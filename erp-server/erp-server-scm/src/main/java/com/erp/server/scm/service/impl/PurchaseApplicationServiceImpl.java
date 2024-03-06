@@ -131,7 +131,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             return new PagingVO(pageData);
         }
         //数据处理
-        doOpHandlePurchaseApplication(records);
+        doOpHandlePurchaseApplication(records,false);
         return new PagingVO(pageData);
     }
 
@@ -567,7 +567,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             return Boolean.TRUE;
         }
         //数据处理
-        doOpHandlePurchaseApplication(list);
+        doOpHandlePurchaseApplication(list,true);
         List<PurchaseApplicationExportExcelDTO> resultList = BeanMapperUtils.copyList(PurchaseApplicationExportExcelDTO.class, list);
         String fileName = "采购申请单数据";
         try {
@@ -1113,7 +1113,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
      * @date: 2023/4/19 17:57
      * @param records
      */
-    private void doOpHandlePurchaseApplication(List<PurchaseApplicationDTO.ListDTO> records){
+    private void doOpHandlePurchaseApplication(List<PurchaseApplicationDTO.ListDTO> records,boolean isExport){
         if (CollectionUtils.isEmpty(records)) {
             return;
         }
@@ -1186,6 +1186,9 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 obj.setWaitQty(0);
             }else{
                 obj.setWaitQty(obj.getApplyQty() - (Objects.isNull(obj.getRealPurchaseQty())?0:obj.getRealPurchaseQty()));
+            }
+            if(isExport){
+                obj.setIsFirstMassProductStr(obj.getIsFirstMassProduct()?"是":"否");
             }
         }
     }

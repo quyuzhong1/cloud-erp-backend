@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
 import lombok.Data;
@@ -148,6 +149,21 @@ public class RequisitionApplicationDetailDTO implements Serializable {
         * 产品id
         */
         private String skuId;
+
+        /**
+         * 平台sku
+         */
+        private String platformSku;
+
+        /**
+         * 平台spu
+         */
+        private String platformSpu;
+
+        /**
+         * fnSku
+         */
+        private String platformFnSku;
 
         /**
         * 产品编码

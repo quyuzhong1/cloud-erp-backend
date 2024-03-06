@@ -416,7 +416,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 }
                 //查询已采购数量
                 if (CollectionUtils.isNotEmpty(purchaseRefList)) {
-                    purchaseQty = purchaseRefList.stream().filter(obj -> detailEntity.getId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(0, Integer::sum);
+                    purchaseQty = purchaseRefList.stream().filter(obj -> detailEntity.getSourceDetailId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(0, Integer::sum);
                 }
 
                 //已下推数量
