@@ -122,7 +122,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         entity.setId(dto.getId());
         entity.setRemark(dto.getRemark());
         entity.setMultipartFile(dto.getMultipartFile());
-        entity.setCertificateValidTime(ObjectUtil.isEmpty(dto.getCertificateValidTimeStr()) ? null : LocalDate.parse(dto.getCertificateValidTimeStr(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        //entity.setCertificateValidTime(ObjectUtil.isEmpty(dto.getCertificateValidTimeStr()) ? null : LocalDate.parse(dto.getCertificateValidTimeStr(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         log.info("编辑 开始更新产品认证", entity.getId());
         //更新主表数据
         this.updateById(entity);
