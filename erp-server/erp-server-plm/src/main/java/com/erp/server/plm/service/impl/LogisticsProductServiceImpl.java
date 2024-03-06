@@ -215,8 +215,6 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                         productLogistics.getOutputElectric().stripTrailingZeros().toPlainString(),productLogistics.getElectricUnit(),
                         productLogistics.getOutputPower().stripTrailingZeros().toPlainString(),productLogistics.getPowerUnit(),
                         productLogistics.getOutputBatteryCapacity().stripTrailingZeros().toPlainString(),productLogistics.getBatteryCapacityUnit()));
-            }else {
-                productBaseInfo.setElectric(false);
             }
         }
         String combinationDeclareType = declareInfo.getCombinationDeclareType();
