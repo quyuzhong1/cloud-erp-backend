@@ -68,11 +68,14 @@
         cbs.create_time desc
     </select>
     <select id="countByTabFlag" resultType="com.erp.model.oms.dto.CustomerB2bSellerChangeDTO$TabFlagDTO">
-        select approve_status as tabFlag,
+        select cbs.approve_status as tabFlag,
                count(1) as count
-        from customer_b2b_seller_change
-        where is_deleted = false
-        group by approve_status
+        from customer_b2b_seller_change cbs
+                 inner join customer_info ci on cbs.main_id = ci.id
+        where
+           cbs.is_deleted = false
+          and ci.is_deleted = false
+        group by cbs.approve_status
     </select>
     <select id="export" resultType="com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO">
         select
