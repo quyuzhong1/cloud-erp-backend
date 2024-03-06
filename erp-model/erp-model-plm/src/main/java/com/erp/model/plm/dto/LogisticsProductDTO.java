@@ -475,7 +475,7 @@ public class LogisticsProductDTO {
         /**
          * 判断是否含电 true 展示输入输出电池电压功率  false不展示入输出电池电压功率
          */
-        private Boolean electric;
+        private boolean electric;
         /**
          * 输入参数 仅展示使用
          */

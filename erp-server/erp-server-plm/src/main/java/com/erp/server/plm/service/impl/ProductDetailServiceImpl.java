@@ -433,8 +433,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                             req.getOutputElectric().stripTrailingZeros().toPlainString(),req.getElectricUnit(),
                             req.getOutputPower().stripTrailingZeros().toPlainString(),req.getPowerUnit(),
                             req.getOutputBatteryCapacity().stripTrailingZeros().toPlainString(),req.getBatteryCapacityUnit()));
-                }else {
-                    req.setElectric(false);
                 }
             }
         });
@@ -547,8 +545,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                             req.getOutputElectric().stripTrailingZeros().toPlainString(),req.getElectricUnit(),
                             req.getOutputPower().stripTrailingZeros().toPlainString(),req.getPowerUnit(),
                             req.getOutputBatteryCapacity().stripTrailingZeros().toPlainString(),req.getBatteryCapacityUnit()));
-                }else {
-                    req.setElectric(false);
                 }
             }
         });
@@ -769,8 +765,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                             req.getOutputElectric().stripTrailingZeros().toPlainString(),req.getElectricUnit(),
                             req.getOutputPower().stripTrailingZeros().toPlainString(),req.getPowerUnit(),
                             req.getOutputBatteryCapacity().stripTrailingZeros().toPlainString(),req.getBatteryCapacityUnit()));
-                }else {
-                    req.setElectric(false);
                 }
             }
         });
