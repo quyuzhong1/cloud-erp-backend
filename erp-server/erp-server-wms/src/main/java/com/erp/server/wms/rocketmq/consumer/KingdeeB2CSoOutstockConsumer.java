@@ -1,11 +1,12 @@
 package com.erp.server.wms.rocketmq.consumer;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
-import com.alibaba.fastjson2.JSONObject;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
-import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
@@ -28,7 +29,7 @@ import javax.annotation.Resource;
 @Service
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.DMP_SYNC_TASK_TOPIC, selectorExpression = "sync_kingdee_so_outatock_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SO_OUTSTOCK_TO_WMS)
-public class KingdeeB2CSoOutstockConsumer implements RocketMQListener<DmpSyncMqDTO> {
+public class KingdeeB2CSoOutstockConsumer implements RocketMQListener<Object> {
 
     @Resource
     private SyncB2CSoOutstockService syncB2CSoOutstockService;
@@ -37,13 +38,17 @@ public class KingdeeB2CSoOutstockConsumer implements RocketMQListener<DmpSyncMqD
     private DmpTaskFeign dmpTaskFeign;
 
     @Override
-    public void onMessage(DmpSyncMqDTO dmpSyncMqDTO) {
+    public void onMessage(Object ext) {
+        //json数据
+        JSONObject jsonObject = JSONUtil.parseObj(ext);
+        String dmpSyncTaskId = jsonObject.get("dmpSyncTaskId").toString();
+
         DmpSyncMqDTO.ParamDTO paramDTO = new DmpSyncMqDTO.ParamDTO();
-        paramDTO.setDmpSyncTaskId(dmpSyncMqDTO.getDmpSyncTaskId());
+        paramDTO.setDmpSyncTaskId(dmpSyncTaskId);
         try {
-            String dataJson = dmpSyncMqDTO.getMqData();
-            log.info("监听到金蝶B2C销售出库单要同步：entity>>>>>{}", dataJson);
-            KingdeeDeliveryDetailEntity entity= JSONObject.parseObject(dataJson,KingdeeDeliveryDetailEntity.class);
+            log.info("监听到金蝶B2C销售出库单要同步：entity>>>>>{}", ext);
+            //由于实体对象上有别名，所以转对象无法用hutool,需要用fastjson
+            KingdeeDeliveryDetailEntity entity= com.alibaba.fastjson2.JSONObject.parseObject(JSONUtil.toJsonStr(jsonObject),KingdeeDeliveryDetailEntity.class);
             syncB2CSoOutstockService.syncKingdeeSoOutstock(entity);
             //同步成功
             paramDTO.setSyncStatus(SyncStatusEnum.SUCCESS_SYNC.getCode());
@@ -56,7 +61,7 @@ public class KingdeeB2CSoOutstockConsumer implements RocketMQListener<DmpSyncMqD
             paramDTO.setResponseMsg(StringUtils.isBlank(e.getMessage())? ExceptionUtil.stacktraceToOneLineString(e,10):e.getMessage());
             dmpTaskFeign.updateSyncInfo(paramDTO);
             //错误预警
-            dmpTaskFeign.sendWarnMsg(dmpSyncMqDTO.getDmpSyncTaskId());
+            dmpTaskFeign.sendWarnMsg(dmpSyncTaskId);
         }
 
     }

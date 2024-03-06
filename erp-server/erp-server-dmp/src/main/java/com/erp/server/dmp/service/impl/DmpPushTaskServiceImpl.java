@@ -37,7 +37,6 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
-import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -105,8 +104,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             return;
         }
         // 发送MQ消息
-        DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(entityId, dto.getMqData());
-        String mqData = dmpSyncMqDTO.getMqData();
+        String mqData = dto.getMqData();
         JSONObject jsonObject = JSONUtil.parseObj(mqData);
         jsonObject.set("dmpSyncTaskId",entityId);
         SendResult result = mqProducerService.syncClassMsg(dto.getMqTopic(), dto.getMqTag(), JSONUtil.toJsonStr(jsonObject), entity.getSourceId());
@@ -240,8 +238,6 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         List<DmpPushTaskEntity> updateList = new ArrayList<>();
         for (DmpPushTaskEntity dmpPushTaskEntity : list) {
             try {
-                // 发送MQ消息
-                DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpPushTaskEntity.getId(), dmpPushTaskEntity.getMqData());
                 //查询来源上级单据
                 Boolean isSend = isSendParentBillTask(dmpPushTaskEntity);
                 //判断是否存在上级单据，并且推送成功
@@ -249,7 +245,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                     updateList.add(dmpPushTaskEntity);
                     continue;
                 }
-                String mqData = dmpSyncMqDTO.getMqData();
+                String mqData = dmpPushTaskEntity.getMqData();
                 JSONObject jsonObject = JSONUtil.parseObj(mqData);
                 jsonObject.set("dmpSyncTaskId",dmpPushTaskEntity.getId());
                 SendResult result = mqProducerService.syncClassMsg(dmpPushTaskEntity.getMqTopic(), dmpPushTaskEntity.getMqTag(), JSONUtil.toJsonStr(jsonObject), dmpPushTaskEntity.getSourceId());
