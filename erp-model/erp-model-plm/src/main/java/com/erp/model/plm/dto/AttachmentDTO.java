@@ -143,7 +143,7 @@ public class AttachmentDTO implements Serializable {
         /**
          * 大小
          */
-        private BigDecimal fileSize;
+        private BigDecimal attachSize;
 
     }
 
