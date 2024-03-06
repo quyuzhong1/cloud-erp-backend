@@ -84,6 +84,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -2027,10 +2028,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (Objects.isNull(entity)){
             return;
         }
-        ProductCostEntity productCostEntity = productCostService.getBySkuId(entity.getId());
-        if(Objects.isNull(productCostEntity)){
-            return;
-        }
         ProductLogisticsEntity productLogistics = productLogisticsService.getBySkuId(entity.getId());
         if (Objects.isNull(productLogistics)){
             return;
@@ -2039,28 +2036,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (Objects.isNull(setting) || Objects.isNull(setting.getDataJson()) || CollectionUtils.isEmpty(setting.getDataJson().getJSONArray("data"))){
             return;
         }
+        List<DmpSkuCostEntity> skuCostList = dmpTaskFeign.listRedisBySkuNoList(Collections.singletonList(entity.getSkuNo()));
         //是否重算目的国申报价
         BigDecimal destDeclarePrice = productLogistics.getDestDeclarePrice();
         if (Objects.isNull(destDeclarePrice) || destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
-
-            String usdCode = CurrencyEnum.USD.getCurrencyCode();
-            String nowDay = LocalDate.now().toString();
+            DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuNo().equals(entity.getSkuNo())).findFirst().orElse(null);
+            if (Objects.isNull(skuCostDTO)){
+                return;
+            }
             //汇率
-            BigDecimal rate = dmpTaskFeign.getRate(nowDay, usdCode);
-            if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) == 0) {
-                rate = new BigDecimal("7.13");
+            BigDecimal exchangeRate = BigDecimal.ONE;
+            if (StrUtil.isNotBlank(skuCostDTO.getCurrency()) && !CurrencyEnum.CNY.getCurrencyCode().equals(skuCostDTO.getCurrency())) {
+                exchangeRate = dmpTaskFeign.getRate(skuCostDTO.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
             }
             //含税成本
-            BigDecimal actualTaxCost = productCostEntity.getActualTaxCost();
-            if (Objects.isNull(actualTaxCost) || BigDecimal.ZERO.compareTo(actualTaxCost) == 0) {
-                List<DmpSkuCostEntity>  skuCostList= dmpTaskFeign.listRedisBySkuNoList(Collections.singletonList(entity.getSkuNo()));
-                if (CollectionUtils.isNotEmpty(skuCostList)){
-                    actualTaxCost = skuCostList.get(0).getCostPrice();
-                }else {
-                    actualTaxCost = BigDecimal.ZERO;
-                }
+            BigDecimal actualTaxCost = BigDecimal.ZERO;
+            if (CollectionUtils.isNotEmpty(skuCostList)){
+                actualTaxCost = skuCostDTO.getCostPrice();
             }
-            BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, rate);
+            BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, exchangeRate);
             List<CfgSettingValueDTO.LogisticsProductDestDeclarePrice> data = JSONUtil.toList(setting.getDataJson().getJSONArray("data"), CfgSettingValueDTO.LogisticsProductDestDeclarePrice.class);
             CfgSettingValueDTO.LogisticsProductDestDeclarePrice declarePrice = data.stream().filter(e -> e.getStartPrice().compareTo(actualTaxCostUsd) < 0 && e.getEndPrice().compareTo(actualTaxCostUsd) >= 0).findFirst().orElse(null);
             if (Objects.isNull(declarePrice) || Objects.isNull(declarePrice.getRate())){
