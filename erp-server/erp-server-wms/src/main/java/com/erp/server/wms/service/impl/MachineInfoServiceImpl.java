@@ -16,6 +16,7 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -37,6 +38,7 @@ import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.MachineSourceTypeEnum;
 import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -136,7 +138,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             return new PagingVO(pageData);
         }
         //数据处理
-        doOpHandleData(records);
+        doOpHandleData(records,false);
         return new PagingVO(pageData);
     }
 
@@ -662,7 +664,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
         }
-        doOpHandleData(list);
+        doOpHandleData(list,true);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/machineInfo.xlsx";
         String name = "加工单导出";
@@ -796,7 +798,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
      * @author Will
      * @date: 2023/4/19 18:58
      */
-    private void doOpHandleData(List<MachineInfoDTO.ListDTO> records) {
+    private void doOpHandleData(List<MachineInfoDTO.ListDTO> records,boolean isExport) {
         if (CollectionUtils.isEmpty(records)) {
             return;
         }
@@ -820,6 +822,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
 
+            if(isExport){
+                obj.setSourceType(EnumMessage.getNameByCode(MachineSourceTypeEnum.class,obj.getSourceType()));
+            }
         }
     }
 
