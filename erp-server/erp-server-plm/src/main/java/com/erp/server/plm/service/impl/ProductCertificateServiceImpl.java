@@ -676,7 +676,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             }
             double size = multipartFile.getSize();
             double fileSize = size / (1024 * 1024);
-            fileSize = (double) Math.round(fileSize * 100) / 100;
+            fileSize = (double) Math.round(fileSize * 10000) / 10000;
             if (fileSize > 300) {
                 throw new ServiceException(ApiError.ERROR_95160, 300);
             }

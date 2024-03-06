@@ -154,6 +154,7 @@
         FROM sys_user_info sui
         LEFT JOIN sys_department_user sdu ON sdu.user_id = sui.uid
         LEFT JOIN sys_department sd ON sd."id" = sdu.department_id
+        where sui.user_type = 'erp'
     </select>
     <select id="getListByRoleIds" resultType="com.common.business.dto.FindUserDTO">
         SELECT
@@ -169,7 +170,7 @@
         from sys_user_info sui
                  LEFT JOIN sys_role_user sru on sui.uid = sru.user_id
                  LEFT JOIN sys_role sr on sr."id" = sru.role_id
-        where sr.id in
+        where sui.user_type = 'erp' and sr.id in
         <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
             #{roleId}
         </foreach>
@@ -197,7 +198,7 @@
         sui.sync_kingdee_id
         from sys_user_info sui
         LEFT JOIN sys_department_user sdu on sui.uid = sdu.user_id
-        where 1 = 1
+        where sui.user_type = 'erp'
         <if test="deptIds != null and deptIds.size() > 0">
             and sdu.department_id in
             <foreach collection="deptIds" item="id" open="(" close=")" separator=",">
