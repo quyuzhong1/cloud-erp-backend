@@ -1745,7 +1745,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             addDTO.setType(SubcontractIssueTypeEnum.NORMAL.getCode());
             addDTO.setDate(LocalDate.now());
             addDTO.setSupplierId(poInstockEntity.getSupplierId());
-            List<SubcontractIssueDetailDTO.AddDTO> detailList = new ArrayList<>();
+
             for (PoInstockDetailEntity detailEntity : thisPoDetailList) {
                 //采购订单明细
                 PurchaseOrderDetailEntity poDetailEntity = purchaseOrderDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
@@ -1757,6 +1757,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 if (CollectionUtils.isEmpty(subDetailList)) {
                     throw new ServiceException(ApiError.ERROR_98070);
                 }
+                List<SubcontractIssueDetailDTO.AddDTO> detailList = new ArrayList<>();
                 for (SubcontractOrderDetailEntity childSubDetail : subDetailList) {
                     SubcontractIssueDetailDTO.AddDTO addDetailDTO = new SubcontractIssueDetailDTO.AddDTO();
                     addDetailDTO.setSubcontractOrderDetailId(childSubDetail.getId());
