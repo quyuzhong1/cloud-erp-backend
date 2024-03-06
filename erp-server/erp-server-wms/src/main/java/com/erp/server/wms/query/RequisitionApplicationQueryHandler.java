@@ -61,6 +61,11 @@ public class RequisitionApplicationQueryHandler extends AbstractQueryHandler {
                         return getQueryEmptySql();
                     }
                     super.buildDefaultDTO("ra.channel_id",shopIds);
+                }else{
+                    List<String> platformList = listingAdvanceQueryDTOList.stream().map(ListingAdvanceQueryDTO::getPlatform).distinct().collect(Collectors.toList());
+                    if(CollectionUtils.isNotEmpty(platformList)){
+                        super.buildDefaultDTO("op.code",platformList);
+                    }
                 }
             }
 
