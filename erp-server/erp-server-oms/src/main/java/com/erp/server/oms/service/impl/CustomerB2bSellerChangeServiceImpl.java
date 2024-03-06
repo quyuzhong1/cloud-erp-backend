@@ -16,6 +16,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
@@ -507,6 +508,13 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         customerInfoEntity.setSellerName(entity.getChangeSellerName());
         customerInfoService.updateById(customerInfoEntity);
         customerSellerService.batchSellerHistory(Collections.singletonList(customerInfoEntity),entity.getStartDate());
+        //记录操作日志
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        if(Objects.nonNull(loginUser)){
+            loginUser.setUserName("system");
+        }
+        String content = String.format("销售员变更单[%s]审核通过自动修改销售员从[%s]为[%s]",customerInfoEntity.getCode(),entity.getOriginSellerName(),entity.getChangeSellerName());
+        operateLogService.addModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), customerInfoEntity.getId(), "编辑操作");
         return true;
     }
 
