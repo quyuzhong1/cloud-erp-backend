@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -45,12 +46,12 @@ public class OverseasDeliveryPlanDetailDTO implements Serializable {
         /**
          * 第三方仓SKU
          */
-        private String thirdWarehouseSku;
+        private String platformSku;
 
         /**
          * 第三方仓产品名称
          */
-        private String thirdWarehouseProductName;
+        private String platformSkuName;
 
         /**
         * 产品id
@@ -141,7 +142,15 @@ public class OverseasDeliveryPlanDetailDTO implements Serializable {
         * 计划数量
         */
         private Integer qty;
+        /**
+         * 平台sku
+         */
+        private String platformSku;
 
+        /**
+         * 平台sku
+         */
+        private String platformSkuName;
     }
 
     @Data

@@ -65,7 +65,8 @@
             odp.approve_user_name AS approveUserName,
             odp.create_time AS createTime,
             odp.approve_time AS  approveTime,
-            op.code AS sourcePlatformCode
+            op.code AS sourcePlatformCode,
+            odpd.platform_sku as thirdWarehouseSku
         FROM overseas_delivery_plan_detail odpd
         INNER JOIN overseas_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
         LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = odp.to_warehouse_id and opw.is_deleted = false
@@ -111,7 +112,8 @@
         odp.approve_user_name,
         odp.create_time,
         odp.approve_time,
-        op.code AS sourcePlatformCode
+        op.code AS sourcePlatformCode,
+        odpd.platform_sku as thirdWarehouseSku
         FROM overseas_delivery_plan_detail odpd
         INNER JOIN overseas_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
         LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = odp.to_warehouse_id and opw.is_deleted = false
