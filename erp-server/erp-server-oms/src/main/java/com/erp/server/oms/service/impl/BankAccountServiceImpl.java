@@ -1,10 +1,19 @@
 package com.erp.server.oms.service.impl;
 
 import com.alibaba.excel.EasyExcel;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
+import com.erp.model.oms.dto.BankAccountDTO;
+import com.erp.model.oms.dto.CustomerB2CDTO;
 import com.erp.model.oms.dto.excel.KingdeeBankAccountExcelDTO;
 import com.erp.model.oms.entity.BankAccountEntity;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.listener.KingdeeBankAccountListener;
 import com.erp.server.oms.mapper.BankAccountMapper;
@@ -14,12 +23,14 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -103,6 +114,60 @@ public class BankAccountServiceImpl extends SuperServiceImpl<BankAccountMapper, 
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(BankAccountEntity::getAccountName,receiveAccountList).list();
+    }
+
+    @Override
+    public PagingVO<BankAccountDTO.PagingViewDTO> paging(PagingDTO<BankAccountDTO.PagingParamDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        BankAccountDTO.PagingParamDTO params = dto.getParams();
+        IPage pageData = baseMapper.paging(query, params);
+        List<BankAccountDTO.PagingViewDTO> list = pageData.getRecords();
+        for (BankAccountDTO.PagingViewDTO item : list) {
+            Boolean disabled = item.getDisabled();
+            String disabledName = disabled ? "禁用" : "启用";
+            item.setDisabledName(disabledName);
+        }
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public BankAccountDTO.ViewDTO view(String id) {
+        BankAccountEntity bankAccount = this.getById(id);
+        if (Objects.isNull(bankAccount)) {
+            throw new ServiceException("银行账号不存在");
+        }
+        BankAccountDTO.ViewDTO viewDTO = new BankAccountDTO.ViewDTO();
+        BeanMapper.copy(bankAccount, viewDTO);
+        Boolean disabled = viewDTO.getDisabled();
+        String disabledName = disabled ? "禁用" : "启用";
+        viewDTO.setDisabledName(disabledName);
+        return viewDTO;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean add(BankAccountDTO.AddDTO dto) {
+        BankAccountEntity bankAccount = new BankAccountEntity();
+        BeanMapper.copy(dto, bankAccount);
+        // 数据处理
+        handleData(bankAccount);
+        return this.save(bankAccount);
+    }
+
+    private void handleData(BankAccountEntity bankAccount) {
+        String bankAccountNo = bankAccount.getBankAccountNo();
+        int count = this.lambdaQuery().eq(BankAccountEntity::getBankAccountNo, bankAccountNo).count();
+        if (count > 0) {
+            throw new ServiceException("银行账号已存在");
+        }
+        String orgId = bankAccount.getOrgId();
+        SysAccountingCompanyEntity org= sysUserFeign.getCompanyById(orgId);
+        if (Objects.isNull(org)) {
+            throw new ServiceException("使用组织不存在");
+        }
+        bankAccount.setOrgName(org.getCompanyName());
+        bankAccount.setKindeeOrgCode(org.getCode());
+
     }
 
 }
