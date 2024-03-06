@@ -71,6 +71,12 @@ public class PurchaseApplicationDTO implements Serializable {
          */
         private Boolean isFirstMassProduct;
 
+
+        /**
+         * 新品首批（false否,true是）
+         */
+        private String isFirstMassProductStr;
+
         /**
          * 采购单关联状态
          */

@@ -106,7 +106,8 @@
             pa.create_user_name as createUserName,
             pa.create_time as createTime,
             s.id as supplierId,
-            s.name as supplierName
+            s.name as supplierName,
+            pad.close_reason as closeReason
         from purchase_application pa
         inner join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = false
         left join supplier s on pad.supplier_id = s.id and s.is_deleted = false

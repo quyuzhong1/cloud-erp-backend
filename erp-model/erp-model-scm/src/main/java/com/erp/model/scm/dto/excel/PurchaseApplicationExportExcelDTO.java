@@ -32,7 +32,7 @@ public class PurchaseApplicationExportExcelDTO implements Serializable {
      * 新品首批
      */
     @ExcelProperty(value = "新品首批", index = 2)
-    private String  isFirstMassProduct;
+    private String  isFirstMassProductStr;
 
     /**
      * 采购单关联状态
