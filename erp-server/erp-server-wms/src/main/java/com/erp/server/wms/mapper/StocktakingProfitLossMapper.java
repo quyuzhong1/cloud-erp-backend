@@ -9,6 +9,7 @@ import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -55,4 +56,19 @@ public interface StocktakingProfitLossMapper extends BaseMapper<StocktakingProfi
      */
     List<InOutStockDTO> listInventoryInOut(@Param("idList") List<String> idList);
 
+    /**
+     * 库存组织ID和SKuId最新单据时间
+     * @author Jim
+     * @date 2023-03-05
+     */
+    List<StocktakingProfitLossDTO.LastDTO> listByOrgIdAndSkuIds(@Param("orgIdList")List<String> orgIdList, @Param("skuIdList") List<String> skuIdList);
+
+
+    /**
+     * 仓库ID和SkuId,单据时间查询最新的单号
+     *
+     * @author Jim
+     * @date 2023-03-05
+     */
+    List<String> findLastOneCode(@Param("warehouseId")String warehouseId, @Param("skuId")String skuId, @Param("billDate")LocalDate billDate);
 }

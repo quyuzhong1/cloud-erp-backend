@@ -16,7 +16,9 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -28,6 +30,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
+import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import com.erp.model.oms.entity.CustomerB2bSellerChangeEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
@@ -174,7 +177,29 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     public PagingVO<CustomerB2bSellerChangeDTO.ListDTO> paging(PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage<CustomerB2bSellerChangeDTO.ListDTO> listDTOList = baseMapper.paging(query,dto.getParams());
-        listDTOList.getRecords().forEach(v->v.setApproveStatusName(ApproveStatusEnum.getName(v.getApproveStatus())));
+        List<String> ids = listDTOList.getRecords().stream().map(CustomerB2bSellerChangeDTO.ListDTO::getId).collect(Collectors.toList());
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        ids.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_B2B_CHANGE_SELLER.getCode(), obj));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.Default.code, listApiResult.getMsg()));
+            }
+        }
+        for (CustomerB2bSellerChangeDTO.ListDTO record : listDTOList.getRecords()) {
+            record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
+            //最新待审核人
+            if (listApiResult != null && org.apache.commons.collections4.CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(record.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                if(StringUtils.isNotBlank(curApprove)){
+                    record.setApproveUserName(curApprove);
+                }
+            }
+        }
         return new PagingVO<>(listDTOList);
     }
 
@@ -257,8 +282,8 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             CustomerInfoEntity customerInfoEntity = customerInfoService.getById(entity.getMainId());
             batchResultDTO.setId(entity.getId());
             batchResultDTO.setCode(customerInfoEntity.getCode());
-            if(!entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT)){
-                batchResultDTO.setMsg("只有待提交状态可以提交审核");
+            if(!(entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT) || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT))){
+                batchResultDTO.setMsg("只有待提交或审核失败状态可以提交审核");
                 batchResultDTO.setSuccess(false);
                 resultDTOList.add(batchResultDTO);
                 continue;
@@ -269,7 +294,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
                 continue;
             }
             entity.setApproveStatus(ApproveStatusEnum.APPROVE_ING);
-            boolean result = this.updateById(entity);
+            boolean result = this.updateApproveInfo(entity,"",null);
             if (result) {
                 //添加日志
                 String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
@@ -430,13 +455,32 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         }
         CustomerB2bSellerChangeEntity againEntity = this.getById(entity.getId());
         if(againEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING)){
-            againEntity.setRemark(dto.getComment());
-            againEntity.setApproveTime(LocalDateTime.now());
-            againEntity.setApproveUserId(userInfo.getUid());
-            againEntity.setApproveUserName(userInfo.getUserName());
-            this.updateById(againEntity);
+            this.updateApproveInfo(againEntity,dto.getComment(),LocalDateTime.now());
         }
     }
+
+    public Boolean updateApproveInfo(CustomerB2bSellerChangeEntity entity,String comment,LocalDateTime approveTime){
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_B2B_CHANGE_SELLER.getCode(), entity.getId()));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        if (listApiResult != null && org.apache.commons.collections4.CollectionUtils.isNotEmpty(listApiResult.getData())) {
+            List<ProcessManagementDTO.CurApproveInfoDTO> curApproveInfoDTOList = listApiResult.getData();
+            String curApproveId = curApproveInfoDTOList.stream().filter(v->StringUtils.isNotBlank(v.getCurApproveId())).findFirst().orElse(new ProcessManagementDTO.CurApproveInfoDTO()).getCurApproveId();
+            String curApproveName = curApproveInfoDTOList.stream().filter(v->StringUtils.isNotBlank(v.getCurApproveName())).findFirst().orElse(new ProcessManagementDTO.CurApproveInfoDTO()).getCurApproveName();
+            if(StringUtils.isNotBlank(curApproveId)){
+                entity.setApproveUserId(curApproveId);
+            }
+            if(StringUtils.isNotBlank(curApproveName)){
+                entity.setApproveUserName(curApproveName);
+            }
+            if(approveTime != null){
+                entity.setApproveTime(approveTime);
+            }
+            entity.setRemark(comment);
+        }
+        return this.updateById(entity);
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -464,6 +508,13 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         customerInfoEntity.setSellerName(entity.getChangeSellerName());
         customerInfoService.updateById(customerInfoEntity);
         customerSellerService.batchSellerHistory(Collections.singletonList(customerInfoEntity),entity.getStartDate());
+        //记录操作日志
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        if(Objects.nonNull(loginUser)){
+            loginUser.setUserName("system");
+        }
+        String content = String.format("销售员变更单[%s]审核通过自动修改销售员从[%s]为[%s]",customerInfoEntity.getCode(),entity.getOriginSellerName(),entity.getChangeSellerName());
+        operateLogService.addModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), customerInfoEntity.getId(), "编辑操作");
         return true;
     }
 
@@ -473,7 +524,29 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         if(CollUtil.isEmpty(list)) {
             return;
         }
-        list.forEach(v->v.setApproveStatusName(ApproveStatusEnum.getName(v.getApproveStatus())));
+        List<String> ids = list.stream().map(CustomerB2bSellerExcelDTO::getId).collect(Collectors.toList());
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        ids.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_B2B_CHANGE_SELLER.getCode(), obj));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.Default.code, listApiResult.getMsg()));
+            }
+        }
+        for (CustomerB2bSellerExcelDTO customerB2bSellerExcelDTO : list) {
+            customerB2bSellerExcelDTO.setApproveStatusName(ApproveStatusEnum.getName(customerB2bSellerExcelDTO.getApproveStatus()));
+            //最新待审核人
+            if (listApiResult != null && org.apache.commons.collections4.CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(customerB2bSellerExcelDTO.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                if(StringUtils.isNotBlank(curApprove)){
+                    customerB2bSellerExcelDTO.setApproveUserName(curApprove);
+                }
+            }
+        }
         // 数据处理
         ExcelUtil.export("客户b2b销售变更单","客户b2b销售变更单",list,CustomerB2bSellerExcelDTO.class,response);
     }

@@ -7,6 +7,7 @@ import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -158,4 +159,21 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * @return com.common.business.dto.base.BatchResultDTO
      */
     BatchResultDTO delete(String id);
+
+    /**
+     * 库存组织ID和SKuId最新单据时间
+     *
+     * @author Jim
+     * @date 2024-03-05
+     */
+    List<StocktakingProfitLossDTO.LastDTO> listByOrgIdAndSkuIds(List<String> orgIds, List<String> skuIds);
+
+
+    /**
+     * 仓库ID和SkuId,单据时间查询最新的单号
+     *
+     * @author Jim
+     * @date 2024-03-05
+     */
+    String findLastOneCode(String warehouseId, String skuId, LocalDate billDate);
 }

@@ -36,6 +36,13 @@ public class PurchaseEndReceiveImportExcelDTO implements Serializable {
     private String  skuNo;
 
     /**
+     * 结束交货原因
+     */
+    @ExcelProperty(value = "*结束交货原因", index = 2)
+    @FieldValid(fieldName = "结束交货原因", isNotBlank = true,maxLength = 200)
+    private String remark;
+
+    /**
      * 错误数据
      */
     private String  errorMsg;

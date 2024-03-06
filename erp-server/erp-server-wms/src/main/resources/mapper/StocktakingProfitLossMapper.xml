@@ -137,7 +137,50 @@
                 #{id}
             </foreach>
         </if>
-
     </select>
 
+    <select id="listByOrgIdAndSkuIds" resultType="com.erp.model.wms.dto.StocktakingProfitLossDTO$LastDTO">
+        SELECT
+        wh.org_id AS inventoryOrgId,
+        MAX(spl.bill_date) AS billDate,
+        spld.sku_id
+        FROM stocktaking_profit_loss_detail spld
+        LEFT JOIN stocktaking_profit_loss spl
+        ON spld.main_id=spl.id
+        LEFT JOIN warehouse wh on spld.warehouse_id = wh.id
+        WHERE spld.is_deleted=FALSE AND spl.is_deleted=FALSE
+        AND spl.approve_status = 'approve'
+        <if test="orgIdList!=null and orgIdList.size>0">
+            AND wh.org_id IN
+            <foreach collection="orgIdList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="skuIdList!=null and skuIdList.size>0">
+            AND spld.sku_id IN
+            <foreach collection="skuIdList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        GROUP BY wh.org_id,spld.sku_id
+    </select>
+
+    <select id="findLastOneCode" resultType="java.lang.String">
+        SELECT
+            spl.code as maxCode
+        FROM stocktaking_profit_loss_detail spld
+        LEFT JOIN stocktaking_profit_loss spl
+        ON spld.main_id=spl.id
+        WHERE spld.is_deleted=FALSE AND spl.is_deleted=FALSE
+          AND spl.approve_status = 'approve'
+        <if test="billDate != null">
+            AND spl.bill_date = #{billDate}
+        </if>
+        <if test="warehouseId != null and warehouseId != ''">
+            AND spld.warehouse_id = #{warehouseId}
+        </if>
+        <if test="skuId != null and skuId != ''">
+            AND spld.sku_id = #{skuId}
+        </if>
+    </select>
 </mapper>

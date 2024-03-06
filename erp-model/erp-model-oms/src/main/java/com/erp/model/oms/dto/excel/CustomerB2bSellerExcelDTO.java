@@ -15,6 +15,9 @@ import java.time.LocalDateTime;
 @Data
 public class CustomerB2bSellerExcelDTO {
 
+    @ExcelIgnore
+    private String id;
+
     @ColumnWidth(20)
     @ExcelProperty(value = "客户编码", index = 0)
     private String code;

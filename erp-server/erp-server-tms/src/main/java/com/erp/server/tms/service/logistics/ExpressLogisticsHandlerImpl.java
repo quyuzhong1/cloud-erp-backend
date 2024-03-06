@@ -522,4 +522,10 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.SF_EXPRESS;
     }
+
+    @Override
+    public ApiResult<List<LogisticsServiceResponseVO>> listLogisticsService(Map<String, String> authMap) {
+        return ApiResult.error(-1, "功能未开放");
+
+    }
 }

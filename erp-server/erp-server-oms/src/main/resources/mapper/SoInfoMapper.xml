@@ -31,6 +31,7 @@
         sod.qty,
         sod.amount,
         sod.currency,
+        sod.delivery_qty AS deliveryQty,
         sod.currency_symbol AS currencySymbol,
         sod.price,
         sod.tax_amount AS taxAmount,
@@ -64,6 +65,7 @@
     <select id="pagingTotal" resultType="com.erp.model.oms.dto.SoInfoDTO$PagingTotalDTO">
         SELECT
             COALESCE(sum(sod.qty),0) as totalQty,
+            COALESCE(sum(sod.delivery_qty),0) as totalDeliveryQty,
             COALESCE(sum(sod.amount),0) as totalAmount,
             COALESCE(sum(sod.tax_amount),0) as totalTaxAmount,
             COALESCE(sum(sod.amount_local_currency),0) as amountLocalCurrency,
@@ -120,6 +122,7 @@
             sod.qty,
             sod.amount,
             sod.currency,
+            sod.delivery_qty AS deliveryQty,
             sod.currency_symbol AS currencySymbol,
             sod.price,
             sod.tax_amount AS taxAmount,
