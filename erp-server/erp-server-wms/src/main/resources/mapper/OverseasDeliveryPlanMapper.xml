@@ -154,7 +154,9 @@
             odpd.sku_no,
             odpd.is_combination,
             odpd.qty AS planQty,
-            odpd.qty AS requisitionQty
+            odpd.qty AS requisitionQty,
+            odpd.platform_sku as platformSku,
+            odpd.platform_sku_name as platformSkuName
         FROM overseas_delivery_plan_detail odpd
         INNER JOIN overseas_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
         WHERE odp.is_deleted = FALSE
