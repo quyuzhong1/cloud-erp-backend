@@ -176,4 +176,12 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * @date 2024-03-05
      */
     String findLastOneCode(String warehouseId, String skuId, LocalDate billDate);
+
+    /**
+     * 根据组织IDS和SkuIds，比较单据日期是否是已审核的盘盈盘亏单据日期之前
+     *
+     * @author Jim
+     * @date 2024-03-07
+     */
+    boolean checkClosed(List<String> orgIds, List<String> skuIds, LocalDate billDate);
 }

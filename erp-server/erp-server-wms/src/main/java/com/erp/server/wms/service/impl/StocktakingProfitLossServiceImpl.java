@@ -919,6 +919,21 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         return codeList.stream().findFirst().orElse("");
     }
 
+    @Override
+    public boolean checkClosed(List<String> orgIds, List<String> skuIds, LocalDate billDate) {
+        // 最新盘盈盘亏单有效单据日期列表
+        List<StocktakingProfitLossDTO.LastDTO> lastStocktakingProfitLossList = this.listByOrgIdAndSkuIds(orgIds, skuIds);
+        if (CollectionUtils.isNotEmpty(lastStocktakingProfitLossList)){
+            for (StocktakingProfitLossDTO.LastDTO lastDTO : lastStocktakingProfitLossList) {
+                if (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate())){
+                    // 已有日期之前已审核的盘盈盘亏单
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /**
      * 更改审核信息
      *

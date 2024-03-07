@@ -15,6 +15,7 @@ import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
+import com.erp.server.wms.query.SoReturnNoticeQueryHandler;
 import com.erp.server.wms.service.SoReturnNoticeService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -54,7 +55,7 @@ public class SoReturnNoticeController extends BaseController {
             menuCode = "wms:soReturnNotice:paging",
             tableAlias = "srn"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SoReturnNoticeQueryHandler.class)
     public ApiResult<PagingVO<SoReturnNoticeDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<SoReturnNoticeDTO.PagingParam> dto) {
         PagingVO<SoReturnNoticeDTO.PagingView> pagingVO = soReturnNoticeService.paging(dto);
         return success(pagingVO);
@@ -297,7 +298,7 @@ public class SoReturnNoticeController extends BaseController {
             menuCode = "wms:soReturnNotice:paging",
             tableAlias = "srn"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SoReturnNoticeQueryHandler.class)
     public ApiResult exportExcel(@RequestBody SoReturnNoticeDTO.PagingParam dto, HttpServletResponse response) {
         Boolean flag = soReturnNoticeService.exportExcel(dto, response);
         return flag == true ? success() : failure();
