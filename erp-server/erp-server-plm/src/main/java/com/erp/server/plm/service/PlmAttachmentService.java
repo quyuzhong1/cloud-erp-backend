@@ -1,6 +1,9 @@
 package com.erp.server.plm.service;
-import com.erp.model.plm.entity.PlmAttachmentEntity;
+
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.service.SuperService;
+import com.erp.model.plm.entity.PlmAttachmentEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -37,4 +40,28 @@ public interface PlmAttachmentService extends SuperService<PlmAttachmentEntity> 
      * @return void
      */
     List<PlmAttachmentEntity> listByBusinessIds(List<String> businessIdList);
+    /**
+     * @description: 上传
+     * @author Will
+     * @date: 2024/2/23 10:50
+     * @param multipartFile
+     * @return String
+     */
+    PlmAttachmentEntity upload(MultipartFile multipartFile,String type);
+    /**
+     * @description: 删除
+     * @author Will
+     * @date: 2024/2/23 10:58
+     * @param dto
+     */
+    void removeAttachment(BaseIdDTO dto);
+    /**
+     * @description: 批量上传
+     * @author Will
+     * @date: 2024/2/27 15:03
+     * @param multipartFileList
+     * @param type
+     * @return List<PlmAttachmentEntity>
+     */
+    List<PlmAttachmentEntity> batchUpload(List<MultipartFile> multipartFileList, String type);
 }

@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -103,7 +104,7 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
     * @param dto
     * @return
     */
-    void approve(BaseApproveParamDTO dto);
+    BatchResultDTO approve(ApproveOneDTO dto);
 
     /**
      * @description: 结束审核
@@ -113,16 +114,16 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @param list
      * @return Boolean
      */
-    Boolean approveEnd(BaseApproveParamDTO dto, List<SubcontractOrderEntity> list);
+    Boolean approveEnd(ApproveOneDTO dto, SubcontractOrderEntity list);
 
     /**
     * 反审核
     * @author will
     * @date: 2023-06-08
-    * @param ids
+    * @param id
     * @return
     */
-    void disApprove(List<String> ids);
+    BatchResultDTO disApprove(String id);
 
     /**
     * 删除

@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -365,5 +366,56 @@ public class SoB2cDetailDTO implements Serializable {
 
     }
 
+    /**
+     * 待发货查询参数DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WaitDeliveryParamDTO{
 
+        /**
+         * skuId集合
+         */
+        private List<String> skuIdList;
+
+        /**
+         * 仓库id集合
+         */
+        private List<String> warehouseIdList;
+
+        /**
+         * 销售订单明细id
+         */
+        private List<String> detailIdList;
+    }
+
+    /**
+     * 待发货查询DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WaitDeliveryQtyDTO{
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+    }
 }

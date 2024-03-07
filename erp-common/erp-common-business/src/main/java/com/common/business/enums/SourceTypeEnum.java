@@ -68,6 +68,7 @@ public enum SourceTypeEnum {
     SO_INFO("soInfo", "B2B销售订单","so_info"),
     SO_CHANGE("soChange", "销售变更单","so_change"),
     CUSTOMER_INFO( "customerInfo", "客户表","customer_info"),
+    CUSTOMER_B2B_CHANGE_SELLER( "customerB2bChangeSeller", "B2B客户表变更销售员","customer_b2b_seller_change"),
     SO_B2C( "soB2c", "B2C销售订单","so_b2c"),
     CUSTOMER_B2C( "customerB2c", "B2C客户表","customer_b2c"),
     SHOP( "shop", "店铺","shop_info"),

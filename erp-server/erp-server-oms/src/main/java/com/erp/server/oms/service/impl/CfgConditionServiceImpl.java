@@ -61,12 +61,6 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
         if (!save) {
             throw new ServiceException("条件配置单保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "条件配置单", cfConditionEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, cfConditionEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
         return cfConditionEntity.getId();
     }
 
@@ -87,13 +81,6 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
         if (!save) {
             throw new ServiceException("条件配置单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-        log.info("编辑 开始记录条件配置单日志数据，id：【{}】", cfConditionEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), cfConditionEntity.getId(), "条件配置单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, cfConditionEntity, null, cfConditionEntity.getId(), msg);
         return Boolean.TRUE;
     }
 

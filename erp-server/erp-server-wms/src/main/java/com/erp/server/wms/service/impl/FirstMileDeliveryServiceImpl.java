@@ -13,6 +13,7 @@ import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -266,7 +267,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
     @Override
     @Transactional
-    public void exportList(FirstMileDeliveryDTO.ExportDTO param, HttpServletResponse response) {
+    public void exportList(FirstMileDeliveryDTO.PagingParamDTO param, HttpServletResponse response) {
         List<FirstMileDeliveryDTO.ListDTO> list = this.baseMapper.listExport(param);
         if(CollUtil.isEmpty(list)) {
            return;
@@ -858,7 +859,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<FirstMileDeliveryDetailEntity> entities = firstMileDeliveryDetailService.listBySourceDetailIds(sourceDetailIdList);
 
         //获取库存sku信息
-//        List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNoViews = omsListingInfoFeign.listBySkuNoList(skuNoList);
         List<SkuMappingDTO.ListSkuParamDTO> paramDTOList = new ArrayList<>();
         for (FirstMileDeliveryDetailEntity detailEntity : detailEntityList) {
             SkuMappingDTO.ListSkuParamDTO paramDTO = new SkuMappingDTO.ListSkuParamDTO();
@@ -869,6 +869,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         List<SkuMappingDTO.ListSkuDTO> listSkuDTOS = skuMappingFeign.listBySkuNoList(paramDTOList);
+
+        //查询第三方SKU信息
+        List<String> skuIdList = detailEntityList.stream().map(FirstMileDeliveryDetailEntity::getSkuId).collect(Collectors.toList());
 
         //明细信息
         List<FirstMileDeliveryDetailDTO.ViewDTO> detailViews = new ArrayList<>();
@@ -901,6 +904,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             detailVie.setStockSku(stockSku);
 
             detailViews.add(detailVie);
+            detailVie.setThirdWarehouseSku(firstMileDeliveryDetailEntity.getPlatformSkuNo());
         }
         data.setDetailList(detailViews);
     }
@@ -1240,17 +1244,34 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //查询已下推的海外入库单
         List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(ids);
 
+        //查询第三方SKU信息
+        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIdList,"");
+
         // 属性赋值
         for(FirstMileDeliveryDTO.ListDTO data : list) {
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(data.getSkuNo())).findFirst().orElse(new SkuVO());
 
+            //设置第三方SKU信息
+            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = null;
+            if(StringUtils.isNotBlank(data.getProvideCode())){
+                listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
+                        v->v.getProductSkuId().equals(data.getSkuId()) && v.getDictPlatform().equals(data.getProvideCode()) && (v.getHasMappingAll() || v.getWarehouseId().equals(data.getDestWarehouseId()))
+                        )
+                        .findFirst().orElse(null);
+            }
+
+            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
+                data.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
+            }
+
             //库存sku
             String stockSku = listSkuDTOS.stream()
-                    .filter(req -> req.getProductSkuId().equals(data.getSkuId())
-                            && req.getWarehouseId().equals(data.getDeliveryWarehouseId()))
+                    .filter(req -> data.getSkuId().equals(req.getProductSkuId())
+                            && data.getDeliveryWarehouseId().equals(req.getWarehouseId()))
                     .distinct().findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
             data.setStockSku(stockSku);
+
 
             //审核状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));

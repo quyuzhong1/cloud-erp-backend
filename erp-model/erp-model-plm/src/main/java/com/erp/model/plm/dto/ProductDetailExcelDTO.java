@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.erp.model.plm.enums.*;
@@ -61,6 +60,19 @@ public class ProductDetailExcelDTO {
      */
     @FieldValid(fieldName = "品名（英文）", isNotBlank = true, maxLength = 255)
     private String nameEn;
+
+
+    /**
+     * 产品类型
+     */
+    @FieldValid(fieldName = "产品类型", isNotBlank = true, maxLength = 50,enumClass = ProductTypeEnum.class)
+    private String typeName;
+
+    /**
+     * 关联产品
+     */
+    @FieldValid(fieldName = "关联产品", maxLength = 64)
+    private String iterateRefSkuNo;
 
     /**
      * 产品属性
@@ -435,25 +447,25 @@ public class ProductDetailExcelDTO {
     /**
      * 毛重
      */
-    @FieldValid(fieldName = "毛重",formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "毛重",formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String grossWeight;
 
     /**
      * 净重
      */
-    @FieldValid(fieldName = "净重",formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "净重",formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String netWeight;
 
     /**
      * 单箱重量
      */
-    @FieldValid(fieldName = "单箱重量",formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "单箱重量",formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String boxWeight;
 
     /**
      * 单箱数量
      */
-    @FieldValid(fieldName = "单箱数量",formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "单箱数量",formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String boxQty;
 
     /**

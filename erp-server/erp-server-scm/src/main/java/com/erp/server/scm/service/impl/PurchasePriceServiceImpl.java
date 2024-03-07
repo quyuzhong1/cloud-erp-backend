@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
-import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -30,9 +29,11 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.ImportPurchasePriceExcelDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceExportExcelDTO;
-import com.erp.model.scm.entity.*;
+import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
+import com.erp.model.scm.entity.PurchasePriceDetailEntity;
+import com.erp.model.scm.entity.PurchasePriceEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PoTableFlagEnum;
 import com.erp.model.scm.enums.PurchasePriceTabFlagEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictBasicDTO;
@@ -48,7 +49,6 @@ import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceService;
 import com.erp.server.scm.listener.PurchasePriceExcelListener;
 import com.erp.server.scm.mapper.PurchasePriceMapper;
-import com.erp.server.scm.query.PurchaseOrderQueryHandler;
 import com.erp.server.scm.query.PurchasePriceQueryHandler;
 import com.erp.server.scm.service.*;
 import com.google.common.collect.Lists;
@@ -93,10 +93,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
     @Resource
     private PurchasePriceDetailService priceDetailService;
-
-
-    @Resource
-    private PurchasePriceHistoryService purchasePriceHistoryService;
 
     @Resource
     private AttachmentService attachmentService;

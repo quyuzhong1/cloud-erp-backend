@@ -8,14 +8,14 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailShowDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -24,6 +24,8 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
@@ -49,6 +51,7 @@ import java.util.stream.Collectors;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -80,6 +83,15 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private WarehouseService warehouseService;
     @Autowired
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private SkuMappingFeign skuMappingFeign;
+
+    @Resource
+    private OverseasProviderWarehouseService overseasProviderWarehouseService;
+
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -383,6 +395,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //查询产品信息
         List<String> skuIds = requisitionApplicationDetailEntities.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
 
+        //查询第三方SKU信息
+        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIds,"");
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
 
@@ -405,6 +419,24 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                             && req.getBomVersion().equals(requisitionApplicationDetailEntity.getBomVersion()))
                     .collect(Collectors.toList());
 
+            //根据类型设置第三方SKU信息
+            RequisitionApplicationEntity mainEntity = list.stream().filter(v->v.getId().equals(requisitionApplicationDetailEntity.getMainId())).findFirst().get();
+            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = null;
+            if(mainEntity.getType().equals(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode())){
+                List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(mainEntity.getChannelId()));
+                if(CollectionUtils.isNotEmpty(viewDTOList)){
+                    String provideCode = viewDTOList.get(0).getProviderCode();
+                    if(StringUtils.isNotBlank(provideCode)){
+                        listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
+                                v->v.getProductSkuId().equals(requisitionApplicationDetailEntity.getSkuId()) && v.getDictPlatform().equals(provideCode) && (v.getHasMappingAll() || v.getWarehouseId().equals(mainEntity.getChannelId()))
+                        ).findFirst().orElse(null);
+                    }
+                }
+            }
+            String thirdSku = "";
+            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
+                thirdSku = listingInfoWithSkuMappingDTO.getPlatformSkuNo();
+            }
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 for (BomChildrenSkuDTO bomChildrenSkuDTO : sonSkuList) {
                     RequisitionApplicationDTO.printPickingViewDTO viewDTO = new RequisitionApplicationDTO.printPickingViewDTO();
@@ -419,6 +451,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(bomChildrenSkuDTO.getParentSkuId())).distinct().findFirst().orElse(new SkuVO());
                     viewDTO.setProductName(skuVO.getSkuName());
                     viewDTO.setWarehouseLocation(StringUtils.isBlank(skuVO.getWarehouseLocation()) ? "" : skuVO.getWarehouseLocation());
+                    viewDTO.setThirdWarehouseSku(thirdSku);
                     printPickingViewList.add(viewDTO);
                 }
             } else {
@@ -431,6 +464,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 if (viewDTO.getPickingQty() == null || viewDTO.getPickingQty() == 0) {
                     viewDTO.setPickingQty(requisitionApplicationDetailEntity.getApproveQty());
                 }
+                viewDTO.setThirdWarehouseSku(thirdSku);
                 printPickingViewList.add(viewDTO);
             }
         }
@@ -557,6 +591,25 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         String requisitionWarehouseId = requisitionApplicationEntity.getRequisitionWarehouseId();
         List<WarehouseDTO.UpdateDTO> warehouse = warehouseService.listWarehouseByIds(Arrays.asList(requisitionWarehouseId));
         requisitionApplicationEntity.setRequisitionWarehouseName(warehouse.get(MathUtil.ZERO).getName());
+        if(StringUtils.isBlank(requisitionApplicationEntity.getChannelName())){
+            if(StringUtils.isBlank(requisitionApplicationEntity.getChannelId())){
+                return;
+            }
+            String channelName = "";
+            if(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode().equals(requisitionApplicationEntity.getType())){
+                ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(requisitionApplicationEntity.getChannelId());
+                if(Objects.nonNull(shopInfoEntity)){
+                    channelName = shopInfoEntity.getName();
+                }
+            }
+            if(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode().equals(requisitionApplicationEntity.getType())){
+                OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(requisitionApplicationEntity.getChannelId());
+                if(Objects.nonNull(overseasProviderWarehouseEntity)){
+                    channelName =  overseasProviderWarehouseEntity.getWarehouseName();
+                }
+            }
+            requisitionApplicationEntity.setChannelName(channelName);
+        }
     }
 
     /**
@@ -579,6 +632,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         //详情字段设置
         List<RequisitionApplicationDetailDTO.ViewDTO> viewDetailList = new ArrayList<>();
+
+        //查询第三方SKU信息
+//        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIdList,"");
+
         for (RequisitionApplicationDetailEntity detailEntity : detailList) {
             RequisitionApplicationDetailDTO.ViewDTO detailView = RequisitionApplicationConverter.INSTANCE.radEntityToRadDto(detailEntity);
 
@@ -598,6 +655,30 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             } else {
                 detailView.setIsCombination(Boolean.FALSE);
             }
+            //根据类型设置第三方SKU信息
+//            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = null;
+//            if(data.getType().equals(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode())){
+//                List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(data.getChannelId()));
+//                if(CollectionUtils.isNotEmpty(viewDTOList)){
+//                    String provideCode = viewDTOList.get(0).getProviderCode();
+//                    listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
+//                            v->v.getProductSkuId().equals(detailEntity.getSkuId()) && v.getDictPlatform().equals(provideCode) && (v.getHasMappingAll() || v.getWarehouseId().equals(data.getChannelId()))
+//                    ).findFirst().orElse(null);
+//                }
+//            }
+
+//            if(data.getType().equals(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode())){
+//                if(StringUtils.isNotBlank(data.getChannelId())){
+//                    listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(v->v.getProductSkuId().equals(detailEntity.getSkuId()) && v.getShopId().equals(data.getChannelId())).findFirst().orElse(null);
+//                }
+//            }
+
+//            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
+//                detailView.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
+//                detailView.setPlatformSkuNo(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
+//                detailView.setPlatformSkuName(listingInfoWithSkuMappingDTO.getPlatformSkuName());
+//                detailView.setPlatformFnSku(listingInfoWithSkuMappingDTO.getPlatformFnSku());
+//            }
 
             viewDetailList.add(detailView);
         }
@@ -616,6 +697,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
+
+        //查询第三方SKU信息
+        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIdList,"");
+
         for (RequisitionApplicationDTO.ListDTO listDTO : list) {
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
@@ -634,6 +719,29 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             listDTO.setStatusName(RequisitionApplicationStatusEnum.getName(listDTO.getStatus()));
             //要货类型中文
             listDTO.setTypeName(RequisitionApplicationTypeEnum.getName(listDTO.getType()));
+
+            //根据类型设置第三方SKU信息
+//            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = null;
+//            if(listDTO.getType().equals(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode())){
+//                if(StringUtils.isNotBlank(listDTO.getProvideCode())){
+//                    listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
+//                            v->v.getProductSkuId().equals(listDTO.getSkuId()) && v.getDictPlatform().equals(listDTO.getProvideCode()) && (v.getHasMappingAll() || v.getWarehouseId().equals(listDTO.getChannelId()))
+//                    ).findFirst().orElse(null);
+//                }
+//            }
+//
+//            if(listDTO.getType().equals(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode())){
+//                if(StringUtils.isNotBlank(listDTO.getChannelId())){
+//                    listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(v->v.getProductSkuId().equals(listDTO.getSkuId()) && v.getShopId().equals(listDTO.getChannelId())).findFirst().orElse(null);
+//                }
+//            }
+//
+//            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
+//                listDTO.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
+//                listDTO.setPlatformProductId(listingInfoWithSkuMappingDTO.getPlatformSpuNo());
+//                listDTO.setPlatformSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
+//                listDTO.setPlatformFnSku(listingInfoWithSkuMappingDTO.getPlatformFnSku());
+//            }
         }
     }
 

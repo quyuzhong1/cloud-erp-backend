@@ -80,6 +80,11 @@ public class ProductSkuDTO extends PermissionsDTO {
      */
     private String productName;
 
+    /**
+     * 迭代产品SKU编码
+     */
+    private String iterateRefSkuNo;
+
 
     /**
      * 产品等级

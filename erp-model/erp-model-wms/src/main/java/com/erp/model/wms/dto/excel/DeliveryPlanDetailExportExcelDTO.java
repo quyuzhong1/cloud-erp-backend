@@ -12,8 +12,8 @@ public class DeliveryPlanDetailExportExcelDTO {
     /**
      * sku
      */
-    @ExcelProperty(value = "*SKU", index = 0)
-    @FieldValid(fieldName = "SKU", isNotBlank = true)
+    @ExcelProperty(value = "*第三方仓sku", index = 0)
+    @FieldValid(fieldName = "第三方仓sku", isNotBlank = true)
     private String skuNo;
 
     /**

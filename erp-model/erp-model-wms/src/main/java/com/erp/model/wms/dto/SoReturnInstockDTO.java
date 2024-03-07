@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,7 @@ import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 public class SoReturnInstockDTO {
     /**
@@ -17,6 +19,17 @@ public class SoReturnInstockDTO {
     @Data
     @NoArgsConstructor
     public static class PagingParam extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
         /**
          * 主键id
          */
@@ -118,6 +131,12 @@ public class SoReturnInstockDTO {
          * 销售单号
          */
         private String soCode;
+
+        /**
+         * 第三方单据编号
+         */
+        private String thirdCode;
+
         /**
          * 单据类型
          */
@@ -287,7 +306,6 @@ public class SoReturnInstockDTO {
         /**
          * 仓库id
          */
-        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
         /**
          * 仓管员
@@ -358,7 +376,6 @@ public class SoReturnInstockDTO {
         /**
          * 仓库id
          */
-        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
         /**
          * 仓管员
@@ -412,6 +429,12 @@ public class SoReturnInstockDTO {
          * 审核状态
          */
         private String approveStatusName;
+
+        /**
+         * 第三方单据编号
+         */
+        private String thirdCode;
+
         /**
          * 单据类型
          */
@@ -767,6 +790,14 @@ public class SoReturnInstockDTO {
     @NoArgsConstructor
     public static class ViewGenerateMachineInfoDTO {
         /**
+         * id
+         */
+        private String id;
+        /**
+         * 退货入库单据编号
+         */
+        private String code;
+        /**
          * 事务类型
          */
         private String workType;
@@ -870,6 +901,16 @@ public class SoReturnInstockDTO {
     @Data
     @NoArgsConstructor
     public static class GenerateMachineInfoDTO {
+        /**
+         * id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+        /**
+         * 退货入库单号
+         */
+        @NotBlank(message = "退货入库单号不能为空")
+        private String code;
         /**
          * skuId
          */

@@ -1,11 +1,12 @@
 package com.erp.server.wms.schedule;
+
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson2.JSONArray;
 import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.wms.dto.extension.TStkCloseProfileDTO;
 import com.erp.model.wms.entity.InventoryClosedRecordEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.wms.service.*;
+import com.erp.server.wms.service.InventoryClosedRecordService;
 import com.erp.server.wms.utils.KingdeeExtensionUtils;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -17,12 +18,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 金蝶扩展项目任务
@@ -67,15 +67,15 @@ public class KingdeeExtensionJob {
             log.error("[拉取金蝶库存组织关账时间列表任务]：列表为空");
             return ReturnT.FAIL;
         }
-        Map<String, TStkCloseProfileDTO> map = list.stream()
-                .collect(Collectors.toMap(e-> e.getFOrgId().toString(), Function.identity()));
+        Map<String, List<TStkCloseProfileDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getFOrgId().toString()));
 
         // 转换新记录
         List<InventoryClosedRecordEntity> newEntityList = companyList.stream()
                 // 检查当前金蝶组织ID是否存在最新库存组织关账时间列表
                 .filter(e -> map.containsKey(e.getFlagId()))
                 // 实体初始化
-                .map(e -> InventoryClosedRecordEntity.init(map.get(e.getFlagId()), e))
+                .flatMap(e -> Stream.of(InventoryClosedRecordEntity.initList(map.get(e.getFlagId()), e)))
+                .distinct()
                 .collect(Collectors.toList());
 
         if (CollectionUtils.isEmpty(newEntityList)) {

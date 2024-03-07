@@ -89,4 +89,12 @@ public interface ProductPackService extends IService<ProductPackEntity> {
      * @param productPackList
      */
     void backFillPackaging(List<ProductPackDTO>  productPackList);
+    /**
+     * @description: 根据skuid集合查询
+     * @author Will
+     * @date: 2024/2/1 9:54
+     * @param skuIdList
+     * @return List<ProductPackEntity>
+     */
+    List<ProductPackEntity> listBySkuIdList(List<String> skuIdList);
 }

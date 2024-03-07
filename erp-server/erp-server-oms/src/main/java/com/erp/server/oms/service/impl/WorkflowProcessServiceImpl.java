@@ -2,11 +2,9 @@ package com.erp.server.oms.service.impl;
 
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.SourceTypeEnum;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoChangeEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.server.oms.service.*;
 import org.springframework.stereotype.Service;
@@ -36,6 +34,9 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     @Resource
     private SoB2cService soB2cService;
 
+    @Resource
+    private CustomerB2bSellerChangeService customerB2bSellerChangeService;
+
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
@@ -55,6 +56,10 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
             case SO_B2C:
                 //b2c销售订单
                 SoB2cApproveEnd(dto);
+                break;
+            case CUSTOMER_B2B_CHANGE_SELLER:
+                //客户信息销售员变更
+                customerB2bChangeSellerApproveEnd(dto);
                 break;
             default:
                 break;
@@ -97,6 +102,16 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         return customerInfoService.approveEnd(baseApproveParamDTO,list);
     }
 
+    private Boolean customerB2bChangeSellerApproveEnd(EndProcessDTO dto) {
+        //销售变更单
+        CustomerB2bSellerChangeEntity entity = customerB2bSellerChangeService.getById(dto.getBusinessId());
+        CustomerInfoEntity customerInfo = customerInfoService.getById(entity.getMainId());
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
+        baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
+        baseApproveParamDTO.setComment(dto.getComment());
+        return customerB2bSellerChangeService.approveEnd(baseApproveParamDTO,entity,new BatchResultDTO(),customerInfo);
+    }
     /**
      * 销售订单审核结束
      * @Author Luo_WG

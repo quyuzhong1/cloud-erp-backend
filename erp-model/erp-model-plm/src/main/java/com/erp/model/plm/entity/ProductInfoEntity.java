@@ -116,9 +116,11 @@ public class ProductInfoEntity extends BaseEntity<ProductInfoEntity> implements 
     private String categoryId;
 
 
-
+    /**
+     * 产品类型，ProductTypeEnum枚举
+     */
     @TableField("type")
-    private Integer type;
+    private String type;
 
     /**
      * spu
@@ -169,10 +171,16 @@ public class ProductInfoEntity extends BaseEntity<ProductInfoEntity> implements 
     private String saleMethod;
 
     /**
-     * 关联产品id
+     * 迭代产品关联skuid
      */
-    @TableField("relevance_product_id")
-    private String relevanceProductId;
+    @TableField("iterate_ref_sku_id")
+    private String iterateRefSkuId;
+
+    /**
+     * 迭代产品关联skuNo
+     */
+    @TableField("iterate_ref_sku_no")
+    private String iterateRefSkuNo;
 
     /**
      * 是否是产品开发管理的数据：1 是
@@ -234,13 +242,6 @@ public class ProductInfoEntity extends BaseEntity<ProductInfoEntity> implements 
      */
     @TableField(value = "template_id")
     private String templateId;
-
-    /**
-     * 产品版本号
-     */
-    @TableField(value = "product_version")
-    private Integer productVersion;
-
 
     /**
      * 暂停前的状态

@@ -1,42 +1,35 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.enums.InventoryClosedRecordEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.entity.BaseEntity;
-import com.erp.model.dmp.enums.PlatformEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.OperateLogDTO;
-import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
-import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.FbaReceiveHandleStatusEnum;
-import com.erp.model.wms.enums.HandleResultEnum;
 import com.erp.server.wms.mapper.FbaShipmentReceiveMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import javax.sql.rowset.serial.SerialException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -210,7 +203,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         operateLogService.batchAddModuleOperateLog(logList);
 
         // 查询最新库存关账记录
-        Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId();
+        Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId(InventoryClosedRecordEnum.STK.getCode());
 
         LocalDate billDate = entityList.get(0).getReceiveDate().toLocalDate();
         // 执行调拨逻辑
@@ -278,7 +271,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         }
 
         // 查询最新库存关账记录
-        Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId();
+        Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId(InventoryClosedRecordEnum.STK.getCode());
         // 按签收日期分组调拨
         Map<LocalDateTime, List<FbaShipmentReceiveEntity>> groupMap = list.stream().collect(Collectors.groupingBy(FbaShipmentReceiveEntity::getReceiveDate));
 

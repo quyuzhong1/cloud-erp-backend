@@ -17,29 +17,38 @@ public enum  BasicDictTypeEnum {
      * 报关属性
      */
     DECLARE_PROPERTY("declareProperty", "报关属性"),
+    /**
+     * 国家
+     */
+    COUNTRY("country", "国家"),
+
+    /**
+     * 证书类型
+     */
+    CERTIFICATE_TYPE("certificateType", "证书类型"),
+
+    /**
+     * 证书项目
+     */
+    CERTIFICATE_PROJECT("certificateProject", "证书项目"),
 
     /**
      * 产品认证
      */
     PRODUCT_ATTESTATION("productAttestation", "产品认证"),
 
-
-
     /**
      * 运输认证
      */
     TRANSPORT_ATTESTATION("transportAttestation", "运输认证"),
 
-
     /**
-     * 其它
+     * 其他认证
      */
-    OTHER_ATTESTATION("otherAttestation", "其它认证"),
+    OTHER_ATTESTATION("otherAttestation", "其他认证"),
+    ;
 
-    /**
-     * 国家
-     */
-    COUNTRY("country", "国家");
+
 
     private String code;
     private String name;

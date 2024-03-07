@@ -1,6 +1,7 @@
 package com.erp.server.plm.listener;
 
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -15,6 +16,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.BasicDictEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductUnitEntity;
 import com.erp.model.plm.enums.*;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -173,6 +175,24 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 equals(dto.getBrandName())).findFirst().orElse(null);
         if (ObjectUtils.isEmpty(productBrand)) {
             errorMsgList.add("产品品牌在系统中未找到");
+        }
+
+        //迭代产品校验
+        if (ProductTypeEnum.ITERATIVE_PRODUCT.getName().equals(dto.getTypeName())) {
+            if (StrUtil.isBlank(dto.getIterateRefSkuNo())) {
+                errorMsgList.add("迭代产品不能为空");
+            } else {
+                List<ProductDetailEntity> iterativeSkuList = productDetailService.listBySkuNos(Arrays.asList(dto.getIterateRefSkuNo()));
+                if (CollectionUtils.isEmpty(iterativeSkuList)) {
+                    errorMsgList.add("迭代产品在系统中未找到");
+                } else {
+                    ProductDetailEntity productDetailEntity = iterativeSkuList.get(0);
+                    if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productDetailEntity.getStatus())) {
+                        errorMsgList.add("迭代产品未审核完成不支持引用");
+                    }
+                    productInfoDTO.setIterateRefSkuId(productDetailEntity.getId());
+                }
+            }
         }
 
         BasicDictEntity productProperty = basicDictList.stream().filter(b -> BasicDictTypeEnum.PRODUCT_PROPERTY.getCode().equals(b.getType()) && b.getValue().

@@ -71,6 +71,8 @@ public interface LogisticsFeign {
     @PostMapping("/feign/logistics/getSignShipInfoByChannelById")
     LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelById(@RequestBody String channelId );
 
+    @GetMapping("/feign/logistics/getLogisticsChannelConstraint")
+    LogisticsChannelDTO.LogisticsChannelConstraintDTO getLogisticsChannelConstraint(@RequestParam(value = "channelId")String channelId,@RequestParam(value = "country")String country);
     /**
      * 获取地址信息
      * @param id

@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -12,13 +13,14 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.MathUtil;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.SingleApproveParamDTO;
 import com.erp.model.wms.dto.TransferApplicationDTO;
+import com.erp.server.wms.query.TransferApplicationQueryHandler;
 import com.erp.server.wms.service.TransferApplicationService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -57,6 +59,7 @@ public class TransferApplicationController extends BaseController {
             menuCode = "wms:transferApplication:paging",
             tableAlias = "ta"
     )
+    @WebAdvanceQuery(handler = TransferApplicationQueryHandler.class)
     public ApiResult<PagingVO<TransferApplicationDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<TransferApplicationDTO.SearchParamDTO> dto) {
         PagingVO<TransferApplicationDTO.ListDTO> pagingVO = transferApplicationService.paging(dto);
         return success(pagingVO);
@@ -324,6 +327,7 @@ public class TransferApplicationController extends BaseController {
             menuCode = "wms:transferApplication:paging",
             tableAlias = "ta"
     )
+    @WebAdvanceQuery(handler = TransferApplicationQueryHandler.class)
     public ApiResult exportExcel(@RequestBody TransferApplicationDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = transferApplicationService.exportExcel(dto, response);
         return flag == true ? success() : failure();

@@ -37,6 +37,18 @@ public class SoB2cErrorFeignController extends BaseController {
     }
 
     /**
+     * @param batchAdd
+     * @return
+     * @description 批量添加异常订单信息  一个请求中包含多个订单
+     * @author zdy
+     * @create 2023-12-20 11:06
+     */
+    @PostMapping("/batchAdd")
+    public void batchAddSoB2cError(@RequestBody SoB2cErrorDTO.BatchAdd batchAdd){
+        soB2cErrorService.batchAddSoB2cError(batchAdd);
+    }
+
+    /**
      * 删除异常信息
      * @param dto
      * @return
@@ -46,6 +58,19 @@ public class SoB2cErrorFeignController extends BaseController {
         return soB2cErrorService.delete(dto);
     }
 
+    /**
+     * 批量删除异常信息
+     *
+     * @param batchDeleteDTO
+     * @return
+     * @description
+     * @author zdy
+     * @create 2023-12-20 11:20
+     */
+    @PostMapping("/deleteErrorByMainIds")
+    public void deleteErrorByMainIds(@RequestBody SoB2cErrorDTO.BatchDeleteDTO batchDeleteDTO){
+        soB2cErrorService.deleteErrorByMainIds(batchDeleteDTO);
+    }
     /**
      * 获取异常信息
      * @param

@@ -348,25 +348,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     public PagingVO<CustomerDTO.PagingViewDTO> paging(PagingDTO<CustomerDTO.PagingParamDTO> dto) {
         CustomerDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        String searchType = params.getSearchType();
-        List<String> approveList = new ArrayList<>();
-        //待审核
-        if (OmsConstant.WAIT_APPROVE.equals(searchType)) {
-            approveList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-        }
-
-        //已审核
-        if (OmsConstant.APPROVE.equals(searchType)) {
-            approveList.add(ApproveStatusEnum.APPROVE.getStatus());
-        }
-
-        //审核不通过
-        if (OmsConstant.REJECT.equals(searchType)) {
-            approveList.add(ApproveStatusEnum.REJECT.getStatus());
-        }
-
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params, approveList);
+        IPage pageData = baseMapper.paging(query, params);
         List<CustomerDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
@@ -695,7 +678,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 contactEntities.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
             }*/
             //批量保存销售员信息
-            customerSellerService.batchSellerHistory(list);
+            customerSellerService.batchSellerHistory(list,LocalDate.now());
 
         }
         return Boolean.TRUE;
@@ -798,28 +781,25 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      */
     @Override
     public Boolean exportExcel(CustomerDTO.ExportDTO dto, HttpServletResponse response) {
-        String searchType = dto.getSearchType();
-        List<String> approveList = new ArrayList<>();
-        //待审核
-        if (OmsConstant.WAIT_APPROVE.equals(searchType)) {
-            approveList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-        }
-
-        //已审核
-        if (OmsConstant.APPROVE.equals(searchType)) {
-            approveList.add(ApproveStatusEnum.APPROVE.getStatus());
-        }
-
-        //审核不通过
-        if (OmsConstant.REJECT.equals(searchType)) {
-            approveList.add(ApproveStatusEnum.REJECT.getStatus());
-        }
-
-        List<CustomerDTO.PagingViewDTO> list = baseMapper.listExport(dto, approveList);
+        List<CustomerDTO.PagingViewDTO> list = baseMapper.listExport(dto);
 
         //平台信息
         String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
+
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        List<String> ids = list.stream().map(CustomerDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        ids.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_INFO.getCode(), obj));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.Default.code, listApiResult.getMsg()));
+            }
+        }
         for (CustomerDTO.PagingViewDTO item : list) {
             Boolean disabled = item.getDisabled();
             String disabledName = disabled ? "停用" : "启用";
@@ -829,6 +809,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //平台类型名称
             String platformTypeName = dictList.stream().filter(obj -> obj.getValue().equals(item.getPlatformType())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setPlatformTypeName(platformTypeName);
+            //最新审核人
+            if (listApiResult != null && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                item.setApproveUserName(curApprove);
+            }
         }
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/CustomerExport.xlsx";

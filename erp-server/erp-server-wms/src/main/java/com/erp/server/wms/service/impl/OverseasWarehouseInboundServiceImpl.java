@@ -1201,7 +1201,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 //获取库存sku
                 SkuMappingDTO.ListStockSkuNoByProductSkuIdView listStockSkuNoByProductSkuIdView = listStockSkuNoByProductSkuIdViews.stream()
                         .filter(req -> req.getProductSkuId().equals(data.getSkuId())
-                                && req.getWarehouseId().equals(data.getToWarehouseId())
+                                && (req.getHasMappingAll() || req.getWarehouseId().equals(data.getToWarehouseId()))
                         ).distinct()
                         .findFirst().orElse(null);
 

@@ -234,6 +234,11 @@ public class TransferDeclareDTO implements Serializable {
          * 来源：/tms/drop/down/dict/list/key=transferOutstockStatus
          */
         private List<String> outstockStatusList;
+        /**
+         * 入库预报状态
+         * 来源：/tms/drop/down/dict/list/key=instockForecastStatus
+         */
+        private List<String> instockForecastStatusList;
 
         /**
          * 中转状态
@@ -290,6 +295,22 @@ public class TransferDeclareDTO implements Serializable {
          * 上传状态(批次)
          */
         private String uploadBatchStatus;
+        /**
+         * 入库预报状态
+         */
+        private String instockForecastStatus;
+        /**
+         * 入库预报状态中文
+         */
+        private String instockForecastStatusName;
+        /**
+         * 入库预报异常原因
+         */
+        private String instockForecastRemark;
+        /**
+         * 总件数（页面录入）
+         */
+        private Integer totalQty;
         /**
          * 上传状态（批次）中文
          */

@@ -226,6 +226,14 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         return viewList;
     }
 
+    @Override
+    public List<SoChangeDetailEntity> listByMainIdList(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(SoChangeDetailEntity::getMainId,mainIdList).list();
+    }
+
 
     /**
      * 根据销售单id 获取到对应详情数据

@@ -127,6 +127,11 @@ public class LogisticsFeignController {
         return logisticsChannelService.getSignShipInfoByChannelId(channelId);
     }
 
+    @GetMapping("/getLogisticsChannelConstraint")
+    public LogisticsChannelDTO.LogisticsChannelConstraintDTO getLogisticsChannelConstraint(@RequestParam(value = "channelId")String channelId, @RequestParam(value = "country")String country) {
+        return logisticsChannelService.getLogisticsChannelConstraint(channelId,country);
+    }
+
     /**
      * @description
      * @param id

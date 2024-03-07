@@ -251,6 +251,14 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
         }
     }
 
+    @Override
+    public List<ProductPackEntity> listBySkuIdList(List<String> skuIdList) {
+        if (CollectionUtils.isEmpty(skuIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return  lambdaQuery().in(ProductPackEntity::getSkuId,skuIdList).list();
+    }
+
     /**
      * @description: 更新尺寸信息
      * @author Will

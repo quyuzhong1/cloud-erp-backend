@@ -20,6 +20,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.LogisticsServicePlatformDTO;
 
+import java.util.List;
+
 /**
  * 物流平台服务表
  *
@@ -57,14 +59,23 @@ public class LogisticsServicePlatformController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "物流平台服务表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "tms:logisticsServicePlatform:update",
-        serviceClass = LogisticsServicePlatformService.class,
-        keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated LogisticsServicePlatformDTO.UpdateDTO dto) {
         logisticsServicePlatformService.update(dto);
         return success();
+    }
+
+    /**
+     *  logisticsPlatform=AliExpress
+     * 下拉列表
+     * @description
+     * @param logisticsPlatform
+     * @return
+     * @date 2024-03-05 9:31
+     * @author Lambda
+     */
+    @GetMapping("/listServiceName")
+    public ApiResult<List<LogisticsServicePlatformDTO.ServiceNameDTO>>  list(@RequestParam(value = "logisticsPlatform",required = true)String logisticsPlatform){
+        return success(logisticsServicePlatformService.listServiceNameByLogisticsPlatform(logisticsPlatform));
     }
 
 

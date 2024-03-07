@@ -37,6 +37,7 @@
     <select id="paging" resultType="com.erp.model.wms.dto.MachineInfoDTO$ListDTO">
         select
             mi.id,
+            md.id as detailId,
             mi.code,
             mi.work_type as workType,
             mi.approve_status as approveStatus,
@@ -52,57 +53,18 @@
             mi.approve_time as approveTime,
             mi.create_user_name as createUserName,
             mi.create_time as createTime,
-            md.warehouse_location as warehouseLocation
+            md.warehouse_location as warehouseLocation,
+            mi.source_code as sourceCode,
+            mi.source_id as sourceId,
+            mi.source_type as sourceType
         from machine_info mi
         inner join machine_detail md on mi.id = md.main_id and md.is_deleted = false
-        <where>
-            mi.is_deleted = false
-            <if test="params.searchType != null and params.searchType != ''">
-                AND mi.approve_status = #{params.searchType}
-            </if>
-            <if test="params.code != null and params.code != ''">
-                and mi.code ILIKE concat('%',#{params.code}::text,'%')
-            </if>
-            <if test="params.invalidStatus != null ">
-                and mi.invalid_status = #{params.invalidStatus}
-            </if>
-            <if test="params.workType != null ">
-                and mi.work_type = #{params.workType}
-            </if>
-            <if test="params.skuNoList != null and params.skuNoList.size > 0">
-                and md.sku_no in
-                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                and mi.approve_status in
-                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
-                and mi.warehouse_id in
-                <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-                and mi.create_user_id in
-                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and mi.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > mi.create_time
-            </if>
-            <if test="params.billDateList != null and params.billDateList.size > 0">
-                and mi.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > mi.bill_date
-            </if>
+        where
+        ${params.sqlMap.default}
+           and mi.is_deleted = false
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
-        </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -149,62 +111,18 @@
         mi.approve_user_name as approveUserName,
         mi.approve_time as approveTime,
         mi.create_user_name as createUserName,
-        mi.create_time as createTime
+        mi.create_time as createTime,
+        mi.source_code as sourceCode,
+        mi.source_id as sourceId,
+        mi.source_type as sourceType
         from machine_info mi
         inner join machine_detail md on mi.id = md.main_id and md.is_deleted = false
-        <where>
-            mi.is_deleted = false
-            <if test="params.ids != null and params.ids.size > 0">
-                and mi.id in
-                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.ids == null or params.ids.size == 0">
-                <if test="params.code != null and params.code != ''">
-                    and mi.code ILIKE concat('%',#{params.code}::text,'%')
-                </if>
-                <if test="params.invalidStatus != null ">
-                    and mi.invalid_status = #{params.invalidStatus}
-                </if>
-                <if test="params.workType != null ">
-                    and mi.work_type = #{params.workType}
-                </if>
-                <if test="params.skuNoList != null and params.skuNoList.size > 0">
-                    and md.sku_no in
-                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                    and mi.approve_status in
-                    <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
-                    and mi.warehouse_id in
-                    <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-                    and mi.create_user_id in
-                    <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                    and mi.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > mi.create_time
-                </if>
-                <if test="params.billDateList != null and params.billDateList.size > 0">
-                    and mi.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > mi.bill_date
-                </if>
+        where
+        ${params.sqlMap.default}
+           and mi.is_deleted = false
                 <if test="params.permissionSql != null and params.permissionSql != ''">
                     ${params.permissionSql}
                 </if>
-            </if>
-        </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">

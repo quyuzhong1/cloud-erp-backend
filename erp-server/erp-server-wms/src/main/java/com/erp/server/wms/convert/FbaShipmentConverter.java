@@ -138,10 +138,12 @@ public interface FbaShipmentConverter {
     RequisitionApplicationDTO.AddDTO DeliveryPlanGRA(FbaShipmentDTO.GenerateRequisitionApplicationViewDTO dto);
 
 
-
     @Mappings({
             @Mapping(target = "approveQty", ignore = true),
             @Mapping(target = "pickingQty", ignore = true),
+            @Mapping(target = "asin", source = "asin"),
+            @Mapping(target = "fnSku", source = "fnSku"),
+            @Mapping(target = "platformSku", source = "msku"),
     })
     RequisitionApplicationDetailDTO.AddDTO DeliveryPlanDetailGRA(FbaShipmentDTO.GenerateRequisitionApplicationViewDTO dto);
 }

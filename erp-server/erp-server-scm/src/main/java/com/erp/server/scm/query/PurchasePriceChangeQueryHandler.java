@@ -2,8 +2,8 @@ package com.erp.server.scm.query;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.TabFlagEnum;
 import com.common.business.query.AbstractQueryHandler;
+import com.erp.model.scm.enums.PurchasePriceChangeTabFlagEnum;
 import com.erp.server.scm.service.CommonService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -45,7 +45,7 @@ public class PurchasePriceChangeQueryHandler extends AbstractQueryHandler {
      */
     public String getTabSql (Object value) {
         //待我审核
-        if (TabFlagEnum.APPROVE_ING.getCode().equals(value)) {
+        if (PurchasePriceChangeTabFlagEnum.APPROVE_ING.getCode().equals(value)) {
             super.buildDefaultDTO("pp.approve_status",Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
             //需要审核的业务ids
             List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
@@ -57,11 +57,11 @@ public class PurchasePriceChangeQueryHandler extends AbstractQueryHandler {
             }
         }
         // 已审核
-        if (TabFlagEnum.APPROVE.getCode().equals(value)) {
+        if (PurchasePriceChangeTabFlagEnum.APPROVE.getCode().equals(value)) {
             super.buildDefaultDTO("pp.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
         }
         //不通过
-        if (TabFlagEnum.REJECT.getCode().equals(value)) {
+        if (PurchasePriceChangeTabFlagEnum.REJECT.getCode().equals(value)) {
             super.buildDefaultDTO("pp.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
         }
         return super.getSplicingSQL();

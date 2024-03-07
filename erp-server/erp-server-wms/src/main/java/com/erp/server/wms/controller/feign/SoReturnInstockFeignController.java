@@ -4,10 +4,7 @@ import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.server.wms.service.SoReturnInstockDetailService;
 import com.erp.server.wms.service.SoReturnInstockService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -42,5 +39,16 @@ public class SoReturnInstockFeignController {
     @PostMapping("/getSoReturnInstockByMainId")
     List<SoReturnInstockDetailEntity> getSoReturnInstockDetailByMainId(@RequestParam(value = "mainId") String mainId) {
         return soReturnInstockDetailService.listDetailByMainId(mainId);
+    }
+
+
+    /**
+     * 获取退货入库单 明细
+     *
+     * @return
+     */
+    @PostMapping("/listDetailBySoReturnDetailIds")
+    List<SoReturnInstockDetailEntity> listDetailBySoReturnDetailIds(@RequestBody List<String> detailIds) {
+        return soReturnInstockDetailService.listDetailBySoReturnDetailIds(detailIds);
     }
 }

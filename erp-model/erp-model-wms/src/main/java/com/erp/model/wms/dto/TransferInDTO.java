@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -19,6 +20,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -37,7 +39,12 @@ public class TransferInDTO implements Serializable {
     @NoArgsConstructor
     public static class TabListDTO {
         //类型
-        private String searchType;
+        private String tabFlag;
+
+        /**
+         * tab名称
+         */
+        private String tabFlagName;
 
         //数量
         private Integer count;
@@ -51,6 +58,11 @@ public class TransferInDTO implements Serializable {
          * id
          */
         private String id;
+
+        /**
+         * 明细id
+         */
+        private String detailId;
 
         /**
          * code
@@ -175,68 +187,14 @@ public class TransferInDTO implements Serializable {
     public static class PagingParamDTO extends SortDTO {
 
         /**
-         * all 全部
-         * waitApprove 待审核
-         * approve 已审核
-         * reject 审核不通过
+         * 页面高级查询
          */
-        @StateEnumValue(strValues = {"all", "waitApprove", "approve", "reject"}, message = "搜索类型有误")
-        @NotBlank(message = "搜索类型不能为空")
-        private String searchType;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * sku no 集合
+         * sqlMap 默认key default
          */
-        private List<String> skuNoList;
-
-        /**
-         * code
-         */
-        private String code;
-
-        /**
-         * 审核状态集合
-         */
-        private List<String> approveStatusList;
-
-        /**
-         * 调拨方向
-         */
-        private String transferDirection;
-
-        /**
-         * 作废状态
-         * true 已作废
-         * false 未作废
-         */
-        private Boolean invalidStatus;
-
-        /**
-         * 调入日期
-         */
-        private List<LocalDate> billDateList;
-
-        /**
-         * 创建人 id 集合
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-
-        /**
-         * 调出仓库集合
-         */
-        private List<String> outWarehouseIdList;
-
-        /**
-         * 调入仓库集合
-         */
-        private List<String> inWarehouseIdList;
-
-
+        private Map<String,String> sqlMap;
     }
 
 

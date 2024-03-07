@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -11,10 +12,11 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.TransferInfoDTO;
+import com.erp.server.wms.query.TransferInfoQueryHandler;
 import com.erp.server.wms.service.TransferInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -52,6 +54,7 @@ public class TransferInfoController extends BaseController {
             menuCode = "wms:transferInfo:paging",
             tableAlias = "ti"
     )
+    @WebAdvanceQuery(handler = TransferInfoQueryHandler.class)
     public ApiResult<PagingVO<TransferInfoDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<TransferInfoDTO.SearchParamDTO> dto) {
         PagingVO<TransferInfoDTO.ListDTO> pagingVO = transferInfoService.paging(dto);
         return success(pagingVO);
@@ -300,6 +303,7 @@ public class TransferInfoController extends BaseController {
             menuCode = "wms:transferInfo:paging",
             tableAlias = "ti"
     )
+    @WebAdvanceQuery(handler = TransferInfoQueryHandler.class)
     public ApiResult exportExcel(@RequestBody TransferInfoDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = transferInfoService.exportExcel(dto, response);
         return flag == true ? success() : failure();

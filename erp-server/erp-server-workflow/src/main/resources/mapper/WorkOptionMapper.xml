@@ -49,6 +49,7 @@
             wm.module_classify AS moduleClassify,
             wm.module_code AS moduleCode,
             db.name AS moduleStatusName,
+            wmrs.module_status_field AS moduleStatusField,
             wmrs.module_status AS moduleStatus,
             wmrs.module_url AS moduleUrl,
             wmrs.module_param AS moduleParam
@@ -87,18 +88,18 @@
     <select id="approveView" resultType="com.erp.model.workflow.dto.WorkOptionDTO$ApproveViewDTO">
         SELECT
             max(ptm.id) AS id,
-            wm.module_classify,
-            pm.business_code,
-            pm.business_name,
-            pm.business_id,
-            pm.business_key,
-            pm.create_user_id,
-            EXTRACT(EPOCH FROM (pm.end_time - pm.start_time)) AS approveDuration,
-            pm.create_time,
-            pm.approve_status,
-            concat(wm.detail_url,pm.business_id) as detail_url,
-            wmrs.cancel_process_url,
-            wmrs.cancel_process_param
+            wm.module_classify as moduleClassify,
+            pm.business_code as businessCode,
+            pm.business_name as businessName,
+            pm.business_id as businessId,
+            pm.business_key as businessKey,
+            pm.create_user_id as createUserId,
+            COALESCE(EXTRACT(EPOCH FROM (pm.end_time - pm.start_time)),0) AS approveDuration,
+            pm.create_time as createTime,
+            pm.approve_status as approveStatus,
+            concat(wm.detail_url,pm.business_id) as detailUrl,
+            wmrs.cancel_process_url as cancelProcessUrl,
+            wmrs.cancel_process_param as cancelProcessParam
         FROM process_management pm
         INNER JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = FALSE
         INNER JOIN work_menu wm ON pm.business_key = wm.module_code AND wm.is_deleted = FALSE
@@ -140,18 +141,24 @@
             INTERVAL '1
             DAY' ) > pm.create_time
         </if>
-        GROUP BY wm.module_classify,
-        pm.business_code,
-        pm.business_name,
-        pm.business_id,
-        pm.business_key,
-        pm.create_user_id,
-        EXTRACT(EPOCH FROM (pm.end_time - pm.start_time)),
-        pm.create_time,
-        pm.approve_status,
-        concat(wm.detail_url,pm.business_id),
-        wmrs.cancel_process_url,
-        wmrs.cancel_process_param
+        GROUP BY moduleClassify,
+        businessCode,
+        businessName,
+        businessId,
+        businessKey,
+        createUserId,
+        approveDuration,
+        createTime,
+        approveStatus,
+        detailUrl,
+        cancelProcessUrl,
+        cancelProcessParam
+        <if test="params.sortList != null and params.sortList.size > 0">
+            ORDER BY
+            <foreach collection="params.sortList" item="item" separator=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
     </select>
 
 

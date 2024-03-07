@@ -16,10 +16,11 @@ public enum RuleCompareEnum implements EnumMessage {
     LE("<=", "小于等于"),
     EQ("==", "等于"),
     NE("!=", "不等于"),
-    CONTAINS("contains", "包含"),
-    NOT_CONTAINS("notContains", "不包含"),
+    CONTAINS("contains", "在列表"),
+    NOT_CONTAINS("notContains", "不在列表"),
     IS_NULL("isEmpty", "为空"),
     NOT_NULL("notEmpty", "不为空"),
+    STARTS_WITH("startsWith", "以...开头"),
     ;
 
 

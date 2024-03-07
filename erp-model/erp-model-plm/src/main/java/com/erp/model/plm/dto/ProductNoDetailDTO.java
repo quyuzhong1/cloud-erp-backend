@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -103,6 +104,21 @@ public class ProductNoDetailDTO {
      * 产品类别Id
      */
     private String categoryId;
+
+    /**
+     * 产品类型，ProductTypeEnum枚举，/plm/dict/list?type=productType
+     */
+    private String type;
+
+    /**
+     * 迭代产品关联skuid
+     */
+    private String iterateRefSkuId;
+
+    /**
+     * 迭代产品关联skuNo
+     */
+    private String iterateRefSkuNo;
 
     /**
      * 销售方式

@@ -2,6 +2,8 @@ package com.erp.model.wms.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 
@@ -10,6 +12,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -56,64 +59,15 @@ public class OverseasDeliveryPlanDTO implements Serializable {
      @NoArgsConstructor
      public static class PagingParamDTO extends SortDTO {
          /**
-         * 搜索类型
-         */
-         private String tabFlag;
+          * 页面高级查询
+          */
+         private List<AdvanceQueryDTO> advanceQueryDTOList;
 
          /**
-         * 单号
-         */
-         private String code;
+          * sqlMap 默认key default
+          */
+         private Map<String, String> sqlMap;
 
-         /**
-         * 产品编号
-         */
-         private List<String> skuNoList;
-
-         /**
-         * 审核状态
-         */
-         private List<String> approveStatusList;
-
-         /**
-         * 发货状态
-         */
-         private List<String> deliveryStatusList;
-
-         /**
-         * 发货单号
-         */
-         private String deliveryCode;
-
-         /**
-         * 目的仓库
-         */
-         private List<String> toWarehouseIdList;
-
-         /**
-         * 国家
-         */
-         private List<String> countryList;
-
-         /**
-         * 是否组合品
-         */
-         private Boolean isCombination;
-
-         /**
-         * 操作人
-         */
-         private List<String> updateUserIdList;
-
-         /**
-         * 创建时间
-         */
-         private List<LocalDate> createTimeList;
-
-         /**
-         * 审核时间
-         */
-         private List<LocalDate> approveTimeList;
      }
 
     /**
@@ -192,6 +146,11 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         private String countryName;
 
         /**
+         * 第三方仓SKU
+         */
+        private String thirdWarehouseSku;
+
+        /**
          * 产品id
          */
         private String skuId;
@@ -255,6 +214,11 @@ public class OverseasDeliveryPlanDTO implements Serializable {
          * 审核时间
          */
         private LocalDateTime approveTime;
+
+        /**
+         * 来源平台
+         */
+        private String provideCode;
     }
 
     /**
@@ -520,6 +484,27 @@ public class OverseasDeliveryPlanDTO implements Serializable {
          * 是否组合品
          */
         private Boolean isCombination;
+
+        /**
+         * 平台sku
+         */
+        private String platformSku;
+
+        /**
+         * 平台spu（asin）
+         */
+        private String asin;
+
+        /**
+         * fnSku
+         */
+        private String fnSku;
+
+        /**
+         * 平台产品名称
+         */
+        private String platformSkuName;
+
     }
 
     /**
@@ -613,6 +598,16 @@ public class OverseasDeliveryPlanDTO implements Serializable {
          * 发货数量
          */
         private Integer deliveryQty;
+
+        /**
+         * 平台sku
+         */
+        private String platformSku;
+
+        /**
+         * 平台产品名称
+         */
+        private String platformSkuName;
     }
 
 

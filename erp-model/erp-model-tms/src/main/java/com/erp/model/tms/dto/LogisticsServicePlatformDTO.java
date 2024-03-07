@@ -94,5 +94,13 @@ public class LogisticsServicePlatformDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ServiceNameDTO{
+        /**
+         * 服务名称
+         */
+        private String serviceName;
+    }
 
 }

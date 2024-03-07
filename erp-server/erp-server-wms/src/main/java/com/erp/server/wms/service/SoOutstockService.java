@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.PlatformSoOutStockDTO;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
@@ -246,7 +247,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param dto
      * @return String
      */
-    Boolean pagingUpdate(SoOutstockDTO.PagingUpdateDTO dto);
+    List<BatchResultDTO> pagingUpdate(List<SoOutstockDTO.PagingUpdateDTO> dto);
 
     /**
      * 打印
@@ -382,6 +383,8 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return
      */
     Boolean generateB2cSoOutstockByCode(String soB2cCode);
+
+    List<SoOutstockEntity> listByAdvanceQuery(AdvanceQueryContainer container);
 
     /**
      * 检查和生成销售出库单

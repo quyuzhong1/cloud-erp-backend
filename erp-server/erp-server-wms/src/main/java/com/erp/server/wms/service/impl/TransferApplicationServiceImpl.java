@@ -56,6 +56,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.TransferApplicationMapper;
+import com.erp.server.wms.query.TransferApplicationQueryHandler;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -133,16 +134,13 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     @Resource
     private MachineInfoService machineInfoService;
 
+    @Resource
+    private TransferApplicationQueryHandler transferApplicationQueryHandler;
 
     @Override
     public PagingVO<TransferApplicationDTO.ListDTO> paging(PagingDTO<TransferApplicationDTO.SearchParamDTO> pagingDTO) {
         TransferApplicationDTO.SearchParamDTO params = pagingDTO.getParams();
         params.setPermissionSql(pagingDTO.getPermissionSql());
-        //列表Tab查询状态处理
-        Boolean isFlag = doOpHandleTableParam(params);
-        if (!isFlag) {
-            return new PagingVO(new Page());
-        }
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<TransferApplicationDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         List<TransferApplicationDTO.ListDTO> records = pageData.getRecords();
@@ -163,16 +161,14 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             TransferApplicationDTO.SearchParamDTO searchParamDTO = new TransferApplicationDTO.SearchParamDTO();
             searchParamDTO.setPermissionSql(dto.getPermissionSql());
             TransferApplicationDTO.ListStatusCountDTO resultDTO = new TransferApplicationDTO.ListStatusCountDTO();
-            //搜索类型
-            searchParamDTO.setSearchType(item.getCode());
-            //列表Tab查询状态处理
-            Boolean isFlag = doOpHandleTableParam(searchParamDTO);
-            Integer count = MathUtil.ZERO;
-            if (isFlag) {
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
+            String tabSql = transferApplicationQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            searchParamDTO.setSqlMap(map);
+            Integer count = this.baseMapper.listCount(searchParamDTO);
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
-            resultDTO.setSearchType(item.getCode());
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.equals(PageListTypeEnum.TO_BE_APPROVE) ? "待我审核" : item.getName());
             list.add(resultDTO);
         }
         return list;
@@ -841,6 +837,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             addDTO.setType(MachineTypeEnum.ORDINARY.getCode());
             addDTO.setSourceId(sourceId);
             addDTO.setSourceType(SourceTypeEnum.TRANSFER_APPLICATION.getCode());
+            String sourceCode = list.stream().filter(v->v.getSourceId().equals(sourceId)).findFirst().orElseThrow(() -> new ServiceException("未找到对应信息")).getSourceCode();
+            addDTO.setSourceCode(sourceCode);
             List<TransferApplicationDTO.ViewGenerateMachineInfo> viewGenerateMachineInfoList = list.stream().filter(req -> req.getSourceId().equals(sourceId)).collect(Collectors.toList());
             List<MachineSubComponentsDTO.AddDTO> componentsDTOList = new ArrayList<>();
             for (TransferApplicationDTO.ViewGenerateMachineInfo viewGenerateMachineInfo : viewGenerateMachineInfoList) {
@@ -876,39 +874,6 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             }
             addDTO.setDetailList(MachineDetailDtoList);
             machineInfoService.add(addDTO);
-        }
-        return Boolean.TRUE;
-    }
-
-    /**
-     * @description: 列表Tab查询状态处理
-     * @author Will
-     * @date: 2023/8/2 16:46
-     * @param params
-     * @return Boolean
-     */
-    private Boolean doOpHandleTableParam (TransferApplicationDTO.SearchParamDTO params) {
-        List<String> approveStatusList = new ArrayList<>(1);
-        //待我审核
-        if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(params.getSearchType())) {
-            approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-            //需要审核的业务ids
-            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.TRANSFER_APPLICATION.getCode());
-            if (CollectionUtils.isEmpty(businessIds)) {
-                return Boolean.FALSE;
-            }
-            params.setIdList(businessIds);
-        }
-        // 待提交
-        if (PageListTypeEnum.APPROVE.getCode().equals(params.getSearchType())) {
-            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
-        }
-        //不通过
-        if (PageListTypeEnum.REJECT.getCode().equals(params.getSearchType())) {
-            approveStatusList.add(ApproveStatusEnum.REJECT.getStatus());
-        }
-        if (CollectionUtils.isNotEmpty(approveStatusList)) {
-            params.setApproveStatusList(approveStatusList);
         }
         return Boolean.TRUE;
     }

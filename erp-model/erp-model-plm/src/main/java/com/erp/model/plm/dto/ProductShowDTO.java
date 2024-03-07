@@ -51,7 +51,7 @@ public class ProductShowDTO implements Serializable {
     /**
      * 产品类型
      */
-    private Integer type;
+    private String type;
 
     /**
      * 产品立项状态

@@ -1,5 +1,8 @@
 package com.erp.server.tms.controller.feign;
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -195,4 +199,33 @@ public class LogisticsBillFeignController {
         return logisticsPrintTypeEntities;
     }
 
+    /**
+     * 批量根据销售出库单更新跟踪号
+     * @param batchUpdateTrackNoDTOList
+     * @return
+     */
+    @PostMapping("/updateBatchTrackNo")
+    public List<BatchResultDTO> updateBatchTrackNo(@RequestBody List<LogisticsBillDTO.BatchUpdateTrackNoDTO> batchUpdateTrackNoDTOList,@RequestParam(name = "isAdd") Boolean isAdd){
+        return logisticsBillService.updateBatchTrackNo(batchUpdateTrackNoDTOList,isAdd);
+    }
+
+    /**
+     * 查询跟踪号与出库单号Map
+     * @param ids
+     * @return
+     */
+    @PostMapping("/mapTrackNoAndSoOutId")
+    public Map<String, List<String>> mapTrackNoAndSoOutId(@RequestBody List<String> ids){
+        return logisticsBillService.mapTrackNoAndSoOutId(ids);
+    }
+
+    /**
+     * 根据高级查询条件查询出库Id
+     * @return
+     */
+    @PostMapping("/listSoOutIdByQuery")
+    @WebAdvanceQuery
+    public List<String> listSoOutIdByQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer){
+        return logisticsBillService.listSoOutIdByQuery(advanceQueryContainer);
+    }
 }

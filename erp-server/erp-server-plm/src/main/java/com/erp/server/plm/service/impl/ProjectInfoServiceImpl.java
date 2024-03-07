@@ -16,7 +16,6 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
-import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.SourceType;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectInfoMapper;
@@ -387,6 +386,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+        //部门处理
+        Boolean isFlag = productInfoService.handlePagingDept(params);
+        if (isFlag) {
+            return new PagingVO(new Page());
+        }
         pageData = baseMapper.paging(query, params, archiveProductIds, categoryIdList);
         Integer finish = TaskStateEnum.FINISH.getCode();
         Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
@@ -410,7 +414,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                     item.setIfAddProduct(false);
                 }
 
-                if (ProductConstant.ITERATION_PRODUCT.equals(item.getType())) {
+                if (ProductTypeEnum.ITERATIVE_PRODUCT.getCode().equals(item.getType())) {
                     item.setIfIteration(true);
                 }
                 String progressStatus = item.getProgressStatus();
@@ -495,6 +499,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         List<BasicDTO> list = new ArrayList<>();
+        //部门处理
+        Boolean isFlag = productInfoService.handlePagingDept(params);
+        if (isFlag) {
+            return list;
+        }
         list = baseMapper.listNotPaging(params, archiveProductIds);
         return list;
     }

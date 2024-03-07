@@ -149,7 +149,7 @@ public class ReceivingInfo {
      * 目前固定为3
      */
     @Builder.Default
-    protected String transMode = "3";
+    protected String transMode = "7";
 
     /**
      * 固定值1集货

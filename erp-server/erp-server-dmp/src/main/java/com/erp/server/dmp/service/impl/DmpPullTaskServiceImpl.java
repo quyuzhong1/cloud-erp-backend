@@ -348,7 +348,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     @GlobalTransactional(rollbackFor = Exception.class)
     public void syncOmsOrderToDmp(Map<String, Object> resultMap) {
         //检查推送状态是否已完成，已完成则直接返回
-        Object dmpPullTaskId = resultMap.getOrDefault("dmpPullTaskId", null);
+        Object dmpPullTaskId = resultMap.getOrDefault("dmpSyncTaskId", null);
         Object id = resultMap.getOrDefault("id", null);
         Object code = resultMap.getOrDefault("code", null);
         Object operate = resultMap.getOrDefault("operate", null);
@@ -408,7 +408,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     @GlobalTransactional(rollbackFor = Exception.class)
     public void syncWmsOutStockToDmp(Map<String, Object> resultMap) {
         //检查推送状态是否已完成，已完成则直接返回
-        Object dmpPullTaskId = resultMap.getOrDefault("dmpPullTaskId", null);
+        Object dmpPullTaskId = resultMap.getOrDefault("dmpSyncTaskId", null);
         Object id = resultMap.getOrDefault("id", null);
         Object code = resultMap.getOrDefault("code", null);
         Object operate = resultMap.getOrDefault("operate", null);
@@ -464,7 +464,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     @GlobalTransactional(rollbackFor = Exception.class)
     public void syncOmsReturnToDmp(Map<String, Object> resultMap) {
         //检查推送状态是否已完成，已完成则直接返回
-        Object dmpPullTaskId = resultMap.getOrDefault("dmpPullTaskId", null);
+        Object dmpPullTaskId = resultMap.getOrDefault("dmpSyncTaskId", null);
         Object id = resultMap.getOrDefault("id", null);
         Object code = resultMap.getOrDefault("code", null);
         Object operate = resultMap.getOrDefault("operate", null);

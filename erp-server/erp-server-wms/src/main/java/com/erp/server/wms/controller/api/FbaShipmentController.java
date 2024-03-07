@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -26,6 +27,7 @@ import com.erp.server.wms.service.FbaShipmentService;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,9 +52,22 @@ public class FbaShipmentController extends BaseController {
      * @return ApiResult<PagingVO<FbaDeliveryDTO.ListDTO>>
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<FbaShipmentDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
         PagingVO<FbaShipmentDTO.ListDTO> list = fbaShipmentService.paging(dto);
         return success(list);
+    }
+
+    /**
+     * 导出
+     * @param dto
+     * @return ApiResult<PagingVO<FbaDeliveryDTO.ListDTO>>
+     */
+    @PostMapping("/export")
+    @WebAdvanceQuery
+    public ApiResult export(@RequestBody @Validated FbaShipmentDTO.PagingParamDTO dto, HttpServletResponse response) {
+        fbaShipmentService.export(dto,response);
+        return success();
     }
 
     /**
