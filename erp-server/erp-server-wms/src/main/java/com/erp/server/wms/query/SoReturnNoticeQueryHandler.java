@@ -45,13 +45,13 @@ public class SoReturnNoticeQueryHandler extends AbstractQueryHandler {
             QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
             if(queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.CONTAINS)
                     || queryConditionEnum.equals(QueryConditionEnum.STARTS_WITH) ||  queryConditionEnum.equals(QueryConditionEnum.ENDS_WITH)){
-                if(CollectionUtils.isEmpty(valueList)){
+                if(CollectionUtils.isEmpty(detailIdList)){
                     return this.getQueryEmptySql();
                 }
                 super.buildSplicingSQLDTO("srnd.source_detail_id",QueryConditionEnum.IN_LIST,detailIdList,QueryDataTypeEnum.STRING);
             }
             if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.NOT_CONTAINS)){
-                if(CollectionUtils.isEmpty(valueList)){
+                if(CollectionUtils.isEmpty(detailIdList)){
                     return this.getQueryAllSql();
                 }
                 super.buildSplicingSQLDTO("srnd.source_detail_id",QueryConditionEnum.NOT_IN_LIST,detailIdList,QueryDataTypeEnum.STRING);
