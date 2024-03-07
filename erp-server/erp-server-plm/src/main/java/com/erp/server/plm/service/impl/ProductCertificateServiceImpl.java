@@ -114,6 +114,9 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(ProductCertificateDTO.UpdateDTO dto) {
+        ProductCertificateEntity old = this.getById(dto.getId());
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "产品认证"));
+
         ProductCertificateEntity entity = new ProductCertificateEntity();
         entity.setId(dto.getId());
         entity.setRemark(dto.getRemark());
@@ -127,8 +130,6 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         //删除附件
         deleteFile(dto.getRemoveFileIdList(),dto.getId());
 
-        //添加日志
-        ProductCertificateEntity old = this.getById(dto.getId());
         // 记录产品认证操作日志
         log.info("编辑 开始记录产品认证日志数据，id：【{}】", entity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), entity.getId(), "产品认证");
