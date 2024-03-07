@@ -121,6 +121,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private SysUserFeign sysUserFeign;
     @Resource
     private InventoryClosedRecordService inventoryClosedRecordService;
+    @Resource
+    private StocktakingProfitLossService stocktakingProfitLossService;
 
     @Override
     public PagingVO<FbaShipmentDTO.ListDTO> paging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
@@ -1670,6 +1672,19 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     return;
                 }
             }
+            List<String> skuIds = receiveList.stream().map(FbaShipmentReceiveEntity::getSkuId).distinct().collect(Collectors.toList());
+            // 最新盘盈盘亏单有效单据日期列表
+            List<StocktakingProfitLossDTO.LastDTO> lastStocktakingProfitLossList = stocktakingProfitLossService.listByOrgIdAndSkuIds(
+                    Arrays.asList(addDTO.getInOrgId(), addDTO.getOutOrgId()), skuIds);
+            if (CollectionUtils.isNotEmpty(lastStocktakingProfitLossList)){
+                for (StocktakingProfitLossDTO.LastDTO lastDTO : lastStocktakingProfitLossList) {
+                    if (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate())){
+                        // 已有盘盈盘亏单不审核
+                        return;
+                    }
+                }
+            }
+
             //提交
             transferInfoService.submit(Collections.singletonList(transferOutId));
 

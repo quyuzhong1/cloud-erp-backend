@@ -47,6 +47,7 @@ import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
+import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -167,6 +168,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private LogisticsFeign logisticsFeign;
+
+    @Resource
+    private InventoryClosedRecordService inventoryClosedRecordService;
+
+    @Resource
+    private StocktakingProfitLossService stocktakingProfitLossService;
 
 
     @Override
@@ -2077,6 +2084,20 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String id = this.addB2cSoOutstock(dto);
             //表示添加成功
             if (StringUtils.isNotBlank(id)) {
+                if (null != dto.getSalesOrgId() && null != dto.getBillDate()){
+                    // 校验是否存在已库存关账时间
+                    LocalDate existClosedDate = inventoryClosedRecordService.checkClosed(dto.getSalesOrgId(), dto.getBillDate());
+                    if (null != existClosedDate){
+                        // 库存关账时间之前的单据不提交
+                        return true;
+                    }
+                    List<String> skuIds = dto.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
+                    boolean closed = stocktakingProfitLossService.checkClosed(Collections.singletonList(dto.getSalesOrgId()), skuIds, dto.getBillDate());
+                    if (closed){
+                        // 已有盘盈盘亏单不提交
+                        return true;
+                    }
+                }
                 //提交
                 Boolean submitResult = this.submit(Arrays.asList(id));
                 if (submitResult) {
