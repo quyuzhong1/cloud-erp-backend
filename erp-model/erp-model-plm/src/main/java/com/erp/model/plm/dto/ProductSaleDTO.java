@@ -58,7 +58,7 @@ public class ProductSaleDTO implements Serializable {
     /**
      * 销售国家
      */
-    @Size(max = 255,message = "国家最大不能超过255字符")
+    @Size(max = 255,message = "国家最大不能超过512字符")
     private String saleCountry;
 
     /**
