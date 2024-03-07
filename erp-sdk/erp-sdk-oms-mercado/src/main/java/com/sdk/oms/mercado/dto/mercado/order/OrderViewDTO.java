@@ -1,6 +1,7 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
 import com.google.gson.annotations.SerializedName;
+import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
 
 import java.util.List;
 
@@ -81,6 +82,8 @@ public class OrderViewDTO {
     private List<OrderItemsBean> orderItems;
     @SerializedName("payments")
     private List<PaymentsBeanX> payments;
+    @SerializedName("shipmentViewDTO")
+    private ShipmentViewDTO shipmentViewDTO;
 
     public long getId() {
         return id;
@@ -272,5 +275,13 @@ public class OrderViewDTO {
 
     public void setPayments(List<PaymentsBeanX> payments) {
         this.payments = payments;
+    }
+
+    public ShipmentViewDTO getShipmentViewDTO() {
+        return shipmentViewDTO;
+    }
+
+    public void setShipmentViewDTO(ShipmentViewDTO shipmentViewDTO) {
+        this.shipmentViewDTO = shipmentViewDTO;
     }
 }

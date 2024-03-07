@@ -1,6 +1,7 @@
 package com.sdk.oms.mercado.service;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -29,6 +30,7 @@ import com.sdk.oms.mercado.dto.mercado.listing.ListingViewDTO;
 import com.sdk.oms.mercado.dto.mercado.order.OrderDTO;
 import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
 import com.sdk.oms.mercado.dto.mercado.order.ResultsBean;
+import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -49,7 +51,7 @@ import java.util.stream.Collectors;
 @Component
 public class MercadoSdkClientService {
     public static void main(String[] args) {
-//        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=authorization_code&grant_type=authorization_code&client_id=3457166802805723&client_secret=QucvI4VWHO0w3AZftOElz5liVOurfjQG&code=TG-65e12c65326e580001c3a0ba-1509269799&redirect_uri=https://erptest.ulanzi.cn:8020/store-permission-result";
+//        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=authorization_code&grant_type=authorization_code&client_id=3457166802805723&client_secret=QucvI4VWHO0w3AZftOElz5liVOurfjQG&code=TG-65e84c33beaa890001c29f80-1715441696&redirect_uri=https://erptest.ulanzi.cn:8020/store-permission-result";
 
         //组装刷新token请求的url
         String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=refresh_token&client_id=3457166802805723&client_secret=QucvI4VWHO0w3AZftOElz5liVOurfjQG&refresh_token=TG-65e67868ceddf000015d733a-1509269799";
@@ -304,7 +306,7 @@ public class MercadoSdkClientService {
 
             //拉取数据
             ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
-            if (!Objects.equals(apiResult.getCode(), 200)) {
+            if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
                 log.error("调用url={},入参params={}, 美客多marketplace/orders/search数据失败，返回值 responseMap={}", baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多marketplace/orders/search数据失败，返回值 responseMap={}",
                         baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
@@ -334,7 +336,7 @@ public class MercadoSdkClientService {
 
                     //拉取数据
                     ApiResult orderResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
-                    if (!Objects.equals(orderResult.getCode(), 200)) {
+                    if (!Objects.equals(orderResult.getCode(), 200) && !Objects.equals(orderResult.getCode(), 201)) {
                         log.error("调用url={},入参params={}, 美客多marketplace/orders数据失败，返回值 responseMap={}", orderUrl, orderParams.toString(), JSONUtil.toJsonStr(orderResult));
                         throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多marketplace/orders数据失败，返回值 responseMap={}",
                                 orderUrl, orderParams.toString(), JSONUtil.toJsonStr(orderResult)));
@@ -343,11 +345,48 @@ public class MercadoSdkClientService {
                     //解析数据
                     OrderViewDTO orderViewDTO = JSONUtil.toBean(JSONUtil.toJsonStr(orderResult.getData()), OrderViewDTO.class);
 
+                    //根据发货id查询发货详情
+                    ShipmentViewDTO shippingRecords = getShippingRecords(shopInfoDTO, orderViewDTO.getShipping().getId());
+                    if (ObjectUtil.isNotEmpty(shippingRecords)) {
+                        orderViewDTO.setShipmentViewDTO(shippingRecords);
+                    }
                     resultList.add(orderViewDTO);
                 }
             }
         }
         return resultList;
+    }
+
+    /**
+     * 根据发货id查询发货详情
+     * @param shopInfoDTO
+     * @param shippingId
+     * @return
+     */
+    private ShipmentViewDTO getShippingRecords(MercadoShopInfoDTO shopInfoDTO, Long shippingId) {
+        String orderUrl = "https://api.mercadolibre.com/marketplace/shipments/" + shippingId + "";
+
+        //入参
+        HashMap<String, Object> orderParams = new HashMap<>(1);
+
+        //设置请求头
+        Map<String, String> orderHeaderMap = new HashMap<>(1);
+        orderHeaderMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
+        orderHeaderMap.put("x-format-new", "true");
+
+        //拉取数据
+        ApiResult shipmentResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
+        if (!Objects.equals(shipmentResult.getCode(), 200) && !Objects.equals(shipmentResult.getCode(), 201)) {
+            log.error("调用url={},入参params={}, 美客多marketplace/shipments数据失败，返回值 responseMap={}", orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多marketplace/shipments数据失败，返回值 responseMap={}",
+                    orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult)));
+        }
+
+        //解析数据
+        ShipmentViewDTO orderViewDTO = JSONUtil.toBean(JSONUtil.toJsonStr(shipmentResult.getData()), ShipmentViewDTO.class);
+
+        return orderViewDTO;
+
     }
 
     /**

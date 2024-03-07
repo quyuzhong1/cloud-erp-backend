@@ -2,6 +2,8 @@ package com.sdk.oms.mercado.dto.mercado.order;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.math.BigDecimal;
+
 public class OrderItemsBean {
     /**
      * item : {"id":"MLM2802963514","title":"Ulanzi R099 Kit De Montaje Con Clip Para Cámara Gopro","category_id":"MLM127873","variation_id":null,"seller_custom_field":null,"variation_attributes":[],"warranty":"Garantía del vendedor: 1 meses","condition":"new","seller_sku":"2993+1764A+0605","parent_item_id":"CBT1908713864"}
@@ -19,17 +21,17 @@ public class OrderItemsBean {
     @SerializedName("quantity")
     private int quantity;
     @SerializedName("unit_price")
-    private double unitPrice;
+    private BigDecimal unitPrice;
     @SerializedName("full_unit_price")
-    private double fullUnitPrice;
+    private BigDecimal fullUnitPrice;
     @SerializedName("currency_id")
     private String currencyId;
     @SerializedName("manufacturing_days")
     private Object manufacturingDays;
     @SerializedName("sale_fee")
-    private double saleFee;
+    private BigDecimal saleFee;
     @SerializedName("base_exchange_rate")
-    private double baseExchangeRate;
+    private BigDecimal baseExchangeRate;
 
     public ItemBean getItem() {
         return item;
@@ -47,19 +49,19 @@ public class OrderItemsBean {
         this.quantity = quantity;
     }
 
-    public double getUnitPrice() {
+    public BigDecimal getUnitPrice() {
         return unitPrice;
     }
 
-    public void setUnitPrice(double unitPrice) {
+    public void setUnitPrice(BigDecimal unitPrice) {
         this.unitPrice = unitPrice;
     }
 
-    public double getFullUnitPrice() {
+    public BigDecimal getFullUnitPrice() {
         return fullUnitPrice;
     }
 
-    public void setFullUnitPrice(double fullUnitPrice) {
+    public void setFullUnitPrice(BigDecimal fullUnitPrice) {
         this.fullUnitPrice = fullUnitPrice;
     }
 
@@ -79,19 +81,19 @@ public class OrderItemsBean {
         this.manufacturingDays = manufacturingDays;
     }
 
-    public double getSaleFee() {
+    public BigDecimal getSaleFee() {
         return saleFee;
     }
 
-    public void setSaleFee(double saleFee) {
+    public void setSaleFee(BigDecimal saleFee) {
         this.saleFee = saleFee;
     }
 
-    public double getBaseExchangeRate() {
+    public BigDecimal getBaseExchangeRate() {
         return baseExchangeRate;
     }
 
-    public void setBaseExchangeRate(double baseExchangeRate) {
+    public void setBaseExchangeRate(BigDecimal baseExchangeRate) {
         this.baseExchangeRate = baseExchangeRate;
     }
 }

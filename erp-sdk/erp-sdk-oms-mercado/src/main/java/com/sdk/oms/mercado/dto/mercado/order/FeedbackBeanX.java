@@ -9,23 +9,23 @@ public class FeedbackBeanX {
      */
 
     @SerializedName("sale")
-    private Object sale;
+    private String sale;
     @SerializedName("purchase")
-    private Object purchase;
+    private String purchase;
 
-    public Object getSale() {
+    public String getSale() {
         return sale;
     }
 
-    public void setSale(Object sale) {
+    public void setSale(String sale) {
         this.sale = sale;
     }
 
-    public Object getPurchase() {
+    public String getPurchase() {
         return purchase;
     }
 
-    public void setPurchase(Object purchase) {
+    public void setPurchase(String purchase) {
         this.purchase = purchase;
     }
 }

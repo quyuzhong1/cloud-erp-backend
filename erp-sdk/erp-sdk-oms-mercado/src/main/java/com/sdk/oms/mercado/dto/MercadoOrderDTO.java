@@ -1,20 +1,28 @@
 package com.sdk.oms.mercado.dto;
 
-import com.common.business.dto.CleanBaseDTO;
-import com.common.business.dto.JobTaskDTO;
-import com.common.business.dto.PlatformOrderDTO;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
+import com.common.business.dto.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.sdk.oms.mercado.dto.mercado.order.OrderItemsBean;
 import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
+import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -73,11 +81,21 @@ public class MercadoOrderDTO extends CleanBaseDTO {
             // 转换为 LocalDateTime
             LocalDateTime payTime = offsetDateTime.toLocalDateTime();
             orderDTO.setPayTime(payTime);
+
+            //付款方式
+            orderDTO.setDictPayMethod(orderBean.getPayments().get(0).getPaymentMethodId());
+
         }
 
+        //订单金额
+        BigDecimal amount = orderBean.getPayments().stream().map(req -> req.getTotalPaidAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        orderDTO.setAmount(amount);
 
-        // 订单状态，详情金额汇总
-//        fieldHandler(orderBean.getOrderLines().getOrderLine(), orderDTO, orderBean.getShipNode().getType());
+        //币别
+        orderDTO.setCurrency(orderBean.getCurrencyId());
+
+        //买家备注
+        orderDTO.setBuyerRemark(orderBean.getFeedback().getPurchase());
 
         // 是否拦截
         orderDTO.setIsIntercept(false);
@@ -93,17 +111,26 @@ public class MercadoOrderDTO extends CleanBaseDTO {
 
         // 来源编码
         orderDTO.setSourceCode("");
-/*
         // 标签json
         Map<String, String> lableMap = new HashMap<>();
-        lableMap.put("shipNodeType", orderBean.getShipNode().getType());
-        orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
 
-        //如果是平台仓，状态审核通过
-        if ("WFSFulfilled".equals(orderBean.getShipNode().getType()) || "3PLFulfilled".equals(orderBean.getShipNode().getType())) {
-            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
+        ShipmentViewDTO shipmentViewDTO = new ShipmentViewDTO();
+        if (ObjectUtil.isNotEmpty(orderBean.getShipmentViewDTO())) {
+            shipmentViewDTO = orderBean.getShipmentViewDTO();
+            lableMap.put("logisticType", shipmentViewDTO.getLogistic().getType());
+            orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
+
+            //如果是平台仓，状态审核通过
+            if ("m2".equals(shipmentViewDTO.getLogistic().getMode()) && "fulfillment".equals(shipmentViewDTO.getLogistic().getType())) {
+                orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
+            }
+
+            //扩展字段
+            JSONObject extendDataJson = new JSONObject();
+            extendDataJson.put("mode",shipmentViewDTO.getLogistic().getMode());
+            extendDataJson.put("logisticType", shipmentViewDTO.getLogistic().getType());
+            orderDTO.setExtendData(extendDataJson.toString());
         }
-*/
 
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         orderDTO.setAbnormalType("");
@@ -111,52 +138,79 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
 
-/*        // 订单明细
+        // 订单状态，详情金额汇总
+        if (ObjectUtil.isNotEmpty(orderBean.getShipmentViewDTO())) {
+            shipmentViewDTO = orderBean.getShipmentViewDTO();
+
+            if ("handling".equals(shipmentViewDTO.getStatus())) {
+                orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE_ING.getStatus());
+                orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+            } else if ("ready_to_ship".equals(shipmentViewDTO.getStatus())) {
+                orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE_ING.getStatus());
+                orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+            } else if ("shipped".equals(shipmentViewDTO.getStatus())) {
+                orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
+                orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            } else if ("cancelled".equals(shipmentViewDTO.getStatus())) {
+                orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+                orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+                orderDTO.setInvalidStatus(Boolean.TRUE);
+                orderDTO.setRemark("平台取消");
+            }
+
+        }
+
+        if ("invalid".equals(orderBean.getStatus())) {
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+            orderDTO.setInvalidStatus(Boolean.TRUE);
+            orderDTO.setRemark("平台无效订单");
+        }
+
+        // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(orderBean);
         orderDTO.setDetails(details);
 
         //B2C销售订单买家信息表
         orderDTO.setReceiver(parseReceiver(orderBean));
         //B2C销售订单物流信息表
-        orderDTO.setLogisticsList(parseLogistics(orderBean.getOrderLines().getOrderLine()));
+        orderDTO.setLogisticsList(parseLogistics(orderBean));
         //B2C销售订单财务信息表
         orderDTO.setFinances(parseFinances(orderBean));
-        orderDTO.setPlatform(PlatformDictEnum.WALMART.getCode());
-        orderDTO.setUniqueId(orderBean.getPurchaseOrderId());*/
+        orderDTO.setPlatform(PlatformDictEnum.MERCADO.getCode());
+        orderDTO.setUniqueId(String.valueOf(orderBean.getId()));
         return orderDTO;
     }
-/*
-    *//**
+    /**
      * 批量转换明细
-     *//*
-    public static List<PlatformOrderDetailDTO> parseDetailDto(OrderBean orderBean) {
-        return orderBean.getOrderLines().getOrderLine().stream()
+     */
+    public static List<PlatformOrderDetailDTO> parseDetailDto(OrderViewDTO orderBean) {
+        return orderBean.getOrderItems().stream()
                 .map(e -> intPlatformOrderDetailDTO(e, orderBean))
                 .collect(Collectors.toList());
     }
 
 
-    *//**
+    /**
      * 转换明细
-     *//*
-    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(OrderLineBean orderLineBean, OrderBean orderBean) {
+     */
+    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(OrderItemsBean orderItemsBean, OrderViewDTO orderViewDTO) {
         PlatformOrderDetailDTO detailDTO = new PlatformOrderDetailDTO();
-        ItemBean item = orderLineBean.getItem();
         // 图片URL
-        detailDTO.setImageUrl(item.getImageUrl());
+        detailDTO.setImageUrl("");
         // skuId
         detailDTO.setSkuId("");
         // skuNo
         detailDTO.setSkuNo("");
 
         //平台明细行号
-        detailDTO.setPlatformLineNumber(orderLineBean.getLineNumber());
+        detailDTO.setPlatformLineNumber("");
 
         // 平台sku编号
-        detailDTO.setPlatformSkuNo(item.getSku());
+        detailDTO.setPlatformSkuNo(orderItemsBean.getItem().getParentItemId());
 
         //平台产品id
-        detailDTO.setPlatformSpuNo(item.getWpid());
+        detailDTO.setPlatformSpuNo(orderItemsBean.getItem().getId());
 
         // 库存sku编号
         detailDTO.setWarehouseName("");
@@ -164,26 +218,22 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         // 库存是否扣除
         detailDTO.setWarehouseId("");
         // 数量
-        detailDTO.setQty(orderLineBean.getOrderLineQuantity().getAmount());
+        detailDTO.setQty(orderItemsBean.getQuantity());
 
         // 金额
-        BigDecimal amount = orderLineBean.getCharges().getCharge().stream().filter(req -> "ItemPrice".equals(req.getChargeName()))
-                .map(req -> req.getChargeAmount().getAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        detailDTO.setAmount(amount);
+        detailDTO.setAmount(orderItemsBean.getFullUnitPrice());
         // 单价
-        detailDTO.setPrice(amount);
+        detailDTO.setPrice(orderItemsBean.getUnitPrice());
         // 币别（原币）
-        String currency = orderLineBean.getCharges().getCharge().stream().map(req -> req.getChargeAmount().getCurrency()).findFirst().orElse("");
-        detailDTO.setCurrency(currency);
+        detailDTO.setCurrency(orderItemsBean.getCurrencyId());
         // 汇率
-        detailDTO.setExchangeRate(BigDecimal.ONE);
+        detailDTO.setExchangeRate(orderItemsBean.getBaseExchangeRate());
         // 建议售价（本位币）
         detailDTO.setAdvicePrice(BigDecimal.ZERO);
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
         // 来源明细id
-        detailDTO.setSourceDetailId(orderBean.getCustomerOrderId() + "-" + orderLineBean.getLineNumber());
+        detailDTO.setSourceDetailId(orderItemsBean.getItem().getId());
         // 标签json
         detailDTO.setLabelJson("");
         // 库存组织id
@@ -194,6 +244,97 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         detailDTO.setWarehouseLocation("");
 
         return detailDTO;
-    }*/
+    }
+
+    /**
+     * 买家信息字段处理
+     * @Author Luo_WG
+     * @Date 2023/12/4 9:38
+     * @param orderViewDTO
+     * @return java.util.List<com.common.business.dto.PlatformOrderReceiverDTO>
+     **/
+    private static PlatformOrderReceiverDTO parseReceiver(OrderViewDTO orderViewDTO) {
+        if (Objects.isNull(orderViewDTO) || Objects.isNull(orderViewDTO.getShipping())) {
+            return null;
+        }
+
+        return PlatformOrderReceiverDTO.builder()
+                .loginId("")
+                .customerId(String.valueOf(orderViewDTO.getBuyer().getId()))
+                .name(orderViewDTO.getBuyer().getLastName()+" "+orderViewDTO.getBuyer().getFirstName())
+                .receiverName(orderViewDTO.getShipmentViewDTO().getDestination().getReceiverName())
+                .telNumber(orderViewDTO.getShipmentViewDTO().getDestination().getReceiverPhone())
+                .receiverTelNumber(orderViewDTO.getShipmentViewDTO().getDestination().getReceiverPhone())
+                .email("")
+                .country(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getCountry().getId())
+                .provinceName(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getState().getName())
+                .cityName(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getCity().getName())
+                .districtName(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getAddressLine())
+                .postCode(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getZipCode())
+                .firstAddress("")
+                .secondAddress("")
+                .fullAddress(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getNeighborhood()+" "+
+                        orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getMunicipality()+" "+
+                        orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getComment())
+                .build();
+    }
+
+
+    /**
+     * 物流信息字段处理
+     * @Author Luo_WG
+     * @Date 2023/12/4 14:07
+     * @param orderBean
+     * @return java.util.List<com.common.business.dto.PlatformOrderLogisticsDTO>
+     **/
+    private static List<PlatformOrderLogisticsDTO> parseLogistics(OrderViewDTO orderBean) {
+        if (ObjectUtil.isEmpty(orderBean)) {
+            return Collections.emptyList();
+        }
+
+        String trackingNumber = "";
+        String name = "";
+        BigDecimal cost = BigDecimal.ZERO;
+
+        if (ObjectUtil.isNotEmpty(orderBean.getShipmentViewDTO().getTrackingNumber())) {
+            trackingNumber = orderBean.getShipmentViewDTO().getTrackingNumber();
+            name = orderBean.getShipmentViewDTO().getLeadTime().getShippingMethod().getName();
+            cost = orderBean.getShipmentViewDTO().getLeadTime().getCost();
+        }
+        List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
+
+
+        PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
+                .code(trackingNumber)
+                .name(name)
+                .deliveryTime(null)
+                .logisticsChannelId("")
+                .logisticsChannelName("")
+                .estimatedShippingCost(cost)
+                .actualShippingCost(BigDecimal.ZERO)
+                .accessoriesCostCurrency("")
+                .actualShippingCurrency("")
+                .estimatedShippingCurrency("")
+                .build();
+        logisticsDTOS.add(dto);
+        return logisticsDTOS;
+    }
+
+    /**
+     * 财务信息表
+     * @Author Luo_WG
+     * @Date 2023/12/4 14:07
+     * @param orderViewDTO
+     * @return java.util.List<com.common.business.dto.PlatformOrderFinanceDTO>
+     **/
+    private static PlatformOrderFinanceDTO parseFinances(OrderViewDTO orderViewDTO) {
+        BigDecimal vatRate = orderViewDTO.getPayments().stream().map(req -> req.getTaxesAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        BigDecimal shippingCost = orderViewDTO.getPayments().stream().map(req -> req.getShippingCost()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        return PlatformOrderFinanceDTO.builder()
+                .currency("")
+                .shippingCost(shippingCost)
+                .vatRate(vatRate)
+                .build();
+    }
 
 }

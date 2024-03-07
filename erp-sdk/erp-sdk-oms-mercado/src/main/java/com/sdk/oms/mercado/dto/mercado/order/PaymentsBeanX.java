@@ -2,6 +2,7 @@ package com.sdk.oms.mercado.dto.mercado.order;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public class PaymentsBeanX {
@@ -82,15 +83,15 @@ public class PaymentsBeanX {
     @SerializedName("transaction_amount")
     private double transactionAmount;
     @SerializedName("taxes_amount")
-    private int taxesAmount;
+    private BigDecimal taxesAmount;
     @SerializedName("shipping_cost")
-    private int shippingCost;
+    private BigDecimal shippingCost;
     @SerializedName("coupon_amount")
     private double couponAmount;
     @SerializedName("overpaid_amount")
     private int overpaidAmount;
     @SerializedName("total_paid_amount")
-    private double totalPaidAmount;
+    private BigDecimal totalPaidAmount;
     @SerializedName("installment_amount")
     private int installmentAmount;
     @SerializedName("deferred_period")
@@ -268,19 +269,19 @@ public class PaymentsBeanX {
         this.transactionAmount = transactionAmount;
     }
 
-    public int getTaxesAmount() {
+    public BigDecimal getTaxesAmount() {
         return taxesAmount;
     }
 
-    public void setTaxesAmount(int taxesAmount) {
+    public void setTaxesAmount(BigDecimal taxesAmount) {
         this.taxesAmount = taxesAmount;
     }
 
-    public int getShippingCost() {
+    public BigDecimal getShippingCost() {
         return shippingCost;
     }
 
-    public void setShippingCost(int shippingCost) {
+    public void setShippingCost(BigDecimal shippingCost) {
         this.shippingCost = shippingCost;
     }
 
@@ -300,11 +301,11 @@ public class PaymentsBeanX {
         this.overpaidAmount = overpaidAmount;
     }
 
-    public double getTotalPaidAmount() {
+    public BigDecimal getTotalPaidAmount() {
         return totalPaidAmount;
     }
 
-    public void setTotalPaidAmount(double totalPaidAmount) {
+    public void setTotalPaidAmount(BigDecimal totalPaidAmount) {
         this.totalPaidAmount = totalPaidAmount;
     }
 
