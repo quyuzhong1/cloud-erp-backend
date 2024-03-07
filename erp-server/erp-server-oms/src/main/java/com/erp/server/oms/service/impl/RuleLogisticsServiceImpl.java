@@ -212,10 +212,10 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
             return null;
         }
         List<Map<String, Object>> mapList = (List<Map<String, Object>>) map.get("detailList");
-        mapList= mapList.stream().filter(m->Objects.isNull(m.get("logisticsChannelId"))||StringUtils.isBlank(m.get("logisticsChannelId").toString())).
-                collect(Collectors.toList());
-        if(CollectionUtils.isEmpty(mapList)){
-            return new RuleLogisticsDTO.RuleMatchResultDTO();
+        String logisticsChannelIdKey="logisticsChannelId";
+        long isNullCount  = mapList.stream().filter(m -> StringUtils.isBlank(m.getOrDefault(logisticsChannelIdKey,"").toString())).count();
+        if (isNullCount > 0) {
+            return null;
         }
         map.put("detailList",mapList);
         List<RuleLogisticsEntity> ruleLogisticsList = this.listOrderByPriority();
@@ -287,4 +287,6 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         }
 
     }
+
+
 }
