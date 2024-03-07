@@ -5,8 +5,10 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.enums.DistributedLockEnum;
 import com.common.business.utils.RedisUtil;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
@@ -72,6 +74,10 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
 
     @Resource
     private AbstractInventoryServiceImpl abstractInventoryService;
+
+    @Resource
+    private CommonService commonService;
+
     /**
      * 允许录入负数的库存业务单据（临时打开）
      */
@@ -229,10 +235,19 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
     private void checkAllowTransaction(LocalDate closeDate, String orgId, String warehouseId, String warehouseLocation, String skuId, String skuNo, String dictInventoryStatus, LocalDate billDate, InventoryStatusEnum inventoryStatusEnum) {
         // 库存关账时间检测
         log.info("closeDate:{}",closeDate);
-        // 存在关账时间并非在途库存
-        if(null != closeDate && !InventoryStatusEnum.IN_TRANSIT.equals(inventoryStatusEnum)){
-            if (billDate.isBefore(closeDate) || billDate.equals(closeDate)) {
-                throw new ServiceException(ApiError.ERROR_INVENTORY_CLOSED, closeDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
+
+        /**
+         * 获取当前登录人
+         * 当前登录人为system（金蝶拉取时为system,处理数据时需要）则无需判断关账时间
+         * 获取到非system的用户时正常校验
+         */
+        LoginUser userInfo = commonService.getUserInfo();
+        if (!UserStateConstants.USER_SYSTEM_ID.equals(userInfo.getUid())) {
+            // 存在关账时间并非在途库存
+            if(null != closeDate && !InventoryStatusEnum.IN_TRANSIT.equals(inventoryStatusEnum)){
+                if (billDate.isBefore(closeDate) || billDate.equals(closeDate)) {
+                    throw new ServiceException(ApiError.ERROR_INVENTORY_CLOSED, closeDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
+                }
             }
         }
         // 盘点冻结
