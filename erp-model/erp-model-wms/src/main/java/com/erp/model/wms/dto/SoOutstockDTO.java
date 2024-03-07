@@ -1403,8 +1403,6 @@ public class SoOutstockDTO implements Serializable {
          */
         private String carrierId;
 
-        private LocalDate billDate;
-
         /**
          * 销售组织id
          */
@@ -1480,8 +1478,6 @@ public class SoOutstockDTO implements Serializable {
          * 销售部门id
          */
         private String salesDeptId;
-
-
 
         /**
          * 销售员
