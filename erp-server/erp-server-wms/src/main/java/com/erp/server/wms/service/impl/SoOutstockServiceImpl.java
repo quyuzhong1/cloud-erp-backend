@@ -2134,20 +2134,25 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         BusinessNoTypeEnum businessNoType = BusinessNoTypeEnum.CODE_XSCK;
         String code = docNoGenHelper.generateCode(businessNoType);
         soOutstock.setCode(code);
-        // 出库日期
-        soOutstock.setBillDate(LocalDate.now());
-
+        LocalDate billDate = dto.getBillDate();
+        Boolean billDateIsNull = Objects.isNull(billDate);
         //速卖通菜鸟仓发货单生产的销售出库单，发货日期都取平台出库日期
         SoB2cEntity soB2cEntity = soB2cFeign.getById(dto.getSoId());
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform()) && soB2cEntity.hasPlatformWarehouseOrder()) {
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform()) && soB2cEntity.hasPlatformWarehouseOrder()&& billDateIsNull) {
             List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
             if (ObjectUtil.isNotEmpty(soB2cLogisticsEntities)) {
                 LocalDateTime deliveryTime = soB2cLogisticsEntities.get(0).getDeliveryTime();
-                soOutstock.setBillDate(deliveryTime.toLocalDate());
+                billDate = deliveryTime.toLocalDate();
                 soOutstock.setPlanDeliveryDate(deliveryTime.toLocalDate());
                 soOutstock.setActualDeliveryDate(deliveryTime);
             }
         }
+
+        if (Objects.isNull(billDate)) {
+            billDate = LocalDate.now();
+        }
+        // 出库日期
+        soOutstock.setBillDate(billDate);
 
         Boolean addResult = this.save(soOutstock);
         if (addResult) {
