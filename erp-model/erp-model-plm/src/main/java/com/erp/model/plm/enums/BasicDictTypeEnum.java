@@ -17,18 +17,6 @@ public enum  BasicDictTypeEnum {
      * 报关属性
      */
     DECLARE_PROPERTY("declareProperty", "报关属性"),
-
-    /**
-     * 运输认证
-     */
-    TRANSPORT_ATTESTATION("transportAttestation", "运输认证"),
-
-
-    /**
-     * 其它
-     */
-    OTHER_ATTESTATION("otherAttestation", "其它认证"),
-
     /**
      * 国家
      */
@@ -43,6 +31,21 @@ public enum  BasicDictTypeEnum {
      * 证书项目
      */
     CERTIFICATE_PROJECT("certificateProject", "证书项目"),
+
+    /**
+     * 产品认证
+     */
+    PRODUCT_ATTESTATION("productAttestation", "产品认证"),
+
+    /**
+     * 运输认证
+     */
+    TRANSPORT_ATTESTATION("transportAttestation", "运输认证"),
+
+    /**
+     * 其他认证
+     */
+    OTHER_ATTESTATION("otherAttestation", "其他认证"),
     ;
 
 

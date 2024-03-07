@@ -6,6 +6,8 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+
 @Component
 public class TransferInfoQueryHandler extends AbstractQueryHandler {
 
@@ -28,8 +30,8 @@ public class TransferInfoQueryHandler extends AbstractQueryHandler {
     public String getTabSql (Object value) {
         //待提交
         if (PageListTypeEnum.WAIT_SUBMIT.getCode().equals(value)) {
-            super.buildDefaultDTO("ti.approve_status", ApproveStatusEnum.WAIT_SUBMIT.getCode());
-            super.buildDefaultDTO("ti.invalid_status", InvalidStatusEnum.NOT_VOIDED.getStatus());
+            super.buildDefaultDTO("ti.approve_status", Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getCode()));
+            super.buildDefaultDTO("ti.invalid_status", Collections.singletonList(InvalidStatusEnum.NOT_VOIDED.getStatus()));
         }
         //待审核
         if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(value)) {

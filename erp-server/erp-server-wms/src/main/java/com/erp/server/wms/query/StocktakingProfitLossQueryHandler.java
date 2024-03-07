@@ -5,7 +5,6 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
-import com.common.business.threadlocal.AdvanceQueryContext;
 import com.common.business.utils.QueryUtils;
 import com.erp.model.wms.entity.StocktakingTaskUserEntity;
 import com.erp.model.wms.enums.BillTypeEnum;
@@ -14,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,18 +31,23 @@ public class StocktakingProfitLossQueryHandler extends AbstractQueryHandler {
         }
         if("stocktakingUserId".equals(field)){
             if (ObjUtil.isNotEmpty(value)) {
-                Collection<String> collection = (Collection<String>) value;
-                List<String> stringList = new ArrayList<>(collection);
+                List<String> stringList = new ArrayList<>();
+                if (value instanceof String) {
+                    stringList = Arrays.asList(value.toString());
+                } else if (value instanceof List) {
+                    Collection<String> collection = (Collection<String>) value;
+                     stringList = new ArrayList<>(collection);
+                }
                 List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listByUserIds(stringList);
                 List<String> sourceIdList = taskUserList.stream().map(StocktakingTaskUserEntity::getSourceId).collect(Collectors.toList());
 
                 //比较符
-                QueryConditionEnum condEnum = AdvanceQueryContext.getCompareCode();
+                QueryConditionEnum condEnum = QueryConditionEnum.IN_LIST;
                 AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO(null,condEnum,sourceIdList,QueryDataTypeEnum.STRING);
 
                 String compareValueSQL = QueryUtils.splicingCompareValueSQL(condEnum,advanceQueryDTO);
 
-                return "(spl.source_id"+ compareValueSQL +
+                return "(spl.source_id "+ compareValueSQL +
                         " or spl.id "+ compareValueSQL +")";
             }
         }

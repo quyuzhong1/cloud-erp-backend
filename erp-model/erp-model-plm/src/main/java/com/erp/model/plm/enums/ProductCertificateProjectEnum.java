@@ -20,7 +20,7 @@ public enum ProductCertificateProjectEnum implements EnumMessage {
     TELEC("TELEC", "TELEC"),
     OTHER("other", "其他"),
     TRANSPORT_REPORT("transportReport", "运输报告"),
-
+    OTHER_CERTIFICATE("other", "其他认证"),
     ;
 
     private String code;
@@ -44,6 +44,15 @@ public enum ProductCertificateProjectEnum implements EnumMessage {
         for (ProductCertificateProjectEnum item : ProductCertificateProjectEnum.values()) {
             if (item.getCode().equals(code)) {
                 return item.getName();
+            }
+        }
+        return "";
+    }
+
+    public static String getCode(String name) {
+        for (ProductCertificateProjectEnum item : ProductCertificateProjectEnum.values()) {
+            if (item.getName().equals(name)) {
+                return item.getCode();
             }
         }
         return "";

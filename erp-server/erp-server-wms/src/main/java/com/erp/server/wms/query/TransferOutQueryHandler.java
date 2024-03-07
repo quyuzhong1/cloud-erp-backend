@@ -28,15 +28,15 @@ public class TransferOutQueryHandler extends AbstractQueryHandler {
     public String getTabSql (Object value) {
         //待审核
         if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(value)) {
-            super.buildDefaultDTO("ti.approve_status", ApproveStatusEnum.APPROVE_ING.getCode());
+            super.buildDefaultDTO("tfo.approve_status", ApproveStatusEnum.APPROVE_ING.getCode());
         }
         //已审核
         if (PageListTypeEnum.APPROVE.getCode().equals(value)) {
-            super.buildDefaultDTO("ti.approve_status", ApproveStatusEnum.APPROVE.getCode());
+            super.buildDefaultDTO("tfo.approve_status", ApproveStatusEnum.APPROVE.getCode());
         }
         //不通过
         if (PageListTypeEnum.REJECT.getCode().equals(value)) {
-            super.buildDefaultDTO("ti.approve_status", ApproveStatusEnum.REJECT.getCode());
+            super.buildDefaultDTO("tfo.approve_status", ApproveStatusEnum.REJECT.getCode());
         }
         return super.getSplicingSQL();
     }

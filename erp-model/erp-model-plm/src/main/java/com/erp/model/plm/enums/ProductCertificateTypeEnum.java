@@ -32,5 +32,21 @@ public enum ProductCertificateTypeEnum implements EnumMessage {
         return name;
     }
 
+    public static String getName(String code) {
+        for (ProductCertificateTypeEnum item : ProductCertificateTypeEnum.values()) {
+            if (item.getCode().equals(code)) {
+                return item.getName();
+            }
+        }
+        return "";
+    }
 
+    public static String getCode(String name) {
+        for (ProductCertificateTypeEnum item : ProductCertificateTypeEnum.values()) {
+            if (item.getName().equals(name)) {
+                return item.getCode();
+            }
+        }
+        return "";
+    }
 }

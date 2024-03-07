@@ -82,7 +82,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -3978,9 +3977,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (StrUtil.isBlank(productPackEntity.getProductSize())) {
                 throw new ServiceException(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST,detailEntity.getSkuNo());
             }
-            //箱规
+            if (StrUtil.isNotBlank(productPackEntity.getProductSize())) {
+                List<String> productSizeList = Arrays.stream(productPackEntity.getProductSize().split("X")).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(productSizeList)) {
+                    throw new ServiceException(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST,detailEntity.getSkuNo());
+                }
+            }
             if (StrUtil.isBlank(productPackEntity.getBoxSize())) {
-                throw new ServiceException(ApiError.ERROR_BOX_SIZE_NOT_EXIST,detailEntity.getSkuNo());
+                throw new ServiceException(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST,detailEntity.getSkuNo());
+            }
+            //箱规
+            if (StrUtil.isNotBlank(productPackEntity.getBoxSize())) {
+                List<String> boxSizeList = Arrays.stream(productPackEntity.getProductSize().split("X")).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(boxSizeList)) {
+                    throw new ServiceException(ApiError.ERROR_BOX_SIZE_NOT_EXIST, detailEntity.getSkuNo());
+                }
             }
             //毛重
             if (MathUtil.compareTo(productPackEntity.getGrossWeight(),MathUtil.ZERO) == MathUtil.ZERO) {

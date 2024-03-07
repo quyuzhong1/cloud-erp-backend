@@ -3,6 +3,8 @@ package com.erp.model.plm.dto.excel;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
+import com.erp.model.plm.enums.ProductCertificateProjectEnum;
+import com.erp.model.plm.enums.ProductCertificateTypeEnum;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -26,14 +28,14 @@ public class ProductCertificateExcelDTO implements Serializable {
      * 证书类型
      */
     @ExcelProperty(value = "*证书类型", index = 1)
-    @FieldValid(fieldName = "证书类型",isNotBlank = true)
+    @FieldValid(fieldName = "证书类型",isNotBlank = true,enumClass = ProductCertificateTypeEnum.class)
     private String typeName;
 
     /**
      * 证书项目
      */
     @ExcelProperty(value = "*证书项目", index = 2)
-    @FieldValid(fieldName = "证书项目",isNotBlank = true)
+    @FieldValid(fieldName = "证书项目",isNotBlank = true,enumClass = ProductCertificateProjectEnum.class)
     private String dictProjectName;
 
     /**

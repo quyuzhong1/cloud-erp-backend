@@ -21,6 +21,7 @@ import com.erp.model.plm.dto.excel.ProductCertificateExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.enums.ProductCertificateProjectEnum;
+import com.erp.model.plm.enums.ProductCertificateTypeEnum;
 import com.erp.server.plm.listener.ProductCertificateExcelListener;
 import com.erp.server.plm.mapper.ProductCertificateMapper;
 import com.erp.server.plm.service.*;
@@ -379,11 +380,42 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         List<String> skuNoList = successList.stream().map(ProductCertificateExcelDTO::getSkuNo).collect(Collectors.toList());
         List<ProductDetailEntity> skuList = productDetailService.listBySkuNoList(skuNoList);
 
+        //产品认证
+        List<BasicDictEntity> productAttestationList = basicDictService.listByType(BasicDictTypeEnum.PRODUCT_ATTESTATION.getCode());
+        //运输认证
+        List<BasicDictEntity> transportAttestationList = basicDictService.listByType(BasicDictTypeEnum.TRANSPORT_ATTESTATION.getCode());
+        //其他认证
+        List<BasicDictEntity> otherAttestationList = basicDictService.listByType(BasicDictTypeEnum.OTHER_ATTESTATION.getCode());
+
         List<ProductCertificateEntity> resultList = new ArrayList<>();
+
         for (ProductCertificateExcelDTO excelDTO : successList) {
 
             List<String> errorMsgList = new ArrayList<>();
-
+            //产品认证
+            if (StrUtil.equals(ProductCertificateTypeEnum.PRODUCT_ATTESTATION.getName(),excelDTO.getTypeName())) {
+                long count = productAttestationList.stream().filter(obj -> StrUtil.equals(excelDTO.getDictProjectName(), obj.getName())).count();
+                if (count == 0) {
+                    errorMsgList.add("产品认证下未找到证书项目");
+                }
+            }
+            //运输认证
+            if (StrUtil.equals(ProductCertificateTypeEnum.TRANSPORT_ATTESTATION.getName(),excelDTO.getTypeName())) {
+                long count = transportAttestationList.stream().filter(obj -> StrUtil.equals(excelDTO.getDictProjectName(), obj.getName())).count();
+                if (count == 0) {
+                    errorMsgList.add("运输认证下未找到证书项目");
+                }
+                if (StrUtil.isBlank(excelDTO.getCertificateValidTimeStr())) {
+                    errorMsgList.add("运输认证有效期不能为空");
+                }
+            }
+            //其他认证
+            if (StrUtil.equals(ProductCertificateTypeEnum.OTHER_ATTESTATION.getName(),excelDTO.getTypeName())) {
+                long count = otherAttestationList.stream().filter(obj -> StrUtil.equals(excelDTO.getDictProjectName(), obj.getName())).count();
+                if (count == 0) {
+                    errorMsgList.add("其他认证下未找到证书项目");
+                }
+            }
             //产品信息
             ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(productDetailEntity)) {
@@ -403,9 +435,24 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                 continue;
             }
             ProductCertificateEntity entity = new ProductCertificateEntity();
-            BeanMapperUtils.copy(excelDTO,entity);
+            entity.setSkuId(productDetailEntity.getId());
+            entity.setProductId(productDetailEntity.getProductId());
+            entity.setType(ProductCertificateTypeEnum.getCode(excelDTO.getTypeName()));
+            entity.setDictProject(ProductCertificateProjectEnum.getCode(excelDTO.getDictProjectName()));
             entity.setCertificateValidTime(ObjectUtil.isEmpty(excelDTO.getCertificateValidTimeStr()) ? null : LocalDate.parse(excelDTO.getCertificateValidTimeStr(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             entity.setMultipartFile(multipartFile);
+            //数据验证
+            try {
+                checkProductCertificate(Arrays.asList(entity));
+            } catch (Exception e) {
+                errorMsgList.add(e.getMessage());
+            }
+            //存在错误信息则
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                continue;
+            }
             resultList.add(entity);
         }
         //新增数据
@@ -638,7 +685,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             for (ProductCertificateDTO.FileDTO fileDTO : fileList) {
                 ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), skuNo)).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(productDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_95154);
+                    throw new ServiceException(StrUtil.format("SKU【{}】系统不存在",skuNo));
                 }
                 ProductCertificateEntity entity = new ProductCertificateEntity();
                 entity.setSkuId(productDetailEntity.getId());
@@ -697,7 +744,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             PlmAttachmentEntity attachmentEntity = new PlmAttachmentEntity();
             attachmentEntity.setBusinessId(entity.getId());
             attachmentEntity.setAttachUrl(fileUrl);
-            attachmentEntity.setAttachName(fileName);
+            attachmentEntity.setAttachName(StrUtil.isBlank(fileName) ? multipartFile.getName().toLowerCase() : fileName);
             attachmentEntity.setType(ProductCertificateEntity.TABLE_NAME);
             attachmentEntity.setAttachSize(new BigDecimal(fileSize));
             attachmentList.add(attachmentEntity);

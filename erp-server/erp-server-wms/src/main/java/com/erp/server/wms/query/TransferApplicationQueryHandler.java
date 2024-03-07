@@ -3,6 +3,7 @@ package com.erp.server.wms.query;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.server.wms.service.CommonService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -35,6 +36,12 @@ public class TransferApplicationQueryHandler extends AbstractQueryHandler {
      * @return String
      */
     public String getTabSql (Object value) {
+
+        //待提交
+        if (PageListTypeEnum.WAIT_SUBMIT.getCode().equals(value)) {
+            super.buildDefaultDTO("ta.approve_status", Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getCode()));
+            super.buildDefaultDTO("ta.invalid_status", Collections.singletonList(InvalidStatusEnum.NOT_VOIDED.getStatus()));
+        }
         //待我审核
         if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(value)) {
             super.buildDefaultDTO("ta.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));

@@ -2,7 +2,6 @@ package com.erp.server.wms.query;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.query.AbstractQueryHandler;
-import com.erp.model.scm.enums.PageListTypeEnum;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -27,15 +26,15 @@ public class TransferInQueryHandler extends AbstractQueryHandler {
      */
     public String getTabSql (Object value) {
         //待审核
-        if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(value)) {
+        if (ApproveStatusEnum.APPROVE_ING.getCode().equals(value)) {
             super.buildDefaultDTO("ti.approve_status", ApproveStatusEnum.APPROVE_ING.getCode());
         }
         //已审核
-        if (PageListTypeEnum.APPROVE.getCode().equals(value)) {
+        if (ApproveStatusEnum.APPROVE.getCode().equals(value)) {
             super.buildDefaultDTO("ti.approve_status", ApproveStatusEnum.APPROVE.getCode());
         }
         //不通过
-        if (PageListTypeEnum.REJECT.getCode().equals(value)) {
+        if (ApproveStatusEnum.REJECT.getCode().equals(value)) {
             super.buildDefaultDTO("ti.approve_status", ApproveStatusEnum.REJECT.getCode());
         }
         return super.getSplicingSQL();
