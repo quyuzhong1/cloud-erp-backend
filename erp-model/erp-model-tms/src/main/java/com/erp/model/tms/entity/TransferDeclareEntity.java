@@ -103,7 +103,11 @@ public class TransferDeclareEntity extends BaseEntity<TransferDeclareEntity> {
      */
     @TableField("instock_forecast_remark")
     private String instockForecastRemark;
-
+    /**
+     * 入库预报客户参考单号
+     */
+    @TableField("instock_ref_code")
+    private String instockRefCode;
 
     public static final String CODE = "code";
 

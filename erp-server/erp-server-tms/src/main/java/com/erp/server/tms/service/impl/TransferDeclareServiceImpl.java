@@ -59,7 +59,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -537,8 +539,10 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), "未开发平台【" + LogisticsPlatformEnum.getByName(authEntity.getLogisticsPlatform()).getName() + "】报关功能"));
             return resultDTOList;
         }
+        //计算入库预报客户单号
+        String referenceCode = getReferenceCode();
         TransferLogisticsCreateInboundReq request = TransferLogisticsCreateInboundReq.builder()
-                .referenceCode(IdUtil.fastUUID())
+                .referenceCode(referenceCode)
                 .isDelivery(true)
                 .packQty(qtyDTO.getQty())
                 .grossWeight(receiveItemList.stream().map(TransferLogisticsCreateInboundReq.ReceiveItem::getGrossWeight).reduce(BigDecimal::add).orElse(BigDecimal.ZERO))
@@ -548,12 +552,13 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         try {
             //下单
             ApiResult<String> result = service.createInbound(request, authEntity.getId());
-
+            transferDeclareEntity.setInstockRefCode(referenceCode);
             transferDeclareEntity.setInstockForecastAsnCode(result.getData());
             transferDeclareEntity.setTotalQty(qtyDTO.getQty());
             if (result.getCode() == 200) {
                 //拿到第三方订单号，用于给订单赋值第三方平台发货单号
                 transferDeclareEntity.setInstockForecastStatus(InstockForecastStatusEnum.UPLOAD_SUCCESS.getCode());
+                transferDeclareEntity.setInstockForecastRemark(result.getMsg());
                 //上传成功
                 baseMapper.updateById(transferDeclareEntity);
                 //删除订单异常记录
@@ -580,6 +585,15 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), msg));
             }
         }catch (Exception e){
+            transferDeclareEntity.setInstockRefCode(referenceCode);
+            transferDeclareEntity.setInstockForecastAsnCode("");
+            transferDeclareEntity.setTotalQty(qtyDTO.getQty());
+            String msg = String.format("入库预报失败：%s", e.getMessage());
+            //上传失败
+            transferDeclareEntity.setInstockForecastRemark(e.getMessage());
+            transferDeclareEntity.setInstockForecastStatus(InstockForecastStatusEnum.UPLOAD_FAILURE.getCode());
+            baseMapper.updateById(transferDeclareEntity);
+
             //记录订单预报异常
             SoB2cErrorDTO.BatchAdd batchAdd = new SoB2cErrorDTO.BatchAdd();
             batchAdd.setMainIds(transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).distinct().collect(Collectors.toList()));
@@ -590,6 +604,22 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), e.getMessage()));
         }
         return resultDTOList;
+    }
+
+    private String getReferenceCode() {
+        StringBuffer stringBuffer = new StringBuffer();
+        LocalDateTime localDateTime = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String format = localDateTime.format(formatter);
+        stringBuffer.append("深圳市优篮子科技有限公司+").append(format);
+        Integer count = this.lambdaQuery().likeRight(TransferDeclareEntity::getInstockRefCode,stringBuffer.toString()).count();
+        if (Objects.isNull(count)){
+            stringBuffer.append(StringUtils.leftPad("1",4, "0"));
+        }else {
+            count = count + 1;
+            stringBuffer.append(StringUtils.leftPad(count.toString(),4, "0"));
+        }
+        return stringBuffer.toString();
     }
 
     @Override
