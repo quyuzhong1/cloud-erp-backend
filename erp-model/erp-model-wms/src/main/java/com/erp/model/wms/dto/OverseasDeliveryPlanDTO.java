@@ -598,6 +598,16 @@ public class OverseasDeliveryPlanDTO implements Serializable {
          * 发货数量
          */
         private Integer deliveryQty;
+
+        /**
+         * 平台sku
+         */
+        private String platformSku;
+
+        /**
+         * 平台产品名称
+         */
+        private String platformSkuName;
     }
 
 

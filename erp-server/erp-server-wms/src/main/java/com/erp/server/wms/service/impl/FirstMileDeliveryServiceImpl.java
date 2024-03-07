@@ -859,7 +859,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<FirstMileDeliveryDetailEntity> entities = firstMileDeliveryDetailService.listBySourceDetailIds(sourceDetailIdList);
 
         //获取库存sku信息
-//        List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNoViews = omsListingInfoFeign.listBySkuNoList(skuNoList);
         List<SkuMappingDTO.ListSkuParamDTO> paramDTOList = new ArrayList<>();
         for (FirstMileDeliveryDetailEntity detailEntity : detailEntityList) {
             SkuMappingDTO.ListSkuParamDTO paramDTO = new SkuMappingDTO.ListSkuParamDTO();
@@ -873,7 +872,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         //查询第三方SKU信息
         List<String> skuIdList = detailEntityList.stream().map(FirstMileDeliveryDetailEntity::getSkuId).collect(Collectors.toList());
-        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIdList,"");
 
         //明细信息
         List<FirstMileDeliveryDetailDTO.ViewDTO> detailViews = new ArrayList<>();
@@ -906,23 +904,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             detailVie.setStockSku(stockSku);
 
             detailViews.add(detailVie);
-
-            //设置第三方仓sku
-            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = null;
-            if(data.getDemandType().equals(FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode())){
-                List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(data.getDestWarehouseId()));
-                if(CollectionUtils.isNotEmpty(viewDTOList)){
-                    String provideCode = viewDTOList.get(0).getProviderCode();
-                    if(StringUtils.isNotBlank(provideCode)){
-                        listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
-                                v->v.getProductSkuId().equals(detailVie.getSkuId()) && v.getDictPlatform().equals(provideCode) && (v.getHasMappingAll() && v.getWarehouseId().equals(data.getDestWarehouseId())))
-                                .findFirst().orElse(null);
-                        if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
-                            detailVie.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
-                        }
-                    }
-                }
-            }
+            detailVie.setThirdWarehouseSku(firstMileDeliveryDetailEntity.getPlatformSkuNo());
         }
         data.setDetailList(detailViews);
     }

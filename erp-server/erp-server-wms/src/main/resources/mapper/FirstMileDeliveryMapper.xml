@@ -35,7 +35,8 @@
         fd.create_time AS createTime,
         fd.approve_user_name AS approveUserName,
         fd.approve_time AS approveTime,
-        op.code as provideCode
+        op.code as provideCode,
+        fdd.platform_sku_no as thirdWarehouseSku
         FROM first_mile_delivery_detail fdd
         LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         LEFT JOIN first_mile_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
