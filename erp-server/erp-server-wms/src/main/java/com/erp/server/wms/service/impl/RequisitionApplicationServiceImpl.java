@@ -634,7 +634,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationDetailDTO.ViewDTO> viewDetailList = new ArrayList<>();
 
         //查询第三方SKU信息
-        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIdList,"");
+//        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIdList,"");
 
         for (RequisitionApplicationDetailEntity detailEntity : detailList) {
             RequisitionApplicationDetailDTO.ViewDTO detailView = RequisitionApplicationConverter.INSTANCE.radEntityToRadDto(detailEntity);
@@ -656,29 +656,29 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 detailView.setIsCombination(Boolean.FALSE);
             }
             //根据类型设置第三方SKU信息
-            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = null;
-            if(data.getType().equals(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode())){
-                List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(data.getChannelId()));
-                if(CollectionUtils.isNotEmpty(viewDTOList)){
-                    String provideCode = viewDTOList.get(0).getProviderCode();
-                    listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
-                            v->v.getProductSkuId().equals(detailEntity.getSkuId()) && v.getDictPlatform().equals(provideCode) && (v.getHasMappingAll() || v.getWarehouseId().equals(data.getChannelId()))
-                    ).findFirst().orElse(null);
-                }
-            }
+//            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = null;
+//            if(data.getType().equals(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode())){
+//                List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(data.getChannelId()));
+//                if(CollectionUtils.isNotEmpty(viewDTOList)){
+//                    String provideCode = viewDTOList.get(0).getProviderCode();
+//                    listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
+//                            v->v.getProductSkuId().equals(detailEntity.getSkuId()) && v.getDictPlatform().equals(provideCode) && (v.getHasMappingAll() || v.getWarehouseId().equals(data.getChannelId()))
+//                    ).findFirst().orElse(null);
+//                }
+//            }
 
-            if(data.getType().equals(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode())){
-                if(StringUtils.isNotBlank(data.getChannelId())){
-                    listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(v->v.getProductSkuId().equals(detailEntity.getSkuId()) && v.getShopId().equals(data.getChannelId())).findFirst().orElse(null);
-                }
-            }
+//            if(data.getType().equals(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode())){
+//                if(StringUtils.isNotBlank(data.getChannelId())){
+//                    listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(v->v.getProductSkuId().equals(detailEntity.getSkuId()) && v.getShopId().equals(data.getChannelId())).findFirst().orElse(null);
+//                }
+//            }
 
-            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
-                detailView.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
-                detailView.setPlatformSkuNo(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
-                detailView.setPlatformSkuName(listingInfoWithSkuMappingDTO.getPlatformSkuName());
-                detailView.setPlatformFnSku(listingInfoWithSkuMappingDTO.getPlatformFnSku());
-            }
+//            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
+//                detailView.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
+//                detailView.setPlatformSkuNo(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
+//                detailView.setPlatformSkuName(listingInfoWithSkuMappingDTO.getPlatformSkuName());
+//                detailView.setPlatformFnSku(listingInfoWithSkuMappingDTO.getPlatformFnSku());
+//            }
 
             viewDetailList.add(detailView);
         }
