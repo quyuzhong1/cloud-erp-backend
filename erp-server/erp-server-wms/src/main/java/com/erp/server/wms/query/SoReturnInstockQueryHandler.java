@@ -1,5 +1,6 @@
 package com.erp.server.wms.query;
 
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
@@ -24,7 +25,11 @@ public class SoReturnInstockQueryHandler extends AbstractQueryHandler {
             if(StringUtils.isBlank(value.toString()) || "all".equals(value.toString())){
                 return this.getQueryAllSql();
             }
-            super.buildDefaultDTO("sri.approve_status",value);
+            if("toBeApprove".equals(value.toString())){
+                super.buildDefaultDTO("sri.approve_status", ApproveStatusEnum.APPROVE_ING.getStatus());
+            }else{
+                super.buildDefaultDTO("sri.approve_status",value);
+            }
             super.buildSplicingSQLDTO("sri.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
         return null;
