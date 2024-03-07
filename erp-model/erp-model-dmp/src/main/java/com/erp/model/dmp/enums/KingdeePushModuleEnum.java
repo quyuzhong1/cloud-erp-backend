@@ -40,7 +40,7 @@ public enum KingdeePushModuleEnum {
     PUR_POXCHANGE("PUR_POXChange","采购变更"),
     PUR_RECEIVEBILL("PUR_ReceiveBill","收料通知单"),
     SUB_PICKMTRL("SUB_PickMtrl","委外领料单"),
-
+    CN_BANKACNT("CN_BANKACNT","银行账号"),
 
     ;
     private String code;

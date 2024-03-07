@@ -5,9 +5,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.oms.dto.BankAccountDTO;
 import com.erp.model.oms.dto.CustomerB2CDTO;
 import com.erp.model.oms.entity.BankAccountEntity;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.oms.service.BankAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -16,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -71,6 +74,15 @@ public class BankAccountController extends BaseController {
     public ApiResult<BankAccountDTO.ViewDTO> view(@RequestParam(value = "id") String id){
         BankAccountDTO.ViewDTO viewDTO = bankAccountService.view(id);
         return success(viewDTO);
+    }
+    @GetMapping("/test")
+    public ApiResult test(){
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.CN_BANKACNT.getCode());
+        //查询子单据id
+        String fieldKeys = "FNumber,FName,UseOrgId.Number";
+        List<Map<String, Object>> list = apiUtils.queryList("", fieldKeys, 1000, 1, 0);
+        System.out.println(list);
+        return success();
     }
 
 }
