@@ -727,10 +727,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
             obj.setReturnTypeDict(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
             obj.setType(BillTypeEnum.getName(obj.getType()));
-            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95107);
-            }
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(obj.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             obj.setProductName(productDetailEntity.getName());

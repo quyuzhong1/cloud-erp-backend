@@ -21,11 +21,11 @@ public class SoReturnInstockQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if("tab".equals(field)){
-            if(StringUtils.isBlank(value.toString())){
+            if(StringUtils.isBlank(value.toString()) || "all".equals(value.toString())){
                 return this.getQueryAllSql();
             }
-            super.buildDefaultDTO("srr.approve_status",value);
-            super.buildSplicingSQLDTO("srr.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            super.buildDefaultDTO("sri.approve_status",value);
+            super.buildSplicingSQLDTO("sri.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
         return null;
     }
