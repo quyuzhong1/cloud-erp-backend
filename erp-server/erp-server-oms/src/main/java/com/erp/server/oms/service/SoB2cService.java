@@ -777,4 +777,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return void
      **/
     Boolean updateAliExpressOrderWarehouse(String soId, String shopId);
+
+    /**
+     * 根据平台单号和平台查询B2C销售订单
+     *
+     * @date 2024-03-07
+     * @author Jim
+     */
+    SoB2cEntity getByPlatformCode(String platformCode, String dictPlatform);
 }

@@ -152,7 +152,11 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
                 handleRule(mainEntity);
                 //如果是已发货且是平台仓订单 就生成销售出库单
-                if (isShipped && hasPlatformWarehouse) {
+                // 亚马逊的平台订单不实时生成销售出库单,由亚马逊FBA物流配送报告生成
+                if (isShipped
+                        && hasPlatformWarehouse
+                        && !PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())
+                ) {
                     SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
                     soOutstockFeign.generateB2cSoOutstockByData(generateB2cDTO);
                 }

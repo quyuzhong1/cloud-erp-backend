@@ -355,7 +355,7 @@ public class ReportsApiTest {
 //        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_ALL_INVENTORY_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_INVENTORY_PLANNING_DATA");
-        List<String> reportTypes = Arrays.asList("GET_LEDGER_DETAIL_VIEW_DATA");
+        List<String> reportTypes = Arrays.asList("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL");
 //        List<String> reportTypes = Arrays.asList(AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType());
 //        List<String> reportTypes = Stream.of(AmazonReportRecordTypeEnum.values())
 //                .map(AmazonReportRecordTypeEnum::getRecordType)
@@ -364,7 +364,7 @@ public class ReportsApiTest {
         List<String> processingStatuses = null;
 //        List<String> marketplaceIds = Arrays.asList("A1VC38T7YXB528");
         ;
-        Integer pageSize = 10;
+        Integer pageSize = 20;
         String createdSince = null;
         String createdUntil = null;
         String nextToken = null;
@@ -372,7 +372,8 @@ public class ReportsApiTest {
 //        String shopId = "1734478618723094529";
 //        String shopId = "1734478618731483137";
 //        String shopId = "1738050804738166786";
-        String shopId = "1735479610549735425";
+//        String shopId = "1739563826220634113";
+        String shopId = "1739563826220634113";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -401,8 +402,8 @@ public class ReportsApiTest {
 
 //        String reportDocumentId = "amzn1.spdoc.1.4.eu.2dab2b36-2509-427e-a09c-849f9aa3d2a1.T2YME8P5WMNUJ8.47700";
 //        String shopId = "1734478618723094530";
-        String reportDocumentId = "amzn1.spdoc.1.4.fe.b7a2550b-23f6-49cf-b999-9763dbc56dfc.T2D0ZXHD56F8VZ.84700";
-        String shopId = "1735479610549735425";
+        String reportDocumentId = "amzn1.spdoc.1.4.na.432063e2-6fd9-4f35-99ae-75e9e4e0adee.T11BXPXCLBFLJA.2511";
+        String shopId = "1739563826220634113";
 
 
         // 获取店铺授权信息
@@ -417,7 +418,7 @@ public class ReportsApiTest {
         System.out.println("路径");
         System.out.println(url);
 //        String recordType= AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA.getRecordType();
-        String recordType= "GET_LEDGER_DETAIL_VIEW_DATA";
+        String recordType= "GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL";
 //        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA;
 //        Map<String, String> configMap = cfgAmzReportFieldService.mayByReportType(recordTypeEnum.getRecordType());
         String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();
@@ -438,7 +439,8 @@ public class ReportsApiTest {
     @Test
     public void getGzipFileMetadata() throws Exception {
 //        String filePath = "group1/M00/00/56/rBBkDGWwhqKAEXEzAAAsztgMvt42.84700";
-        String filePath = "group1/M00/00/59/rBBkDGXB43OAfWxJAABZFLcZxlY4128.gz";
+//        String filePath = "group1/M00/00/59/rBBkDGXB43OAfWxJAABZFLcZxlY4128.gz";
+        String filePath = "group1/M00/00/61/rBBkDGXmdr2AQduGAAM1_TuUdzs.T11BXP";
         Map<String, String> fileMetadata = FastDFSClientUtil.getFileMetadata(filePath);
         System.out.println(fileMetadata);
         // {reportDocumentId=amzn1.spdoc.1.4.na.adbe9060-0721-4959-9edb-6e51b38efd5b.T22ITFOKN9MSCT.84700, compressionAlgorithm=GZIP, recordType=GET_LEDGER_DETAIL_VIEW_DATA, Content-Type=text/plain}
@@ -450,10 +452,10 @@ public class ReportsApiTest {
         // GET_MERCHANT_LISTINGS_DATA
 //        String filePath = "group1/M00/00/57/rBBkDGWwwAGAKM66AAA9CK6hNZY.T1RW0R";
 //        String filePath = "group1/M00/00/57/rBBkDGWwx-SAN72WAAAa60JmTIA.TJTK0A";
-        String filePath = "group1/M00/00/59/rBBkDGXB43OAfWxJAABZFLcZxlY4128.gz";
+        String filePath = "group1/M00/00/61/rBBkDGXmdr2AQduGAAM1_TuUdzs.T11BXP";
 //        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA;
 //        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA;
-        String recordType = "GET_LEDGER_DETAIL_VIEW_DATA";
+        String recordType = "GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL";
         // GET_LEDGER_DETAIL_VIEW_DATA
 //        String filePath = "group1/M00/00/56/rBBkDGWwhqKAEXEzAAAsztgMvt42.84700";
 //        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_LEDGER_DETAIL_VIEW_DATA;

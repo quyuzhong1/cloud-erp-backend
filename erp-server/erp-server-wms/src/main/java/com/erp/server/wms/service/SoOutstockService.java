@@ -1,10 +1,12 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
@@ -380,4 +382,12 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return
      */
     Boolean generateB2cSoOutstockByCode(String soB2cCode);
+
+    /**
+     * 检查和生成销售出库单
+     *
+     * @author Jim
+     * @date 2024-03-07
+     */
+    void checkAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity);
 }

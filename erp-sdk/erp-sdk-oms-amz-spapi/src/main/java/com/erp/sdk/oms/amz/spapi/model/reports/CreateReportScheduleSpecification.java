@@ -94,7 +94,7 @@ public class CreateReportScheduleSpecification {
             return Stream.of(PeriodEnum.values())
                     .filter(periodEnum -> periodEnum.getValue().equalsIgnoreCase(period))
                     .findFirst()
-                    .orElseThrow(() -> new ServiceException("为找到对应时间段类型:"+ period))
+                    .orElseThrow(() -> new ServiceException("未找到对应时间段类型:"+ period))
                     ;
         }
 
@@ -153,7 +153,7 @@ public class CreateReportScheduleSpecification {
                 case P30D:
                     return currentDateTime.plusDays(30);
                 case P1M:
-                    return currentDateTime.plusMinutes(1);
+                    return currentDateTime.plusMonths(1);
             }
             throw new ServiceException("未找到对应时区");
         }
@@ -183,6 +183,13 @@ public class CreateReportScheduleSpecification {
                         .withSecond(0)
                         .withNano(0);
             }
+            if (PeriodEnum.P1D.equals(this)){
+                return currentDateTime.withHour(0)
+                        .withMinute(0)
+                        .withSecond(0)
+                        .withNano(0);
+            }
+
             // 其他时间取整
             return currentDateTime.withMinute(0)
                         .withSecond(0)

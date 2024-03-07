@@ -5606,6 +5606,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return Boolean.FALSE;
     }
 
+    @Override
+    public SoB2cEntity getByPlatformCode(String platformCode, String dictPlatform) {
+        return lambdaQuery()
+                .eq(SoB2cEntity::getPlatformCode, platformCode)
+                .eq(SoB2cEntity::getDictPlatform, dictPlatform)
+                .last("LIMIT 1")
+                .one();
+    }
+
 
     /**
      * 新增速卖通发货单

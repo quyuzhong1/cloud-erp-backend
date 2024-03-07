@@ -200,6 +200,12 @@ public interface MongoTableNameContant {
      */
     String REPORT_AMAZON_RESERVED = "report_amazon_reserved";
 
+
+    /**
+     * 亚马逊物流销售报告
+     */
+    String REPORT_AMAZON_FULFILLED_SHIPMENTS = "report_amazon_fulfilled_shipments";
+
     // Shopify数据库表名
     /**
      * Shopify订单表

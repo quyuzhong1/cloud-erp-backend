@@ -359,4 +359,16 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/batchUpdateLogistics")
     Boolean batchUpdateLogistics(@RequestBody List<SoB2cLogisticsEntity> list);
+
+    /**
+     * 根据平台单号和平台查询B2C销售订单
+     *
+     * @date 2024-03-07
+     * @author Jim
+     */
+    @GetMapping("/feign/soB2c/getByPlatformCode")
+    SoB2cEntity getByPlatformCode(@RequestParam("platformCode") String platformCode, @RequestParam("dictPlatform") String dictPlatform);
+
+    @PostMapping("/feign/soB2c/updateById")
+    Boolean updateById(@RequestBody SoB2cEntity soB2cEntity);
 }
