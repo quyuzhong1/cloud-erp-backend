@@ -50,6 +50,18 @@ public class OverseasDeliveryPlanDetailEntity extends BaseEntity<OverseasDeliver
     @TableField("is_combination")
     private Boolean isCombination;
 
+    /**
+     * 平台sku
+     */
+    @TableField("platform_sku")
+    private String platformSku;
+
+    /**
+     * 平台sku
+     */
+    @TableField("platform_sku_name")
+    private String platformSkuName;
+
 
     public static final String MAIN_ID = "main_id";
 

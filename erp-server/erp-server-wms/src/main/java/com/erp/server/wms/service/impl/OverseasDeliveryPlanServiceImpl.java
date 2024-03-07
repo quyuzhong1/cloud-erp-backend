@@ -465,14 +465,14 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         //查询第三方仓SKU信息
-        List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(data.getToWarehouseId()));
-        String provideCode;
-        if(CollectionUtils.isNotEmpty(viewDTOList)){
-            provideCode = viewDTOList.get(0).getProviderCode();
-        } else {
-            provideCode = "";
-        }
-        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIdList,"");
+//        List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(data.getToWarehouseId()));
+//        String provideCode;
+//        if(CollectionUtils.isNotEmpty(viewDTOList)){
+//            provideCode = viewDTOList.get(0).getProviderCode();
+//        } else {
+//            provideCode = "";
+//        }
+//        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIdList,"");
         //设置状态中文名称
         data.setApproveStatusName(data.getApproveStatus().getName());
 
@@ -507,14 +507,14 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
                 viewDTO.setStockSku(listSkuDTO.getWarehouseSkuNo());
                 viewDTO.setStockSkuName(listSkuDTO.getWarehouseProductName());
             }
-            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
-                    v->v.getDictPlatform().equals(provideCode) && v.getProductSkuId().equals(viewDTO.getSkuId()) && (v.getHasMappingAll() || v.getWarehouseId().equals(data.getToWarehouseId()))
-                    )
-                    .findFirst().orElse(null);
-            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
-                viewDTO.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
-                viewDTO.setThirdWarehouseProductName(listingInfoWithSkuMappingDTO.getPlatformSkuName());
-            }
+//            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
+//                    v->v.getDictPlatform().equals(provideCode) && v.getProductSkuId().equals(viewDTO.getSkuId()) && (v.getHasMappingAll() || v.getWarehouseId().equals(data.getToWarehouseId()))
+//                    )
+//                    .findFirst().orElse(null);
+//            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
+//                viewDTO.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
+//                viewDTO.setThirdWarehouseProductName(listingInfoWithSkuMappingDTO.getPlatformSkuName());
+//            }
 
         }
         data.setDetailList(viewDTOS);
@@ -902,7 +902,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         //查询第三方仓SKU信息
-        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIds,"");
+//        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIds,"");
         //根据单据id查询审核流程
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
 
@@ -941,13 +941,13 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
             String waitApproveUserName = StringUtils.join(curApproveName, ",");
             data.setWaitApproveUserName(waitApproveUserName);
 
-            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
-                    v->v.getDictPlatform().equals(data.getProvideCode()) && v.getProductSkuId().equals(data.getSkuId()) &&(v.getHasMappingAll() || v.getWarehouseId().equals(data.getToWarehouseId()))
-                    )
-                    .findFirst().orElse(null);
-            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
-                data.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
-            }
+//            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
+//                    v->v.getDictPlatform().equals(data.getProvideCode()) && v.getProductSkuId().equals(data.getSkuId()) &&(v.getHasMappingAll() || v.getWarehouseId().equals(data.getToWarehouseId()))
+//                    )
+//                    .findFirst().orElse(null);
+//            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
+//                data.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
+//            }
         }
     }
     /**

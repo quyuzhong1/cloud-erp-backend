@@ -484,6 +484,27 @@ public class OverseasDeliveryPlanDTO implements Serializable {
          * 是否组合品
          */
         private Boolean isCombination;
+
+        /**
+         * 平台sku
+         */
+        private String platformSku;
+
+        /**
+         * 平台spu（asin）
+         */
+        private String asin;
+
+        /**
+         * fnSku
+         */
+        private String fnSku;
+
+        /**
+         * 平台产品名称
+         */
+        private String platformSkuName;
+
     }
 
     /**
