@@ -440,7 +440,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             entity.setProductId(productDetailEntity.getProductId());
             entity.setType(ProductCertificateTypeEnum.getCode(excelDTO.getTypeName()));
             entity.setDictProject(ProductCertificateProjectEnum.getCode(excelDTO.getDictProjectName()));
-            entity.setCertificateValidTime(ObjectUtil.isEmpty(excelDTO.getCertificateValidTimeStr()) ? null : LocalDate.parse(excelDTO.getCertificateValidTimeStr(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            entity.setCertificateValidTime(ObjectUtil.isEmpty(excelDTO.getCertificateValidTimeStr()) ? null : LocalDate.parse(excelDTO.getCertificateValidTimeStr(), DateTimeFormatter.ofPattern("yyyy/M/d")));
             entity.setMultipartFile(multipartFile);
             //数据验证
             try {
