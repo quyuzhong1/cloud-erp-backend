@@ -1,5 +1,7 @@
 package com.erp.model.oms.dto;
 
+import cn.hutool.core.annotation.Alias;
+import com.alibaba.fastjson.annotation.JSONField;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -111,6 +113,52 @@ public class BankAccountDTO implements Serializable {
         @NotBlank(message = "账户名称不能为空")
         private String orgId;
 
+
+
+
+    }
+
+
+    @Data
+    public static class KingdeeBankAccountDTO{
+
+        /**
+         * 账号
+         */
+        @Alias("FNumber")
+        private String bankAccountNo;
+        /**
+         * 账号名称
+         */
+        @Alias("FName")
+        private String accountName;
+
+        /**
+         * 使用组织code
+         */
+        @Alias("FUseOrgId.FNumber")
+        private String userOrgCode;
+
+
+        /**
+         * 金蝶id
+         */
+        @Alias("FBANKACNTID")
+        private String kingdeeId;
+
+        /**
+         * 金蝶状态
+         * C 是已审核
+         */
+        @Alias("FDOCUMENTSTATUS")
+        private String kingdeeStatus;
+
+        /**
+         * 金蝶禁用状态
+         * B 是禁用
+         */
+        @Alias("FFORBIDSTATUS")
+        private String kingdeeDisabledStatus;
 
 
 
