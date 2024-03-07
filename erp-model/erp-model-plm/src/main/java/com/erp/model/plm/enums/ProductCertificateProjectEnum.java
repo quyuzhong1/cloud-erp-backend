@@ -20,7 +20,7 @@ public enum ProductCertificateProjectEnum implements EnumMessage {
     TELEC("TELEC", "TELEC"),
     OTHER("other", "其他"),
     TRANSPORT_REPORT("transportReport", "运输报告"),
-    OTHER_CERTIFICATE("other", "其他认证"),
+    OTHER_CERTIFICATE("otherCertificate", "其他认证"),
     ;
 
     private String code;
