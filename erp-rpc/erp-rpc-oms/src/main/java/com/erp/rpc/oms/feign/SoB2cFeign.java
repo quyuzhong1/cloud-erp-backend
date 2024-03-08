@@ -350,6 +350,16 @@ public interface SoB2cFeign {
      **/
     @PostMapping("/feign/soB2c/updateShippingOrderNo")
     Boolean updateShippingOrderNo(@RequestBody List<TransferDeclareDTO.ShippingOrderDTO> list);
+
+    /**
+     * 修改订单的第三方物流单号
+     * @Author Luo_WG
+     * @Date 2024/1/29 17:04
+     * @param shippingOrderDTO
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/soB2c/updateShippingOrderNoBySoId")
+    Boolean updateShippingOrderNoBySoId(@RequestBody TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO);
     /**
      * 根据销售订单拆分sku
      * 拆分逻辑为 物流产品 为拆分 sku为组合时进行拆分

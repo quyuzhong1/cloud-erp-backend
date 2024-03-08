@@ -784,4 +784,11 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param type
      */
     void batchRemoveSignError(List<String> mainIds, String type);
+
+    /**
+     * 单个更新订单预报号
+     * @param shippingOrderDTO
+     * @return
+     */
+    Boolean updateShippingOrderNoBySoId(TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO);
 }

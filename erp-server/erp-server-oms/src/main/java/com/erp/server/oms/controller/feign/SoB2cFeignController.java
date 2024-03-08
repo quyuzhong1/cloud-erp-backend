@@ -479,6 +479,15 @@ public class SoB2cFeignController extends BaseController {
     }
 
     /**
+     * 单个更新订单预报号
+     * @param shippingOrderDTO
+     * @return
+     */
+    @PostMapping("/updateShippingOrderNoBySoId")
+    Boolean updateShippingOrderNoBySoId(@RequestBody TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO){
+        return soB2cService.updateShippingOrderNoBySoId(shippingOrderDTO);
+    }
+    /**
      * 根据销售订单拆分sku
      * 拆分逻辑为 物流产品 为拆分 sku为组合时进行拆分
      *

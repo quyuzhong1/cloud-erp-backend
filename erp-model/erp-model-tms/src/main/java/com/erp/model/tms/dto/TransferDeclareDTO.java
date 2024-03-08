@@ -479,6 +479,10 @@ public class TransferDeclareDTO implements Serializable {
          * 第三方中转服务商的发货单号
          */
         private String shippingOrderNo;
+        /**
+         * 异常标识
+         */
+        private String sign;
     }
 
     @Data

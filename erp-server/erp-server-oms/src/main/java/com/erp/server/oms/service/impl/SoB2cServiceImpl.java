@@ -5696,6 +5696,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     }
 
+    @Override
+    public Boolean updateShippingOrderNoBySoId(TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO) {
+        SoB2cEntity soB2cEntity = this.getById(shippingOrderDTO.getSoId());
+        if (Objects.nonNull(soB2cEntity)){
+            this.lambdaUpdate()
+                    .set(SoB2cEntity::getShippingOrderNo,shippingOrderDTO.getShippingOrderNo())
+                    .set(soB2cEntity.getSignOrderError().equals(shippingOrderDTO.getSign()), SoB2cEntity::getSignOrderError, "")
+                    .eq(SoB2cEntity::getId,shippingOrderDTO.getSoId()).update();
+        }
+        return Boolean.TRUE;
+    }
+
 
     /**
      * 新增速卖通发货单
