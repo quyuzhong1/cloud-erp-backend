@@ -149,10 +149,10 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
                                     || (e.getWarehouseId().equalsIgnoreCase(dto.getWarehouseId()) && e.getPlatformSkuNo().equalsIgnoreCase(dto.getProductSku()))
                             ).findFirst().orElse(null);
                     if (null != listingInfoWithSkuMappingDTO){
-                        entity.setPlatformSkuName(listingInfoWithSkuMappingDTO.getPlatformSkuName());
-                        entity.setProductName(listingInfoWithSkuMappingDTO.getProductName());
-                        entity.setSkuId(listingInfoWithSkuMappingDTO.getProductSkuId());
-                        entity.setSkuNo(listingInfoWithSkuMappingDTO.getProductSkuNo());
+                        entity.setPlatformSkuName(listingInfoWithSkuMappingDTO.getPlatformSkuName().trim());
+                        entity.setProductName(listingInfoWithSkuMappingDTO.getProductName().trim());
+                        entity.setSkuId(listingInfoWithSkuMappingDTO.getProductSkuId().trim());
+                        entity.setSkuNo(listingInfoWithSkuMappingDTO.getProductSkuNo().trim());
                     }
                 }
             }
@@ -162,7 +162,6 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
         }
         return ApiResult.success();
     }
-
 
     private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity, String msg) {
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();

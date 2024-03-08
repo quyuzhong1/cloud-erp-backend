@@ -208,7 +208,10 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         List<RuleDeliveryWarehouseEntity> ruleDeliveryWarehouselList = this.listOrderByPriority();
         List<String> ruleIdList = ruleDeliveryWarehouselList.stream().map(RuleDeliveryWarehouseEntity::getId).collect(Collectors.toList());
         List<Map<String, Object>> mapList = (List<Map<String, Object>>) map.get("detailList");
-        mapList= mapList.stream().filter(m->Objects.isNull(m.get("deliveryWarehouseId"))||StringUtils.isBlank(m.get("deliveryWarehouseId").toString())).
+        //deliveryWarehouseId
+        //要匹配仓库id 是空的 如果有就不用匹配了返回成功
+        mapList = mapList.stream().filter(m -> m.get("deliveryWarehouseId") == null ||
+                        StringUtils.isBlank(m.getOrDefault("deliveryWarehouseId", "").toString())).
                 collect(Collectors.toList());
         if(CollectionUtils.isEmpty(mapList)){
             return new RuleDeliveryWarehouseDTO.RuleMatchResultDTO();
@@ -266,4 +269,5 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         ruleDeliveryWarehouseEntity.setWarehouseName(warehouseList.get(0).getName());
 
     }
+
 }
