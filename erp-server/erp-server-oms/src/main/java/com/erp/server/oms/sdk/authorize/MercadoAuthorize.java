@@ -36,11 +36,9 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 美客多授权
@@ -91,19 +89,24 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         findDTO.setDictPlatform(appClient.getPlatform());
         findDTO.setPlatformType(appClient.getPlatformType());
         CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
-        // 设置缓存
-        String key = StrUtil.format(RedisCacheConstants.AUTH_MERCADO_STATE, dto.getShop());
-        Object obj = redisUtil.get(key);
-        if (null != obj){
-            throw new ServiceException("正在申请授权中");
-        }
-        redisUtil.set(key, dto.getShopId(), RedisCacheConstants.THIRD_PARTY_AUTH_EXPIRATION);
+
+        // 生成随机数据
+        SecureRandom secureRandom = new SecureRandom();
+        // 生成 256 字节的随机数据
+        byte[] randomBytes = new byte[256];
+        secureRandom.nextBytes(randomBytes);
+        // 进行 Base64 编码
+        String state = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+        // 缓存state
+        String key = StrUtil.format(RedisCacheConstants.AUTH_MERCADO_STATE, state);
+
+        redisUtil.set(key, shopInfo.getId(), RedisCacheConstants.THIRD_PARTY_AUTH_EXPIRATION);
 
         //拼接授权地址
         String shopAuthorizeUrl = "";
         if (ObjectUtil.isNotEmpty(cfgAppClient)) {
-
-            shopAuthorizeUrl = String.format(cfgAppClient.getUrl(), cfgAppClient.getClientId(), cfgAppClient.getRedirectUrl());
+            //https://global-selling.mercadolibre.com/authorization?response_type=code&client_id=%s&redirect_uri=%s&state=%s
+            shopAuthorizeUrl = String.format(cfgAppClient.getUrl(), cfgAppClient.getClientId(), cfgAppClient.getRedirectUrl(), state);
         }
         return shopAuthorizeUrl;
     }
