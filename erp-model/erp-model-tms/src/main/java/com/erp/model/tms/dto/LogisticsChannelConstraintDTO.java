@@ -258,6 +258,75 @@ public class LogisticsChannelConstraintDTO implements Serializable {
         */
         private String sizeUnit = "cm";
 
+        public void setMaxCustomsAmount(BigDecimal maxCustomsAmount) {
+            if(maxCustomsAmount == null){
+                return;
+            }
+            this.maxCustomsAmount = maxCustomsAmount;
+        }
+
+        public void setMaxCustomsCurrency(String maxCustomsCurrency) {
+            if(maxCustomsCurrency == null){
+                return;
+            }
+            this.maxCustomsCurrency = maxCustomsCurrency;
+        }
+
+        public void setMinCustomsAmount(BigDecimal minCustomsAmount) {
+            if(minCustomsAmount == null){
+                return;
+            }
+            this.minCustomsAmount = minCustomsAmount;
+        }
+
+        public void setMinCustomsCurrency(String minCustomsCurrency) {
+            if(minCustomsCurrency == null){
+                return;
+            }
+            this.minCustomsCurrency = minCustomsCurrency;
+        }
+
+        public void setMaxWeight(BigDecimal maxWeight) {
+            if(maxWeight == null){
+                return;
+            }
+            this.maxWeight = maxWeight;
+        }
+
+        public void setWeightUnit(String weightUnit) {
+            if(weightUnit == null){
+                return;
+            }
+            this.weightUnit = weightUnit;
+        }
+
+        public void setMaxLength(BigDecimal maxLength) {
+            if(maxLength == null){
+                return;
+            }
+            this.maxLength = maxLength;
+        }
+
+        public void setMaxWidth(BigDecimal maxWidth) {
+            if(maxWidth == null){
+                return;
+            }
+            this.maxWidth = maxWidth;
+        }
+
+        public void setMaxHeight(BigDecimal maxHeight) {
+            if(maxHeight == null){
+                return;
+            }
+            this.maxHeight = maxHeight;
+        }
+
+        public void setSizeUnit(String sizeUnit) {
+            if(sizeUnit == null){
+                return;
+            }
+            this.sizeUnit = sizeUnit;
+        }
 
         public boolean equalsEntity(Object o) {
             if (this == o) return true;
