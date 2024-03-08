@@ -109,6 +109,12 @@ public class ShopAuthorizeDTO implements Serializable {
             return this;
         }
 
+        // 美客多
+        if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code) && StrUtil.startWith(this.code, "TG")){
+            this.setPlatformCode(PlatformDictEnum.MERCADO.getCode());
+            return this;
+        }
+
         // 速卖通
         if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code)){
             this.setPlatformCode(PlatformDictEnum.ALI_EXPRESS.getCode());
@@ -130,12 +136,6 @@ public class ShopAuthorizeDTO implements Serializable {
                 StringUtils.isNotBlank(this.clientSecret)
         ){
             this.setPlatformCode(PlatformDictEnum.WALMART.getCode());
-            return this;
-        }
-
-        // 美客多
-        if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code) && StrUtil.startWith(this.code, "TG")){
-            this.setPlatformCode(PlatformDictEnum.MERCADO.getCode());
             return this;
         }
 
