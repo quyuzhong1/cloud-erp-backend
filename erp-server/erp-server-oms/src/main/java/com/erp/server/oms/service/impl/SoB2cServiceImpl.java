@@ -3522,7 +3522,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("isAmazonFBA", isAmazonFBA);
             detailMap.put("packageWidth", logisticsEntity.getWidth());
             detailMap.put("buyLogisticsChannelId", logisticsEntity.getName());
-
+            detailMap.put("postCode", receiverEntity.getPostCode());
             //明细标签处理
             String detailLabelJson = detailEntity.getLabelJson();
             if (StrUtil.isNotBlank(detailLabelJson)) {

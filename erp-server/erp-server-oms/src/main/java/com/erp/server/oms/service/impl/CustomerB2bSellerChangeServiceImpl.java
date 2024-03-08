@@ -486,11 +486,14 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     @Transactional(rollbackFor = Exception.class)
     public Boolean approveEnd(BaseApproveParamDTO dto, CustomerB2bSellerChangeEntity entity,BatchResultDTO batchResultDTO,CustomerInfoEntity customerInfoEntity ) {
         LoginUser user = commonService.getUserInfo();
+        ApproveStatusEnum approve;
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
+            approve = ApproveStatusEnum.APPROVE;
             entity.setApproveStatus(ApproveStatusEnum.APPROVE);
         } else {
             //审核不通过
+            approve = ApproveStatusEnum.REJECT;
             entity.setApproveStatus(ApproveStatusEnum.REJECT);
         }
         entity.setRemark(dto.getComment());
@@ -513,6 +516,8 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         if(Objects.nonNull(loginUser)){
             loginUser.setUserName("system");
         }
+        String approveContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), approve.getName());
+        operateLogService.addModuleOperateLog(approveContent, ModuleTypeEnum.CUSTOMER_B2B_SELLER_CHANGE.getCode(), entity.getId(), "状态变更");
         String content = String.format("销售员变更单[%s]审核通过自动修改销售员从[%s]为[%s]",customerInfoEntity.getCode(),entity.getOriginSellerName(),entity.getChangeSellerName());
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), customerInfoEntity.getId(), "编辑操作");
         return true;
