@@ -252,7 +252,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
     public void handleNotMapping(String platform) {
         LambdaQueryWrapper<OverseasInventoryEntity> queryWrapper = new LambdaQueryWrapper<OverseasInventoryEntity>()
                 .eq(OverseasInventoryEntity::getDictPlatform, platform)
-                .last(" and TRIM(both ' ' FROM sku_id) = ''");
+                .eq(OverseasInventoryEntity::getSkuId, "");
 
         List<OverseasInventoryEntity> notMappingEntityList = this.list(queryWrapper);
 
@@ -297,10 +297,10 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
                     if (null == listingInfoWithSkuMappingDTO){
                         return;
                     }
-                    entity.setPlatformSkuName(listingInfoWithSkuMappingDTO.getPlatformSkuName());
-                    entity.setProductName(listingInfoWithSkuMappingDTO.getProductName());
-                    entity.setSkuId(listingInfoWithSkuMappingDTO.getProductSkuId());
-                    entity.setSkuNo(listingInfoWithSkuMappingDTO.getProductSkuNo());
+                    entity.setPlatformSkuName(listingInfoWithSkuMappingDTO.getPlatformSkuName().trim());
+                    entity.setProductName(listingInfoWithSkuMappingDTO.getProductName().trim());
+                    entity.setSkuId(listingInfoWithSkuMappingDTO.getProductSkuId().trim());
+                    entity.setSkuNo(listingInfoWithSkuMappingDTO.getProductSkuNo().trim());
                 })
                 .collect(Collectors.toList());
 
