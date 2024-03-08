@@ -1,4 +1,4 @@
-package com.erp.server.dmp.convert;
+package com.erp.server.wms.convert;
 
 import com.erp.model.dmp.lingxing.FbaReceiveDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
@@ -21,21 +21,9 @@ import java.util.List;
  */
 @Mapper
 @Component
-public interface DmpFbaShipmentReceiveConverter {
+public interface FbaShipmentReceiveConverter {
 
-    DmpFbaShipmentReceiveConverter INSTANCE = Mappers.getMapper(DmpFbaShipmentReceiveConverter.class);
-
-    @Mappings({
-            @Mapping(target = "receivedDateStr", expression = "java(dto.getReceivedDate().format(java.time.format.DateTimeFormatter.ofPattern(\"yyyy-MM-dd'T'HH:mm:ssXXX\")))"),
-            @Mapping(target = "receivedDateLocaleStr", expression = "java(dto.getReceivedDateLocale().format(java.time.format.DateTimeFormatter.ofPattern(\"yyyy-MM-dd'T'HH:mm:ssXXX\")))"),
-            @Mapping(target = "shopId", source = "shopId"),
-    })
-    FbaReceiveDetailEntity dtoToEntity(FbaShipmentReceiveDTO dto);
-
-    @Mappings({
-    })
-    List<FbaReceiveDetailEntity> dtoListToEntityList(List<FbaShipmentReceiveDTO> dtoList);
-
+    FbaShipmentReceiveConverter INSTANCE = Mappers.getMapper(FbaShipmentReceiveConverter.class);
 
     @Mappings({
             // 有效签收时间

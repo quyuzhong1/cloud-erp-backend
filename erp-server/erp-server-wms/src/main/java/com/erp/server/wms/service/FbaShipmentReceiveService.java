@@ -1,12 +1,11 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.model.dmp.lingxing.FbaReceiveGroupEntity;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.FbaShipmentReceiveDTO;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -37,15 +36,20 @@ public interface FbaShipmentReceiveService extends SuperService<FbaShipmentRecei
     /**
      * 保存签收记录并检查调拨
      */
-    Boolean saveAndCheckTransfer(List<FbaShipmentReceiveEntity> entityList);
+    Boolean saveAndCheckTransfer(List<FbaShipmentReceiveEntity> entityList, FbaShipmentEntity fbaShipmentEntity);
 
     /**
      * 移除非Erp系统的签收记录的关联关系
      */
-    void checkAndRemoveDetailIds(List<String> mainIds);
+    void checkAndRemoveDetailIds(List<String> mainIds, LocalDate checkBillDate);
 
     /**
      * 检查并绑定历史的签收记录
      */
     void checkAndBindHistory(FbaShipmentEntity entity, List<FbaShipmentDetailEntity> newDetailEntityList, String sourceType);
+
+    /**
+     * 获取或拉取货件
+     */
+    FbaShipmentEntity getAndPullResend(FbaReceiveGroupEntity groupEntity);
 }
