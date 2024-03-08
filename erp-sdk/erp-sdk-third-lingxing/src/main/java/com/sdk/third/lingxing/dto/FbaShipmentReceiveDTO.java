@@ -69,5 +69,6 @@ public class FbaShipmentReceiveDTO {
     @JsonProperty("new_source")
     private Integer newSource;
 
-
+    @JsonProperty("shopId")
+    private String shopId;
 }
