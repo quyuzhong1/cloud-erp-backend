@@ -1,13 +1,11 @@
 package com.common.core.server.impl;
 
 
-import cn.hutool.json.JSONObject;
 import com.common.core.dto.SpElAddFieldDTO;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.enums.RuleCompareEnum;
 import com.common.core.server.rule.SpElServer;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.EvaluationContext;
@@ -181,6 +179,9 @@ public class SpElServerImpl implements SpElServer {
                             break;
                         case NOT_NULL:
                             content = convertToNotNullMapExpression(field);
+                            break;
+                        case STARTS_WITH:
+                            content = convertToStartsWithObjExpression(field,value);
                             break;
                     }
                 }
@@ -419,7 +420,7 @@ public class SpElServerImpl implements SpElServer {
         StringBuilder expression = new StringBuilder();
         expression.append("['").append(field).append("']");
         expression.append(".startsWith");
-        expression.append("('").append(value).append("')");
+        expression.append("(").append(value).append(")");
         return expression.toString();
     }
 
