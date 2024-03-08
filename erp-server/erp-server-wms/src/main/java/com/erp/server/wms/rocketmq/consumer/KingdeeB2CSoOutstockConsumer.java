@@ -39,8 +39,10 @@ public class KingdeeB2CSoOutstockConsumer implements RocketMQListener<Object> {
 
     @Override
     public void onMessage(Object ext) {
+        //json字符串
+        String jsonStr = JSONUtil.toJsonStr(ext);
         //json数据
-        JSONObject jsonObject = JSONUtil.parseObj(ext);
+        JSONObject jsonObject = JSONUtil.parseObj(jsonStr);
         String dmpSyncTaskId = jsonObject.get("dmpSyncTaskId").toString();
 
         DmpSyncMqDTO.ParamDTO paramDTO = new DmpSyncMqDTO.ParamDTO();
@@ -48,7 +50,7 @@ public class KingdeeB2CSoOutstockConsumer implements RocketMQListener<Object> {
         try {
             log.info("监听到金蝶B2C销售出库单要同步：entity>>>>>{}", ext);
             //由于实体对象上有别名，所以转对象无法用hutool,需要用fastjson
-            KingdeeDeliveryDetailEntity entity= com.alibaba.fastjson2.JSONObject.parseObject(JSONUtil.toJsonStr(jsonObject),KingdeeDeliveryDetailEntity.class);
+            KingdeeDeliveryDetailEntity entity= JSONUtil.toBean(jsonStr,KingdeeDeliveryDetailEntity.class);
             syncB2CSoOutstockService.syncKingdeeSoOutstock(entity);
             //同步成功
             paramDTO.setSyncStatus(SyncStatusEnum.SUCCESS_SYNC.getCode());
