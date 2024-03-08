@@ -1,12 +1,12 @@
 package com.erp.server.dmp.enums;
 
-import com.common.business.dto.PlatformCityDictDTO;
-import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressListingDTO;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressOrderDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFbaShipmentDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
+import com.sdk.oms.mercado.dto.MercadoListingDTO;
+import com.sdk.oms.mercado.dto.MercadoOrderDTO;
 import com.sdk.oms.shopee.dto.PlatformShopeeListingDTO;
 import com.sdk.oms.shopee.dto.PlatformShopeeOrderDTO;
 import com.sdk.oms.shopify.dto.PlatformShopifyListingDTO;
@@ -16,7 +16,6 @@ import com.sdk.oms.walmart.dto.PlatformWalmartOrderDTO;
 import com.sdk.tms.track123.dto.PlatformTrack123TrackDTO;
 import com.sdk.wms.goodcang.dto.response.*;
 import com.sdk.wms.iml.dto.response.*;
-import org.apache.poi.ss.formula.functions.T;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +43,9 @@ public enum CleanDataTableEnum {
     AMAZON_ORDER("Amazon", "third_system_Amazon_order","third_system", "order","Amazon订单数据", PlatformAmazonOrderDTO.class),
     AMAZON_PRODUCT("Amazon", "third_system_Amazon_product","third_system", "product","Amazon产品数据", PlatformAmazonListingDTO.class),
     AMAZON_FBA_SHIPMENT("Amazon", "third_system_Amazon_fba_shipment","third_system", "fba_shipment","AmazonFBA货件", PlatformAmazonFbaShipmentDTO.class),
+    //美客多
+    MERCADO_ORDER("Mercado", "third_system_Mercado_order","third_system", "order","美客多订单数据", MercadoOrderDTO.class),
+    MERCADO_PRODUCT("Mercado", "third_system_Mercado_product","third_system", "product","美客多产品数据", MercadoListingDTO.class),
 
 
     //track123
