@@ -26,11 +26,11 @@ public class SoReturnInstockQueryHandler extends AbstractQueryHandler {
                 return this.getQueryAllSql();
             }
             if("toBeApprove".equals(value.toString())){
-                super.buildDefaultDTO("srr.approve_status", ApproveStatusEnum.APPROVE_ING.getStatus());
+                super.buildDefaultDTO("sri.approve_status", ApproveStatusEnum.APPROVE_ING.getStatus());
             }else{
-                super.buildDefaultDTO("srr.approve_status",value);
+                super.buildDefaultDTO("sri.approve_status",value);
             }
-            super.buildSplicingSQLDTO("srr.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sri.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
         return null;
     }
