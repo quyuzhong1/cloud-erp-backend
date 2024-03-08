@@ -511,13 +511,14 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         customerInfoEntity.setSellerName(entity.getChangeSellerName());
         customerInfoService.updateById(customerInfoEntity);
         customerSellerService.batchSellerHistory(Collections.singletonList(customerInfoEntity),entity.getStartDate());
+
+        String approveContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), approve.getName());
+        operateLogService.addModuleOperateLog(approveContent, ModuleTypeEnum.CUSTOMER_B2B_SELLER_CHANGE.getCode(), entity.getId(), "状态变更");
         //记录操作日志
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if(Objects.nonNull(loginUser)){
             loginUser.setUserName("system");
         }
-        String approveContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), approve.getName());
-        operateLogService.addModuleOperateLog(approveContent, ModuleTypeEnum.CUSTOMER_B2B_SELLER_CHANGE.getCode(), entity.getId(), "状态变更");
         String content = String.format("销售员变更单[%s]审核通过自动修改销售员从[%s]为[%s]",customerInfoEntity.getCode(),entity.getOriginSellerName(),entity.getChangeSellerName());
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), customerInfoEntity.getId(), "编辑操作");
         return true;
