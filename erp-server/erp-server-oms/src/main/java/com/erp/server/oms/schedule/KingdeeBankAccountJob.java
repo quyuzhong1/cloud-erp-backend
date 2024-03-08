@@ -70,7 +70,15 @@ public class KingdeeBankAccountJob {
             String kingdeeStatus = item.getKingdeeStatus();
             //禁用状态
             String kingdeeDisabledStatus = item.getKingdeeDisabledStatus();
+            //B 表示禁用
             Boolean disabled = "B".equals(kingdeeDisabledStatus);
+            //表示 未禁用
+            if(!disabled){
+                //表示未审核
+               if(!"C".equals(kingdeeStatus)){
+                   disabled=Boolean.TRUE;
+               }
+            }
             String userOrgCode = item.getUserOrgCode();
             BaseIdDTO.CodeDTO orgInfo = orgList.stream().filter(org -> org.getCode().equals(userOrgCode)).
                     findFirst().orElse(null);

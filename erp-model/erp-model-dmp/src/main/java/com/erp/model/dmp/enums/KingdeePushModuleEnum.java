@@ -41,6 +41,7 @@ public enum KingdeePushModuleEnum {
     PUR_RECEIVEBILL("PUR_ReceiveBill","收料通知单"),
     SUB_PICKMTRL("SUB_PickMtrl","委外领料单"),
     CN_BANKACNT("CN_BANKACNT","银行账号"),
+    BD_RECCONDITION("BD_RecCondition","收款条件"),
 
     ;
     private String code;

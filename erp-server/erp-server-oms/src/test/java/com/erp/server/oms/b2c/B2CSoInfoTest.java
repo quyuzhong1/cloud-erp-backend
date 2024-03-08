@@ -53,9 +53,9 @@ public class B2CSoInfoTest {
 
     @Test
     public void test(){
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.CN_BANKACNT.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_RECCONDITION.getCode());
         //查询子单据id
-        String fieldKeys = "FNumber,FName,FUseOrgId.FNumber,FId,FFORBIDSTATUS,FDOCUMENTSTATUS";
+        String fieldKeys = "FID,FNumber,FName,FFORBIDSTATUS,FDOCUMENTSTATUS";
         List<Map<String, Object>> list = apiUtils.queryList("", fieldKeys, 1000, 1, 0);
         System.out.println("-----------"+JSONUtil.toJsonStr(list));
 
