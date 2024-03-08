@@ -5,7 +5,6 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
-import com.common.business.constant.UserStateConstants;
 import com.common.business.enums.DistributedLockEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
@@ -242,7 +241,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
          * 获取到非system的用户时正常校验
          */
         LoginUser userInfo = commonService.getUserInfo();
-        if (!UserStateConstants.USER_SYSTEM_ID.equals(userInfo.getUid())) {
+        if (!StrUtil.isBlank(userInfo.getUid())) {
             // 存在关账时间并非在途库存
             if(null != closeDate && !InventoryStatusEnum.IN_TRANSIT.equals(inventoryStatusEnum)){
                 if (billDate.isBefore(closeDate) || billDate.equals(closeDate)) {
