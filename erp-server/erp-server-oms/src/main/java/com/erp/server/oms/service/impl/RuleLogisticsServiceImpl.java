@@ -212,10 +212,12 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
             return null;
         }
         List<Map<String, Object>> mapList = (List<Map<String, Object>>) map.get("detailList");
+        //要匹配渠道id 是空的 如果有就 不用匹配了返回成功
         String logisticsChannelIdKey="logisticsChannelId";
-        long isNullCount  = mapList.stream().filter(m -> StringUtils.isBlank(m.getOrDefault(logisticsChannelIdKey,"").toString())).count();
-        if (isNullCount > 0) {
-            return null;
+        mapList = mapList.stream().filter(m -> m.get(logisticsChannelIdKey)==null ||
+                StringUtils.isBlank(m.getOrDefault(logisticsChannelIdKey,"").toString())).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(mapList)){
+            return new RuleLogisticsDTO.RuleMatchResultDTO();
         }
         map.put("detailList",mapList);
         List<RuleLogisticsEntity> ruleLogisticsList = this.listOrderByPriority();
