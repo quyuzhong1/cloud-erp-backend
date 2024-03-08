@@ -179,8 +179,14 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
         String usdCode = CurrencyEnum.USD.getCurrencyCode();
         //汇率
-        BigDecimal rate = dmpTaskFeign.getRate(skuCostDTO.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), usdCode);
+        BigDecimal rate;
+        if (Objects.nonNull(skuCostDTO) && Objects.nonNull(skuCostDTO.getCostDate())){
+            rate = dmpTaskFeign.getRate(skuCostDTO.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), usdCode);
+        }else {
+            rate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), usdCode);
+        }
         result.setExchangeRate(rate);
+
         String sourceCountryName = "";
 //        BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, rate);
         if (Objects.nonNull(productLogistics)) {
@@ -250,37 +256,6 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         result.setCustomsList(customsList);
         return result;
-    }
-
-    /**
-     * 25美金及以下 60%
-     * <p>
-     * 25-50美金(含) 55%
-     * <p>
-     * 50-100美金(含)  50%
-     * <p>
-     * 100-300+   40%
-     *
-     * @param actualTaxCostUsd
-     * @return
-     */
-    private BigDecimal getDestDeclarePrice(BigDecimal actualTaxCostUsd) {
-        BigDecimal b2 = new BigDecimal("25");
-        BigDecimal b5 = new BigDecimal("50");
-        BigDecimal b100 = new BigDecimal("100");
-        if (actualTaxCostUsd.compareTo(b2) <= 0) {
-            return MathUtil.multiply(actualTaxCostUsd, new BigDecimal("0.6"));
-        }
-        if (actualTaxCostUsd.compareTo(b2) > 0 && actualTaxCostUsd.compareTo(b5) <= 0) {
-            return MathUtil.multiply(actualTaxCostUsd, new BigDecimal("0.55"));
-        }
-        if (actualTaxCostUsd.compareTo(b5) > 0 && actualTaxCostUsd.compareTo(b100) <= 0) {
-            return MathUtil.multiply(actualTaxCostUsd, new BigDecimal("0.5"));
-        }
-        if (actualTaxCostUsd.compareTo(b100) > 0) {
-            return MathUtil.multiply(actualTaxCostUsd, new BigDecimal("0.4"));
-        }
-        return actualTaxCostUsd;
     }
 
     /**
