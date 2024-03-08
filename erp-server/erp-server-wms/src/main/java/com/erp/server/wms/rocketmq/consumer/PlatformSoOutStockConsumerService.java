@@ -13,9 +13,11 @@ import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.ShopInfoDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -107,6 +109,19 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
         }
         // B2C销售订单添加整个销售出库单的基础信息
         SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(soB2cEntity.getId());
+
+        // 校验sku映射关系
+        if (generateB2cDTO.getDetailList().stream().anyMatch(e-> StringUtils.isBlank(e.getSkuId()))){
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+            addError.setType(SoB2cErrorTypeEnum.AUTO_GENERATE_OUT_STOCK.getCode());
+            addError.setParamJson(JSONUtil.toJsonStr(ext));
+            addError.setReturnJson("");
+            addError.setMainId(soB2cEntity.getId());
+            addError.setMessage(StrUtil.format("自动生成销售出库单失败：订单未匹配Sku映射关系"));
+            soB2cFeign.addSoB2cError(addError);
+            return ApiResult.success();
+        }
+
         // 检查和生成销售出库单
         soOutstockService.checkAndGenerate(generateB2cDTO, dto, soB2cEntity);
         return ApiResult.success();
