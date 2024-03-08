@@ -80,13 +80,8 @@
         from machine_info mi
         left join machine_detail md on mi.id = md.main_id and md.is_deleted = false
         <where>
-            mi.is_deleted = false
-            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                and mi.approve_status in
-                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
+            ${params.sqlMap.default}
+            and mi.is_deleted = false
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
