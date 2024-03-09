@@ -119,7 +119,11 @@ public class FbaShipmentReceiveEntity extends BaseEntity<FbaShipmentReceiveEntit
      */
     @TableField("unique_md5")
     private String uniqueMd5;
-
+    /**
+     * ERP的店铺ID
+     */
+    @TableField(exist = false)
+    private String shopId;
 
 
     public static final String DETAIL_ID = "detail_id";

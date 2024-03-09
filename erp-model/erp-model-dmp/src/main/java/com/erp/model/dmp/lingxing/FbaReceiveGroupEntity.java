@@ -23,6 +23,11 @@ public class FbaReceiveGroupEntity extends CleanBaseDTO {
     private String sid;
 
     /**
+     * ERP店铺ID
+     */
+    private String shopId;
+
+    /**
      * 同组的货件ID
      */
     private String fbaShipmentId;
@@ -37,9 +42,10 @@ public class FbaReceiveGroupEntity extends CleanBaseDTO {
      */
     private List<FbaReceiveDetailEntity> detailList;
 
-    public static FbaReceiveGroupEntity init(Map.Entry<String, List<FbaReceiveDetailEntity>> entry, LocalDate receiveDate,String sid) {
+    public static FbaReceiveGroupEntity init(Map.Entry<String, List<FbaReceiveDetailEntity>> entry, LocalDate receiveDate, String sid, String shopId) {
         FbaReceiveGroupEntity result = new FbaReceiveGroupEntity();
         result.setSid(sid);
+        result.setShopId(shopId);
         result.setFbaShipmentId(entry.getKey());
         result.setRequestReceiveDate(receiveDate);
         result.setDetailList(entry.getValue());

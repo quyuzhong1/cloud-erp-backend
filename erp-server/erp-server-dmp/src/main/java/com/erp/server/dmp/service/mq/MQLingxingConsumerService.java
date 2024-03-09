@@ -1,11 +1,13 @@
 package com.erp.server.dmp.service.mq;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.business.dto.UniqueDto;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -72,9 +74,12 @@ public class MQLingxingConsumerService {
         public void onMessage(Object extObj) {
             log.info("监听领星Fba签收明细消息：entity={}", JSONUtil.toJsonStr(extObj));
             FbaReceiveGroupEntity ext = JSONUtil.toBean(extObj.toString(), FbaReceiveGroupEntity.class);
-            List<FbaShipmentReceiveEntity> receiveEntityList = DmpFbaShipmentReceiveConverter.INSTANCE.sourceListToEntityList(ext.getDetailList());
+            // 检查店铺ID
+            if (null == ext.getShopId()){
+                throw new ServiceException(StrUtil.format("来源数据异常, 店铺ID为空, dto={}", extObj.toString()));
+            }
             // 保存和检查调拨
-            wmsShipmentFeign.saveAndCheckTransfer(receiveEntityList);
+            wmsShipmentFeign.saveAndCheckTransfer(ext);
             MapUtil mapUtil = getMapParam();
             UniqueDto updateDto = UniqueDto.getUniqId(ext.getUniqueId());
             finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveGroupEntity.class);

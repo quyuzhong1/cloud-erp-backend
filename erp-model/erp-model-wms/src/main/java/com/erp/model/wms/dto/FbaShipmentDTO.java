@@ -1,13 +1,13 @@
 package com.erp.model.wms.dto;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
 import java.util.List;
 import javax.validation.constraints.*;
@@ -246,7 +246,8 @@ public class FbaShipmentDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class pullShipmentDTO {
+    @AllArgsConstructor
+    public static class PullShipmentDTO {
         /**
          * 店铺id
          */
