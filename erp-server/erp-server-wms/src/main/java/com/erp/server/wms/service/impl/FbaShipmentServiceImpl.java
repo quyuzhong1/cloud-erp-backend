@@ -1587,6 +1587,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (CollectionUtils.isEmpty(receiveEntityList)){
             throw new ServiceException("未找到FBA货件签收记录");
         }
+        // 检查历史领星的签收记录绑定
+        fbaShipmentReceiveService.checkAndBindHistory(entity, oldDetailEntityList, PlatformEnum.LINGXING.getName());
 
         // 检查和设置最新映射关系到签收记录
         receiveEntityList = fbaShipmentReceiveService.checkAndSetReceiveSkuMapping(oldDetailEntityList, receiveEntityList);
