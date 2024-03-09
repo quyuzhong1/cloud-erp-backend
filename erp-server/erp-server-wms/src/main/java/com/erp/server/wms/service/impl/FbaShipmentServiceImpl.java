@@ -1595,17 +1595,19 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
         List<String> detailIds = oldDetailEntityList.stream().map(FbaShipmentDetailEntity::getId).collect(Collectors.toList());
         // 查询签收记录
-        List<FbaShipmentReceiveEntity> receiveEntityList = fbaShipmentReceiveService.listByDetailIds(detailIds);
-        if (CollectionUtils.isEmpty(receiveEntityList)){
-            throw new ServiceException("未找到FBA货件签收记录");
+        List<FbaShipmentReceiveEntity> receiveEntityList = fbaShipmentReceiveService.listByDetailIdsAndSourceType(detailIds, PlatformEnum.LINGXING.getName());
+        if (!CollectionUtils.isEmpty(receiveEntityList)){
+            // 检查和设置最新映射关系到签收记录
+            receiveEntityList = fbaShipmentReceiveService.checkAndSetReceiveSkuMapping(oldDetailEntityList, receiveEntityList);
         }
-        // 检查和设置最新映射关系到签收记录
-        receiveEntityList = fbaShipmentReceiveService.checkAndSetReceiveSkuMapping(oldDetailEntityList, receiveEntityList);
 
         // 检查历史领星的签收记录绑定
         List<FbaShipmentReceiveEntity> list = fbaShipmentReceiveService.checkAndBindHistory(entity, oldDetailEntityList, PlatformEnum.LINGXING.getName());
         if (CollectionUtils.isNotEmpty(list)){
             receiveEntityList.addAll(list);
+        }
+        if (CollectionUtils.isEmpty(receiveEntityList)){
+            throw new ServiceException("未找到FBA货件签收记录");
         }
 
         // 根据调拨日志分组
