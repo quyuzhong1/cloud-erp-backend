@@ -46,7 +46,7 @@ public interface FbaShipmentReceiveService extends SuperService<FbaShipmentRecei
     /**
      * 检查并绑定历史的签收记录
      */
-    void checkAndBindHistory(FbaShipmentEntity entity, List<FbaShipmentDetailEntity> newDetailEntityList, String sourceType);
+    List<FbaShipmentReceiveEntity> checkAndBindHistory(FbaShipmentEntity entity, List<FbaShipmentDetailEntity> newDetailEntityList, String sourceType);
 
     /**
      * 获取或拉取货件
