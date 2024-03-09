@@ -862,7 +862,19 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
 
         // 检查历史领星的签收记录绑定
-        fbaShipmentReceiveService.checkAndBindHistory(entity, newDetailEntityList, PlatformEnum.LINGXING.getName());
+        List<FbaShipmentReceiveEntity> list = fbaShipmentReceiveService.checkAndBindHistory(entity, newDetailEntityList, PlatformEnum.LINGXING.getName());
+        if (CollectionUtils.isNotEmpty(list)){
+            // 查询最新库存关账记录
+            Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId();
+            // 按签收日期分组调拨
+            Map<LocalDateTime, List<FbaShipmentReceiveEntity>> groupMap = list.stream().collect(Collectors.groupingBy(FbaShipmentReceiveEntity::getReceiveDate));
+
+            for (Map.Entry<LocalDateTime, List<FbaShipmentReceiveEntity>> entry : groupMap.entrySet()) {
+                LocalDate billDate = entry.getKey().toLocalDate();
+                // 执行调拨逻辑
+                this.handlerWarehouse(entity, entry.getValue(), billDate, closedDateMap);
+            }
+        }
 
         // 检查货件是否生成签收记录
 //        if (this.checkStopGenReceived(entity)){
@@ -1587,11 +1599,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (CollectionUtils.isEmpty(receiveEntityList)){
             throw new ServiceException("未找到FBA货件签收记录");
         }
-        // 检查历史领星的签收记录绑定
-        fbaShipmentReceiveService.checkAndBindHistory(entity, oldDetailEntityList, PlatformEnum.LINGXING.getName());
-
         // 检查和设置最新映射关系到签收记录
         receiveEntityList = fbaShipmentReceiveService.checkAndSetReceiveSkuMapping(oldDetailEntityList, receiveEntityList);
+
+        // 检查历史领星的签收记录绑定
+        List<FbaShipmentReceiveEntity> list = fbaShipmentReceiveService.checkAndBindHistory(entity, oldDetailEntityList, PlatformEnum.LINGXING.getName());
+        if (CollectionUtils.isNotEmpty(list)){
+            receiveEntityList.addAll(list);
+        }
 
         // 根据调拨日志分组
         Map<LocalDate, List<FbaShipmentReceiveEntity>> groupBillDateMap = receiveEntityList.stream()
