@@ -309,4 +309,15 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         }
         return null;
     }
+
+    @Override
+    public List<FbaShipmentReceiveEntity> listByDetailIdsAndSourceType(List<String> detailIds, String sourceType) {
+        if (CollectionUtils.isEmpty(detailIds)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery()
+                .in(FbaShipmentReceiveEntity::getDetailId, detailIds)
+                .eq(FbaShipmentReceiveEntity::getSourceType, sourceType)
+                .list();
+    }
 }

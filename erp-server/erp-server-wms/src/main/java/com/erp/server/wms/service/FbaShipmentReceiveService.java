@@ -52,4 +52,9 @@ public interface FbaShipmentReceiveService extends SuperService<FbaShipmentRecei
      * 获取或拉取货件
      */
     FbaShipmentEntity getAndPullResend(FbaReceiveGroupEntity groupEntity);
+
+    /**
+     * 指定详情ID和来源类型查询明细
+     */
+    List<FbaShipmentReceiveEntity> listByDetailIdsAndSourceType(List<String> detailIds, String sourceType);
 }
