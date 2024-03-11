@@ -1,8 +1,6 @@
 package com.erp.server.plm.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.LoginUser;
@@ -17,22 +15,15 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.WorkOptionMapper;
 import com.erp.server.plm.service.CommonService;
+import com.erp.server.plm.service.ProductChangeService;
 import com.erp.server.plm.service.ProjectTaskService;
 import com.erp.server.plm.service.WorkOptionService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -54,6 +45,9 @@ public class WorkOptionServiceImpl implements WorkOptionService {
 
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private ProductChangeService productChangeService;
 
     @Override
     public List<WorkOptionDTO.MyWorkOptionDTO> getTableNum(List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList) {
@@ -77,8 +71,9 @@ public class WorkOptionServiceImpl implements WorkOptionService {
                 myWorkOptionDTO.setTableNumber(workOptionMapper.getProductBomInfoNum(myWorkOptionDTO, status));
             }
             if (myWorkOptionDTO.getModuleCode().equals("product_change")) {
-                Integer status = Integer.valueOf(myWorkOptionDTO.getModuleStatus());
-                myWorkOptionDTO.setTableNumber(workOptionMapper.getProductChangeNum(myWorkOptionDTO, status));
+                PagingDTO pagingDTO = JSONObject.parseObject(myWorkOptionDTO.getModuleParam(), PagingDTO.class);
+                PagingVO paging = productChangeService.paging(pagingDTO);
+                myWorkOptionDTO.setTableNumber(paging.getTotalCount());
             }
         }
         return myWorkOptionDTOList;
