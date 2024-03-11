@@ -42,4 +42,11 @@ public interface KingdeeDepartmentService extends SuperService<KingdeeDepartment
      * @author Lambda
      */
     Boolean init();
+
+    /**
+     * 详情
+     * @param id
+     * @return
+     */
+    KingdeeDepartmentDTO.ViewDTO view(String id);
 }

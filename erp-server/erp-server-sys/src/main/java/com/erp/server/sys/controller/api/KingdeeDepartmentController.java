@@ -2,6 +2,7 @@ package com.erp.server.sys.controller.api;
 
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
@@ -72,14 +73,22 @@ public class KingdeeDepartmentController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "sys:kingdeeDepartment:update",
-        serviceClass = KingdeeDepartmentService.class,
-        keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated KingdeeDepartmentDTO.UpdateDTO dto) {
         kingdeeDepartmentService.update(dto);
         return success();
+    }
+
+
+    /**
+     * 详情
+     * @author Lambda
+     * @date:  2024-03-11
+     * @return ApiResult<String>
+     */
+    @GetMapping("/view")
+    @LogViewService
+    public ApiResult<KingdeeDepartmentDTO.ViewDTO> view(@Param("id") String id) {
+        return success(kingdeeDepartmentService.view(id));
     }
 
 

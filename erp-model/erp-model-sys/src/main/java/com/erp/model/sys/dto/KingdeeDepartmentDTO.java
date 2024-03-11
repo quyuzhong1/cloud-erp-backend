@@ -1,5 +1,6 @@
 package com.erp.model.sys.dto;
 
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -21,7 +22,44 @@ import javax.validation.constraints.Size;
 public class KingdeeDepartmentDTO implements Serializable {
 
 
+    @Data
+    @NoArgsConstructor
+    public static class KingdeeDTO {
+        /**
+         * 金蝶部门id
+         */
+        @Alias("FDEPTID")
+        private String kingdeeId;
 
+
+
+        /**
+         * 金蝶部门code
+         *
+         */
+        @Alias("FNumber")
+        private String kingdeeDeptCode;
+
+        /**
+         * 金蝶名称
+         */
+        @Alias("FName")
+        private String kingdeeDeptName;
+
+        /**
+         * 使用组织code
+         */
+        @Alias("FUseOrgId.FNumber")
+        private String useOrgCode;
+
+        /**
+         * 金蝶部门父级code 当没有的时候就是null
+         */
+        @Alias("FParentID.FNumber")
+        private String parentKingdeeCode;
+
+
+    }
 
     /**
     * 详情
@@ -56,14 +94,34 @@ public class KingdeeDepartmentDTO implements Serializable {
         private String erpDeptId;
 
         /**
+         * erp部门名称
+         */
+        private String erpDeptName;
+
+        /**
         * 使用组织id
         */
         private String useOrgId;
 
         /**
+         * 使用组织id
+         */
+        private String useOrgName;
+
+        /**
         * 父级id 
         */
         private String parentId;
+
+        /**
+         * 父级部门名称
+         */
+        private String parentDeptName;
+
+        /**
+         * 父级金蝶部门code
+         */
+        private String parentKingdeeCode;
 
 
     }
@@ -77,6 +135,8 @@ public class KingdeeDepartmentDTO implements Serializable {
 
 
     }
+
+
 
     /**
     * 修改

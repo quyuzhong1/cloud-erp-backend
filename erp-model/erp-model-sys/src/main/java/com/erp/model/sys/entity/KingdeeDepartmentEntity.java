@@ -49,6 +49,9 @@ public class KingdeeDepartmentEntity extends BaseEntity<KingdeeDepartmentEntity>
     */
     @TableField("use_org_id")
     private String useOrgId;
+
+    @TableField("use_org_name")
+    private String useOrgName;
     /**
     * 父级id 
     */
@@ -57,10 +60,12 @@ public class KingdeeDepartmentEntity extends BaseEntity<KingdeeDepartmentEntity>
 
 
     /**
-     * 父级金蝶id
+     * 父级金蝶code
      */
-    @TableField("parent_kingdee_id")
-    private String parentKingdeeId;
+    @TableField("parent_kingdee_code")
+    private String parentKingdeeCode;
+
+
 
 
     public static final String KINGDEE_ID = "kingdee_id";
