@@ -217,12 +217,12 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             BasicDictEntity isElectric = dictList.stream().filter(e -> e.getRemark().equals("isElectric")).findFirst().orElse(null);
             if (Objects.nonNull(isElectric)){
                 productBaseInfo.setElectric(true);
-                productBaseInfo.setInputParams(String.format("电压:%s%s/电流:%s%s/功率：%s%s/电池容量：%s%s",
+                productBaseInfo.setInputParams(String.format("电压:%s%s/电流:%s%s/功率:%s%s/电池容量:%s%s",
                         productLogistics.getInputVoltage().stripTrailingZeros().toPlainString(),productLogistics.getVoltageUnit(),
                         productLogistics.getInputElectric().stripTrailingZeros().toPlainString(),productLogistics.getElectricUnit(),
                         productLogistics.getInputPower().stripTrailingZeros().toPlainString(),productLogistics.getPowerUnit(),
                         productLogistics.getInputBatteryCapacity().stripTrailingZeros().toPlainString(),productLogistics.getBatteryCapacityUnit()));
-                productBaseInfo.setOutputParams(String.format("电压:%s%s/电流:%s%s/功率：%s%s/电池容量：%s%s",
+                productBaseInfo.setOutputParams(String.format("电压:%s%s/电流:%s%s/功率:%s%s/电池容量:%s%s",
                         productLogistics.getOutputVoltage().stripTrailingZeros().toPlainString(),productLogistics.getVoltageUnit(),
                         productLogistics.getOutputElectric().stripTrailingZeros().toPlainString(),productLogistics.getElectricUnit(),
                         productLogistics.getOutputPower().stripTrailingZeros().toPlainString(),productLogistics.getPowerUnit(),

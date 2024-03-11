@@ -424,12 +424,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BasicDictEntity isElectric = basicDictEntities.stream().filter(e -> e.getRemark().equals("isElectric")).findFirst().orElse(null);
                 if (Objects.nonNull(isElectric)){
                     req.setElectric(true);
-                    req.setInputParams(String.format("电压:%s%s/电流:%s%s/功率：%s%s/电池容量：%s%s",
+                    req.setInputParams(String.format("电压:%s%s/电流:%s%s/功率:%s%s/电池容量:%s%s",
                             req.getInputVoltage().stripTrailingZeros().toPlainString(),req.getVoltageUnit(),
                             req.getInputElectric().stripTrailingZeros().toPlainString(),req.getElectricUnit(),
                             req.getInputPower().stripTrailingZeros().toPlainString(),req.getPowerUnit(),
                             req.getInputBatteryCapacity().stripTrailingZeros().toPlainString(),req.getBatteryCapacityUnit()));
-                    req.setOutputParams(String.format("电压:%s%s/电流:%s%s/功率：%s%s/电池容量：%s%s",
+                    req.setOutputParams(String.format("电压:%s%s/电流:%s%s/功率:%s%s/电池容量:%s%s",
                             req.getOutputVoltage().stripTrailingZeros().toPlainString(),req.getVoltageUnit(),
                             req.getOutputElectric().stripTrailingZeros().toPlainString(),req.getElectricUnit(),
                             req.getOutputPower().stripTrailingZeros().toPlainString(),req.getPowerUnit(),
@@ -536,12 +536,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BasicDictEntity isElectric = basicDictEntities.stream().filter(e -> e.getRemark().equals("isElectric")).findFirst().orElse(null);
                 if (Objects.nonNull(isElectric)){
                     req.setElectric(true);
-                    req.setInputParams(String.format("电压:%s%s/电流:%s%s/功率：%s%s/电池容量：%s%s",
+                    req.setInputParams(String.format("电压:%s%s/电流:%s%s/功率:%s%s/电池容量:%s%s",
                             req.getInputVoltage().stripTrailingZeros().toPlainString(),req.getVoltageUnit(),
                             req.getInputElectric().stripTrailingZeros().toPlainString(),req.getElectricUnit(),
                             req.getInputPower().stripTrailingZeros().toPlainString(),req.getPowerUnit(),
                             req.getInputBatteryCapacity().stripTrailingZeros().toPlainString(),req.getBatteryCapacityUnit()));
-                    req.setOutputParams(String.format("电压:%s%s/电流:%s%s/功率：%s%s/电池容量：%s%s",
+                    req.setOutputParams(String.format("电压:%s%s/电流:%s%s/功率:%s%s/电池容量:%s%s",
                             req.getOutputVoltage().stripTrailingZeros().toPlainString(),req.getVoltageUnit(),
                             req.getOutputElectric().stripTrailingZeros().toPlainString(),req.getElectricUnit(),
                             req.getOutputPower().stripTrailingZeros().toPlainString(),req.getPowerUnit(),
@@ -756,12 +756,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BasicDictEntity isElectric = basicDictEntities.stream().filter(e -> e.getRemark().equals("isElectric")).findFirst().orElse(null);
                 if (Objects.nonNull(isElectric)){
                     req.setElectric(true);
-                    req.setInputParams(String.format("电压:%s%s/电流:%s%s/功率：%s%s/电池容量：%s%s",
+                    req.setInputParams(String.format("电压:%s%s/电流:%s%s/功率:%s%s/电池容量:%s%s",
                             req.getInputVoltage().stripTrailingZeros().toPlainString(),req.getVoltageUnit(),
                             req.getInputElectric().stripTrailingZeros().toPlainString(),req.getElectricUnit(),
                             req.getInputPower().stripTrailingZeros().toPlainString(),req.getPowerUnit(),
                             req.getInputBatteryCapacity().stripTrailingZeros().toPlainString(),req.getBatteryCapacityUnit()));
-                    req.setOutputParams(String.format("电压:%s%s/电流:%s%s/功率：%s%s/电池容量：%s%s",
+                    req.setOutputParams(String.format("电压:%s%s/电流:%s%s/功率:%s%s/电池容量:%s%s",
                             req.getOutputVoltage().stripTrailingZeros().toPlainString(),req.getVoltageUnit(),
                             req.getOutputElectric().stripTrailingZeros().toPlainString(),req.getElectricUnit(),
                             req.getOutputPower().stripTrailingZeros().toPlainString(),req.getPowerUnit(),
