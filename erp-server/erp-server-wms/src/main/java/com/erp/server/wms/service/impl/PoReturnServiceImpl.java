@@ -673,8 +673,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                     .update();
 
             List<PurchaseOrderDetailEntity> list = new ArrayList<>();
+            List<PoReturnDetailEntity> poReturnDetailList = poReturnDetailService.listByMainIds(ids);
             for (PoReturnEntity poReturnEntity : poReturnEntityList) {
-                List<PoReturnDetailEntity> detailByMainId = poReturnDetailService.getDetailByMainId(poReturnEntity.getId());
+                List<PoReturnDetailEntity> detailByMainId = poReturnDetailList.stream().filter(obj -> StrUtil.equals(poReturnEntity.getId(), obj.getMainId())).collect(Collectors.toList());
                 List<String> detailId = detailByMainId.stream().map(PoReturnDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
                 List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
                 if (CollectionUtils.isNotEmpty(purchaseOrderDetailEntities)) {
@@ -696,12 +697,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 poReturnEntity.setConfirmStatus(confirmStatus);
                 poReturnEntity.setConfirmDate(confirmStatus.equals(PoReturnConfirmStatusEnum.WAIT_CONFIRM.getStatus()) ? null :LocalDate.now());
             }
-
-
-
-            List<String> purchaseOrderIds = poReturnEntityList.stream().filter(req -> StringUtils.isNotBlank(req.getPurchaseOrderId())).map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(purchaseOrderIds)) {
-                updateArrivalState(purchaseOrderIds);
+            //采购明细id
+            List<String> podIds = poReturnDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(podIds)) {
+                updateArrivalState(podIds);
             }
             //自动生成补货采购订单
             autoAddPurchaseOrder(poReturnEntityList);
@@ -833,8 +832,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 .update();
         List<PurchaseOrderDetailEntity> list = new ArrayList<>();
         for (PoReturnEntity poReturnEntity : poReturnEntityList) {
-
-            List<PoReturnDetailEntity> detailByMainId = poReturnDetailService.getDetailByMainId(poReturnEntity.getId());
+            List<PoReturnDetailEntity> detailByMainId = poReturnDetailList.stream().filter(obj -> StrUtil.equals(poReturnEntity.getId(), obj.getMainId())).collect(Collectors.toList());
             List<String> detailId = detailByMainId.stream().map(PoReturnDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
             List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
             if (CollectionUtils.isNotEmpty(purchaseOrderDetailEntities)) {
@@ -852,10 +850,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
             }
         }
-        List<String> purchaseOrderIds = poReturnEntityList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(purchaseOrderIds)) {
-            updateArrivalState(purchaseOrderIds);
+        //采购明细id
+        List<String> podIds = poReturnDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(podIds)) {
+            updateArrivalState(podIds);
         }
+
         unApproveInventory(poReturnEntityList); // 库存反审核操作
 
         //操作日志
@@ -1159,7 +1159,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     /**
      * 修改到货状态
      *
-     * @param purchaseOrderIds
+     * @param podIds
      * @return void
      * @Author Luo_WG
      * @Date 2023/4/28 11:37
@@ -1167,9 +1167,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public void updateArrivalState(List<String> purchaseOrderIds) {
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listByPurchaseOrderIds(purchaseOrderIds);
-        List<String> podIds = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+    public void updateArrivalState(List<String> podIds) {
+        //采购订单明细
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(podIds);
         List<PoReturnDetailEntity> returnDetailEntityList = poReturnDetailService.listReturnOrderDetailByPodIds(podIds);
         List<WarehouseReceiveDetailEntity> receiveDetailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
 
