@@ -3,6 +3,11 @@ package com.erp.model.wms.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
+import com.alibaba.excel.annotation.ExcelIgnore;
+import com.alibaba.excel.annotation.ExcelProperty;
+import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,6 +15,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.*;
 
 /**
@@ -25,6 +31,135 @@ import javax.validation.constraints.*;
 public class FbaShipmentDTO implements Serializable {
 
     /**
+     * 导出
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO {
+        /**
+         * 详情Id
+         */
+        @ExcelIgnore
+        private String detailId;
+        /**
+         * 货件单号
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "货件单号", index = 0)
+        private String code;
+        /**
+         * 店铺名称
+         */
+        @ColumnWidth(15)
+        @ExcelProperty(value = "店铺名称", index = 1)
+        private String shopName;
+        /**
+         * 国家名称
+         */
+        @ColumnWidth(15)
+        @ExcelProperty(value = "国家名称", index = 2)
+        private String countryName;
+        /**
+         * 平台物流中心
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "平台物流中心", index = 3)
+        private String fulfillmentCenter;
+        /**
+         * 发货状态名称
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "发货状态名称", index = 4)
+        private String deliveryStatusName;
+        /**
+         * 发货单号
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "发货单号", index = 5)
+        private String deliveryCode;
+        /**
+         * 平台货件状态
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "平台货件状态", index = 6)
+        private String platformShipmentStatus;
+        /**
+         * ASIN
+         */
+        @ColumnWidth(30)
+        @ExcelProperty(value = "ASIN", index = 7)
+        private String asin;
+
+        /**
+         * MSKU
+         */
+        @ColumnWidth(30)
+        @ExcelProperty(value = "MSKU", index = 8)
+        private String msku;
+        /**
+         * FNSKU
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "FNSKU", index = 9)
+        private String fnSku;
+        /**
+         * sku编号
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "sku编号", index = 10)
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        @ColumnWidth(30)
+        @ExcelProperty(value = "产品名称", index = 11)
+        private String productName;
+        /**
+         * 申报数量
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "申报数量", index = 12)
+        private Integer declareQty;
+        /**
+         * 发货数量
+         */
+        @ColumnWidth(15)
+        @ExcelProperty(value = "发货数量", index = 13)
+        private Integer deliveryQty;
+        /**
+         * 签收数量
+         */
+        @ColumnWidth(15)
+        @ExcelProperty(value = "签收数量", index = 14)
+        private String receiveQty;
+        /**
+         * 在途数量
+         */
+        @ColumnWidth(15)
+        @ExcelProperty(value = "在途数量", index = 15)
+        private Integer transportQty;
+        /**
+         * 收发差异
+         */
+        @ColumnWidth(15)
+        @ExcelProperty(value = "收发差异", index =16)
+        private Integer diffQty;
+        /**
+         * 创建时间
+         */
+        @ColumnWidth(30)
+        @ExcelProperty(value = "创建时间", index = 17)
+        private LocalDateTime shipmentCreateTime;
+        /**
+         * 签收时间（拉取签收数据的日期）
+         */
+        @ColumnWidth(30)
+        @ExcelProperty(value = "签收时间", index = 18)
+        private LocalDateTime shipmentReceiveTime;
+    }
+
+
+        /**
      * 详情
      */
     @Data
@@ -295,78 +430,17 @@ public class FbaShipmentDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
-        /**
-         * 单据编号
-         */
-        private String code;
 
         /**
-         * sku编号
+         * 页面高级查询
          */
-        private List<String> skuNoList;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 店铺id
+         * sqlMap 默认key default
          */
-        private List<String> shopIdList;
+        private Map<String, String> sqlMap;
 
-        /**
-         * 国家二字码
-         */
-        private List<String> countryIdList;
-
-        /**
-         * 平台物流中心
-         */
-        private String fulfillmentCenter;
-
-        /**
-         * 发货状态:/wms/common/enumDropDown?type=FbaDeliveryStatus
-         * 描述：shipped:已发货  isOver:已完结  unShipped:未发货
-         */
-        private List<String> deliveryStatusList;
-
-        /**
-         * 平台货件状态:/wms/common/enumDropDown?type=FbaPlatformShipmentStatus
-         * 描述： CLOSED WORKING SHIPPED RECEIVING
-         */
-        private List<String> platformShipmentStatusList;
-
-        /**
-         * 平台产品id
-         */
-        private String asin;
-
-        /**
-         * 平台sku
-         */
-        private String msku;
-
-        /**
-         * fnSku
-         */
-        private String fnSku;
-
-        /**
-         * 是否组合品 true 是
-         */
-        private Boolean isCombination;
-
-        /**
-         * 收发差异：/wms/common/enumDropDown?type=DiffRule
-         * 描述： >:大于0，<:小于0，=:等于0，<>:不等于0
-         */
-        private String diffRule;
-
-        /**
-         * 创建时间（拉取数据的日期）
-         */
-        private List<LocalDate> shipmentCreateTimeList;
-
-        /**
-         * 签收时间（拉取签收数据的日期）
-         */
-        private List<LocalDate> shipmentReceiveTimeList;
 
     }
 
@@ -509,6 +583,13 @@ public class FbaShipmentDTO implements Serializable {
          * 签收数量
          */
         private Integer receiveQty;
+
+        @Override
+        public String toString(){
+
+            return "签收时间:"+LocalDateTimeUtil.formatNormal(receiveTime) + " 签收数量:" + receiveQty;
+        }
+
     }
 
     /**

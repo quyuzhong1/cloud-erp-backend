@@ -21,4 +21,12 @@ import java.util.List;
 public interface SoB2cDetailMapper extends BaseMapper<SoB2cDetailEntity> {
 
     List<SoB2cDetailDTO.OutstockDTO> listOutstockByMainId(@Param("mainId") String mainId);
+    /**
+     * @description: 查询待发货数量
+     * @author Will
+     * @date: 2024/1/31 12:04
+     * @param paramDTO
+     * @return List<WaitDeliveryQtyDTO>
+     */
+    List<SoB2cDetailDTO.WaitDeliveryQtyDTO> listWaitDeliveryQty(@Param("paramDTO") SoB2cDetailDTO.WaitDeliveryParamDTO paramDTO);
 }

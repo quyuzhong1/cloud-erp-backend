@@ -78,4 +78,22 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
      * @create 2024-01-03 11:55
      */
     void deleteByCodeAndType(String soCode, String type);
+    /**
+     * 批量删除异常信息
+     *
+     * @param batchDeleteDTO
+     * @return
+     * @description
+     * @author zdy
+     * @create 2023-12-20 11:20
+     */
+    void deleteErrorByMainIds(SoB2cErrorDTO.BatchDeleteDTO batchDeleteDTO);
+    /**
+     * @param batchAdd
+     * @return
+     * @description 批量添加异常订单信息  一个请求中包含多个订单
+     * @author zdy
+     * @create 2023-12-20 11:06
+     */
+    void batchAddSoB2cError(SoB2cErrorDTO.BatchAdd batchAdd);
 }

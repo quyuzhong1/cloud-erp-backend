@@ -355,8 +355,14 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             return;
         }
         //推送同步中台dmp任务
+        Map<String, Object> resultMap = new HashMap<>();
+        //业务id
+        resultMap.put("id", soInfoEntity.getId());
+        //客户编号
+        resultMap.put("code", soInfoEntity.getCode());
+        resultMap.put("operate", syncOperate);
         DmpPullTaskFeignDTO dto = new DmpPullTaskFeignDTO()
-                .setMqData(JSON.toJSONString(soInfoEntity))
+                .setMqData(JSON.toJSONString(resultMap))
                 .setMqTopic(RocketMqTopic.SYNC_SO_INFO_ORDER_TO_DMP_TOPIC)
                 .setMqTag(RocketMqTagEnum.APPROVED_SO_INFO_ORDER_TO_DMP_TAG.getName())
                 .setSourceCode(soInfoEntity.getCode())
@@ -368,13 +374,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         log.info("推送消息开始：{}", dto.toString());
         //推送mq
         String dmpPullTaskId = dmpTaskFeign.savePullTask(dto);
-        Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("dmpPullTaskId", dmpPullTaskId);
-        //业务id
-        resultMap.put("id", soInfoEntity.getId());
-        //客户编号
-        resultMap.put("code", soInfoEntity.getCode());
-        resultMap.put("operate", syncOperate);
+        resultMap.put("dmpSyncTaskId", dmpPullTaskId);
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.SYNC_SO_INFO_ORDER_TO_DMP_TOPIC, RocketMqTagEnum.APPROVED_SO_INFO_ORDER_TO_DMP_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));

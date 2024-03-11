@@ -5,6 +5,7 @@ import com.common.business.dto.CleanBaseDTO;
 import lombok.*;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -25,4 +26,7 @@ public class GoodCangOutboundResp extends CleanBaseDTO implements Serializable {
     @JSONField(name = "order_status")
     private String orderStatus;
 
+    //出库时间
+    @JSONField(name = "date_shipping")
+    private LocalDateTime outBoundTime;
 }

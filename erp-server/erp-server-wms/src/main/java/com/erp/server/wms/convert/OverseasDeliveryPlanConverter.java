@@ -44,5 +44,8 @@ public interface OverseasDeliveryPlanConverter {
     })
     FirstMileDeliveryDTO.AddDTO generateDeliverFDD(OverseasDeliveryPlanDTO.GenerateDeliverViewDTO dto);
 
+    @Mappings({
+            @Mapping(target = "platformSkuNo", source = "platformSku")
+    })
     FirstMileDeliveryDetailDTO.AddDTO generateDeliverDetailFDD(OverseasDeliveryPlanDTO.GenerateDeliverViewDTO dto);
 }

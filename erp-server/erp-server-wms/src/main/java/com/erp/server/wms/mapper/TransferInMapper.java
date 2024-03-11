@@ -31,15 +31,14 @@ public interface TransferInMapper extends BaseMapper<TransferInEntity> {
      */
     List<TransferInDTO.ApproveCountDTO> listApproveCount(@Param("permissionSql")String permissionSql);
 
-    IPage<TransferInDTO.PagingViewDTO> paging(Page query, @Param("params")TransferInDTO.PagingParamDTO params, @Param("approveList") List<String> approveList);
+    IPage<TransferInDTO.PagingViewDTO> paging(Page query, @Param("params")TransferInDTO.PagingParamDTO params);
 
     /**
      * 获取导出数据
      * @param dto
-     * @param approveList
      * @return
      */
-    List<TransferInDTO.PagingViewDTO> listExport(@Param("params") TransferInDTO.ExportDTO dto, @Param("approveList") List<String> approveList);
+    List<TransferInDTO.PagingViewDTO> listExport(@Param("params") TransferInDTO.ExportDTO dto);
 
     /**
      * 获取到对应参数

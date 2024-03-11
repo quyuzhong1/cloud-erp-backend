@@ -4,22 +4,80 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.plm.mapper.ProductCertificateMapper">
 
-    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.ProductCertificateEntity">
-        <id property="id" column="id" jdbcType="VARCHAR"/>
-        <result property="skuId" column="sku_id" jdbcType="VARCHAR"/>
-        <result property="certificateImg" column="certificate_img" jdbcType="VARCHAR"/>
-        <result property="certificateValidTime" column="certificate_valid_time" jdbcType="TIMESTAMP"/>
-        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
-        <result property="createUserId" column="create_user_id" jdbcType="VARCHAR"/>
-        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
-        <result property="updateUserId" column="update_user_id" jdbcType="VARCHAR"/>
-    </resultMap>
-
     <sql id="Base_Column_List">
-        sku_id,certificate_img,
-        certificate_valid_time,pd.create_time,pd.create_user_id,
+        pc.sku_id,pc.type,pc.dict_project,pc.remark,
+        pc.certificate_valid_time,pd.create_time,pd.create_user_id,
         pd.update_time,pd.update_user_id
     </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.plm.dto.ProductCertificateDTO$ListDTO">
+        select
+            pc.id,
+            pc.sku_id as skuId,
+            pd.sku_no as skuNo,
+            pd.name as skuName,
+            pc.certificate_valid_time as certificateValidTime,
+            pc.type,
+            pc.dict_project as dictProject,
+            att.attach_name as attachName,
+            att.attach_url as attachUrl,
+            pc.remark,
+            pc.update_user_name as updateUserName,
+            pc.update_time as updateTime
+        from product_certificate pc
+        inner join product_detail pd on pc.sku_id = pd.id and pd.is_deleted = false
+        inner join (
+            select
+                   business_id,attach_name,attach_url
+            from attachment
+            where id in ( select max(id) from attachment where is_deleted = false group by business_id )
+        ) att on pc.id = att.business_id
+        <where>
+            pc.is_deleted = false
+
+            <if test="params.skuName != null and params.skuName != ''">
+                and pd.name ILIKE concat('%',#{params.skuName}::text,'%')
+            </if>
+            <if test="params.attachName != null and params.attachName != ''">
+                and att.attach_name ILIKE concat('%',#{params.attachName}::text,'%')
+            </if>
+            <if test="params.remark != null and params.remark != ''">
+                and pc.remark ILIKE concat('%',#{params.remark}::text,'%')
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                and pd.sku_no  in
+                <foreach collection="params.skuNoList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.typeList != null and params.typeList.size > 0">
+                and pc.type  in
+                <foreach collection="params.typeList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.dictProjectList != null and params.dictProjectList.size > 0">
+                and pc.dict_project  in
+                <foreach collection="params.dictProjectList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.certificateValidTimeList != null and params.certificateValidTimeList.size > 0">
+                and pc.certificate_valid_time >= #{params.certificateValidTimeList[0]} and  (#{params.certificateValidTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pc.certificate_valid_time
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pc.update_time desc
+    </select>
 
     <select id="list" resultType="com.erp.model.plm.dto.ProductCertificateShowDTO">
         SELECT
@@ -27,11 +85,20 @@
         pd.sku_no,
         pd.id AS sku_id,
         pd.images_url,
+        att.id as attachmentId,
+        att.attach_name,
+        att.attach_url,
         <include refid="Base_Column_List"/>
         FROM product_detail pd
         INNER JOIN product_certificate pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
+        inner join (
+        select
+        id,business_id,attach_name,attach_url
+        from attachment
+        where id in ( select max(id) from attachment where is_deleted = false group by business_id )
+        ) att on pc.id = att.business_id
         WHERE pd.product_id = #{productId} AND pd.is_deleted = FALSE
-        ORDER BY pd.id desc
+        ORDER BY pd.id desc,pc.update_time desc
     </select>
 
     <select id="listBySkuId" resultType="com.erp.model.plm.dto.ProductCertificateShowDTO">
@@ -40,10 +107,90 @@
         pd.sku_no,
         pd.id AS sku_id,
         pd.images_url,
+        att.id as attachmentId,
+        att.attach_name,
+        att.attach_url,
         <include refid="Base_Column_List"/>
         FROM product_detail pd
         INNER JOIN product_certificate pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
+        inner join (
+        select
+        id,business_id,attach_name,attach_url
+        from attachment
+        where id in ( select max(id) from attachment where is_deleted = false group by business_id )
+        ) att on pc.id = att.business_id
         WHERE pd.id = #{skuId} AND pd.is_deleted = FALSE
-        ORDER BY pd.id desc
+        ORDER BY pd.id desc,pc.update_time desc
     </select>
+
+    <select id="exportExcel" resultType="com.erp.model.plm.dto.ProductCertificateDTO$ListDTO">
+        select
+        pc.id,
+        pc.sku_id as skuId,
+        pd.sku_no as skuNo,
+        pd.name as skuName,
+        pc.certificate_valid_time as certificateValidTime,
+        pc.type,
+        pc.dict_project as dictProject,
+        att.attach_name as attachName,
+        att.attach_url as attachUrl,
+        pc.remark,
+        pc.update_user_name as updateUserName,
+        pc.update_time as updateTime
+        from product_certificate pc
+        inner join product_detail pd on pc.sku_id = pd.id and pd.is_deleted = false
+        inner join attachment att on pc.id = att.business_id and att.is_deleted = false
+        <where>
+            pc.is_deleted = false
+            <if test="params.ids != null and params.ids.size > 0">
+                and pc.id in
+                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.ids == null or params.ids.size == 0">
+                <if test="params.skuName != null and params.skuName != ''">
+                    and pd.name ILIKE concat('%',#{params.skuName}::text,'%')
+                </if>
+                <if test="params.attachName != null and params.attachName != ''">
+                    and att.attach_name ILIKE concat('%',#{params.attachName}::text,'%')
+                </if>
+                <if test="params.remark != null and params.remark != ''">
+                    and pc.remark ILIKE concat('%',#{params.remark}::text,'%')
+                </if>
+                <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                    and pd.sku_no  in
+                    <foreach collection="params.skuNoList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.typeList != null and params.typeList.size > 0">
+                    and pc.type  in
+                    <foreach collection="params.typeList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.dictProjectList != null and params.dictProjectList.size > 0">
+                    and pc.dict_project  in
+                    <foreach collection="params.dictProjectList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.certificateValidTimeList != null and params.certificateValidTimeList.size > 0">
+                    and pc.certificate_valid_time >= #{params.certificateValidTimeList[0]} and  (#{params.certificateValidTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pc.certificate_valid_time
+                </if>
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pc.update_time desc
+    </select>
+
 </mapper>

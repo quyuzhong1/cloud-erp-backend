@@ -1,7 +1,7 @@
 package com.erp.server.scm.controller.feign;
 
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.scm.service.*;
 import org.springframework.validation.annotation.Validated;
@@ -97,8 +97,9 @@ public class ScmWorkOptionFeignController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/purchaseOrderApprove")
-    public Boolean purchaseOrderApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
-        return purchaseOrderService.approve(dto);
+    public Boolean purchaseOrderApprove(@RequestBody @Validated ApproveOneDTO dto) {
+        purchaseOrderService.approve(dto);
+        return Boolean.TRUE;
     }
 
     /**

@@ -6,6 +6,7 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.CustomerSellerEntity;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -74,5 +75,10 @@ public interface CustomerSellerService extends SuperService<CustomerSellerEntity
      * @param list
      * @return void
      */
-    void batchSellerHistory(List<CustomerInfoEntity> list);
+    void batchSellerHistory(List<CustomerInfoEntity> list, LocalDate date);
+
+    /**
+     * 获取当前销售员信息
+     */
+    CustomerSellerEntity getCurrentInfo(String mainId);
 }

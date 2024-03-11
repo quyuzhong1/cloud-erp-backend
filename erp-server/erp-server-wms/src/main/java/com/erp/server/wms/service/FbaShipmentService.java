@@ -12,6 +12,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -225,6 +226,8 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
 
 
     void generateTransfer(ShopInfoEntity shopInfoEntity, FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> receiveList, Boolean isToOnwayWarehouse, String remark, LocalDate billDate, String transferDirection, Map<String, LocalDate> closedDateMap);
+
+    void export(FbaShipmentDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
      * 检查当前Fba货件是停止生成签收记录得日期

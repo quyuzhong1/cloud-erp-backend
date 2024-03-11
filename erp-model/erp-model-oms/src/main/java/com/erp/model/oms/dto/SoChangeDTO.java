@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -19,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -37,7 +39,12 @@ public class SoChangeDTO implements Serializable {
         /**
          * 类型
          */
-        private String searchType;
+        private String tabFlag;
+
+        /**
+         * tab名称
+         */
+        private String tabFlagName;
 
         /**
          * 数量
@@ -71,6 +78,11 @@ public class SoChangeDTO implements Serializable {
          * id
          */
         private String id;
+
+        /**
+         * 明细id
+         */
+        private String detailId;
 
         /**
          * code
@@ -226,67 +238,15 @@ public class SoChangeDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * all 全部
-         * waitApprove 待审核
-         * approve 已审核
-         * reject 审核不通过
+         * sqlMap 默认key default
          */
-        @StateEnumValue(strValues = {"all", "waitApprove", "approve", "reject"}, message = "搜索类型有误")
-        @NotBlank(message = "搜索类型不能为空")
-        private String searchType;
-        /**
-         * sku no 集合
-         */
-        private List<String> skuNoList;
-
-        /**
-         * id 集合
-         */
-        private List<String> ids;
-
-        /**
-         * code
-         */
-        private String code;
-
-        /**
-         * 销售订单code
-         */
-        private String soCode;
-
-        /**
-         * 类型
-         */
-        private String orderType;
-
-        /**
-         * 审核列表集合
-         */
-        private List<String> approveStatusList;
-
-        /**
-         * 作废状态
-         * true 已作废
-         * false 未作废
-         */
-        private Boolean invalidStatus;
-
-        /**
-         * 客户 集合
-         */
-        private List<String> customerIdList;
-
-        /**
-         * 创建人 id 集合
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
+        private Map<String,String> sqlMap;
 
     }
 

@@ -1,5 +1,6 @@
 package com.erp.rpc.plm.feign;
 
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.*;
@@ -78,6 +79,8 @@ public interface PlmTaskFeign {
     @PostMapping("feign/product/getSkuInfoByIds")
     List<SkuVO> getSkuInfoByIds(@RequestBody List<String> skuIds);
 
+    @PostMapping("feign/product/getSkuInfoAdvanceQuery")
+    List<SkuVO> getSkuInfoAdvanceQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer);
 
     /**
      * 根据sku no 获取信息

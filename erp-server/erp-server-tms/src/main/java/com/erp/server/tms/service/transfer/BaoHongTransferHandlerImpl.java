@@ -74,6 +74,14 @@ public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
         CreateOrderInfo createOrderInfo  = BaoHongConverter.INSTANCE.createOrderConvert(createOrderReq);
         BaoHongResponse<String> result = baoHongService.createOrder(createOrderInfo);
         if(isFailure(result)){
+            if(result.getMessage().contains("系统已经存在该交易订单号")){
+                BaoHongResponse<OrderDataArr> response = baoHongService.getOrderByCode(createOrderInfo.getReferenceNo());
+                if(isFailure(response)){
+                    return failure(response.getMessage());
+                }else{
+                    return success(response.getData().getOrderCode());
+                }
+            }
             return failure(result.getMessage());
         }
         return success(result.getData());

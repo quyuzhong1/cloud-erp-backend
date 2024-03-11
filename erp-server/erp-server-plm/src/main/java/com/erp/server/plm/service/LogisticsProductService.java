@@ -10,6 +10,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -93,4 +94,10 @@ public interface LogisticsProductService  extends SuperService<ProductDetailEnti
      *@date 2023-11-27
      */
     List<LogisticsProductDTO.ProductDTO> listLogisticsProduct(List<String> skuIdList);
+
+    /**
+     * 根据dmp销售成本，更新物流目的国申报价
+     * @param dmpSkuCostEntityList
+     */
+    void recalDestDeclarePrice(List<DmpSkuCostEntity> dmpSkuCostEntityList);
 }

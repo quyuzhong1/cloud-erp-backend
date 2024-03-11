@@ -32,6 +32,7 @@ import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.SubcontractIssueDTO;
 import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
@@ -210,9 +211,9 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     @Override
     public List<SubcontractIssueDTO.TabListDTO> tabList(PermissionsDTO param) {
         SubcontractIssueDTO.PagingParamDTO searchParam = new SubcontractIssueDTO.PagingParamDTO();
-        TabFlagEnum[] values = TabFlagEnum.values();
+        PageListTypeEnum[] values = PageListTypeEnum.values();
         List<SubcontractIssueDTO.TabListDTO> list = new ArrayList<>();
-        for (TabFlagEnum item : values) {
+        for (PageListTypeEnum item : values) {
             searchParam.setPermissionSql(param.getPermissionSql());
             SubcontractIssueDTO.TabListDTO resultDTO = new SubcontractIssueDTO.TabListDTO();
             String tabSql = subcontractIssueQueryHandler.getTabSql(item.getCode());
@@ -222,7 +223,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             Integer count = this.baseMapper.tabList(searchParam);
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(item.getCode());
-            resultDTO.setTabFlagName(item.getName());
+            resultDTO.setTabFlagName(item.equals(PageListTypeEnum.TO_BE_APPROVE) ? "待我审核" : item.getName());
             list.add(resultDTO);
         }
         return list;

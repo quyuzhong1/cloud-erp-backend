@@ -211,7 +211,11 @@ public class SoReturnInstockEntity extends BaseEntity<SoReturnInstockEntity> {
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
 
-    
+    /**
+     * 第三方单据编号
+     */
+    @TableField("third_code")
+    private String thirdCode;
 
     public static final String APPROVE_STATUS = "approve_status";
 

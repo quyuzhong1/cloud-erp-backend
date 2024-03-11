@@ -91,5 +91,61 @@ public class ProductLogisticsDTO implements Serializable {
     @Size(max = 200,message = "英文用途最大200字符")
     private String englishUsage;
 
+    /**
+     * 输入电压
+     */
+    private BigDecimal inputVoltage;
+    /**
+     * 输出电压
+     */
+    private BigDecimal outputVoltage;
+
+    /**
+     * 电压单位  dict type=voltageUnit
+     */
+    private String voltageUnit;
+
+    /**
+     * 输入电流
+     */
+    private BigDecimal inputElectric;
+    /**
+     * 输出电流
+     */
+    private BigDecimal outputElectric;
+
+    /**
+     * 电流单位 dict type=electricUnit
+     */
+    private String electricUnit;
+
+    /**
+     * 输入功率
+     */
+    private BigDecimal inputPower;
+    /**
+     * 输出功率
+     */
+    private BigDecimal outputPower;
+
+    /**
+     * 功率单位 dict type=powerUnit
+     */
+    private String powerUnit;
+
+    /**
+     * 输入电池容量
+     */
+    private BigDecimal inputBatteryCapacity;
+    /**
+     * 输出电池容量
+     */
+    private BigDecimal outputBatteryCapacity;
+
+    /**
+     * 电池容量单位 dict type=batteryCapacityUnit
+     */
+    private String batteryCapacityUnit;
+
     private static final long serialVersionUID = 1L;
 }

@@ -1,5 +1,6 @@
 package com.erp.server.scm.controller.api;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -14,12 +15,15 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
+import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.server.scm.service.SubcontractOrderService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,6 +32,7 @@ import java.util.List;
  * @author will
  * @since 2023-06-08
  */
+@Slf4j
 @RestController
 @LogSystemModule("委外订单")
 @RequestMapping("/subcontractOrder")
@@ -184,9 +189,26 @@ public class SubcontractOrderController extends BaseController {
             menuCode = "scm:subcontractOrder:approve",
             serviceClass = SubcontractOrderService.class,
             keyIdName = "ids")
-    public ApiResult<Void> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
-        subcontractOrderService.approve(dto);
-        return success();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : ids) {
+            BatchResultDTO approveResult;
+            try {
+                approveResult = subcontractOrderService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+            }catch (Exception e){
+                log.error("采购订单审核失败",e);
+                SubcontractOrderEntity entity = subcontractOrderService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    approveResult = BatchResultDTO.fail(id, id, "采购订单不存在, 审核失败");
+                    resultDTOS.add(approveResult);
+                    continue;
+                }
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(approveResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -203,9 +225,25 @@ public class SubcontractOrderController extends BaseController {
             menuCode = "scm:subcontractOrder:disApprove",
             serviceClass = SubcontractOrderService.class,
             keyIdName = "ids")
-    public ApiResult<Void> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        subcontractOrderService.disApprove(dto.getIds());
-        return success();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO disApproveResult;
+            try {
+                disApproveResult = subcontractOrderService.disApprove(id);
+            }catch (Exception e){
+                log.error("委外订单反审核失败",e);
+                SubcontractOrderEntity entity = subcontractOrderService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    disApproveResult = BatchResultDTO.fail(id, id, "委外订单不存在, 反审核失败");
+                    resultDTOS.add(disApproveResult);
+                    continue;
+                }
+                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(disApproveResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

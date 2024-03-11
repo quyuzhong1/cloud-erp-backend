@@ -53,6 +53,12 @@ public class PurchaseReturnOrderDTO {
         private String returnOrgId;
 
         /**
+         * 采购组织id
+         */
+        @NotBlank(message = "采购组织不能为空")
+        private String purchaseOrgId;
+
+        /**
          * 退货仓库id
          */
         @NotBlank(message = "退货仓库不能为空")
@@ -156,6 +162,12 @@ public class PurchaseReturnOrderDTO {
          * 退货人组织id
          */
         private String returnOrgId;
+
+        /**
+         * 采购组织id
+         */
+        @NotBlank(message = "采购组织不能为空")
+        private String purchaseOrgId;
 
         /**
          * 退货原因
@@ -294,6 +306,16 @@ public class PurchaseReturnOrderDTO {
         private String returnOrgName;
 
         /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgName ;
+
+        /**
          * 退货原因
          */
         private String returnRemark;
@@ -389,16 +411,6 @@ public class PurchaseReturnOrderDTO {
         private String purchaseUserDeptName;
 
         /**
-         * 采购组织id
-         */
-        private String purchaseOrgId;
-
-        /**
-         * 采购组织名称
-         */
-        private String purchaseOrgName;
-
-        /**
          * 创建人id
          */
         private String createUserId;
@@ -432,6 +444,11 @@ public class PurchaseReturnOrderDTO {
          * 表id
          */
         private String id;
+
+        /**
+         * 明细id
+         */
+        private String detailId;
 
         /**
          * 退货单号
@@ -673,35 +690,7 @@ public class PurchaseReturnOrderDTO {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
-        /**
-         * 订单编号
-         */
-        private String code;
 
-        /**
-         * ids
-         */
-        private List<String> ids;
-
-        /**
-         * skuNo集合
-         */
-        private List<String> skuNoList;
-
-        /**
-         * 供应商id集合
-         */
-        private List<String> supplierIdList;
-
-        /**
-         * 采购单号
-         */
-        private String purchaseOrderCode;
-
-        /**
-         * 采购员id集合
-         */
-        private List<String> purchaseUserIdList;
 
         /**
          * 状态(waitSubmit 待提交，approveIng 审核中，reject 审核不通过，approve 已审核，waitForMeHandle 待我处理)
@@ -714,64 +703,11 @@ public class PurchaseReturnOrderDTO {
          * 作废状态（false未作废，true已作废）
          */
         private Boolean invalidStatus;
-
-        /**
-         * 退货方式
-         */
-        private String returnMode;
-
         /**
          * 退货日期
          */
         private List<LocalDate> billDateList;
 
-        /**
-         * 退货创库id集合
-         */
-        private List<String> returnWarehouseIdList;
-
-        /**
-         * 创建人id集合
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-
-        /**
-         * 退货来源
-         * 参考枚举ReturnOrderSourceEnum
-         */
-        private String returnOrderSource;
-
-        /**
-         * 明细备注
-         */
-        private String detailRemark;
-
-        /**
-         * 退货确认状态
-         * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
-         * 入参：key=poReturnConfirmStatus
-         */
-        private String confirmStatus;
-        /**
-         * 异常分类
-         * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
-         * 入参：key=poReturnUnusualType
-         */
-        private String unusualType;
-        /**
-         * 异常反馈描述
-         */
-        private String unusualRemark;
-        /**
-         * 异常处理人
-         * 来源：http://172.16.100.11:3002/project/92/interface/api/27679
-         */
-        private List<String> unusualHandleUserIdList;
 
 
         /**
@@ -917,7 +853,12 @@ public class PurchaseReturnOrderDTO {
          * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
          * 入参：key=poReturnStatus
          */
-        private String type;
+        private String tabFlag;
+
+        /**
+         * tab名称
+         */
+        private String tabFlagName;
         /**
          * 数量
          */

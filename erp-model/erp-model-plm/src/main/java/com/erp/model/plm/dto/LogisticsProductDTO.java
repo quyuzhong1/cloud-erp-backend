@@ -83,12 +83,12 @@ public class LogisticsProductDTO {
 
 
         /**
-         * 报关申报价
+         * 出口申报价
          */
         private BigDecimal declarePrice;
 
         /**
-         * 报关申报价币种
+         * 出口申报价币种
          */
         private String declareCurrency;
 
@@ -379,7 +379,10 @@ public class LogisticsProductDTO {
          */
         private List<ProductCustomsDTO.ViewDTO> customsList;
 
-
+        /**
+         * 报关信息-汇率
+         */
+        private BigDecimal exchangeRate;
     }
 
     @Data
@@ -472,6 +475,18 @@ public class LogisticsProductDTO {
          * 物流属性
          */
         private String logisticsPropertyName;
+        /**
+         * 判断是否含电 true 展示输入输出电池电压功率  false不展示入输出电池电压功率
+         */
+        private boolean electric;
+        /**
+         * 输入参数 仅展示使用
+         */
+        private String inputParams;
+        /**
+         * 输出参数 仅展示使用
+         */
+        private String outputParams;
 
         /**
          * ENA 吗
@@ -563,17 +578,17 @@ public class LogisticsProductDTO {
 
 
         /**
-         * 报关申报价
+         * 出口申报价
          */
         private BigDecimal declarePrice;
 
         /**
-         * 报关申报价币种
+         * 出口申报价币种
          */
         private String declareCurrency;
 
         /**
-         * 报关申报价币种符号
+         * 出口申报价币种符号
          */
         private String declareCurrencySymbol;
 

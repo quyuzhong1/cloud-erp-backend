@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -20,6 +21,7 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
+import com.erp.server.oms.query.SoReturnQueryHandler;
 import com.erp.server.oms.service.SoReturnDetailService;
 import com.erp.server.oms.service.SoReturnService;
 import org.apache.commons.lang3.StringUtils;
@@ -58,6 +60,7 @@ public class SoReturnController extends BaseController {
             menuCode = "oms:soReturn:paging",
             tableAlias = "sr"
     )
+    @WebAdvanceQuery(handler = SoReturnQueryHandler.class)
     public ApiResult<PagingVO<SoReturnDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<SoReturnDTO.PagingParam> dto) {
         PagingVO<SoReturnDTO.PagingView> pagingVO = soReturnService.paging(dto);
         return success(pagingVO);
@@ -301,6 +304,7 @@ public class SoReturnController extends BaseController {
             menuCode = "oms:soReturn:paging",
             tableAlias = "sr"
     )
+    @WebAdvanceQuery(handler = SoReturnQueryHandler.class)
     public ApiResult exportExcel(@RequestBody SoReturnDTO.PagingParam dto, HttpServletResponse response) {
         Boolean flag = soReturnService.exportExcel(dto, response);
         return flag == true ? success() : failure();

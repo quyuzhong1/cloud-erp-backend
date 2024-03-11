@@ -69,12 +69,6 @@ public class ProductSmallestUnitDTO implements Serializable {
      */
     private List<ProductCertificateShowDTO> productCertificateShowDTOList;
 
-
-    /**
-     * 产品认证信息
-     */
-    private ProductAttestationDTO productAttestationDTO;
-
     /**
      * 产品包装辅料
      */

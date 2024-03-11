@@ -17,6 +17,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.server.plm.service.LogisticsProductService;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -56,5 +57,12 @@ public class LogisticsProductFeignController extends BaseController {
          return logisticsProductService.listLogisticsProduct(skuIdList);
     }
 
-
+    /**
+     * 重算物流产品 目的国申报价
+     * @return
+     */
+    @PostMapping("/recalDestDeclarePrice")
+    public void recalDestDeclarePrice(@RequestBody List<DmpSkuCostEntity> dmpSkuCostEntityList) {
+        logisticsProductService.recalDestDeclarePrice(dmpSkuCostEntityList);
+    }
 }

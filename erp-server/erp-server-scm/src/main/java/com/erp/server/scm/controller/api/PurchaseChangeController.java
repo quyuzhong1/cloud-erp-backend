@@ -2,6 +2,7 @@ package com.erp.server.scm.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -48,6 +49,7 @@ public class PurchaseChangeController extends BaseController {
             tableField = "change_user_id",
             menuCode = "scm:purchaseChange:paging",
             tableAlias = "pc")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<PurchaseChangeDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseChangeDTO.SearchParamDTO> dto) {
         PagingVO<PurchaseChangeDTO.ListDTO> pagingVO = purchaseChangeService.paging(dto);
         return success(pagingVO);
@@ -255,6 +257,7 @@ public class PurchaseChangeController extends BaseController {
             tableField = "change_user_id",
             menuCode = "scm:purchaseChange:exportExcel",
             tableAlias = "pc")
+    @WebAdvanceQuery
     public ApiResult exportExcel(@RequestBody PurchaseChangeDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = purchaseChangeService.exportExcel(dto, response);
         return flag == true ? success() : failure();

@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.scm.entity.*;
@@ -123,11 +124,11 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
      */
     private Boolean purchaseOrderApproveEnd(EndProcessDTO dto) {
         //供应商
-        List<PurchaseOrderEntity> list = purchaseOrderService.listByIds(Arrays.asList(dto.getBusinessId()));
-        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        PurchaseOrderEntity entity = purchaseOrderService.getById(dto.getBusinessId());
+        ApproveOneDTO baseApproveParamDTO = new ApproveOneDTO();
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
-        baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
-        return purchaseOrderService.approveEnd(baseApproveParamDTO,list);
+        baseApproveParamDTO.setId(dto.getBusinessId());
+        return purchaseOrderService.approveEnd(baseApproveParamDTO,entity);
     }
 
     /**
@@ -139,10 +140,10 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
      */
     private Boolean subcontractOrderApproveEnd(EndProcessDTO dto) {
         //供应商
-        List<SubcontractOrderEntity> list = subcontractOrderService.listByIds(Arrays.asList(dto.getBusinessId()));
-        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-        baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
-        baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
-        return subcontractOrderService.approveEnd(baseApproveParamDTO,list);
+        SubcontractOrderEntity entity = subcontractOrderService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+        approveOneDTO.setType(dto.getApproveStatus().getStatus());
+        approveOneDTO.setId(dto.getBusinessId());
+        return subcontractOrderService.approveEnd(approveOneDTO,entity);
     }
 }

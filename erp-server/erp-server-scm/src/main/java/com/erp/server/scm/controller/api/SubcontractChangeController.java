@@ -1,6 +1,7 @@
 package com.erp.server.scm.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -14,6 +15,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
+import com.erp.server.scm.query.SubcontractChangeQueryHandler;
 import com.erp.server.scm.service.SubcontractChangeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -63,6 +65,7 @@ public class SubcontractChangeController extends BaseController {
             menuCode = "scm:subcontractChangeOrder:paging",
             tableAlias = "sc"
     )
+    @WebAdvanceQuery(handler = SubcontractChangeQueryHandler.class)
     public ApiResult<PagingVO<SubcontractChangeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SubcontractChangeDTO.PagingParamDTO> dto) {
         return success(subcontractChangeService.paging(dto));
     }
@@ -247,7 +250,8 @@ public class SubcontractChangeController extends BaseController {
             menuCode = "scm:subcontractChangeOrder:export",
             tableAlias = "sc"
     )
-    public void exportList(@RequestBody @Validated SubcontractChangeDTO.ExportDTO dto, HttpServletResponse response) {
+    @WebAdvanceQuery(handler = SubcontractChangeQueryHandler.class)
+    public void exportList(@RequestBody @Validated SubcontractChangeDTO.PagingParamDTO dto, HttpServletResponse response) {
         subcontractChangeService.exportList(dto, response);
     }
 

@@ -1,6 +1,7 @@
 package com.erp.model.scm.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,6 +15,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 委外变更单请求响应实体
@@ -53,59 +55,22 @@ public class SubcontractChangeDTO implements Serializable {
      public static class PagingParamDTO extends SortDTO {
 
          /**
+          * 页面高级查询
+          */
+         private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+         /**
+          * sqlMap 默认key default
+          */
+         private Map<String, String> sqlMap;
+
+
+         /**
          * 搜索类型
          */
          private String  searchType;
 
-         /**
-          * 委外订单编号
-          */
-         private String code;
-
-         /**
-          * sku编码
-          */
-         private List<String> skuNoList;
-
-         /**
-          * 供应商id
-          */
-         private List<String> supplierIdList;
-
-         /**
-          * 审核状态（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
-          */
          private List<String> approveStatusList;
-
-         /**
-          * 作废状态（false未作废，true已作废）
-          */
-         private Boolean invalidStatus;
-
-         /**
-          * 仓库id
-          */
-         private List<String> warehouseIdList;
-
-         /**
-          * 创建时间
-          */
-         private List<LocalDate> createTimeList;
-
-         /**
-          * 审核时间
-          */
-         private List<LocalDate> approveTimeList;
-
-         /**
-          * 申请人id
-          */
-         private List<String> purchaseUserIdList;
-
-         /**
-          * 创建人id
-          */
-         private List<String> createUserIdList;
 
      }
     /**
@@ -118,7 +83,13 @@ public class SubcontractChangeDTO implements Serializable {
         /**
         * 主键id
         */
-        private String  id;
+        private String id;
+
+        /**
+         * 明细id
+         */
+        private String detailId;
+
         /**
          * 单据编号
          */

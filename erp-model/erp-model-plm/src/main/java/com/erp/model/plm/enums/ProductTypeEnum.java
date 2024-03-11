@@ -10,21 +10,21 @@ import com.common.core.constant.EnumMessage;
  */
 public enum ProductTypeEnum implements EnumMessage {
 
-    NEWPRODUCT(1,"新产品"),
+    NEW_PRODUCT("newProduct","新产品"),
 
-    ITERATIVEPRODUCT(2,"迭代产品");
+    ITERATIVE_PRODUCT("iterativeProduct","迭代产品");
 
-    private Integer code;
+    private String code;
 
     private String name;
 
 
-    ProductTypeEnum(Integer colourState, String name) {
-        this.code = colourState;
+    ProductTypeEnum(String code, String name) {
+        this.code = code;
         this.name = name;
     }
 
-    public Integer getCode() {
+    public String getCode() {
         return code;
     }
 
@@ -32,7 +32,7 @@ public enum ProductTypeEnum implements EnumMessage {
         return name;
     }
 
-    public static String getName(Integer code) {
+    public static String getName(String code) {
         for (ProductTypeEnum state : ProductTypeEnum.values()) {
             if (code.equals(state.getCode())) {
                 return state.getName();

@@ -1,5 +1,7 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -73,4 +75,8 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
     ListingInfoEntity getByPlatformSkuNoAndSpu(String platformSkuNo, String platformSpuNo, String typeCode);
 
     void updateMatchResult(String listingId, Boolean matchResult);
+
+    PagingVO<ListingInfoDTO.PageDTO> paging(PagingDTO<ListingInfoDTO.PagingParamDTO> dto);
+
+    Boolean warehouseSkuMapping(ListingInfoDTO.WarehouseSkuMappingParamDTO dto);
 }

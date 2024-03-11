@@ -3,6 +3,7 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -223,6 +224,8 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * 搜索SKU只带组合信息
      */
     List<SkuSimpleVO> searchSkuWithCombination(@Param("searchKeyword") String searchKeyword, @Param("state") Integer state);
+
+    List<SkuVO> getSkuInfoAdvanceQuery(@Param("params") AdvanceQueryContainer advanceQueryContainer);
 }
 
 

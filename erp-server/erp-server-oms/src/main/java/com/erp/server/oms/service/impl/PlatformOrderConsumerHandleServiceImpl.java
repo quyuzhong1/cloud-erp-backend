@@ -416,10 +416,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
         List<String> skuIds = detailList.stream().map(SoB2cDetailEntity::getSkuId).filter(StringUtils::isNotEmpty).collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
-        List<BomChildrenSkuDTO> skuDTOS = plmTaskFeign.listBomBySkuIds(skuIds);
+//        List<BomChildrenSkuDTO> skuDTOS = plmTaskFeign.listBomBySkuIds(skuIds);
         List<SplitSkuDTO> splitSkuDTOS = new ArrayList<>();
         detailList.forEach(addDTO -> {
-            BomChildrenSkuDTO skuVO = skuDTOS.stream().filter(e -> StrUtil.isNotEmpty(e.getSkuId()) && StrUtil.isNotEmpty(e.getSkuNo()) && e.getSkuId().equals(addDTO.getSkuId()))
+            BomChildrenSkuDTO skuVO = bomChildrenSkuDTOS.stream().filter(e -> StrUtil.isNotEmpty(e.getParentSkuId()) && StrUtil.isNotEmpty(e.getParentSkuNo()) && e.getParentSkuId().equals(addDTO.getSkuId()))
                     .findFirst().orElse(null);
             if (Objects.nonNull(skuVO) && StringUtils.isNotEmpty(skuVO.getType()) && BomTypeEnum.COMBINATION.getType().equals(skuVO.getType())){
                 //组合品时进行拆分

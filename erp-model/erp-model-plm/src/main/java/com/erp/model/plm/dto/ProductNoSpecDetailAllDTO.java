@@ -5,7 +5,6 @@ import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -60,11 +59,6 @@ public class ProductNoSpecDetailAllDTO {
      * 产品包装辅料
      */
     private List<ProductAccessoriesDTO> productAccessoriesList;
-
-    /**
-     * 产品认证信息
-     */
-    private List<ProductAttestationDTO> productAttestationList;
 
     /**
      * 目的国海关编码信息

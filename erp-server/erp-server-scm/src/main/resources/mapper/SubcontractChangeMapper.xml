@@ -35,6 +35,7 @@
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         sc.id,
+        scd.id as detailId,
         sc.code,
         sc.source_code as sourceCode,
         s.name as supplierName,
@@ -66,54 +67,12 @@
         from subcontract_change sc
         inner join subcontract_change_detail scd on  sc.id = scd.main_id and scd.is_deleted = false
         left join supplier s  on scd.supplier_id = s.id and s.is_deleted = false
-        <where>
-            sc.is_deleted = false and scd.parent_id = ''
-            <if test="params.code != null and params.code != ''">
-                and sc.code ILIKE concat('%',#{params.code}::text,'%')
-            </if>
-            <if test="params.invalidStatus != null ">
-                and sc.invalid_status = #{params.invalidStatus}
-            </if>
-            <if test="params.skuNoList != null and params.skuNoList.size > 0">
-                and scd.sku_no in
-                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
-                and scd.supplier_id in
-                <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                and sc.approve_status in
-                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
-                and scd.warehouse_id in
-                <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-                and sc.create_user_id in
-                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and sc.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sc.create_time
-            </if>
-            <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
-                and sc.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sc.approve_time
-            </if>
+        where
+        ${params.sqlMap.default}
+        and    sc.is_deleted = false and scd.parent_id = ''
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
-        </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -149,56 +108,12 @@
         from subcontract_change sc
         inner join subcontract_change_detail scd on  sc.id = scd.main_id and scd.is_deleted = false
         left join supplier s  on scd.supplier_id = s.id and s.is_deleted = false
-        <where>
-            sc.is_deleted = false
-            <if test="params.ids != null and params.ids.size > 0">
-                and po.id in
-                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.ids == null or params.ids.size == 0">
-                <if test="params.code != null and params.code != ''">
-                    and sc.code ILIKE concat('%',#{params.code}::text,'%')
-                </if>
-                <if test="params.invalidStatus != null ">
-                    and sc.invalid_status = #{params.invalidStatus}
-                </if>
-                <if test="params.skuNoList != null and params.skuNoList.size > 0">
-                    and scd.sku_no in
-                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                    and sc.approve_status in
-                    <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
-                    and sc.warehouse_id in
-                    <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-                    and sc.create_user_id in
-                    <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                    and sc.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sc.create_time
-                </if>
-                <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
-                    and sc.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sc.approve_time
-                </if>
+        where
+        ${params.sqlMap.default}
+           and sc.is_deleted = false
                 <if test="params.permissionSql != null and params.permissionSql != ''">
                     ${params.permissionSql}
                 </if>
-            </if>
-        </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">

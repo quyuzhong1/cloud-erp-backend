@@ -148,7 +148,7 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     * @param response
     * @return
     */
-    void exportList(FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(FirstMileDeliveryDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法

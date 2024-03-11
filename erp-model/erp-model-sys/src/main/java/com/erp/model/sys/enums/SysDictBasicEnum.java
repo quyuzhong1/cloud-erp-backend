@@ -9,7 +9,9 @@ package com.erp.model.sys.enums;
 
 public enum SysDictBasicEnum {
 
-    PAYMENT_CONDITION("paymentCondition",  "付款条件"),;
+    PAYMENT_CONDITION("paymentCondition",  "付款条件"),
+    SUPPLIER_CATEGORY("paymentCondition",  "付款条件"),
+    ;
 
 
     private String code;

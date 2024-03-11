@@ -8,11 +8,15 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -31,9 +35,10 @@ import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
-import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.MachineSourceTypeEnum;
 import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -44,8 +49,8 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeMachineInfoService;
 import com.erp.server.wms.mabang.SyncMabangMachineService;
 import com.erp.server.wms.mapper.MachineInfoMapper;
+import com.erp.server.wms.query.MachineInfoQueryHandler;
 import com.erp.server.wms.service.*;
-import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -60,7 +65,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -121,7 +125,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     @Resource
     private MachineRefSoService machineRefSoService;
 
-
+    @Resource
+    private MachineInfoQueryHandler machineInfoQueryHandler;
 
     @Override
     public PagingVO<MachineInfoDTO.ListDTO> paging(PagingDTO<MachineInfoDTO.SearchParamDTO> pagingDTO) {
@@ -133,7 +138,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             return new PagingVO(pageData);
         }
         //数据处理
-        doOpHandleData(records);
+        doOpHandleData(records,false);
         return new PagingVO(pageData);
     }
 
@@ -145,25 +150,14 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             MachineInfoDTO.SearchParamDTO searchParamDTO = new MachineInfoDTO.SearchParamDTO();
             searchParamDTO.setPermissionSql(dto.getPermissionSql());
             MachineInfoDTO.ListStatusCountDTO resultDTO = new MachineInfoDTO.ListStatusCountDTO();
-            Integer count = MathUtil.ZERO;
-            if(PageListTypeEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
-            if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
-            if (PageListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
-            if (PageListTypeEnum.REJECT.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
+            String tabSql = machineInfoQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            searchParamDTO.setSqlMap(map);
+            Integer count = this.baseMapper.listCount(searchParamDTO);
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
-            resultDTO.setSearchType(item.getCode());
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
             list.add(resultDTO);
         }
         return list;
@@ -195,11 +189,11 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         return entity.getId();
     }
 
-    
+
     /**
      * @description
      * @param checkSkuIdList 检查 的sku
-     * @return 
+     * @return
      * @date 2024-02-28 11:58
      * @author Lambda
      */
@@ -314,19 +308,34 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         }
         List<MachineDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(MachineDetailDTO.ViewDTO.class, detailList);
 
-        //产品信息
+        //查询明细子件
+        List<String> detailIdList = detailList.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
+        List<MachineSubComponentsEntity> machineSubComponentsList = machineSubComponentsService.listByDetailIds(detailIdList);
+        if (CollectionUtils.isEmpty(machineSubComponentsList)) {
+            throw new ServiceException(ApiError.ERROR_99056);
+        }
+        //子件仓库id集合
+        List<String> warehouseIdList = machineSubComponentsList.stream().map(MachineSubComponentsEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        warehouseIdList.add(viewDTO.getWarehouseId());
+
+        //明细skuId集合
         List<String> skuIds = detailList.stream().map(MachineDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        //查询BOM中SKU子集
+        List<BomChildrenSkuDTO> childrenList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
+
+        //子件skuId集合
+        List<String> subComponentsSkuIdList = machineSubComponentsList.stream().map(MachineSubComponentsEntity::getSkuId).collect(Collectors.toList());
+        skuIds.addAll(subComponentsSkuIdList);
+        //产品信息
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        Map<String, List<MachineSubComponentsDTO.ViewDTO>> bomSubMap = Maps.newHashMap();
-        detailList.stream().forEach(obj-> bomSubMap.put(obj.getSkuId(), viewBomSubComponents( new MachineSubComponentsDTO.ViewBomParamDTO(obj.getSkuId(),obj.getReferenceVersion()))));
 
         //组织
-        InventoryDTO.ParamDTO param = new InventoryDTO.ParamDTO();
-        param.setOrgIdList(Arrays.asList(viewDTO.getInventoryOrgId()));
-        param.setSkuIdList(skuIds);
-        param.setWarehouseIdList(Arrays.asList(viewDTO.getWarehouseId()));
-        //库存信息
-        List<InventoryEntity> inventoryInfoList = inventoryService.listInventoryByParam(param);
+        InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
+        skuInventoryDTO.setSkuIdList(skuIds);
+        skuInventoryDTO.setWarehouseIdList(warehouseIdList);
+        skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        //可用数量
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
 
         for (MachineDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
             //产品名称
@@ -335,21 +344,39 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                 viewDetailDTO.setProductName(productName);
             }
             //根据组织、仓库、sku查询可用库存
-            Integer curInventoryQty = inventoryInfoList.stream().filter(obj -> obj.getSkuId().equals(viewDetailDTO.getSkuId()) && InventoryStatusEnum.USABLE.getCode().equals(obj.getDictInventoryStatus()))
-                    .map(InventoryEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer curInventoryQty = skuInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(),viewDetailDTO.getSkuId())
+                            && StrUtil.equals(obj.getWarehouseId(),viewDTO.getWarehouseId())
+                            && StrUtil.equals(obj.getWarehouseLocationId(),viewDetailDTO.getWarehouseLocation()))
+                    .map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO, Integer::sum);
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
+
             //明细子件
-            List<MachineSubComponentsDTO.ViewDTO> subComponentsList = this.viewSubComponents(viewDetailDTO.getId());
-            List<MachineSubComponentsDTO.ViewDTO> subList = bomSubMap.get(viewDetailDTO.getSkuId());
-            Map<String,MachineSubComponentsDTO.ViewDTO> subMap = subList.stream().collect(Collectors.toMap(MachineSubComponentsDTO.ViewDTO::getSkuId, Function.identity()));
-            subComponentsList.stream().forEach(sub-> {
-                MachineSubComponentsDTO.ViewDTO subView = subMap.get(sub.getSkuId());
-                if (ObjectUtils.isEmpty(subView)) {
+            List<MachineSubComponentsEntity> subComponentsList = machineSubComponentsList.stream().filter(obj -> StrUtil.equals(viewDetailDTO.getId(), obj.getDetailId())).collect(Collectors.toList());
+            List<MachineSubComponentsDTO.ViewDTO> subComponentsDTOList = BeanMapperUtils.copyList(MachineSubComponentsDTO.ViewDTO.class, subComponentsList);
+
+            for (MachineSubComponentsDTO.ViewDTO subComponentsDTO : subComponentsDTOList) {
+                //产品信息
+                SkuVO skuVO = skuList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), subComponentsDTO.getSkuId())).findFirst().orElse(new SkuVO());
+                subComponentsDTO.setSkuNo(skuVO.getSkuNo());
+                subComponentsDTO.setProductName(skuVO.getSkuName());
+
+                //根据组织、仓库、sku查询可用库存
+                Integer  subComponentsQty = skuInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(),subComponentsDTO.getSkuId())
+                                && StrUtil.equals(obj.getWarehouseId(),subComponentsDTO.getWarehouseId())
+                                && StrUtil.equals(obj.getWarehouseLocationId(),subComponentsDTO.getWarehouseLocation()))
+                        .map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO, Integer::sum);
+                subComponentsDTO.setCurInventoryQty(subComponentsQty);
+
+                //bom用量
+                Integer quantity = childrenList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), viewDetailDTO.getSkuId())
+                        && StrUtil.equals(obj.getSkuId(), subComponentsDTO.getSkuId())
+                ).map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(quantity)) {
                     throw new ServiceException(ApiError.ERROR_95173,viewDetailDTO.getSkuNo());
                 }
-                sub.setItemQty(subView.getQty());
-            });
-            viewDetailDTO.setSubComponentsList(subComponentsList);
+                subComponentsDTO.setItemQty(quantity);
+            }
+            viewDetailDTO.setSubComponentsList(subComponentsDTOList);
         }
         viewDTO.setDetailList(viewDetailList);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
@@ -637,7 +664,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
         }
-        doOpHandleData(list);
+        doOpHandleData(list,true);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/machineInfo.xlsx";
         String name = "加工单导出";
@@ -771,7 +798,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
      * @author Will
      * @date: 2023/4/19 18:58
      */
-    private void doOpHandleData(List<MachineInfoDTO.ListDTO> records) {
+    private void doOpHandleData(List<MachineInfoDTO.ListDTO> records,boolean isExport) {
         if (CollectionUtils.isEmpty(records)) {
             return;
         }
@@ -795,6 +822,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
 
+            if(isExport){
+                obj.setSourceType(EnumMessage.getNameByCode(MachineSourceTypeEnum.class,obj.getSourceType()));
+            }
         }
     }
 

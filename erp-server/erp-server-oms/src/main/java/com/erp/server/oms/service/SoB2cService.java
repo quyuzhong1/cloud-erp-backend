@@ -777,4 +777,18 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return void
      **/
     Boolean updateAliExpressOrderWarehouse(String soId, String shopId);
+
+    /**
+     * 批量删除订单异常标识
+     * @param mainIds
+     * @param type
+     */
+    void batchRemoveSignError(List<String> mainIds, String type);
+
+    /**
+     * 单个更新订单预报号
+     * @param shippingOrderDTO
+     * @return
+     */
+    Boolean updateShippingOrderNoBySoId(TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO);
 }

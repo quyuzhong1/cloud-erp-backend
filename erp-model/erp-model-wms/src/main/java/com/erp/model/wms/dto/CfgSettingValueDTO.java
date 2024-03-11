@@ -4,10 +4,12 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -81,5 +83,24 @@ public class CfgSettingValueDTO implements Serializable {
         private String endDate;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsProductDestDeclarePrice{
+        /**
+         * 含税采购价（>）
+         */
+        @Digits(integer = 12, fraction = 4, message = "含税采购价整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal startPrice;
+        /**
+         * 含税采购价(<=)
+         */
+        @Digits(integer = 12, fraction = 4, message = "含税采购价整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal endPrice;
+        /**
+         * 比例
+         */
+        @Digits(integer = 12, fraction = 2, message = "比例整数位不能超过12位，小数位不能超过2位")
+        private BigDecimal rate;
+    }
 
 }

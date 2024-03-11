@@ -100,4 +100,6 @@ public interface SoReturnDetailService extends SuperService<SoReturnDetailEntity
      * @return java.util.List<java.lang.String>
      **/
     List<String> listBySkuNo(SoReturnDTO.PdaSoReturnParam dto);
+
+    List<SoReturnDetailEntity> listDetailByReturnType(List<String> returnType);
 }

@@ -36,8 +36,16 @@ public interface SoChangeDetailService extends SuperService<SoChangeDetailEntity
      * @return java.util.List<com.erp.model.oms.dto.SoChangeDetailDTO.ViewDTO>
      */
     List<SoChangeDetailDTO.ViewDTO> listDetailByMainId(String mainId);
+    /**
+     * @description:
+     * @author Will
+     * @date: 2024/2/1 14:54
+     * @param idList
+     * @return List<SoChangeDetailEntity>
+     */
+    List<SoChangeDetailEntity> listByMainIdList(List<String> idList);
 
-    
+
     /**
      * 检查对应的变更类型
      * @author yl
@@ -116,4 +124,5 @@ public interface SoChangeDetailService extends SuperService<SoChangeDetailEntity
      * @return java.lang.Boolean
      */
     Boolean existAdd(String mainId);
+
 }

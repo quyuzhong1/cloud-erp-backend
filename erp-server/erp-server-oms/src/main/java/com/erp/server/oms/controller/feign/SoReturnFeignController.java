@@ -100,5 +100,12 @@ public class SoReturnFeignController {
     public List<SoReturnDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds) {
         return soReturnDetailService.listDetailByMainIds(mainIds);
     }
+    /**
+     * 根据退货类型查询
+     **/
+    @PostMapping("/listDetailByReturnType")
+    public List<SoReturnDetailEntity> listDetailByReturnType(@RequestBody List<String> returnType) {
+        return soReturnDetailService.listDetailByReturnType(returnType);
+    }
 
 }

@@ -153,6 +153,11 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         private String moduleCode;
 
         /**
+         * 模块状态字段
+         */
+        private String moduleStatusField;
+
+        /**
          * 模块状态名称
          */
         private String moduleStatusName;
@@ -338,23 +343,23 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          */
         private String id;
         /**
-         * 单据来源
+         * 单据来源 【可排序】
          */
         private String moduleClassify;
         /**
-         * 单据编号
+         * 单据编号【可排序】
          */
         private String businessCode;
         /**
-         * 单据名称
+         * 单据名称【可排序】
          */
         private String businessName;
         /**
-         * 单据来源id
+         * 单据来源id【可排序】
          */
         private String businessId;
         /**
-         * 电锯来源编号
+         * 单据来源编号【可排序】
          */
         private String businessKey;
         /**
@@ -362,7 +367,7 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          */
         private String approveDuration;
         /**
-         * 申请人id
+         * 申请人id【可排序】
          */
         private String createUserId;
         /**
@@ -370,11 +375,11 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          */
         private String createUserName;
         /**
-         * 申请时间
+         * 申请时间【可排序】
          */
         private LocalDateTime createTime;
         /**
-         * 审核状态
+         * 审核状态【可排序】
          */
         private String approveStatus;
         /**
@@ -386,11 +391,11 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          */
         private String detailUrl;
         /**
-         * 撤销接口地址
+         * 撤销接口地址【可排序】
          */
         private String cancelProcessUrl;
         /**
-         * 撤销请求参数
+         * 撤销请求参数【可排序】
          */
         private String cancelProcessParam;
         /**

@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -46,6 +47,7 @@ public class InitStockController extends BaseController {
             menuCode = "wms:initStock:paging",
             tableAlias = "ism"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<InitStockDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<InitStockDTO.SearchParamDTO> dto) {
         return success(initStockService.paging(dto));
     }
@@ -250,6 +252,7 @@ public class InitStockController extends BaseController {
             menuCode = "wms:initStock:paging",
             tableAlias = "ism"
     )
+    @WebAdvanceQuery
     public ApiResult<Void> exportExcel(@RequestBody InitStockDTO.ExportSearchParamDTO dto, HttpServletResponse response) {
         initStockService.exportExcel(dto, response);
         return null;

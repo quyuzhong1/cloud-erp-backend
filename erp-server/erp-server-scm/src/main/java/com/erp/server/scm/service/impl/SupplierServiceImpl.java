@@ -1375,6 +1375,39 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         return Boolean.TRUE;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateCategory(SupplierDTO.BatchUpdateCategoryDTO dto) {
+        List<SupplierEntity> supplierEntityList = this.listByIds(dto.getIds());
+        if(CollectionUtils.isEmpty(supplierEntityList)){
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+        DictBasicEntity dictBasicEntity = dictBasicService.getById(dto.getCategoryId());
+        if(Objects.isNull(dictBasicEntity)){
+            throw new ServiceException("供应商分类信息为空");
+        }
+        List<SupplierEntity> updateList = new ArrayList<>();
+        List<Pair<String, String>> pairList = new ArrayList<>();
+        supplierEntityList.forEach(v->{
+            if(!v.getCategoryId().equals(dto.getCategoryId())){
+                Pair<String, String> pair = new Pair<>(v.getId(),v.getCategoryName());
+                v.setCategoryId(dictBasicEntity.getId());
+                v.setCategoryName(dictBasicEntity.getName());
+                pairList.add(pair);
+                updateList.add(v);
+            }
+        });
+        if(CollectionUtils.isEmpty(updateList)){
+            return;
+        }
+        if(!this.updateBatchById(updateList)){
+            throw new ServiceException("更新供应商分类信息失败");
+        }
+        String content = "供应商分类由[%s]变更为"+dictBasicEntity.getName();
+        batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "供应商分类变更");
+
+    }
+
     /**
      * @description: 更新状态
      * @author Will

@@ -23,6 +23,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.TransferDeclareProductDTO;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * 中转报关产品
@@ -73,10 +74,10 @@ public class TransferDeclareProductController extends BaseController {
         return success();
     }
 
-    @GetMapping("/getSkuInfo")
+    @GetMapping("/getSkuInfoByTransferDeclare")
     public ApiResult getSkuInfo(@RequestParam("id") String id){
-        TransferDeclareDetailEntity detail = transferDeclareDetailService.getById(id);
-        Boolean aBoolean = transferDeclareProductService.saveOrUpdateTransferDeclareProducts(Collections.singletonList(detail));
+        List<TransferDeclareDetailEntity> transferDeclareDetailEntities = transferDeclareDetailService.listByMainIds(Collections.singletonList(id));
+        Boolean aBoolean = transferDeclareProductService.saveOrUpdateTransferDeclareProducts(transferDeclareDetailEntities);
         return success(aBoolean);
     }
 

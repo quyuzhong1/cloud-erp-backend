@@ -31,29 +31,23 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
-import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
-import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.entity.CfgSettingEntity;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
-import com.erp.model.wms.enums.CfgSettingCreateTypeEnum;
-import com.erp.model.wms.enums.CfgSettingEnum;
-import com.erp.model.wms.enums.SubcontractIssueTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.CfgSettingFeign;
+import com.erp.rpc.wms.feign.InventoryCloseRecordFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.SubcontractIssueFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -64,7 +58,6 @@ import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,6 +67,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -142,7 +136,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     private SubcontractIssueFeign subcontractIssueFeign;
 
     @Resource
-    private CfgSettingFeign cfgSettingFeign;
+    private InventoryCloseRecordFeign inventoryCloseRecordFeign;
 
     @Override
     public PagingVO<SubcontractOrderDTO.ListDTO> paging(PagingDTO<SubcontractOrderDTO.PagingParamDTO> pagingParamDTO) {
@@ -376,39 +370,37 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void approve(BaseApproveParamDTO dto) {
-        List<String> ids = dto.getIds();
+    public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-           throw new ServiceException("审核不通过请填写审核意见");
+            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
         }
-        List<SubcontractOrderEntity> list = super.listByIds(ids);
-        if (CollUtil.isEmpty(list)) {
-            throw new ServiceException("未找到委外订单数据");
-        }
+        SubcontractOrderEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
-        if (count > 0) {
+        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+        //验证存货核算是否关账
+        List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = Arrays.asList(new InventoryClosedRecordDTO.ClosedParamDTO(entity.getPurchaseOrgId(), entity.getBillDate()),
+                new InventoryClosedRecordDTO.ClosedParamDTO(entity.getSubcontractOrgId(), entity.getBillDate()));
+        inventoryCloseRecordFeign.checkHsClosed(closedParamList);
         //调用审核流程
-        approveProcess(list, dto);
+        approveProcess(entity, dto);
 
         // 操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个委外订单", approveType.getName()).concat("【%s】").concat(StrUtils.isNotEmpty(dto.getComment()) ? String.format("，意见：%s", dto.getComment()) : ""),
-                ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "审核操作");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "委外订单", approveType.getName(), dto.getComment());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), entity.getId(), "审核操作");
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(BaseApproveParamDTO dto, List<SubcontractOrderEntity> list) {
-        if (CollectionUtils.isEmpty(list)) {
+    public Boolean approveEnd(ApproveOneDTO dto, SubcontractOrderEntity entity) {
+        if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
-        List<String> ids = list.stream().map(SubcontractOrderEntity::getId).collect(Collectors.toList());
-
         ApproveStatusEnum approveStatus;
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
@@ -417,15 +409,15 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT;
         }
-        Boolean result = this.updateForApprove(ids, approveStatus.getStatus());
+        Boolean result = this.updateForApprove(Arrays.asList(entity.getId()), approveStatus.getStatus());
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             //自动生成采购订单
-            autoGeneratePo(ids);
+            autoGeneratePo(entity.getId());
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            syncKingdeeSubcontractOrderService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -434,55 +426,49 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void disApprove(List<String> ids) {
-        List<SubcontractOrderEntity> list = super.listByIds(ids);
-        if (CollUtil.isEmpty(list)) {
-            throw new ServiceException("未找到委外订单数据");
-        }
+    public BatchResultDTO disApprove(String id) {
+        SubcontractOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到委外订单数据"));
+
         // 已审核支持反审核
-        long count = list.stream().filter(obj -> !Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), obj.getApproveStatus())).count();
-        if (count > 0) {
+        if (!Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
         //委外变更单
-        List<SubcontractChangeEntity> subcontractChangeList = subcontractChangeService.listBySourceIds(ids);
+        List<SubcontractChangeEntity> subcontractChangeList = subcontractChangeService.listBySourceIds(Arrays.asList(id));
         //采购订单
-        List<PurchaseOrderEntity> purchaseOrderList = purchaseOrderService.listBySourceIds(ids);
+        List<PurchaseOrderEntity> purchaseOrderList = purchaseOrderService.listBySourceIds(Arrays.asList(id));
 
         //委外发料单
-        List<SubcontractIssueEntity> subcontractIssueList = subcontractIssueFeign.listBySourceIdList(ids);
+        List<SubcontractIssueEntity> subcontractIssueList = subcontractIssueFeign.listBySourceIdList(Arrays.asList(id));
 
-        for (SubcontractOrderEntity entity : list) {
-            //判断是否下推委外发料单
-            List<SubcontractIssueEntity> subIssueList = subcontractIssueList.stream().filter(obj -> StrUtil.equals(obj.getSourceId(), entity.getId())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(subIssueList)) {
-                String codes = subIssueList.stream().map(SubcontractIssueEntity::getCode).collect(Collectors.joining(","));
-                throw new ServiceException(ApiError.ERROR_SUB_PUSH_ISSUE,entity.getCode(),codes);
-            }
-            // 判断是否存在下推的采购订单
-            List<PurchaseOrderEntity> foundList = purchaseOrderList.stream().filter(obj -> obj.getSourceId().equals(entity.getId())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(foundList)) {
-                String codes = purchaseOrderList.stream().map(PurchaseOrderEntity::getCode).collect(Collectors.joining(","));
-                throw new ServiceException(ApiError.ERROR_98080,entity.getCode(),codes);
-            }
-            // 判断是否存在下推的变更单
-            List<SubcontractChangeEntity> subChangeList = subcontractChangeList.stream().filter(obj -> obj.getSourceId().equals(entity.getId())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(subChangeList)) {
-                String codes = subcontractChangeList.stream().map(SubcontractChangeEntity::getCode).collect(Collectors.joining(","));
-                throw new ServiceException(ApiError.ERROR_SUB_PUSH_CHANGE,entity.getCode(),codes);
-            }
+        //判断是否下推委外发料单
+        if (CollectionUtils.isNotEmpty(subcontractIssueList)) {
+            throw new ServiceException(ApiError.ERROR_SUB_PUSH_ISSUE,entity.getCode(),subcontractIssueList.get(0).getCode());
+        }
+        // 判断是否存在下推的采购订单
+        if (CollectionUtils.isNotEmpty(purchaseOrderList)) {
+            throw new ServiceException(ApiError.ERROR_98080,entity.getCode(),purchaseOrderList.get(0).getCode());
+        }
+        // 判断是否存在下推的变更单
+        if (CollectionUtils.isNotEmpty(subcontractChangeList)) {
+            throw new ServiceException(ApiError.ERROR_SUB_PUSH_CHANGE,entity.getCode(),subcontractChangeList.get(0).getCode());
         }
 
+        //验证存货核算是否关账
+        List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = Arrays.asList(new InventoryClosedRecordDTO.ClosedParamDTO(entity.getPurchaseOrgId(), entity.getBillDate()),
+                new InventoryClosedRecordDTO.ClosedParamDTO(entity.getSubcontractOrgId(), entity.getBillDate()));
+        inventoryCloseRecordFeign.checkHsClosed(closedParamList);
 
         // 更新审核信息
-        updateApproveStatus(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatus(Arrays.asList(id), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         //审核通过发送金蝶
-        list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        syncKingdeeSubcontractOrderService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
 
         // 操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("反审核了一个委外订单【%s】", ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "反审核操作");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "委外订单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), entity.getId(), "反审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
 
@@ -849,12 +835,14 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 throw new ServiceException(ApiError.ERROR_98076);
             }
             //审核
-            BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-            baseApproveParamDTO.setIds(poIds);
-            baseApproveParamDTO.setType(ApproveType.PASS);
-            Boolean approve = purchaseOrderService.approve(baseApproveParamDTO);
-            if (!approve) {
-                throw new ServiceException(ApiError.ERROR_98077);
+            for (String poId : poIds) {
+                ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+                approveOneDTO.setId(poId);
+                approveOneDTO.setType(ApproveType.PASS);
+                BatchResultDTO approve = purchaseOrderService.approve(approveOneDTO);
+                if (!approve.getSuccess()) {
+                    throw new ServiceException(ApiError.ERROR_98077);
+                }
             }
         }
     }
@@ -1025,6 +1013,14 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_98012);
         }
+
+        //验证存货核算是否关账
+        List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = list.stream().flatMap(obj -> Stream.of(new InventoryClosedRecordDTO.ClosedParamDTO(obj.getSubcontractOrgId(),obj.getBillDate())
+                        ,new InventoryClosedRecordDTO.ClosedParamDTO(obj.getPurchaseOrgId(),obj.getBillDate()))).
+                distinct().collect(Collectors.toList());
+        inventoryCloseRecordFeign.checkHsClosed(closedParamList);
+
+
         log.info("采购订单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
         //更新订单作废状态
         updateInvalidStatus(ids, remark);
@@ -1188,37 +1184,27 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
      * @description: 审核流程处理
      * @author Will
      * @date: 2023/7/11 12:28
-     * @param list
+     * @param entity
      * @param dto
      */
-    private void approveProcess(List<SubcontractOrderEntity> list, BaseApproveParamDTO dto) {
-        ValidList<ProcessManagementDTO.ApproveDTO> resultList = new ValidList<>();
+    private void approveProcess(SubcontractOrderEntity entity , ApproveOneDTO dto) {
         LoginUser userInfo = commonService.getUserInfo();
-        list.forEach(obj -> {
-            ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
-            approveDTO.setBusinessId(obj.getId());
-            approveDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
-            approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
-            approveDTO.setComment(dto.getComment());
-            approveDTO.setUserId(userInfo.getUid());
-            approveDTO.setVariablesMap(BeanUtil.beanToMap(obj));
-            resultList.add(approveDTO);
-        });
-        ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> listApiResult = workflowFeign.batchApproveProcess(resultList);
-        Integer code = listApiResult.getCode();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+        approveDTO.setComment(dto.getComment());
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
+        Integer code = approveResult.getCode();
         if (200 != code) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
-        List<ProcessManagementDTO.ApproveResultDTO> data = listApiResult.getData();
-        List<String> updateIdList = data.stream()
-                .filter(obj -> ObjectUtils.isEmpty(obj.getIsExistProcess()) || !obj.getIsExistProcess())
-                .map(ProcessManagementDTO.ApproveResultDTO::getBusinessId)
-                .collect(Collectors.toList());
-
-        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(updateIdList)) {
-            //无需走流程的数据则直接更新状态
-            List<SubcontractOrderEntity> updateList = list.stream().filter(obj -> updateIdList.contains(obj.getId())).collect(Collectors.toList());
-            approveEnd(dto, updateList);
+        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(dto, entity);
         }
     }
 
@@ -1226,14 +1212,11 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
      * @description: 自动生成采购订单
      * @author Will
      * @date: 2023/6/19 9:59
-     * @param ids
+     * @param id
      */
-    private void autoGeneratePo(List<String> ids) {
+    private void autoGeneratePo(String id) {
 
-        if (CollectionUtils.isEmpty(ids)) {
-            return;
-        }
-        List<SubcontractOrderDTO.ViewGeneratePoDTO> viewGeneratePoDTOS = viewGeneratePo(ids);
+        List<SubcontractOrderDTO.ViewGeneratePoDTO> viewGeneratePoDTOS = viewGeneratePo(Arrays.asList(id));
         if (CollectionUtils.isEmpty(viewGeneratePoDTOS)) {
             return;
         }

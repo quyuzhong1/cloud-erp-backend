@@ -5,6 +5,7 @@
     <select id="paging" resultType="com.erp.model.wms.dto.PoInstockDTO$ListDTO">
         select
             psi.id,
+            psid.id as detailId,
             psi.code,
             psid.purchase_order_detail_id AS purchaseOrderDetailId,
             psi.purchase_order_id AS purchaseOrderId,
@@ -39,72 +40,12 @@
         on psi.id = psid.main_id and psid.is_deleted = false
         left join purchase_order_detail pod
         on pod.id=psid.purchase_order_detail_id and pod.is_deleted = false
-        <where>
-            psi.is_deleted = false
-            <if test="params.productName != null and params.productName != ''">
-                and psid.product_name ILIKE concat('%',#{params.productName}::text,'%')
-            </if>
-            <if test="params.code != null and params.code != ''">
-                and psi.code ILIKE concat('%',#{params.code}::text,'%')
-            </if>
-            <if test="params.invalidStatus != null ">
-                and psi.invalid_status = #{params.invalidStatus}
-            </if>
-            <if test="params.purchaseOrderCode != null and params.purchaseOrderCode != ''">
-                and psi.purchase_order_code ILIKE concat('%',#{params.purchaseOrderCode}::text,'%')
-            </if>
-            <if test="params.skuNoList != null and params.skuNoList.size > 0">
-                and psid.sku_no in
-                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.purchaseTypeList != null and params.purchaseTypeList.size > 0">
-                and psi.purchase_type in
-                <foreach collection="params.purchaseTypeList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                and psi.approve_status in
-                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
-                and psi.delivery_warehouse_id in
-                <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
-                and psi.supplier_id in
-                <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
-                and psi.purchase_user_id in
-                <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-                and psi.create_user_id in
-                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and psi.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > psi.create_time
-            </if>
-            <if test="params.stockInDateList != null and params.stockInDateList.size > 0">
-                and psi.stock_in_date >= #{params.stockInDateList[0]} and  (#{params.stockInDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > psi.stock_in_date
-            </if>
+        where
+            ${params.sqlMap.default}
+        and    psi.is_deleted = false
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
-        </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -172,80 +113,12 @@
         on psi.id = psid.main_id and psid.is_deleted = false
         left join purchase_order_detail pod
         on pod.id=psid.purchase_order_detail_id and pod.is_deleted = false
-        <where>
-            psi.is_deleted = false
-            <if test="params.ids != null and params.ids.size > 0">
-                and psi.id in
-                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.ids == null or params.ids.size == 0">
-                <if test="params.productName != null and params.productName != ''">
-                    and psid.product_name ILIKE concat('%',#{params.productName}::text,'%')
-                </if>
-                <if test="params.code != null and params.code != ''">
-                    and psi.code ILIKE concat('%',#{params.code}::text,'%')
-                </if>
-                <if test="params.invalidStatus != null ">
-                    and psi.invalid_status = #{params.invalidStatus}
-                </if>
-                <if test="params.purchaseTypeList != null and params.purchaseTypeList.size > 0">
-                    and psi.purchase_type in
-                    <foreach collection="params.purchaseTypeList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.purchaseOrderCode != null and params.purchaseOrderCode != ''">
-                    and psi.purchase_order_code ILIKE concat('%',#{params.purchaseOrderCode}::text,'%')
-                </if>
-                <if test="params.skuNoList != null and params.skuNoList.size > 0">
-                    and psid.sku_no in
-                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                    and psi.approve_status in
-                    <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
-                    and psi.delivery_warehouse_id in
-                    <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
-                    and psi.supplier_id in
-                    <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
-                    and psi.purchase_user_id in
-                    <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-                    and psi.create_user_id in
-                    <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                    and psi.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > psi.create_time
-                </if>
-                <if test="params.stockInDateList != null and params.stockInDateList.size > 0">
-                    and psi.stock_in_date >= #{params.stockInDateList[0]} and  (#{params.stockInDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > psi.stock_in_date
-                </if>
+        where
+        ${params.sqlMap.default}
+        and    psi.is_deleted = false
                 <if test="params.permissionSql != null and params.permissionSql != ''">
                     ${params.permissionSql}
                 </if>
-            </if>
-        </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -415,66 +288,12 @@
         from po_instock psi
         inner join po_instock_detail psid
         on psi.id = psid.main_id and psid.is_deleted = false
-        <where>
-            psi.is_deleted = false
-            <if test="params.productName != null  and params.productName != ''">
-                and psid.product_name ILIKE concat('%',#{params.productName}::text,'%')
-            </if>
-            <if test="params.code != null and params.code != ''">
-                and psi.code ILIKE concat('%',#{params.code}::text,'%')
-            </if>
-            <if test="params.invalidStatus != null ">
-                and psi.invalid_status = #{params.invalidStatus}
-            </if>
-            <if test="params.purchaseOrderCode != null and params.purchaseOrderCode != ''">
-                and psi.purchase_order_code ILIKE concat('%',#{params.purchaseOrderCode}::text,'%')
-            </if>
-            <if test="params.skuNoList != null and params.skuNoList.size > 0">
-                and psid.sku_no in
-                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                and psi.approve_status in
-                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
-                and psi.delivery_warehouse_id in
-                <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
-                and psi.supplier_id in
-                <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
-                and psi.purchase_user_id in
-                <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-                and psi.create_user_id in
-                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and psi.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > psi.create_time
-            </if>
-            <if test="params.stockInDateList != null and params.stockInDateList.size > 0">
-                and psi.stock_in_date >= #{params.stockInDateList[0]} and  (#{params.stockInDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > psi.stock_in_date
-            </if>
+        where
+        ${params.sqlMap.default}
+        and    psi.is_deleted = false
+
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
-        </where>
-
     </select>
 </mapper>
