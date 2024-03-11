@@ -105,6 +105,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                     new SysLogEntity().setContent(String.format("新增了一个【产品证书】"))
                             .setBusinessId(obj.getSkuId())
                             .setPid(obj.getId())
+                            .setOperation("新增操作")
             );
         });
         sysLogService.addSysLogByBatchSave(sysLogEntityList);
@@ -442,6 +443,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             entity.setDictProject(ProductCertificateProjectEnum.getCode(excelDTO.getDictProjectName()));
             entity.setCertificateValidTime(ObjectUtil.isEmpty(excelDTO.getCertificateValidTimeStr()) ? null : LocalDate.parse(excelDTO.getCertificateValidTimeStr(), DateTimeFormatter.ofPattern("yyyy/M/d")));
             entity.setMultipartFile(multipartFile);
+            entity.setRemark(excelDTO.getRemark());
             //数据验证
             try {
                 checkProductCertificate(Arrays.asList(entity));
