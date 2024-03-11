@@ -1,16 +1,15 @@
 package com.erp.model.wms.dto;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+
 import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -115,14 +114,9 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private String remark;
 
         /**
-        * 到货状态（0未到货，1部分到货，2已到货）
-        */
-        private String arrivalStatus;
-
-        /**
-        * 到货时间
-        */
-        private LocalDateTime arrivalTime;
+         * 执行状态
+         */
+        private String executionStatus;
 
         /**
         * 税率
@@ -310,16 +304,9 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private String remark;
 
         /**
-        * 到货状态（0未到货，1部分到货，2已到货）
-        */
-        @NotBlank(message = "到货状态（0未到货，1部分到货，2已到货）不能为空")
-        @Size(max = 1,message = "到货状态（0未到货，1部分到货，2已到货）最大长度不能超过1位")
-        private String arrivalStatus;
-
-        /**
-        * 到货时间
-        */
-        private LocalDateTime arrivalTime;
+         * 执行状态
+         */
+        private String executionStatus;
 
         /**
         * 税率
