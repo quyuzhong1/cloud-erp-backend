@@ -27,7 +27,10 @@ import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.*;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
+import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -49,13 +52,9 @@ import com.erp.rpc.srm.feign.SrmDeliveryOrderFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.server.wms.convert.WarehouseReceiveConverter;
-import com.erp.server.wms.mapper.WarehouseMappingMapper;
 import com.erp.server.wms.mapper.WarehouseReceiveMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
-import com.xxl.job.core.biz.model.ReturnT;
-import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -577,9 +576,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             // 更新库存数据
             updateInventoryTransCore(warehouseReceiveList);
 
-            List<String> purchaseOrderIds = warehouseReceiveList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
-            //修改到货状态
-            poReturnService.updateArrivalState(purchaseOrderIds);
+            List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listDetailByMainIds(ids);
+            List<String> podIds = receiveDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(podIds)) {
+                //修改到货状态
+                poReturnService.updateArrivalState(podIds);
+            }
             //修改发货单确认状态
             List<String> deliveryOrderIds = warehouseReceiveList.stream().filter(v-> PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(v.getSourceType())).map(WarehouseReceiveEntity::getSourceId).distinct().collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(deliveryOrderIds)){
@@ -804,9 +806,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 .in(WarehouseReceiveEntity::getId, ids)
                 .update();
 
-        List<String> purchaseOrderIds = warehouseReceiveList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
-        //修改到货状态
-        poReturnService.updateArrivalState(purchaseOrderIds);
+        List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listDetailByMainIds(ids);
+        List<String> podIds = receiveDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(podIds)) {
+            //修改到货状态
+            poReturnService.updateArrivalState(podIds);
+        }
 
         // 更新库存数据，回扣库存
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.WAREHOUSE_RECEIVE, ids);
