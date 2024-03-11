@@ -2074,8 +2074,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 return;
             }
             productLogistics.setDestDeclarePrice(MathUtil.divide(resultDestDeclarePrice, usdRate));
-            productLogistics.setDeclareCurrency(CurrencyEnum.USD.getCurrencyCode());
-            productLogistics.setDeclareCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+            productLogistics.setDestCurrency(CurrencyEnum.USD.getCurrencyCode());
+            productLogistics.setDestCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
             productLogisticsService.updateById(productLogistics);
         }
     }
