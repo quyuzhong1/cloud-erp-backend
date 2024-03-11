@@ -1778,7 +1778,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
         // 按关账日期
         // 查询最新库存关账记录
-        Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId();
+        Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId(InventoryClosedRecordEnum.STK.getCode());
         // 最新的关账记录时间
         if (!closedDateMap.isEmpty()){
             // 来源店铺
