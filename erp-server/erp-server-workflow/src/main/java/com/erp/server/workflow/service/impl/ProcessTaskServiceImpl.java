@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service.impl;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.util.DateUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.BaseStatusEnum;
@@ -181,7 +182,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
             List<AuditorHandleDTO> auditorHandleList = this.getHistoryTaskByProcessId(dto.getProcessId());
             List<FindUserDTO> userList = sysUserFeign.getUserList();
             for (AuditorHandleDTO item : auditorHandleList) {
-                FindUserDTO findUser = userList.stream().filter(u -> item.getHandleUserId().equals(u.getUserId())).findFirst().orElse(null);
+                FindUserDTO findUser = userList.stream().filter(u -> StrUtil.equals(item.getHandleUserId(),u.getUserId())).findFirst().orElse(null);
                 if (findUser != null) {
                     item.setHandleUserName(findUser.getUserName());
                 } else {
@@ -330,7 +331,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
                     auditorHandleDTO.setHandContent("completed".equals(item.getDeleteReason()) ? "审核通过" : "待审核");
                 }
             }
-            FindUserDTO findUser = userList.stream().filter(u -> item.getAssignee().equals(u.getUserId())).findFirst().orElse(null);
+            FindUserDTO findUser = userList.stream().filter(u -> StrUtil.equals(item.getAssignee(),u.getUserId())).findFirst().orElse(null);
             auditorHandleDTO.setHandleUserName(null != findUser ? findUser.getUserName() : "");
             auditorHandleDTO.setActivityName(item.getName());
             auditorHandleDTO.setStartTime(DateUtils.format(item.getStartTime(), DateUtils.DATE_FORMAT_19));
