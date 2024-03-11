@@ -174,7 +174,8 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
     }
 
     @Override
-    public String getSkuRuleTest(SkuMappingRuleDTO.RuleTestDTO ruleTestDTO) {
+    public List<String> getSkuRuleTest(SkuMappingRuleDTO.RuleTestDTO ruleTestDTO) {
+        List<String> list = new ArrayList<>();
         String result = ruleTestDTO.getSkuNo();
         //先执行扩展规则
         //处理扩展规则
@@ -197,12 +198,13 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         List<String> regexList = skuMappingRuleEnum.getRegexMethod().apply(ruleTestDTO.getRuleDTO());
         //匹配规则为空，返回原结果
         if(CollectionUtils.isEmpty(regexList)){
-            return result;
+            list.add(result);
         }
         for(String regex : regexList){
             result = skuMappingRuleEnum.getHandleRegexMethod().apply(ruleTestDTO.getRuleType(),regex,result);
+            list.add(result);
         }
-        return result;
+        return list;
     }
 
 

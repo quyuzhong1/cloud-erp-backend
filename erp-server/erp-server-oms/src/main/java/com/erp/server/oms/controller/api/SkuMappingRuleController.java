@@ -138,8 +138,8 @@ public class SkuMappingRuleController extends BaseController {
             menuCode = "oms:skuMappingRule:update",
             serviceClass = SkuMappingRuleService.class,
             keyIdName = "id")
-    public ApiResult<String> getSkuRuleTest(@RequestBody @Validated SkuMappingRuleDTO.RuleTestDTO dto) {
-        String result = skuMappingRuleService.getSkuRuleTest(dto);
+    public ApiResult<List<String>> getSkuRuleTest(@RequestBody @Validated SkuMappingRuleDTO.RuleTestDTO dto) {
+        List<String> result = skuMappingRuleService.getSkuRuleTest(dto);
         return success(result);
     }
 }

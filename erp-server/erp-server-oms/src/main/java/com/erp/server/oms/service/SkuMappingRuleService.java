@@ -44,7 +44,7 @@ public interface SkuMappingRuleService extends SuperService<SkuMappingRuleEntity
 
     SkuMappingRuleDTO.ViewDTO view(String id);
 
-    String getSkuRuleTest(SkuMappingRuleDTO.RuleTestDTO dto);
+    List<String> getSkuRuleTest(SkuMappingRuleDTO.RuleTestDTO dto);
 
     void handleSkuMapping();
 
