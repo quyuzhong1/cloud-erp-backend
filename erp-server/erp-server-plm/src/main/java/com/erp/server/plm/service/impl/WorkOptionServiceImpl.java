@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.dto.TaskPagingShowDTO;
 import com.erp.model.plm.dto.TaskSearchParamDTO;
 import com.erp.model.plm.enums.TaskSearchCategoryEnum;
@@ -71,7 +72,9 @@ public class WorkOptionServiceImpl implements WorkOptionService {
                 myWorkOptionDTO.setTableNumber(workOptionMapper.getProductBomInfoNum(myWorkOptionDTO, status));
             }
             if (myWorkOptionDTO.getModuleCode().equals("product_change")) {
-                PagingDTO pagingDTO = JSONObject.parseObject(myWorkOptionDTO.getModuleParam(), PagingDTO.class);
+                PagingDTO<SearchPagingDTO> pagingDTO = JSONObject.parseObject(myWorkOptionDTO.getModuleParam(), PagingDTO.class);
+                SearchPagingDTO params = JSONObject.parseObject(JSONObject.toJSONString(pagingDTO.getParams()), SearchPagingDTO.class);
+                pagingDTO.setParams(params);
                 PagingVO paging = productChangeService.paging(pagingDTO);
                 myWorkOptionDTO.setTableNumber(paging.getTotalCount());
             }
