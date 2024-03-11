@@ -97,6 +97,8 @@ public enum SkuMappingRuleEnum implements EnumMessage{
         private final Boolean isEscape;
     }
 
+    private final List<String> needEscepe = Arrays.asList("+","*","[","]","\\",".");
+
     private static List<String> getIgnorePrefixesAndSuffixesRegex(SkuMappingRuleDTO.RuleDTO commonDTO){
         List<String> list = new ArrayList<>(commonDTO.getRuleContentList().size());
         for(SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO : commonDTO.getRuleContentList()){
@@ -105,14 +107,8 @@ public enum SkuMappingRuleEnum implements EnumMessage{
             }
             String prefix = Objects.isNull(ruleConditionsDTO.getIgnorePrefix())?"":ruleConditionsDTO.getIgnorePrefix();
             String suffixes = Objects.isNull(ruleConditionsDTO.getIgnoringSuffixes())?"":ruleConditionsDTO.getIgnoringSuffixes();
-            SkuMappingSymbolicEnum startSymbolEnum = EnumMessage.getByCode(SkuMappingRuleEnum.SkuMappingSymbolicEnum.class,prefix);
-            SkuMappingSymbolicEnum endSymbolicEnum = EnumMessage.getByCode(SkuMappingRuleEnum.SkuMappingSymbolicEnum.class,suffixes);
-            if(Objects.nonNull(startSymbolEnum) && startSymbolEnum.isEscape){
-                prefix = "\\"+prefix;
-            }
-            if(Objects.nonNull(endSymbolicEnum) && endSymbolicEnum.isEscape){
-                suffixes = "\\"+suffixes;
-            }
+            prefix = escapeSpecialCharacters(prefix);
+            suffixes = escapeSpecialCharacters(suffixes);
             if(StringUtils.isNotBlank(prefix)){
                 String regex = "\"^"+ prefix+"(.*?)$\"";
                 list.add(regex);
@@ -207,14 +203,9 @@ public enum SkuMappingRuleEnum implements EnumMessage{
             }
             String startSymbol = ruleConditionsDTO.getStartingSymbol();
             String endSymbol =ruleConditionsDTO.getEndSymbol();
-            SkuMappingSymbolicEnum startSymbolEnum = EnumMessage.getByCode(SkuMappingRuleEnum.SkuMappingSymbolicEnum.class,startSymbol);
-            SkuMappingSymbolicEnum endSymbolicEnum = EnumMessage.getByCode(SkuMappingRuleEnum.SkuMappingSymbolicEnum.class,endSymbol);
-            if(Objects.nonNull(startSymbolEnum) && startSymbolEnum.isEscape){
-                startSymbol = "\\\\"+startSymbol;
-            }
-            if(Objects.nonNull(endSymbolicEnum) && endSymbolicEnum.isEscape){
-                endSymbol = "\\\\"+endSymbol;
-            }
+            //转义
+            startSymbol = escapeSpecialCharacters(startSymbol);
+            endSymbol = escapeSpecialCharacters(endSymbol);
             String regex = finalRegex.replaceAll("【#】",startSymbol).replaceAll("【%】",endSymbol);
             if(ruleConditionsDTO.getValidStartingSymbolPosition().equals(ruleConditionsDTO.getValidEndSymbolPosition())
             &&  StringUtils.isNotBlank(startSymbol) && StringUtils.isNotBlank(endSymbol) &&startSymbol.equals(endSymbol)){
@@ -253,8 +244,7 @@ public enum SkuMappingRuleEnum implements EnumMessage{
             return matcher.group(1);
         }else{
             SkuMappingRuleEnum skuMappingRuleEnum = EnumMessage.getByCode(SkuMappingRuleEnum.class, ruleType);
-            if(skuMappingRuleEnum.equals(SkuMappingRuleEnum.IGNORE_FIRST_AND_LAST_DIGITS)
-            || skuMappingRuleEnum.equals(SkuMappingRuleEnum.EXTRACT_BETWEEN_START_AND_END)){
+            if(skuMappingRuleEnum.equals(SkuMappingRuleEnum.IGNORE_FIRST_AND_LAST_DIGITS)){
                 return "";
             }
             return inputStr;
@@ -279,5 +269,23 @@ public enum SkuMappingRuleEnum implements EnumMessage{
             result = inputStr.replaceAll(key,value);
         }
         return result;
+    }
+
+    public static String escapeSpecialCharacters(String str) {
+        if(StringUtils.isBlank(str)){
+            return str;
+        }
+        StringBuilder escapedStr = new StringBuilder();
+        // 需要转义的特殊字符
+        String specialCharacters = ".$|()[{^?*+\\";
+        for (char ch : str.toCharArray()) {
+            // 如果字符是特殊字符，则进行转义
+            if (specialCharacters.indexOf(ch) != -1) {
+                escapedStr.append("\\").append(ch);
+            } else {
+                escapedStr.append(ch);
+            }
+        }
+        return escapedStr.toString();
     }
 }
