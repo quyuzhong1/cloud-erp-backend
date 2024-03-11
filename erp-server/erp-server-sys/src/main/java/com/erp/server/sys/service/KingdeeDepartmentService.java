@@ -33,4 +33,13 @@ public interface KingdeeDepartmentService extends SuperService<KingdeeDepartment
     Boolean update(KingdeeDepartmentDTO.UpdateDTO dto);
 
 
+    /**
+     * 初始化金蝶部门
+     * @description
+     * @param
+     * @return
+     * @date 2024-03-11 11:48
+     * @author Lambda
+     */
+    Boolean init();
 }

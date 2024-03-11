@@ -28,12 +28,27 @@ import com.erp.model.sys.dto.KingdeeDepartmentDTO;
  */
 @Slf4j
 @RestController
-@LogSystemModule("")
+@LogSystemModule("金蝶部门")
 @RequestMapping("/kingdeeDepartment")
 public class KingdeeDepartmentController extends BaseController {
 
     @Resource
     private KingdeeDepartmentService kingdeeDepartmentService;
+
+
+    /**
+     * 初始化金蝶数据
+     * @author Lambda
+     * @date:  2024-03-11
+     * @return ApiResult<String>
+     */
+    @GetMapping("/init")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "初始化")
+    public ApiResult init() {
+        Boolean result = kingdeeDepartmentService.init();
+        return result ? success() : failure();
+    }
+
 
     /**
     * 新增

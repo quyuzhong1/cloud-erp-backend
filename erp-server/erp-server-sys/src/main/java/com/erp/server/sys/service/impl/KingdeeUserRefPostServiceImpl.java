@@ -7,7 +7,6 @@ import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
 import com.erp.server.sys.mapper.KingdeeUserRefPostMapper;
 import com.erp.server.sys.service.KingdeeUserRefPostService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.sys.service.OperateLogService;
 import com.erp.server.sys.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
@@ -30,8 +29,7 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserRefPostMapper, KingdeeUserRefPostEntity> implements KingdeeUserRefPostService {
-    @Autowired
-    private OperateLogService operateLogService;
+
     @Autowired
     private CommonService commonService;
 
@@ -53,9 +51,7 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "金蝶员工任岗单" , kingdeeUserRefPostEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, kingdeeUserRefPostEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+
 
         return new BaseResultDTO.AddDTO(kingdeeUserRefPostEntity.getId(), kingdeeUserRefPostEntity.getId());
     }
@@ -77,13 +73,8 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
         if(!save) {
             throw new ServiceException("金蝶员工任岗单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
-        // 记录主单操作日志
-            log.info("编辑 开始记录金蝶员工任岗单日志数据，id：【{}】", kingdeeUserRefPostEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), kingdeeUserRefPostEntity.getId(), "金蝶员工任岗单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, kingdeeUserRefPostEntity, null, kingdeeUserRefPostEntity.getId(), msg);
+
         return Boolean.TRUE;
     }
 

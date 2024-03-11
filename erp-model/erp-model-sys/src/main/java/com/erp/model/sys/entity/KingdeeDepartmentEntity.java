@@ -56,6 +56,13 @@ public class KingdeeDepartmentEntity extends BaseEntity<KingdeeDepartmentEntity>
     private String parentId;
 
 
+    /**
+     * 父级金蝶id
+     */
+    @TableField("parent_kingdee_id")
+    private String parentKingdeeId;
+
+
     public static final String KINGDEE_ID = "kingdee_id";
 
     public static final String KINGDEE_DEPT_CODE = "kingdee_dept_code";

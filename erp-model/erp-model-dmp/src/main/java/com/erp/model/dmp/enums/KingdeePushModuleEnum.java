@@ -44,6 +44,7 @@ public enum KingdeePushModuleEnum {
     BD_RECCONDITION("BD_RecCondition","收款条件"),
     BD_PAYMENTCONDITION("BD_PaymentCondition","付款条件"),
 
+
     ;
     private String code;
 

@@ -7,7 +7,6 @@ import com.erp.model.sys.entity.KingdeePostEntity;
 import com.erp.server.sys.mapper.KingdeePostMapper;
 import com.erp.server.sys.service.KingdeePostService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.sys.service.OperateLogService;
 import com.erp.server.sys.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
@@ -33,8 +32,7 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, KingdeePostEntity> implements KingdeePostService {
-    @Autowired
-    private OperateLogService operateLogService;
+
     @Autowired
     private CommonService commonService;
     @Autowired
@@ -52,7 +50,6 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
 
         log.info("开始新增金蝶岗位单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
         String code = docNoGenHelper.generateCode(null);
         kingdeePostEntity.setCode(code);
         boolean save = super.save(kingdeePostEntity);
@@ -62,9 +59,7 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "金蝶岗位单" , kingdeePostEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, kingdeePostEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+
 
         return new BaseResultDTO.AddDTO(kingdeePostEntity.getId(), code);
     }
@@ -86,13 +81,7 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
         if(!save) {
             throw new ServiceException("金蝶岗位单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
-        // 记录主单操作日志
-            log.info("编辑 开始记录金蝶岗位单日志数据，单号：【{}】", kingdeePostEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), kingdeePostEntity.getCode(), "金蝶岗位单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, kingdeePostEntity, null, kingdeePostEntity.getId(), msg);
         return Boolean.TRUE;
     }
 

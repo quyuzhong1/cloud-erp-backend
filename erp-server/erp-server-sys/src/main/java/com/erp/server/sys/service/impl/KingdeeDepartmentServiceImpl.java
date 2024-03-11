@@ -3,22 +3,24 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.sys.entity.KingdeeDepartmentEntity;
-import com.erp.server.sys.mapper.KingdeeDepartmentMapper;
-import com.erp.server.sys.service.KingdeeDepartmentService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.sys.service.OperateLogService;
-import com.erp.server.sys.service.CommonService;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.sys.dto.KingdeeDepartmentDTO;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.server.sys.mapper.KingdeeDepartmentMapper;
+import com.erp.server.sys.service.CommonService;
+import com.erp.server.sys.service.KingdeeDepartmentService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.sys.dto.KingdeeDepartmentDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 /**
  * <p>
  *  服务实现类
@@ -30,8 +32,7 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepartmentMapper, KingdeeDepartmentEntity> implements KingdeeDepartmentService {
-    @Autowired
-    private OperateLogService operateLogService;
+
     @Autowired
     private CommonService commonService;
 
@@ -53,9 +54,6 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "" , kingdeeDepartmentEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, kingdeeDepartmentEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(kingdeeDepartmentEntity.getId(), kingdeeDepartmentEntity.getId());
     }
@@ -77,14 +75,17 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
         if(!save) {
             throw new ServiceException("保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
-        // 记录主单操作日志
-            log.info("编辑 开始记录日志数据，id：【{}】", kingdeeDepartmentEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), kingdeeDepartmentEntity.getId(), "");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, kingdeeDepartmentEntity, null, kingdeeDepartmentEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean init() {
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_DEPARTMENT.getCode());
+        //查询
+        String fieldKeys = "FDEPTID,FNumber,FName,FUseOrgId.FNumber,FParentID.FNumber";
+
+        return null;
     }
 
 
