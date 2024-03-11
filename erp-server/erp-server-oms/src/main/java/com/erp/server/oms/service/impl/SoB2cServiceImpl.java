@@ -65,7 +65,6 @@ import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -2026,6 +2025,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (PlatformDictEnum.SHOPEE.getCode().equals(entity.getDictPlatform())) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_SHOPEE_NOT_MERGE, entity.getCode());
             }
+            //美客多订单不支持合并
+            if (PlatformDictEnum.MERCADO.getCode().equals(entity.getDictPlatform())) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_MERCADO_NOT_MERGE, entity.getCode());
+            }
         }
 
         //物流信息
@@ -3278,6 +3281,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (PlatformDictEnum.SHOPEE.getCode().equals(entity.getDictPlatform())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_SHOPEE_NOT_SPLIT, entity.getCode());
         }
+        if (PlatformDictEnum.MERCADO.getCode().equals(entity.getDictPlatform())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_MERCADO_NOT_SPLIT, entity.getCode());
+        }
+
+
         //未付款数据不能操作
         if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
@@ -3407,6 +3415,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         map.put("actualShippingCost", logisticsEntity.getActualShippingCost());
         map.put("estimatedShippingCost", logisticsEntity.getEstimatedShippingCost());
         map.put("dictPlatform", soB2cEntity.getDictPlatform());
+
+        //如果是美客多，取订单标签里面的发货类型标识匹配订单规则
+        if (PlatformDictEnum.MERCADO.getCode().equals(soB2cEntity.getPlatformCode())) {
+            SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(soB2cEntity.getLabelJson(), SoB2cDTO.LabelDTO.class);
+            map.put("mercadoOrderDeliveryType", labelJsonDTO.getLogisticType());
+        }
+
         //是否买家留言
         Boolean isHavebuyerRemark = !StringUtils.isBlank(soB2cEntity.getBuyerRemark());
 
@@ -3468,6 +3483,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("orderTaxCost", totalTaxCost);
             detailMap.put("amount", MathUtil.multiply(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
             detailMap.put("orderProfitRate", financialInfo.getProfitRateFlag());
+
+            //如果是美客多，取订单标签里面的发货类型标识匹配订单规则
+            if (PlatformDictEnum.MERCADO.getCode().equals(soB2cEntity.getPlatformCode())) {
+                SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(soB2cEntity.getLabelJson(), SoB2cDTO.LabelDTO.class);
+                map.put("mercadoOrderDeliveryType", labelJsonDTO.getLogisticType());
+            }
+
             //明细标签处理
             String detailLabelJson = detailEntity.getLabelJson();
             if (StrUtil.isNotBlank(detailLabelJson)) {

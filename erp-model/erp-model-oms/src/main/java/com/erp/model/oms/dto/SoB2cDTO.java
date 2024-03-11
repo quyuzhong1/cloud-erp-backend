@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
@@ -10,11 +9,8 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.stringtemplate.v4.ST;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -464,6 +460,12 @@ public class SoB2cDTO implements Serializable {
          * WFS（沃尔玛订单shipNodeType=WFSFulfilled或3PLFulfilled）
          */
         private String shipNodeType;
+
+        private String mode;
+        /**
+         * 美客多（mode=me2 且 logistic_type = fulfillment是官方仓发货）
+         */
+        private String logisticType;
 
         /**
          * 是否平台仓订单 true 是 fasle 不是

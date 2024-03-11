@@ -117,14 +117,20 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         ShipmentViewDTO shipmentViewDTO = new ShipmentViewDTO();
         if (ObjectUtil.isNotEmpty(orderBean.getShipmentViewDTO())) {
             shipmentViewDTO = orderBean.getShipmentViewDTO();
-            lableMap.put("logisticType", shipmentViewDTO.getLogistic().getType());
-            orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
 
-            //如果是平台仓，状态审核通过
             if ("m2".equals(shipmentViewDTO.getLogistic().getMode()) && "fulfillment".equals(shipmentViewDTO.getLogistic().getType())) {
+                //如果是平台仓，状态审核通过
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
+                lableMap.put("logisticType", shipmentViewDTO.getLogistic().getType());
+            } else if ("m2".equals(shipmentViewDTO.getLogistic().getMode()) && ("drop_off".equals(shipmentViewDTO.getLogistic().getType()) || "cross_docking".equals(shipmentViewDTO.getLogistic().getType()))) {
+                //中转发货
+                lableMap.put("logisticType", shipmentViewDTO.getLogistic().getType());
+            } else if ("m1".equals(shipmentViewDTO.getLogistic().getMode())) {
+                //自发货
+                lableMap.put("logisticType", "default");
             }
 
+            orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
             //扩展字段
             JSONObject extendDataJson = new JSONObject();
             extendDataJson.put("mode",shipmentViewDTO.getLogistic().getMode());
