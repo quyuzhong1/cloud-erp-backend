@@ -222,35 +222,39 @@ public class PullAmzJob {
             return;
         }
         for (PlatformAmazonOrderDTO dto : orderEntityList) {
-            AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS;
-            try {
-                // 动态请求配置
-                // 平台请求中:平台类型:sellerId:业务类型:请求的端点区域
-                String redissonKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, platform, key, requestTypeRateLimiterEnum.getBusinessTypeName());
-                JSONObject extentJsonObj = requestTypeRateLimiterEnum.getExtentJsonObj();
-                extentJsonObj.put(AmazonRequestTypeRateLimiterEnum.limitKey, redissonKey);
-                dto.setRedissonKey(redissonKey);
-                PlatformAmazonOrderDTO newDto = amazonOrderHandler.downloadDetail(dto, extentJsonObj);
+            singleHandlerDetailDownload(key, platform, category, business, dto);
+        }
+    }
 
-                newDto.setDownloadStatus(1);
-                newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
-                newDto.setRedissonKey(null);
-                List<PlatformOrderDTO> convertDto = amazonOrderHandler.convert(Collections.singletonList(newDto));
-                businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
-                log.info("[拉取亚马逊订单详情任务] amazonSalesOrderDetail下载成功，uniqueId={}", dto.getUniqueId());
-                XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail下载成功，uniqueId={}", dto.getUniqueId());
-            } catch (Exception error) {
-                // 获取锁异常等重试
-                if (error instanceof InterruptedException) {
-                    XxlJobHelper.log("请求亚马逊逊获取锁异常：{}", error.getMessage());
-                    throw new ServiceException(ApiError.ERROR_1026);
-                }
-                XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail下载失败，uniqueId={}, error={}",
-                        dto.getUniqueId(),
-                        error.getMessage());
-                // 发送预警
-                dmpPushTaskService.sendWarnMsg(dto.getDmpSyncTaskId());
+    public void singleHandlerDetailDownload(String key, String platform, String category, String business, PlatformAmazonOrderDTO dto) {
+        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS;
+        try {
+            // 动态请求配置
+            // 平台请求中:平台类型:sellerId:业务类型:请求的端点区域
+            String redissonKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, platform, key, requestTypeRateLimiterEnum.getBusinessTypeName());
+            JSONObject extentJsonObj = requestTypeRateLimiterEnum.getExtentJsonObj();
+            extentJsonObj.put(AmazonRequestTypeRateLimiterEnum.limitKey, redissonKey);
+            dto.setRedissonKey(redissonKey);
+            PlatformAmazonOrderDTO newDto = amazonOrderHandler.downloadDetail(dto, extentJsonObj);
+
+            newDto.setDownloadStatus(1);
+            newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
+            newDto.setRedissonKey(null);
+            List<PlatformOrderDTO> convertDto = amazonOrderHandler.convert(Collections.singletonList(newDto));
+            businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
+            log.info("[拉取亚马逊订单详情任务] amazonSalesOrderDetail下载成功，uniqueId={}", dto.getUniqueId());
+            XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail下载成功，uniqueId={}", dto.getUniqueId());
+        } catch (Exception error) {
+            // 获取锁异常等重试
+            if (error instanceof InterruptedException) {
+                XxlJobHelper.log("请求亚马逊逊获取锁异常：{}", error.getMessage());
+                throw new ServiceException(ApiError.ERROR_1026);
             }
+            XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail下载失败，uniqueId={}, error={}",
+                    dto.getUniqueId(),
+                    error.getMessage());
+            // 发送预警
+            dmpPushTaskService.sendWarnMsg(dto.getDmpSyncTaskId());
         }
     }
 

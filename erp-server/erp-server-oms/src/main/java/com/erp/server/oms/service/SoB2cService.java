@@ -791,5 +791,5 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @date 2024-03-07
      * @author Jim
      */
-    SoB2cEntity getByPlatformCode(String platformCode, String dictPlatform);
+    List<SoB2cEntity> getByPlatformCode(List<String> platformCodeList, String dictPlatform);
 }

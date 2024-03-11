@@ -387,7 +387,7 @@ public interface SoB2cFeign {
      * @author Jim
      */
     @GetMapping("/feign/soB2c/getByPlatformCode")
-    SoB2cEntity getByPlatformCode(@RequestParam("platformCode") String platformCode, @RequestParam("dictPlatform") String dictPlatform);
+    List<SoB2cEntity>  getByPlatformCode(@RequestParam("platformCodeList") List<String> platformCodeList, @RequestParam("dictPlatform") String dictPlatform);
 
     @PostMapping("/feign/soB2c/updateById")
     Boolean updateById(@RequestBody SoB2cEntity soB2cEntity);

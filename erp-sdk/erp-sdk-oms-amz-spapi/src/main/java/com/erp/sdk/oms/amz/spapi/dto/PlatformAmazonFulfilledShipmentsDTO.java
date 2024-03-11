@@ -1,6 +1,8 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
 import com.common.business.dto.CleanBaseDTO;
+import com.common.core.anno.Panno;
+import com.common.core.enums.PannoEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -14,6 +16,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PlatformAmazonFulfilledShipmentsDTO extends CleanBaseDTO {
 
+    /**
+     * 处理状态：
+     * -1=无需处理(已有订单直接处理)
+     * 0=待下载订单(检查订单下载处理)
+     * 1=待处理销售出库单(订单已下载处理)
+     * 2=已处理
+     */
+    @Panno(findType = PannoEnum.EQ,field = "handleStatus")
+    private String handleStatus;
+
+    @Panno(findType = PannoEnum.EQ,field = "amazonOrderId")
     private String amazonOrderId;
 
     private String merchantOrderId;

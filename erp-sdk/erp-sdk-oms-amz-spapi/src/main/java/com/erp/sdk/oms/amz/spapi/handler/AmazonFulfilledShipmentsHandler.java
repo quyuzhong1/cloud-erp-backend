@@ -14,6 +14,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.oms.amz.spapi.convert.SdkSoOutStockConverter;
 import com.erp.sdk.oms.amz.spapi.csv.ReportFulfilledShipmentsCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonHandleStatusEnum;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -52,7 +53,7 @@ public class AmazonFulfilledShipmentsHandler extends AbstractSoOutStockHandler<P
 
         // 返回下载源数据
         return sourceDataList.stream()
-                .map(e -> SdkSoOutStockConverter.INSTANCE.sourceDtoToOutStockDto(e, data.getPlatformApiId()))
+                .map(e -> SdkSoOutStockConverter.INSTANCE.sourceDtoToOutStockDto(e, data.getPlatformApiId(), AmazonHandleStatusEnum.NONE.getCode()))
                 .collect(Collectors.toList());
     }
 

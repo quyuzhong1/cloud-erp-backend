@@ -50,7 +50,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * 亚马逊物流销售消费服务
+ * 销售出库单消费服务
  *
  * @author Jim
  */
@@ -102,11 +102,12 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
             return ApiResult.success();
         }
         // 查询销售出库单是否存在?
-        SoB2cEntity soB2cEntity = soB2cFeign.getByPlatformCode(dto.getPlatformCode(), dto.getDictPlatform());
-        if (null == soB2cEntity){
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.getByPlatformCode(Collections.singletonList(dto.getPlatformCode()), dto.getDictPlatform());
+        if (CollectionUtils.isEmpty(soB2cEntityList)){
             log.warn("[亚马逊物流销售消费服务]:B2C销售单不存在：单号={}", dto.getPlatformCode());
             throw new ServiceException("B2C销售单不存在：单号=" + dto.getPlatformCode());
         }
+        SoB2cEntity soB2cEntity = soB2cEntityList.get(0);
         // B2C销售订单添加整个销售出库单的基础信息
         SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(soB2cEntity.getId());
 

@@ -3,22 +3,33 @@ package com.erp.server.dmp.handler.report;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
+import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.JobTaskDTO;
+import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.RequestDTO;
 import com.common.business.enums.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.AmzReportInfoEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.sdk.oms.amz.spapi.convert.SdkSoOutStockConverter;
 import com.erp.sdk.oms.amz.spapi.csv.ReportFulfilledShipmentsCsvEntity;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonHandleStatusEnum;
+import com.erp.sdk.oms.amz.spapi.handler.AmazonFulfilledShipmentsHandler;
+import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,37 +46,74 @@ public class AmzReportFulfilledShipmentsHandler extends AmzReportBusinessHandler
 
     @Resource
     private BusinessServiceImpl businessService;
+    @Resource
+    private SoB2cFeign soB2cFeign;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void businessHandler(AmzReportTaskEntity taskEntity, AmzReportInfoEntity reportInfo, JSONArray jsonArray) {
         log.debug("亚马逊物流销售报告处理服务处理：jsonArray={}", JSONUtil.toJsonStr(jsonArray));
-        JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setShopId(taskEntity.getShopId());
-        jobTaskDTO.setShopName(taskEntity.getShopId());
-        jobTaskDTO.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
-        jobTaskDTO.setApiCode(BusinessTypeEnum.SO_OUT_STOCK.getCode());
-        jobTaskDTO.setIntervalTime(86400);
-        jobTaskDTO.setStatus(3);
-        jobTaskDTO.setRetryTimes(0);
-        jobTaskDTO.setApiName("亚马逊物流销售");
-        jobTaskDTO.setCreateTime(LocalDateTime.now());
-        // 转换时间
-        LocalDateTime parseTime = LocalDateTimeUtil.parse(taskEntity.getReqDataEndTime(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-        jobTaskDTO.setUpdateTime(DateUtil.utcSamePlus8(parseTime));
+        if (CollectionUtils.isEmpty(jsonArray)){
+            log.warn("亚马逊物流销售报告处理服务处理结束：无配置订单:reportId={}", reportInfo.getReportId());
+            return;
+        }
+        List<ReportFulfilledShipmentsCsvEntity> allList = JSONUtil.toList(jsonArray, ReportFulfilledShipmentsCsvEntity.class);
+        List<String> amazonOrderIds = allList.stream()
+                .map(ReportFulfilledShipmentsCsvEntity::getAmazonOrderId)
+                .distinct()
+                .collect(Collectors.toList());
+        // 查询亚马逊订单是否存在
+        List<SoB2cEntity> existOrderList = soB2cFeign.getByPlatformCode(amazonOrderIds, PlatformDictEnum.AMAZON.getCode());
+        if (CollectionUtils.isEmpty(existOrderList)){
+            // 都不存在直接保存mongo等待重新触发
+            // 不存在保存mongo等待重新触发
+            List<PlatformAmazonFulfilledShipmentsDTO> sourceList = allList.stream()
+                    .map(e -> SdkSoOutStockConverter.INSTANCE.sourceDtoToOutStockDto(e, taskEntity.getReportId(), AmazonHandleStatusEnum.WAIT_DOWNLOAD.getCode()))
+                    .collect(Collectors.toList());
+            businessService.handleSaveOrUpdateMongo(sourceList, MongoTableNameContant.THIRD_SYSTEM_AMAZON_SO_OUT_STOCK, PlatformAmazonFulfilledShipmentsDTO.class, new ArrayList<>());
+            return;
+        }
+        List<String> existOrderIds = existOrderList.stream().map(SoB2cEntity::getPlatformCode).distinct().collect(Collectors.toList());
+        // 按订单存在分组
+        Map<Boolean, List<ReportFulfilledShipmentsCsvEntity>> gourpMap = allList.stream().collect(Collectors.groupingBy(e -> existOrderIds.contains(e.getAmazonOrderId())));
 
-        jobTaskDTO.setPlatformApiId(taskEntity.getReportId());
-        jobTaskDTO.setPlatformCategory(PlatformCategoryEnum.THIRD_SYSTEM.getCode());
-        jobTaskDTO.setBillType(BusinessTypeEnum.SO_OUT_STOCK.getCode());
-        jobTaskDTO.setOperateType("pull");
+        List<ReportFulfilledShipmentsCsvEntity> existList = gourpMap.get(true);
+        List<ReportFulfilledShipmentsCsvEntity> notExistList = gourpMap.get(false);
 
-        List<ReportFulfilledShipmentsCsvEntity> list = JSONUtil.toList(jsonArray, ReportFulfilledShipmentsCsvEntity.class);
-        jobTaskDTO.setSourceList(list);
+        if (!CollectionUtils.isEmpty(notExistList)){
+            // 不存在保存mongo等待重新触发
+            List<PlatformAmazonFulfilledShipmentsDTO> sourceList = notExistList.stream()
+                    .map(e -> SdkSoOutStockConverter.INSTANCE.sourceDtoToOutStockDto(e, taskEntity.getReportId(), AmazonHandleStatusEnum.WAIT_DOWNLOAD.getCode()))
+                    .collect(Collectors.toList());
+            businessService.handleSaveOrUpdateMongo(sourceList, MongoTableNameContant.THIRD_SYSTEM_AMAZON_SO_OUT_STOCK, PlatformAmazonFulfilledShipmentsDTO.class, new ArrayList<>());
+        }
 
-        RequestDTO dto = new RequestDTO();
-        dto.setJobTaskDTO(jobTaskDTO);
+        // 存在的订单直接触发销售出库单
+        if (!CollectionUtils.isEmpty(existList)){
+            JobTaskDTO jobTaskDTO = new JobTaskDTO();
+            jobTaskDTO.setShopId(taskEntity.getShopId());
+            jobTaskDTO.setShopName(taskEntity.getShopId());
+            jobTaskDTO.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
+            jobTaskDTO.setApiCode(BusinessTypeEnum.SO_OUT_STOCK.getCode());
+            jobTaskDTO.setIntervalTime(86400);
+            jobTaskDTO.setStatus(3);
+            jobTaskDTO.setRetryTimes(0);
+            jobTaskDTO.setApiName("亚马逊物流销售");
+            jobTaskDTO.setCreateTime(LocalDateTime.now());
+            // 转换时间
+            LocalDateTime parseTime = LocalDateTimeUtil.parse(taskEntity.getReqDataEndTime(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            jobTaskDTO.setUpdateTime(DateUtil.utcSamePlus8(parseTime));
 
-        // 事务处理
-        businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(), jobTaskDTO.getBillType(), jobTaskDTO, dto.getPlatformApiEnum());
+            jobTaskDTO.setPlatformApiId(taskEntity.getReportId());
+            jobTaskDTO.setPlatformCategory(PlatformCategoryEnum.THIRD_SYSTEM.getCode());
+            jobTaskDTO.setBillType(BusinessTypeEnum.SO_OUT_STOCK.getCode());
+            jobTaskDTO.setOperateType("pull");
+            jobTaskDTO.setSourceList(existList);
+            RequestDTO dto = new RequestDTO();
+            dto.setJobTaskDTO(jobTaskDTO);
+            // 事务处理
+            businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(), jobTaskDTO.getBillType(), jobTaskDTO, dto.getPlatformApiEnum());
+        }
     }
 }

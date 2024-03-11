@@ -5694,12 +5694,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public SoB2cEntity getByPlatformCode(String platformCode, String dictPlatform) {
+    public List<SoB2cEntity> getByPlatformCode(List<String> platformCodeList, String dictPlatform) {
+        if (CollectionUtils.isEmpty(platformCodeList)){
+            return Collections.emptyList();
+        }
         return lambdaQuery()
-                .eq(SoB2cEntity::getPlatformCode, platformCode)
+                .in(SoB2cEntity::getPlatformCode, platformCodeList)
                 .eq(SoB2cEntity::getDictPlatform, dictPlatform)
-                .last("LIMIT 1")
-                .one();
+                .list();
     }
 
 

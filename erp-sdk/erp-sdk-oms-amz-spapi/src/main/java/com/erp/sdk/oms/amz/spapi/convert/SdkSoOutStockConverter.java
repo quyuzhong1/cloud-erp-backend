@@ -28,8 +28,9 @@ public interface SdkSoOutStockConverter {
     @Mappings({
             @Mapping(target = "uniqueId", source = "csvEntity.shipmentItemId"),
             @Mapping(target = "downloadTime", expression = "java(java.time.LocalDateTime.now().toString())"),
+            @Mapping(target = "handleStatus", source = "handleStatus"),
     })
-    PlatformAmazonFulfilledShipmentsDTO sourceDtoToOutStockDto(ReportFulfilledShipmentsCsvEntity csvEntity, String reportId);
+    PlatformAmazonFulfilledShipmentsDTO sourceDtoToOutStockDto(ReportFulfilledShipmentsCsvEntity csvEntity, String reportId, String handleStatus);
 
 
     @Mappings({

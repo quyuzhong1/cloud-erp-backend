@@ -165,6 +165,11 @@ public interface MongoTableNameContant {
     String THIRD_SYSTEM_AMAZON_PRODUCT = "third_system_Amazon_product";
 
     /**
+     * 亚马逊销售出库表
+     */
+    String THIRD_SYSTEM_AMAZON_SO_OUT_STOCK = "third_system_Amazon_so_out_stock";
+
+    /**
      * 亚马逊报表表
      */
     String THIRD_SYSTEM_AMAZON_REPORT = "third_system_Amazon_report";
