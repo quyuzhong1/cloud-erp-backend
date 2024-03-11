@@ -1273,6 +1273,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             addDTO.setReturnOrgId(orgId);
             addDTO.setBillDate(LocalDate.now());
             addDTO.setSourceType(type);
+            addDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
             addDTO.setSourceId(purchaseReturnOrderDTO.getSourceId());
             addDTO.setPurchaseOrderId(purchaseOrderEntity.getPurchaseOrderId());
             addDTO.setReturnWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
