@@ -56,6 +56,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -161,6 +162,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private ProjectInfoService projectInfoService;
 
+    @Resource
+    private LogisticsProductService logisticsProductService;
 
     /**
      * 添加系统的产品任务
@@ -933,6 +936,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> skuIdList = taskRefSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> productDetailList = productDetailService.getByIdList(skuIdList);
         List<ProductDetailEntity> details = productDetailService.getSkuListByProductId(taskEntity.getProductId());
+        //物流产品信息-暂时供展示电池电压展示
+        List<LogisticsProductDTO.ProductDTO> productDTOS = logisticsProductService.listLogisticsProduct(skuIdList);
+        detailsDTO.setProductDTOS(productDTOS);
         //如果任务设置的自动关联，则查询产品下未关联的sku
         if (RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(taskEntity.getRelatedSkuType())) {
             if (CollectionUtils.isNotEmpty(details)) {

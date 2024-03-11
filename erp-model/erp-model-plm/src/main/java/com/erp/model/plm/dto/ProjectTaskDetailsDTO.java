@@ -229,5 +229,8 @@ public class ProjectTaskDetailsDTO implements Serializable {
     private Integer planWorkTime;
 
     private Integer realWorkTime;
-
+    /**
+     * 产品物流信息 -暂时供展示电池电压展示
+     */
+    private List<LogisticsProductDTO.ProductDTO> productDTOS;
 }
