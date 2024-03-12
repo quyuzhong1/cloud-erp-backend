@@ -11,7 +11,7 @@ public enum ProductCertificateTypeEnum implements EnumMessage {
 
 
     PRODUCT_ATTESTATION("productAttestation", "产品认证"),
-    OTHER_ATTESTATION("otherAttestation", "其它认证"),
+    OTHER_ATTESTATION("otherAttestation", "其他认证"),
     TRANSPORT_ATTESTATION("transportAttestation", "运输认证"),
     ;
 
