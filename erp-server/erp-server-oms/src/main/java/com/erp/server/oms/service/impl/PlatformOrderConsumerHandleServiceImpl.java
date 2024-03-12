@@ -153,8 +153,19 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 handleRule(mainEntity);
                 //如果是已发货且是平台仓订单 就生成销售出库单
                 if (isShipped && hasPlatformWarehouse) {
-                    SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
-                    soOutstockFeign.generateB2cSoOutstockByData(generateB2cDTO);
+                    try {
+                        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
+                        soOutstockFeign.generateB2cSoOutstockByData(generateB2cDTO);
+                    }catch (Exception e){
+                        SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                        addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+                        addError.setParamJson("");
+                        addError.setReturnJson("");
+                        addError.setMainId(mainEntity.getId());
+                        addError.setMessage(e.getMessage());
+                        soB2cErrorService.add(addError);
+                        log.error("[生成销售出库单异常]:order={},msg={}", mainEntity.getCode(), e.getMessage());
+                    }
                 }
             }
 
