@@ -25,6 +25,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
@@ -368,6 +369,11 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         List<String> soIdList = transferDeclareDetailList.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIdList);
 
+        //查询店铺信息
+        List<String> shopIds = soB2cEntities.stream().map(req -> req.getShopId()).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(shopIds);
+
+
         //订单客户信息
         List<SoB2cReceiverEntity> soB2cReceiverEntities = soB2cFeign.listSoB2cReceiverByMainIdList(soIdList);
 
@@ -405,6 +411,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 shippingCode = transferLogisticsChannelEntity.getCode();
             }
 
+            ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> soB2cEntity.getShopId().equals(req.getId())).findFirst().orElse(new ShopInfoEntity());
+
             //组装SDK需要的下报关单单信息
             TransferLogisticsCreateOrderReq orderReq = TransferLogisticsCreateOrderReq.builder()
                     .trackingNumber(transferDeclareDetailEntity.getTrackNo())
@@ -412,14 +420,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                     .shippingCode(shippingCode)
                     .name(soB2cReceiverEntity.getReceiverName())
                     .referenceNo(soB2cEntity.getCode())
-                    .deliveryAddress(soB2cReceiverEntity.getFullAddress())
-                    .streetAddress(soB2cReceiverEntity.getFullAddress())
+                    .deliveryAddress(soB2cReceiverEntity.getFirstAddress())
+                    .streetAddress(soB2cReceiverEntity.getFirstAddress())
                     .state(soB2cReceiverEntity.getProvinceName())
                     .city(soB2cReceiverEntity.getCityName())
                     .postcode(soB2cReceiverEntity.getPostCode())
                     .phone(soB2cReceiverEntity.getReceiverTelNumber())
                     .orderStatus("2")
-                    .iossNo("")
+                    .iossNo(shopInfoEntity.getIossTaxNo())
                     .serialNo("")
                     .grossWeight(transferDeclareDetailEntity.getPackageWeight())
                     .buyInsurance(0)

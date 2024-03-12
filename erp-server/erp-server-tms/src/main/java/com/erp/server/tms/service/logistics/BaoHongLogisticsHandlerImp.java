@@ -14,8 +14,11 @@ import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.convert.BaoHongConverter;
+import com.erp.server.tms.convert.BaoHongCreateOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
+import com.sdk.tms.baohong.api.order.CreateOrderInfo;
+import com.sdk.tms.baohong.api.order.ProductDeatil;
 import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import com.sdk.tms.baohong.service.BaoHongService;
@@ -54,7 +57,49 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
 
     @Override
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
-        return super.createOrder(logisticsOrderVO);
+        LogisticsOrderResponseVO responseVO = new LogisticsOrderResponseVO();
+        //主信息
+        CreateOrderInfo createOrderInfo = BaoHongCreateOrderConverter.INSTANCE.LogisticsOrderVOToCreateOrderInfo(logisticsOrderVO);
+
+        //订单产品详情
+        List<ProductDeatil> productDeatils = BaoHongCreateOrderConverter.INSTANCE.LogisticsProductVOToProductDeatil(logisticsOrderVO.getLogisticsProductVOList());
+        createOrderInfo.setOrderProduct(productDeatils);
+
+        try {
+            //下单获取平台返回值
+            BaoHongResponse<String> result = baoHongService.createOrder(createOrderInfo);
+
+            if(isFailure(result)){
+                //下单成功
+                responseVO = LogisticsOrderResponseVO.builder()
+                        .transportNo(result.getData())
+                        .trackNo(result.getData())
+                        .deliveryNo(logisticsOrderVO.getDeliveryNo())
+                        .build();
+
+                logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+                        logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(""));
+                return success(responseVO);
+            }else{
+                //下单失败
+                responseVO.failure(LogisticsPlatformEnum.BAO_HONG.getName(), logisticsOrderVO.getDeliveryNo(), result.getMessage());
+                logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+                        logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO),result.getMessage() );
+
+                return failure(responseVO);
+            }
+
+        } catch (Exception e) {
+            //下单异常
+            log.error("保宏创建订单异常：{}", e.getMessage());
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e));
+
+            return failure(responseVO);
+        }
     }
 
     @Override
@@ -179,4 +224,5 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
     private boolean isFailure(BaoHongResponse<?> response){
         return response.getAsk().equals("0");
     }
+
 }
