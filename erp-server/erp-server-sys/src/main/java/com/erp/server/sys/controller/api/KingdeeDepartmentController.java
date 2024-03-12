@@ -7,6 +7,7 @@ import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.server.sys.query.KingdeeDepartmentQueryHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -31,9 +32,10 @@ import com.erp.model.sys.dto.KingdeeDepartmentDTO;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
- * 
+ *  金蝶组织部门
  *
  * @author Lambda
  * @since 2024-03-11
@@ -59,6 +61,20 @@ public class KingdeeDepartmentController extends BaseController {
     public ApiResult init() {
         Boolean result = kingdeeDepartmentService.init();
         return result ? success() : failure();
+    }
+
+    /**
+     * 上级部门下拉
+     * @return
+     */
+    @GetMapping("/parentList")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> parentList(@RequestParam("orgId") String orgId){
+        List<KingdeeDepartmentEntity> list=kingdeeDepartmentService.listByOrgId(orgId);
+        List<BaseDropDownDTO.CommonDTO> result = list.stream().filter(d-> StringUtils.isNotBlank(d.getKingdeeDeptCode()))
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getId(), x.getKingdeeDeptName()))
+                .collect(Collectors.toList());
+        return success(result);
+
     }
 
     /**

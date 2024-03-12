@@ -6,6 +6,8 @@ import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.KingdeeDepartmentDTO;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务类
@@ -76,4 +78,14 @@ public interface KingdeeDepartmentService extends SuperService<KingdeeDepartment
      * @author Lambda
      */
     BatchResultDTO delete(String id);
+
+    /**
+     * 根据组织id 获取部门列表
+     * @description
+     * @param orgId
+     * @return
+     * @date 2024-03-12 17:00
+     * @author Lambda
+     */
+    List<KingdeeDepartmentEntity> listByOrgId(String orgId);
 }

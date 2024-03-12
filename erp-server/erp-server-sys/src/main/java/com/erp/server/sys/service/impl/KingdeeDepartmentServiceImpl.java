@@ -29,6 +29,7 @@ import com.erp.server.sys.service.SysAccountingCompanyService;
 import com.erp.server.sys.service.SysDepartmentService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -211,8 +212,41 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
         paramDTO.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage<KingdeeDepartmentDTO.PagingViewDTO> pageData = this.baseMapper.paging(query, paramDTO);
+        List<KingdeeDepartmentDTO.PagingViewDTO> list=pageData.getRecords();
+        fillList(list);
+        return new PagingVO(pageData);
+    }
 
-        return null;
+    private void fillList(List<KingdeeDepartmentDTO.PagingViewDTO> list) {
+        List<String> erpDeptIdList = list.stream().map(KingdeeDepartmentDTO.PagingViewDTO::getErpDeptId).
+                distinct().collect(Collectors.toList());
+
+        List<String> parentKingdeeCodeList = list.stream().map(KingdeeDepartmentDTO.PagingViewDTO::getParentKingdeeCode).
+                distinct().collect(Collectors.toList());
+        List<SysDepartmentEntity> erpDeptList = sysDepartmentService.listByIds(erpDeptIdList);
+
+        List<KingdeeDepartmentEntity> kingdeeDepartmentList = this.listByParentKingdeeCodeList(parentKingdeeCodeList);
+        for(KingdeeDepartmentDTO.PagingViewDTO item:list){
+            String erpDeptId = item.getErpDeptId();
+            String erpDeptName = erpDeptList.stream().filter(x->x.getId().equals(erpDeptId)).findFirst().
+                    map(SysDepartmentEntity::getName).orElse("");
+            item.setErpDeptName(erpDeptName);
+            String parentKingdeeCode = item.getParentKingdeeCode();
+            KingdeeDepartmentEntity parentDepartment = kingdeeDepartmentList.stream().filter(k -> k.getKingdeeDeptCode().
+                    equals(parentKingdeeCode)).findFirst().orElse(null);
+            if (Objects.nonNull(parentDepartment)) {
+                item.setParentDeptName(parentDepartment.getKingdeeDeptName());
+                item.setParentId(parentDepartment.getId());
+            }
+        }
+
+    }
+
+    private List<KingdeeDepartmentEntity> listByParentKingdeeCodeList(List<String> parentKingdeeCodeList) {
+        if (CollectionUtils.isEmpty(parentKingdeeCodeList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(KingdeeDepartmentEntity::getKingdeeDeptCode,parentKingdeeCodeList).list();
     }
 
     @Override
@@ -237,6 +271,11 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
         }
         return BatchResultDTO.success(entity.getId(), entity.getKingdeeDeptCode(), OperationTypeEnum.DELETE);
 
+    }
+
+    @Override
+    public List<KingdeeDepartmentEntity> listByOrgId(String orgId) {
+        return this.lambdaQuery().eq(KingdeeDepartmentEntity::getUseOrgId, orgId).list();
     }
 
     private KingdeeDepartmentEntity getParentDeptByKingdeeCode(String parentKingdeeCode) {
@@ -265,12 +304,12 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
             throw new ServiceException("同组织下部门名称不能重复");
         }
         //检查组织下绑定的 erp 部門id
-//        long erpDeptIdCount = this.lambdaQuery().eq(KingdeeDepartmentEntity::getUseOrgId, useOrgId).
-//                eq(KingdeeDepartmentEntity::getErpDeptId, erpDeptId).
-//                ne(StringUtils.isNotBlank(id), KingdeeDepartmentEntity::getId, id).count();
-//        if (erpDeptIdCount > 0) {
-//            throw new ServiceException("同组织下绑定的ERP部门不能存在多个");
-//        }
+        long erpDeptIdCount = this.lambdaQuery().eq(KingdeeDepartmentEntity::getUseOrgId, useOrgId).
+                eq(KingdeeDepartmentEntity::getErpDeptId, erpDeptId).
+                ne(StringUtils.isNotBlank(id), KingdeeDepartmentEntity::getId, id).count();
+        if (erpDeptIdCount > 0) {
+            throw new ServiceException("同组织下绑定的ERP部门不能存在多个");
+        }
 
         //父级部门
         String parentId =kingdeeDepartmentEntity.getParentId();
