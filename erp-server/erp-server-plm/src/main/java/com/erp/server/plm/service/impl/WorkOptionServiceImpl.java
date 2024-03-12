@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.erp.model.plm.dto.ProductSkuDTO;
 import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.dto.TaskPagingShowDTO;
 import com.erp.model.plm.dto.TaskSearchParamDTO;
@@ -15,10 +16,7 @@ import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.WorkOptionMapper;
-import com.erp.server.plm.service.CommonService;
-import com.erp.server.plm.service.ProductChangeService;
-import com.erp.server.plm.service.ProjectTaskService;
-import com.erp.server.plm.service.WorkOptionService;
+import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
@@ -50,26 +48,41 @@ public class WorkOptionServiceImpl implements WorkOptionService {
     @Resource
     private ProductChangeService productChangeService;
 
+    @Resource
+    private BomInfoService bomInfoService;
+
+    @Resource
+    private ProductDetailService productDetailService;
+
     @Override
     public List<WorkOptionDTO.MyWorkOptionDTO> getTableNum(List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList) {
         for (WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO : myWorkOptionDTOList) {
             myWorkOptionDTO.setModuleCode(SourceTypeEnum.getByCode(myWorkOptionDTO.getModuleCode()).getTableName());
             if (myWorkOptionDTO.getModuleCode().equals("project_task")) {
-                PagingDTO pagingDTO = JSONObject.parseObject(myWorkOptionDTO.getModuleParam(), PagingDTO.class);
+                PagingDTO<TaskSearchParamDTO> pagingDTO = JSONObject.parseObject(myWorkOptionDTO.getModuleParam(), PagingDTO.class);
                 TaskSearchParamDTO params = JSONObject.parseObject(JSONObject.toJSONString(pagingDTO.getParams()), TaskSearchParamDTO.class);
+                pagingDTO.setParams(params);
+
+
                 if (myWorkOptionDTO.getModuleStatus().equals("assignNotStarted") || myWorkOptionDTO.getModuleStatus().equals("assignExecutable")) {
-                    myWorkOptionDTO.setTableNumber(getWaitFinishCount(params));
+                    myWorkOptionDTO.setTableNumber(projectTaskService.assignToMePaging(pagingDTO).getTotalCount());
                 } else {
-                    myWorkOptionDTO.setTableNumber(getWaitAuditCount(params));
+                    myWorkOptionDTO.setTableNumber(projectTaskService.assignToMeWaitAuditPaging(pagingDTO).getTotalCount());
                 }
             }
             if (myWorkOptionDTO.getModuleCode().equals("product_detail")) {
                 Integer status = Integer.valueOf(myWorkOptionDTO.getModuleStatus());
-                myWorkOptionDTO.setTableNumber(workOptionMapper.getProductDetailNum(myWorkOptionDTO, status));
+                PagingDTO<ProductSkuDTO> pagingDTO = JSONObject.parseObject(myWorkOptionDTO.getModuleParam(), PagingDTO.class);
+                ProductSkuDTO params = JSONObject.parseObject(JSONObject.toJSONString(pagingDTO.getParams()), ProductSkuDTO.class);
+                pagingDTO.setParams(params);
+                myWorkOptionDTO.setTableNumber(productDetailService.paging(pagingDTO).getTotalCount());
             }
             if (myWorkOptionDTO.getModuleCode().equals("product_bom_info")) {
                 Integer status = Integer.valueOf(myWorkOptionDTO.getModuleStatus());
-                myWorkOptionDTO.setTableNumber(workOptionMapper.getProductBomInfoNum(myWorkOptionDTO, status));
+                PagingDTO<SearchPagingDTO> pagingDTO = JSONObject.parseObject(myWorkOptionDTO.getModuleParam(), PagingDTO.class);
+                SearchPagingDTO params = JSONObject.parseObject(JSONObject.toJSONString(pagingDTO.getParams()), SearchPagingDTO.class);
+                pagingDTO.setParams(params);
+                myWorkOptionDTO.setTableNumber(bomInfoService.paging(pagingDTO).getTotalCount());
             }
             if (myWorkOptionDTO.getModuleCode().equals("product_change")) {
                 PagingDTO<SearchPagingDTO> pagingDTO = JSONObject.parseObject(myWorkOptionDTO.getModuleParam(), PagingDTO.class);
