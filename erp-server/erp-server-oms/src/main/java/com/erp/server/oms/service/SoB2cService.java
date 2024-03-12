@@ -791,4 +791,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     Boolean updateShippingOrderNoBySoId(TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO);
+    /**
+     * @description: 库存缺货校验
+     * @author Will
+     * @date: 2024/3/12 17:52
+     * @param dto
+     * @param detailList
+     * @return String
+     */
+    String checkSkuInventory(SoB2cDTO.AddDTO dto, List<SoB2cDetailDTO.AddDTO> detailList);
 }
