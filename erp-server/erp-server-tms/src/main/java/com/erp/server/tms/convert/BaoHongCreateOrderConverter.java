@@ -36,7 +36,7 @@ public interface BaoHongCreateOrderConverter {
             @Mapping(target = "oabPhone", source = "logisticsOrderVO.receiverInfoVO.telNumber"),
             @Mapping(target = "oabEmail", source = "logisticsOrderVO.receiverInfoVO.email"),
             @Mapping(target = "deliveryAddress", source = "logisticsOrderVO.receiverInfoVO.addressFirst"),
-            @Mapping(target = "orderStatus", source = "2"),
+            @Mapping(target = "orderStatus", constant = "2"),
             @Mapping(target = "iossNo", source = "logisticsOrderVO.iossCode"),
             @Mapping(target = "buyInsurance", source = "logisticsOrderVO.logisticsChannelEntity.isApiInsurance", qualifiedByName = "boolToInteger"),
             @Mapping(target = "tradeMode", constant = "1210"),
