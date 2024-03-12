@@ -5,6 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * B2C销售订单异常表 服务类
@@ -96,4 +98,11 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
      * @create 2023-12-20 11:06
      */
     void batchAddSoB2cError(SoB2cErrorDTO.BatchAdd batchAdd);
+
+    /**
+     * 重新生成销售出库单
+     * @author Jim
+     * {@code @date:} 2024-03-11
+     */
+    BatchResultDTO retrySoOutStock(String soBcId);
 }

@@ -1,5 +1,6 @@
 package com.erp.server.oms.controller.api;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.Idempotent;
@@ -16,6 +17,8 @@ import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.tms.entity.TransferDeclareEntity;
+import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -24,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.*;
 
 /**
@@ -39,6 +43,8 @@ public class SoB2cController extends BaseController {
 
     @Autowired
     private SoB2cService soB2cService;
+    @Resource
+    private SoB2cErrorService soB2cErrorService;
 
 
     /**
@@ -937,5 +943,34 @@ public class SoB2cController extends BaseController {
        Boolean result= soB2cService.transferDeclare(dto.getIds(), dto.getTransferLogisticsSupplierId(), dto.getTransferLogisticsChannelId());
        return result ? success() : failure();
 
+    }
+
+
+    /**
+     * 重试生成销售出库单
+     *
+     * @Author Jim
+     * @Date 2024/03/25
+     **/
+    @PostMapping(value = "/b2cOrderRetry")
+    public ApiResult<List<BatchResultDTO>> b2cOrderRetry(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            try {
+                // id=B2c订单ID
+                BatchResultDTO currentResult = soB2cErrorService.retrySoOutStock(id);
+                resultDTOS.add(currentResult);
+            } catch (Exception e) {
+                log.error("重试生成销售出库单:{}", ExceptionUtil.stacktraceToString(e));
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTOS.add(BatchResultDTO.fail(id, id, "B2C订单不存在, 重试生成销售出库单失败"));
+                    continue;
+                }
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

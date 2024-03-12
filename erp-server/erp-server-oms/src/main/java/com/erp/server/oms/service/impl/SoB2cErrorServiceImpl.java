@@ -1,10 +1,23 @@
 package com.erp.server.oms.service.impl;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
+import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.mapper.SoB2cErrorMapper;
 import com.erp.server.oms.service.SoB2cErrorService;
@@ -16,7 +29,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -32,6 +49,8 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
 
     @Resource
     private SoB2cService soB2cService;
+    @Resource
+    private SoOutstockFeign soOutstockFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -167,6 +186,29 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
             }
             soB2cService.addSignError(mainId,batchAdd.getType());
         });
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO retrySoOutStock(String soBcId) {
+        SoB2cEntity soB2cEntity = soB2cService.getById(soBcId);
+        if (Objects.isNull(soB2cEntity)){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+
+        SoB2cErrorEntity errorEntity = this.getByMainIdAndType(soB2cEntity.getId(), SoB2cErrorTypeEnum.AUTO_GENERATE_OUT_STOCK.getCode());
+        if (null == errorEntity){
+            return BatchResultDTO.success(soBcId, soB2cEntity.getCode(), "重试成功");
+        }
+        // TODO
+//        soOutstockFeign.generateB2cSoOutstock();
+        //删除订单异常记录
+        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+        deleteDTO.setMainId(soB2cEntity.getId());
+        deleteDTO.setType(SoB2cErrorTypeEnum.AUTO_GENERATE_OUT_STOCK.getCode());
+        this.delete(deleteDTO);
+
+        return BatchResultDTO.success(soBcId, soB2cEntity.getCode(), "重试执行成功");
     }
 
 
