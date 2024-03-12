@@ -168,7 +168,7 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         private String moduleStatus;
 
         /**
-         * 地址（预留）
+         * 地址
          */
         private String moduleUrl;
 
@@ -178,7 +178,7 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         private String path;
 
         /**
-         * 入参（预留）
+         * 入参
          */
         private String moduleParam;
 
