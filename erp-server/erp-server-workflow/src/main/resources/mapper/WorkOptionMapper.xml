@@ -51,7 +51,10 @@
             db.name AS moduleStatusName,
             wmrs.module_status AS moduleStatus,
             wmrs.module_url AS moduleUrl,
-            wmrs.module_param AS moduleParam
+            wmrs.module_param AS moduleParam,
+            wmrs.table_field AS tableField,
+            wmrs.menu_code AS menuCode,
+            wmrs.is_approval_workflow AS isApprovalWorkflow
         FROM work_option wo
         LEFT JOIN work_menu_ref_status wmrs ON wo.work_menu_id = wmrs.id
         LEFT JOIN work_menu wm ON wm.id = wmrs.menu_id
