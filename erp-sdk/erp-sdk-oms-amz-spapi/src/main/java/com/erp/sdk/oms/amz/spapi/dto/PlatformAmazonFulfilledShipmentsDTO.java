@@ -3,6 +3,7 @@ package com.erp.sdk.oms.amz.spapi.dto;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
+import com.erp.sdk.oms.amz.spapi.csv.ReportFulfilledShipmentsCsvEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -28,6 +29,15 @@ public class PlatformAmazonFulfilledShipmentsDTO extends CleanBaseDTO {
 
     @Panno(findType = PannoEnum.EQ,field = "amazonOrderId")
     private String amazonOrderId;
+
+    @Panno(findType = PannoEnum.EQ,field = "shopId")
+    private String shopId;
+
+    /**
+     * 分组ID:{订单ID}_{单据日期}_{店铺ID}
+     */
+    @Panno(findType = PannoEnum.EQ,field = "groupId")
+    private String groupId;
 
     private String merchantOrderId;
 

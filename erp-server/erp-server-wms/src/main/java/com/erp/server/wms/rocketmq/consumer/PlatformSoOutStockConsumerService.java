@@ -4,12 +4,15 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.*;
+import com.common.business.enums.BusinessTypeEnum;
+import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
+import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.ShopInfoDTO;
@@ -79,7 +82,23 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
 
     @Override
     public void updateMongodbData(String platform, String uniqueId, Integer isClean) {
+        if (StringUtils.isEmpty(uniqueId) || StringUtils.isEmpty(platform) || Objects.isNull(isClean)){
+            return;
+        }
+        MongoDBUpdateDTO dto = MongoDBUpdateDTO.builder()
+                .tableName(getTableName(platform))
+                .uniqueId(uniqueId)
+                .isClean(isClean)
+                .build();
+        dmpMongoDbFeign.updateMongoDbData(dto);
+    }
 
+    /**
+     * 根据平台组装表名
+     */
+    private String getTableName(String platform){
+        return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+                platform, BusinessTypeEnum.SO_OUT_STOCK.getCode());
     }
 
     @Override
@@ -114,7 +133,7 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
         // 校验sku映射关系
         if (generateB2cDTO.getDetailList().stream().anyMatch(e-> StringUtils.isBlank(e.getSkuId()))){
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-            addError.setType(SoB2cErrorTypeEnum.AUTO_GENERATE_OUT_STOCK.getCode());
+            addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
             addError.setParamJson(JSONUtil.toJsonStr(ext));
             addError.setReturnJson("");
             addError.setMainId(soB2cEntity.getId());

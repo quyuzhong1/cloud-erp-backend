@@ -2,6 +2,8 @@ package com.erp.server.dmp.controller.feign;
 
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
+import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
+import com.erp.server.dmp.service.AmzBusinessHandleService;
 import com.erp.server.dmp.service.CfgAppClientService;
 import com.erp.server.dmp.service.AmzReportHandleService;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,10 @@ public class DmpAmazonFeignController {
     private AmzReportHandleService amzReportHandleService;
     @Resource
     private CfgAppClientService cfgAppClientService;
+    @Resource
+    private AmzBusinessHandleService amzBusinessHandleService;
+
+
 
     /**
      * 拉取货件
@@ -47,7 +53,15 @@ public class DmpAmazonFeignController {
         return cfgAppClientService.cacheAndFindShopAuth(shopId);
     }
 
-
-
+    /**
+     * 重推销售出库单
+     *
+     * @Author Jim
+     * @since 2024-03-12
+     **/
+    @PostMapping("/amazon/checkAndSendSoOutStock")
+    public Boolean checkAndSendSoOutStock(@RequestBody DmpPullSoOutStockDTO dto){
+        return amzBusinessHandleService.checkAndSendSoOutStock(dto);
+    }
 
 }

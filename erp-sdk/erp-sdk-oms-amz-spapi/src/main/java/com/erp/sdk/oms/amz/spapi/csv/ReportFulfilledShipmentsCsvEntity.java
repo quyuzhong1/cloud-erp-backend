@@ -105,5 +105,7 @@ public class ReportFulfilledShipmentsCsvEntity implements Serializable {
 
     private String salesChannel;
 
+    private String pointsGranted;
+
 
 }

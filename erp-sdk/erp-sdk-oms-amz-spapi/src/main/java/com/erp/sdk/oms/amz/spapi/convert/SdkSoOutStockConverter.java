@@ -29,16 +29,24 @@ public interface SdkSoOutStockConverter {
             @Mapping(target = "uniqueId", source = "csvEntity.shipmentItemId"),
             @Mapping(target = "downloadTime", expression = "java(java.time.LocalDateTime.now().toString())"),
             @Mapping(target = "handleStatus", source = "handleStatus"),
+            @Mapping(target = "shopId", source = "shopId"),
+            @Mapping(target = "groupId", source = "groupId"),
     })
-    PlatformAmazonFulfilledShipmentsDTO sourceDtoToOutStockDto(ReportFulfilledShipmentsCsvEntity csvEntity, String reportId, String handleStatus);
+    PlatformAmazonFulfilledShipmentsDTO sourceDtoToOutStockDto(ReportFulfilledShipmentsCsvEntity csvEntity,
+                                                               String reportId,
+                                                               String shopId,
+                                                               String groupId,
+                                                               String handleStatus
+    );
 
 
     @Mappings({
             @Mapping(target = "platformCode", source = "platformCode"),
             @Mapping(target = "dictPlatform", constant = "Amazon"),
+            @Mapping(target = "uniqueId", source = "uniqueId"),
             @Mapping(target = "detailList", expression = "java(sourceDetails.stream().map(INSTANCE::amazonConvertDetailDTO).collect(java.util.stream.Collectors.toList()))"),
     })
-    PlatformSoOutStockDTO amazonConvertDTO(String platformCode, List<PlatformAmazonFulfilledShipmentsDTO> sourceDetails);
+    PlatformSoOutStockDTO amazonConvertDTO(String platformCode, String uniqueId, List<PlatformAmazonFulfilledShipmentsDTO> sourceDetails);
 
 
     @Mappings({

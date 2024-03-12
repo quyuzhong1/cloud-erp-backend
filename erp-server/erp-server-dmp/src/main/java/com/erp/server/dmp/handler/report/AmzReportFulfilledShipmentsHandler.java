@@ -1,6 +1,7 @@
 package com.erp.server.dmp.handler.report;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.MongoTableNameContant;
@@ -68,25 +69,20 @@ public class AmzReportFulfilledShipmentsHandler extends AmzReportBusinessHandler
         if (CollectionUtils.isEmpty(existOrderList)){
             // 都不存在直接保存mongo等待重新触发
             // 不存在保存mongo等待重新触发
-            List<PlatformAmazonFulfilledShipmentsDTO> sourceList = allList.stream()
-                    .map(e -> SdkSoOutStockConverter.INSTANCE.sourceDtoToOutStockDto(e, taskEntity.getReportId(), AmazonHandleStatusEnum.WAIT_DOWNLOAD.getCode()))
-                    .collect(Collectors.toList());
-            businessService.handleSaveOrUpdateMongo(sourceList, MongoTableNameContant.THIRD_SYSTEM_AMAZON_SO_OUT_STOCK, PlatformAmazonFulfilledShipmentsDTO.class, new ArrayList<>());
+            directSaveMongo(taskEntity, allList);
             return;
         }
         List<String> existOrderIds = existOrderList.stream().map(SoB2cEntity::getPlatformCode).distinct().collect(Collectors.toList());
         // 按订单存在分组
-        Map<Boolean, List<ReportFulfilledShipmentsCsvEntity>> gourpMap = allList.stream().collect(Collectors.groupingBy(e -> existOrderIds.contains(e.getAmazonOrderId())));
+        Map<Boolean, List<ReportFulfilledShipmentsCsvEntity>> gourpMap = allList.stream()
+                .collect(Collectors.groupingBy(e -> existOrderIds.contains(e.getAmazonOrderId())));
 
         List<ReportFulfilledShipmentsCsvEntity> existList = gourpMap.get(true);
         List<ReportFulfilledShipmentsCsvEntity> notExistList = gourpMap.get(false);
 
         if (!CollectionUtils.isEmpty(notExistList)){
             // 不存在保存mongo等待重新触发
-            List<PlatformAmazonFulfilledShipmentsDTO> sourceList = notExistList.stream()
-                    .map(e -> SdkSoOutStockConverter.INSTANCE.sourceDtoToOutStockDto(e, taskEntity.getReportId(), AmazonHandleStatusEnum.WAIT_DOWNLOAD.getCode()))
-                    .collect(Collectors.toList());
-            businessService.handleSaveOrUpdateMongo(sourceList, MongoTableNameContant.THIRD_SYSTEM_AMAZON_SO_OUT_STOCK, PlatformAmazonFulfilledShipmentsDTO.class, new ArrayList<>());
+            directSaveMongo(taskEntity, notExistList);
         }
 
         // 存在的订单直接触发销售出库单
@@ -115,5 +111,16 @@ public class AmzReportFulfilledShipmentsHandler extends AmzReportBusinessHandler
             // 事务处理
             businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(), jobTaskDTO.getBillType(), jobTaskDTO, dto.getPlatformApiEnum());
         }
+    }
+
+    private void directSaveMongo(AmzReportTaskEntity taskEntity, List<ReportFulfilledShipmentsCsvEntity> allList) {
+        List<PlatformAmazonFulfilledShipmentsDTO> sourceList = allList.stream()
+                .map(e -> SdkSoOutStockConverter.INSTANCE.sourceDtoToOutStockDto(e,
+                        taskEntity.getReportId(),
+                        taskEntity.getShopId(),
+                        StrUtil.format("{}_{}_{}", e.getAmazonOrderId(), e.getShipmentDate(), taskEntity.getShopId()),
+                        AmazonHandleStatusEnum.WAIT_DOWNLOAD.getCode()))
+                .collect(Collectors.toList());
+        businessService.handleSaveOrUpdateMongo(sourceList, MongoTableNameContant.THIRD_SYSTEM_AMAZON_SO_OUT_STOCK, PlatformAmazonFulfilledShipmentsDTO.class, new ArrayList<>());
     }
 }

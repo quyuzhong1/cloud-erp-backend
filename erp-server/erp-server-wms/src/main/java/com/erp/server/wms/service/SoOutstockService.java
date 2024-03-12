@@ -393,4 +393,12 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @date 2024-03-07
      */
     void checkAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity);
+
+    /**
+     * 默认重推销售出库单逻辑
+     *
+     * @author Jim
+     * @date 2024-03-07
+     */
+    Boolean defaultHandleRetry(String soB2cId, List<SoB2cEntity> instantList);
 }

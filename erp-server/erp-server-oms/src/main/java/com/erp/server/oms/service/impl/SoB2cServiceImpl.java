@@ -4987,7 +4987,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     SoOutstockDetailDTO.AddDTO addDTO = new SoOutstockDetailDTO.AddDTO();
                     addDTO.setSkuId(deliverySku.getSkuId());
                     addDTO.setSkuNo(deliverySku.getSkuNo());
-                    addDTO.setSourceDetailId(detailId);
+                    addDTO.setSourceDetailId(detailItem.getSourceDetailId());
                     addDTO.setSoDetailId(detailId);
                     Integer wantQty = qty * deliverySku.getQty();
                     addDTO.setPlanQty(wantQty);

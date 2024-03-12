@@ -34,6 +34,7 @@ import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -2047,6 +2048,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         } else {
             String id = outstock.getId();
             ApproveStatusEnum approveStatus = outstock.getApproveStatus();
+            // 检查关账时间
+            LocalDate closedDate = inventoryClosedRecordService.checkClosed(outstock.getWarehouseOrgId(), outstock.getBillDate());
+            if (null == closedDate){
+                // 已关账
+                return Boolean.TRUE;
+            }
             //待提交
             if (ApproveStatusEnum.WAIT_SUBMIT.equals(approveStatus)) {
                 this.submit(Arrays.asList(id));
@@ -2217,7 +2224,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         // 补充来源
         generateB2cDTO.setSourceCode(dto.getPlatformCode());
         generateB2cDTO.setSourceId("");
-        generateB2cDTO.setSourceType(SourceTypeEnum.AMZ_FULFILLED_SHIPMENT.getCode());
+        generateB2cDTO.setSourceType(SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode());
 
         // 需要生成销售出库单的明细
         List<PlatformSoOutStockDetailDTO> generateSourceDetailList = dto.getDetailList();
@@ -2263,7 +2270,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                         .findFirst()
                         .orElse(null);
                 if (null == activeAddDTO){
-                   String msg = StrUtil.format("找到B2C订单明细：平台={}，平台单号={}，平台单号明细Id={}", dto.getDictPlatform(), detailDTO.getPlatformCode(), detailDTO.getPlatformOrderDetailId());
+                   String msg = StrUtil.format("找不到B2C订单明细：平台={}，平台单号={}，平台单号明细Id={}", dto.getDictPlatform(), detailDTO.getPlatformCode(), detailDTO.getPlatformOrderDetailId());
                    throw new ServiceException(msg);
                 }
                 SoOutstockDetailDTO.AddDTO currentAddDTO = new SoOutstockDetailDTO.AddDTO();
@@ -2278,8 +2285,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         for (SoOutstockDTO.GenerateB2cDTO genDTO : generateB2cList) {
             if (!this.generateB2cSoOutstock(genDTO)){
-                String msg = StrUtil.format("【亚马逊物流销售报告】生成销售出库单失败:dto={}", JSONUtil.toJsonStr(genDTO));
-                throw new ServiceException(msg);
+                log.warn("【亚马逊物流销售报告】生成销售出库单失败:dto={}", JSONUtil.toJsonStr(genDTO));
+                continue;
             }
         }
 
@@ -2289,6 +2296,46 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soB2cEntity.setPayTime(platformPayTime.toLocalDateTime());
             soB2cFeign.updateById(soB2cEntity);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean defaultHandleRetry(String id, List<SoB2cEntity> soB2cList) {
+        //已发货
+        String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+        SoB2cEntity soB2c = soB2cList.stream().filter(s ->
+                s.getId().equals(id)&&
+                        shipped.equals(s.getBillStatus())&&
+                        s.hasPlatformWarehouseOrder()
+        ).findFirst().orElse(null);
+        /**
+         * 表示有仓库为空且是已发货并且是平台仓订单
+         * 那么就要去找店铺的仓库 然后匹配上仓库
+         * [排除速卖通订单]
+         */
+        if (Objects.nonNull(soB2c) && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getDictPlatform())) {
+            soB2cFeign.updateWarehouseByShopId(soB2c.getId(), soB2c.getShopId());
+        }
+
+        //速卖通是否重试成功表示
+        Boolean flag = Boolean.TRUE;
+
+        //速卖通异常订单重新生成需要查询速卖通平台发货单获取仓库
+        if (Objects.nonNull(soB2c) && PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getDictPlatform())) {
+            flag = soB2cFeign.updateAliExpressOrderWarehouse(soB2c.getId(), soB2c.getShopId());
+        }
+
+        Boolean result = this.generateB2cSoOutstock(id);
+        boolean allResult = result && flag;
+        if (allResult) {
+            String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+            SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+            deleteDTO.setMainId(id);
+            deleteDTO.setType(type);
+            soB2cFeign.deleteError(deleteDTO);
+        }
+        return allResult;
     }
 
     private SoOutstockEntity getBySoCode(String soB2cCode) {
