@@ -77,4 +77,9 @@ public class SysMenuVO implements Serializable {
      * 菜单排序
      */
     private Integer index;
+
+    /**
+     * 所属系统
+     */
+    private String system;
 }
