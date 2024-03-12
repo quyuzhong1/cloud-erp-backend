@@ -109,14 +109,10 @@ public enum SkuMappingRuleEnum implements EnumMessage{
             String suffixes = Objects.isNull(ruleConditionsDTO.getIgnoringSuffixes())?"":ruleConditionsDTO.getIgnoringSuffixes();
             prefix = escapeSpecialCharacters(prefix);
             suffixes = escapeSpecialCharacters(suffixes);
-            if(StringUtils.isNotBlank(prefix)){
-                String regex = "\"^"+ prefix+"(.*?)$\"";
-                list.add(regex);
-            }
-            if(StringUtils.isNotBlank(suffixes)){
-                String regex = "\"^(.*?)"+suffixes+"$\"";
-                list.add(regex);
-            }
+            String prefixRegex = StringUtils.isNotBlank(prefix)?"\"^"+ prefix+"(.*?)$\"" : "123";
+            list.add(prefixRegex);
+            String suffixesRegex = StringUtils.isNotBlank(suffixes)?"\"^(.*?)"+suffixes+"$\"" : "123";
+            list.add(suffixesRegex);
         }
         return list;
     }

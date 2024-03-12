@@ -200,9 +200,15 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         if(CollectionUtils.isEmpty(regexList)){
             list.add(result);
         }
+        // 记录循环次数
+        int count = 1;
         for(String regex : regexList){
             result = skuMappingRuleEnum.getHandleRegexMethod().apply(ruleTestDTO.getRuleType(),regex,result);
-            list.add(result);
+            // 判断是否需要添加结果到列表
+            if (!skuMappingRuleEnum.equals(SkuMappingRuleEnum.IGNORE_PREFIXES_AND_SUFFIXES) || count % 2 == 0) {
+                list.add(result);
+            }
+            count++;
         }
         return list;
     }
