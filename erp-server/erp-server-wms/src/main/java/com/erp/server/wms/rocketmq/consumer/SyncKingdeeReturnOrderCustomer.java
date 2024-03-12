@@ -1,6 +1,7 @@
 package com.erp.server.wms.rocketmq.consumer;
 
-import com.alibaba.fastjson2.JSONObject;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
@@ -18,7 +19,7 @@ import javax.annotation.Resource;
 @Service
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.DMP_SYNC_TASK_TOPIC, selectorExpression = "sync_kingdee_return_order_to_wms_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_RETURN_ORDER_TO_WMS)
-public class SyncKingdeeReturnOrderCustomer implements RocketMQListener<DmpSyncMqDTO> {
+public class SyncKingdeeReturnOrderCustomer implements RocketMQListener<Object> {
 
     @Resource
     private SyncSoReturnService syncSoReturnService;
@@ -27,13 +28,17 @@ public class SyncKingdeeReturnOrderCustomer implements RocketMQListener<DmpSyncM
     private DmpTaskFeign dmpTaskFeign;
 
     @Override
-    public void onMessage(DmpSyncMqDTO dmpSyncMqDTO) {
+    public void onMessage(Object ext) {
+        //json字符串
+        String jsonStr = JSONUtil.toJsonStr(ext);
+        //json数据
+        JSONObject jsonObject = JSONUtil.parseObj(jsonStr);
+        String dmpSyncTaskId = jsonObject.get("dmpSyncTaskId").toString();
         DmpSyncMqDTO.ParamDTO paramDTO = new DmpSyncMqDTO.ParamDTO();
-        paramDTO.setDmpSyncTaskId(dmpSyncMqDTO.getDmpSyncTaskId());
+        paramDTO.setDmpSyncTaskId(dmpSyncTaskId);
         try {
-            String dataJson = dmpSyncMqDTO.getMqData();
-            log.info("监听到金蝶销售退货单要同步：entity>>>>>{}", dataJson);
-            KingdeeReturnOrderEntity entity= JSONObject.parseObject(dataJson, KingdeeReturnOrderEntity.class);
+            log.info("监听到金蝶销售退货单要同步：entity>>>>>{}", jsonObject);
+            KingdeeReturnOrderEntity entity= com.alibaba.fastjson2.JSONObject.parseObject(jsonStr,KingdeeReturnOrderEntity.class);
             syncSoReturnService.syncKingdeeReturnOrderToSoReturn(entity);
         } catch (Exception e){
             log.error("金蝶销售退货单同步失败，msg = {}",e.getMessage());
@@ -42,7 +47,7 @@ public class SyncKingdeeReturnOrderCustomer implements RocketMQListener<DmpSyncM
             paramDTO.setResponseMsg(e.getMessage());
             dmpTaskFeign.updateSyncInfo(paramDTO);
             //错误预警
-            dmpTaskFeign.sendWarnMsg(dmpSyncMqDTO.getDmpSyncTaskId());
+            dmpTaskFeign.sendWarnMsg(dmpSyncTaskId);
             return;
         }
         //同步成功
