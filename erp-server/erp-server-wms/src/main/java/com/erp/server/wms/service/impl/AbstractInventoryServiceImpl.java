@@ -29,6 +29,7 @@ import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -166,7 +167,8 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         txnFlows.forEach(txnFlow->{
             // 检测是否允许库存交易=
             InventoryStatusEnum inventoryStatusEnum = InventoryStatusEnum.getAndCheckByCode(txnFlow.getDictInventoryStatus());
-            checkAllowTransaction(closedDateMap.get(txnFlow.getOrgId()), txnFlow.getOrgId(),txnFlow.getWarehouseId(),txnFlow.getWarehouseLocation(),txnFlow.getSkuId(),txnFlow.getSkuNo(),txnFlow.getDictInventoryStatus(),txnFlow.getBillDate(), inventoryStatusEnum, lastStocktakingProfitLossList);
+            InventorySourceTypeEnum sourceTypeEnum = InventorySourceTypeEnum.getByCode(txnFlow.getSourceCode());
+            checkAllowTransaction(closedDateMap.get(txnFlow.getOrgId()), txnFlow.getOrgId(),txnFlow.getWarehouseId(),txnFlow.getWarehouseLocation(),txnFlow.getSkuId(),txnFlow.getSkuNo(),txnFlow.getDictInventoryStatus(),txnFlow.getBillDate(), inventoryStatusEnum, lastStocktakingProfitLossList, sourceTypeEnum);
 
             // 获取单据业务类型
             InventoryBusinessTypeEnum businessTypeEnum = InventoryBusinessTypeEnum.getByCode(txnFlow.getDictBizType());// 取原交易流水的业务类型
@@ -232,17 +234,19 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
     /**
      * 检查库存交易的否允许
      *
-     * @param closeDate           关账时间
-     * @param orgId               组织
-     * @param warehouseId         仓库
-     * @param warehouseLocation   仓位
-     * @param skuId               SKU
-     * @param dictInventoryStatus 库存状态
-     * @param billDate            单据日期
+     * @param sourceCode
+     * @param closeDate                     关账时间
+     * @param orgId                         组织
+     * @param warehouseId                   仓库
+     * @param warehouseLocation             仓位
+     * @param skuId                         SKU
+     * @param dictInventoryStatus           库存状态
+     * @param billDate                      单据日期
      * @param inventoryStatusEnum
      * @param lastStocktakingProfitLossList
+     * @param sourceType
      */
-    private void checkAllowTransaction(LocalDate closeDate, String orgId, String warehouseId, String warehouseLocation, String skuId, String skuNo, String dictInventoryStatus, LocalDate billDate, InventoryStatusEnum inventoryStatusEnum, List<StocktakingProfitLossDTO.LastDTO> lastStocktakingProfitLossList) {
+    private void checkAllowTransaction(LocalDate closeDate, String orgId, String warehouseId, String warehouseLocation, String skuId, String skuNo, String dictInventoryStatus, LocalDate billDate, InventoryStatusEnum inventoryStatusEnum, List<StocktakingProfitLossDTO.LastDTO> lastStocktakingProfitLossList, InventorySourceTypeEnum sourceType) {
         // 库存关账时间检测
         log.info("closeDate:{}",closeDate);
 
@@ -266,9 +270,16 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
             if (null != lastDTO && (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate()))){
                 // 查询存在的最新单号
                 String code = stocktakingProfitLossService.findLastOneCode(warehouseId, lastDTO.getSkuId(), lastDTO.getBillDate());
-                // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
-                throw new ServiceException(ApiError.ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED, code, lastDTO.getBillDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
-            }
+                if (null == sourceType) {
+                    // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
+                    throw new ServiceException(ApiError.ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED, code, lastDTO.getBillDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
+                }
+                // 盘点类型跳过检查
+                if (!InventorySourceTypeEnum.STOCKTAKING_PROFIT_LOSS.equals(sourceType)){
+                    // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
+                    throw new ServiceException(ApiError.ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED, code, lastDTO.getBillDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
+                }
+           }
         }
 
         // 盘点冻结
@@ -341,7 +352,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         // 最新盘盈盘亏单有效单据日期列表
         List<StocktakingProfitLossDTO.LastDTO> lastStocktakingProfitLossList = stocktakingProfitLossService.listByOrgIdAndSkuIds(Collections.singletonList(warehouseInfo.getOrgId()), Collections.singletonList(param.getSkuId()));
 
-        checkAllowTransaction(closedDateMap.get(warehouseInfo.getOrgId()), warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(),param.getSkuNo(), inventoryStatusEnum.getCode(), param.getBillDate(), inventoryStatusEnum, lastStocktakingProfitLossList);
+        checkAllowTransaction(closedDateMap.get(warehouseInfo.getOrgId()), warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(),param.getSkuNo(), inventoryStatusEnum.getCode(), param.getBillDate(), inventoryStatusEnum, lastStocktakingProfitLossList, param.getSourceType());
         log.warn("交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走入库逻辑", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getSkuNo(), inventoryStatusEnum.getName());
 
         // 按照仓库+仓位+库存状态+SKU 进行锁定
@@ -393,7 +404,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         List<StocktakingProfitLossDTO.LastDTO> lastStocktakingProfitLossList = stocktakingProfitLossService.listByOrgIdAndSkuIds(Collections.singletonList(warehouseInfo.getOrgId()), Collections.singletonList(param.getSkuId()));
 
 
-        checkAllowTransaction(closedDateMap.get(warehouseInfo.getOrgId()), warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode(), param.getBillDate(), inventoryStatusEnum, lastStocktakingProfitLossList);
+        checkAllowTransaction(closedDateMap.get(warehouseInfo.getOrgId()), warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode(), param.getBillDate(), inventoryStatusEnum, lastStocktakingProfitLossList, param.getSourceType());
         // 待出库数量
         Integer waitOutQty = param.getQty();
         log.info("交易业务：【{}】，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走出库逻辑", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), inventoryStatusEnum.getName(), param.getSkuNo());
