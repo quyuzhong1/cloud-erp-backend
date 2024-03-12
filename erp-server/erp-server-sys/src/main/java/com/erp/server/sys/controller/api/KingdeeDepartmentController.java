@@ -4,11 +4,14 @@ package com.erp.server.sys.controller.api;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.server.sys.query.KingdeeDepartmentQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
+import javax.validation.Valid;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -24,6 +27,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.sys.dto.KingdeeDepartmentDTO;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * 
@@ -90,9 +97,9 @@ public class KingdeeDepartmentController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
-    public ApiResult<?> update(@RequestBody @Validated KingdeeDepartmentDTO.UpdateDTO dto) {
-        kingdeeDepartmentService.update(dto);
-        return success();
+    public ApiResult update(@RequestBody @Validated KingdeeDepartmentDTO.UpdateDTO dto) {
+        Boolean result = kingdeeDepartmentService.update(dto);
+        return result?success():failure();
     }
 
 
@@ -108,6 +115,33 @@ public class KingdeeDepartmentController extends BaseController {
         return success(kingdeeDepartmentService.view(id));
     }
 
+
+    /**
+     * 删除
+     * @param dto
+     * @return
+     */
+    @PostMapping("/delete")
+    public ApiResult<List<BatchResultDTO>>  delete(@RequestBody  @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = kingdeeDepartmentService.delete(id);
+            }catch (Exception e){
+                log.error("金蝶部门删除失败===>{}", e.getMessage());
+                KingdeeDepartmentEntity entity = kingdeeDepartmentService.getById(id);
+                if (Objects.isNull(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "金蝶部门不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getKingdeeDeptCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
 
 }

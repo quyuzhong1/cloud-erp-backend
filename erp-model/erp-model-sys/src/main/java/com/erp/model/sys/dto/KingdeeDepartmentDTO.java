@@ -227,13 +227,36 @@ public class KingdeeDepartmentDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDTO  {
 
         /**
         * 主键id
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 金蝶部门名称
+         */
+        @NotBlank(message = "金蝶部门名称不能为空")
+        private String kingdeeDeptName;
+
+        /**
+         * erp部门id
+         */
+        @NotBlank(message = "erp部门id不能为空")
+        private String erpDeptId;
+
+        /**
+         * 使用组织id
+         */
+        @NotBlank(message = "使用组织id不能为空")
+        private String useOrgId;
+
+        /**
+         * 父级id
+         */
+        private String parentId;
 
     }
 
