@@ -8,6 +8,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -107,4 +108,12 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
     * @create 2024-01-05 9:29
     */
    List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList();
+
+    /**
+     * 根据主表id修改发货时间
+     * @param mainIds
+     * @param deliveryTime
+     * @return
+     */
+   Boolean updateDeliveryTimeByMainIds(List<String> mainIds, LocalDateTime deliveryTime);
 }
