@@ -3,28 +3,29 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.model.oms.entity.BankAccountEntity;
-import com.erp.model.scm.dto.KingdeePaymentConditionDTO;
-import com.erp.model.scm.entity.KingdeePaymentConditionEntity;
 import com.erp.model.sys.dto.KingdeeDepartmentDTO;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.sys.mapper.KingdeeDepartmentMapper;
-import com.erp.server.sys.service.CommonService;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysDeptService;
 import com.erp.server.sys.service.KingdeeDepartmentService;
 import com.erp.server.sys.service.SysAccountingCompanyService;
 import com.erp.server.sys.service.SysDepartmentService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,8 +45,7 @@ import java.util.stream.Collectors;
 @Service
 public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepartmentMapper, KingdeeDepartmentEntity> implements KingdeeDepartmentService {
 
-    @Autowired
-    private CommonService commonService;
+
 
     @Autowired
     private SysAccountingCompanyService sysAccountingCompanyService;
@@ -53,26 +53,23 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
     @Autowired
     private SysDepartmentService sysDepartmentService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Autowired
+    private SyncKingdeeSysDeptService syncKingdeeSysDeptService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(KingdeeDepartmentDTO.AddDTO addDTO) {
+    public Boolean add(KingdeeDepartmentDTO.AddDTO addDTO) {
         KingdeeDepartmentEntity kingdeeDepartmentEntity = new KingdeeDepartmentEntity();
         BeanMapperUtils.copy(addDTO, kingdeeDepartmentEntity);
-
         // 数据处理
         handleData(kingdeeDepartmentEntity);
-
-        log.info("开始新增");
         boolean save = super.save(kingdeeDepartmentEntity);
         if (!save) {
             throw new ServiceException("保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "", kingdeeDepartmentEntity.getId());
-
-        return new BaseResultDTO.AddDTO(kingdeeDepartmentEntity.getId(), kingdeeDepartmentEntity.getId());
+        //金蝶推送
+        syncKingdeeSysDeptService.syncDataToKingdee(kingdeeDepartmentEntity, SyncOperateEnum.OPERATE_ADD.getCode());
+        return save;
     }
 
     /**
@@ -100,7 +97,6 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
     public Boolean init() {
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_DEPARTMENT.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-
         //审核状态
         queryFilters.add(StrUtil.format(" FDocumentStatus = {}", "'C'"));
         //禁用状态
@@ -203,6 +199,25 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
         return viewDTO;
     }
 
+    @Override
+    public PagingVO<KingdeeDepartmentDTO.PagingViewDTO> paging(PagingDTO<KingdeeDepartmentDTO.PagingParamDTO> dto) {
+        KingdeeDepartmentDTO.PagingParamDTO paramDTO = dto.getParams();
+        paramDTO.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<KingdeeDepartmentDTO.PagingViewDTO> pageData = this.baseMapper.paging(query, paramDTO);
+
+        return null;
+    }
+
+    @Override
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId, String syncKingdeeCode) {
+         return this.lambdaUpdate()
+                 .eq(KingdeeDepartmentEntity::getId, id)
+                 .set(StringUtils.isNotBlank(syncKingdeeId), KingdeeDepartmentEntity::getKingdeeId, syncKingdeeId)
+                 .set(StringUtils.isNotBlank(syncKingdeeCode), KingdeeDepartmentEntity::getKingdeeDeptCode, syncKingdeeCode)
+                 .update();
+    }
+
     private KingdeeDepartmentEntity getParentDeptByKingdeeCode(String parentKingdeeCode) {
         return this.lambdaQuery().eq(KingdeeDepartmentEntity::getKingdeeDeptCode, parentKingdeeCode).last("LIMIT 1").one();
     }
@@ -212,6 +227,31 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
      * 新增修改处理数据
      */
     private void handleData(KingdeeDepartmentEntity kingdeeDepartmentEntity) {
-        // TODO 验证数据 & 数据赋值
+        String useOrgId = kingdeeDepartmentEntity.getUseOrgId();
+        SysAccountingCompanyEntity orgInfo= sysAccountingCompanyService.getById(useOrgId);
+        if(Objects.isNull(orgInfo)){
+            throw new ServiceException("组织信息不存在");
+        }
+        kingdeeDepartmentEntity.setUseOrgName(orgInfo.getCompanyName());
+        String deptName = kingdeeDepartmentEntity.getKingdeeDeptName();
+        String id = kingdeeDepartmentEntity.getId();
+
+        long nameCount=this.lambdaQuery().eq(KingdeeDepartmentEntity::getUseOrgId,useOrgId).
+                eq(KingdeeDepartmentEntity::getKingdeeDeptName,deptName)
+                .ne(StringUtils.isNotBlank(id),KingdeeDepartmentEntity::getId,id).count();
+        if(nameCount>0){
+            throw new ServiceException("同组织下部门名称不能重复");
+        }
+
+        //父级部门
+        String parentId =kingdeeDepartmentEntity.getParentId();
+        if (StringUtils.isNotBlank(parentId)) {
+            KingdeeDepartmentEntity parentDept = this.getById(parentId);
+            if (Objects.nonNull(parentDept)) {
+                kingdeeDepartmentEntity.setParentKingdeeCode(parentDept.getKingdeeDeptCode());
+            }
+        }
+        kingdeeDepartmentEntity.setUseOrgCode(orgInfo.getCode());
+
     }
 }

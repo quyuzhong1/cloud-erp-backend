@@ -65,6 +65,9 @@ public class KingdeeDepartmentEntity extends BaseEntity<KingdeeDepartmentEntity>
     @TableField("parent_kingdee_code")
     private String parentKingdeeCode;
 
+    @TableField(exist = false)
+    private String useOrgCode;
+
 
 
 

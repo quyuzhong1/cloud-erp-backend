@@ -33,6 +33,35 @@
         is_deleted,
         kingdee_id, kingdee_dept_code, kingdee_dept_name, erp_dept_id, use_org_id, parent_id
     </sql>
+    <!--分頁查詢-->
+    <select id="paging" resultType="com.erp.model.sys.dto.KingdeeDepartmentDTO$PagingViewDTO">
+        SELECT
+            kd.id,
+            kd.kingdee_id AS kingdeeId ,
+            kd.kingdee_dept_code AS kingdeeDeptCode,
+            kd.kingdee_dept_name AS kingdeeDeptName,
+            kd.erp_dept_id AS erpDeptId,
+            kd.use_org_id AS useOrgId,
+            kd.parent_id AS parentId,
+            kd.parent_kingdee_code AS parentKingdeeCode,
+            kd.use_org_name AS useOrgName,
+            sd.name AS erpDeptName
+       FROM kingdee_department kd
+       LEFT JOIN sys_department sd
+       ON sd.id=kd.erp_dept_id
+       WHERE kd.is_deleted = FALSE
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        kd.id desc
+    </select>
 
 
 </mapper>

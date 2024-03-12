@@ -1,6 +1,10 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.server.sys.query.KingdeeDepartmentQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +54,18 @@ public class KingdeeDepartmentController extends BaseController {
         return result ? success() : failure();
     }
 
+    /**
+     * 分页查询
+     * @param dto
+     * @return
+     */
+    @PostMapping("/paging")
+    @WebAdvanceQuery(handler = KingdeeDepartmentQueryHandler.class)
+    public ApiResult<PagingVO<KingdeeDepartmentDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<KingdeeDepartmentDTO.PagingParamDTO> dto) {
+        PagingVO<KingdeeDepartmentDTO.PagingViewDTO> pagingVO = kingdeeDepartmentService.paging(dto);
+        return success(pagingVO);
+    }
+
 
     /**
     * 新增
@@ -60,8 +76,9 @@ public class KingdeeDepartmentController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated KingdeeDepartmentDTO.AddDTO dto) {
-        return success(kingdeeDepartmentService.add(dto));
+    public ApiResult add(@RequestBody @Validated KingdeeDepartmentDTO.AddDTO dto) {
+        Boolean result = kingdeeDepartmentService.add(dto);
+        return result ? success() : failure();
     }
 
     /**

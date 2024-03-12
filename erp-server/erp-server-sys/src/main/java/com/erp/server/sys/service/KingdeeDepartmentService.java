@@ -1,8 +1,10 @@
 package com.erp.server.sys.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.KingdeeDepartmentDTO;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
@@ -21,7 +23,7 @@ public interface KingdeeDepartmentService extends SuperService<KingdeeDepartment
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(KingdeeDepartmentDTO.AddDTO dto);
+    Boolean add(KingdeeDepartmentDTO.AddDTO dto);
 
     /**
     * 修改
@@ -49,4 +51,19 @@ public interface KingdeeDepartmentService extends SuperService<KingdeeDepartment
      * @return
      */
     KingdeeDepartmentDTO.ViewDTO view(String id);
+
+    /**
+     * 分页查询
+     * @param dto
+     * @return
+     */
+    PagingVO<KingdeeDepartmentDTO.PagingViewDTO> paging(PagingDTO<KingdeeDepartmentDTO.PagingParamDTO> dto);
+
+    /**
+     * 更改金蝶信息
+     * @param businessId
+     * @param syncKingdeeId
+     * @param syncKingdeeCode
+     */
+    Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId, String syncKingdeeCode);
 }

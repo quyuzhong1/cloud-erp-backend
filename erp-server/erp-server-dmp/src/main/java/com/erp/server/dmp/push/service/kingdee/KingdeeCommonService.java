@@ -33,7 +33,7 @@ public interface KingdeeCommonService {
      * @author Will
      * @date: 2023/3/10 14:57
      */
-    void updateBusinessSyncKingdeeStatus(Integer code, String businessId, String status, String kingdeeId);
+    void updateBusinessSyncKingdeeStatus(Integer code, String businessId, String status, String kingdeeId,String kingdeeCode);
 
     /**
      * @param platformEntity

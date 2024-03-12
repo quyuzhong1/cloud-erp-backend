@@ -1,6 +1,7 @@
 package com.erp.model.sys.dto;
 
 import cn.hutool.core.annotation.Alias;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -20,6 +21,68 @@ import javax.validation.constraints.Size;
 @Data
 @NoArgsConstructor
 public class KingdeeDepartmentDTO implements Serializable {
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO{
+
+        private String id;
+
+        /**
+         * 金蝶部门名称
+         */
+        private String kingdeeDeptName;
+
+        /**
+         * 金蝶部门code
+         */
+        private String kingdeeDeptCode;
+
+        /**
+         * 金蝶父级部门code
+         */
+        private String parentKingdeeCode;
+
+        /**
+         * erp部门id
+         */
+        private String erpDeptId;
+
+        /**
+         * erp部门名称
+         */
+        private String erpDeptName;
+
+        /**
+         * 使用组织id
+         */
+        private String useOrgId;
+
+        /**
+         * 使用组织id
+         */
+        private String useOrgName;
+
+        /**
+         * 父级id
+         */
+        private String parentId;
+
+        /**
+         * 父级部门名称
+         */
+        private String parentDeptName;
+
+
+
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+    }
 
 
     @Data
@@ -131,8 +194,29 @@ public class KingdeeDepartmentDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
+    public static class AddDTO  {
+        /**
+         * 金蝶部门名称
+         */
+        @NotBlank(message = "金蝶部门名称不能为空")
+        private String kingdeeDeptName;
 
+        /**
+         * erp部门id
+         */
+        @NotBlank(message = "erp部门id不能为空")
+        private String erpDeptId;
+
+        /**
+         * 使用组织id
+         */
+        @NotBlank(message = "使用组织id不能为空")
+        private String useOrgId;
+
+        /**
+         * 父级id
+         */
+        private String parentId;
 
     }
 
