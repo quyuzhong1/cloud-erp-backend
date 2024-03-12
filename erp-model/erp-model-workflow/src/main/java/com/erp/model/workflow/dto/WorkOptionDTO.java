@@ -186,6 +186,21 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          * 待办数量
          */
         private Integer tableNumber;
+
+        /**
+         * 数据权限字段
+         */
+        private String tableField;
+
+        /**
+         * 菜单编码
+         */
+        private String menuCode;
+
+        /**
+         * 是否查询审核流程里的待我审核数据
+         */
+        private Boolean isApprovalWorkflow;
     }
 
     /**
