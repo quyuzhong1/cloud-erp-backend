@@ -4,9 +4,12 @@ package com.erp.server.sys.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -24,6 +27,7 @@ import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysDeptService;
 import com.erp.server.sys.service.KingdeeDepartmentService;
 import com.erp.server.sys.service.SysAccountingCompanyService;
 import com.erp.server.sys.service.SysDepartmentService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,9 +83,10 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
     @Override
     public Boolean update(KingdeeDepartmentDTO.UpdateDTO updateDTO) {
         KingdeeDepartmentEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶部门不存在"));
         KingdeeDepartmentEntity kingdeeDepartmentEntity = BeanMapperUtils.map(KingdeeDepartmentEntity.class, updateDTO);
-
+        kingdeeDepartmentEntity.setKingdeeId(old.getKingdeeId());
+        kingdeeDepartmentEntity.setKingdeeDeptCode(old.getKingdeeDeptCode());
         // 数据处理
         handleData(kingdeeDepartmentEntity);
         log.info("编辑 开始修改数据，id：【{}】", old.getId());
@@ -89,7 +94,8 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
         if (!save) {
             throw new ServiceException("保存失败");
         }
-
+       //金蝶推送
+        syncKingdeeSysDeptService.syncDataToKingdee(kingdeeDepartmentEntity, SyncOperateEnum.OPERATE_UPDATE.getCode());
         return Boolean.TRUE;
     }
 
@@ -218,6 +224,21 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
                  .update();
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(String id) {
+        KingdeeDepartmentEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶部门不存在"));
+        Boolean result = this.removeById(id);
+        if (result && StringUtils.isNotBlank(entity.getKingdeeId())) {
+            //金蝶推送
+            syncKingdeeSysDeptService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getKingdeeDeptCode(), OperationTypeEnum.DELETE);
+
+    }
+
     private KingdeeDepartmentEntity getParentDeptByKingdeeCode(String parentKingdeeCode) {
         return this.lambdaQuery().eq(KingdeeDepartmentEntity::getKingdeeDeptCode, parentKingdeeCode).last("LIMIT 1").one();
     }
@@ -235,13 +256,21 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
         kingdeeDepartmentEntity.setUseOrgName(orgInfo.getCompanyName());
         String deptName = kingdeeDepartmentEntity.getKingdeeDeptName();
         String id = kingdeeDepartmentEntity.getId();
-
+        String erpDeptId = kingdeeDepartmentEntity.getErpDeptId();
+        //检查名称
         long nameCount=this.lambdaQuery().eq(KingdeeDepartmentEntity::getUseOrgId,useOrgId).
                 eq(KingdeeDepartmentEntity::getKingdeeDeptName,deptName)
                 .ne(StringUtils.isNotBlank(id),KingdeeDepartmentEntity::getId,id).count();
-        if(nameCount>0){
+        if (nameCount > 0) {
             throw new ServiceException("同组织下部门名称不能重复");
         }
+        //检查组织下绑定的 erp 部門id
+//        long erpDeptIdCount = this.lambdaQuery().eq(KingdeeDepartmentEntity::getUseOrgId, useOrgId).
+//                eq(KingdeeDepartmentEntity::getErpDeptId, erpDeptId).
+//                ne(StringUtils.isNotBlank(id), KingdeeDepartmentEntity::getId, id).count();
+//        if (erpDeptIdCount > 0) {
+//            throw new ServiceException("同组织下绑定的ERP部门不能存在多个");
+//        }
 
         //父级部门
         String parentId =kingdeeDepartmentEntity.getParentId();

@@ -66,4 +66,14 @@ public interface KingdeeDepartmentService extends SuperService<KingdeeDepartment
      * @param syncKingdeeCode
      */
     Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId, String syncKingdeeCode);
+
+    /**
+     * 删除金蝶部门
+     * @description
+     * @param id
+     * @return
+     * @date 2024-03-12 15:57
+     * @author Lambda
+     */
+    BatchResultDTO delete(String id);
 }
