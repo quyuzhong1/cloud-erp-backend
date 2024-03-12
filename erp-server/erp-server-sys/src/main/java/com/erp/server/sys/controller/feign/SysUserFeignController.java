@@ -5,16 +5,11 @@ import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseSearchDTO;
-import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.UserTypeEnum;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysRoleMenuEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
@@ -70,6 +65,9 @@ public class SysUserFeignController extends BaseController {
 
     @Resource
     private SysUserWechatService wechatService;
+
+    @Resource
+    private UserDatePermissionService userDatePermissionService;
 
 
     @PostMapping("/accountLogin")
@@ -550,5 +548,19 @@ public class SysUserFeignController extends BaseController {
     @GetMapping("/getWxInfo")
     public SysUserWechatEntity getWxInfo(@RequestParam("uid") String uid) {
         return wechatService.getWxInfo(uid);
+    }
+
+
+    /**
+     * 查询用户数据权限,获取到权限sql
+     * @Author Luo_WG
+     * @Date 2024/3/12 16:45
+     * @param tableField 权限过滤字段
+     * @param menuCode 菜单编号
+     * @return java.lang.String
+     **/
+    @GetMapping("/getUserDatePermissionSql")
+    public String getUserDatePermissionSql(@RequestParam("tableField") String tableField, @RequestParam("menuCode") String menuCode) {
+        return userDatePermissionService.getUserDatePermissionSql(tableField, menuCode);
     }
 }
