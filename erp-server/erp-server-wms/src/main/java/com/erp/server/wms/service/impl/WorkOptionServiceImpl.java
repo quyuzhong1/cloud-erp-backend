@@ -28,8 +28,13 @@ public class WorkOptionServiceImpl implements WorkOptionService {
     @Override
     public List<WorkOptionDTO.MyWorkOptionDTO> getTableNum(List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList) {
         for (WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO : myWorkOptionDTOList) {
-            myWorkOptionDTO.setModuleCode(SourceTypeEnum.getByCode(myWorkOptionDTO.getModuleCode()).getTableName());
-            myWorkOptionDTO.setTableNumber(workOptionMapper.getTableNum(myWorkOptionDTO));
+            if (!myWorkOptionDTO.getIsApprovalWorkflow()) {
+                myWorkOptionDTO.setModuleCode(SourceTypeEnum.getByCode(myWorkOptionDTO.getModuleCode()).getTableName());
+                myWorkOptionDTO.setTableNumber(workOptionMapper.getTableNum(myWorkOptionDTO));
+            } else {
+
+            }
+
         }
         return myWorkOptionDTOList;
     }
