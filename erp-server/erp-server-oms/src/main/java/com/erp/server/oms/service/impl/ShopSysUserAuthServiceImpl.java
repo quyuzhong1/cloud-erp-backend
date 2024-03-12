@@ -231,6 +231,8 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
                     viewShopDTO.setShopName(shopInfoEntity.getName());
                     viewShopDTO.setDictPlatform(shopInfoEntity.getDictPlatform());
                     viewShopDTO.setDisabled(shopInfoEntity.getDisabled());
+                    viewShopDTO.setId(shopInfoEntity.getId());
+                    viewShopDTO.setName(shopInfoEntity.getName());
                     resultList.add(viewShopDTO);
                 }
             } else {
@@ -246,6 +248,8 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
                     viewShopDTO.setShopName(shopInfoEntity.getName());
                     viewShopDTO.setDictPlatform(shopInfoEntity.getDictPlatform());
                     viewShopDTO.setDisabled(shopInfoEntity.getDisabled());
+                    viewShopDTO.setId(shopInfoEntity.getId());
+                    viewShopDTO.setName(shopInfoEntity.getName());
                     resultList.add(viewShopDTO);
                 }
             }

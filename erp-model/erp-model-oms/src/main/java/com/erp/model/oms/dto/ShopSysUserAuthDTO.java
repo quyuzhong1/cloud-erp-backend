@@ -72,6 +72,17 @@ public class ShopSysUserAuthDTO implements Serializable {
          */
         private String shopName;
 
+
+        /**
+         * id 与shopId同值，兼容旧接口
+         */
+        private String id;
+
+        /**
+         * name 与shopName同值，兼容旧接口
+         */
+        private String name;
+
         /**
          * 是否禁用
          */
