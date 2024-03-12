@@ -66,10 +66,19 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
         createOrderInfo.setOrderProduct(productDeatils);
 
         try {
+            TransferLogisticsContext.setAuthMap(logisticsOrderVO.getAuthMap());
             //下单获取平台返回值
             BaoHongResponse<String> result = baoHongService.createOrder(createOrderInfo);
 
             if(isFailure(result)){
+                //下单失败
+                responseVO.failure(LogisticsPlatformEnum.BAO_HONG.getName(), logisticsOrderVO.getDeliveryNo(), result.getMessage());
+                logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+                        logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO),result.getMessage() );
+
+                return failure(responseVO);
+            }else{
                 //下单成功
                 responseVO = LogisticsOrderResponseVO.builder()
                         .transportNo(result.getData())
@@ -81,14 +90,6 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(""));
                 return success(responseVO);
-            }else{
-                //下单失败
-                responseVO.failure(LogisticsPlatformEnum.BAO_HONG.getName(), logisticsOrderVO.getDeliveryNo(), result.getMessage());
-                logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
-                        logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
-                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO),result.getMessage() );
-
-                return failure(responseVO);
             }
 
         } catch (Exception e) {
