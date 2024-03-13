@@ -7,6 +7,8 @@ import com.common.business.dto.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.oms.enums.MercadoOrderLogisticTypeEnum;
+import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.sdk.oms.mercado.dto.mercado.order.OrderItemsBean;
 import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
@@ -114,20 +116,26 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         // 标签json
         Map<String, String> lableMap = new HashMap<>();
 
+        String logisticType = "";
         ShipmentViewDTO shipmentViewDTO = new ShipmentViewDTO();
         if (ObjectUtil.isNotEmpty(orderBean.getShipmentViewDTO())) {
             shipmentViewDTO = orderBean.getShipmentViewDTO();
 
-            if ("m2".equals(shipmentViewDTO.getLogistic().getMode()) && "fulfillment".equals(shipmentViewDTO.getLogistic().getType())) {
+            if ("m2".equals(shipmentViewDTO.getLogistic().getMode()) && MercadoOrderLogisticTypeEnum.FULFILLMENT.getCode().equals(shipmentViewDTO.getLogistic().getType())) {
                 //如果是平台仓，状态审核通过
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
                 lableMap.put("logisticType", shipmentViewDTO.getLogistic().getType());
-            } else if ("m2".equals(shipmentViewDTO.getLogistic().getMode()) && ("drop_off".equals(shipmentViewDTO.getLogistic().getType()) || "cross_docking".equals(shipmentViewDTO.getLogistic().getType()))) {
+                logisticType = OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
+            } else if ("m2".equals(shipmentViewDTO.getLogistic().getMode())
+                    && (MercadoOrderLogisticTypeEnum.DROP_OFF.getCode().equals(shipmentViewDTO.getLogistic().getType()) || MercadoOrderLogisticTypeEnum.CROSS_DOCKING.getCode().equals(shipmentViewDTO.getLogistic().getType()))
+            ){
                 //中转发货
                 lableMap.put("logisticType", shipmentViewDTO.getLogistic().getType());
+                logisticType = OrderLogisticTypeEnum.TRANSIT_WAREHOUSE.getCode();
             } else if ("m1".equals(shipmentViewDTO.getLogistic().getMode())) {
                 //自发货
-                lableMap.put("logisticType", "default");
+                lableMap.put("logisticType", MercadoOrderLogisticTypeEnum.DEFAULT.getCode());
+                logisticType = OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
             }
 
             orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
@@ -180,7 +188,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         //B2C销售订单买家信息表
         orderDTO.setReceiver(parseReceiver(orderBean));
         //B2C销售订单物流信息表
-        orderDTO.setLogisticsList(parseLogistics(orderBean));
+        orderDTO.setLogisticsList(parseLogistics(orderBean, logisticType));
         //B2C销售订单财务信息表
         orderDTO.setFinances(parseFinances(orderBean));
         orderDTO.setPlatform(PlatformDictEnum.MERCADO.getCode());
@@ -293,7 +301,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
      * @param orderBean
      * @return java.util.List<com.common.business.dto.PlatformOrderLogisticsDTO>
      **/
-    private static List<PlatformOrderLogisticsDTO> parseLogistics(OrderViewDTO orderBean) {
+    private static List<PlatformOrderLogisticsDTO> parseLogistics(OrderViewDTO orderBean, String logisticType) {
         if (ObjectUtil.isEmpty(orderBean)) {
             return Collections.emptyList();
         }
@@ -321,6 +329,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
                 .accessoriesCostCurrency("")
                 .actualShippingCurrency("")
                 .estimatedShippingCurrency("")
+                .logisticType(logisticType)
                 .build();
         logisticsDTOS.add(dto);
         return logisticsDTOS;

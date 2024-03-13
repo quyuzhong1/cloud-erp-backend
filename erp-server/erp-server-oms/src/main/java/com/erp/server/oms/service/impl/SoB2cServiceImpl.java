@@ -2935,6 +2935,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //明细存在一条数据时组合SKU则标识
             labelDTO.setIsCombination(isCombination);
             data.setLabelDTO(labelDTO);
+
+            //物流类型，目前就美客多平台使用
+            if (StringUtils.isNotBlank(logisticsEntity.getLogisticType())) {
+                data.setLogisticType(logisticsEntity.getLogisticType());
+                data.setLogisticTypeName(OrderLogisticTypeEnum.getName(logisticsEntity.getLogisticType()));
+            }
+
         }
     }
 

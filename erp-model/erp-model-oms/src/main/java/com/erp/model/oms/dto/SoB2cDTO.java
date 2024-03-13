@@ -11,9 +11,6 @@ import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.stringtemplate.v4.ST;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -389,6 +386,16 @@ public class SoB2cDTO implements Serializable {
          * 订单异常的标示
          */
         private String signOrderError;
+
+        /**
+         * 物流类型
+         */
+        private String logisticType;
+
+        /**
+         * 物流类型中文
+         */
+        private String logisticTypeName;
 
 
         /**

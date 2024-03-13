@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -134,6 +133,11 @@ public class SoB2cLogisticsEntity extends BaseEntity<SoB2cLogisticsEntity> {
      */
     @TableField("height")
     private BigDecimal height;
+    /**
+     * 物流类型
+     */
+    @TableField("logistic_type")
+    private String logisticType;
 
 
     public static final String MAIN_ID = "main_id";

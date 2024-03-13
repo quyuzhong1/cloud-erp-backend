@@ -3,7 +3,7 @@ package com.erp.model.oms.enums;
 /**
  * 美客多发货类型
  */
-public enum  MercadoOrderDeliveryTypeEnum {
+public enum MercadoOrderLogisticTypeEnum {
 
     FULFILLMENT("fulfillment",  "平台仓发货（fulfillment）","平台仓"),
     DROP_OFF("dropOff",  "中转仓发货（drop_off）","中转仓"),
@@ -15,16 +15,11 @@ public enum  MercadoOrderDeliveryTypeEnum {
     private String name;
     private String displayName;
 
-    MercadoOrderDeliveryTypeEnum(String code, String name,String displayName) {
+    MercadoOrderLogisticTypeEnum(String code, String name, String displayName) {
 
         this.code = code;
         this.name = name;
         this.displayName = displayName;
-    }
-
-
-    public String getDisplayName() {
-        return displayName;
     }
 
     public String getCode() {
@@ -36,7 +31,7 @@ public enum  MercadoOrderDeliveryTypeEnum {
     }
 
     public static String getName(String code) {
-        for (MercadoOrderDeliveryTypeEnum dictBasic : MercadoOrderDeliveryTypeEnum.values()) {
+        for (MercadoOrderLogisticTypeEnum dictBasic : MercadoOrderLogisticTypeEnum.values()) {
             if (code.equals(dictBasic.getCode())) {
                 return dictBasic.getName();
             }
