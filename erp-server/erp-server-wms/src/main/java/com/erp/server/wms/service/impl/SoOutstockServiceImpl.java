@@ -2174,6 +2174,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
                 if (ObjectUtil.isNotEmpty(soB2cLogisticsEntities)) {
                     LocalDateTime deliveryTime = soB2cLogisticsEntities.get(0).getDeliveryTime();
+                    if(Objects.isNull(deliveryTime)){
+                       throw new ServiceException("发货日期不能为空");
+                    }
                     billDate = deliveryTime.toLocalDate();
                 }
             }
