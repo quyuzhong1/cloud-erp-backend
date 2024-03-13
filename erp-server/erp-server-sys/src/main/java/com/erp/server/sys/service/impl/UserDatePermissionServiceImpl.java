@@ -1,9 +1,8 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.vo.LoginUser;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.sys.service.CommonService;
 import com.erp.server.sys.service.UserDatePermissionService;
@@ -59,8 +58,10 @@ public class UserDatePermissionServiceImpl implements UserDatePermissionService 
             userRequestPermissions = requestPermissionsList
                     .stream()
                     .filter(p -> p.getPermissionsCode().equals(menuCode))
-                    .findFirst()
-                    .orElseThrow(() -> new ServiceException(ApiError.NO_PERMISSION));
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(userRequestPermissions)) {
+                return "AND 1 = 2";
+            }
         }
 
         List<String> userList = sysUserFeign.getDepUserList(user.getUid());
