@@ -9,8 +9,10 @@ import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.KingdeeDepartmentDTO;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.entity.KingdeePostEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.sys.mapper.KingdeePostMapper;
+import com.erp.server.sys.service.KingdeeDepartmentService;
 import com.erp.server.sys.service.KingdeePostService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.sys.service.CommonService;
@@ -19,6 +21,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import com.erp.server.sys.service.SysAccountingCompanyService;
+import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.checker.units.qual.K;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +52,9 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
 
     @Autowired
     private SysAccountingCompanyService sysAccountingCompanyService;
+
+    @Autowired
+    private KingdeeDepartmentService kingdeeDepartmentService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -123,8 +129,57 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
         //数据库存在的
         List<KingdeePostEntity> dbList = this.list();
         List<BaseIdDTO.CodeDTO> orgList = sysAccountingCompanyService.getByIds(Collections.emptyList());
+        List<KingdeePostEntity> saveOrUpdateList = new ArrayList<>(20);
+        //部门列表
+        List<KingdeeDepartmentEntity> deptList = kingdeeDepartmentService.list();
+        for (KingdeePostDTO.KingdeeDTO item : postList) {
+            String kingdeeId = item.getKingdeeId();
+            //金蝶部门code
+            String deptCode = item.getDeptCode();
+            String name = item.getName();
+            String code = item.getCode();
+            String useOrgCode = item.getUseOrgCode();
+            BaseIdDTO.CodeDTO orgInfo = orgList.stream().filter(org -> org.getCode().equals(useOrgCode)).
+                    findFirst().orElse(null);
+            if (Objects.isNull(orgInfo)) {
+                continue;
+            }
+            //部门id
+            String kingdeeDeptId = deptList.stream().filter(entity -> entity.getKingdeeDeptCode().equals(deptCode)).
+                    findFirst().map(KingdeeDepartmentEntity::getId).orElse("");
+            //等于空 继续
+            if (StringUtils.isBlank(kingdeeDeptId)) {
+                continue;
+            }
+            KingdeePostEntity dbEntity = dbList.stream().filter(entity -> entity.getKingdeeId().equals(kingdeeId)).
+                    findFirst().orElse(null);
+            //表示没有
+            if(Objects.isNull(dbEntity)){
+                KingdeePostEntity  addEntity = new KingdeePostEntity();
+                addEntity.setKingdeeId(kingdeeId);
+                addEntity.setCode(code);
+                addEntity.setName(name);
+                addEntity.setUseOrgId(orgInfo.getId());
+                addEntity.setUseOrgName(orgInfo.getName());
+                addEntity.setKingdeeDeptId(kingdeeDeptId);
+                saveOrUpdateList.add(dbEntity);
+            }else{
+                if(!dbEntity.getCode().equals(code) || !dbEntity.getName().equals(name) ||
+                        dbEntity.getUseOrgId().equals(orgInfo.getId()) ||
+                        dbEntity.getKingdeeDeptId().equals(kingdeeDeptId)){
 
-        return null;
+                    dbEntity.setCode(code);
+                    dbEntity.setName(name);
+                    dbEntity.setUseOrgId(orgInfo.getId());
+                    dbEntity.setUseOrgName(orgInfo.getName());
+                    dbEntity.setKingdeeDeptId(kingdeeDeptId);
+                    saveOrUpdateList.add(dbEntity);
+
+                }
+            }
+        }
+
+        return this.saveOrUpdateBatch(saveOrUpdateList);
     }
 
 
