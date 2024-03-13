@@ -101,6 +101,7 @@ public enum ApiError implements Serializable {
     GLOBAL_EXCEPTION_ID_IN_PROCESS(1049, "记录【{}】操作中"),
     ERROR_IMPORT_DATA_NOT_NULL(1050,"导入{}数据不能为空"),
     ERROR_FILE_DELETE(1051,"文件删除失败"),
+    ERROR_FILE_NOT_DELETE_ALL(1051,"文件不能全部删除"),
     ERROR_FILE_TEMPLATE_NOT_EXIST(1052,"文件模板不存在"),
     ERROR_FILE_TEMPLATE_DOWNLOAD(1053,"文件模板下载失败"),
     EXCEL_PARSING_FIELD_EXCEPTION(1054,"excel解析字段异常"),
@@ -503,6 +504,16 @@ public enum ApiError implements Serializable {
     ERROR_NOT_BOM_COMBINATION_PUSH_DOWN(95259, "SKU【{}】非组合产品，不支持下推"),
     ERROR_APPROVE_NOT_START(95259, "存在为空的审核人，流程启动失败"),
     ERROR_BOM_CONTAIN(95259,"BOM【{}】子级SKU已包含SKU【{}】"),
+    ERROR_PRODUCT_PACK_NOT_EXIST(95260,"SKU【{}】产品包装信息不能为空"),
+    ERROR_PRODUCT_SIZE_NOT_EXIST(95261,"SKU【{}】包装尺寸不能为空"),
+    ERROR_BOX_SIZE_NOT_EXIST(95262,"SKU【{}】箱规不能为空"),
+    ERROR_GROSS_WEIGHT_NOT_EXIST(95263,"SKU【{}】毛重不能为空"),
+    ERROR_BOX_WEIGHT_NOT_EXIST(95264,"SKU【{}】单箱重量不能为空"),
+    ERROR_NET_WEIGHT_NOT_EXIST(95265,"SKU【{}】净重不能为空"),
+    ERROR_BOX_QTY_NOT_EXIST(95266,"SKU【{}】单箱数量不能为空"),
+    ERROR_PRODUCT_ITERATE_REF_SKU_NOT_EXIST(95267,"迭代产品不能为空"),
+    ERROR_PRODUCT_CERTIFICATE_EXIST(95268,"SKU【{}】下已存在证书项目【{}】的证书"),
+
 
     /**
      * TMS 错误
@@ -621,7 +632,7 @@ public enum ApiError implements Serializable {
     ERROR_98032(98032,"只有待提交或审核不通过数据支持提交"),
     ERROR_98033(98033,"已审核数据才能生成采购单"),
     ERROR_98034(98034,"供应商名称不能重复"),
-    ERROR_98035(98035,"只有已确认和送货中的采购订单能结束交货"),
+    ERROR_98035(98035,"只有已确认，已拒绝和送货中的采购订单能结束交货"),
     ERROR_98036(98036,"未找到采购订单供应商信息"),
     ERROR_98037(98037,"资质有效起不能大于资质有效止"),
     ERROR_98038(98038,"待提交和审核不通过采购订单不支持导出采购合同"),
@@ -707,6 +718,12 @@ public enum ApiError implements Serializable {
     ERROR_WAREHOUSE_LOCATION_NOT_NULL(98111,"仓库【{}】下仓位不能为空"),
     PRICE_NOT_EXIST(98112,"采购价目表不存在"),
     PURCHASE_ORG_NOT_REPEAT(98113,"只有相同的采购组织可以批量变更报价"),
+    ERROR_SUBCONTRACT_ORDER_WAREHOUSE_ORG(98114,"委外订单仓库【{}】与委外组织【{}】不匹配"),
+
+
+
+
+
     ERROR_PURCHASE_PRICE_DATE(98112,"采购价目表SKU【{}】失效时间不可小于生效时间"),
     ERROR_PURCHASE_PRICE_DATE_OVERLAP(98113,"采购价目表SKU【{}】时间区间重叠"),
     ERROR_PURCHASE_PRICE_CHANGE_DATE(98114,"采购调价表SKU【{}】失效时间不可小于生效时间"),
@@ -940,10 +957,15 @@ public enum ApiError implements Serializable {
     RECEIVE_QTY_ERROR(92131,"收货数量不能大于送货数量"),
     ERROR_SUBCONTRACT_ISSUE_SUPPLIER_DIFF(92124,"委外发料单明细数据对应供应商【{}】必须一致"),
     ERROR_PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE(92131,"采购入库单已下推委外发料单【{}】"),
+    ERROR_UPLOAD_SUCCES_CAN_INSTOCK_FORCAST(92132,"仅支持【订单预报(批次)】上传成功时且入库预报为【待上传/上传失败】，可操作【入库预报】"),
+    ERROR_TRANSFER_DECLARE_NOT_EXIST(92133,"中转报关单记录不存在"),
+    ERROR_TRANSFER_DECLARE_ID_NOT_EXIST(92134,"入库预报记录id不能为空"),
+    ERROR_TRANSFER_DECLARE_QTY_NOT_EXIST(92135,"入库预报记录总件数不能为空"),
+    ERROR_TRANSFER_DECLARE_DETAIL_NOT_EXIST(92136,"入库预报订单明细不能为空"),
+    ERROR_UPLOAD_SUCCES_CAN_ORDER_FORCAST(92137,"仅支持订单预报为【待上传/上传失败】，可操作【订单预报】"),
     THIRD_WAREHOUSE_NAME_EXIST(92132,"平台【{}】第三方仓【{}】不能重复绑定多个仓库"),
 
-
-
+    ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED(92133,"已有盘盈盘亏单【{}】不允许操作【{}】之前单据"),
 
 
 
@@ -1114,6 +1136,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_EXCHANGERATE_NOT_SUBMIT(92126,"B2C销售订单【{}】汇率不存在不支持提交"),
     ERROR_SO_B2C_LOGISTICS_CANCEL_FAI(92114,"当前渠道无法取消物流单【{}】"),
     ERROR_SO_B2C_DELIVERY_NOT_EXIST_WAREHOUSE(92114,"销售订单发货仓库不存在不支持提交发货"),
+    ERROR_SO_B2C_NOT_EXIST_WAREHOUSE(92114,"B2C销售订单发货仓库不存在"),
     ERROR_SO_B2C_DISTRIBUTION_NOT_NULL(92115,"手动配货仓库和渠道不能全部为空"),
     ERROR_SKU_MAPPING_RULE_NULL(92115,"sku匹配规则详情不能为空"),
     PLATFORM_WAREHOUSE_ORDER_NOT_INTERCEPT(92116,"平台仓订单不支持拦截"),

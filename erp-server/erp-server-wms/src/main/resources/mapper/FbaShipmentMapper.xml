@@ -28,83 +28,9 @@
         fsd.is_combination AS isCombination
         FROM fba_shipment_detail fsd
         INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
-        WHERE fs.is_deleted = FALSE
-        <!--单据编号-->
-        <if test="params.code != null and params.code != ''">
-            AND fs.code ILIKE concat('%',#{params.code}::text,'%')
-        </if>
-        <!--sku编号-->
-        <if test="params.skuNoList != null and params.skuNoList.size > 0">
-            AND fsd.sku_no in
-            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-        <!--店铺id-->
-        <if test="params.shopIdList != null and params.shopIdList.size > 0">
-            AND fs.shop_id in
-            <foreach collection="params.shopIdList" item="shopId" open="(" close=")" separator=",">
-                #{shopId}
-            </foreach>
-        </if>
-        <!--国家二字码-->
-        <if test="params.countryIdList != null and params.countryIdList.size > 0">
-            AND fs.country_id in
-            <foreach collection="params.countryIdList" item="countryId" open="(" close=")" separator=",">
-                #{countryId}
-            </foreach>
-        </if>
-        <!--平台物流中心-->
-        <if test="params.fulfillmentCenter != null and params.fulfillmentCenter != ''">
-            AND fs.fulfillment_center ILIKE concat('%',#{params.fulfillmentCenter}::text,'%')
-        </if>
-        <!--发货状态-->
-        <if test="params.deliveryStatusList != null and params.deliveryStatusList.size > 0">
-            AND fs.delivery_status in
-            <foreach collection="params.deliveryStatusList" item="deliveryStatus" open="(" close=")" separator=",">
-                #{deliveryStatus}
-            </foreach>
-        </if>
-        <!--平台货件状态-->
-        <if test="params.platformShipmentStatusList != null and params.platformShipmentStatusList.size > 0">
-            AND fs.platform_shipment_status in
-            <foreach collection="params.platformShipmentStatusList" item="platformShipmentStatus" open="(" close=")"
-                     separator=",">
-                #{platformShipmentStatus}
-            </foreach>
-        </if>
-        <!--平台产品id-->
-        <if test="params.asin != null and params.asin != ''">
-            AND fsd.asin ILIKE concat('%',#{params.asin}::text,'%')
-        </if>
-        <!--fnSku-->
-        <if test="params.fnSku != null and params.fnSku != ''">
-            AND fsd.fn_sku ILIKE concat('%',#{params.fnSku}::text,'%')
-        </if>
-        <!--平台sku-->
-        <if test="params.msku != null and params.msku != ''">
-            AND fsd.msku ILIKE concat('%',#{params.msku}::text,'%')
-        </if>
-
-        <if test="params.isCombination != null">
-            and fsd.is_combination = #{params.isCombination}
-        </if>
-
-        <!--收发差异（大于0，小于0，等于0，不等于0）-->
-        <if test="params.diffRule != null and params.diffRule != ''">
-            AND fsd.diff_qty ${params.diffRule} 0
-        </if>
-        <!--创建时间（拉取数据的日期）-->
-        <if test="params.shipmentCreateTimeList !=null and params.shipmentCreateTimeList.size>0">
-            AND fs.shipment_create_time >= #{params.shipmentCreateTimeList[0]}
-            AND (#{params.shipmentCreateTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > fs.shipment_create_time
-        </if>
-        <!--签收时间（拉取签收数据的日期）-->
-        <if test="params.shipmentReceiveTimeList !=null and params.shipmentReceiveTimeList.size>0">
-            AND fs.shipment_receive_time >= #{params.shipmentReceiveTimeList[0]}
-            AND (#{params.shipmentReceiveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > fs.shipment_receive_time
-        </if>
-
+        WHERE
+        ${params.sqlMap.default}
+        and fs.is_deleted = FALSE
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -166,6 +92,36 @@
             <foreach collection="ids" item="id" open="(" close=")" separator=",">
                 #{id}
             </foreach>
+        </if>
+    </select>
+    <select id="export" resultType="com.erp.model.wms.dto.FbaShipmentDTO$ListDTO">
+        SELECT
+        fsd.id as detailId,
+        fs.code,
+        fs.shop_name AS shopName,
+        fs.country_name AS countryName,
+        fs.fulfillment_center AS fulfillmentCenter,
+        fs.delivery_status AS deliveryStatus,
+        (SELECT string_agg(fd.code,',') FROM first_mile_delivery fd WHERE fd.source_id = fs.id AND fd.is_deleted = FALSE GROUP BY fd.source_id) AS deliveryCode,
+        fs.platform_shipment_status AS platformShipmentStatus,
+        fsd.asin,
+        fsd.msku,
+        fsd.fn_sku AS fnSku,
+        fsd.sku_no AS skuNo,
+        fsd.declare_qty AS declareQty,
+        fsd.delivery_qty as deliveryQty,
+        fsd.diff_qty AS diffQty,
+        fs.shipment_create_time AS shipmentCreateTime,
+        fsd.receive_date AS shipmentReceiveTime,
+        fsd.receive_qty AS receiveQty
+        FROM fba_shipment_detail fsd
+        INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        and fs.is_deleted = FALSE
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
     </select>
 </mapper>

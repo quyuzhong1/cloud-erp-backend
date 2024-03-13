@@ -1,6 +1,7 @@
 package com.common.business.threadlocal;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.enums.QueryConditionEnum;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,15 +19,15 @@ public class AdvanceQueryContext {
      */
     private static final ThreadLocal<List<AdvanceQueryDTO>> queryList = ThreadLocal.withInitial(ArrayList::new);
 
-    private static final ThreadLocal<String> compareCode = new ThreadLocal<>();
+    private static final ThreadLocal<QueryConditionEnum> compareCode = new ThreadLocal<>();
 
     public static void addQuery(AdvanceQueryDTO dto) {queryList.get().add(dto);}
 
     public static List<AdvanceQueryDTO> getQueryList() { return queryList.get();}
 
-    public static void setCompareCode(String code) {compareCode.set(code);}
+    public static void setCompareCode(QueryConditionEnum code) {compareCode.set(code);}
 
-    public static String getCompareCode() {return compareCode.get();}
+    public static QueryConditionEnum getCompareCode() {return compareCode.get();}
 
     public static void remove() {
         queryList.remove();

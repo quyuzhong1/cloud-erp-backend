@@ -15,6 +15,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.stringtemplate.v4.ST;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -1939,4 +1940,24 @@ public class SoB2cDTO implements Serializable {
 
     }
 
+
+    /**
+     * 修改订单发货时间
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDeliveryTimeDTO {
+        /**
+         * id
+         */
+        private List<String> soB2cIds;
+        /**
+         * 状态
+         */
+        private String status;
+        /**
+         * 发货时间
+         */
+        private LocalDateTime deliveryTime;
+    }
 }

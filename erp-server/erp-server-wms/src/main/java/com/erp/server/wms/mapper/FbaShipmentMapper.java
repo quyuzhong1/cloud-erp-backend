@@ -56,4 +56,6 @@ public interface FbaShipmentMapper extends BaseMapper<FbaShipmentEntity> {
      * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.GenerateRequisitionApplicationViewDTO>
      **/
     List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(@Param("ids") List<String> ids);
+
+    List<FbaShipmentDTO.ListDTO> export(@Param("params") FbaShipmentDTO.PagingParamDTO dto);
 }

@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -15,6 +16,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -33,71 +35,15 @@ public class CustomerDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * all 全部
-         * waitApprove 待审核
-         * approve 已审核
-         * reject 审核不通过
+         * sqlMap 默认key default
          */
-        @StateEnumValue(strValues = {"all", "waitApprove", "approve", "reject"}, message = "搜索类型有误")
-        @NotBlank(message = "搜索类型不能为空")
-        private String searchType;
-
-
-        /**
-         * 单号
-         */
-        private String code;
-
-        /**
-         * 客户名称
-         */
-        private String name;
-
-
-        /**
-         * 客户 集合
-         */
-        private List<String> customerIdList;
-
-        /**
-         * 客户简称
-         */
-        private String shortName;
-
-        /**
-         * 平台集合
-         */
-        private List<String> platformTypeList;
-
-
-        /**
-         * 审核列表集合
-         */
-        private List<String> approveStatusList;
-
-
-        /**
-         * 使用组织集合
-         */
-        private List<String> useOrgIdList;
-
-        /**
-         * 销售人 id 集合
-         */
-        private List<String> sellerIdList;
-
-        /**
-         * 创建人 id 集合
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-
+        private Map<String, String> sqlMap;
     }
 
 
@@ -756,8 +702,15 @@ public class CustomerDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
-        private List<String> ids;
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     @Data

@@ -33,6 +33,16 @@ public class ExcelImportDTO implements Serializable {
          * skuIds
          */
         private List<String> skuIds;
+
+        /**
+         * 第三方sku编号
+         */
+        private List<String> thirdSkuNoList;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
     }
 
     @Data

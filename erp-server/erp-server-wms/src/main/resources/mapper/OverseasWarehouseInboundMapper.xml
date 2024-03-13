@@ -49,110 +49,9 @@
     </sql>
 
     <sql id="conditionSql">
-        owi.is_deleted = FALSE
+        ${params.sqlMap.default}
+      and  owi.is_deleted = FALSE
         AND owid.is_deleted = FALSE
-        <!--来源单号-->
-        <if test="params.code != null and params.code != ''">
-            AND owi.code ILIKE concat('%',#{params.code}::text,'%')
-        </if>
-        <!--来源单号-->
-        <if test="params.sourceCode != null and params.sourceCode != ''">
-            AND owi.source_code ILIKE concat('%',#{params.sourceCode}::text,'%')
-        </if>
-        <!--入库类型-->
-        <if test="params.instockType != null ">
-            AND owi.instock_type = #{params.instockType}
-        </if>
-        <!--交货方式-->
-        <if test="params.deliveryMode != null ">
-            AND owi.delivery_mode = #{params.deliveryMode}
-        </if>
-        <!--入库状态-->
-        <if test="params.instockStatusList != null and params.instockStatusList.size > 0">
-            AND owi.instock_status in
-            <foreach collection="params.instockStatusList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-        <!--物流方式-->
-        <if test="params.logisticsMethodList != null and params.logisticsMethodList.size > 0">
-            AND owi.logistics_method in
-            <foreach collection="params.logisticsMethodList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-
-        <!--发货仓ID-->
-        <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
-            AND owi.delivery_warehouse_id in
-            <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-        <!--中转仓ID-->
-        <if test="params.transferWarehouseIdList != null and params.transferWarehouseIdList.size > 0">
-            AND owi.transfer_warehouse_id in
-            <foreach collection="params.transferWarehouseIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-        <!--目的仓ID-->
-        <if test="params.toWarehouseIdList != null and params.toWarehouseIdList.size > 0">
-            AND owi.to_warehouse_id in
-            <foreach collection="params.toWarehouseIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-        <!--   是否组合品     -->
-        <if test="params.isCombination != null">
-            and owid.is_combination = #{params.isCombination}
-        </if>
-
-        <if test="params.skuNo != null and params.skuNo != ''">
-            AND owid.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
-        </if>
-
-        <if test="params.platformSkuNo != null and params.platformSkuNo != ''">
-            AND owid.platform_sku_no ILIKE concat('%',#{params.platformSkuNo}::text,'%')
-        </if>
-
-        <if test="params.skuNoList != null and params.skuNoList.size > 0">
-            AND owid.sku_no in
-            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-
-        <!--海外仓库存SKU列表-->
-        <if test="params.platformSkuNoList != null and params.platformSkuNoList.size > 0">
-            AND owid.platform_sku_no in
-            <foreach collection="params.platformSkuNoList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-
-        <!--创建人 -->
-        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
-            AND owi.create_user_id IN
-            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
-                #{createUserId}
-            </foreach>
-        </if>
-        <!--创建时间（拉取数据的日期）-->
-        <if test="params.createTimeList !=null and params.createTimeList.size>0">
-            AND owi.create_time >= #{params.createTimeList[0]}
-            AND (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > owi.create_time
-        </if>
-        <!--签收时间（拉取签收数据的日期）-->
-        <if test="params.receiveTimeList !=null and params.receiveTimeList.size>0">
-            AND owi.receive_time >= #{params.receiveTimeList[0]}
-            AND (#{params.receiveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > owi.receive_time
-        </if>
-        <!--收发差异（大于0，小于0，等于0，不等于0）-->
-        <if test="params.diffRule != null and params.diffRule != ''">
-            AND owid.diff_qty ${params.diffRule} 0
-        </if>
-
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -209,9 +108,8 @@
         owid.receive_type AS receiveType
         FROM overseas_warehouse_inbound owi
         INNER JOIN overseas_warehouse_inbound_detail owid ON owi.id = owid.main_id
-        <where>
+        where
             <include refid="conditionSql"/>
-        </where>
     </select>
 
     <select id="listExportExcel" resultType="com.erp.model.wms.dto.OverseasWarehouseInboundDTO$ListDTO">
@@ -257,17 +155,8 @@
         owid.receive_type
         FROM overseas_warehouse_inbound owi
         INNER JOIN overseas_warehouse_inbound_detail owid ON owi.id = owid.main_id
-        <where>
-            <if test="params.ids != null and params.ids.size > 0">
-                and owi.id in
-                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.ids == null or params.ids.size == 0">
-                <include refid="conditionSql"/>
-            </if>
-        </where>
+        where
+        <include refid="conditionSql"/>
     </select>
 
     <select id="tabList" resultType="com.erp.model.wms.dto.OverseasWarehouseInboundDTO$CountDTO">

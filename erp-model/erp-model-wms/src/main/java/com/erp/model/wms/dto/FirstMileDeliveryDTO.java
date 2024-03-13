@@ -2,6 +2,8 @@ package com.erp.model.wms.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 
@@ -14,6 +16,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 
 import java.io.Serializable;
+import java.util.Map;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -59,6 +62,17 @@ public class FirstMileDeliveryDTO implements Serializable {
      @Data
      @NoArgsConstructor
      public static class PagingParamDTO extends SortDTO {
+
+         /**
+          * 页面高级查询
+          */
+         private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+         /**
+          * sqlMap 默认key default
+          */
+         private Map<String, String> sqlMap;
+
          /**
          * tab：/wms/common/enumDropDown?type=ApproveStatusEnum
          * 描述：waitSubmit:待提交, approveIng:审核中, reject:审核不通过, approve:已审核
@@ -152,9 +166,18 @@ public class FirstMileDeliveryDTO implements Serializable {
          */
         private String id;
         /**
+         * 明细主键Id
+         */
+        private String detailId;
+        /**
          * 编号
          */
         private String code;
+
+        /**
+         * 服务商编码
+         */
+        private String provideCode;
 
         /**
          * 来源单号
@@ -265,6 +288,11 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 卖家sku
          */
         private String platformSkuNo;
+
+        /**
+         * 第三方仓SKU
+         */
+        private String thirdWarehouseSku;
 
         /**
          * FNSKU
@@ -396,6 +424,7 @@ public class FirstMileDeliveryDTO implements Serializable {
         * 作废状态（false未作废，true已作废）
         */
         private Boolean invalidStatus;
+
 
         /**
         * 作废状态名称

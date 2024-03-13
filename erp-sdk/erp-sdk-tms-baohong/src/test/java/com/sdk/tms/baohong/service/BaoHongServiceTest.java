@@ -3,6 +3,7 @@ package com.sdk.tms.baohong.service;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.business.threadlocal.TransferLogisticsContext;
+import com.sdk.tms.baohong.api.asn.ASNData;
 import com.sdk.tms.baohong.api.asn.ReceivingInfo;
 import com.sdk.tms.baohong.api.asn.ReceivingItemsType;
 import com.sdk.tms.baohong.api.order.CreateOrderInfo;
@@ -76,9 +77,9 @@ public class BaoHongServiceTest {
                                 .opQuantity(1)
                                 .build()
                 ))
-                .trackingNumber("123456781011")
+                .trackingNumber("1234567811011")
                 .oabName("wj")
-                .referenceNo("wj202401211")
+                .referenceNo("wj2024012311")
                 .deliveryAddress("深圳龙岗坂田")
                 .oabStreetAddress1("深圳龙岗坂田")
                 .build();
@@ -90,7 +91,7 @@ public class BaoHongServiceTest {
 
     @Test
     public void getOrderByCodeTest(){
-        BaoHongResponse<OrderDataArr> response = baoHongService.getOrderByCode("SOE02070222796");
+        BaoHongResponse<OrderDataArr> response = baoHongService.getOrderByCode("SOE02070222879");
         System.out.println(response);
         System.out.println(response.getData());
     }
@@ -98,13 +99,14 @@ public class BaoHongServiceTest {
     @Test
     public void createReceiving(){
         ReceivingInfo receivingInfo = ReceivingInfo.builder()
-                .refCode("SOE02070222802")
+                .refCode("SOE02070238021")
                 .wrapType("1")
                 .packNo("10")
                 .roughWeight("10.12")
                 .iePort("5349")
+                .isDelivery("1")
                 .receivingItems(Arrays.asList(ReceivingItemsType.builder()
-                                .orderCode("SOE02070222802")
+                                .orderCode("SOE02070222879")
                                 .groossWeight("100")
                         .build()))
                 .build();
@@ -115,6 +117,26 @@ public class BaoHongServiceTest {
         System.out.println(response.getData());
     }
 
+    @Test
+    public void getReceiving(){
+        ReceivingInfo receivingInfo = ReceivingInfo.builder()
+                .refCode("SOE02070238021")
+                .wrapType("1")
+                .packNo("10")
+                .roughWeight("10.12")
+                .iePort("5349")
+                .isDelivery("1")
+                .receivingItems(Arrays.asList(ReceivingItemsType.builder()
+                        .orderCode("SOE02070222879")
+                        .groossWeight("100")
+                        .build()))
+                .build();
+        String json = JSONObject.toJSONString(receivingInfo);
+
+        BaoHongResponse<ASNData> response = baoHongService.getReceiving("SOE02070238021");
+        System.out.println(response);
+        System.out.println(response.getData());
+    }
 
     @Test
     public void printLabel(){

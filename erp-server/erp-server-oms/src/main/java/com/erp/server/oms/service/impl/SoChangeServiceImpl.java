@@ -1,14 +1,12 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
-import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -22,10 +20,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.StrUtils;
-import com.common.core.utils.ValidatorUtil;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
@@ -33,9 +28,9 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.CustomerAddressTypeEnum;
-import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -45,6 +40,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoChangeService;
 import com.erp.server.oms.mapper.SoChangeMapper;
+import com.erp.server.oms.query.SoChangeQueryHandler;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -110,6 +106,8 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     @Autowired
     private CustomerAddressService customerAddressService;
 
+    @Autowired
+    private SoChangeQueryHandler soChangeQueryHandler;
 
     /**
      * 添加销售订单
@@ -165,82 +163,6 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             return id;
         }
         return "";
-    }
-
-    /**
-     * 检查能否变更根据折扣金额
-     *
-     * @param
-     * @param detailList
-     * @return void
-     * @author yl
-     * @date 2023-08-23 15:50
-     */
-    private void checkByDiscountAmount(List<SoChangeDetailDTO.AddDTO> detailList) {
-        StringBuffer sb = new StringBuffer("");
-        SoChangeTypeEnum deleteType = SoChangeTypeEnum.DELETE;
-        SoChangeTypeEnum updateType = SoChangeTypeEnum.UPDATE;
-        List<String> soDetailIdList = detailList.stream().map(SoChangeDetailDTO.AddDTO::getSoDetailId).collect(Collectors.toList());
-        //销售订单详情
-        List<SoDetailEntity> soDetailEntityList = CollectionUtils.isNotEmpty(soDetailIdList) ? soDetailService.listByIds(soDetailIdList) : Collections.emptyList();
-
-        List<SoChangeDetailDTO.AddDTO> deleteList = detailList.stream().filter(d -> deleteType.equals(d.getChangeType()) && StringUtils.isNotBlank(d.getSoDetailId())).collect(Collectors.toList());
-        //修改的
-        List<SoChangeDetailDTO.AddDTO> updateList = detailList.stream().filter(d -> updateType.equals(d.getChangeType()) && StringUtils.isNotBlank(d.getSoDetailId())).collect(Collectors.toList());
-
-
-        //这个是删除的销售订单详情id 集合
-        List<String> deleteSoDetailIds = deleteList.stream().filter(d -> StringUtils.isNotBlank(d.getSoDetailId())).map(SoChangeDetailDTO.AddDTO::getSoDetailId).collect(Collectors.toList());
-
-
-        //这个是删除的销售订单 且 有折扣额的
-        List<SoDetailEntity> deleteSoDetailList = soDetailEntityList.stream().filter(s -> deleteSoDetailIds.contains(s.getId()) && s.getDiscountAmount().compareTo(BigDecimal.ZERO) == 1).collect(Collectors.toList());
-        for (SoDetailEntity deleteSoDetail : deleteSoDetailList) {
-            sb.append("SKU:").append(deleteSoDetail.getSkuNo()).append("有折扣金额,因此无法删除");
-        }
-        List<String> skuIdList = updateList.stream().map(SoChangeDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-        //这个是修改的
-        for (SoChangeDetailDTO.AddDTO updateItem : updateList) {
-            String soDetailId = updateItem.getSoDetailId();
-            //折扣额
-            BigDecimal discountAmount = soDetailEntityList.stream().filter(s -> s.getId().equals(soDetailId)).
-                    map(SoDetailEntity::getDiscountAmount).findFirst().orElse(BigDecimal.ZERO);
-
-            BigDecimal price = updateItem.getPrice();
-            Integer qty = updateItem.getQty();
-
-            //是否赠品
-            Boolean isGift = updateItem.getIsGift();
-            //当是赠品的时候  单价为0
-            if (Objects.nonNull(isGift) && isGift) {
-                price = BigDecimal.ZERO;
-            }
-            //税率
-            BigDecimal taxRate = updateItem.getTaxRate();
-            if (Objects.isNull(taxRate)) {
-                taxRate = BigDecimal.ZERO;
-            }
-
-            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
-            //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
-            //价税合计（折前）
-            BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty);
-            if (discountAmount.compareTo(taxAmount) == 1) {
-                String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(updateItem.getSkuId())).
-                        map(SkuVO::getSkuNo).findFirst().orElse("");
-                sb.append("SKU:").append(skuNo).append("的折扣金额").append(discountAmount);
-                sb.append(" 大于").append("价税合计").append(taxAmount);
-            }
-        }
-
-        String checkResult = sb.toString();
-        if (StringUtils.isNotBlank(checkResult)) {
-            throw new ServiceException(checkResult);
-        }
     }
 
 
@@ -367,22 +289,6 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         }
     }
 
-
-    /**
-     * 根据 so id 获取对应数据
-     *
-     * @return
-     */
-    public List<SoChangeEntity> listBySoId(String soId, String id) {
-        LambdaQueryWrapper<SoChangeEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SoChangeEntity::getSoId, soId);
-        if (StringUtils.isNotBlank(id)) {
-            queryWrapper.ne(SoChangeEntity::getId, id);
-        }
-        return this.list(queryWrapper);
-    }
-
-
     /**
      * 提交审核
      *
@@ -471,39 +377,26 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      */
     @Override
     public List<SoChangeDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        List<SoChangeDTO.TabListDTO> resultList = new ArrayList<>(4);
-        List<SoChangeDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount(dto.getPermissionSql());
-        int allCount = approveCountList.stream().mapToInt(SoChangeDTO.ApproveCountDTO::getCount).sum();
-        SoChangeDTO.TabListDTO all = new SoChangeDTO.TabListDTO();
-        all.setCount(allCount);
-        all.setSearchType(SearchType.ALL);
-        resultList.add(all);
-        //待审核
-        String ing = ApproveStatusEnum.APPROVE_ING.getStatus();
-        SoChangeDTO.TabListDTO waitApprove = new SoChangeDTO.TabListDTO();
-        int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(ing)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        waitApprove.setCount(waitApproveCount);
-        waitApprove.setSearchType(SearchType.WAIT_APPROVE);
-        resultList.add(waitApprove);
-
-        //已审核
-        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-        SoChangeDTO.TabListDTO approve = new SoChangeDTO.TabListDTO();
-        int approveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(approveStatus)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        approve.setCount(approveCount);
-        approve.setSearchType(approveStatus);
-        resultList.add(approve);
-        //审核不通过
-        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-        SoChangeDTO.TabListDTO reject = new SoChangeDTO.TabListDTO();
-        int rejectCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(rejectStatus)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        reject.setCount(rejectCount);
-        reject.setSearchType(rejectStatus);
-        resultList.add(reject);
-        return resultList;
+        PageListTypeEnum[] values = PageListTypeEnum.values();
+        List<SoChangeDTO.TabListDTO> list = new ArrayList<>();
+        for (PageListTypeEnum item : values) {
+            if (PageListTypeEnum.WAIT_SUBMIT.equals(item)) {
+                continue;
+            }
+            SoChangeDTO.PagingParamDTO pagingParamDTO = new SoChangeDTO.PagingParamDTO();
+            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+            SoChangeDTO.TabListDTO resultDTO = new SoChangeDTO.TabListDTO();
+            String tabSql = soChangeQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            pagingParamDTO.setSqlMap(map);
+            Integer count = this.baseMapper.listCount(pagingParamDTO);
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.equals(PageListTypeEnum.TO_BE_APPROVE) ? "待我审核" : item.getName());
+            list.add(resultDTO);
+        }
+        return list;
     }
 
 
@@ -519,14 +412,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     public PagingVO<SoChangeDTO.PagingViewDTO> paging(PagingDTO<SoChangeDTO.PagingParamDTO> dto) {
         SoChangeDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        String searchType = params.getSearchType();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        //根据搜索类型获取到审核状态
-        List<String> approveList = listBySearchType(searchType, params);
-        if (approveList == null) {
-            return new PagingVO(new Page());
-        }
-        IPage pageData = baseMapper.paging(query, params, approveList);
+
+        IPage pageData = baseMapper.paging(query, params);
         List<SoChangeDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
@@ -603,16 +491,11 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      */
     @Override
     public Boolean exportExcel(SoChangeDTO.PagingParamDTO dto, HttpServletResponse response) {
-        String searchType = dto.getSearchType();
-        List<String> approveList = listBySearchType(searchType, dto);
-        if (approveList == null) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        List<SoChangeDTO.PagingViewDTO> list = baseMapper.listExport(dto, approveList);
+
+        List<SoChangeDTO.PagingViewDTO> list = baseMapper.listExport(dto);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
-
         List<String> skuIdList = list.stream().map(SoChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         //客户id
@@ -967,6 +850,15 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             throw new ServiceException(ApiError.ERROR_94006);
         }
         if (dto.getType().equals(ApproveType.PASS)) {
+            //销售变更单校验
+            List<String> idList = list.stream().map(SoChangeEntity::getId).collect(Collectors.toList());
+            List<SoChangeDetailEntity> soChangeDetailList = soChangeDetailService.listByMainIdList(idList);
+            if (CollectionUtils.isEmpty(soChangeDetailList)) {
+                throw new ServiceException(ApiError.ERROR_92036);
+            }
+            List<SoChangeDetailDTO.UpdateDTO> updateList = BeanMapperUtils.copyList(SoChangeDetailDTO.UpdateDTO.class, soChangeDetailList);
+            soChangeDetailService.checkChange(updateList);
+
             //更新销售表数据
             soChangeDetailService.handleDb(list);
             //审核通过发送金蝶
@@ -1182,31 +1074,6 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             return this.updateBatchById(list);
         }
         return Boolean.TRUE;
-    }
-
-    private List<String> listBySearchType(String searchType, SoChangeDTO.PagingParamDTO params) {
-        List<String> approveList = new ArrayList<>(3);
-        //待审核
-        if (SearchType.WAIT_APPROVE.equals(searchType)) {
-            approveList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-            if (CollectionUtils.isEmpty(params.getIds())) {
-                //需要审核的业务ids
-                List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SO_CHANGE.getCode());
-                if (CollectionUtils.isEmpty(businessIds)) {
-                    return null;
-                }
-                params.setIds(businessIds);
-            }
-        }
-        //已审核
-        if (ApproveStatusEnum.APPROVE.getStatus().equals(searchType)) {
-            approveList.add(ApproveStatusEnum.APPROVE.getStatus());
-        }
-        //审核不通过
-        if (ApproveStatusEnum.REJECT.getStatus().equals(searchType)) {
-            approveList.add(ApproveStatusEnum.REJECT.getStatus());
-        }
-        return approveList;
     }
 
     private Boolean updateApproveStatus(List<SoChangeEntity> list, ApproveStatusEnum statusEnum) {

@@ -116,7 +116,7 @@ public class SoB2cController extends BaseController {
             SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
             if (warehouseRuleMatch) {
-                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, warehouseRuleResult.getMap());
+                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>());
                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
                 Boolean isRuleMatch = logisticsRuleResult.getIsRuleMatch();
                 //表示成功
@@ -212,7 +212,7 @@ public class SoB2cController extends BaseController {
                         SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(id, null, new HashMap<>());
                         Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
                         if (warehouseRuleMatch) {
-                            SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, warehouseRuleResult.getMap());
+                            SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>());
                             //表示成功
                             if(logisticsRuleResult.getIsRuleMatch()){
                                 //检查是否备案并修改状态
@@ -876,8 +876,9 @@ public class SoB2cController extends BaseController {
 
     @GetMapping("/getJson")
     public ApiResult<Map<String, Object>> getJson(@RequestParam("id") String id) {
-        Map<String, Object> map = soB2cService.getJson(id);
-        return success(map);
+        SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>());
+        System.out.println(JSONUtil.toJsonStr(logisticsRuleResult));
+        return success();
 
     }
     @GetMapping("/getSplitSku")
@@ -937,4 +938,18 @@ public class SoB2cController extends BaseController {
        return result ? success() : failure();
 
     }
+
+    /**
+     * 验证是否缺货
+     * @author Will
+     * @date: 2024/3/12 18:39
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/checkSkuInventory")
+    public ApiResult<String> checkSkuInventory(@RequestBody @Validated SoB2cDTO.AddDTO dto) {
+        String msg = soB2cService.checkSkuInventory(dto, dto.getDetailList());
+        return success( "", msg);
+    }
+
 }

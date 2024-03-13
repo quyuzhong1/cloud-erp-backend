@@ -1,15 +1,15 @@
 package com.erp.model.oms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 public class SoReturnDTO {
     /**
@@ -19,53 +19,14 @@ public class SoReturnDTO {
     @NoArgsConstructor
     public static class PagingParam extends SortDTO {
         /**
-         * 主键id
+         * 页面高级查询
          */
-        private List<String> ids;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
         /**
-         * sku编号
+         * sqlMap 默认key default
          */
-        private List<String> skuNoList;
-        /**
-         * 销售单号
-         */
-        private String sourceCode;
-        /**
-         * 单据编号
-         */
-        private String code;
-        /**
-         * 单据类型
-         */
-        private String type;
-        /**
-         * 审核状态
-         */
-        private List<String> approveStatusList;
-        /**
-         * 作废状态
-         */
-        private Boolean invalidStatus;
-        /**
-         * 客户id
-         */
-        private List<String> customerIdList;
-        /**
-         * 销售员id
-         */
-        private List<String> sellerIdList;
-        /**
-         * 退货日期
-         */
-        private List<LocalDate> billDateList;
-        /**
-         * 创建人id
-         */
-        private List<String> createUserIdList;
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
+        private Map<String,String> sqlMap;
     }
 
     /**
@@ -78,6 +39,10 @@ public class SoReturnDTO {
          * 主键id
          */
         private String id;
+        /**
+         * 明细id
+         */
+        private String detailId;
         /**
          * 销售单id
          */
@@ -171,6 +136,10 @@ public class SoReturnDTO {
          */
         private Integer unDeliveryQty;
         /**
+         * 退货入库
+         */
+        private Integer returnInStockQty;
+        /**
          * 单位
          */
         private String unit;
@@ -214,7 +183,13 @@ public class SoReturnDTO {
         /**
          * 类型(toBeApprove 待审核，reject 审核不通过，approve 已审核)
          */
-        private String type;
+        private String tabFlag;
+
+        /**
+         * tab名称
+         */
+        private String tabFlagName;
+
         /**
          * 数量
          */

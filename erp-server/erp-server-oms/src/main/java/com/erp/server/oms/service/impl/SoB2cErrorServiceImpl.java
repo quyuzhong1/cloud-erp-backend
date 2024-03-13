@@ -5,18 +5,18 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.mapper.SoB2cErrorMapper;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * <p>
@@ -37,9 +37,19 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     @GlobalTransactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(SoB2cErrorDTO.AddDTO addDTO) {
-        SoB2cErrorEntity soB2cErrorEntity = new SoB2cErrorEntity();
-        BeanMapperUtils.copy(addDTO, soB2cErrorEntity);
-        boolean save = super.save(soB2cErrorEntity);
+        //记录是否已存在
+        SoB2cErrorEntity soB2cErrorEntity = this.getByMainIdAndType(addDTO.getMainId(),addDTO.getType());
+        if (Objects.nonNull(soB2cErrorEntity)){
+            soB2cErrorEntity.setParamJson(addDTO.getParamJson());
+            soB2cErrorEntity.setMessage(addDTO.getMessage());
+        }else {
+            soB2cErrorEntity = new SoB2cErrorEntity();
+            soB2cErrorEntity.setParamJson(addDTO.getParamJson());
+            soB2cErrorEntity.setMessage(addDTO.getMessage());
+            soB2cErrorEntity.setMainId(addDTO.getMainId());
+            soB2cErrorEntity.setType(addDTO.getType());
+        }
+        boolean save = super.saveOrUpdate(soB2cErrorEntity);
         if(!save) {
             throw new ServiceException("B2C销售订单异常单保存失败");
         }
@@ -123,6 +133,40 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     @Override
     public void deleteByCodeAndType(String soCode, String type) {
          baseMapper.deleteByCodeAndType(soCode,type);
+    }
+
+    @Override
+    public void deleteErrorByMainIds(SoB2cErrorDTO.BatchDeleteDTO batchDeleteDTO) {
+        if (Objects.isNull(batchDeleteDTO) || CollectionUtils.isEmpty(batchDeleteDTO.getMainIds())){
+            return;
+        }
+        Boolean result = baseMapper.batchDeleteB2cError(batchDeleteDTO);
+        if(result){
+            soB2cService.batchRemoveSignError(batchDeleteDTO.getMainIds(),batchDeleteDTO.getType());
+        }
+    }
+
+    @Override
+    public void batchAddSoB2cError(SoB2cErrorDTO.BatchAdd batchAdd) {
+        if (Objects.isNull(batchAdd) || CollectionUtils.isEmpty(batchAdd.getMainIds()) || StringUtil.isEmpty(batchAdd.getType())){
+            return;
+        }
+        batchAdd.getMainIds().forEach(mainId ->{
+            SoB2cErrorEntity soB2cErrorEntity = this.getByMainIdAndType(mainId,batchAdd.getType());
+            if (Objects.nonNull(soB2cErrorEntity)){
+                soB2cErrorEntity.setParamJson(batchAdd.getParamJson());
+                soB2cErrorEntity.setMessage(batchAdd.getMessage());
+                this.updateById(soB2cErrorEntity);
+            }else {
+                soB2cErrorEntity = new SoB2cErrorEntity();
+                soB2cErrorEntity.setParamJson(batchAdd.getParamJson());
+                soB2cErrorEntity.setMessage(batchAdd.getMessage());
+                soB2cErrorEntity.setMainId(mainId);
+                soB2cErrorEntity.setType(batchAdd.getType());
+                this.save(soB2cErrorEntity);
+            }
+            soB2cService.addSignError(mainId,batchAdd.getType());
+        });
     }
 
 

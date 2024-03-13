@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
@@ -12,6 +13,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Will
@@ -31,6 +33,12 @@ public class SalesDemandDTO implements Serializable {
          * 主键id
          */
         private String id;
+
+        /**
+         * 明细主键id
+         */
+        private String detailId;
+
 
         /**
          * 备货编号
@@ -143,64 +151,19 @@ public class SalesDemandDTO implements Serializable {
     public static class SearchParamDTO extends SortDTO {
 
         /**
-         * 主键ids
+         * 页面高级查询
          */
-        private List<String> ids;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
         /**
          * 审核状态（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
          */
         private List<String> approveStatusList;
-
-        /**
-         * 单据编号
-         */
-        private String code;
-
-        /**
-         * 是否加急（false否，true是）
-         */
-        private Boolean isUrgent;
-
-        /**
-         * sku编码
-         */
-        private List<String> skuNoList;
-
-        /**
-         * 目的仓库id
-         */
-        private List<String> destWarehouseIdList;
-
-        /**
-         * 产品名称
-         */
-        private String productName;
-
-        /**
-         * 作废状态（false未作废，true已作废）
-         */
-        private Boolean invalidStatus;
-
-        /**
-         * 创建人
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-
-        /**
-         * 计划交期开始
-         */
-        private List<LocalDate> planDeliveryDateList;
-
-        /**
-         * 审核时间开始
-         */
-        private List<LocalDate> approvePassTimeList;
 
     }
 

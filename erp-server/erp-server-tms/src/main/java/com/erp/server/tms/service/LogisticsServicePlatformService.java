@@ -44,4 +44,11 @@ public interface LogisticsServicePlatformService extends SuperService<LogisticsS
      * @author Lambda
      */
     List<LogisticsServicePlatformEntity> listByPlatform(String logisticsPlatform);
+
+    /**
+     * 根据平台获取服务名
+     * @param logisticsPlatform
+     * @return
+     */
+    List<LogisticsServicePlatformDTO.ServiceNameDTO> listServiceNameByLogisticsPlatform(String logisticsPlatform);
 }

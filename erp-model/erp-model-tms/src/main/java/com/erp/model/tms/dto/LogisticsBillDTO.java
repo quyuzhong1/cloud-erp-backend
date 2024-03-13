@@ -5,12 +5,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -815,6 +817,26 @@ public class LogisticsBillDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class BatchUpdateTrackNoDTO{
+
+        /**
+         * 销售出单单
+         */
+        private SoOutstockEntity soOutstockEntity;
+
+        /**
+         * 销售出单单id 集合
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 跟踪单号
+         */
+        private List<String> trackNoList;
+
+    }
 
     @Data
     @NoArgsConstructor

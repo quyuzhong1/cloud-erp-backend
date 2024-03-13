@@ -216,6 +216,14 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         return baseMapper.listDeptUserByUserIdList(userIdList);
     }
 
+    @Override
+    public List<SysDepartmentUserNumberDTO> listDeptUserByDeptIdList(List<String> deptIdList) {
+        if (CollectionUtils.isEmpty(deptIdList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listDeptUserByDeptIdList(deptIdList);
+    }
+
 
     public void removeDepartmentUser(String departmentId, Set<String> userIds) {
         if (CollectionUtils.isNotEmpty(userIds)) {

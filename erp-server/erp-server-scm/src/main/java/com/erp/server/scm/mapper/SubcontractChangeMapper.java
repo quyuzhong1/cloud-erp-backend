@@ -41,6 +41,6 @@ public interface SubcontractChangeMapper extends BaseMapper<SubcontractChangeEnt
     * @param params
     * @return
     */
-    List<SubcontractChangeDTO.ListDTO> listExport(@Param("params") SubcontractChangeDTO.ExportDTO params);
+    List<SubcontractChangeDTO.ListDTO> listExport(@Param("params") SubcontractChangeDTO.PagingParamDTO params);
 
 }

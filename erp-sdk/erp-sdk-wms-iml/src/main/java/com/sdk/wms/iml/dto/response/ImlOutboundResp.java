@@ -27,4 +27,8 @@ public class ImlOutboundResp extends CleanBaseDTO implements Serializable {
     //订单状态
     @JSONField(name = "order_status")
     private String orderStatus;
+
+    //出库时间
+    @JSONField(name = "date_shipping")
+    private LocalDateTime outBoundTime;
 }

@@ -32,7 +32,7 @@ public class PurchaseApplicationExportExcelDTO implements Serializable {
      * 新品首批
      */
     @ExcelProperty(value = "新品首批", index = 2)
-    private String  isFirstMassProduct;
+    private String  isFirstMassProductStr;
 
     /**
      * 采购单关联状态
@@ -77,50 +77,63 @@ public class PurchaseApplicationExportExcelDTO implements Serializable {
     private String realPurchaseQty;
 
     /**
+     * 剩余数量
+     */
+    @ExcelProperty(value = "剩余数量", index = 10)
+    private Integer waitQty;
+
+    /**
      * 签收数量
      */
-    @ExcelProperty(value = "签收数量", index = 10)
+    @ExcelProperty(value = "签收数量", index = 11)
     private String receiveQty;
 
     /**
      * 入库数量
      */
-    @ExcelProperty(value = "入库数量", index = 11)
+    @ExcelProperty(value = "入库数量", index = 12)
     private String stockInQty;
 
     /**
      * 目的仓库名称
      */
-    @ExcelProperty(value = "目的仓库名称", index = 12)
+    @ExcelProperty(value = "目的仓库名称", index = 13)
     private String destWarehouseName;
 
     /**
      * 备注
      */
-    @ExcelProperty(value = "备注", index = 13)
+    @ExcelProperty(value = "备注", index = 14)
     private String remark;
 
     /**
      * 审核人
      */
-    @ExcelProperty(value = "审核人", index = 14)
+    @ExcelProperty(value = "审核人", index = 15)
     private String approveUserName;
 
     /**
      * 审核完成时间
      */
-    @ExcelProperty(value = "审核完成时间", index = 15  ,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "审核完成时间", index = 16  ,converter= LocalDateStringConverter.class)
     private LocalDateTime approveTime;
 
     /**
      * 创建人
      */
-    @ExcelProperty(value = "创建人", index = 16)
+    @ExcelProperty(value = "创建人", index = 17)
     private String createUserName;
 
     /**
      * 创建时间
      */
-    @ExcelProperty(value = "创建时间", index = 17 ,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 18 ,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
+
+    /**
+     * 关闭原因
+     */
+    @ExcelProperty(value = "关闭原因", index = 19)
+    private String closeReason;
+
 }

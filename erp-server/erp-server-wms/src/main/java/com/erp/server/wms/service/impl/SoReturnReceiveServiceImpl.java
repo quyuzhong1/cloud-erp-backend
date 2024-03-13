@@ -731,10 +731,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
             pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
             pagingView.setReturnTypeDictName(ReturnTypeEnum.getName(pagingView.getReturnTypeDict()));
-            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(pagingView.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95107);
-            }
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(pagingView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(pagingView.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             pagingView.setProductName(productDetailEntity.getName());

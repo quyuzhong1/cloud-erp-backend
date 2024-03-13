@@ -35,5 +35,33 @@
             FROM listing_info WHERE is_deleted=FALSE
             AND type=#{type}
     </select>
+    <select id="paging" resultType="com.erp.model.oms.dto.ListingInfoDTO$PageDTO">
+        select
+            sm.id,
+            li.platform_sku_no as platformSku,
+            li.platform_sku_name as platformSkuName,
+            sm.product_sku_id as skuId,
+            sm.product_sku_no as skuNo,
+            sm.product_name as productName,
+            li.platform_spu_no as asin,
+            li.platform_fn_sku as fnSku,
+            li.platform_sku_no as mSKU
+        from listing_info li
+        inner join sku_mapping sm on sm.listing_id = li.id and sm.is_deleted = false
+        where
+            ${params.sqlMap.default}
+        and li.is_deleted = false
+        and sm.is_expire = false
+        <if test="params.shopId != null and params.shopId != ''">
+            and sm.shop_id = #{params.shopId}
+        </if>
+        <if test="params.providerCode != null and params.providerCode != ''">
+            and li.platform = #{params.providerCode}
+            and ( sm.has_mapping_all = true or sm.warehouse_id = #{params.warehouseId})
+        </if>
+        <if test="(params.providerCode == null or params.providerCode == '') and (params.warehouseId != null and params.warehouseId != '')">
+            and sm.warehouse_id = #{params.warehouseId}
+        </if>
+    </select>
 
 </mapper>

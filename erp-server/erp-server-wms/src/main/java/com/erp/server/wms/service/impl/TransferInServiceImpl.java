@@ -99,7 +99,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         int allCount = approveCountList.stream().mapToInt(TransferInDTO.ApproveCountDTO::getCount).sum();
         TransferInDTO.TabListDTO all = new TransferInDTO.TabListDTO();
         all.setCount(allCount);
-        all.setSearchType(SearchType.ALL);
+        all.setTabFlag(SearchType.ALL);
         resultList.add(all);
         //待审核
         String ing = ApproveStatusEnum.APPROVE_ING.getStatus();
@@ -107,7 +107,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(ing)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         waitApprove.setCount(waitApproveCount);
-        waitApprove.setSearchType(SearchType.WAIT_APPROVE);
+        waitApprove.setTabFlag(ing);
+        waitApprove.setTabFlagName(ApproveStatusEnum.APPROVE_ING.getName());
         resultList.add(waitApprove);
 
         //已审核
@@ -116,7 +117,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         int approveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(approveStatus)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         approve.setCount(approveCount);
-        approve.setSearchType(approveStatus);
+        approve.setTabFlag(approveStatus);
+        approve.setTabFlagName(ApproveStatusEnum.APPROVE.getName());
         resultList.add(approve);
         //审核不通过
         String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -124,7 +126,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         int rejectCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(rejectStatus)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         reject.setCount(rejectCount);
-        reject.setSearchType(rejectStatus);
+        reject.setTabFlag(rejectStatus);
+        reject.setTabFlagName(ApproveStatusEnum.REJECT.getName());
         resultList.add(reject);
         return resultList;
     }
@@ -217,11 +220,9 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     public PagingVO<TransferInDTO.PagingViewDTO> paging(PagingDTO<TransferInDTO.PagingParamDTO> dto) {
         TransferInDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        String searchType = params.getSearchType();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         //根据搜索类型获取到审核状态
-        List<String> approveList = listBySearchType(searchType);
-        IPage pageData = baseMapper.paging(query, params, approveList);
+        IPage pageData = baseMapper.paging(query, params);
         List<TransferInDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
@@ -524,11 +525,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      */
     @Override
     public Boolean exportExcel(TransferInDTO.ExportDTO dto, HttpServletResponse response) {
-        String searchType = dto.getSearchType();
-        //根据搜索类型获取到审核状态
-        List<String> approveList = listBySearchType(searchType);
         //获取导出数据
-        List<TransferInDTO.PagingViewDTO> list = baseMapper.listExport(dto, approveList);
+        List<TransferInDTO.PagingViewDTO> list = baseMapper.listExport(dto);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
@@ -707,25 +705,6 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         return Boolean.TRUE;
     }
 
-
-    private List<String> listBySearchType(String searchType) {
-        List<String> approveList = new ArrayList<>(3);
-        //待审核
-        if (SearchType.WAIT_APPROVE.equals(searchType)) {
-            approveList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-        }
-
-        //已审核
-        if (ApproveStatusEnum.APPROVE.getStatus().equals(searchType)) {
-            approveList.add(ApproveStatusEnum.APPROVE.getStatus());
-        }
-
-        //审核不通过
-        if (ApproveStatusEnum.REJECT.getStatus().equals(searchType)) {
-            approveList.add(ApproveStatusEnum.REJECT.getStatus());
-        }
-        return approveList;
-    }
 
     /**
      * 批量添加数据

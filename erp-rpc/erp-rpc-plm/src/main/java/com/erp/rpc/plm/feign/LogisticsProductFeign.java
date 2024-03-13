@@ -2,6 +2,7 @@ package com.erp.rpc.plm.feign;
 
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.ProductRefLabelVO;
@@ -34,4 +35,10 @@ public interface LogisticsProductFeign {
 
     @PostMapping("feign/logistics/product/listLogisticsProduct")
     List<LogisticsProductDTO.ProductDTO> listBySkuIdList(@RequestBody List<String> skuIdList);
+    /**
+     * 重算物流产品 目的国申报价
+     * @return
+     */
+    @PostMapping("feign/logistics/product/recalDestDeclarePrice")
+    void recalDestDeclarePrice(@RequestBody List<DmpSkuCostEntity> dmpSkuCostEntityList);
 }

@@ -278,7 +278,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .eq(SoB2cDeliveryEntity::getId, id).update();
 
         //修改订单状态待发货
-        soB2cFeign.updateSoB2cStatus(Arrays.asList(entity.getSourceId()), SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+        SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
+        updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
+        updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+        updateDeliveryTimeDTO.setDeliveryTime(LocalDateTime.now());
+        soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】手动发货单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "手动发货");

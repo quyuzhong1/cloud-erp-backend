@@ -328,4 +328,6 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return List<SupplierDefaultDTO>
      */
     List<SupplierDTO.SupplierDefaultDTO> listDefaultBySupplierIdList(List<String> supplierIdList);
+
+    void updateCategory(SupplierDTO.BatchUpdateCategoryDTO dto);
 }

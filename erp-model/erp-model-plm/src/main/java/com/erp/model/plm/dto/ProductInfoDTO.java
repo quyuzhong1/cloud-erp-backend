@@ -86,6 +86,16 @@ public class ProductInfoDTO {
     private String categoryId;
 
     /**
+     * 产品类型，ProductTypeEnum枚举，/plm/dict/list?type=productType
+     */
+    private String type;
+
+    /**
+     * 迭代产品关联skuid
+     */
+    private String iterateRefSkuId;
+
+    /**
      * spuNo
      */
     @Size(max = 50, message = "SPU最大50字符")

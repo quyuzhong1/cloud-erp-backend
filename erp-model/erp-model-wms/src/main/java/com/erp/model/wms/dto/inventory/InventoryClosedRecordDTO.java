@@ -1,14 +1,15 @@
 package com.erp.model.wms.dto.inventory;
 
-import java.time.LocalDate;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -120,5 +121,25 @@ public class InventoryClosedRecordDTO implements Serializable {
 
     }
 
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ClosedParamDTO {
+
+        /**
+         * 组织id
+         */
+        @NotBlank(message = "组织id不能为空")
+        private String orgId;
+
+        /**
+         * 单据日期
+         */
+        @NotNull(message = "单据日期不能为空")
+        private LocalDate billDate;
+    }
 
 }

@@ -76,7 +76,8 @@ public class KingdeeReturnOrderEntity extends CleanBaseDTO {
     private String fULZDataSources;
     @Alias("FISGENFORIOS")
     private Boolean fIsGenForIos;
-
+    @Alias("FETHIRDBILLNO")
+    private String fEThirdBillNo;
 
     private List<KingdeeReturnOrderItemEntity> itemEntityList;
     @Override

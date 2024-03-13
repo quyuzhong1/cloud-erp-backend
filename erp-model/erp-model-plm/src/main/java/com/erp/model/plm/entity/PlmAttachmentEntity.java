@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -48,6 +49,12 @@ public class PlmAttachmentEntity extends BaseEntity<PlmAttachmentEntity> {
     */
     @TableField("attach_name")
     private String attachName;
+
+    /**
+     * 附件大小
+     */
+    @TableField("attach_size")
+    private BigDecimal attachSize;
 
 
     public static final String BUSINESS_ID = "business_id";

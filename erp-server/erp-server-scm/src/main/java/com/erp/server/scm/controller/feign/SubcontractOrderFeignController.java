@@ -1,13 +1,16 @@
 package com.erp.server.scm.controller.feign;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.ApproveOneDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.server.scm.service.SubcontractOrderDetailService;
 import com.erp.server.scm.service.SubcontractOrderService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.Collections;
@@ -94,7 +97,7 @@ public class SubcontractOrderFeignController {
      * @Date 2023/7/12 12:55
      **/
     @PostMapping("/subcontractOrderApprove")
-    public Boolean subcontractOrderApprove(@RequestBody BaseApproveParamDTO dto) {
+    public Boolean subcontractOrderApprove(@RequestBody ApproveOneDTO dto) {
         subcontractOrderService.approve(dto);
         return Boolean.TRUE;
     }

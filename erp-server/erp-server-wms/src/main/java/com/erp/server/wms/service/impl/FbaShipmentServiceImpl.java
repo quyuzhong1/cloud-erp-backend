@@ -1,5 +1,7 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.util.ObjectUtil;
@@ -12,18 +14,17 @@ import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
@@ -58,6 +59,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
@@ -119,6 +121,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private SysUserFeign sysUserFeign;
     @Resource
     private InventoryClosedRecordService inventoryClosedRecordService;
+    @Resource
+    private StocktakingProfitLossService stocktakingProfitLossService;
 
     @Override
     public PagingVO<FbaShipmentDTO.ListDTO> paging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
@@ -865,7 +869,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<FbaShipmentReceiveEntity> list = fbaShipmentReceiveService.checkAndBindHistory(entity, newDetailEntityList, PlatformEnum.LINGXING.getName());
         if (CollectionUtils.isNotEmpty(list)){
             // 查询最新库存关账记录
-            Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId();
+            Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId(InventoryClosedRecordEnum.STK.getCode());
             // 按签收日期分组调拨
             Map<LocalDateTime, List<FbaShipmentReceiveEntity>> groupMap = list.stream().collect(Collectors.groupingBy(FbaShipmentReceiveEntity::getReceiveDate));
 
@@ -1615,7 +1619,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 .collect(Collectors.groupingBy(e-> e.getReceiveDate().toLocalDate()));
 
         // 查询最新库存关账记录
-        Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId();
+        Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId(InventoryClosedRecordEnum.STK.getCode());
 
         for (Map.Entry<LocalDate, List<FbaShipmentReceiveEntity>> entry : groupBillDateMap.entrySet()) {
             // 根据签收时间作为调拨时间
@@ -1718,6 +1722,56 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
+    public void export(FbaShipmentDTO.PagingParamDTO dto, HttpServletResponse response) {
+        List<FbaShipmentDTO.ListDTO> list = baseMapper.export(dto);
+        fillList(list);
+        List<FbaShipmentDTO.ExportDTO> exportDTOList = BeanUtil.copyToList(list,FbaShipmentDTO.ExportDTO.class, CopyOptions.create(FbaShipmentDTO.ExportDTO.class,false,"receiveQty"));
+        List<FbaShipmentDTO.ExportDTO> fillDTOList = fillReceive(exportDTOList);
+//        ExcelUtil.export("FBA货件","FBA货件",exportDTOList,FbaShipmentDTO.ExportDTO.class,response);
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/fbaShipment.xlsx";
+        String name = "FBA货件导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(fillDTOList, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+    }
+
+    private List<FbaShipmentDTO.ExportDTO> fillReceive(List<FbaShipmentDTO.ExportDTO> exportDTOList) {
+        List<FbaShipmentDTO.ExportDTO> result = new ArrayList<>();
+        List<String> detailIds = exportDTOList.stream().map(FbaShipmentDTO.ExportDTO::getDetailId).distinct().collect(Collectors.toList());
+        Map<String,List<FbaShipmentReceiveEntity>> fbaShipmentReceiveEntitieMap = fbaShipmentReceiveService.listByDetailIds(detailIds).stream().collect(Collectors.groupingBy(FbaShipmentReceiveEntity::getDetailId));
+        for(FbaShipmentDTO.ExportDTO exportDTO : exportDTOList){
+            List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntityList = fbaShipmentReceiveEntitieMap.get(exportDTO.getDetailId());
+            if(CollectionUtils.isEmpty(fbaShipmentReceiveEntityList)){
+                exportDTO.setReceiveQty("0");
+                result.add(exportDTO);
+                continue;
+            }
+            String receive;
+            for (FbaShipmentReceiveEntity fbaShipmentReceiveEntity : fbaShipmentReceiveEntityList) {
+                //映射字段
+                FbaShipmentDTO.ReceiveRecordView receiveRecordView = FbaShipmentConverter.INSTANCE.fbaShipmentReceiveEntityToView(fbaShipmentReceiveEntity);
+//                if(receive == null){
+//                    receive = receiveRecordView.toString();
+//                }else{
+//                    receive = receive + ",\n\r" + receiveRecordView.toString();
+//                }
+                FbaShipmentDTO.ExportDTO fillDTO = new FbaShipmentDTO.ExportDTO();
+                BeanUtil.copyProperties(exportDTO,fillDTO);
+                receive = receiveRecordView.toString();
+                fillDTO.setReceiveQty(receive);
+                result.add(fillDTO);
+            }
+        }
+        return result;
+    }
+
+    @Override
     public LocalDate getStopGenReceivedDate(FbaShipmentEntity fbaShipmentEntity) {
         List<DictBasicDTO.ListDTO> stopGenReceivedTimeList = dictBasicService.getByKey(DictBasicEnum.STOP_GEN_RECEIVE_TIME.getKey());
         if (!CollectionUtils.isEmpty(stopGenReceivedTimeList)) {
@@ -1731,7 +1785,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
         // 按关账日期
         // 查询最新库存关账记录
-        Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId();
+        Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId(InventoryClosedRecordEnum.STK.getCode());
         // 最新的关账记录时间
         if (!closedDateMap.isEmpty()){
             // 来源店铺

@@ -5,9 +5,10 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogViewService;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.sys.dto.*;
+import com.erp.model.sys.dto.SysUserInfoDTO;
+import com.erp.model.sys.dto.UpdateUserStateDTO;
+import com.erp.model.sys.dto.UserPagingSearchDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserWechatEntity;
 import com.erp.model.sys.vo.SupplierUserVO;
@@ -148,4 +149,15 @@ public interface UserInfoFeign {
      **/
     @GetMapping("feign/user/getWxInfo")
     SysUserWechatEntity getWxInfo(@RequestParam("uid") String uid);
+
+    /**
+     * 查询用户数据权限,获取到权限sql
+     * @Author Luo_WG
+     * @Date 2024/3/12 16:45
+     * @param tableField 权限过滤字段
+     * @param menuCode 菜单编号
+     * @return java.lang.String
+     **/
+    @GetMapping("feign/user/getUserDatePermissionSql")
+    String getUserDatePermissionSql(@RequestParam("tableField") String tableField, @RequestParam("menuCode") String menuCode);
 }

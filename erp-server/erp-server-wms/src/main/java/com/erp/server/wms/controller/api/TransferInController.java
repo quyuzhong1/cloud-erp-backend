@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -9,10 +10,11 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.TransferInDTO;
+import com.erp.server.wms.query.TransferInQueryHandler;
 import com.erp.server.wms.service.TransferInService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -64,6 +66,7 @@ public class TransferInController extends BaseController {
             menuCode = "wms:transfer:in:paging",
             tableAlias = "ti"
     )
+    @WebAdvanceQuery(handler = TransferInQueryHandler.class)
     public ApiResult<PagingVO<TransferInDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<TransferInDTO.PagingParamDTO> dto) {
         PagingVO<TransferInDTO.PagingViewDTO> pagingVO = transferInService.paging(dto);
         return success(pagingVO);
@@ -269,6 +272,7 @@ public class TransferInController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出分布式调入单")
     @PostMapping("/export")
+    @WebAdvanceQuery(handler = TransferInQueryHandler.class)
     public ApiResult exportWarehouse(@RequestBody @Valid TransferInDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = transferInService.exportExcel(dto, response);
         return result ? success() : failure();

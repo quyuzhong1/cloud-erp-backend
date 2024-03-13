@@ -1,8 +1,10 @@
 package com.erp.server.plm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.plm.dto.ProductCertificateDTO;
 import com.erp.model.plm.dto.ProductCertificateShowDTO;
-import com.erp.model.plm.dto.ProductCostShowDTO;
 import com.erp.model.plm.entity.ProductCertificateEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -31,6 +33,24 @@ public interface ProductCertificateMapper extends BaseMapper<ProductCertificateE
      * @return java.util.List<com.erp.model.plm.dto.ProductCostShowDTO>
      **/
     List<ProductCertificateShowDTO> listBySkuId(@Param("skuId") String skuId);
+    /**
+     * @description: 分页查询
+     * @author Will
+     * @date: 2024/2/19 10:55
+     * @param query
+     * @param params
+     * @return IPage<ListDTO>
+     */
+    IPage<ProductCertificateDTO.ListDTO> paging(Page query,@Param("params") ProductCertificateDTO.SearchParamDTO params);
+
+    /**
+     * @description: 导出数据
+     * @author Will
+     * @date: 2024/2/19 16:50
+     * @param params
+     * @return List<ListDTO>
+     */
+    List<ProductCertificateDTO.ListDTO> exportExcel(@Param("params") ProductCertificateDTO.ExportParamDTO params);
 }
 
 

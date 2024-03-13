@@ -355,4 +355,9 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         queryWrapper.groupBy(SoReturnDetailEntity::getMainId);
         return listObjs(queryWrapper, Object::toString);
     }
+
+    @Override
+    public List<SoReturnDetailEntity> listDetailByReturnType(List<String> returnType) {
+        return lambdaQuery().in(SoReturnDetailEntity::getReturnTypeDict, returnType).list();
+    }
 }

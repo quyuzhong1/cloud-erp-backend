@@ -75,11 +75,6 @@ public class ProductManyDetailDTO {
     private List<ProductAccessoriesDTO> productAccessoriesList;
 
     /**
-     * 产品认证信息
-     */
-    private List<ProductAttestationDTO> productAttestationList;
-
-    /**
      * 目的国海关编码信息
      */
     private List<ProductCustomsEntity> productCustomsList;

@@ -9,6 +9,7 @@ import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -34,22 +35,18 @@ public interface StocktakingProfitLossMapper extends BaseMapper<StocktakingProfi
      * 分页查询
      * @param query
      * @param params
-     * @param billType
-     * @param sourceIdList
      * @return
      */
-    IPage<StocktakingProfitLossDTO.PagingViewDTO> paging(Page query, @Param("params")StocktakingProfitLossDTO.PagingParamDTO params, @Param("billType")String billType,@Param("sourceIdList") List<String> sourceIdList);
+    IPage<StocktakingProfitLossDTO.PagingViewDTO> paging(Page query, @Param("params")StocktakingProfitLossDTO.PagingParamDTO params);
 
     /**
      * 获取到导出数据
      * @author yl
      * @date 2023-08-11 12:16
      * @param params
-     * @param billType
-     * @param taskIdList
      * @return java.util.List<com.erp.model.wms.dto.StocktakingProfitLossDTO.PagingViewDTO>
      */
-    List<StocktakingProfitLossDTO.ExportViewDTO> listExport(@Param("params") StocktakingProfitLossDTO.ExportDTO params,@Param("billType") String billType, @Param("sourceIdList")List<String> taskIdList);
+    List<StocktakingProfitLossDTO.ExportViewDTO> listExport(@Param("params") StocktakingProfitLossDTO.ExportDTO params);
     /**
      * 获取到扣减库存所需的参数
      * @author yl
@@ -59,4 +56,19 @@ public interface StocktakingProfitLossMapper extends BaseMapper<StocktakingProfi
      */
     List<InOutStockDTO> listInventoryInOut(@Param("idList") List<String> idList);
 
+    /**
+     * 库存组织ID和SKuId最新单据时间
+     * @author Jim
+     * @date 2023-03-05
+     */
+    List<StocktakingProfitLossDTO.LastDTO> listByOrgIdAndSkuIds(@Param("orgIdList")List<String> orgIdList, @Param("skuIdList") List<String> skuIdList);
+
+
+    /**
+     * 仓库ID和SkuId,单据时间查询最新的单号
+     *
+     * @author Jim
+     * @date 2023-03-05
+     */
+    List<String> findLastOneCode(@Param("warehouseId")String warehouseId, @Param("skuId")String skuId, @Param("billDate")LocalDate billDate);
 }

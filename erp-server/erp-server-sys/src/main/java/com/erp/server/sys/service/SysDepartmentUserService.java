@@ -85,4 +85,12 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
      * @return java.util.List<com.erp.model.sys.dto.SysDepartmentUserNumberDTO>
      */
     List<SysDepartmentUserNumberDTO> listDeptUserByUserIdList(List<String> userIdList);
+    /**
+     * @description: 
+     * @author Will
+     * @date: 2024/1/31 17:34
+     * @param deptIdList 
+     * @return List<SysDepartmentUserNumberDTO> 
+     */
+    List<SysDepartmentUserNumberDTO> listDeptUserByDeptIdList(List<String> deptIdList);
 }

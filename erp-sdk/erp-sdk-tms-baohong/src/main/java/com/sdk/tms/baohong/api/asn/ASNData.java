@@ -1,6 +1,8 @@
 
 package com.sdk.tms.baohong.api.asn;
 
+import lombok.ToString;
+
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -86,6 +88,7 @@ import javax.xml.bind.annotation.XmlType;
     "orderDetail",
     "receivingDetail"
 })
+@ToString
 public class ASNData {
 
     @XmlElement(required = true)

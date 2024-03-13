@@ -17,6 +17,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsServicePlatformDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
@@ -53,9 +55,7 @@ public class LogisticsServicePlatformServiceImpl extends SuperServiceImpl<Logist
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物流平台服务单" , logisticsServicePlatformEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, logisticsServicePlatformEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(logisticsServicePlatformEntity.getId(), logisticsServicePlatformEntity.getId());
     }
@@ -77,7 +77,7 @@ public class LogisticsServicePlatformServiceImpl extends SuperServiceImpl<Logist
         if(!save) {
             throw new ServiceException("物流平台服务单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+
 
         // 记录主单操作日志
             log.info("编辑 开始记录物流平台服务单日志数据，id：【{}】", logisticsServicePlatformEntity.getId());
@@ -92,11 +92,24 @@ public class LogisticsServicePlatformServiceImpl extends SuperServiceImpl<Logist
         return this.lambdaQuery().eq(LogisticsServicePlatformEntity::getLogisticsPlatform, logisticsPlatform).list();
     }
 
+    @Override
+    public List<LogisticsServicePlatformDTO.ServiceNameDTO> listServiceNameByLogisticsPlatform(String logisticsPlatform) {
+        List<LogisticsServicePlatformEntity> dbList = listByPlatform(logisticsPlatform);
+        List<String> nameList = dbList.stream().map(LogisticsServicePlatformEntity::getServiceName).distinct().collect(Collectors.toList());
+        List<LogisticsServicePlatformDTO.ServiceNameDTO> list = new ArrayList<>(nameList.size());
+        for (String item : nameList) {
+            LogisticsServicePlatformDTO.ServiceNameDTO serviceNameDTO = new LogisticsServicePlatformDTO.ServiceNameDTO();
+            serviceNameDTO.setServiceName(item);
+            list.add(serviceNameDTO);
+        }
+        return list;
+    }
+
 
     /**
     * 新增修改处理数据
     */
     private void handleData(LogisticsServicePlatformEntity logisticsServicePlatformEntity) {
-    // TODO 验证数据 & 数据赋值
+
     }
 }

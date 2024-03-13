@@ -237,4 +237,26 @@
           and pod.confirm_date is not null
           and pod.confirm_date between #{startTime} and #{endTime}
     </select>
+
+    <select id="listImportEndReceive" resultType="com.erp.model.scm.dto.PurchaseOrderDetailDTO$ImportEndReceiveDTO">
+        select
+            po.code,
+            pod.id as detailId,
+            pod.sku_no as skuNo
+        from
+        purchase_order po
+        left join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
+        <where>
+            po.is_deleted = false and po.invalid_status = false and po.code in
+            <foreach collection="codeList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+            and pod.sku_no in
+            <foreach collection="skuNoList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </where>
+
+
+    </select>
 </mapper>

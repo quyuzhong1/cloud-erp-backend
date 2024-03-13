@@ -367,4 +367,13 @@
             </foreach>
         </if>
     </select>
+    <select id="listSoOutIdByQuery" resultType="java.lang.String">
+        SELECT
+            DISTINCT lb.outstock_id AS outstockId
+        FROM  logistics_bill_detail lbd
+        inner JOIN  logistics_bill lb ON lbd.main_id=lb.id ANd lb.is_deleted = false
+        WHERE
+            ${params.sqlMap.default}
+        and  lbd.is_deleted = false
+    </select>
 </mapper>

@@ -1,11 +1,13 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.validator.ValidList;
 import com.erp.model.wms.dto.FirstMileCartonDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.server.wms.query.FirstMileDeliveryQueryHandler;
 import com.erp.server.wms.service.FirstMileDeliveryDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,6 +103,7 @@ public class FirstMileDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:paging",
             tableAlias = "fd"
     )
+    @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
     public ApiResult<PagingVO<FirstMileDeliveryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> dto) {
         return success(firstMileDeliveryService.paging(dto));
     }
@@ -379,7 +382,8 @@ public class FirstMileDeliveryController extends BaseController {
             tableAlias = "fd"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "头程发货单导出Excel数据")
-    public void exportList(@RequestBody @Validated FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
+    @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
+    public void exportList(@RequestBody @Validated FirstMileDeliveryDTO.PagingParamDTO dto, HttpServletResponse response) {
         firstMileDeliveryService.exportList(dto, response);
     }
 

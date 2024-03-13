@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.validator.AddGroup;
 import lombok.Data;
@@ -9,6 +10,7 @@ import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 public class SoReturnReceiveDTO {
     /**
@@ -17,6 +19,16 @@ public class SoReturnReceiveDTO {
     @Data
     @NoArgsConstructor
     public static class PagingParam extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
         /**
          * 主键id
          */

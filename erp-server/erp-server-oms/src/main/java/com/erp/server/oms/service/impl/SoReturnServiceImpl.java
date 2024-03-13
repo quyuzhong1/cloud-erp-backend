@@ -43,12 +43,10 @@ import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.rpc.wms.feign.SoReturnNoticeFeign;
-import com.erp.rpc.wms.feign.SoReturnReceiveFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.mapper.SoReturnMapper;
+import com.erp.server.oms.query.SoReturnQueryHandler;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -128,6 +126,13 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Resource
     private CustomerAddressService customerAddressService;
 
+    @Resource
+    private SoReturnInstockFeign soReturnInstockFeign;
+
+    @Resource
+    private SoReturnQueryHandler soReturnQueryHandler;
+
+
     @Override
     public PagingVO<SoReturnDTO.PagingView> paging(PagingDTO<SoReturnDTO.PagingParam> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -147,6 +152,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
         List<String> soDetailIds = records.stream().map(SoReturnDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(soDetailIds);
+        List<String> detailIds = records.stream().map(SoReturnDTO.PagingView::getDetailId).collect(Collectors.toList());
+        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = soReturnInstockFeign.listDetailBySoReturnDetailIds(detailIds);
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
@@ -165,6 +172,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 obj.setCustomerName(customerInfoEntity.getName());
                 obj.setCurrency(soDetailEntity.getCurrency());
                 obj.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
+                Integer returnInStockQty = soReturnInstockDetailEntityList.stream().filter(detail -> obj.getDetailId().equals(detail.getSoReturnDetailId())  ).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
+                obj.setReturnInStockQty(returnInStockQty);
             });
         }
         return new PagingVO(pageData);
@@ -178,21 +187,14 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             SoReturnDTO.PagingParam pagingParam = new SoReturnDTO.PagingParam();
             pagingParam.setPermissionSql(dto.getPermissionSql());
             SoReturnDTO.StatusCountDTO resultDTO = new SoReturnDTO.StatusCountDTO();
-            Integer count = MathUtil.ZERO;
-            if (SOReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(pagingParam);
-            }
-            if (SOReturnChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(pagingParam);
-            }
-            if (SOReturnChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
-                count = this.baseMapper.listCount(pagingParam);
-            }
+            String tabSql = soReturnQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            pagingParam.setSqlMap(map);
+            Integer count = this.baseMapper.listCount(pagingParam);
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
-            resultDTO.setType(item.getCode());
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
             list.add(resultDTO);
         }
         return list;
@@ -471,8 +473,15 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             return;
         }
         //推送同步中台dmp任务
+        Map<String, Object> resultMap = new HashMap<>();
+        //业务id
+        resultMap.put("id", entity.getId());
+        //客户编号
+        resultMap.put("code", entity.getCode());
+        resultMap.put("operate", operate);
+
         DmpPullTaskFeignDTO dto = new DmpPullTaskFeignDTO()
-                .setMqData(JSON.toJSONString(entity))
+                .setMqData(JSON.toJSONString(resultMap))
                 .setMqTopic(RocketMqTopic.SYNC_RETURN_ORDER_TO_DMP_TOPIC)
                 .setMqTag(RocketMqTagEnum.APPROVED_RETURN_ORDER_TO_DMP_TAG.getName())
                 .setSourceCode(entity.getCode())
@@ -483,14 +492,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 .setSyncOperate(operate);
         log.info("推送消息开始：{}", dto.toString());
         String dmpPullTaskId = dmpTaskFeign.savePullTask(dto);
-
-        Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("dmpPullTaskId", dmpPullTaskId);
-        //业务id
-        resultMap.put("id", entity.getId());
-        //客户编号
-        resultMap.put("code", entity.getCode());
-        resultMap.put("operate", operate);
+        resultMap.put("dmpSyncTaskId", dmpPullTaskId);
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_RETURN_ORDER_TO_DMP_TOPIC, RocketMqTagEnum.APPROVED_RETURN_ORDER_TO_DMP_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
