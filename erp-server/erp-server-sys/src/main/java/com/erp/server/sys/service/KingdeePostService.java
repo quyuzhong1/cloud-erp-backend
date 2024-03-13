@@ -21,7 +21,7 @@ public interface KingdeePostService extends SuperService<KingdeePostEntity> {
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(KingdeePostDTO.AddDTO dto);
+    Boolean add(KingdeePostDTO.AddDTO dto);
 
     /**
     * 修改
@@ -52,4 +52,13 @@ public interface KingdeePostService extends SuperService<KingdeePostEntity> {
      * @author Lambda
      */
     KingdeePostDTO.ViewDTO view(String id);
+    
+    /**
+     * 更改金蝶返回来的信息
+     * @description
+     * @return
+     * @date 2024-03-13 17:22
+     * @author Lambda
+     */
+    Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId, String syncKingdeeCode);
 }

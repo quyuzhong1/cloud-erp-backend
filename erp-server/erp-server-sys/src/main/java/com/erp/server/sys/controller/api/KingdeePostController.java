@@ -64,8 +64,9 @@ public class KingdeePostController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "金蝶岗位表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated KingdeePostDTO.AddDTO dto) {
-        return success(kingdeePostService.add(dto));
+    public ApiResult add(@RequestBody @Validated KingdeePostDTO.AddDTO dto) {
+        Boolean result = kingdeePostService.add(dto);
+        return result ? success() : failure();
     }
 
 
@@ -89,15 +90,9 @@ public class KingdeePostController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "金蝶岗位表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "sys:kingdeePost:update",
-        serviceClass = KingdeePostService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated KingdeePostDTO.UpdateDTO dto) {
-        kingdeePostService.update(dto);
-        return success();
+    public ApiResult update(@RequestBody @Validated KingdeePostDTO.UpdateDTO dto) {
+        Boolean result = kingdeePostService.update(dto);
+        return result ? success() : failure();
     }
 
 

@@ -5,13 +5,18 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.SyncOperateEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.KingdeeDepartmentDTO;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.entity.KingdeePostEntity;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.sys.mapper.KingdeePostMapper;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeePostService;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeService;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysDeptService;
 import com.erp.server.sys.service.KingdeeDepartmentService;
 import com.erp.server.sys.service.KingdeePostService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -29,11 +34,13 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.sys.dto.KingdeePostDTO;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
 /**
  * <p>
  * 金蝶岗位表 服务实现类
@@ -56,47 +63,46 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
     @Autowired
     private KingdeeDepartmentService kingdeeDepartmentService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Autowired
+    private SyncKingdeePostService syncKingdeePostService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(KingdeePostDTO.AddDTO addDTO) {
+    public Boolean add(KingdeePostDTO.AddDTO addDTO) {
         KingdeePostEntity kingdeePostEntity = new KingdeePostEntity();
         BeanMapperUtils.copy(addDTO, kingdeePostEntity);
-
         // 数据处理
         handleData(kingdeePostEntity);
-
         boolean save = super.save(kingdeePostEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("金蝶岗位单保存失败");
         }
+        syncKingdeePostService.syncDataToKingdee(kingdeePostEntity, SyncOperateEnum.OPERATE_ADD.getCode());
+        return save;
 
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "金蝶岗位单" , kingdeePostEntity.getCode());
-
-
-        return new BaseResultDTO.AddDTO(kingdeePostEntity.getId(), "");
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(KingdeePostDTO.UpdateDTO updateDTO) {
         KingdeePostEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶岗位单"));
-        KingdeePostEntity kingdeePostEntity =  BeanMapperUtils.map(KingdeePostEntity.class, updateDTO);
-
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶岗位"));
+        KingdeePostEntity kingdeePostEntity = BeanMapperUtils.map(KingdeePostEntity.class, updateDTO);
+        kingdeePostEntity.setKingdeeId(old.getKingdeeId());
+        kingdeePostEntity.setCode(old.getCode());
         // 数据处理
         handleData(kingdeePostEntity);
-        log.info("编辑 开始修改金蝶岗位单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(kingdeePostEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("金蝶岗位单保存失败");
         }
+        //金蝶推送
+        syncKingdeePostService.syncDataToKingdee(kingdeePostEntity, SyncOperateEnum.OPERATE_UPDATE.getCode());
+        return save;
 
-        return Boolean.TRUE;
     }
 
     @Override
@@ -116,7 +122,7 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
         Integer pageSize = 1000;
         List<KingdeePostDTO.KingdeeDTO> postList = new ArrayList<>(20);
         Boolean dataSign = true;
-        while (dataSign){
+        while (dataSign) {
             List<Map<String, Object>> result = apiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, 0);
             if (result.size() < pageSize) {
                 dataSign = false;
@@ -154,8 +160,8 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
             KingdeePostEntity dbEntity = dbList.stream().filter(entity -> entity.getKingdeeId().equals(kingdeeId)).
                     findFirst().orElse(null);
             //表示没有
-            if(Objects.isNull(dbEntity)){
-                KingdeePostEntity  addEntity = new KingdeePostEntity();
+            if (Objects.isNull(dbEntity)) {
+                KingdeePostEntity addEntity = new KingdeePostEntity();
                 addEntity.setKingdeeId(kingdeeId);
                 addEntity.setCode(code);
                 addEntity.setName(name);
@@ -163,10 +169,10 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
                 addEntity.setUseOrgName(orgInfo.getName());
                 addEntity.setKingdeeDeptId(kingdeeDeptId);
                 saveOrUpdateList.add(addEntity);
-            }else{
-                if(!dbEntity.getCode().equals(code) || !dbEntity.getName().equals(name) ||
+            } else {
+                if (!dbEntity.getCode().equals(code) || !dbEntity.getName().equals(name) ||
                         dbEntity.getUseOrgId().equals(orgInfo.getId()) ||
-                        dbEntity.getKingdeeDeptId().equals(kingdeeDeptId)){
+                        dbEntity.getKingdeeDeptId().equals(kingdeeDeptId)) {
 
                     dbEntity.setCode(code);
                     dbEntity.setName(name);
@@ -190,18 +196,44 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
         KingdeePostDTO.ViewDTO viewDTO = new KingdeePostDTO.ViewDTO();
         BeanUtil.copyProperties(postEntity, viewDTO);
         String kingdeeDeptId = postEntity.getKingdeeDeptId();
-        KingdeeDepartmentEntity  kingdeeDept= kingdeeDepartmentService.getById(kingdeeDeptId);
+        KingdeeDepartmentEntity kingdeeDept = kingdeeDepartmentService.getById(kingdeeDeptId);
         if (Objects.nonNull(kingdeeDept)) {
             viewDTO.setKingdeeDeptName(kingdeeDept.getKingdeeDeptName());
         }
         return viewDTO;
     }
 
+    @Override
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId, String syncKingdeeCode) {
+        return this.lambdaUpdate()
+                .eq(KingdeePostEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), KingdeePostEntity::getKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncKingdeeCode), KingdeePostEntity::getCode, syncKingdeeCode)
+                .update();
+    }
+
 
     /**
-    * 新增修改处理数据
-    */
-    private void handleData(KingdeePostEntity kingdeePostEntity) {
-    // TODO 验证数据 & 数据赋值
+     * 新增修改处理数据
+     */
+    private void handleData(KingdeePostEntity entity) {
+        String kingdeeDeptId = entity.getKingdeeDeptId();
+        String useOrgId = entity.getUseOrgId();
+        SysAccountingCompanyEntity orgInfo = sysAccountingCompanyService.getById(useOrgId);
+        if (Objects.isNull(orgInfo)) {
+            throw new ServiceException("组织信息不存在");
+        }
+        entity.setUseOrgName(orgInfo.getCompanyName());
+        KingdeeDepartmentEntity kingdeeDept = kingdeeDepartmentService.getById(kingdeeDeptId);
+        if (Objects.isNull(kingdeeDept)) {
+            throw new ServiceException("金蝶部门不存在");
+        }
+        String kingdeeDeptCode = kingdeeDept.getKingdeeDeptCode();
+        String kingdeeDeptName = kingdeeDept.getKingdeeDeptName();
+        if (StringUtils.isBlank(kingdeeDeptCode)) {
+            throw new ServiceException(kingdeeDeptName + "未同步金蝶,请先同步金蝶");
+        }
+        entity.setKingdeeDeptCode(kingdeeDeptCode);
+        entity.setUseOrgCode(orgInfo.getCode());
     }
 }

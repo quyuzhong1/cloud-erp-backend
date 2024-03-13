@@ -60,6 +60,13 @@ public class KingdeePostEntity extends BaseEntity<KingdeePostEntity> {
     @TableField("disabled")
     private Boolean disabled;
 
+    @TableField(exist = false)
+    private String kingdeeDeptCode;
+
+    @TableField(exist = false)
+    private String useOrgCode;
+
+
 
     public static final String NAME = "name";
 

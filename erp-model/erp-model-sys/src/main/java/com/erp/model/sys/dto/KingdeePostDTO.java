@@ -4,6 +4,7 @@ import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
@@ -59,6 +60,23 @@ public class KingdeePostDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO{
+        /**
+         * 使用组织id 来源 http://172.16.100.11:3002/project/36/interface/api/30795
+         */
+        @NotBlank(message = "组织不能为空")
+        private String useOrgId;
+
+        /**
+         * 岗位名称
+         */
+        @NotBlank(message = "岗位名称不能为空")
+        private String name;
+
+        /**
+         * 金蝶部门表id 来源 http://172.16.100.11:3002/project/36/interface/api/30715
+         */
+        @NotBlank(message = "金蝶岗位不能为空")
+        private String kingdeeDeptId;
 
     }
 
@@ -66,7 +84,27 @@ public class KingdeePostDTO implements Serializable {
     @NoArgsConstructor
     public static class UpdateDTO{
 
+        @NotBlank(message = "岗位id不能为空")
         private String id;
+
+
+        /**
+         * 使用组织id 来源 http://172.16.100.11:3002/project/36/interface/api/30795
+         */
+        @NotBlank(message = "组织不能为空")
+        private String useOrgId;
+
+        /**
+         * 岗位名称
+         */
+        @NotBlank(message = "岗位名称不能为空")
+        private String name;
+
+        /**
+         * 金蝶部门表id 来源 http://172.16.100.11:3002/project/36/interface/api/30715
+         */
+        @NotBlank(message = "金蝶岗位不能为空")
+        private String kingdeeDeptId;
 
     }
 
