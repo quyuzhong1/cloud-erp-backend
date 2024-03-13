@@ -225,14 +225,13 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
         }
         List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Arrays.asList(dto.getWarehouseId()));
+        String provideCode;
         if(CollectionUtils.isEmpty(viewDTOList)){
-            throw new ServiceException("查询不到仓库服务商");
+            provideCode = "";
+        }else{
+            provideCode = viewDTOList.get(0).getProviderCode();
         }
-        String provideCode = viewDTOList.get(0).getProviderCode();
         PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(provideCode);
-        if(platformDictEnum == null){
-            throw new ServiceException("查询不到仓库服务商");
-        }
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Arrays.asList(dto.getSkuNo()));
         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(dto.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
         if (ObjectUtil.isEmpty(skuVO)) {
@@ -253,8 +252,8 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
         skuMappingEntity.setProductName(skuVO.getSkuName());
         skuMappingEntity.setListingId(listingInfoEntity.getId());
-        skuMappingEntity.setDictPlatform(platformDictEnum.getCode());
-        skuMappingEntity.setPlatformName(platformDictEnum.getName());
+        skuMappingEntity.setDictPlatform(platformDictEnum == null ? "":platformDictEnum.getCode());
+        skuMappingEntity.setPlatformName(platformDictEnum == null ? "":platformDictEnum.getName());
         skuMappingEntity.setHasMappingAll(true);
 
         //生效时间
