@@ -271,6 +271,7 @@ public class KingdeeDeliveryDetailEntity  extends CleanBaseDTO {
                 ", fSettleCurrCode='" + fSettleCurrCode + '\'' +
                 ", fExchangeRate='" + fExchangeRate + '\'' +
                 ", FIsGenForIos='" + FIsGenForIos + '\'' +
+                ", fEThirdBillNo='" + fEThirdBillNo + '\'' +
                 ", kingdeeOutStockItemEntityList=" + kingdeeOutStockItemEntityList +
                 '}';
     }
