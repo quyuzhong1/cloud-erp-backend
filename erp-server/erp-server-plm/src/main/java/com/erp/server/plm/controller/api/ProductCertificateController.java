@@ -83,6 +83,11 @@ public class ProductCertificateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改产品证书信息")
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:productCertificate:update",
+            serviceClass = ProductCertificateService.class,
+            keyIdName = "id")
     public ApiResult update(@ModelAttribute @Validated ProductCertificateDTO.UpdateDTO dto) {
         Boolean flag = productCertificateService.update(dto);
         return flag == true ? success() : failure();
