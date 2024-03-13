@@ -4,6 +4,7 @@ import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
@@ -31,4 +32,6 @@ public interface SoReturnInstockFeign {
     @PostMapping("feign/soReturnInstock/getSoReturnInstockByMainId")
     List<SoReturnInstockDetailEntity> getSoReturnInstockDetailByMainId(@RequestParam(value = "mainId") String mainId);
 
+    @PostMapping("feign/soReturnInstock/listDetailBySoReturnDetailIds")
+    List<SoReturnInstockDetailEntity> listDetailBySoReturnDetailIds(@RequestBody List<String> detailIds);
 }

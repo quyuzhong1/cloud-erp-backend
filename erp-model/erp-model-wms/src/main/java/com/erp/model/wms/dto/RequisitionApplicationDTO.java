@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -14,6 +15,7 @@ import lombok.AllArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.*;
 
 /**
@@ -327,6 +329,16 @@ public class RequisitionApplicationDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
         /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
+        /**
          * 主键id
          */
         private List<String> ids;
@@ -413,6 +425,10 @@ public class RequisitionApplicationDTO implements Serializable {
          * 主键id
          */
         private String id;
+        /**
+         * 明细id
+         */
+        private String detailId;
 
         /**
          * 单据编号
@@ -465,6 +481,26 @@ public class RequisitionApplicationDTO implements Serializable {
          * 产品编号
          */
         private String skuNo;
+
+        /**
+         * 第三方仓SKU
+         */
+        private String thirdWarehouseSku;
+
+        /**
+         * 平台产品id
+         */
+        private String platformProductId;
+
+        /**
+         * 平台sku
+         */
+        private String platformSku;
+
+        /**
+         * FNSKU
+         */
+        private String platformFnSku;
 
         /**
          * sku版本
@@ -545,6 +581,11 @@ public class RequisitionApplicationDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 服务商code
+         */
+        private String provideCode;;
     }
 
     /**
@@ -743,6 +784,10 @@ public class RequisitionApplicationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class printPickingViewDTO {
+        /**
+         * 第三方仓SKU
+         */
+        private String thirdWarehouseSku;
         /**
          * 产品id
          */

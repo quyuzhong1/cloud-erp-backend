@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.RequestIdTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
@@ -23,6 +24,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -46,100 +48,14 @@ public class OverseasWarehouseInboundDTO implements Serializable {
     public static class PagingParamDTO extends SortDTO {
 
         /**
-         * tab页
+         * 页面高级查询
          */
-        private String  tabFlag;
-
-        private String code;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 来源单号
+         * sqlMap 默认key default
          */
-        private String sourceCode;
-
-        /**
-         * 系统SKU
-         */
-        private String skuNo;
-
-        /**
-         * 海外仓SKU
-         */
-        private String platformSkuNo;
-
-        /**
-         * 入库类型
-         * /api/wms/common/enumDropDown?type=OverseasInstockType
-         */
-        private String instockType;
-
-        /**
-         * 交货方式
-         * /api/wms/common/enumDropDown?type=OverseasDeliveryMode
-         */
-        private String deliveryMode;
-        /**
-         * 入库状态
-         * /api/wms/common/enumDropDown?type=OverseasInstockStatus
-         */
-        private List<String> instockStatusList;
-
-        /**
-         * 发货仓ID
-         */
-        private List<String> deliveryWarehouseIdList;
-
-        /**
-         * 中转仓ID
-         */
-        private List<String> transferWarehouseIdList;
-
-        /**
-         * 目的仓ID
-         */
-        private List<String> toWarehouseIdList;
-
-        /**
-         * 物流方式
-         * /api/wms/common/enumDropDown?type=LogisticsMethod
-         */
-        private List<String> logisticsMethodList;
-
-        /**
-         * 是否组合品
-         */
-        private Boolean isCombination;
-
-        /**
-         * ERP SKU列表
-         */
-        private List<String> skuNoList;
-
-        /**
-         * 海外仓库存SKU列表
-         */
-        private List<String> platformSkuNoList;
-
-        /**
-         * 创建人id列表
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-
-        /**
-         * 签收时间
-         */
-        private List<LocalDate> receiveTimeList;
-
-        /**
-         * 收发差异：/wms/common/enumDropDown?type=DiffRule
-         * 描述： >:大于0，<:小于0，=:等于0，<>:不等于0
-         */
-        private String diffRule;
+        private Map<String, String> sqlMap;
 
     }
 

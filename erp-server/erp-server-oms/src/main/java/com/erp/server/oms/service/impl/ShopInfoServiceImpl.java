@@ -1089,6 +1089,15 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
+    public List<ShopSysUserAuthDTO.ViewShopDTO> listShopByAmazonAuth() {
+        ShopSysUserAuthDTO.UserAuthShopParamDTO dto = new ShopSysUserAuthDTO.UserAuthShopParamDTO();
+        dto.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
+        dto.setUserId(commonService.getUserInfo().getUid());
+        return shopSysUserAuthService.listUserAuthShop(dto);
+    }
+
+
+    @Override
     public List<String> accountList() {
         return lambdaQuery().select(ShopInfoEntity::getAccount).
                 groupBy(ShopInfoEntity::getAccount).list().stream().map(ShopInfoEntity::getAccount).collect(Collectors.toList());

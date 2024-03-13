@@ -1,36 +1,27 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.common.business.interceptor.CommonInterceptor;
-import com.common.business.vo.LoginUser;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.dto.ProductSaleDTO;
 import com.erp.model.plm.dto.ProductSaleShowDTO;
 import com.erp.model.plm.dto.SkuDTO;
-import com.erp.model.plm.entity.BasicDictEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
-import com.erp.model.plm.enums.ProductSalesPlatformEnum;
 import com.erp.model.plm.enums.SaleStateEnum;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.plm.mapper.ProductSaleMapper;
 import com.erp.server.plm.service.BasicDictService;
-import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductSaleService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +39,10 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
     @Resource
     private BasicDictService basicDictService;
 
+    @Resource
+    private SysDictFeign sysDictFeign;
+
+
     /**
      * @param productId:产品信息表id
      * @return java.util.List<com.erp.model.plm.dto.ProductSaleShowDTO>
@@ -61,8 +56,8 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
         for (ProductSaleShowDTO productSaleShowDTO : list) {
             if (StringUtils.isNotBlank(productSaleShowDTO.getSaleCountry())) {
                 List<String> saleCountryList = Arrays.asList(productSaleShowDTO.getSaleCountry().split(","));
-                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(saleCountryList);
-                List<String> saleCountryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                List<DictCountryEntity> dictCountryEntities = sysDictFeign.listCountryByIds(saleCountryList);
+                List<String> saleCountryNameList = dictCountryEntities.stream().map(DictCountryEntity::getNameCn).collect(Collectors.toList());
                 productSaleShowDTO.setSaleCountryName(StringUtils.join(saleCountryNameList, ","));
             }
         }
@@ -79,11 +74,12 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
     @Override
     public List<ProductSaleShowDTO> listBySkuId(String skuId) {
         List<ProductSaleShowDTO> list = productSaleMapper.listBySkuId(skuId);
+
         for (ProductSaleShowDTO productSaleShowDTO : list) {
             if (StringUtils.isNotBlank(productSaleShowDTO.getSaleCountry())) {
                 List<String> saleCountryList = Arrays.asList(productSaleShowDTO.getSaleCountry().split(","));
-                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(saleCountryList);
-                List<String> saleCountryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                List<DictCountryEntity> dictCountryEntities = sysDictFeign.listCountryByIds(saleCountryList);
+                List<String> saleCountryNameList = dictCountryEntities.stream().map(DictCountryEntity::getNameCn).collect(Collectors.toList());
                 productSaleShowDTO.setSaleCountryName(StringUtils.join(saleCountryNameList, ","));
             }
         }

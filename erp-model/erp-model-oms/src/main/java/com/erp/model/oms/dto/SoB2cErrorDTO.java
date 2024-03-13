@@ -2,11 +2,10 @@ package com.erp.model.oms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  *
@@ -147,6 +146,45 @@ public class SoB2cErrorDTO implements Serializable {
 
 
     }
+    @Data
+    @NoArgsConstructor
+    public static class BatchAdd {
+
+        /**
+         * 销售订单id
+         */
+        @NotNull(message = "销售订单不能为空")
+        private List<String> mainIds;
+
+        /**
+         * 异常类型
+         * submitDelivery 提交发货异常
+         * signDelivery 标记发货异常
+         * getLogisticsCode 获取物流单异常
+         */
+        @NotBlank(message = "异常类型 异常不能为空")
+        private String type;
+
+        /**
+         * 传的json 字符串
+         */
+        @NotBlank(message = "传的json 字符串不能为空")
+        private String paramJson;
+
+        /**
+         * 错误信息
+         */
+        @NotBlank(message = "错误信息不能为空")
+        private String message;
+
+        /**
+         * 返回的json 字符串
+         */
+        @NotBlank(message = "返回的json 字符串不能为空")
+        private String returnJson;
+
+
+    }
 
     @Data
     @NoArgsConstructor
@@ -163,5 +201,18 @@ public class SoB2cErrorDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class BatchDeleteDTO{
+        /**
+         * 订单id
+         */
+        private List<String> mainIds;
 
+        /**
+         * 异常类型
+         */
+        private String type;
+
+    }
 }

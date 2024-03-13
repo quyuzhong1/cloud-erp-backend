@@ -16,6 +16,7 @@ public enum DictBasicEnum {
     LOGISTIC_TRACK_STATUS("logisticTrackStatus",  "运输状态"),
     LOGISTICS_SUPPLIER("logisticsSupplierType","物流商类型"),
     TRANSFER_LOGISTICS_AUTH_STATUS("transferLogisticsAuthStatus","中转报关服务商授权状态"),
+    CFG_SETTING("cfgSetting", "系统配置"),
     ;
 
 

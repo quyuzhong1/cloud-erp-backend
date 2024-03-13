@@ -184,4 +184,5 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      */
     void generateSubcontractOrder(ValidList<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> list);
 
+    Boolean close(PurchaseApplicationDTO.CloseDTO dto);
 }

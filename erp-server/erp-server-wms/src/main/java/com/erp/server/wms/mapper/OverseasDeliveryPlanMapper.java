@@ -43,7 +43,7 @@ public interface OverseasDeliveryPlanMapper extends BaseMapper<OverseasDeliveryP
     * @param params
     * @return
     */
-    List<OverseasDeliveryPlanDTO.ListDTO> listExport(@Param("params") OverseasDeliveryPlanDTO.ExportDTO params);
+    List<OverseasDeliveryPlanDTO.ListDTO> listExport(@Param("params") OverseasDeliveryPlanDTO.PagingParamDTO params);
 
 
     /**

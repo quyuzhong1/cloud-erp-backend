@@ -1,6 +1,7 @@
 package com.erp.server.tms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -73,4 +74,6 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
      * @return com.erp.model.tms.dto.LogisticsBillDTO.BaseDTO
      **/
     List<LogisticsBillDTO.BaseDTO> listLogisticsBillByTransportNos(@Param("transportNoList") List<String> transportNoList);
+
+    List<String> listSoOutIdByQuery(@Param("params") AdvanceQueryContainer advanceQueryContainer);
 }

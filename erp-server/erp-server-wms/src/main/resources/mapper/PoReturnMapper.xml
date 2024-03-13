@@ -10,6 +10,7 @@
         pro.supplier_name AS supplierName,
         pro.approve_status AS approveStatus,
         pro.invalid_status AS invalidStatus,
+        prod.id as detailId,
         prod.sku_id AS skuId,
         prod.sku_no AS skuNo,
         pro.bill_date AS billDate,

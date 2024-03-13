@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -74,6 +75,11 @@ public class CfgSettingDTO implements Serializable {
          */
         @Valid
         private CfgSettingValueDTO.PoReconciliationSettingDTO poReconciliationSettingDTO;
+        /**
+         * 物流产品信息-目的国申报价
+         */
+        @Valid
+        private List<CfgSettingValueDTO.LogisticsProductDestDeclarePrice> logisticsProductDestDeclarePrices;
     }
 
 

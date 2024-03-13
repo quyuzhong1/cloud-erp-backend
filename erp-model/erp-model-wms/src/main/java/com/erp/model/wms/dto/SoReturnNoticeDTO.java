@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
@@ -13,6 +14,7 @@ import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 public class SoReturnNoticeDTO {
     /**
@@ -21,6 +23,17 @@ public class SoReturnNoticeDTO {
     @Data
     @NoArgsConstructor
     public static class PagingParam extends SortDTO {
+
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
         /**
          * 主键id
          */
@@ -86,6 +99,10 @@ public class SoReturnNoticeDTO {
          * 主键id
          */
         private String id;
+        /**
+         * 明细主键id
+         */
+        private String detailId;
         /**
          * 退货订单id
          */

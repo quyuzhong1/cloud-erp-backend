@@ -115,4 +115,27 @@
             </foreach>
         </if>
     </select>
+
+    <!-- 根据部门id集合查询 -->
+    <select id="listDeptUserByDeptIdList" resultType="com.erp.model.sys.dto.SysDepartmentUserNumberDTO">
+        SELECT
+        sdu.department_id,
+        sd.name AS departmentName,
+        sui.uid AS userId,
+        sui.user_name,
+        sd.code,
+        sui.code AS userCode,
+        sui.head_icon AS userHeadIcon,
+        sd.parent_id AS deptPid
+        FROM sys_user_info sui
+        INNER JOIN sys_department_user sdu ON sdu.user_id = sui.uid
+        INNER JOIN sys_department sd ON sdu.department_id = sd.id
+        WHERE sui.delete_state=1
+        <if test="deptIdList!=null and deptIdList.size>0">
+            AND sd.id IN
+            <foreach collection="deptIdList" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+    </select>
 </mapper>

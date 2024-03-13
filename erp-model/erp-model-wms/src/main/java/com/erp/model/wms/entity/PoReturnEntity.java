@@ -93,6 +93,18 @@ public class PoReturnEntity extends BaseEntity<PoReturnEntity> {
     private String returnOrgName;
 
     /**
+     * 采购组织id
+     */
+    @TableField("purchase_org_id")
+    private String purchaseOrgId;
+
+    /**
+     * 采购组织名称
+     */
+    @TableField("purchase_org_name")
+    private String purchaseOrgName;
+
+    /**
      * 退货原因
      */
     @TableField("return_remark")

@@ -10,9 +10,11 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
@@ -26,13 +28,11 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
@@ -138,9 +138,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     public PagingVO<TransferInfoDTO.ListDTO> paging(PagingDTO<TransferInfoDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
-        if (StringUtils.isNotBlank(pagingDTO.getParams().getSearchType())) {
-            pagingDTO.getParams().setInvalidStatus(Boolean.FALSE);
-        }
         IPage<TransferInfoDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         List<TransferInfoDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {
@@ -189,7 +186,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 count = this.baseMapper.listCount(searchParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
-            resultDTO.setSearchType(item.getCode());
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
             list.add(resultDTO);
         }
         return list;

@@ -140,6 +140,10 @@ public class ListingInfoWithSkuMappingDTO {
     private String productPacking;
 
     /**
+     * fnSku
+     */
+    private String platformFnSku;
+    /**
      * 平台最后修改时间
      */
     private LocalDateTime platformUpdateTime;

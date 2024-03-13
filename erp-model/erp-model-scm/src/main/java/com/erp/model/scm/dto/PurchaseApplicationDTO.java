@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
@@ -14,6 +15,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Will
@@ -68,6 +70,12 @@ public class PurchaseApplicationDTO implements Serializable {
          * 新品首批（false否,true是）
          */
         private Boolean isFirstMassProduct;
+
+
+        /**
+         * 新品首批（false否,true是）
+         */
+        private String isFirstMassProductStr;
 
         /**
          * 采购单关联状态
@@ -125,6 +133,10 @@ public class PurchaseApplicationDTO implements Serializable {
         private Integer realPurchaseQty;
 
         /**
+         * 剩余数量
+         */
+        private Integer waitQty;
+        /**
          * 签收数量
          */
         private Integer receiveQty;
@@ -168,6 +180,11 @@ public class PurchaseApplicationDTO implements Serializable {
          * 是否是组合SKU
          */
         private Boolean isConstitute;
+
+        /**
+         * 关闭原因
+         */
+        private String closeReason;
     }
 
     @Data
@@ -186,6 +203,15 @@ public class PurchaseApplicationDTO implements Serializable {
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
         /**
          * 主键ids
@@ -298,6 +324,21 @@ public class PurchaseApplicationDTO implements Serializable {
          */
         @Valid
         private List<PurchaseApplicationDetailDTO.AddDTO> details;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CloseDTO {
+        /**
+         * 采购申请明细id
+         */
+        @NotEmpty(message = "采购申请明细id不能为空")
+        private List<String> detailIds;
+        /**
+         * 关闭原因
+         */
+        @NotBlank(message = "关闭原因不能为空")
+        private String closeReason;
     }
 
     @Data

@@ -13,6 +13,8 @@ import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 /**
  * 要货申请
  */
@@ -41,4 +43,12 @@ public interface RequisitionApplicationConverter {
     })
     TransferInfoDetailDTO.AddDTO radFinishListToTransferInfoDetail(RequisitionApplicationDTO.FinishListDTO finishListDTO);
 
+    @Mappings({
+            @Mapping(target = "platformSku", source = "platformSku"),
+            @Mapping(target = "platformSpu", source = "asin"),
+            @Mapping(target = "platformFnSku", source = "fnSku"),
+            @Mapping(target = "platformSkuName", source = "platformSkuName"),
+    })
+    RequisitionApplicationDetailEntity detailConvert(RequisitionApplicationDetailDTO.AddDTO detailList);
+    List<RequisitionApplicationDetailEntity> detailConvert(List<RequisitionApplicationDetailDTO.AddDTO> detailList);
 }

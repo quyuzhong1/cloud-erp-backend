@@ -29,7 +29,8 @@
         materials,
         spec_type,
         sale_method,
-        relevance_product_id,
+        iterate_ref_sku_id,
+        iterate_ref_sku_no,
         grade_id,
         create_user_id,
         create_user_name,
@@ -130,8 +131,11 @@
             <if test="saleMethod != null">
                 sale_method = #{saleMethod,jdbcType=VARCHAR},
             </if>
-            <if test="relevanceProductId != null">
-                relevance_product_id = #{relevanceProductId,jdbcType=VARCHAR},
+            <if test="iterateRefSkuId != null">
+                iterate_ref_sku_id = #{iterateRefSkuId,jdbcType=VARCHAR},
+            </if>
+            <if test="iterateRefSkuNo != null">
+                iterate_ref_sku_no = #{iterateRefSkuNo,jdbcType=VARCHAR},
             </if>
             <if test="gradeId != null">
                 grade_id = #{gradeId,jdbcType=VARCHAR},
@@ -153,9 +157,6 @@
             </if>
             <if test="approvalTime != null">
                 approval_time = #{approvalTime,jdbcType=TIMESTAMP},
-            </if>
-            <if test="productVersion != null">
-                product_version = #{productVersion,jdbcType=SMALLINT},
             </if>
             <if test="entrustedDevelopCost != null">
                 entrusted_develop_cost = #{entrustedDevelopCost,jdbcType=NUMERIC},
@@ -362,10 +363,17 @@
                     </if>
                 </foreach>
             </trim>
-            <trim prefix="relevance_product_id = case" suffix="end,">
+            <trim prefix="iterate_ref_sku_id = case" suffix="end,">
                 <foreach collection="list" index="index" item="item">
-                    <if test="item.relevanceProductId != null">
-                        when id = #{item.id,jdbcType=VARCHAR} then #{item.relevanceProductId,jdbcType=VARCHAR}
+                    <if test="item.iterateRefSkuId != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.iterateRefSkuId,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="iterate_ref_sku_no = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.iterateRefSkuNo != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.iterateRefSkuNo,jdbcType=VARCHAR}
                     </if>
                 </foreach>
             </trim>
@@ -415,13 +423,6 @@
                 <foreach collection="list" index="index" item="item">
                     <if test="item.approvalTime != null">
                         when id = #{item.id,jdbcType=VARCHAR} then #{item.approvalTime,jdbcType=TIMESTAMP}
-                    </if>
-                </foreach>
-            </trim>
-            <trim prefix="product_version = case" suffix="end,">
-                <foreach collection="list" index="index" item="item">
-                    <if test="item.productVersion != null">
-                        when id = #{item.id,jdbcType=VARCHAR} then #{item.productVersion,jdbcType=SMALLINT}
                     </if>
                 </foreach>
             </trim>

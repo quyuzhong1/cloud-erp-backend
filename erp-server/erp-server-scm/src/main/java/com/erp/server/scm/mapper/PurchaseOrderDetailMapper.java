@@ -2,7 +2,6 @@ package com.erp.server.scm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
-import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -59,4 +58,13 @@ public interface PurchaseOrderDetailMapper extends BaseMapper<PurchaseOrderDetai
      * @return
      */
     Integer countOrderBySupplierId(@Param(value = "supplierId") String supplierId,@Param(value = "startTime") LocalDate startTime,@Param(value = "endTime") LocalDate endTime);
+    /**
+     * @description: 根据编码集合和sku编码集合查询
+     * @author Will
+     * @date: 2024/3/5 16:08
+     * @param codeList
+     * @param skuNoList
+     * @return List<ImportEndReceiveDTO>
+     */
+    List<PurchaseOrderDetailDTO.ImportEndReceiveDTO> listImportEndReceive(@Param(value = "codeList") List<String> codeList,@Param(value = "skuNoList") List<String> skuNoList);
 }

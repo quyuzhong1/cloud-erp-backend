@@ -3,15 +3,13 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.DmpPullTaskFeignDTO;
-import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -34,11 +32,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.dmp.dto.excel.DmpPullTaskExportExcelDTO;
-import com.erp.model.dmp.entity.DmpPullTaskEntity;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.*;
-import com.erp.model.dmp.entity.DmpPullTaskEntity;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
@@ -59,8 +53,6 @@ import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.SoReturnInstockFeign;
 import com.erp.server.dmp.convert.DmpOrderConverter;
-import com.erp.model.msg.dto.WarnMsgInfoDTO;
-import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.server.dmp.mapper.DmpPullTaskMapper;
 import com.erp.server.dmp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -188,12 +180,14 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         dmpPullTaskEntity.setStatus(SyncStatusEnum.IN_SYNC.getCode());
         dmpPullTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
         dmpPullTaskEntity.setMqTag(RocketMqTagEnum.SYNC_KINGDEE_RETURN_ORDER_TO_WMS_TAG.getName());
-        String mqData = JSONObject.toJSONString(entity);
+        String mqData = JSONUtil.toJsonStr(entity);
         dmpPullTaskEntity.setMqData(mqData);
         this.saveOrUpdateDmpSyncTask(dmpPullTaskEntity);
-        DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpPullTaskEntity.getId(), mqData);
+        // 发送推送同步任务消息
+        JSONObject jsonObject = JSONUtil.parseObj(dmpPullTaskEntity.getMqData());
+        jsonObject.set("dmpSyncTaskId",dmpPullTaskEntity.getId());
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.SYNC_KINGDEE_RETURN_ORDER_TO_WMS_TAG.getName(),
-                dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
+                jsonObject, StrUtil.uuid().toLowerCase());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
@@ -232,9 +226,10 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         // 保存任务表
         DmpPullTaskEntity dmpPullTaskEntity = new DmpPullTaskEntity(dto);
         this.saveOrUpdateDmpSyncTask(dmpPullTaskEntity);
-        // 发送MQ消息
-        DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpPullTaskEntity.getId(), dto.getMqData());
-        SendResult result = mqProducerService.syncClassMsg(dto.getMqTopic(), dto.getMqTag(), dmpSyncMqDTO, dmpPullTaskEntity.getSourceId());
+        // 发送推送同步任务消息
+        JSONObject jsonObject = JSONUtil.parseObj(dmpPullTaskEntity.getMqData());
+        jsonObject.set("dmpSyncTaskId",dmpPullTaskEntity.getId());
+        SendResult result = mqProducerService.syncClassMsg(dto.getMqTopic(), dto.getMqTag(), jsonObject, dmpPullTaskEntity.getSourceId());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
@@ -315,9 +310,10 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
             throw new ServiceException(ApiError.ERROR_NOT_EXIST_DMP_PUSH_TASK);
         }
         for (DmpPullTaskEntity dmpPullTaskEntity : list) {
-            // 发送MQ消息
-            DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpPullTaskEntity.getId(), dmpPullTaskEntity.getMqData());
-            SendResult result = mqProducerService.syncClassMsg(dmpPullTaskEntity.getMqTopic(), dmpPullTaskEntity.getMqTag(), dmpSyncMqDTO, dmpPullTaskEntity.getSourceId());
+            // 发送推送同步任务消息
+            JSONObject jsonObject = JSONUtil.parseObj(dmpPullTaskEntity.getMqData());
+            jsonObject.set("dmpSyncTaskId",dmpPullTaskEntity.getId());
+            SendResult result = mqProducerService.syncClassMsg(dmpPullTaskEntity.getMqTopic(), dmpPullTaskEntity.getMqTag(), jsonObject, dmpPullTaskEntity.getSourceId());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
@@ -348,7 +344,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     @GlobalTransactional(rollbackFor = Exception.class)
     public void syncOmsOrderToDmp(Map<String, Object> resultMap) {
         //检查推送状态是否已完成，已完成则直接返回
-        Object dmpPullTaskId = resultMap.getOrDefault("dmpPullTaskId", null);
+        Object dmpPullTaskId = resultMap.getOrDefault("dmpSyncTaskId", null);
         Object id = resultMap.getOrDefault("id", null);
         Object code = resultMap.getOrDefault("code", null);
         Object operate = resultMap.getOrDefault("operate", null);
@@ -408,7 +404,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     @GlobalTransactional(rollbackFor = Exception.class)
     public void syncWmsOutStockToDmp(Map<String, Object> resultMap) {
         //检查推送状态是否已完成，已完成则直接返回
-        Object dmpPullTaskId = resultMap.getOrDefault("dmpPullTaskId", null);
+        Object dmpPullTaskId = resultMap.getOrDefault("dmpSyncTaskId", null);
         Object id = resultMap.getOrDefault("id", null);
         Object code = resultMap.getOrDefault("code", null);
         Object operate = resultMap.getOrDefault("operate", null);
@@ -464,7 +460,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     @GlobalTransactional(rollbackFor = Exception.class)
     public void syncOmsReturnToDmp(Map<String, Object> resultMap) {
         //检查推送状态是否已完成，已完成则直接返回
-        Object dmpPullTaskId = resultMap.getOrDefault("dmpPullTaskId", null);
+        Object dmpPullTaskId = resultMap.getOrDefault("dmpSyncTaskId", null);
         Object id = resultMap.getOrDefault("id", null);
         Object code = resultMap.getOrDefault("code", null);
         Object operate = resultMap.getOrDefault("operate", null);
@@ -947,9 +943,10 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                     dto.getMqTopic(), dto.getMqTag(), dto.getMqData(), SyncStatusEnum.IN_SYNC.getCode(),
                     dto.getSourcePlatformName(), dto.getSourceType(), dto.getSourceId(), dto.getSourceCode(), 0);
             this.saveOrUpdateDmpSyncTask(entity);
-            // 发送MQ消息
-            DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(entity.getId(), dto.getMqData());
-            SendResult result = mqProducerService.syncClassMsg(dto.getMqTopic(), dto.getMqTag(), dmpSyncMqDTO, entity.getSourceId());
+            // 发送推送同步任务消息
+            JSONObject jsonObject = JSONUtil.parseObj(entity.getMqData());
+            jsonObject.set("dmpSyncTaskId",entity.getId());
+            SendResult result = mqProducerService.syncClassMsg(dto.getMqTopic(), dto.getMqTag(), jsonObject, entity.getSourceId());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                 log.error("发送MQ数据异常，{}", JSONUtil.toJsonStr(result));
                 return Boolean.FALSE;

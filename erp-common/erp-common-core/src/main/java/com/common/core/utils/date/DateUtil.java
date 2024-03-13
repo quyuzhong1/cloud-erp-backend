@@ -500,6 +500,7 @@ public class DateUtil {
         }
         return dates;
     }
+
     /**
      * 判断字符串是否是合法的日期或时间 yyyy或yyyy-MM或yyyy-MM-DD 或yyyy-MM-DD HH:MI:SS
      * @param input

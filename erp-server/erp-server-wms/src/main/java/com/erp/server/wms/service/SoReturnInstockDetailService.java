@@ -80,4 +80,6 @@ public interface SoReturnInstockDetailService extends SuperService<SoReturnInsto
      * @return java.util.List<com.erp.model.wms.entity.SoReturnInstockDetailEntity>
      **/
     List<SoReturnInstockDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds);
+
+    List<SoReturnInstockDetailEntity> listDetailBySoReturnDetailIds(List<String> soReturnDetailIds);
 }

@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -14,6 +15,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.server.wms.query.PoInStockQueryHandler;
 import com.erp.server.wms.service.PoInstockService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -51,6 +53,7 @@ public class PoInStockController extends BaseController {
             menuCode = "wms:poInStock:paging",
             tableAlias = "psi"
     )
+    @WebAdvanceQuery(handler = PoInStockQueryHandler.class)
     public ApiResult<PagingVO<PoInstockDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PoInstockDTO.SearchParamDTO> dto) {
         PagingVO<PoInstockDTO.ListDTO> pagingVO = poInstockService.paging(dto);
         return success(pagingVO);
@@ -68,6 +71,7 @@ public class PoInStockController extends BaseController {
             menuCode = "wms:poInStock:paging",
             tableAlias = "psi"
     )
+    @WebAdvanceQuery(handler = PoInStockQueryHandler.class)
     public ApiResult<PoInstockDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated PoInstockDTO.SearchParamDTO  dto) {
         PoInstockDTO.PagingTotalDTO viewDTO = poInstockService.pagingTotal(dto);
         return success(viewDTO);
@@ -316,6 +320,7 @@ public class PoInStockController extends BaseController {
             menuCode = "wms:poInStock:paging",
             tableAlias = "psi"
     )
+    @WebAdvanceQuery(handler = PoInStockQueryHandler.class)
     public ApiResult exportExcel(@RequestBody PoInstockDTO.ExportParamDTO dto, HttpServletResponse response) {
         Boolean flag = poInstockService.exportExcel(dto, response);
         return flag == true ? success() : failure();

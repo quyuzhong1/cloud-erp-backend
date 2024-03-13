@@ -49,4 +49,12 @@ public interface SysDepartmentUserMapper  extends BaseMapper<SysDepartmentUserEn
     List<FindUserDTO> listDeptUserByDeptId(@Param("deptId") String deptId);
 
     List<SysDepartmentUserNumberDTO> listDeptUserByUserIdList(@Param("userIdList")List<String> userIdList);
+    /**
+     * @description: 根据部门id集合查询
+     * @author Will
+     * @date: 2024/1/31 17:57
+     * @param deptIdList
+     * @return List<SysDepartmentUserNumberDTO>
+     */
+    List<SysDepartmentUserNumberDTO> listDeptUserByDeptIdList(@Param("deptIdList") List<String> deptIdList);
 }

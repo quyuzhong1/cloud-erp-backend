@@ -138,6 +138,12 @@ public class PurchaseApplicationDetailEntity extends BaseEntity<PurchaseApplicat
     @TableField("variant_property")
     private String variantProperty;
 
+    /**
+     * 关闭原因
+     */
+    @TableField("close_reason")
+    private String closeReason;
+    
     public static final String PURCHASE_APPLICATION_ID = "purchase_application_id";
 
     public static final String SKU_ID = "sku_id";

@@ -1,40 +1,366 @@
 package com.erp.model.plm.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
- * @Description 产品证书表
- * @Author Luo_WG
- * @Date 2022/9/23 15:22
- **/
+ * @description: 产品证书表
+ * @author Will
+ * @date: 2024/2/19 10:41
+ */
 @Data
 @NoArgsConstructor
 public class ProductCertificateDTO implements Serializable {
 
     /**
-     * 主键id 无id：新增 有id：修改
+     * 列表DTO
      */
-    private String id;
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+        /**
+         * 主键id【可排序】
+         */
+        private String id;
+
+        /**
+         * 产品sku表id【可排序】
+         */
+        private String skuId;
+
+        /**
+         * 产品sku编码【可排序】
+         */
+        private String skuNo;
+
+        /**
+         * 产品sku名称（品名）【可排序】
+         */
+        private String skuName;
+
+        /**
+         * 证书类型【可排序】
+         */
+        private String type;
+
+        /**
+         * 证书类型名称
+         */
+        private String typeName;
+
+        /**
+         * 证书项目【可排序】
+         */
+        private String dictProject;
+
+        /**
+         * 证书项目名称
+         */
+        private String dictProjectName;
+
+        /**
+         * 证书有效期【可排序】
+         */
+        private LocalDate certificateValidTime;
+
+        /**
+         * 文件名称【可排序】
+         */
+        private String attachName;
+
+        /**
+         * 文件路径【可排序】
+         */
+        private String attachUrl;
+
+        /**
+         * 文件全路径
+         */
+        private String fullAttachUrl;
+
+        /**
+         * 备注【可排序】
+         */
+        private String remark;
+
+        /**
+         * 更新人【可排序】
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间【可排序】
+         */
+        private LocalDateTime updateTime;
+    }
 
     /**
-     * sku表id
+     * 参数DTO
      */
-    private String skuId;
+    @Data
+    @NoArgsConstructor
+    public static class SearchParamDTO extends SortDTO {
+
+      /**
+       * 品名
+       */
+      private String skuName;
+
+      /**
+       * SKU
+       */
+      private List<String> skuNoList;
+
+      /**
+       * 证书类型
+       */
+      private List<String> typeList;
+
+      /**
+       * 证书项目
+       */
+      private List<String> dictProjectList;
+
+      /**
+       * 文件名称
+       */
+      private String attachName;
+
+      /**
+       * 有效期
+       */
+      private List<LocalDate> certificateValidTimeList;
+
+      /**
+       * 备注
+       */
+      private String remark;
+
+    }
 
     /**
-     * 证书图片
+     * 参数DTO
      */
-    private String certificateImg;
+    @Data
+    @NoArgsConstructor
+    public static class ExportParamDTO extends SearchParamDTO {
+
+        /**
+         * 导出勾选id集合
+         */
+        private List<String> ids;
+    }
 
     /**
-     * 证书有效期
+     * 新增DTO
      */
-    private LocalDate certificateValidTime;
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO {
 
-    private static final long serialVersionUID = 1L;
+        /**
+         * skuNo集合
+         */
+        @NotEmpty(message = "SKU不能为空")
+        private List<String> skuNoList;
+
+        /**
+         * 证书类型
+         */
+        @NotBlank(message = "证书类型不能为空")
+        private String type;
+
+        /**
+         * 证书文件
+         */
+        @NotEmpty(message = "证书文件不能为空")
+        @Valid
+        private List<FileDTO> fileList;
+
+        /**
+         * 有效期
+         */
+        private String certificateValidTimeStr;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
+    /**
+     * 附件DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FileDTO {
+
+        /**
+         * 证书项目
+         */
+        @NotBlank(message = "证书项目不能为空")
+        private String dictProject;
+
+        /**
+         * 证书文件
+         */
+        @NotNull(message = "证书文件不能为空")
+        private MultipartFile multipartFile;
+
+    }
+
+    /**
+     * 产品信息修改DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductAddOrUpdateDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * 证书类型
+         */
+        @NotBlank(message = "证书类型不能为空")
+        private String type;
+
+        /**
+         * 证书项目
+         */
+        @NotBlank(message = "证书项目不能为空")
+        private String dictProject;
+
+        /**
+         * 有效期
+         */
+        private LocalDate certificateValidTime;
+
+        /**
+         * 证书文件表id
+         */
+        private String attachmentId;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 需要删除的附件id集合
+         */
+        private List<String> removeFileIdList;
+    }
+
+
+    /**
+     * 修改DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO {
+
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 有效期
+         */
+        private String certificateValidTimeStr;
+
+        /**
+         * 证书文件
+         */
+        private MultipartFile multipartFile;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 需要删除的附件id集合
+         */
+        private List<String> removeFileIdList;
+    }
+
+    /**
+     * 查看详情DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 证书类型
+         */
+        private String type;
+
+        /**
+         * 证书类型
+         */
+        private String typeName;
+
+        /**
+         * 证书项目
+         */
+        private String dictProject;
+
+        /**
+         * 证书项目名称
+         */
+        private String dictProjectName;
+
+        /**
+         * 有效时间
+         */
+        private LocalDate certificateValidTime;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 历史附件
+         */
+        private List<AttachmentDTO.ListDTO> historyFileList;
+
+    }
 }

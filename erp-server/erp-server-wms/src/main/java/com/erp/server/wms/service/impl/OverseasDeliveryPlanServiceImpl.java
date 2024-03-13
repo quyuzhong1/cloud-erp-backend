@@ -1,54 +1,57 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
-
-import cn.hutool.core.util.StrUtil;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.*;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.ListingInfoDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.DeliveryPlanDetailExportExcelDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
 import com.erp.model.wms.enums.FbaDemandTypeEnum;
 import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.convert.OverseasDeliveryPlanConverter;
 import com.erp.server.wms.listener.DeliveryPlanDetailExcelListener;
 import com.erp.server.wms.mapper.OverseasDeliveryPlanMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
@@ -56,11 +59,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
-import java.util.stream.Collectors;
 import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import org.springframework.web.multipart.MultipartFile;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -99,6 +99,8 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     private SkuMappingFeign skuMappingFeign;
     @Autowired
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
+
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -191,7 +193,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     }
 
     @Override
-    public void exportList(OverseasDeliveryPlanDTO.ExportDTO param, HttpServletResponse response) {
+    public void exportList(OverseasDeliveryPlanDTO.PagingParamDTO param, HttpServletResponse response) {
         List<OverseasDeliveryPlanDTO.ListDTO> list = this.baseMapper.listExport(param);
         if(CollUtil.isEmpty(list)) {
            return;
@@ -462,6 +464,15 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         List<String> skuIdList = detailEntityList.stream().map(OverseasDeliveryPlanDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
+        //查询第三方仓SKU信息
+//        List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(data.getToWarehouseId()));
+//        String provideCode;
+//        if(CollectionUtils.isNotEmpty(viewDTOList)){
+//            provideCode = viewDTOList.get(0).getProviderCode();
+//        } else {
+//            provideCode = "";
+//        }
+//        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIdList,"");
         //设置状态中文名称
         data.setApproveStatusName(data.getApproveStatus().getName());
 
@@ -496,6 +507,14 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
                 viewDTO.setStockSku(listSkuDTO.getWarehouseSkuNo());
                 viewDTO.setStockSkuName(listSkuDTO.getWarehouseProductName());
             }
+//            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
+//                    v->v.getDictPlatform().equals(provideCode) && v.getProductSkuId().equals(viewDTO.getSkuId()) && (v.getHasMappingAll() || v.getWarehouseId().equals(data.getToWarehouseId()))
+//                    )
+//                    .findFirst().orElse(null);
+//            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
+//                viewDTO.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
+//                viewDTO.setThirdWarehouseProductName(listingInfoWithSkuMappingDTO.getPlatformSkuName());
+//            }
 
         }
         data.setDetailList(viewDTOS);
@@ -684,13 +703,22 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     }
 
     @Override
-    public OverseasDeliveryPlanDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response) {
-        //查询所有审核通过的sku
-        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
-        //子件信息
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+    public ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList,String warehouseId, HttpServletResponse response) {
 
-        DeliveryPlanDetailExcelListener excelListenerUtil = new DeliveryPlanDetailExcelListener(skuList, skuIds, bomChildrenSkuList);
+        if(StringUtils.isBlank(warehouseId)){
+            throw new ServiceException("仓库id不能为空");
+        }
+
+        List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(warehouseId));
+        if(CollectionUtils.isEmpty(viewDTOList)){
+            throw new ServiceException("查询不到海外仓信息");
+        }
+        String provideCode = viewDTOList.get(0).getProviderCode();
+
+        //查询第三方SKU信息
+        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(new ArrayList<>(),provideCode);
+
+        DeliveryPlanDetailExcelListener excelListenerUtil = new DeliveryPlanDetailExcelListener(thirdSkuNoList,listingWithSkuMappingDTOList,warehouseId);
         try {
             EasyExcel.read(excelFile.getInputStream(), DeliveryPlanDetailExportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
@@ -705,9 +733,9 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.ERROR_95123);
         }
-        OverseasDeliveryPlanDetailDTO.ImportDTO importDTO = new OverseasDeliveryPlanDetailDTO.ImportDTO();
+        ListingInfoDTO.ImportDTO importDTO = new ListingInfoDTO.ImportDTO();
         //导入数据处理
-        List<OverseasDeliveryPlanDetailDTO.ViewDTO> successList = excelListenerUtil.getSuccessList();
+        List<ListingInfoDTO.PageDTO> successList = excelListenerUtil.getSuccessList();
         //导出错误数据
         List<DeliveryPlanDetailExportExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";
@@ -718,6 +746,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
+        this.fillData(successList);
         importDTO.setSuccessList(successList);
         importDTO.setErrorUrl(url);
         return importDTO;
@@ -872,8 +901,11 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         //查询skuId产品信息
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
+        //查询第三方仓SKU信息
+//        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIds,"");
         //根据单据id查询审核流程
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
+
 
         // 属性赋值
         for(OverseasDeliveryPlanDTO.ListDTO data : list) {
@@ -908,6 +940,14 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
             List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(data.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
             String waitApproveUserName = StringUtils.join(curApproveName, ",");
             data.setWaitApproveUserName(waitApproveUserName);
+
+//            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
+//                    v->v.getDictPlatform().equals(data.getProvideCode()) && v.getProductSkuId().equals(data.getSkuId()) &&(v.getHasMappingAll() || v.getWarehouseId().equals(data.getToWarehouseId()))
+//                    )
+//                    .findFirst().orElse(null);
+//            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
+//                data.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
+//            }
         }
     }
     /**
@@ -940,5 +980,17 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         }
 
     }
+    private void fillData(List<ListingInfoDTO.PageDTO> records) {
+        List<String> skuNo = records.stream().map(ListingInfoDTO.PageDTO::getSkuNo).collect(Collectors.toList());
 
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNo);
+
+        records.forEach(v->{
+            SkuVO skuVO = skuVOList.stream().filter(t->t.getSkuNo().equals(v.getSkuNo())).findFirst().orElse(null);
+            if(Objects.nonNull(skuVO)){
+                v.setImagesUrl(skuVO.getSkuImagesUrl());
+                v.setProductName(skuVO.getSkuName());
+            }
+        });
+    }
 }

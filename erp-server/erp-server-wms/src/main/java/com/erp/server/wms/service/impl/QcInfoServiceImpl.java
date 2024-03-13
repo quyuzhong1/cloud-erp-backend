@@ -1577,6 +1577,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             String purchaseUserId = "";
             if (purchaseOrderInfo != null) {
                 purchaseUserId = purchaseOrderInfo.getPurchaseUserId();
+                addDTO.setPurchaseOrgId(purchaseOrderInfo.getPurchaseOrgId());
             }
             addDTO.setPurchaseUserId(purchaseUserId);
             addList.add(addDTO);

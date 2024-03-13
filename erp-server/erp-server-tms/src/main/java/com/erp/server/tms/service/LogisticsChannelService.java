@@ -1,10 +1,12 @@
 package com.erp.server.tms.service;
-import com.common.core.controller.vo.ApiResult;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
+
+import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 
 import java.util.List;
 
@@ -196,4 +198,13 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      * @create 2024-01-05 14:24
      */
     List<LogisticsChannelDTO.LogisticsPlatformDTO> listChannelPlatform(List<String> channelIdList);
+
+
+    /**
+     * 获取供应商渠道信息
+     * @return
+     */
+    List<LogisticsChannelDTO.ProvideChannelDTO> getProvideChannel(List<String> channelCodeList,List<String> provideNameList);
+
+    LogisticsChannelDTO.LogisticsChannelConstraintDTO getLogisticsChannelConstraint(String channelId, String country);
 }

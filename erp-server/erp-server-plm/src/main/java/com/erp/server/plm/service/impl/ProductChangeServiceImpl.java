@@ -135,7 +135,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (!isBom) {
             //sku数据验证
             checkSkuChange(dto.getDetailsJson());
-            checkSkuChangeAuditor(sourceId);
+
         }
 
         Boolean saveResult = this.save(change);
@@ -187,23 +187,21 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
 
     /**
-     * 检查sku审核人是否为空
+     * 产品负责人
      *
-     * @param sourceId
+     * @param productChargeIdList
      * @return void
      * @author yl
      * @date 2023-02-01 18:47
      */
-    public void checkSkuChangeAuditor(String sourceId) {
-        List<String> skuIdList = Arrays.asList(sourceId);
+    public void checkSkuChangeAuditor(List<String> productChargeIdList) {
         //产品经理
-        List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
-        if (CollectionUtils.isEmpty(productManagerList)) {
+        if (CollectionUtils.isEmpty(productChargeIdList)) {
             throw new ServiceException(ApiError.ERROR_9030);
         }
 
         //产品经理上级
-        List<String> productManagerSupervisorList = getProductManagerSupervisorList(productManagerList);
+        List<String> productManagerSupervisorList = getProductManagerSupervisorList(productChargeIdList);
         if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
             throw new ServiceException(ApiError.ERROR_9031);
         }
@@ -246,6 +244,13 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             BeanMapper.copy(purchaseShowDTO, purchaseEntity);
             productPurchaseService.checkProductPurchase(purchaseEntity);
         }
+        //检查sku 审核人
+        List<String> productChargeIdList = new ArrayList<>(1);
+        if (skuDTO.getProductManySpecBaseDTO() != null) {
+            productChargeIdList.add(skuDTO.getProductManySpecBaseDTO().getChargeId());
+        }
+        checkSkuChangeAuditor(productChargeIdList);
+
     }
 
     /**
@@ -794,6 +799,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      * @date 2023-01-30 16:41
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void processPass(ProcessPassDTO dto) {
         //从流程那边获取到具体业务表id
         String id = dto.getBusinessTableId();
@@ -850,7 +856,11 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (isBom) {
             checkBomChangeAuditor(change.getSourceId());
         } else {
-            checkSkuChangeAuditor(change.getSourceId());
+            List<String> skuIdList = new ArrayList<>(1);
+            skuIdList.add(change.getSourceId());
+            //产品经理
+            List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
+            checkSkuChangeAuditor(productManagerList);
         }
         Integer state = change.getState();
         if (!ProductChangeStateEnum.AUDIT_NO_PASS.getState().equals(state)) {
@@ -1002,7 +1012,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         setList(CollectionUtils.isNotEmpty(newBom.getRemarkEntityList()) ? newBom.getRemarkEntityList().get(0) : null, CollectionUtils.isNotEmpty(oldbom.getRemarkEntityList()) ? oldbom.getRemarkEntityList().get(0) : null, resultList);
         setList(newBom.getProductLogisticsShowDTO(), oldbom.getProductLogisticsShowDTO(), resultList);
         setList(newBom.getProductPackShowDTO(), oldbom.getProductPackShowDTO(), resultList);
-        setList(newBom.getProductAttestationDTO(), oldbom.getProductAttestationDTO(), resultList);
         if (CollectionUtils.isNotEmpty(resultList)) {
             resultList = resultList.stream().filter(e -> !"createTime".equals(e) && !"updateTime".equals(e) && !"updateUserId".equals(e) && !"updateUserName".equals(e) && !"createUserName".equals(e)).distinct().collect(Collectors.toList());
         }

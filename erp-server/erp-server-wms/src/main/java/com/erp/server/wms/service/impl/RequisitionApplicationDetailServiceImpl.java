@@ -11,6 +11,7 @@ import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.wms.convert.RequisitionApplicationConverter;
 import com.erp.server.wms.mapper.RequisitionApplicationDetailMapper;
 import com.erp.server.wms.service.RequisitionApplicationDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -52,7 +53,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(RequisitionApplicationDTO.AddDTO addDTO, String mainId) {
-        List<RequisitionApplicationDetailEntity> list = BeanMapper.copyList(addDTO.getDetailList(), RequisitionApplicationDetailEntity.class);
+        List<RequisitionApplicationDetailEntity> list = RequisitionApplicationConverter.INSTANCE.detailConvert(addDTO.getDetailList());
 
         // 数据处理
         handleData(list, mainId, Boolean.FALSE);

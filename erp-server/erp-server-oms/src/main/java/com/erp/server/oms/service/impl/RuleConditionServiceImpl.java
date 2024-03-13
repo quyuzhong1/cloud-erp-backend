@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.RuleCompareEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
@@ -58,7 +59,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         BeanMapperUtils.copy(addDTO, ruleConditionEntity);
 
         // 数据处理
-        handleData(ruleConditionEntity);
+
 
         log.info("开始新增规则条件单");
         boolean save = super.save(ruleConditionEntity);
@@ -85,7 +86,6 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         RuleConditionEntity ruleConditionEntity = BeanMapperUtils.map(RuleConditionEntity.class, updateDTO);
 
         // 数据处理
-        handleData(ruleConditionEntity);
         log.info("编辑 开始修改规则条件单数据，id：【{}】", old.getId());
         boolean save = super.updateById(ruleConditionEntity);
         if (!save) {
@@ -122,9 +122,10 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
             item.setIndex(i);
             i++;
         }
-        List<RuleConditionEntity> RuleConditionList = BeanMapper.copyList(conditionList, RuleConditionEntity.class);
-        RuleConditionList.forEach(r -> r.setRuleId(ruleId));
-        this.saveBatch(RuleConditionList);
+        List<RuleConditionEntity> ruleConditionList = BeanMapper.copyList(conditionList, RuleConditionEntity.class);
+        ruleConditionList.forEach(r -> r.setRuleId(ruleId));
+        handleDataList(ruleConditionList);
+        this.saveBatch(ruleConditionList);
     }
 
     /**
@@ -222,6 +223,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
                 operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId, "修改了订单规则");
             }
         }
+        handleDataList(saveOrUpdateList);
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
 
@@ -272,7 +274,13 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
     /**
      * 新增修改处理数据
      */
-    private void handleData(RuleConditionEntity ruleConditionEntity) {
+    private void handleDataList(List<RuleConditionEntity> ruleConditionList) {
         // TODO 验证数据 & 数据赋值
+        for (RuleConditionEntity item : ruleConditionList) {
+            String compare = item.getCompare();
+            if (RuleCompareEnum.IS_NULL.getCode().equals(compare)) {
+                item.setValue("");
+            }
+        }
     }
 }

@@ -39,6 +39,11 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
     PagingVO<ProductShowDTO> paging(PagingDTO<ProductSearchDTO.PagingParamDTO> dto);
 
     /**
+     * 处理部门数据
+     */
+    Boolean handlePagingDept(ProductSearchDTO.PagingParamDTO params);
+
+    /**
      * @description: 查询产品列表数据（无分页）
      * @author Will
      * @date: 2023/2/10 14:35

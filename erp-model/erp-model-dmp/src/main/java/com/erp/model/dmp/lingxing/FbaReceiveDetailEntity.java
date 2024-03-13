@@ -14,7 +14,11 @@ import java.time.OffsetDateTime;
 @NoArgsConstructor
 public class FbaReceiveDetailEntity{
 
-    // 店铺id
+    // ERP店铺id
+    @Panno(findType = PannoEnum.EQ,field = "shopId")
+    private String shopId;
+
+    // 领星店铺id
     @Panno(findType = PannoEnum.EQ,field = "sid")
     private Integer sid;
 

@@ -1,12 +1,12 @@
 package com.erp.server.bi.rocketmq.consumer;
 
-import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.DmpExchangeRateDTO;
-import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.bi.rocketmq.sync.SyncExchangeRateService;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ import javax.annotation.Resource;
 @Service
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.DMP_SYNC_TASK_TOPIC, selectorExpression = "sync_kingdee_exchange_rate_to_wms_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_EXCHANGE_RATE_TO_WMS)
-public class SyncExchangeRateConsumer implements RocketMQListener<DmpSyncMqDTO> {
+public class SyncExchangeRateConsumer implements RocketMQListener<Object> {
 
     @Resource
     private SyncExchangeRateService syncExchangeRateService;
@@ -34,12 +34,16 @@ public class SyncExchangeRateConsumer implements RocketMQListener<DmpSyncMqDTO> 
     private DmpTaskFeign dmpTaskFeign;
 
     @Override
-    public void onMessage(DmpSyncMqDTO dmpSyncMqDTO) {
+    public void onMessage(Object ext) {
+
+        //json数据
+        JSONObject jsonObject = JSONUtil.parseObj(ext);
+        String dmpSyncTaskId = jsonObject.get("dmpSyncTaskId").toString();
+
         DmpSyncMqDTO.ParamDTO paramDTO = new DmpSyncMqDTO.ParamDTO();
-        paramDTO.setDmpSyncTaskId(dmpSyncMqDTO.getDmpSyncTaskId());
-        String dataJson = dmpSyncMqDTO.getMqData();
-        log.info("监听到汇率列表需要同步：entity={}", dataJson);
-        DmpExchangeRateDTO dmpExchangeRateDTO = BeanUtil.toBean(JSONUtil.parseObj(dataJson), DmpExchangeRateDTO.class);
+        paramDTO.setDmpSyncTaskId(dmpSyncTaskId);
+        log.info("监听到汇率列表需要同步：entity={}", jsonObject);
+        DmpExchangeRateDTO dmpExchangeRateDTO = JSONUtil.toBean(jsonObject, DmpExchangeRateDTO.class);
         try {
             syncExchangeRateService.syncKingdeeExchangeRate(dmpExchangeRateDTO);
         } catch (Exception e) {

@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -161,6 +162,7 @@ public class OverseasWarehouseInboundController extends BaseController {
             menuCode = "wms:overseasWarehouseInbound:paging",
             tableAlias = "owi"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<OverseasWarehouseInboundDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<OverseasWarehouseInboundDTO.PagingParamDTO> dto) {
         PagingVO<OverseasWarehouseInboundDTO.ListDTO> result = overseasWarehouseInboundService.paging(dto);
         return success(result);
@@ -360,6 +362,7 @@ public class OverseasWarehouseInboundController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出海外入库单")
     @PostMapping("/export")
+    @WebAdvanceQuery
     public ApiResult<?> exportWarehouse(@RequestBody @Valid OverseasWarehouseInboundDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = overseasWarehouseInboundService.exportExcel(dto, response);
         return result ? success() : failure();

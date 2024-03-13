@@ -132,6 +132,14 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @create 2023-12-13 20:15
      */
     List<SoB2cDetailDTO.OutstockDTO> listOutstockByMainId(String mainId);
+    /**
+     * @description: 查询待发货数量
+     * @author Will
+     * @date: 2024/1/31 12:03
+     * @param paramDTO
+     * @return List<WaitDeliveryQtyDTO>
+     */
+    List<SoB2cDetailDTO.WaitDeliveryQtyDTO> listWaitDeliveryQty(SoB2cDetailDTO.WaitDeliveryParamDTO paramDTO);
 
     /**
      * 速卖通修改仓库信息

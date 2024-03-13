@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.SearchType;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -22,6 +23,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
+import com.erp.model.bi.dto.BiTargetNewProductSettingDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
@@ -1128,6 +1131,19 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             }
         }
         return listDTOPagingVO;
+    }
+
+    @Override
+    public List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(List<String> erpSkuIdList,String provideCode) {
+        if(CollectionUtils.isEmpty(erpSkuIdList) && StringUtils.isBlank(provideCode)){
+            return new ArrayList<>();
+        }
+        return baseMapper.listByErpSkuIdAndType(erpSkuIdList,provideCode);
+    }
+
+    @Override
+    public List<ListingAdvanceQueryDTO> advanceQuerySku(AdvanceQueryContainer advanceQueryContainer) {
+        return baseMapper.advanceQuerySku(advanceQueryContainer);
     }
 
     private List<SkuMappingEntity> listByInfo(List<String> skuIdList, String dictPlatform, String type) {

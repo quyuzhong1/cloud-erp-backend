@@ -212,8 +212,10 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
             return null;
         }
         List<Map<String, Object>> mapList = (List<Map<String, Object>>) map.get("detailList");
-        mapList= mapList.stream().filter(m->Objects.isNull(m.get("logisticsChannelId"))||StringUtils.isBlank(m.get("logisticsChannelId").toString())).
-                collect(Collectors.toList());
+        //要匹配渠道id 是空的 如果有就 不用匹配了返回成功
+        String logisticsChannelIdKey="logisticsChannelId";
+        mapList = mapList.stream().filter(m -> m.get(logisticsChannelIdKey)==null ||
+                StringUtils.isBlank(m.getOrDefault(logisticsChannelIdKey,"").toString())).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(mapList)){
             return new RuleLogisticsDTO.RuleMatchResultDTO();
         }
@@ -287,4 +289,6 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         }
 
     }
+
+
 }

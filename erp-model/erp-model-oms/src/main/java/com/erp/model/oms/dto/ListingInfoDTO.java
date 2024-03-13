@@ -1,11 +1,16 @@
 package com.erp.model.oms.dto;
 
 import cn.hutool.core.util.ReflectUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.core.anno.StateEnumValue;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -15,6 +20,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -25,6 +31,130 @@ import java.util.List;
  */
 public class ListingInfoDTO implements Serializable {
 
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO implements Serializable{
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
+        /**
+         * 目的仓Id（目的仓Id和店铺Id不能都为空）
+         */
+        private String warehouseId;
+
+        /**
+         * 店铺Id（目的仓Id和店铺Id不能都为空）
+         */
+        private String shopId;
+
+        /**
+         * 服务商code
+         */
+        @JsonIgnore
+        private String  providerCode;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class PageDTO implements Serializable{
+        /**
+         * skuMapping id 编辑时传
+         */
+        private String id;
+
+        /**
+         * 第三方sku
+         */
+        private String platformSku;
+
+        /**
+         * 第三方产品名称
+         */
+        private String platformSkuName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 品名
+         */
+        private String productName;
+
+        /**
+         * 图片
+         */
+        private String imagesUrl;
+        /**
+         * mSKU
+         */
+        private String mSKU;
+
+        /**
+         * FNSKU
+         */
+        private String fnSku;
+
+        /**
+         * ASIN
+         */
+        private String asin;
+
+
+        /**
+         * 计划发货数量
+         */
+        private Integer qty;
+
+        /**
+         * 对照关系是否映射到服务商平台所有仓库: f=否, t=是
+         */
+        private Boolean hasMappingAll;
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+    }
+
+    /**
+     * sku映射参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseSkuMappingParamDTO {
+
+        /**
+         * skuMapping id
+         */
+        private String id;
+
+        /**
+         * erp下拉的sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+
+    }
 
     @Data
     @NoArgsConstructor
@@ -116,6 +246,18 @@ public class ListingInfoDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<ListingInfoDTO.PageDTO> successList;
 
+        /**
+         * 错误url
+         */
+        private String errorUrl;
+    }
 
 }

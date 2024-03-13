@@ -1,6 +1,5 @@
 package com.erp.model.scm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
@@ -1099,7 +1098,10 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private String deliveryWarehouseName;
 
-
+        /**
+         * 采购组织
+         */
+        private String purchaseOrgId;
     }
 
     @Data
@@ -1363,6 +1365,16 @@ public class PurchaseOrderDTO implements Serializable {
          * 审核状态名称
          */
         private String approveStatusName;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
         /**
          * 商品信息
          */

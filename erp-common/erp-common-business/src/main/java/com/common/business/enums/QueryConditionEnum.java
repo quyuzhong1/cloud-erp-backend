@@ -1,5 +1,6 @@
 package com.common.business.enums;
 
+import com.common.core.constant.EnumMessage;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -12,7 +13,7 @@ import java.util.stream.Collectors;
 
 @Getter
 @ToString
-public enum QueryConditionEnum {
+public enum QueryConditionEnum implements EnumMessage {
 
     GT("gt",">", "大于"),
     GE("ge",">=", "大于等于"),

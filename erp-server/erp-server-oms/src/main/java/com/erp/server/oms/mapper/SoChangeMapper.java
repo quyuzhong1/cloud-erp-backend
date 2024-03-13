@@ -29,9 +29,9 @@ public interface SoChangeMapper extends BaseMapper<SoChangeEntity> {
      * @param
      * @return java.util.List<com.erp.model.oms.dto.SoChangeDTO.ApproveCountDTO>
      */
-    List<SoChangeDTO.ApproveCountDTO> listApproveCount(@Param("permissionSql")String permissionSql);
+    Integer listCount(@Param("params")SoChangeDTO.PagingParamDTO params);
 
-    IPage<SoChangeDTO.PagingViewDTO> paging(Page query, @Param("params")SoChangeDTO.PagingParamDTO params, @Param("approveList") List<String> approveList);
+    IPage<SoChangeDTO.PagingViewDTO> paging(Page query, @Param("params")SoChangeDTO.PagingParamDTO params);
 
     
     /**
@@ -39,10 +39,9 @@ public interface SoChangeMapper extends BaseMapper<SoChangeEntity> {
      * @author yl
      * @date 2023-05-24 17:49
      * @param dto
-     * @param approveList
      * @return java.util.List<com.erp.model.oms.dto.SoChangeDTO.PagingViewDTO>
      */
-    List<SoChangeDTO.PagingViewDTO> listExport(@Param("params") SoChangeDTO.PagingParamDTO dto,@Param("approveList") List<String> approveList);
+    List<SoChangeDTO.PagingViewDTO> listExport(@Param("params") SoChangeDTO.PagingParamDTO dto);
 
     List<SoChangeDTO.SoRefDTO> listSoRefSoChangeBySoId(@Param("soId") String soId);
 

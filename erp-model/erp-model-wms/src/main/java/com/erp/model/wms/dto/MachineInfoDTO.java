@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.validator.AddGroup;
 import com.common.core.anno.StateEnumValue;
@@ -16,6 +17,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Will
@@ -35,6 +37,27 @@ public class MachineInfoDTO implements Serializable {
          * 主键id
          */
         private String id;
+
+        /**
+         * 明细id
+         */
+        private String detailId;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型 {soInfo:b2b销售订单，MB_FBA_DELIVERY：马帮FBA发货单，firstMileDelivery：头程发货单，soReturnInstock:销售退货入库单，transferApplication：调拨申请单}
+         */
+        private String sourceType;
 
         /**
          * 加工单号
@@ -136,51 +159,20 @@ public class MachineInfoDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 主键ids
+         * sqlMap 默认key default
          */
-        private List<String> ids;
-        /**
-         * 搜索类型
-         */
-        private String searchType;
-        /**
-         * 加工编号
-         */
-        private String code;
-        /**
-         * sku编码集合
-         */
-        private List<String> skuNoList;
+        private Map<String, String> sqlMap;
+
         /**
          * 审核状态集合
          */
         private List<String> approveStatusList;
-        /**
-         * 作废状态
-         */
-        private Boolean invalidStatus;
-        /**
-         * 事务类型
-         */
-        private String workType;
-        /**
-         * 加工日期集合
-         */
-        private List<LocalDate> billDateList;
-        /**
-         * 收货仓库id集合
-         */
-        private List<String> warehouseIdList;
-        /**
-         * 创建人id集合
-         */
-        private List<String> createUserIdList;
-        /**
-         * 创建时间集合
-         */
-        private List<LocalDate> createTimeList;
 
 
     }
@@ -192,8 +184,11 @@ public class MachineInfoDTO implements Serializable {
         /**
          * 类型(toBeApprove待审批，approve审核通过，reject不通过)
          */
-        private String searchType;
-
+        private String tabFlag;
+        /**
+         * tab名称
+         */
+        private String tabFlagName;
         /**
          * 数量
          */
@@ -244,7 +239,7 @@ public class MachineInfoDTO implements Serializable {
          */
         private String sourceId;
         /**
-         * 来源类型
+         * 来源类型 {soInfo:b2b销售订单，MB_FBA_DELIVERY：马帮FBA发货单，firstMileDelivery：头程发货单，soReturnInstock:销售退货入库单，transferApplication：调拨申请单}
          */
         private String sourceType;
 

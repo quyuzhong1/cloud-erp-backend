@@ -186,7 +186,7 @@ public class SoDetailDTO implements Serializable {
         private Integer deliveryQty;
 
         /**
-         * 剩余数量
+         * 剩余未出数量
          */
         private Integer waitQty;
 
@@ -1183,9 +1183,9 @@ public class SoDetailDTO implements Serializable {
 
 
         /**
-         * 已发货数量
+         * 发货数量
          */
-        private Integer alreadyDeliveryQty;
+        private Integer deliveryQty;
 
     }
 

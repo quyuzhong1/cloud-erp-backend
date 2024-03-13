@@ -7,7 +7,6 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.server.dmp.service.DmpPullTaskService;
@@ -130,8 +129,6 @@ public class DmpSyncTaskJob {
         List<DmpPushTaskEntity> updateList = new ArrayList<>();
         for (DmpPushTaskEntity recordEntity : recordEntityList) {
             try {
-                // 发送推送同步任务消息
-                DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(recordEntity.getId(), recordEntity.getMqData());
                 //查询来源上级单据
                 Boolean isSend = dmpPushTaskService.isSendParentBillTask(recordEntity);
                 //判断是否存在上级单据，并且推送成功

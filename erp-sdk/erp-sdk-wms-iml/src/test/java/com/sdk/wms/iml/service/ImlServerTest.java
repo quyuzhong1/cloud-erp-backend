@@ -183,7 +183,7 @@ public class ImlServerTest {
     @Test
     public void getOutboundBillTest() {
         ImlGetOutboundReq imlGetOutboundReq = ImlGetOutboundReq.builder()
-                .orderCode("86526-230221-0473")
+                .orderCode("RV86526-240129-0001")
                 .pageSize(100)
                 .build();
 
