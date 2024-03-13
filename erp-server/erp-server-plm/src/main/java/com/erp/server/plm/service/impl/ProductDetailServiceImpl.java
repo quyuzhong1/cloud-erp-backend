@@ -3993,7 +3993,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 throw new ServiceException(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST,detailEntity.getSkuNo());
             }
             if (StrUtil.isNotBlank(productPackEntity.getProductSize())) {
-                List<String> productSizeList = Arrays.stream(productPackEntity.getProductSize().split("X")).collect(Collectors.toList());
+                List<String> productSizeList = Arrays.stream(productPackEntity.getProductSize().split("X")).filter(obj -> StrUtil.isNotBlank(obj)).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(productSizeList) || productSizeList.size() != 3) {
                     throw new ServiceException(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST,detailEntity.getSkuNo());
                 }
@@ -4003,7 +4003,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             //箱规
             if (StrUtil.isNotBlank(productPackEntity.getBoxSize())) {
-                List<String> boxSizeList = Arrays.stream(productPackEntity.getProductSize().split("X")).collect(Collectors.toList());
+                List<String> boxSizeList = Arrays.stream(productPackEntity.getProductSize().split("X")).filter(obj -> StrUtil.isNotBlank(obj)).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(boxSizeList) || boxSizeList.size() != 3) {
                     throw new ServiceException(ApiError.ERROR_BOX_SIZE_NOT_EXIST, detailEntity.getSkuNo());
                 }
@@ -4026,7 +4026,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
     }
-
 
     @Override
     public List<ProductDetailEntity> listBySkuNoList(List<String> skuNoList) {
