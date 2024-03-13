@@ -1,7 +1,9 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.erp.model.sys.dto.KingdeeDepartmentDTO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
@@ -64,6 +66,19 @@ public class KingdeePostController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "金蝶岗位表新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated KingdeePostDTO.AddDTO dto) {
         return success(kingdeePostService.add(dto));
+    }
+
+
+    /**
+     * 详情
+     * @author Lambda
+     * @date:  2024-03-11
+     * @return ApiResult<String>
+     */
+    @GetMapping("/view")
+    @LogViewService
+    public ApiResult<KingdeePostDTO.ViewDTO> view(@Param("id") String id) {
+        return success(kingdeePostService.view(id));
     }
 
     /**

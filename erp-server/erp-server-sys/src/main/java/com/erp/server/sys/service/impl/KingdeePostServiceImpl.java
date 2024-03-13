@@ -162,7 +162,7 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
                 addEntity.setUseOrgId(orgInfo.getId());
                 addEntity.setUseOrgName(orgInfo.getName());
                 addEntity.setKingdeeDeptId(kingdeeDeptId);
-                saveOrUpdateList.add(dbEntity);
+                saveOrUpdateList.add(addEntity);
             }else{
                 if(!dbEntity.getCode().equals(code) || !dbEntity.getName().equals(name) ||
                         dbEntity.getUseOrgId().equals(orgInfo.getId()) ||
@@ -174,12 +174,27 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
                     dbEntity.setUseOrgName(orgInfo.getName());
                     dbEntity.setKingdeeDeptId(kingdeeDeptId);
                     saveOrUpdateList.add(dbEntity);
-
                 }
             }
         }
 
         return this.saveOrUpdateBatch(saveOrUpdateList);
+    }
+
+    @Override
+    public KingdeePostDTO.ViewDTO view(String id) {
+        KingdeePostEntity postEntity = this.getById(id);
+        if (Objects.isNull(postEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶岗位不存在");
+        }
+        KingdeePostDTO.ViewDTO viewDTO = new KingdeePostDTO.ViewDTO();
+        BeanUtil.copyProperties(postEntity, viewDTO);
+        String kingdeeDeptId = postEntity.getKingdeeDeptId();
+        KingdeeDepartmentEntity  kingdeeDept= kingdeeDepartmentService.getById(kingdeeDeptId);
+        if (Objects.nonNull(kingdeeDept)) {
+            viewDTO.setKingdeeDeptName(kingdeeDept.getKingdeeDeptName());
+        }
+        return viewDTO;
     }
 
 

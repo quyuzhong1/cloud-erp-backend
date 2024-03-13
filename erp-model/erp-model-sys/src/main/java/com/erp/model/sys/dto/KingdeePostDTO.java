@@ -70,6 +70,36 @@ public class KingdeePostDTO implements Serializable {
 
     }
 
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO{
+        private String id;
+
+        /**
+         * 使用组织id
+         */
+        private String useOrgId;
+
+        /**
+         * 使用组织名
+         */
+        private String useOrgName;
+
+        /**
+         * 金蝶部门表id
+         */
+        private String kingdeeDeptId;
+
+        /**
+         * 金蝶部门名
+         */
+        private String kingdeeDeptName;
+
+    }
+
 
     @Data
     @NoArgsConstructor

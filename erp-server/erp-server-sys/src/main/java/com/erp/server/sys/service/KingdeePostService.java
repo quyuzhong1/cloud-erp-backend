@@ -42,4 +42,14 @@ public interface KingdeePostService extends SuperService<KingdeePostEntity> {
      * @author Lambda
      */
     Boolean init();
+
+    /**
+     * 岗位详情
+     * @description
+     * @param id
+     * @return
+     * @date 2024-03-13 14:52
+     * @author Lambda
+     */
+    KingdeePostDTO.ViewDTO view(String id);
 }
