@@ -1,11 +1,14 @@
 package com.erp.model.sys.dto;
 
 import cn.hutool.core.annotation.Alias;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -81,6 +84,17 @@ public class KingdeeDepartmentDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
 
     }
 
@@ -202,19 +216,19 @@ public class KingdeeDepartmentDTO implements Serializable {
         private String kingdeeDeptName;
 
         /**
-         * erp部门id
+         * erp部门id 来源 http://172.16.100.11:3002/project/36/interface/api/5404
          */
         @NotBlank(message = "erp部门id不能为空")
         private String erpDeptId;
 
         /**
-         * 使用组织id
+         * 使用组织id 来源 http://172.16.100.11:3002/project/36/interface/api/30795
          */
         @NotBlank(message = "使用组织id不能为空")
         private String useOrgId;
 
         /**
-         * 父级id
+         * 父级id 来源 http://172.16.100.11:3002/project/36/interface/api/30715
          */
         private String parentId;
 
@@ -242,19 +256,19 @@ public class KingdeeDepartmentDTO implements Serializable {
         private String kingdeeDeptName;
 
         /**
-         * erp部门id
+         * erp部门id 来源 http://172.16.100.11:3002/project/36/interface/api/5404
          */
         @NotBlank(message = "erp部门id不能为空")
         private String erpDeptId;
 
         /**
-         * 使用组织id
+         * 使用组织id 来源 http://172.16.100.11:3002/project/36/interface/api/30795
          */
         @NotBlank(message = "使用组织id不能为空")
         private String useOrgId;
 
         /**
-         * 父级id
+         * 父级id  来源 http://172.16.100.11:3002/project/36/interface/api/30715
          */
         private String parentId;
 

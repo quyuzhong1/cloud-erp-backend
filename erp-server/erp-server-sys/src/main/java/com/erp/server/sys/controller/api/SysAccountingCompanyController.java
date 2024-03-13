@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
+ * 组织管理
  * @author Administrator
  * @Classname SysAccountingCompanyController
 

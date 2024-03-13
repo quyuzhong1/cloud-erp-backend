@@ -50,6 +50,10 @@
        LEFT JOIN sys_department sd
        ON sd.id=kd.erp_dept_id
        WHERE kd.is_deleted = FALSE
+       AND
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
