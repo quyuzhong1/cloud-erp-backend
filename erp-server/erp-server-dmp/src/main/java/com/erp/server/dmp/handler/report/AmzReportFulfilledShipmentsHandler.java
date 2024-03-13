@@ -65,7 +65,7 @@ public class AmzReportFulfilledShipmentsHandler extends AmzReportBusinessHandler
                 .distinct()
                 .collect(Collectors.toList());
         // 查询亚马逊订单是否存在
-        List<SoB2cEntity> existOrderList = soB2cFeign.getByPlatformCode(amazonOrderIds, PlatformDictEnum.AMAZON.getCode());
+        List<SoB2cEntity> existOrderList = soB2cFeign.getByPlatformCode(amazonOrderIds, PlatformDictEnum.AMAZON.getCode(), taskEntity.getShopId());
         if (CollectionUtils.isEmpty(existOrderList)){
             // 都不存在直接保存mongo等待重新触发
             // 不存在保存mongo等待重新触发

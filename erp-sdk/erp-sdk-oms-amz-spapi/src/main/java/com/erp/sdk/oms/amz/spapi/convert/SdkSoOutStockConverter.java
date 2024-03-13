@@ -43,10 +43,12 @@ public interface SdkSoOutStockConverter {
     @Mappings({
             @Mapping(target = "platformCode", source = "platformCode"),
             @Mapping(target = "dictPlatform", constant = "Amazon"),
+            @Mapping(target = "platform", constant = "Amazon"),
+            @Mapping(target = "shopId", source = "shopId"),
             @Mapping(target = "uniqueId", source = "uniqueId"),
             @Mapping(target = "detailList", expression = "java(sourceDetails.stream().map(INSTANCE::amazonConvertDetailDTO).collect(java.util.stream.Collectors.toList()))"),
     })
-    PlatformSoOutStockDTO amazonConvertDTO(String platformCode, String uniqueId, List<PlatformAmazonFulfilledShipmentsDTO> sourceDetails);
+    PlatformSoOutStockDTO amazonConvertDTO(String platformCode, String shopId, String uniqueId, List<PlatformAmazonFulfilledShipmentsDTO> sourceDetails);
 
 
     @Mappings({

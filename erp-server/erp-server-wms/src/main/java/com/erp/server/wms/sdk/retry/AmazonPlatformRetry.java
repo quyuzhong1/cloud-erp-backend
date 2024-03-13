@@ -17,7 +17,9 @@ import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -45,13 +47,21 @@ import java.util.stream.Collectors;
 public class AmazonPlatformRetry implements IPlatformRetryService {
 
     @Resource
-    private PlatformSoOutStockConsumerService platformSoOutStockConsumerService;
+    private SoB2cFeign soB2cFeign;
     @Resource
     private DmpAmazonFeign dmpMongoDbFeign;
 
 
     @Override
     public Boolean retrySoOutStock(SoB2cEntity currentEntity, List list) {
-        return dmpMongoDbFeign.checkAndSendSoOutStock(new DmpPullSoOutStockDTO(currentEntity.getShopId(), currentEntity.getPlatformCode()));
+        Boolean result = dmpMongoDbFeign.checkAndSendSoOutStock(new DmpPullSoOutStockDTO(currentEntity.getShopId(), currentEntity.getPlatformCode()));
+        if (result){
+            String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+            SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+            deleteDTO.setMainId(currentEntity.getId());
+            deleteDTO.setType(type);
+            soB2cFeign.deleteError(deleteDTO);
+        }
+        return result;
     }
 }

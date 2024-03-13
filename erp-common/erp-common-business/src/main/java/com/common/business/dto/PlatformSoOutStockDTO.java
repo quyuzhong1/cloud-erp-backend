@@ -30,6 +30,11 @@ public class PlatformSoOutStockDTO extends UniqueDto {
     private String dictPlatform;
 
     /**
+     * 店铺ID
+     */
+    private String shopId;
+
+    /**
      * 明细列表
      */
     private List<PlatformSoOutStockDetailDTO> detailList;

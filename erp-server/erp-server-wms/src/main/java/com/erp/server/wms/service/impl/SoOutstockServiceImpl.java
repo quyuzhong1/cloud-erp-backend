@@ -2222,8 +2222,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @GlobalTransactional(rollbackFor = Exception.class)
     public void checkAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity) {
         // 补充来源
-        generateB2cDTO.setSourceCode(dto.getPlatformCode());
-        generateB2cDTO.setSourceId("");
+        generateB2cDTO.setSourceCode(soB2cEntity.getPlatformCode());
+        generateB2cDTO.setSourceId(soB2cEntity.getId());
         generateB2cDTO.setSourceType(SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode());
 
         // 需要生成销售出库单的明细
@@ -2286,16 +2286,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         for (SoOutstockDTO.GenerateB2cDTO genDTO : generateB2cList) {
             if (!this.generateB2cSoOutstock(genDTO)){
                 log.warn("【亚马逊物流销售报告】生成销售出库单失败:dto={}", JSONUtil.toJsonStr(genDTO));
-                continue;
             }
         }
 
         // 记录订单支付支付日期
-        OffsetDateTime platformPayTime = dto.getDetailList().get(0).getPlatformPayTime();
-        if (null != platformPayTime){
-            soB2cEntity.setPayTime(platformPayTime.toLocalDateTime());
-            soB2cFeign.updateById(soB2cEntity);
-        }
+//        OffsetDateTime platformPayTime = dto.getDetailList().get(0).getPlatformPayTime();
+//        if (null != platformPayTime){
+//            soB2cEntity.setPayTime(platformPayTime.toLocalDateTime());
+//            soB2cFeign.updateById(soB2cEntity);
+//        }
     }
 
     @Override

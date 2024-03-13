@@ -50,6 +50,9 @@ public class AmazonFulfilledShipmentsHandler extends AbstractSoOutStockHandler<P
         }
 
         Object sourceData = data.getSourceList().stream().findFirst().orElse(null);
+        if (sourceData instanceof PlatformAmazonFulfilledShipmentsDTO){
+            return (List<PlatformAmazonFulfilledShipmentsDTO>) genericDataList;
+        }
         if (!(sourceData instanceof ReportFulfilledShipmentsCsvEntity)) {
             throw new ServiceException(" 亚马逊物流销售:sourceData类型异常:error=" + genericDataList.getClass().toGenericString());
         }
@@ -73,7 +76,6 @@ public class AmazonFulfilledShipmentsHandler extends AbstractSoOutStockHandler<P
         }
         // 亚马逊物流销售报告转为发送mq数据
         // 根据订单ID分组
-        String platformCode = sourceDataList.get(0).getAmazonOrderId();
         Map<String, List<PlatformAmazonFulfilledShipmentsDTO>> groupMap = sourceDataList
                 .stream()
                 .collect(Collectors.groupingBy(PlatformAmazonFulfilledShipmentsDTO::getGroupId));
@@ -81,7 +83,12 @@ public class AmazonFulfilledShipmentsHandler extends AbstractSoOutStockHandler<P
         // 包含数据过滤数据 数据转换 数据合并拆分等操作
         return groupMap.entrySet().stream()
                 // 组装
-                .map(e -> SdkSoOutStockConverter.INSTANCE.amazonConvertDTO(platformCode, e.getKey(), e.getValue()))
+                .map(e -> SdkSoOutStockConverter.INSTANCE.amazonConvertDTO(
+                        e.getValue().get(0).getAmazonOrderId(),
+                        e.getValue().get(0).getShopId(),
+                        e.getKey(),
+                        e.getValue()
+                ))
                 .collect(Collectors.toList());
     }
 

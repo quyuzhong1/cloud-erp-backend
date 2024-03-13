@@ -5694,12 +5694,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public List<SoB2cEntity> getByPlatformCode(List<String> platformCodeList, String dictPlatform) {
+    public List<SoB2cEntity> getByPlatformCodeList(List<String> platformCodeList, String dictPlatform, String shopId) {
         if (CollectionUtils.isEmpty(platformCodeList)){
             return Collections.emptyList();
         }
         return lambdaQuery()
                 .in(SoB2cEntity::getPlatformCode, platformCodeList)
+                .eq(StringUtils.isNotBlank(shopId), SoB2cEntity::getShopId, shopId)
                 .eq(SoB2cEntity::getDictPlatform, dictPlatform)
                 .list();
     }

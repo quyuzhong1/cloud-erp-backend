@@ -3,7 +3,6 @@ package com.erp.sdk.oms.amz.spapi.dto;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
-import com.erp.sdk.oms.amz.spapi.csv.ReportFulfilledShipmentsCsvEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;

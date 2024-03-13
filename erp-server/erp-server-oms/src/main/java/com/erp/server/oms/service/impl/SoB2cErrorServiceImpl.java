@@ -196,7 +196,7 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
 
-        SoB2cErrorEntity errorEntity = this.getByMainIdAndType(soB2cEntity.getId(), SoB2cErrorTypeEnum.AUTO_GENERATE_OUT_STOCK.getCode());
+        SoB2cErrorEntity errorEntity = this.getByMainIdAndType(soB2cEntity.getId(), SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
         if (null == errorEntity){
             return BatchResultDTO.success(soBcId, soB2cEntity.getCode(), "重试成功");
         }
@@ -205,7 +205,7 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         //删除订单异常记录
         SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
         deleteDTO.setMainId(soB2cEntity.getId());
-        deleteDTO.setType(SoB2cErrorTypeEnum.AUTO_GENERATE_OUT_STOCK.getCode());
+        deleteDTO.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
         this.delete(deleteDTO);
 
         return BatchResultDTO.success(soBcId, soB2cEntity.getCode(), "重试执行成功");

@@ -2,8 +2,10 @@ package com.erp.sdk.oms.amz.spapi.csv;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
+import java.time.OffsetDateTime;
 
 
 /**
@@ -107,5 +109,10 @@ public class ReportFulfilledShipmentsCsvEntity implements Serializable {
 
     private String pointsGranted;
 
-
+    public String convertShipmentDate(){
+        if (StringUtils.isBlank(this.shipmentDate)){
+            return "";
+        }
+        return OffsetDateTime.parse(this.shipmentDate).toLocalDate().toString();
+    }
 }
