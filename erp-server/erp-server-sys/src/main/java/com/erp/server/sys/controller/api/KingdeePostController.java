@@ -1,9 +1,12 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.KingdeeDepartmentDTO;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.entity.KingdeePostEntity;
+import com.erp.server.sys.query.KingdeePostQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +49,17 @@ public class KingdeePostController extends BaseController {
     private KingdeePostService kingdeePostService;
 
 
-
+    /**
+     * 分页查询
+     * @param dto
+     * @return
+     */
+    @PostMapping("/paging")
+    @WebAdvanceQuery(handler = KingdeePostQueryHandler.class)
+    public ApiResult<PagingVO<KingdeePostDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<KingdeePostDTO.PagingParamDTO> dto) {
+        PagingVO<KingdeePostDTO.PagingViewDTO> pagingVO = kingdeePostService.paging(dto);
+        return success(pagingVO);
+    }
 
 
     /**
@@ -116,7 +129,7 @@ public class KingdeePostController extends BaseController {
             try {
                 deleteResult = kingdeePostService.delete(id);
             }catch (Exception e){
-                log.error("金蝶部门删除失败===>{}", e.getMessage());
+                log.error("金蝶岗位删除失败===>{}", e.getMessage());
                 KingdeePostEntity entity = kingdeePostService.getById(id);
                 if (Objects.isNull(entity)) {
                     deleteResult = BatchResultDTO.fail(id, id, "金蝶岗位不存在, 删除失败");

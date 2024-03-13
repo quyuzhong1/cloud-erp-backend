@@ -35,5 +35,36 @@
         name, code, kingdee_dept_id, use_org_id, use_org_name, kingdee_id, disabled
     </sql>
 
+    <!--分页查询-->
+    <select id="paging" resultType="com.erp.model.sys.dto.KingdeePostDTO$PagingViewDTO">
+        SELECT
+        kp.id,
+        kp.name,
+        kp.code,
+        kp.kingdee_dept_id AS kingdeeDeptId,
+        kp.use_org_id AS useOrgId,
+        kp.use_org_name AS useOrgName,
+        kd.kingdee_dept_name AS kingdeeDeptName
+        FROM kingdee_post kp
+        LEFT JOIN kingdee_department kd
+        ON kd.id=kp.kingdee_dept_id AND kd.is_deleted = FALSE
+        WHERE kp.is_deleted = FALSE
+        AND
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        kd.id desc
+    </select>
+
 
 </mapper>

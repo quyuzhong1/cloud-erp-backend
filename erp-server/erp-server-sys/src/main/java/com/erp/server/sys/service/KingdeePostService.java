@@ -1,4 +1,5 @@
 package com.erp.server.sys.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.entity.KingdeePostEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -70,4 +71,11 @@ public interface KingdeePostService extends SuperService<KingdeePostEntity> {
      * @author Lambda
      */
     BatchResultDTO delete(String id);
+
+    /**
+     * 分页查询
+     * @param dto
+     * @return
+     */
+    PagingVO<KingdeePostDTO.PagingViewDTO> paging(PagingDTO<KingdeePostDTO.PagingParamDTO> dto);
 }

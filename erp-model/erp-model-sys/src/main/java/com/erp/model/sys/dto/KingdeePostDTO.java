@@ -1,11 +1,15 @@
 package com.erp.model.sys.dto;
 
 import cn.hutool.core.annotation.Alias;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 金蝶员工岗位信息
@@ -19,6 +23,64 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 public class KingdeePostDTO implements Serializable {
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO{
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 岗位名称
+         */
+        private String name;
+
+        /**
+         * 金蝶岗位编码
+         */
+        private String code;
+
+        /**
+         * 金蝶部门表id
+         */
+        private String kingdeeDeptId;
+
+        /**
+         * 金蝶部门名称
+         */
+        private String kingdeeDeptName;
+
+        /**
+         * 组织id
+         */
+        private String useOrgId;
+
+        /**
+         * 组织名
+         */
+        private String useOrgName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+    }
+
 
 
     @Data

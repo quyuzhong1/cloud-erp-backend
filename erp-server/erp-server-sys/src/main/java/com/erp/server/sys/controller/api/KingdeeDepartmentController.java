@@ -2,33 +2,29 @@ package com.erp.server.sys.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.sys.entity.KingdeeDepartmentEntity;
-import com.erp.server.sys.query.KingdeeDepartmentQueryHandler;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.ibatis.annotations.Param;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import javax.validation.Valid;
-
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.sys.service.KingdeeDepartmentService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.KingdeeDepartmentDTO;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.server.sys.query.KingdeeDepartmentQueryHandler;
+import com.erp.server.sys.service.KingdeeDepartmentService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.annotations.Param;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

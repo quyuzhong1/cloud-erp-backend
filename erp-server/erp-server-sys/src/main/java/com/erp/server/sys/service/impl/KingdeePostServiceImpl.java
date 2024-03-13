@@ -3,11 +3,15 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.KingdeeDepartmentDTO;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
@@ -227,6 +231,15 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
         }
         return BatchResultDTO.success(entity.getId(), entity.getKingdeeDeptCode(), OperationTypeEnum.DELETE);
 
+    }
+
+    @Override
+    public PagingVO<KingdeePostDTO.PagingViewDTO> paging(PagingDTO<KingdeePostDTO.PagingParamDTO> dto) {
+        KingdeePostDTO.PagingParamDTO paramDTO = dto.getParams();
+        paramDTO.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<KingdeePostDTO.PagingViewDTO> pageData = this.baseMapper.paging(query, paramDTO);
+        return new PagingVO(pageData);
     }
 
 
