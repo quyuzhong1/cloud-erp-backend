@@ -28,6 +28,7 @@ public interface DmpFbaShipmentReceiveConverter {
     @Mappings({
             @Mapping(target = "receivedDateStr", expression = "java(dto.getReceivedDate().format(java.time.format.DateTimeFormatter.ofPattern(\"yyyy-MM-dd'T'HH:mm:ssXXX\")))"),
             @Mapping(target = "receivedDateLocaleStr", expression = "java(dto.getReceivedDateLocale().format(java.time.format.DateTimeFormatter.ofPattern(\"yyyy-MM-dd'T'HH:mm:ssXXX\")))"),
+            @Mapping(target = "shopId", source = "shopId"),
     })
     FbaReceiveDetailEntity dtoToEntity(FbaShipmentReceiveDTO dto);
 

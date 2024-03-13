@@ -27,7 +27,9 @@ public enum NoticeEnum {
     ARCHIVE_PROJECT("archiveProject","归档项目"),
     SCHEDULE_TASK_SUBMIT("scheduleTaskSubmit","排期任务提交通知"),
     SCHEDULE_TASK_AUDIT("scheduleTaskAudit","排期任务审核通知"),
-    SCHEDULE_TASK_CHANGE("changeScheduleTask","排期变动通知");
+    SCHEDULE_TASK_CHANGE("changeScheduleTask","排期变动通知"),
+    APPROVE_PRODUCT("approveProduct","审核产品")
+    ;
 
 
 

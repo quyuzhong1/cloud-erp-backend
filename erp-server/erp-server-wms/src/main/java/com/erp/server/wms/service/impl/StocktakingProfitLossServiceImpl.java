@@ -57,7 +57,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -115,9 +114,6 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     private SysUserFeign sysUserFeign;
 
     @Resource
-    private InventoryClosedRecordService inventoryClosedRecordService;
-
-    @Resource
     private PlmTaskFeign plmTaskFeign;
 
     /**
@@ -144,6 +140,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         int profitCount = dbList.stream().filter(p -> profit.equals(p.getTabFlag())).findFirst().
                 map(StocktakingProfitLossDTO.TabDTO::getCount).orElse(0);
         profitTab.setTabFlag(profit);
+        profitTab.setTabFlagName(BillTypeEnum.PROFIT.getName());
         profitTab.setCount(profitCount);
         tabList.add(profitTab);
 
@@ -152,6 +149,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         int lossCount = dbList.stream().filter(p -> loss.equals(p.getTabFlag())).findFirst().
                 map(StocktakingProfitLossDTO.TabDTO::getCount).orElse(0);
         lossTab.setTabFlag(loss);
+        lossTab.setTabFlagName(BillTypeEnum.LOSS.getName());
         lossTab.setCount(lossCount);
         tabList.add(lossTab);
 
@@ -163,24 +161,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         StocktakingProfitLossDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        String tabFlag = params.getTabFlag();
-        //单据类型
-        String billType = "";
-        String profit = BillTypeEnum.PROFIT.getCode();
-        String loss = BillTypeEnum.LOSS.getCode();
-        if (profit.equals(tabFlag)) {
-            billType = profit;
-        } else if (loss.equals(tabFlag)) {
-            billType = loss;
-        }
-        //盘点人
-        String stocktakingUserId = params.getStocktakingUserId();
-        List<String> sourceIdList = new ArrayList<>();
-        if (StringUtils.isNotBlank(stocktakingUserId)) {
-            List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listByUserIds(Arrays.asList(stocktakingUserId));
-            sourceIdList = taskUserList.stream().map(StocktakingTaskUserEntity::getSourceId).collect(Collectors.toList());
-        }
-        IPage pageData = baseMapper.paging(query, params, billType, sourceIdList);
+        IPage pageData = baseMapper.paging(query, params);
         List<StocktakingProfitLossDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
@@ -239,25 +220,8 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
      */
     @Override
     public Boolean exportExcel(StocktakingProfitLossDTO.ExportDTO params, HttpServletResponse response) {
-        String tabFlag = params.getTabFlag();
-        //单据类型
-        String billType = "";
-        String profit = BillTypeEnum.PROFIT.getCode();
-        String loss = BillTypeEnum.LOSS.getCode();
-        if (profit.equals(tabFlag)) {
-            billType = profit;
-        } else if (loss.equals(tabFlag)) {
-            billType = loss;
-        }
-        //盘点人
-        String stocktakingUserId = params.getStocktakingUserId();
-        List<String> sourceIds = new ArrayList<>();
-        if (StringUtils.isNotBlank(stocktakingUserId)) {
-            List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listByUserIds(Arrays.asList(stocktakingUserId));
-            sourceIds = taskUserList.stream().map(StocktakingTaskUserEntity::getSourceId).collect(Collectors.toList());
-        }
         //获取导出数据
-        List<StocktakingProfitLossDTO.ExportViewDTO> list = baseMapper.listExport(params, billType, sourceIds);
+        List<StocktakingProfitLossDTO.ExportViewDTO> list = baseMapper.listExport(params);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
@@ -936,6 +900,38 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, "删除操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
 
+    }
+
+    @Override
+    public List<StocktakingProfitLossDTO.LastDTO> listByOrgIdAndSkuIds(List<String> orgIds, List<String> skuIds) {
+        if (CollectionUtils.isEmpty(orgIds)){
+            throw new ServiceException("组织IDS不能为空");
+        }
+        if (CollectionUtils.isEmpty(skuIds)){
+            throw new ServiceException("SKU IDS不能为空");
+        }
+        return baseMapper.listByOrgIdAndSkuIds(orgIds, skuIds);
+    }
+
+    @Override
+    public String findLastOneCode(String warehouseId, String skuId, LocalDate billDate) {
+        List<String> codeList = baseMapper.findLastOneCode(warehouseId, skuId, billDate);
+        return codeList.stream().findFirst().orElse("");
+    }
+
+    @Override
+    public boolean checkClosed(List<String> orgIds, List<String> skuIds, LocalDate billDate) {
+        // 最新盘盈盘亏单有效单据日期列表
+        List<StocktakingProfitLossDTO.LastDTO> lastStocktakingProfitLossList = this.listByOrgIdAndSkuIds(orgIds, skuIds);
+        if (CollectionUtils.isNotEmpty(lastStocktakingProfitLossList)){
+            for (StocktakingProfitLossDTO.LastDTO lastDTO : lastStocktakingProfitLossList) {
+                if (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate())){
+                    // 已有日期之前已审核的盘盈盘亏单
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

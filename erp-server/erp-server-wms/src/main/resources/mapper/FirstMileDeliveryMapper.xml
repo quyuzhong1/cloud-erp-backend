@@ -5,6 +5,7 @@
     <select id="paging" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$ListDTO">
         SELECT
         fd.id,
+        fdd.id as detailId,
         fd.code,
         fd.source_code AS sourceCode,
         fd.demand_type AS demandType,
@@ -33,118 +34,17 @@
         fd.create_user_name AS createUserName,
         fd.create_time AS createTime,
         fd.approve_user_name AS approveUserName,
-        fd.approve_time AS approveTime
+        fd.approve_time AS approveTime,
+        op.code as provideCode,
+        fdd.platform_sku_no as thirdWarehouseSku
         FROM first_mile_delivery_detail fdd
         LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         LEFT JOIN first_mile_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
-        WHERE fd.is_deleted = FALSE
-        <!--状态-->
-        <if test="params.tabFlag != null and params.tabFlag != ''">
-            AND fd.approve_status = #{params.tabFlag}
-        </if>
-        <!--单据编号-->
-        <if test="params.code != null and params.code != ''">
-            AND fd.code ilike concat('%',#{params.code}::text,'%')
-        </if>
-        <!--来源单号-->
-        <if test="params.sourceCode != null and params.sourceCode != ''">
-            AND fd.source_code ILIKE concat('%',#{params.sourceCode}::text,'%')
-        </if>
-        <!--备货类型-->
-        <if test="params.demandTypeList != null and params.demandTypeList.size > 0">
-            AND fd.demand_type in
-            <foreach collection="params.demandTypeList" item="demandType" open="(" close=")" separator=",">
-                #{demandType}
-            </foreach>
-        </if>
-        <!--店铺id-->
-        <if test="params.shopIdList != null and params.shopIdList.size > 0">
-            AND fd.shop_id in
-            <foreach collection="params.shopIdList" item="shopId" open="(" close=")" separator=",">
-                #{shopId}
-            </foreach>
-        </if>
-        <!--国家二字码-->
-        <if test="params.countryIdList != null and params.countryIdList.size > 0">
-            AND fd.country_id in
-            <foreach collection="params.countryIdList" item="countryId" open="(" close=")" separator=",">
-                #{countryId}
-            </foreach>
-        </if>
-        <!--发货仓-->
-        <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
-            AND fd.delivery_warehouse_id in
-            <foreach collection="params.deliveryWarehouseIdList" item="deliveryWarehouseId" open="(" close=")" separator=",">
-                #{deliveryWarehouseId}
-            </foreach>
-        </if>
-        <!--目的仓-->
-        <if test="params.destWarehouseIdList != null and params.destWarehouseIdList.size > 0">
-            AND fd.dest_warehouse_id in
-            <foreach collection="params.destWarehouseIdList" item="destWarehouseId" open="(" close=")" separator=",">
-                #{destWarehouseId}
-            </foreach>
-        </if>
-        <!--审核状态-->
-        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-            AND fd.approve_status in
-            <foreach collection="params.approveStatusList" item="approveStatus" open="(" close=")" separator=",">
-                #{approveStatus}
-            </foreach>
-        </if>
-        <!--物流方式-->
-        <if test="params.logisticsMethodList != null and params.logisticsMethodList.size > 0">
-            AND fdl.logistics_method in
-            <foreach collection="params.logisticsMethodList" item="logisticsMethod" open="(" close=")" separator=",">
-                #{logisticsMethod}
-            </foreach>
-        </if>
-        <!--是否组合品-->
-        <if test="params.isCombination != null">
-            and fdd.is_combination = #{params.isCombination}
-        </if>
-        <!--sku编号-->
-        <if test="params.skuNoList != null and params.skuNoList.size > 0">
-            AND fdd.sku_no in
-            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-        <!--平台sku-->
-        <if test="params.platformSpuNo != null and params.platformSpuNo != ''">
-            AND fdd.platform_spu_no ILIKE concat('%',#{params.platformSpuNo}::text,'%')
-        </if>
-        <!--fnSku-->
-        <if test="params.fnSku != null and params.fnSku != ''">
-            AND fdd.fn_sku ILIKE concat('%',#{params.fnSku}::text,'%')
-        </if>
-        <!--卖家sku-->
-        <if test="params.platformSkuNo != null and params.platformSkuNo != ''">
-            AND fdd.platform_sku_no ILIKE concat('%',#{params.platformSkuNo}::text,'%')
-        </if>
-        <!--审核时间-->
-        <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
-            AND fd.approve_time >= #{params.approveTimeList[0]} and
-            (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > fd.approve_time
-        </if>
-        <!--创建时间-->
-        <if test="params.createTimeList !=null and params.createTimeList.size>0">
-            AND fd.create_time >= #{params.createTimeList[0]} and
-            (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > fd.create_time
-        </if>
-        <!--装箱状态-->
-        <if test="params.packingStatus != null and params.packingStatus != ''">
-            AND fd.packing_status = #{params.packingStatus}
-        </if>
-        <!--是否下推入库单-->
-        <if test="params.isGenerateOverseasInbound != null">
-            <if test="params.isGenerateOverseasInbound == true">
-                AND EXISTS (SELECT id FROM overseas_warehouse_inbound owi WHERE owi.source_id = fd.id AND owi.is_deleted = FALSE)
-            </if>
-            <if test="params.isGenerateOverseasInbound == false ">
-                AND NOT EXISTS (SELECT id FROM overseas_warehouse_inbound owi WHERE owi.source_id = fd.id AND owi.is_deleted = FALSE)
-            </if>
-        </if>
+        LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = fd.dest_warehouse_id and opw.is_deleted = false
+        LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        and    fd.is_deleted = FALSE
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -193,130 +93,16 @@
         fd.create_user_name AS createUserName,
         fd.create_time AS createTime,
         fd.approve_user_name AS approveUserName,
-        fd.approve_time AS approveTime
+        fd.approve_time AS approveTime,
+        op.code as provideCode
         FROM first_mile_delivery fd
+        INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         LEFT JOIN first_mile_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
-        LEFT JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
-        WHERE fd.is_deleted = FALSE
-        <choose>
-            <when test="params.ids!=null and params.ids.size>0 ">
-                AND fd.id IN
-                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
-            </when>
-            <otherwise>
-                <!--状态-->
-                <if test="params.tabFlag != null and params.tabFlag != ''">
-                    AND fd.approve_status = #{params.tabFlag}
-                </if>
-                <!--单据编号-->
-                <if test="params.code != null and params.code != ''">
-                    AND fd.code ILIKE concat('%',#{params.code}::text,'%')
-                </if>
-                <!--来源单号-->
-                <if test="params.sourceCode != null and params.sourceCode != ''">
-                    AND fd.source_code ILIKE concat('%',#{params.sourceCode}::text,'%')
-                </if>
-                <!--备货类型-->
-                <if test="params.demandTypeList != null and params.demandTypeList.size > 0">
-                    AND fd.demand_type in
-                    <foreach collection="params.demandTypeList" item="demandType" open="(" close=")" separator=",">
-                        #{demandType}
-                    </foreach>
-                </if>
-                <!--店铺id-->
-                <if test="params.shopIdList != null and params.shopIdList.size > 0">
-                    AND fd.shop_id in
-                    <foreach collection="params.shopIdList" item="shopId" open="(" close=")" separator=",">
-                        #{shopId}
-                    </foreach>
-                </if>
-                <!--国家二字码-->
-                <if test="params.countryIdList != null and params.countryIdList.size > 0">
-                    AND fd.country_id in
-                    <foreach collection="params.countryIdList" item="countryId" open="(" close=")" separator=",">
-                        #{countryId}
-                    </foreach>
-                </if>
-                <!--发货仓-->
-                <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
-                    AND fd.delivery_warehouse_id in
-                    <foreach collection="params.deliveryWarehouseIdList" item="deliveryWarehouseId" open="(" close=")" separator=",">
-                        #{deliveryWarehouseId}
-                    </foreach>
-                </if>
-                <!--目的仓-->
-                <if test="params.destWarehouseIdList != null and params.destWarehouseIdList.size > 0">
-                    AND fd.dest_warehouse_id in
-                    <foreach collection="params.destWarehouseIdList" item="destWarehouseId" open="(" close=")" separator=",">
-                        #{destWarehouseId}
-                    </foreach>
-                </if>
-                <!--审核状态-->
-                <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                    AND fd.approve_status in
-                    <foreach collection="params.approveStatusList" item="approveStatus" open="(" close=")" separator=",">
-                        #{approveStatus}
-                    </foreach>
-                </if>
-                <!--物流方式-->
-                <if test="params.logisticsMethodList != null and params.logisticsMethodList.size > 0">
-                    AND fdl.logistics_method in
-                    <foreach collection="params.logisticsMethodList" item="logisticsMethod" open="(" close=")" separator=",">
-                        #{logisticsMethod}
-                    </foreach>
-                </if>
-                <!--是否组合品-->
-                <if test="params.isCombination != null">
-                    and fdd.is_combination = #{params.isCombination}
-                </if>
-                <!--sku编号-->
-                <if test="params.skuNoList != null and params.skuNoList.size > 0">
-                    AND fdd.sku_no in
-                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <!--平台sku-->
-                <if test="params.platformSpuNo != null and params.platformSpuNo != ''">
-                    AND fdd.platform_spu_no ILIKE concat('%',#{params.platformSpuNo}::text,'%')
-                </if>
-                <!--fnSku-->
-                <if test="params.fnSku != null and params.fnSku != ''">
-                    AND fdd.fn_sku ILIKE concat('%',#{params.fnSku}::text,'%')
-                </if>
-                <!--卖家sku-->
-                <if test="params.platformSkuNo != null and params.platformSkuNo != ''">
-                    AND fdd.platform_sku_no ILIKE concat('%',#{params.platformSkuNo}::text,'%')
-                </if>
-                <!--审核时间-->
-                <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
-                    AND fd.approve_time >= #{params.approveTimeList[0]} and
-                    (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1
-                    DAY' ) > fd.approve_time
-                </if>
-                <!--创建时间-->
-                <if test="params.createTimeList !=null and params.createTimeList.size>0">
-                    AND fd.create_time >= #{params.createTimeList[0]} and
-                    (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
-                    DAY' ) > fd.create_time
-                </if>
-                <!--装箱状态-->
-                <if test="params.packingStatus != null and params.packingStatus != ''">
-                    AND fd.delivery_status = #{params.packingStatus}
-                </if>
-                <!--是否下推入库单-->
-                <if test="params.isGenerateOverseasInbound != null">
-                    <if test="params.isGenerateOverseasInbound == true">
-                        AND EXISTS (SELECT id FROM overseas_warehouse_inbound owi WHERE owi.source_id = fd.id AND owi.is_deleted = FALSE)
-                    </if>
-                    <if test="params.isGenerateOverseasInbound == false ">
-                        AND NOT EXISTS (SELECT id FROM overseas_warehouse_inbound owi WHERE owi.source_id = fd.id AND owi.is_deleted = FALSE)
-                    </if>
-                </if>
-            </otherwise>
-        </choose>
+        LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = fd.dest_warehouse_id and opw.is_deleted = false
+        LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        and fd.is_deleted = FALSE
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}

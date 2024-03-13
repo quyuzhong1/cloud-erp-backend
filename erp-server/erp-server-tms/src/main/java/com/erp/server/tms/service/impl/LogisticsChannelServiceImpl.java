@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.base.BaseDropDownDTO;
@@ -41,6 +42,8 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
 
 /**
  * <p>
@@ -85,6 +88,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     @Autowired
     private SoB2cFeign soB2cFeign;
 
+    @Resource
+    private LogisticsChannelConstraintService logisticsChannelConstraintService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -430,6 +435,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntities.stream().filter(req -> req.getId().equals(baseDTO.getMainId())).findFirst().orElse(null);
             if (Objects.nonNull(logisticsSupplierEntity)) {
                 baseDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+                baseDTO.setSupplierId(logisticsSupplierEntity.getSupplierId());
 
             }
         }
@@ -454,6 +460,33 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             return Collections.emptyList();
         }
         return baseMapper.listChannelPlatform(channelIdList);
+    }
+
+    @Override
+    public List<LogisticsChannelDTO.ProvideChannelDTO> getProvideChannel(List<String> channelCodeList, List<String> provideNameList) {
+        return baseMapper.getProvideChannel(channelCodeList,provideNameList);
+    }
+
+    @Override
+    public LogisticsChannelDTO.LogisticsChannelConstraintDTO getLogisticsChannelConstraint(String channelId, String country) {
+        LogisticsChannelDTO.LogisticsChannelConstraintDTO result = new LogisticsChannelDTO.LogisticsChannelConstraintDTO();
+        if(StringUtils.isBlank(channelId)){
+            return result;
+        }
+        //先通过国家+渠道获取
+        LogisticsChannelConstraintEntity logisticsChannelConstraintEntity = logisticsChannelConstraintService.getByChannelAndCountry(channelId,country);
+        if(Objects.nonNull(logisticsChannelConstraintEntity)){
+            BeanUtil.copyProperties(logisticsChannelConstraintEntity,result);
+            return result;
+        }
+        //国家维度获取不到，通过渠道获取
+        LogisticsChannelEntity logisticsChannelEntity = this.getById(channelId);
+        if(Objects.nonNull(logisticsChannelEntity)){
+            BeanUtil.copyProperties(logisticsChannelEntity,result);
+            result.setChannelId(logisticsChannelEntity.getId());
+            return result;
+        }
+        return result;
     }
 
     @Override

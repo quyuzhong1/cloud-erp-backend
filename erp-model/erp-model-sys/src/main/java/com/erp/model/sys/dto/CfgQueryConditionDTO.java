@@ -2,7 +2,6 @@ package com.erp.model.sys.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
-import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -173,6 +172,16 @@ public class CfgQueryConditionDTO implements Serializable {
          * 菜单名
          */
         private String name;
+
+        /**
+         * 条件名称
+         */
+        private String label;
+
+        /**
+         * 条件字段
+         */
+        private String value;
     }
 
     @Data

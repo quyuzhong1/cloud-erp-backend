@@ -1,7 +1,6 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.util.IdUtil;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -42,10 +41,12 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastPoChangeDetailDTO;
+import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.InventoryCloseRecordFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -67,6 +68,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -115,6 +117,11 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
     @Autowired
     private SyncKingdeePurchaseChangeService syncKingdeePurchaseChangeService;
+
+
+    @Autowired
+    private InventoryCloseRecordFeign inventoryCloseRecordFeign;
+
 
     @Override
     public PagingVO<PurchaseChangeDTO.ListDTO> paging(PagingDTO<PurchaseChangeDTO.SearchParamDTO> pagingDTO) {
@@ -193,6 +200,12 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         }
         BeanMapperUtils.copy(entity,dto);
 
+        PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(entity.getPurchaseOrderId());
+        if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+           throw new ServiceException(ApiError.ERROR_98025);
+        }
+        //采购订单号
+        dto.setPurchaseOrderCode(purchaseOrderEntity.getCode());
         //供应商信息
         PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(entity.getPurchaseOrderId());
         if (ObjectUtils.isEmpty(supplierEntity)) {
@@ -226,6 +239,13 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_98012);
         }
+
+        //验证存货核算是否关账
+        List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = list.stream().flatMap(obj -> Stream.of(new InventoryClosedRecordDTO.ClosedParamDTO(obj.getReceiveOrgId(),obj.getChangeDate())
+                        ,new InventoryClosedRecordDTO.ClosedParamDTO(obj.getPurchaseOrgId(),obj.getChangeDate()))).
+                distinct().collect(Collectors.toList());
+        inventoryCloseRecordFeign.checkHsClosed(closedParamList);
+
         log.info("采购变更作废，ids=【{}】", JSONUtil.toJsonStr(ids));
         //更新作废状态
         updateInvalidStatus(ids,reason);
@@ -249,6 +269,12 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             throw new ServiceException(ApiError.ERROR_98006);
         }
         String type = baseApproveParamDTO.getType();
+
+        //验证存货核算是否关账
+        List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = list.stream().flatMap(obj -> Stream.of(new InventoryClosedRecordDTO.ClosedParamDTO(obj.getReceiveOrgId(),obj.getChangeDate())
+                        ,new InventoryClosedRecordDTO.ClosedParamDTO(obj.getPurchaseOrgId(),obj.getChangeDate()))).
+                distinct().collect(Collectors.toList());
+        inventoryCloseRecordFeign.checkHsClosed(closedParamList);
 
         log.info("采购变更单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
         //审核通过

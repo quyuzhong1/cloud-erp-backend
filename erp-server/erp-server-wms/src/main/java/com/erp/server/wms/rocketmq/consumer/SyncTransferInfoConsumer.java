@@ -1,11 +1,11 @@
 package com.erp.server.wms.rocketmq.consumer;
 
-import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
-import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.DmpTransferInfoDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.rocketmq.sync.SyncTransferInfoService;
@@ -25,7 +25,7 @@ import javax.annotation.Resource;
 @Service
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.DMP_SYNC_TASK_TOPIC, selectorExpression = "sync_kingdee_transfer_info_to_wms_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_TRANSFER_INFO_TO_WMS)
-public class SyncTransferInfoConsumer implements RocketMQListener<DmpSyncMqDTO> {
+public class SyncTransferInfoConsumer implements RocketMQListener<Object> {
 
     @Resource
     private SyncTransferInfoService syncTransferInfoService;
@@ -34,12 +34,15 @@ public class SyncTransferInfoConsumer implements RocketMQListener<DmpSyncMqDTO> 
     private DmpTaskFeign dmpTaskFeign;
 
     @Override
-    public void onMessage(DmpSyncMqDTO dmpSyncMqDTO) {
+    public void onMessage(Object ext) {
+        //json数据
+        JSONObject jsonObject = JSONUtil.parseObj(ext);
+        String dmpSyncTaskId = jsonObject.get("dmpSyncTaskId").toString();
+
         DmpSyncMqDTO.ParamDTO paramDTO = new DmpSyncMqDTO.ParamDTO();
-        paramDTO.setDmpSyncTaskId(dmpSyncMqDTO.getDmpSyncTaskId());
-        String dataJson = dmpSyncMqDTO.getMqData();
-        log.info("监听到金蝶直接调拨单需要同步：entity={}", dataJson);
-        DmpTransferInfoDTO dmpTransferInfoDTO = BeanUtil.toBean(JSONUtil.parseObj(dataJson), DmpTransferInfoDTO.class);
+        paramDTO.setDmpSyncTaskId(dmpSyncTaskId);
+        log.info("监听到金蝶直接调拨单需要同步：entity={}", jsonObject);
+        DmpTransferInfoDTO dmpTransferInfoDTO = JSONUtil.toBean(jsonObject,  DmpTransferInfoDTO.class);
         try {
             syncTransferInfoService.syncKingdeeTransferInfo(dmpTransferInfoDTO);
         } catch (Exception e) {
@@ -49,7 +52,7 @@ public class SyncTransferInfoConsumer implements RocketMQListener<DmpSyncMqDTO> 
             paramDTO.setResponseMsg(e.getMessage());
             dmpTaskFeign.updateSyncInfo(paramDTO);
             //错误预警
-            dmpTaskFeign.sendWarnMsg(dmpSyncMqDTO.getDmpSyncTaskId());
+            dmpTaskFeign.sendWarnMsg(dmpSyncTaskId);
             return;
         }
         //同步成功

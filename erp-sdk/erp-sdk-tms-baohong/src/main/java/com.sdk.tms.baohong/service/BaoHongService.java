@@ -3,6 +3,7 @@ package com.sdk.tms.baohong.service;
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.threadlocal.TransferLogisticsContext;
+import com.sdk.tms.baohong.api.asn.ASNData;
 import com.sdk.tms.baohong.api.asn.ReceivingInfo;
 import com.sdk.tms.baohong.api.asn.ServiceForAsn;
 import com.sdk.tms.baohong.api.order.*;
@@ -168,7 +169,21 @@ public class BaoHongService {
         service.createReceiving(headerRequest,receivingInfo,askHolder,messageHolder,error,asnCode);
         return BaoHongUtils.buildBaseResponse(askHolder,messageHolder,asnCode.value);
     }
-
+    /**
+     * 获取入库单信息
+     * @return
+//     */
+    public BaoHongResponse<ASNData> getReceiving(String code){
+        TransferLogisticsContext.setRequestJson(JSONObject.toJSONString(code));
+        com.sdk.tms.baohong.api.asn.HeaderRequest headerRequest = BaoHongUtils.getAsnHeader();
+        ServiceForAsn service = BaoHongUtils.getAsnService();
+        Holder<String> askHolder = new Holder<>();
+        Holder<String> messageHolder = new Holder<>();
+        Holder<String> error = new Holder<>();
+        Holder<ASNData> data = new Holder<>();
+        service.getAsnByCode(headerRequest,code,askHolder,messageHolder,error,data);
+        return BaoHongUtils.buildBaseResponse(askHolder,messageHolder,data.value);
+    }
 
     /**
      * 打印标签

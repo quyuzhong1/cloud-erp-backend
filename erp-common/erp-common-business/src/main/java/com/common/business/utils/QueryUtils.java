@@ -3,7 +3,6 @@ package com.common.business.utils;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
-import com.common.business.query.IQueryHandler;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -32,7 +31,7 @@ public class QueryUtils {
      */
     public static String splicingSQL(List<AdvanceQueryDTO> dtoList){
         if(CollectionUtils.isEmpty(dtoList)){
-            return null;
+            return "1 = 1";
         }
         //将最后一个比较符去掉
         dtoList.get(dtoList.size()-1).setCompareSymbol("");
@@ -43,11 +42,11 @@ public class QueryUtils {
                 sql.append("(");
             }
             String contentSql;
-            //为空处理为  (TRIM(both ' ' FROM 字段) = ''or 字段 is null)，不为空处理为  TRIM(both ' ' FROM 字段) != '' 其他直接拼接
+            //为空处理为   (字段 = ''or 字段 is null)，不为空处理为  字段 != '' 其他直接拼接
             if (QueryConditionEnum.IS_NULL.equals(condEnum)) {
-                sql.append("(TRIM(both ' ' FROM " + dto.getField() + ") = ''or " + dto.getField() + " is null)").append(" ");
+                sql.append( "(" + dto.getField() + " = '' or " + dto.getField() + " is null)").append(" ");
             } else if (QueryConditionEnum.NOT_NULL.equals(condEnum)) {
-                sql.append("TRIM(both ' ' FROM " + dto.getField() + ") != ''").append(" ");
+                sql.append( dto.getField() + " != ''").append(" ");
             } else {
                 sql.append(dto.getField()).append(" ");
             }

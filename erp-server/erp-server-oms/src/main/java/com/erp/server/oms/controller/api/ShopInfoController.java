@@ -355,6 +355,20 @@ public class ShopInfoController extends BaseController {
     }
 
     /**
+     * 查询当前用户权限的亚马逊店铺信息
+     *
+     * @return java.util.List<com.erp.model.oms.entity.ShopInfoEntity>
+     * @Author Luo_WG
+     * @Date 2023/11/1 18:56
+     **/
+    @GetMapping("/listShopByAmazonAuth")
+    public ApiResult<List<ShopSysUserAuthDTO.ViewShopDTO>> listShopByAmazonAuth() {
+        List<ShopSysUserAuthDTO.ViewShopDTO> result = shopInfoService.listShopByAmazonAuth();
+        return success(result);
+    }
+
+
+    /**
      * 根据shopify平台用户id查询用户信息
      * @Author Luo_WG
      * @Date 2024/2/23 14:07

@@ -77,6 +77,7 @@ public interface FbaShipmentConsumerConverter {
             @Mapping(target = "declareQty", source = "receiveDTO.declareQty"),
             @Mapping(target = "receiveQty", source = "receiveDTO.receiveQty"),
             @Mapping(target = "fbaShipmentId", source = "shipmentEntity.fbaShipmentId"),
+            @Mapping(target = "shopId", source = "shipmentEntity.shopId"),
             @Mapping(target = "receiveDate",  expression = "java(null == receiveDTO.getReceiveDate() ? java.time.LocalDateTime.now() :receiveDTO.getReceiveDate())"),
     })
     FbaShipmentReceiveEntity fbaShipmentToReceiveEntity(
@@ -113,6 +114,7 @@ public interface FbaShipmentConsumerConverter {
             @Mapping(target = "skuId", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuId())"),
             @Mapping(target = "skuNo", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuNo())"),
             @Mapping(target = "asin", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSpuNo())"),
+            @Mapping(target = "shopId", source = "receiveEntity.shopId"),
     })
     FbaShipmentReceiveEntity receiveSetSkuMappingInfo(FbaShipmentReceiveEntity receiveEntity,
                                                       ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO);

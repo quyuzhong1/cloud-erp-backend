@@ -6,6 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -615,6 +616,11 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         baseApproveParamDTO.setIds(Arrays.asList(dto.getId()));
         baseApproveParamDTO.setType(dto.getType());
         baseApproveParamDTO.setComment(dto.getComment());
+
+        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+        approveOneDTO.setType(dto.getType());
+        approveOneDTO.setId(dto.getId());
+
         switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case PURCHASE_PRICE_CHANGE:
                 scmTaskFeign.purchasePriceChangeApprove(baseApproveParamDTO);
@@ -626,7 +632,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 scmTaskFeign.purchaseApplicationApprove(baseApproveParamDTO);
                 break;
             case PURCHASE_ORDER:
-                scmTaskFeign.purchaseOrderApprove(baseApproveParamDTO);
+                scmTaskFeign.purchaseOrderApprove(approveOneDTO);
                 break;
             case PURCHASE_CHANGE:
                 scmTaskFeign.purchaseChangeApprove(baseApproveParamDTO);
@@ -638,7 +644,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 supplierFeign.supplierApprove(baseApproveParamDTO);
                 break;
             case SUBCONTRACT_ORDER:
-                scmTaskFeign.subcontractOrderApprove(baseApproveParamDTO);
+                scmTaskFeign.subcontractOrderApprove(approveOneDTO);
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);

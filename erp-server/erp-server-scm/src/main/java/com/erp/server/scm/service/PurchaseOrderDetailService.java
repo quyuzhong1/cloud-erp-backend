@@ -119,12 +119,12 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @description: 根据ids更新
      * @author zhangchunlin
      * @date: 2023/6/20 10:33
-     * @param arrivalStatus
+     * @param executionStatus
      * @param ids
      * @param remark
      *
      */
-    void updateArrivalStatusByIds(String arrivalStatus, List<String> ids, List<PurchaseOrderDetailEntity> purchaseOrderDetailList, String remark);
+    void updateArrivalStatusByIds(String executionStatus, List<String> ids, List<PurchaseOrderDetailEntity> purchaseOrderDetailList, String remark);
 
     /**
      * 根据sku id集合获取最新的一个审核通过的采购订单明细，按采购日期倒序
@@ -190,4 +190,13 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @param mainIdList
      */
     void updateExecutionStatus(List<String> mainIdList,ExecutionStatusEnum statusEnum);
+    /**
+     * @description: 根据编码集合和sku编码集合查询
+     * @author Will
+     * @date: 2024/3/5 16:06
+     * @param codeList
+     * @param skuNoList
+     * @return List<ImportEndReceiveDTO>
+     */
+    List<PurchaseOrderDetailDTO.ImportEndReceiveDTO> listImportEndReceive(List<String> codeList, List<String> skuNoList);
 }

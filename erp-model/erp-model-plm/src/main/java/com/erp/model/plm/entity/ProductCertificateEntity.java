@@ -1,13 +1,14 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.alibaba.fastjson.annotation.JSONField;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * @Description 产品证书表
@@ -25,12 +26,6 @@ public class ProductCertificateEntity extends BaseEntity implements Serializable
     private String skuId;
 
     /**
-     * 证书图片
-     */
-    @TableField(value = "certificate_img")
-    private String certificateImg;
-
-    /**
      * 证书有效期
      */
     @TableField(value = "certificate_valid_time")
@@ -42,6 +37,45 @@ public class ProductCertificateEntity extends BaseEntity implements Serializable
     @TableField(value = "product_id")
     private String productId;
 
+    /**
+     * 证书类型
+     */
+    @TableField(value = "type")
+    private String type;
+
+    /**
+     * 证书项目
+     */
+    @TableField(value = "dict_project")
+    private String dictProject;
+
+    /**
+     * 备注
+     */
+    @TableField(value = "remark")
+    private String remark;
+
+    /**
+     * 附件
+     */
+    @TableField(exist = false)
+    @JSONField(serialize = false)
+    private MultipartFile multipartFile;
+
+    /**
+     * 附件路径
+     */
+    @TableField(exist = false)
+    @JSONField(serialize = false)
+    private String pathUrl;
+
+    /**
+     * 证书文件表id
+     */
+    @TableField(exist = false)
+    private String attachmentId;
+
+    public static final String TABLE_NAME = "product_certificate";
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

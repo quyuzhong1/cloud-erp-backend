@@ -804,10 +804,16 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             throw new ServiceException(ApiError.ERROR_99012);
         }
         LoginUser userInfo = commonService.getUserInfo();
-
+        //采购入库单
         List<PoInstockDetailEntity> sourceDetailList = poInstockDetailService.listByIds(sourceDetailIds);
         if (CollectionUtils.isEmpty(sourceDetailList)) {
             throw new ServiceException(ApiError.ERROR_98051);
+        }
+        //采购订单
+        List<String> poIdList = list.stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getPurchaseOrderId).collect(Collectors.toList());
+        List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(poIdList);
+        if (CollectionUtils.isEmpty(purchaseOrderList)) {
+            throw new ServiceException(ApiError.ERROR_98025);
         }
         List<PurchaseReturnOrderDTO.AddDTO> addList = new ArrayList<>();
 
@@ -817,15 +823,22 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             PurchaseReturnOrderDTO.AddDTO addDTO = new PurchaseReturnOrderDTO.AddDTO();
 
             PoInstockDTO.GeneratePurchaseReturnOrderDTO purchaseReturnOrderDTO = value.get(0);
-            //采购单
+            //采购入库单
             PoInstockEntity poInstockEntity = sourceList.stream().filter(obj -> obj.getId().equals(purchaseReturnOrderDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(poInstockEntity)) {
                 throw new ServiceException(ApiError.ERROR_98050);
             }
+            //采购订单
+            PurchaseOrderEntity purchaseOrderEntity = purchaseOrderList.stream().filter(obj -> obj.getId().equals(purchaseReturnOrderDTO.getPurchaseOrderId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(purchaseOrderEntity)) {
+                throw new ServiceException(ApiError.ERROR_98025);
+            }
+
             BeanMapperUtils.copy(poInstockEntity, addDTO);
             addDTO.setBillDate(LocalDate.now());
             addDTO.setSourceType(purchaseReturnOrderDTO.getSourceType());
             addDTO.setSourceId(purchaseReturnOrderDTO.getSourceId());
+            addDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
             List<PurchaseReturnOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
             for (PoInstockDTO.GeneratePurchaseReturnOrderDTO detail : value) {
                 PurchaseReturnOrderDetailDTO.AddDTO addDetailDTO = new PurchaseReturnOrderDetailDTO.AddDTO();

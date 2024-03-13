@@ -63,22 +63,13 @@ public class ProductNoSpecDTO {
      * 产品证书信息
      */
     @Valid
-    private List<ProductCertificateDTO> productCertificateList;
-
-
+    private List<ProductCertificateDTO.ProductAddOrUpdateDTO> productCertificateList;
 
     /**
      * 包装辅料
      */
     @Valid
     private List<ProductAccessoriesDTO> productAccessoriesList;
-
-
-    /**
-     * 产品认证
-     */
-    @Valid
-    private List<ProductAttestationDTO> productAttestationList;
 
     /**
      * 目的国海关编码信息

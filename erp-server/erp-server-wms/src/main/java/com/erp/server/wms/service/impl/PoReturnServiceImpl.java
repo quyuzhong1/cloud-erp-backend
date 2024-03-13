@@ -40,7 +40,6 @@ import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.dto.SysUserDTO;
-import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.model.sys.entity.SysPostUserEntity;
 import com.erp.model.wms.dto.*;
@@ -270,7 +269,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
 
         //获取核算公司
-        SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getReturnOrgId());
+        List<BaseIdDTO.CodeDTO> companyEntityList = sysUserFeign.getAccountingCompanyList(Arrays.asList(dto.getReturnOrgId(),dto.getPurchaseOrgId()));
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getReturnWarehouseId());
         //生成单号
@@ -306,7 +305,13 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             poReturnEntity.setSupplierContactName(supplierContactById.getPerson());
         }
         poReturnEntity.setReturnUserName(userDTO != null ? userDTO.getUserName() : "");
-        poReturnEntity.setReturnOrgName(sysAccountingCompanyEntity.getCompanyName());
+        //退货组织名称
+        String returnOrgName = companyEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getReturnOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        poReturnEntity.setReturnOrgName(returnOrgName);
+        //采购组织名称
+        String purchaseOrgName = companyEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getPurchaseOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        poReturnEntity.setPurchaseOrgName(purchaseOrgName);
+
         poReturnEntity.setBillDate(dto.getBillDate());
         poReturnEntity.setReturnWarehouseName(warehouseEntity.getName());
 
@@ -336,7 +341,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //获取用户信息
         SysUserDTO userDTO = sysUserFeign.getSysUserById(dto.getReturnUserId());
         //获取核算公司
-        SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getReturnOrgId());
+        List<BaseIdDTO.CodeDTO> companyEntityList = sysUserFeign.getAccountingCompanyList(Arrays.asList(dto.getReturnOrgId(),dto.getPurchaseOrgId()));
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getReturnWarehouseId());
 
@@ -383,7 +388,13 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             }
         }
         poReturnEntity.setReturnUserName(userDTO.getUserName());
-        poReturnEntity.setReturnOrgName(sysAccountingCompanyEntity.getCompanyName());
+        //退货组织名称
+        String returnOrgName = companyEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getReturnOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        poReturnEntity.setReturnOrgName(returnOrgName);
+        //采购组织名称
+        String purchaseOrgName = companyEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getPurchaseOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        poReturnEntity.setPurchaseOrgName(purchaseOrgName);
+
         poReturnEntity.setBillDate(dto.getBillDate());
         poReturnEntity.setReturnWarehouseName(warehouseEntity.getName());
         //更新收货单主表信息
@@ -417,8 +428,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(poReturnEntity.getPurchaseOrderId());
             viewDTO.setPurchaseUserDeptId(purchaseOrderEntity.getPurchaseDeptId());
             viewDTO.setPurchaseUserDeptName(purchaseOrderEntity.getPurchaseDeptName());
-            viewDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
-            viewDTO.setPurchaseOrgName(purchaseOrderEntity.getPurchaseOrgName());
             viewDTO.setSourceCode(purchaseOrderEntity.getCode());
             SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(viewDTO.getReturnUserId());
             if (ObjectUtils.isNotEmpty(deptByUserId)) {
@@ -673,8 +682,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                     .update();
 
             List<PurchaseOrderDetailEntity> list = new ArrayList<>();
+            List<PoReturnDetailEntity> poReturnDetailList = poReturnDetailService.listByMainIds(ids);
             for (PoReturnEntity poReturnEntity : poReturnEntityList) {
-                List<PoReturnDetailEntity> detailByMainId = poReturnDetailService.getDetailByMainId(poReturnEntity.getId());
+                List<PoReturnDetailEntity> detailByMainId = poReturnDetailList.stream().filter(obj -> StrUtil.equals(poReturnEntity.getId(), obj.getMainId())).collect(Collectors.toList());
                 List<String> detailId = detailByMainId.stream().map(PoReturnDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
                 List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
                 if (CollectionUtils.isNotEmpty(purchaseOrderDetailEntities)) {
@@ -696,12 +706,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 poReturnEntity.setConfirmStatus(confirmStatus);
                 poReturnEntity.setConfirmDate(confirmStatus.equals(PoReturnConfirmStatusEnum.WAIT_CONFIRM.getStatus()) ? null :LocalDate.now());
             }
-
-
-
-            List<String> purchaseOrderIds = poReturnEntityList.stream().filter(req -> StringUtils.isNotBlank(req.getPurchaseOrderId())).map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(purchaseOrderIds)) {
-                updateArrivalState(purchaseOrderIds);
+            //采购明细id
+            List<String> podIds = poReturnDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(podIds)) {
+                updateArrivalState(podIds);
             }
             //自动生成补货采购订单
             autoAddPurchaseOrder(poReturnEntityList);
@@ -761,7 +769,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             addDTO.setSkuId(poReturnDetailEntity.getSkuId());
             addDTO.setReceiveQty(poReturnDetailEntity.getReturnQty() * -1);
             addDTO.setTaxPrice(poReturnDetailEntity.getReturnPrice());
-            addDTO.setSettleOrgId(entity.getReturnOrgId());
+            addDTO.setSettleOrgId(entity.getPurchaseOrgId());
             addDTO.setCurrency(poReturnDetailEntity.getCurrency());
             ReturnOrderSourceEnum returnOrderSourceEnum = Objects.equals(entity.getSourceType(), SourceTypeEnum.QC_INFO.getCode()) ?
                     ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
@@ -833,8 +841,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 .update();
         List<PurchaseOrderDetailEntity> list = new ArrayList<>();
         for (PoReturnEntity poReturnEntity : poReturnEntityList) {
-
-            List<PoReturnDetailEntity> detailByMainId = poReturnDetailService.getDetailByMainId(poReturnEntity.getId());
+            List<PoReturnDetailEntity> detailByMainId = poReturnDetailList.stream().filter(obj -> StrUtil.equals(poReturnEntity.getId(), obj.getMainId())).collect(Collectors.toList());
             List<String> detailId = detailByMainId.stream().map(PoReturnDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
             List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
             if (CollectionUtils.isNotEmpty(purchaseOrderDetailEntities)) {
@@ -852,10 +859,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
             }
         }
-        List<String> purchaseOrderIds = poReturnEntityList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(purchaseOrderIds)) {
-            updateArrivalState(purchaseOrderIds);
+        //采购明细id
+        List<String> podIds = poReturnDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(podIds)) {
+            updateArrivalState(podIds);
         }
+
         unApproveInventory(poReturnEntityList); // 库存反审核操作
 
         //操作日志
@@ -1092,7 +1101,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             }
 
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
-            resultDTO.setType(item.getCode());
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
             list.add(resultDTO);
         }
         return list;
@@ -1159,7 +1169,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     /**
      * 修改到货状态
      *
-     * @param purchaseOrderIds
+     * @param podIds
      * @return void
      * @Author Luo_WG
      * @Date 2023/4/28 11:37
@@ -1167,9 +1177,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public void updateArrivalState(List<String> purchaseOrderIds) {
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listByPurchaseOrderIds(purchaseOrderIds);
-        List<String> podIds = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+    public void updateArrivalState(List<String> podIds) {
+        //采购订单明细
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(podIds);
         List<PoReturnDetailEntity> returnDetailEntityList = poReturnDetailService.listReturnOrderDetailByPodIds(podIds);
         List<WarehouseReceiveDetailEntity> receiveDetailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
 
@@ -1185,7 +1195,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
             Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(orderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
 
-            Integer receiveQty = receiveDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(orderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer receiveQty = receiveDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(orderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
 
             Integer purchaseQty = orderDetailEntity.getPurchaseQty();
             //订单执行状态
@@ -1263,6 +1273,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             addDTO.setReturnOrgId(orgId);
             addDTO.setBillDate(LocalDate.now());
             addDTO.setSourceType(type);
+            addDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
             addDTO.setSourceId(purchaseReturnOrderDTO.getSourceId());
             addDTO.setPurchaseOrderId(purchaseOrderEntity.getPurchaseOrderId());
             addDTO.setReturnWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());

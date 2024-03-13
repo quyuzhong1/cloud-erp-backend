@@ -120,6 +120,29 @@
         </if>
 
     </select>
+    <select id="getProvideChannel" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$ProvideChannelDTO">
+        SELECT
+            lc.id as channelId,
+            lc.code as channelCode,
+            ls.supplier_id as logisticsSupplierId,
+            ls.supplier_name as logisticsSupplierName
+        from logistics_channel lc
+                          inner join logistics_supplier ls on lc.main_id = ls.id
+        where lc.is_deleted = false and ls.is_deleted = false and ls.disabled = false and auth_status = 'already'
+          and lc.disabled = false
+        <if test="channelCodeList !=null and channelCodeList.size>0">
+            and lc.code in
+            <foreach collection="channelCodeList" open="(" close=")" item="item" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="provideNameList !=null and provideNameList.size>0">
+            and ls.supplier_name in
+            <foreach collection="provideNameList" open="(" close=")" item="item" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 
 
 </mapper>

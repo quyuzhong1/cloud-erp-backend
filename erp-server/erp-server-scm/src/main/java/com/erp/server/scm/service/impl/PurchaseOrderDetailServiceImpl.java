@@ -25,8 +25,8 @@ import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ConfirmTypeEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.ExecutionStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
@@ -47,7 +47,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -612,5 +611,13 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         lambdaUpdate().in(PurchaseOrderDetailEntity::getPurchaseOrderId,mainIdList)
                 .set(PurchaseOrderDetailEntity::getExecutionStatus,statusEnum.getCode())
                 .update();
+    }
+
+    @Override
+    public List<PurchaseOrderDetailDTO.ImportEndReceiveDTO> listImportEndReceive(List<String> codeList, List<String> skuNoList) {
+        if (CollectionUtils.isEmpty(codeList) || CollectionUtils.isEmpty(skuNoList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return this.baseMapper.listImportEndReceive(codeList,skuNoList);
     }
 }

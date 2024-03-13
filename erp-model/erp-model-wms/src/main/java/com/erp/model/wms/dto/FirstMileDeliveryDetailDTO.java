@@ -41,6 +41,11 @@ public class FirstMileDeliveryDetailDTO implements Serializable {
         private String imageUrl;
 
         /**
+         * 第三方仓SKU
+         */
+        private String thirdWarehouseSku;
+
+        /**
         * 平台sku
         */
         private String platformSpuNo;

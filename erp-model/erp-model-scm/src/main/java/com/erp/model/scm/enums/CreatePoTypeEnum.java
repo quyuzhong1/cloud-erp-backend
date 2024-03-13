@@ -12,7 +12,8 @@ public enum CreatePoTypeEnum {
 
     NOT_GENERATED("0", "未生成"),
     PARTIAL_GENERATED("1", "部分生成"),
-    ALL_GENERATED("2", "已生成");
+    ALL_GENERATED("2", "已生成"),
+    CLOSED("3", "已关闭");
 
     private String status;
     private String name;

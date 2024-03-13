@@ -1,9 +1,6 @@
 package com.erp.server.tms.service;
 
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
@@ -148,7 +145,14 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
      * @param id
      * @return java.util.List<BatchResultDTO>
      **/
-    List<BatchResultDTO> upload(String id);
+    List<BatchResultDTO> orderForecast(String id);
+
+    /**
+     * 入库预报
+     * @param qtyDTO
+     * @return
+     */
+    List<BatchResultDTO> instockForecast(BaseDTO.QtyDTO qtyDTO);
 
     /**
      * 报关设置自动生成-定时器调用
@@ -193,4 +197,11 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
      * @return void
      **/
     void getOrderByCodeJob();
+
+    /**
+     * 订单维度重试订单预报
+     * @param id
+     * @return
+     */
+    List<BatchResultDTO> retryOrderForecast(String id);
 }

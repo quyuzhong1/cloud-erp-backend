@@ -486,6 +486,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Boolean updateSoB2cStatus(List<String> soB2cIds, String status);
 
     /**
+     * 修改b2c销售单状态发货时间
+     * @Author Luo_WG
+     * @Date 2023/12/27 20:14
+     * @param deliveryTimeDTO
+     * @return java.lang.Boolean
+     **/
+    Boolean updateSoB2cStatusAndDeliveryTime(SoB2cDTO.UpdateDeliveryTimeDTO deliveryTimeDTO);
+
+    /**
      * 设置打印面单需要的字段
      * @Author Luo_WG
      * @Date 2023/12/28 15:39
@@ -777,4 +786,27 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return void
      **/
     Boolean updateAliExpressOrderWarehouse(String soId, String shopId);
+
+    /**
+     * 批量删除订单异常标识
+     * @param mainIds
+     * @param type
+     */
+    void batchRemoveSignError(List<String> mainIds, String type);
+
+    /**
+     * 单个更新订单预报号
+     * @param shippingOrderDTO
+     * @return
+     */
+    Boolean updateShippingOrderNoBySoId(TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO);
+    /**
+     * @description: 库存缺货校验
+     * @author Will
+     * @date: 2024/3/12 17:52
+     * @param dto
+     * @param detailList
+     * @return String
+     */
+    String checkSkuInventory(SoB2cDTO.AddDTO dto, List<SoB2cDetailDTO.AddDTO> detailList);
 }

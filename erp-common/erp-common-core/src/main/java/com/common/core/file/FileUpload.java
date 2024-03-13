@@ -15,7 +15,6 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Map;
 import java.util.UUID;
 
 
@@ -253,4 +252,5 @@ public class FileUpload {
 			throw new RuntimeException(e);
 		}
 	}
+
 }

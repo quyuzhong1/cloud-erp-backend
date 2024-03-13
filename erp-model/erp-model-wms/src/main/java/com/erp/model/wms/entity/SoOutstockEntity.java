@@ -247,6 +247,12 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     private String country;
 
 
+    /**
+     * 第三方单据编号
+     */
+    @TableField("third_code")
+    private String thirdCode;
+
 
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;

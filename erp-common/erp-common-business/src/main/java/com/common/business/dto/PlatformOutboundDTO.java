@@ -40,4 +40,7 @@ public class PlatformOutboundDTO extends UniqueDto {
     //第三方订单状态
     private String thirdOrderStatus;
 
+    //出库时间
+    private LocalDateTime outBoundTime;
+
 }

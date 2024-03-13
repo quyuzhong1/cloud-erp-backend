@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 public class SoReturnInstockDetailDTO {
@@ -36,6 +37,12 @@ public class SoReturnInstockDetailDTO {
         @Min(value = 1, message = "签收数量最小值为1")
         @Max(value = 999999999, message = "签收数量最大值为999999999")
         private Integer receiveQty;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
         /**
          * 仓位
          */
@@ -95,6 +102,10 @@ public class SoReturnInstockDetailDTO {
         @Min(value = 1, message = "签收数量最小值为1")
         @Max(value = 999999999, message = "签收数量最大值为999999999")
         private Integer receiveQty;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
         /**
          * 仓位
          */
@@ -196,6 +207,14 @@ public class SoReturnInstockDetailDTO {
          * 退货原因名称
          */
         private String returnReasonDictName;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
         /**
          * 仓位
          */

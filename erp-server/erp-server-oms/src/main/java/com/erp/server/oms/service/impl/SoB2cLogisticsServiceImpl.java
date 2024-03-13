@@ -38,9 +38,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -295,6 +294,17 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     @Override
     public List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList() {
         return baseMapper.listTrackNoEmptyList();
+    }
+
+    @Override
+    public Boolean updateDeliveryTimeByMainIds(List<String> mainIds, LocalDateTime deliveryTime) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Boolean.FALSE;
+        }
+        return lambdaUpdate()
+                .set(SoB2cLogisticsEntity::getDeliveryTime, deliveryTime)
+                .in(SoB2cLogisticsEntity::getMainId, mainIds)
+                .update();
     }
 
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {

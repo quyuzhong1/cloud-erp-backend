@@ -6,9 +6,6 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
-import com.erp.model.wms.entity.SubcontractIssueEntity;
-import com.erp.server.scm.query.PurchaseOrderQueryHandler;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -19,7 +16,9 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.server.scm.query.PurchaseOrderQueryHandler;
 import com.erp.server.scm.service.PurchaseOrderDetailService;
 import com.erp.server.scm.service.PurchaseOrderService;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +28,7 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -282,7 +282,7 @@ public class PurchaseOrderController extends BaseController {
      * 批量审核
      * @author Will
      * @date: 2023/3/15 17:54
-     * @param baseApproveParamDTO
+     * @param dto
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.APPROVE, desc = "批量审核采购订单")
@@ -292,9 +292,26 @@ public class PurchaseOrderController extends BaseController {
             menuCode = "scm:purchaseOrder:approve",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "ids")
-    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        purchaseOrderService.approve(baseApproveParamDTO);
-        return success();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : ids) {
+            BatchResultDTO approveResult;
+            try {
+                approveResult = purchaseOrderService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+            }catch (Exception e){
+                log.error("采购订单审核失败",e);
+                PurchaseOrderEntity entity = purchaseOrderService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    approveResult = BatchResultDTO.fail(id, id, "采购订单不存在, 审核失败");
+                    resultDTOS.add(approveResult);
+                    continue;
+                }
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(approveResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -312,8 +329,24 @@ public class PurchaseOrderController extends BaseController {
             serviceClass = PurchaseOrderService.class,
             keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = purchaseOrderService.disApprove(dto.getIds());
-        return flag == true ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO disApproveResult;
+            try {
+                disApproveResult = purchaseOrderService.disApprove(id);
+            }catch (Exception e){
+                log.error("委外订单反审核失败",e);
+                PurchaseOrderEntity entity = purchaseOrderService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    disApproveResult = BatchResultDTO.fail(id, id, "委外订单不存在, 反审核失败");
+                    resultDTOS.add(disApproveResult);
+                    continue;
+                }
+                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(disApproveResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -607,5 +640,52 @@ public class PurchaseOrderController extends BaseController {
             resultDTOS.add(resultDTO);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 下载结束交货模板
+     * @author Will
+     * @date: 2024/3/0 10:22
+     * @param request
+     * @param response
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载结束交货模板")
+    @GetMapping("/exportEndRecveiveTemplate")
+    public ApiResult exportEndRecveiveTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/purchaseEndReceiveTemplate.xlsx";
+        String excelName = "purchaseEndReceiveTemplate.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+        return success();
+    }
+
+    /**
+     * 导入结束交货采购订单
+     * @author Will
+     * @date: 2024/3/5 11:07
+     * @param multipartFile
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入结束交货采购订单")
+    @PostMapping("/importEndReceiveFile")
+    public ApiResult importEndReceiveFile(@RequestParam("excelFile") MultipartFile multipartFile, HttpServletResponse response) {
+        purchaseOrderService.importEndReceiveFile(multipartFile, response);
+        return success();
     }
 }

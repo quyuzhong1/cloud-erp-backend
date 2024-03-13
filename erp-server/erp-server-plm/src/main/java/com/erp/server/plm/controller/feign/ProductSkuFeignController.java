@@ -2,6 +2,8 @@ package com.erp.server.plm.controller.feign;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BasicCategoryEntity;
@@ -168,6 +170,21 @@ public class ProductSkuFeignController {
         List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
         return skuList;
     }
+
+    /**
+     * 根据sku no 获取sku 信息
+     *
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author yl
+     * @date 2023-06-27 17:51
+     */
+    @PostMapping("/getSkuInfoAdvanceQuery")
+    @WebAdvanceQuery
+    public List<SkuVO> getSkuInfoAdvanceQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer) {
+        List<SkuVO> skuList = productDetailService.getSkuInfoAdvanceQuery(advanceQueryContainer);
+        return skuList;
+    }
+
 
 
     @PostMapping("/listBySkuNoList")

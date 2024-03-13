@@ -2,18 +2,19 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.entity.OtherInstockEntity;
-import com.erp.model.wms.entity.SoReturnReceiveEntity;
+import com.erp.server.wms.query.OtherInstockQueryHandler;
 import com.erp.server.wms.service.OtherInstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -24,7 +25,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -57,6 +57,7 @@ public class OtherInstockController extends BaseController {
             menuCode = "wms:otherInstock:paging",
             tableAlias = "oi"
     )
+    @WebAdvanceQuery(handler = OtherInstockQueryHandler.class)
     public ApiResult<PagingVO<OtherInstockDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<OtherInstockDTO.SearchParamDTO> dto) {
         PagingVO<OtherInstockDTO.ListDTO> pagingVO = otherInstockService.paging(dto);
         return success(pagingVO);
@@ -341,6 +342,7 @@ public class OtherInstockController extends BaseController {
             menuCode = "wms:otherInstock:paging",
             tableAlias = "oi"
     )
+    @WebAdvanceQuery(handler = OtherInstockQueryHandler.class)
     public ApiResult exportExcel(@RequestBody OtherInstockDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = otherInstockService.exportExcel(dto, response);
         return flag == true ? success() : failure();

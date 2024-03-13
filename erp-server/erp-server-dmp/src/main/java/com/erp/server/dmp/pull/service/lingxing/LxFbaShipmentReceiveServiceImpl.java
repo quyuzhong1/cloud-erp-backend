@@ -96,6 +96,7 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
             log.info("拉取领星货件签收明细数据列表数据为空,sid={}, date={}", sid, requestTime);
             return;
         }
+        dtoList.forEach(e -> e.setShopId(shopInfoEntity.getId()));
         List<FbaReceiveDetailEntity> entityList = DmpFbaShipmentReceiveConverter.INSTANCE.dtoListToEntityList(dtoList);
 
         log.info("拉取领星货件签收明细数据 entityList.size = {} ", entityList.size());
@@ -107,7 +108,7 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
                 .collect(Collectors.groupingBy(FbaReceiveDetailEntity::getFbaShipmentId));
         for (Map.Entry<String, List<FbaReceiveDetailEntity>> entry : entityToMqList.entrySet()) {
             // 构造消息体
-            FbaReceiveGroupEntity entity = FbaReceiveGroupEntity.init(entry, requestTime.toLocalDate(), sid);
+            FbaReceiveGroupEntity entity = FbaReceiveGroupEntity.init(entry, requestTime.toLocalDate(), sid, shopInfoEntity.getId());
             UniqueDto orderMongoDTO = UniqueDto.getUniqId(entity.getUniqueId());
             List<FbaReceiveGroupEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveGroupEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());

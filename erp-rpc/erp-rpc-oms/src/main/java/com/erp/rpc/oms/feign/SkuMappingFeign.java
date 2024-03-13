@@ -1,6 +1,8 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.validator.ValidList;
+import com.erp.model.oms.dto.ListingAdvanceQueryDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -8,6 +10,7 @@ import com.erp.model.oms.entity.SkuMappingEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -52,4 +55,21 @@ public interface SkuMappingFeign {
      */
     @PostMapping("feign/skuMapping/list")
     List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingList(@RequestBody ListingInfoParamDTO dto);
+
+
+    /**
+     * 通过skuId查询映射关系列表
+     *
+     * @author Jim
+     * @date 2023/11/2
+     */
+    @PostMapping("feign/skuMapping/listByErpSkuIdAndType")
+    List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(@RequestBody List<String> erpSkuIdList,@RequestParam(value = "provideCode") String provideCode);
+
+    /**
+     * 高级查询
+     * @return erp skuId
+     */
+    @PostMapping("feign/skuMapping/advanceQuerySku")
+    List<ListingAdvanceQueryDTO> advanceQuerySku(@RequestBody AdvanceQueryContainer advanceQueryContainer);
 }

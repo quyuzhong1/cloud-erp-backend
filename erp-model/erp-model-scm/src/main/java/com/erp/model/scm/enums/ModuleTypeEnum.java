@@ -73,6 +73,8 @@ public enum ModuleTypeEnum {
     TRANSFER_LOGISTICS_SUPPLIER("64", "中转报关服务商"),
     TRANSFER_DECLARE("65", "中转报关单"),
     PACKAGE_FORECAST("66", "组包预报"),
+    CUSTOMER_B2B_SELLER_CHANGE("63", "b2b客户销售员变更单"),
+    PRODUCT_CERTIFICATE("64", "产品认证"),
     ;
 
 

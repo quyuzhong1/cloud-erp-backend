@@ -1,26 +1,28 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.erp.model.wms.entity.InventoryClosedRecordEntity;
-import com.erp.server.wms.mapper.InventoryClosedRecordMapper;
-import com.erp.server.wms.service.InventoryClosedRecordService;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.InventoryClosedRecordEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
+import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
+import com.erp.model.wms.entity.InventoryClosedRecordEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.wms.mapper.InventoryClosedRecordMapper;
+import com.erp.server.wms.service.InventoryClosedRecordService;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
-
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -34,9 +36,13 @@ import org.springframework.util.CollectionUtils;
 @Service
 public class InventoryClosedRecordServiceImpl extends SuperServiceImpl<InventoryClosedRecordMapper, InventoryClosedRecordEntity> implements InventoryClosedRecordService {
 
+    @Resource
+    private SysUserFeign sysUserFeign;
+
     @Override
-    public Map<String, LocalDate> mapByOrgId() {
+    public Map<String, LocalDate> mapByOrgId(String category) {
         return lambdaQuery()
+                .eq(InventoryClosedRecordEntity::getCategory,category)
                 .list()
                 .stream()
                 .collect(Collectors.toMap(InventoryClosedRecordEntity::getInventoryOrgId, InventoryClosedRecordEntity::getClosedDate));
@@ -45,7 +51,7 @@ public class InventoryClosedRecordServiceImpl extends SuperServiceImpl<Inventory
     @Override
     public LocalDate checkClosed(String inventoryOrgId, LocalDate billDate) {
         // 查询最新库存关账记录
-        Map<String, LocalDate> closedDateMap = this.mapByOrgId();
+        Map<String, LocalDate> closedDateMap = this.mapByOrgId(InventoryClosedRecordEnum.STK.getCode());
         LocalDate closeDate = closedDateMap.get(inventoryOrgId);
         if(null == closeDate) {
             return null;
@@ -63,7 +69,7 @@ public class InventoryClosedRecordServiceImpl extends SuperServiceImpl<Inventory
     public void actionBatch(List<InventoryClosedRecordEntity> newEntityList, List<InventoryClosedRecordEntity> oldEntityList) {
         // 1: 新增列表
         List<InventoryClosedRecordEntity> saveEntityList = newEntityList.stream()
-                .filter(e -> oldEntityList.stream().noneMatch(o -> o.getInventoryOrgId().equalsIgnoreCase(e.getInventoryOrgId())))
+                .filter(e -> oldEntityList.stream().noneMatch(o -> StrUtil.equals(o.getCategory(),e.getCategory()) && o.getInventoryOrgId().equalsIgnoreCase(e.getInventoryOrgId())))
                 .collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(saveEntityList)) {
             boolean result = this.saveBatch(saveEntityList);
@@ -74,7 +80,7 @@ public class InventoryClosedRecordServiceImpl extends SuperServiceImpl<Inventory
 
         // 2: 删除不存在的列表
         List<InventoryClosedRecordEntity> deleteEntityList = oldEntityList.stream()
-                .filter(e -> newEntityList.stream().noneMatch(o -> o.getInventoryOrgId().equalsIgnoreCase(e.getInventoryOrgId())))
+                .filter(e -> newEntityList.stream().noneMatch(o -> StrUtil.equals(o.getCategory(),e.getCategory()) && o.getInventoryOrgId().equalsIgnoreCase(e.getInventoryOrgId())))
                 .collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(deleteEntityList)) {
             List<String> entityIds = deleteEntityList.stream().map(InventoryClosedRecordEntity::getId).collect(Collectors.toList());
@@ -85,19 +91,37 @@ public class InventoryClosedRecordServiceImpl extends SuperServiceImpl<Inventory
         }
 
         // 3: 更新列表
-        // 需要更新的map
-        Map<String, LocalDate> newClosedDateMap = newEntityList
-                .stream()
-                .collect(Collectors.toMap(InventoryClosedRecordEntity::getInventoryOrgId, InventoryClosedRecordEntity::getClosedDate));
         // 过滤得到需要更新的列表
         List<InventoryClosedRecordEntity> updateEntityList = oldEntityList.stream()
-                .filter(e -> e.isUpdateClosedDate(newClosedDateMap))
-                .map(e -> e.setClosedDateByMap(newClosedDateMap))
+                .filter(e -> e.isUpdateClosedDate(newEntityList))
+                .map(e -> e.setClosedDateByMap(newEntityList))
                 .collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(updateEntityList)) {
             boolean result = this.updateBatchById(updateEntityList);
             if (!result) {
                 throw new ServiceException("[InventoryClosedRecordEntity]批量更新失败");
+            }
+        }
+    }
+
+    @Override
+    public void checkHsClosed (List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList) {
+        if (CollectionUtils.isEmpty(closedParamList)) {
+            return;
+        }
+        List<String> orgIdList = closedParamList.stream().map(InventoryClosedRecordDTO.ClosedParamDTO::getOrgId).distinct().collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
+
+        Map<String, LocalDate> closedDateMap = this.mapByOrgId(InventoryClosedRecordEnum.HS.getCode());
+        for (InventoryClosedRecordDTO.ClosedParamDTO closedParamDTO :closedParamList) {
+            LocalDate localDate = closedDateMap.get(closedParamDTO.getOrgId());
+            if (ObjectUtil.isNull(localDate)) {
+                continue;
+            }
+            LocalDate date = closedParamDTO.getBillDate();
+            if (date.isBefore(localDate) || localDate.isEqual(date)) {
+                String orgName = accountingCompanyList.stream().filter(obj -> StrUtil.equals(obj.getId(), closedParamDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
+                throw new ServiceException(StrUtil.format("组织【{}】已于{}关账",orgName,localDate));
             }
         }
     }

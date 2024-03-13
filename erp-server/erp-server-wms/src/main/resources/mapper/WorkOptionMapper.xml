@@ -7,6 +7,7 @@
             COUNT(*)
         FROM ${params.moduleCode}
         where 1=1
-        AND approve_status = #{params.moduleStatus}
+        AND ${params.moduleStatusField} = #{params.moduleStatus}
+        AND is_deleted = FALSE
     </select>
 </mapper>

@@ -131,6 +131,10 @@ public interface NoticeMessageConstant {
      */
     String FINISH_PROJECT = "项目状态: %s 操作 【%s】,将状态由【进行中】变更为【已完成】";
 
+    /**
+     * 审核产品
+     */
+    String APPROVE_PRODUCT = "SKU【%s】产品资料审核通过";
 
     /**
      * 归档项目

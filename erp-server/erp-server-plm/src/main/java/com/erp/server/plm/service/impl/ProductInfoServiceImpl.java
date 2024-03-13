@@ -278,15 +278,16 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             entity.setUpdateUserId(loginUser.getUid());
             entity.setUpdateUserName(loginUser.getUserName());
         }
-        if (entity.getType().intValue() == 1) {
-            entity.setProductVersion(1);
-        } else {
-            //查询关联产品版本
-            ProductInfoEntity productInfoEntity = this.getById(entity.getRelevanceProductId());
-            if (ObjectUtils.isNotEmpty(productInfoEntity)) {
-                entity.setProductVersion(productInfoEntity.getProductVersion().intValue() + 1);
-                dto.setRelevanceProductName(productInfoEntity.getName());
+        if (ProductTypeEnum.ITERATIVE_PRODUCT.getCode().equals(entity.getType())) {
+            ProductDetailEntity productDetailEntity = productDetailService.getById(entity.getIterateRefSkuId());
+            if (ObjectUtils.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_PRODUCT_ITERATE_REF_SKU_NOT_EXIST);
             }
+            entity.setIterateRefSkuId(productDetailEntity.getId());
+            entity.setIterateRefSkuNo(productDetailEntity.getSkuNo());
+        } else {
+            entity.setIterateRefSkuId("");
+            entity.setIterateRefSkuNo("");
         }
         entity.setChargeId(chargeId);
         entity.setChargeName(chargeName);
@@ -515,12 +516,72 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+        //部门处理
+        Boolean isFlag = handlePagingDept(params);
+        if (isFlag) {
+            return new PagingVO(new Page());
+        }
         IPage pageData = baseMapper.paging(query, params, categoryIdList);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
         return new PagingVO(pageData);
     }
 
+    /**
+     * @description: 分页数据处理
+     * @author Will
+     * @date: 2024/2/21 14:22
+     * @param params
+     * @return Boolean
+     */
+    @Override
+    public  Boolean handlePagingDept(ProductSearchDTO.PagingParamDTO params) {
+        //项目经理部门下人员
+        List<String> projectChargeDeptUserIdList =  handleDept(params.getProjectChargeDeptIdList());
+        params.setProjectChargeDeptUserIdList(projectChargeDeptUserIdList);
+        if (CollectionUtils.isNotEmpty(params.getProjectChargeDeptIdList()) && CollectionUtils.isEmpty(projectChargeDeptUserIdList)) {
+            return Boolean.TRUE;
+        }
+        //产品经理部门下人员
+        List<String> productChargeDeptUserIdList =  handleDept(params.getProductChargeDeptIdList());
+        params.setProductChargeDeptUserIdList(productChargeDeptUserIdList);
+        if (CollectionUtils.isNotEmpty(params.getProductChargeDeptIdList()) && CollectionUtils.isEmpty(productChargeDeptUserIdList)) {
+            return Boolean.TRUE;
+        }
+        //团队成员部门下人员
+        List<String> teamChargeDeptUserIdList =  handleDept(params.getTeamChargeDeptIdList());
+        params.setTeamChargeDeptUserIdList(teamChargeDeptUserIdList);
+        if (CollectionUtils.isNotEmpty(params.getTeamChargeDeptIdList()) && CollectionUtils.isEmpty(teamChargeDeptUserIdList)) {
+            return Boolean.TRUE;
+        }
+        //创建人部门下人员
+        List<String> createChargeDeptUserIdList =  handleDept(params.getCreateChargeDeptIdList());
+        params.setCreateChargeDeptUserIdList(createChargeDeptUserIdList);
+        if (CollectionUtils.isNotEmpty(params.getCreateChargeDeptIdList()) && CollectionUtils.isEmpty(createChargeDeptUserIdList)) {
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+    }
+
+    /**
+     * @description: 部门id集合
+     * @author Will
+     * @date: 2024/1/31 16:59
+     * @param deptIdList
+     * @return List<String>
+     */
+    private List<String> handleDept(List<String> deptIdList) {
+        if (CollectionUtils.isEmpty(deptIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<SysDepartmentUserNumberDTO> sysDepartmentUserNumberList = sysUserFeign.listDeptUserByDeptIdList(deptIdList);
+        if (CollectionUtils.isEmpty(sysDepartmentUserNumberList)) {
+           return Collections.EMPTY_LIST;
+        }
+        List<String> userIdList = sysDepartmentUserNumberList.stream().map(SysDepartmentUserNumberDTO::getUserId).collect(Collectors.toList());
+        return userIdList;
+
+    }
 
     /**
      * 我的项目
@@ -545,6 +606,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         String userId = commonService.getUserInfo().getUid();
         //我的项目
+        //部门处理
+        Boolean isFlag = handlePagingDept(params);
+        if (isFlag) {
+            return new PagingVO(new Page());
+        }
         IPage pageData = baseMapper.myProjectPaging(query, params, categoryIdList, userId);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
@@ -575,6 +641,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         String userId = commonService.getUserInfo().getUid();
         //收藏的项目
+        //部门处理
+        Boolean isFlag = handlePagingDept(params);
+        if (isFlag) {
+            return new PagingVO(new Page());
+        }
         IPage pageData = baseMapper.collect(query, params, categoryIdList, userId);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
@@ -780,7 +851,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                     item.setIsAddProductName("否");
                     item.setIfAddProduct(false);
                 }
-                if (ProductConstant.ITERATION_PRODUCT.equals(item.getType())) {
+                if (ProductTypeEnum.ITERATIVE_PRODUCT.getCode().equals(item.getType())) {
                     item.setIfIteration(true);
                     item.setIsIterationName("是");
                 } else {
@@ -887,6 +958,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+        //部门处理
+        Boolean isFlag = handlePagingDept(params);
+        if (isFlag) {
+            return dataList;
+        }
         dataList = baseMapper.listNotPaging(params, archiveProductIds, categoryIdList);
         return dataList;
     }
@@ -1091,6 +1167,21 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public String updateSpec(ProductInfoDTO dto) {
         ProductInfoEntity productInfoEntity = new ProductInfoEntity();
         BeanMapper.copy(dto, productInfoEntity);
+
+        //判断是否是迭代产品
+        if (ProductTypeEnum.ITERATIVE_PRODUCT.getCode().equals(productInfoEntity.getType())) {
+            ProductDetailEntity productDetailEntity = productDetailService.getById(productInfoEntity.getIterateRefSkuId());
+            if (ObjectUtils.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_PRODUCT_ITERATE_REF_SKU_NOT_EXIST);
+            }
+            productInfoEntity.setIterateRefSkuId(productDetailEntity.getId());
+            productInfoEntity.setIterateRefSkuNo(productDetailEntity.getSkuNo());
+        } else {
+            productInfoEntity.setType(ProductTypeEnum.NEW_PRODUCT.getCode());
+            productInfoEntity.setIterateRefSkuId("");
+            productInfoEntity.setIterateRefSkuNo("");
+        }
+
         this.saveOrUpdate(productInfoEntity);
         //同步到SCM
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(productInfoEntity), IdUtil.simpleUUID());
@@ -1906,12 +1997,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity, oldDto);
         }
-        //查询关联产品版本
-        ProductInfoEntity productInfoEntity = this.getById(oldDto.getRelevanceProductId());
-        if (ObjectUtils.isNotEmpty(productInfoEntity)) {
-            oldDto.setRelevanceProductName(productInfoEntity.getName());
-        }
-
         sysLogService.addSysLogByUpdate(oldDto, dto, CLASSPATH, businessId, pid, String.format("SPU[%s]", oldEntity.getSpuNo()));
     }
 
@@ -2359,6 +2444,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+
+        //部门处理
+        Boolean isFlag = handlePagingDept(params);
+        if (isFlag) {
+            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
+        }
         //两个都是
         if (size == 2) {
             List<ProductShowDTO> list = baseMapper.listAllExport(params, categoryIdList);
@@ -2455,7 +2546,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<Integer> exportDataList = params.getExportDataList();
         int size = exportDataList.size();
         Integer flag = exportDataList.get(0);
-
+        //部门处理
+        Boolean isFlag = handlePagingDept(params);
+        if (isFlag) {
+            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
+        }
         //两个都是
         if (size == 2) {
             List<ProductShowDTO> list = baseMapper.listMyProjectExport(params, categoryIdList, userId);
@@ -2548,6 +2643,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<Integer> exportDataList = params.getExportDataList();
         int size = exportDataList.size();
         Integer flag = exportDataList.get(0);
+
+        //部门处理
+        Boolean isFlag = handlePagingDept(params);
+        if (isFlag) {
+            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
+        }
 
         //两个都是
         if (size == 2) {

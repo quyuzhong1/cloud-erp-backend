@@ -3,17 +3,19 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.SoOutstockDTO;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
-import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
-import com.erp.server.wms.service.InventoryTransCoreService;
-import com.erp.server.wms.service.SoOutstockService;
+import com.erp.server.wms.query.StocktakingProfitLossQueryHandler;
 import com.erp.server.wms.service.StocktakingProfitLossService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -21,12 +23,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-
 import org.springframework.web.bind.annotation.RestController;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -107,6 +104,7 @@ public class StocktakingProfitLossController extends BaseController {
             menuCode = "wms:stocktakingProfitLoss:paging",
             tableAlias = "spl"
     )
+    @WebAdvanceQuery(handler = StocktakingProfitLossQueryHandler.class)
     public ApiResult<PagingVO<StocktakingProfitLossDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<StocktakingProfitLossDTO.PagingParamDTO> dto) {
         PagingVO<StocktakingProfitLossDTO.PagingViewDTO> pagingVO = stocktakingProfitLossService.paging(dto);
         return success(pagingVO);
@@ -118,6 +116,7 @@ public class StocktakingProfitLossController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出盘盈盘亏单")
     @PostMapping("/export")
+    @WebAdvanceQuery(handler = StocktakingProfitLossQueryHandler.class)
     public ApiResult exportWarehouse(@RequestBody @Valid StocktakingProfitLossDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = stocktakingProfitLossService.exportExcel(dto, response);
         return result ? success() : failure();

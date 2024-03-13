@@ -5,10 +5,14 @@
 <mapper namespace="com.erp.server.plm.mapper.ProductLogisticsMapper">
 
     <sql id="Base_Column_List">
-        product_property,
-        product_property_id,declare_chinese_name,declare_english_name,declare_model,
+        pl.product_property,
+        pl.product_property_id,declare_chinese_name,declare_english_name,declare_model,
         declare_price,customs_code,declare_unit,declare_element,
         english_material,english_usage,pl.create_time,
+        pl.input_voltage,pl.output_voltage,pl.voltage_unit,
+        pl.input_electric,pl.output_electric,pl.electric_unit,
+        pl.input_power,pl.output_power,pl.power_unit,
+        pl.input_battery_capacity,pl.output_battery_capacity,pl.battery_capacity_unit,
         pl.create_user_id,pl.update_time,pl.update_user_id
     </sql>
 

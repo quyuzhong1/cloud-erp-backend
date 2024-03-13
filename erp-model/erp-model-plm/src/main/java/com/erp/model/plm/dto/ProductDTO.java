@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -105,17 +106,18 @@ public class ProductDTO implements Serializable {
      * 产品类型 1 新产品 2 迭代产品
      */
     @NotNull(message = "产品类型不能为空")
-    @StateEnumValue(intValues = {2, 1}, message = "产品类型有误")
-    private Integer type;
+    @StateEnumValue(strValues = {"newProduct", "iterativeProduct"}, message = "产品类型有误")
+    private String type;
 
     /**
-     * 关联产品id
+     * 迭代产品关联skuid
      */
-    private String relevanceProductId;
+    private String iterateRefSkuId;
+
     /**
-     * 关联产品名称
+     * 迭代产品关联skuNo
      */
-    private String relevanceProductName;
+    private String iterateRefSkuNo;
 
     //产品分类id集合
     private List<String> categoryIdList;

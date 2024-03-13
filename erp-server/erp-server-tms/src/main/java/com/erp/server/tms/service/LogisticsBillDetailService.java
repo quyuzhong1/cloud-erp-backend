@@ -87,4 +87,6 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @return
      */
     Boolean updateTrackNo(LogisticsBillDTO.UpdateTrackNoDTO billDTO);
+
+    List<LogisticsBillDetailEntity> listByTrackNo(List<String> trackNoList);
 }

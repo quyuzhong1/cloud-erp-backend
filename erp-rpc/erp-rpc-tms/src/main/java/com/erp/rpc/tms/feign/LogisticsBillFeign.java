@@ -1,5 +1,8 @@
 package com.erp.rpc.tms.feign;
 
+import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -16,7 +19,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @FeignClient(name = "erp-tms", contextId = "logisticsBill")
 public interface LogisticsBillFeign {
@@ -135,4 +140,27 @@ public interface LogisticsBillFeign {
      **/
     @PostMapping("/feign/logisticsBill/listPrintTypeByChannelIds")
     List<LogisticsPrintTypeDTO.ViewDTO> listPrintTypeByChannelIds(@RequestBody List<String> channelIdList);
+
+    /**
+     * 批量根据销售出库单更新跟踪号
+     * @param batchUpdateTrackNoDTOList
+     * @return
+     */
+    @PostMapping("/feign/logisticsBill/updateBatchTrackNo")
+    List<BatchResultDTO> updateBatchTrackNo(@RequestBody List<LogisticsBillDTO.BatchUpdateTrackNoDTO> batchUpdateTrackNoDTOList,@RequestParam(name = "isAdd") Boolean isAdd);
+
+    /**
+     * 查询跟踪号与出库单号Map
+     * @param ids
+     * @return
+     */
+    @PostMapping("/feign/logisticsBill/mapTrackNoAndSoOutId")
+    Map<String, List<String>> mapTrackNoAndSoOutId(@RequestBody List<String> ids);
+
+    /**
+     * 根据高级查询条件查询出库Id
+     * @return
+     */
+    @PostMapping("/feign/logisticsBill/listSoOutIdByQuery")
+    List<String> listSoOutIdByQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer);
 }

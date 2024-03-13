@@ -166,13 +166,13 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
                 for (String id : list) {
                     BasicDictEntity declareProperty = basicDictService.getById(id);
                     if (ObjectUtils.isNotEmpty(declareProperty)) {
-                        String value = declareProperty.getValue();
+                        String remark = declareProperty.getRemark();
                         //产品属性（是否带电）
-                        if ("内电".equals(value) || "可拆卸电池".equals(value) || "纯电池".equals(value)) {
+                        if (StringUtils.isNotEmpty(remark) && "isElectric".equals(remark)) {
                             resultMap.put("productProperty_electric", true);
                         }
                         //产品属性（是否带磁）
-                        if ("带磁".equals(value)) {
+                        if (StringUtils.isNotEmpty(remark) && "isMagnetism".equals(remark)) {
                             resultMap.put("productProperty_magnetism", true);
                         }
                     }

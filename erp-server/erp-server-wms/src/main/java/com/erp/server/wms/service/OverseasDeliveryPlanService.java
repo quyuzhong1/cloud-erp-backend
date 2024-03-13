@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO;
 import com.erp.model.wms.entity.OverseasDeliveryPlanEntity;
@@ -147,7 +148,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
     * @param response
     * @return
     */
-    void exportList(OverseasDeliveryPlanDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(OverseasDeliveryPlanDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法
@@ -225,11 +226,11 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
      * @Author Luo_WG
      * @Date 2023/11/23 14:17
      * @param excelFile
-     * @param skuIds
+     * @param thirdSkuNoList
      * @param response
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO.ImportDTO>
      **/
-    OverseasDeliveryPlanDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response);
+    ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, HttpServletResponse response);
 
     /**
      * 修改发货状态

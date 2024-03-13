@@ -2034,6 +2034,70 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         return true;
     }
 
+    @Override
+    @Async("customExecutor")
+    public Boolean approveProductNotice(String userName, ProductDetailEntity entity) {
+        ProductShowDTO product = productInfoService.getProductInfo(entity.getProductId());
+        if (Objects.isNull(product)) {
+            return false;
+        }
+        String flag = NoticeEnum.APPROVE_PRODUCT.getFlag();
+        //根据节点标示获取到通知消息实体
+        NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
+        if (!Objects.isNull(notice)) {
+            String noticeMessageId = notice.getId();
+            List<String> noticeUserIds = getSetNotice(notice, product, new ArrayList<>());
+            //如果包含任务负责人的话
+            boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
+            //获取飞书的unionid 与用户关系
+            List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+            //消息通知记录
+            List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
+            List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(product.getProductId());
+            for (ProjectTaskEntity task : taskList) {
+                String chargeId = task.getChargeId();
+                if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
+                    List<String> chargeIdList = Arrays.asList(chargeId.split(","));
+                    noticeUserIds.addAll(chargeIdList);
+                }
+            }
+            //排除关闭通知的人员 并去重
+            List<String> noticeList = eliminateCloseNotice(notice.getId(), noticeUserIds);
+            List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
+            FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+            List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+            sendMessage.setUnionIds(unionIds);
+            String messageContent = String.format(NoticeMessageConstant.APPROVE_PRODUCT, entity.getSkuNo());
+            String projectContent = getProjectContent(product.getName(), productCharge, product.getProductChargeName());
+            Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
+            sendMessage.setContentMap(contentMap);
+            //发送消息的结果
+            Boolean sendResult = fsService.sendMessage(sendMessage);
+            //当发送成功后
+            if (sendResult) {
+                List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
+                for (String userId : acceptUserIds) {
+                    NoticeMessageRecordEntity recordEntity = new NoticeMessageRecordEntity();
+                    recordEntity.setChargeId(product.getProductChargeId());
+                    recordEntity.setMessageContent(messageContent);
+                    recordEntity.setNoticeMessageId(noticeMessageId);
+                    recordEntity.setNoticeNode(flag);
+                    recordEntity.setNoticeUserId(userId);
+                    recordEntity.setProductId(product.getProductId());
+                    recordEntity.setProductName(product.getName());
+                    recordEntity.setTaskId("");
+                    recordEntity.setTaskName("");
+                    recordEntity.setIsTask(0);
+                    recordEntity.setChargeName(product.getProductChargeName());
+                    messageRecordList.add(recordEntity);
+                }
+            }
+            //保存发送消息通知记录
+            noticeMessageRecordService.saveBatch(messageRecordList);
+        }
+        return true;
+    }
+
 
     /**
      * 完成项目 发送通知

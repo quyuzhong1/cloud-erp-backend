@@ -1,6 +1,5 @@
 package com.erp.model.scm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -595,5 +594,26 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 明细id
          */
         private String detailId;
+    }
+
+
+    /**
+     * 导入结束交货返回数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ImportEndReceiveDTO {
+        /**
+         * 采购订单号
+         */
+        private String code;
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * SKU编码
+         */
+        private String skuNo;
     }
 }

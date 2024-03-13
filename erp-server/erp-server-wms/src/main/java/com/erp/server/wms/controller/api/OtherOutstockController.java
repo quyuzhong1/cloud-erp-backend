@@ -2,18 +2,19 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.OtherOutstockDTO;
-import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.OtherOutstockEntity;
+import com.erp.server.wms.query.OtherOutstockQueryHandler;
 import com.erp.server.wms.service.OtherOutstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -56,6 +57,7 @@ public class OtherOutstockController extends BaseController {
             menuCode = "wms:otherOutstock:paging",
             tableAlias = "oo"
     )
+    @WebAdvanceQuery(handler = OtherOutstockQueryHandler.class)
     public ApiResult<PagingVO<OtherOutstockDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<OtherOutstockDTO.SearchParamDTO> dto) {
         PagingVO<OtherOutstockDTO.ListDTO> pagingVO = otherOutstockService.paging(dto);
         return success(pagingVO);
@@ -340,6 +342,7 @@ public class OtherOutstockController extends BaseController {
             menuCode = "wms:otherOutstock:paging",
             tableAlias = "oo"
     )
+    @WebAdvanceQuery(handler = OtherOutstockQueryHandler.class)
     public ApiResult exportExcel(@RequestBody OtherOutstockDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = otherOutstockService.exportExcel(dto, response);
         return flag == true ? success() : failure();

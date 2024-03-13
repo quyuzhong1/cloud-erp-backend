@@ -2,6 +2,7 @@ package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
@@ -243,7 +244,7 @@ public interface ScmTaskFeign {
      * @return java.lang.Boolean
      **/
     @PostMapping("feign/scmWorkOption/purchaseOrderApprove")
-    Boolean purchaseOrderApprove(@RequestBody @Validated BaseApproveParamDTO dto);
+    Boolean purchaseOrderApprove(@RequestBody @Validated ApproveOneDTO dto);
 
     /**
      * 审核
@@ -291,14 +292,6 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/purchaseOrder/listPoRefSubChildByParentPodIds")
     List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildByParentPodIds(@RequestBody List<String> parentPodIds);
-    /**
-     * @description: 审核采购订单
-     * @author Will
-     * @date: 2023/6/15 18:49
-     * @param poIds
-     */
-    @PostMapping("feign/purchaseOrder/autoApprovePurchaseOrder")
-    void autoApprovePurchaseOrder(@RequestBody List<String> poIds);
 
     /**
      * @description: 根据来源id查询采购订单数据
@@ -390,7 +383,7 @@ public interface ScmTaskFeign {
      * @return void
      **/
     @PostMapping("feign/subcontractOrder/subcontractOrderApprove")
-    Boolean subcontractOrderApprove(@RequestBody BaseApproveParamDTO dto);
+    Boolean subcontractOrderApprove(@RequestBody ApproveOneDTO dto);
 
     /**
      * @description: 新增采购订单

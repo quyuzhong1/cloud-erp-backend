@@ -3,7 +3,6 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
@@ -202,10 +201,10 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * 修改到货状态
      * @Author Luo_WG
      * @Date 2023/4/28 11:41
-     * @param purchaseOrderIds
+     * @param purchaseOrderDetailIds
      * @return void
      **/
-    void updateArrivalState(List<String> purchaseOrderIds);
+    void updateArrivalState(List<String> purchaseOrderDetailIds);
 
     
     /**

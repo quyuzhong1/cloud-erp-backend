@@ -123,7 +123,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         instockEntity.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
         instockEntity.setCustomerName(kingdeeReturnOrderEntity.getFRetcustName());
         instockEntity.setId(IdWorker.getIdStr());
-
+        instockEntity.setThirdCode(kingdeeReturnOrderEntity.getFEThirdBillNo());
         List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();
         for (KingdeeReturnOrderItemEntity kingdeeReturnOrderItemEntity : orderItemEntityList) {
             SoReturnInstockDetailEntity instockDetailEntity = new SoReturnInstockDetailEntity();

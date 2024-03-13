@@ -17,6 +17,8 @@ public enum SoB2cErrorTypeEnum {
     GET_LOGISTICS_CODE("getLogisticsCode",  "获取物流单异常"),
     GENERATE_OUTSTOCK("generateOutstock",  "生成销售出库单"),
     INTERCEPT_SUCCESS("interceptSuccess",  "物流拦截成功"),
+    ORDER_FORECAST("orderForecast",  "订单预报失败"),
+    INSTOCK_FORECAST("instockForecast",  "入库预报失败"),
     ;
     /**
      * 类型

@@ -114,7 +114,7 @@ public class BaoHongTransferHandlerImplTest {
                                 .grossWeight(new BigDecimal("10"))
                         .build()))
                 .build();
-        System.out.println(thirdWarehouseService.createInbound(transferLogisticsCreateInboundReq,"1750367777970982913"));
+        System.out.println(thirdWarehouseService.createInbound(transferLogisticsCreateInboundReq,"1753318555765444609"));
     }
 
     @Test

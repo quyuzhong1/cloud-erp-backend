@@ -115,7 +115,7 @@ public enum ImlEnums {
         INITIAL_RECEIVING("P","头程收货中", OverseasInstockStatusEnum.TO_BE_SIGNED),
         IN_TRANSIT("Z","转运中", OverseasInstockStatusEnum.TO_BE_SIGNED),
         RECEIVING_DESTINATION_WAREHOUSE("G","目的仓库收货中", OverseasInstockStatusEnum.PARTIAL_SIGNED),
-        COMPLETION_RECEIVING_DESTINATION_WAREHOUSE("F","目的仓收货完成", OverseasInstockStatusEnum.SIGNED),
+        COMPLETION_RECEIVING_DESTINATION_WAREHOUSE("F","目的仓收货完成", OverseasInstockStatusEnum.PARTIAL_SIGNED),
         COMPLETE_LISTING("E","完成上架", OverseasInstockStatusEnum.SIGNED),
         ABANDONMENT("X","废弃", OverseasInstockStatusEnum.CANCELED)
         ;

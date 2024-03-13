@@ -35,6 +35,7 @@
     <select id="paging" resultType="com.erp.model.wms.dto.OtherOutstockDTO$ListDTO">
         select
             oo.id,
+            ood.id as detailId,
             oo.code,
             oo.type,
             ooc.name as customerName,
@@ -57,52 +58,8 @@
         inner join other_outstock_customer ooc on oo.id = ooc.main_id and ooc.is_deleted = false
         inner join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false 
         <where>
-            oo.is_deleted = false
-            <if test="params.searchType != null and params.searchType != ''">
-                AND oo.approve_status = #{params.searchType}
-            </if>
-            <if test="params.code != null and params.code != ''">
-                and oo.code ILIKE concat('%',#{params.code}::text,'%')
-            </if>
-            <if test="params.invalidStatus != null ">
-                and oo.invalid_status = #{params.invalidStatus}
-            </if>
-            <if test="params.inventoryDirection != null ">
-                and oo.inventory_direction = #{params.inventoryDirection}
-            </if>
-            <if test="params.processApplyCode != null and params.processApplyCode != ''">
-                and oo.process_apply_code ILIKE concat('%',#{params.processApplyCode}::text,'%')
-            </if>
-            <if test="params.skuNoList != null and params.skuNoList.size > 0">
-                and ood.sku_no in
-                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                and oo.approve_status in
-                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
-                and oo.warehouse_id in
-                <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-                and oo.create_user_id in
-                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and oo.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oo.create_time
-            </if>
-            <if test="params.billDateList != null and params.billDateList.size > 0">
-                and oo.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oo.bill_date
-            </if>
+            ${params.sqlMap.default}
+            and  oo.is_deleted = false
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
@@ -122,19 +79,8 @@
         from other_outstock oo
         left join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false
         <where>
-            oo.is_deleted = false
-            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                and oo.approve_status in
-                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.invalidStatus != null ">
-                and oo.invalid_status = #{params.invalidStatus}
-            </if>
-            <if test="params.billDateList != null and params.billDateList.size > 0">
-                and oo.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oo.bill_date
-            </if>
+            ${params.sqlMap.default}
+            and oo.is_deleted = false
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
@@ -144,6 +90,7 @@
     <select id="listExportExcel" resultType="com.erp.model.wms.dto.OtherOutstockDTO$ListDTO">
         select
             oo.id,
+            ood.id as detailId,
             oo.code,
             oo.type,
             ooc.name as customerName,
@@ -166,62 +113,10 @@
         inner join other_outstock_customer ooc on oo.id = ooc.main_id and ooc.is_deleted = false
         inner join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false
         <where>
-            oo.is_deleted = false
-            <if test="params.ids != null and params.ids.size > 0">
-                and oo.id in
-                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.ids == null or params.ids.size == 0">
-                <if test="params.searchType != null and params.searchType != ''">
-                    AND oo.approve_status = #{params.searchType}
-                </if>
-                <if test="params.code != null and params.code != ''">
-                    and oo.code ILIKE concat('%',#{params.code}::text,'%')
-                </if>
-                <if test="params.invalidStatus != null ">
-                    and oo.invalid_status = #{params.invalidStatus}
-                </if>
-                <if test="params.inventoryDirection != null ">
-                    and oo.inventory_direction = #{params.inventoryDirection}
-                </if>
-                <if test="params.processApplyCode != null and params.processApplyCode != ''">
-                    and oo.process_apply_code ILIKE concat('%',#{params.processApplyCode}::text,'%')
-                </if>
-                <if test="params.skuNoList != null and params.skuNoList.size > 0">
-                    and ood.sku_no in
-                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                    and oo.approve_status in
-                    <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
-                    and oo.warehouse_id in
-                    <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-                    and oo.create_user_id in
-                    <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                    and oo.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oo.create_time
-                </if>
-                <if test="params.billDateList != null and params.billDateList.size > 0">
-                    and oo.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oo.bill_date
-                </if>
-                <if test="params.permissionSql != null and params.permissionSql != ''">
-                    ${params.permissionSql}
-                </if>
+            ${params.sqlMap.default}
+            and  oo.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
             </if>
         </where>
         ORDER BY
@@ -230,7 +125,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        oo.id desc,ood.id desc
+        oo.id desc,ood.id asc
     </select>
 
     <select id="pdaPaging" resultType="com.erp.model.wms.dto.OtherOutstockDTO$PdaListDTO">
