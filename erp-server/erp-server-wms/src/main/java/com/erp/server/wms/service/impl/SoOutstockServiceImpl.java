@@ -584,6 +584,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approveEnd(ApproveOneDTO dto, SoOutstockEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
@@ -2173,6 +2174,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
                 if (ObjectUtil.isNotEmpty(soB2cLogisticsEntities)) {
                     LocalDateTime deliveryTime = soB2cLogisticsEntities.get(0).getDeliveryTime();
+                    if(Objects.isNull(deliveryTime)){
+                       throw new ServiceException("发货日期不能为空");
+                    }
                     billDate = deliveryTime.toLocalDate();
                 }
             }
@@ -2180,6 +2184,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (Objects.isNull(billDate)) {
             billDate = LocalDate.now();
         }
+        dto.setBillDate(billDate);
         // 出库日期
         soOutstock.setBillDate(billDate);
         soOutstock.setPlanDeliveryDate(billDate);

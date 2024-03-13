@@ -429,17 +429,20 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     continue;
                 }
                 BigDecimal actualTaxCostUsd = MathUtil.multiply(dmpSkuCostEntity.getCostPrice(), exchangeRate);
-                CfgSettingValueDTO.LogisticsProductDestDeclarePrice declarePrice = settings.stream().filter(e -> e.getStartPrice().compareTo(actualTaxCostUsd) < 0 && e.getEndPrice().compareTo(actualTaxCostUsd) >= 0).findFirst().orElse(null);
-                if (Objects.isNull(declarePrice) || Objects.isNull(declarePrice.getRate())){
-                    continue;
-                }
-                BigDecimal resultDestDeclarePrice = actualTaxCostUsd.multiply(declarePrice.getRate()).divide(MathUtil.BigDecimal_100, 4, RoundingMode.HALF_UP);
                 //统一换算成美元汇率
                 BigDecimal usdRate = dmpTaskFeign.getRate(dmpSkuCostEntity.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
                 if (Objects.isNull(usdRate)){
                     continue;
                 }
-                productLogistics.setDestDeclarePrice(MathUtil.divide(resultDestDeclarePrice, usdRate));
+                actualTaxCostUsd = MathUtil.divide(actualTaxCostUsd, usdRate);
+                //通过配置进行计算比例
+                BigDecimal finalActualTaxCostUsd = actualTaxCostUsd;
+                CfgSettingValueDTO.LogisticsProductDestDeclarePrice declarePrice = settings.stream().filter(e -> e.getStartPrice().compareTo(finalActualTaxCostUsd) < 0 && e.getEndPrice().compareTo(finalActualTaxCostUsd) >= 0).findFirst().orElse(null);
+                if (Objects.isNull(declarePrice) || Objects.isNull(declarePrice.getRate())){
+                    continue;
+                }
+                BigDecimal resultDestDeclarePrice = actualTaxCostUsd.multiply(declarePrice.getRate()).divide(MathUtil.BigDecimal_100, 4, RoundingMode.HALF_UP);
+                productLogistics.setDestDeclarePrice(resultDestDeclarePrice);
                 productLogistics.setDestCurrency(CurrencyEnum.USD.getCurrencyCode());
                 productLogistics.setDestCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
                 productLogisticsService.updateById(productLogistics);

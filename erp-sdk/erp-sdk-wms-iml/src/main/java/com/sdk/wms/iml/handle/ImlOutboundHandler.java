@@ -60,6 +60,7 @@ public class ImlOutboundHandler extends AbstractPullThirdWarehouseHandler<ImlOut
                 .modifyDateFrom(lastTime)
                 .modifyDateTo(nextTime)
                 .pageSize(100)
+                .orderStatus(ImlEnums.OrderStatusEnum.INITIAL_RECEIVING.getCode())
                 .build();
 
         List<ImlOutboundResp> respList = new ArrayList<>();
