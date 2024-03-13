@@ -61,4 +61,13 @@ public interface KingdeePostService extends SuperService<KingdeePostEntity> {
      * @author Lambda
      */
     Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId, String syncKingdeeCode);
+
+    /**
+     * @description
+     * @param id
+     * @return
+     * @date 2024-03-13 18:07
+     * @author Lambda
+     */
+    BatchResultDTO delete(String id);
 }

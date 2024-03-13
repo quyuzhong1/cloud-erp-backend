@@ -5,6 +5,8 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.KingdeeDepartmentDTO;
@@ -53,8 +55,7 @@ import com.common.core.enums.ApiError;
 @Service
 public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, KingdeePostEntity> implements KingdeePostService {
 
-    @Autowired
-    private CommonService commonService;
+
 
 
     @Autowired
@@ -210,6 +211,22 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
                 .set(StringUtils.isNotBlank(syncKingdeeId), KingdeePostEntity::getKingdeeId, syncKingdeeId)
                 .set(StringUtils.isNotBlank(syncKingdeeCode), KingdeePostEntity::getCode, syncKingdeeCode)
                 .update();
+    }
+
+    @Override
+    public BatchResultDTO delete(String id) {
+        KingdeePostEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶岗位不存在");
+        }
+        Boolean result = this.removeById(id);
+
+        if (result && StringUtils.isNotBlank(entity.getKingdeeId())) {
+            //金蝶推送
+            syncKingdeePostService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getKingdeeDeptCode(), OperationTypeEnum.DELETE);
+
     }
 
 

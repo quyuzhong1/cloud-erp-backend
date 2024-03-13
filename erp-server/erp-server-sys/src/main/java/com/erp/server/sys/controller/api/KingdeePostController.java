@@ -2,10 +2,14 @@ package com.erp.server.sys.controller.api;
 
 
 import com.erp.model.sys.dto.KingdeeDepartmentDTO;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.model.sys.entity.KingdeePostEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
+import javax.validation.Valid;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -21,6 +25,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.sys.dto.KingdeePostDTO;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * 金蝶架构管理-岗位分配
@@ -95,6 +103,31 @@ public class KingdeePostController extends BaseController {
         return result ? success() : failure();
     }
 
-
+    /**
+     * 删除
+     * @param dto
+     * @return
+     */
+    @PostMapping("/delete")
+    public ApiResult<List<BatchResultDTO>>  delete(@RequestBody  @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = kingdeePostService.delete(id);
+            }catch (Exception e){
+                log.error("金蝶部门删除失败===>{}", e.getMessage());
+                KingdeePostEntity entity = kingdeePostService.getById(id);
+                if (Objects.isNull(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "金蝶岗位不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getKingdeeDeptCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
 }
