@@ -76,7 +76,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        pc.id desc
+        pc.update_time desc
     </select>
 
     <select id="list" resultType="com.erp.model.plm.dto.ProductCertificateShowDTO">
@@ -98,7 +98,7 @@
         where id in ( select max(id) from attachment where is_deleted = false group by business_id )
         ) att on pc.id = att.business_id
         WHERE pd.product_id = #{productId} AND pd.is_deleted = FALSE
-        ORDER BY pd.id desc
+        ORDER BY pd.id desc,pc.update_time desc
     </select>
 
     <select id="listBySkuId" resultType="com.erp.model.plm.dto.ProductCertificateShowDTO">
@@ -120,7 +120,7 @@
         where id in ( select max(id) from attachment where is_deleted = false group by business_id )
         ) att on pc.id = att.business_id
         WHERE pd.id = #{skuId} AND pd.is_deleted = FALSE
-        ORDER BY pd.id desc
+        ORDER BY pd.id desc,pc.update_time desc
     </select>
 
     <select id="exportExcel" resultType="com.erp.model.plm.dto.ProductCertificateDTO$ListDTO">
@@ -190,7 +190,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        pc.id desc
+        pc.update_time desc
     </select>
 
 </mapper>

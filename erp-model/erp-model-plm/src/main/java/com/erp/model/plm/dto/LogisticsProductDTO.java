@@ -379,7 +379,10 @@ public class LogisticsProductDTO {
          */
         private List<ProductCustomsDTO.ViewDTO> customsList;
 
-
+        /**
+         * 报关信息-汇率
+         */
+        private BigDecimal exchangeRate;
     }
 
     @Data

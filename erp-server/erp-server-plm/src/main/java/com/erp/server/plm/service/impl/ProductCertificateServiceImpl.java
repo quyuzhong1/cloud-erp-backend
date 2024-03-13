@@ -39,6 +39,7 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLDecoder;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -105,6 +106,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                     new SysLogEntity().setContent(String.format("新增了一个【产品证书】"))
                             .setBusinessId(obj.getSkuId())
                             .setPid(obj.getId())
+                            .setOperation("新增操作")
             );
         });
         sysLogService.addSysLogByBatchSave(sysLogEntityList);
@@ -114,6 +116,9 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(ProductCertificateDTO.UpdateDTO dto) {
+        ProductCertificateEntity old = this.getById(dto.getId());
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "产品认证"));
+
         ProductCertificateEntity entity = new ProductCertificateEntity();
         entity.setId(dto.getId());
         entity.setRemark(dto.getRemark());
@@ -127,8 +132,6 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         //删除附件
         deleteFile(dto.getRemoveFileIdList(),dto.getId());
 
-        //添加日志
-        ProductCertificateEntity old = this.getById(dto.getId());
         // 记录产品认证操作日志
         log.info("编辑 开始记录产品认证日志数据，id：【{}】", entity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), entity.getId(), "产品认证");
@@ -439,8 +442,9 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             entity.setProductId(productDetailEntity.getProductId());
             entity.setType(ProductCertificateTypeEnum.getCode(excelDTO.getTypeName()));
             entity.setDictProject(ProductCertificateProjectEnum.getCode(excelDTO.getDictProjectName()));
-            entity.setCertificateValidTime(ObjectUtil.isEmpty(excelDTO.getCertificateValidTimeStr()) ? null : LocalDate.parse(excelDTO.getCertificateValidTimeStr(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            entity.setCertificateValidTime(ObjectUtil.isEmpty(excelDTO.getCertificateValidTimeStr()) ? null : LocalDate.parse(excelDTO.getCertificateValidTimeStr(), DateTimeFormatter.ofPattern("yyyy/M/d")));
             entity.setMultipartFile(multipartFile);
+            entity.setRemark(excelDTO.getRemark());
             //数据验证
             try {
                 checkProductCertificate(Arrays.asList(entity));
@@ -490,7 +494,12 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             outputStream.close();
 
             // 从文件路径中提取文件名
-            String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
+            String fileName = "";
+            if (filePath.contains("?")) {
+                 fileName = filePath.substring(filePath.lastIndexOf("/")+1,filePath.lastIndexOf("?"));
+            } else {
+                 fileName = filePath.substring(filePath.lastIndexOf("/")+1);
+            }
 
             // 创建 MockMultipartFile 对象
             return new MockMultipartFile(fileName, new ByteArrayInputStream(bytes));
@@ -700,6 +709,20 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         }
         return resultList;
     }
+    public static String chineseToUnicode(String str) {
+        String result = "";
+        for (int i = 0; i < str.length(); i++) {
+            int chr1 = (char) str.charAt(i);
+            // 汉字范围 \u4e00 - \u9fa5 (中文)
+            if (chr1 >= 19968 && chr1 <= 171941) {
+                result += "\\u" + Integer.toHexString(chr1);
+            } else {
+                result += str.charAt(i);
+            }
+        }
+        return result;
+    }
+
 
     /**
      * @description: 上传文件
@@ -731,6 +754,14 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             if (fileName.length() > 200) {
                 throw new ServiceException(ApiError.ERROR_1018);
             }
+            if (StrUtil.isBlank(fileName)) {
+                try {
+                    fileName = URLDecoder.decode(multipartFile.getName(), "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+            }
+
             File file = FileUtil.multiToFile(multipartFile);
             if (ObjectUtil.isEmpty(map.get(entity.getDictProject()))) {
                 map.put(entity.getDictProject(),file);
@@ -767,6 +798,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         sysLogService.addSysLogByBatchSave(sysLogEntityList);
 
     }
+
 }
 
 

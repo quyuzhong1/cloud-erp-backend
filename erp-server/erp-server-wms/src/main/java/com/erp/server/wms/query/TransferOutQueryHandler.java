@@ -26,6 +26,10 @@ public class TransferOutQueryHandler extends AbstractQueryHandler {
      * @return String
      */
     public String getTabSql (Object value) {
+        //待提交
+        if (PageListTypeEnum.WAIT_SUBMIT.getCode().equals(value)) {
+            super.buildDefaultDTO("tfo.approve_status", ApproveStatusEnum.WAIT_SUBMIT.getCode());
+        }
         //待审核
         if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(value)) {
             super.buildDefaultDTO("tfo.approve_status", ApproveStatusEnum.APPROVE_ING.getCode());

@@ -1703,7 +1703,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<FbaShipmentDTO.ListDTO> list = baseMapper.export(dto);
         fillList(list);
         List<FbaShipmentDTO.ExportDTO> exportDTOList = BeanUtil.copyToList(list,FbaShipmentDTO.ExportDTO.class, CopyOptions.create(FbaShipmentDTO.ExportDTO.class,false,"receiveQty"));
-        fillReceive(exportDTOList);
+        List<FbaShipmentDTO.ExportDTO> fillDTOList = fillReceive(exportDTOList);
 //        ExcelUtil.export("FBA货件","FBA货件",exportDTOList,FbaShipmentDTO.ExportDTO.class,response);
         // 导出数据
         StringBuffer sb = new StringBuffer();
@@ -1712,33 +1712,40 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date).append(name);
         try {
-            new ExcelPrintUtils().patchExport(exportDTOList, response, sb.toString(), excelPath);
+            new ExcelPrintUtils().patchExport(fillDTOList, response, sb.toString(), excelPath);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
     }
 
-    private void fillReceive(List<FbaShipmentDTO.ExportDTO> exportDTOList) {
+    private List<FbaShipmentDTO.ExportDTO> fillReceive(List<FbaShipmentDTO.ExportDTO> exportDTOList) {
+        List<FbaShipmentDTO.ExportDTO> result = new ArrayList<>();
         List<String> detailIds = exportDTOList.stream().map(FbaShipmentDTO.ExportDTO::getDetailId).distinct().collect(Collectors.toList());
         Map<String,List<FbaShipmentReceiveEntity>> fbaShipmentReceiveEntitieMap = fbaShipmentReceiveService.listByDetailIds(detailIds).stream().collect(Collectors.groupingBy(FbaShipmentReceiveEntity::getDetailId));
         for(FbaShipmentDTO.ExportDTO exportDTO : exportDTOList){
             List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntityList = fbaShipmentReceiveEntitieMap.get(exportDTO.getDetailId());
             if(CollectionUtils.isEmpty(fbaShipmentReceiveEntityList)){
                 exportDTO.setReceiveQty("0");
+                result.add(exportDTO);
                 continue;
             }
-            String receive = null;
+            String receive;
             for (FbaShipmentReceiveEntity fbaShipmentReceiveEntity : fbaShipmentReceiveEntityList) {
                 //映射字段
                 FbaShipmentDTO.ReceiveRecordView receiveRecordView = FbaShipmentConverter.INSTANCE.fbaShipmentReceiveEntityToView(fbaShipmentReceiveEntity);
-                if(receive == null){
-                    receive = receiveRecordView.toString();
-                }else{
-                    receive = receive + ",\n\r" + receiveRecordView.toString();
-                }
+//                if(receive == null){
+//                    receive = receiveRecordView.toString();
+//                }else{
+//                    receive = receive + ",\n\r" + receiveRecordView.toString();
+//                }
+                FbaShipmentDTO.ExportDTO fillDTO = new FbaShipmentDTO.ExportDTO();
+                BeanUtil.copyProperties(exportDTO,fillDTO);
+                receive = receiveRecordView.toString();
+                fillDTO.setReceiveQty(receive);
+                result.add(fillDTO);
             }
-            exportDTO.setReceiveQty(receive);
         }
+        return result;
     }
 
     @Override

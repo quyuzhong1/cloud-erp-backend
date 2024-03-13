@@ -42,7 +42,7 @@ public class ProductCertificateExcelDTO implements Serializable {
      * 文件名称
      */
     @ExcelProperty(value = "*文件名称", index = 3)
-    @FieldValid(fieldName = "文件名称",isNotBlank = true,maxLength = 255)
+    @FieldValid(fieldName = "文件名称",isNotBlank = true)
     private String pathUrl;
 
     /**

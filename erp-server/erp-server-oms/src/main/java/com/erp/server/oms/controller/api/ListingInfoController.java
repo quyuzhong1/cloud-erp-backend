@@ -8,6 +8,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.server.oms.query.ListingInfoQueryHandler;
 import com.erp.server.oms.service.ListingInfoService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -80,7 +81,7 @@ public class ListingInfoController extends BaseController {
      * listing 分页
      **/
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = ListingInfoQueryHandler.class)
     public ApiResult<PagingVO<ListingInfoDTO.PageDTO>> paging(@RequestBody @Validated PagingDTO<ListingInfoDTO.PagingParamDTO> dto) {
         PagingVO<ListingInfoDTO.PageDTO> list = listingInfoService.paging(dto);
         return success(list);

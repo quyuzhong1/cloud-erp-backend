@@ -216,6 +216,9 @@ public class LogisticsChannelConstraintServiceImpl extends SuperServiceImpl<Logi
 
     @Transactional(rollbackFor = Exception.class)
     public void handleImportData(List<LogisticsChannelConstraintDTO.AddOrUpdateDTO> addOrUpdateDTOList) {
+        if(CollectionUtils.isEmpty(addOrUpdateDTOList)){
+            return;
+        }
         List<String> channelIds = addOrUpdateDTOList.stream().map(LogisticsChannelConstraintDTO.AddOrUpdateDTO::getChannelId).collect(Collectors.toList());
         List<LogisticsChannelConstraintEntity> allEntityList = this.lambdaQuery().in(LogisticsChannelConstraintEntity :: getChannelId,channelIds).list();
         Map<String,List<LogisticsChannelConstraintEntity>> entityMap = allEntityList.stream().collect(Collectors.groupingBy(LogisticsChannelConstraintEntity::getChannelId));

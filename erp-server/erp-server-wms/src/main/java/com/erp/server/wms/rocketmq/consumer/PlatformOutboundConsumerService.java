@@ -16,6 +16,7 @@ import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
@@ -105,7 +107,12 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         soB2cFeign.updateSoB2cStatusByParams(updateStatus);
         if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
             try {
-                soOutstockService.generateB2cSoOutstockByCode(soB2cCode);
+                SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(soB2cCode);
+                LocalDateTime outBoundTime = dto.getOutBoundTime();
+                if(Objects.nonNull(outBoundTime)){
+                    generateB2cDTO.setBillDate(outBoundTime.toLocalDate());
+                }
+                soOutstockService.generateB2cSoOutstock(generateB2cDTO);
             } catch (Exception e) {
                 log.error("销售订单{} 生成销售出库单失败>>>>>>{}", soB2cCode, e.getMessage());
             }

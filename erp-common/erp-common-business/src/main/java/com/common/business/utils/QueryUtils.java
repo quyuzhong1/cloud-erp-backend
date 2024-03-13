@@ -42,11 +42,11 @@ public class QueryUtils {
                 sql.append("(");
             }
             String contentSql;
-            //为空处理为  (TRIM(both ' ' FROM 字段) = ''or 字段 is null)，不为空处理为  TRIM(both ' ' FROM 字段) != '' 其他直接拼接
+            //为空处理为   (字段 = ''or 字段 is null)，不为空处理为  字段 != '' 其他直接拼接
             if (QueryConditionEnum.IS_NULL.equals(condEnum)) {
-                sql.append("(TRIM(both ' ' FROM " + dto.getField() + ") = ''or " + dto.getField() + " is null)").append(" ");
+                sql.append( "(" + dto.getField() + " = '' or " + dto.getField() + " is null)").append(" ");
             } else if (QueryConditionEnum.NOT_NULL.equals(condEnum)) {
-                sql.append("TRIM(both ' ' FROM " + dto.getField() + ") != ''").append(" ");
+                sql.append( dto.getField() + " != ''").append(" ");
             } else {
                 sql.append(dto.getField()).append(" ");
             }

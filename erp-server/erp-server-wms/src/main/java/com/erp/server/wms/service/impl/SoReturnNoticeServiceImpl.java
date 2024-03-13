@@ -602,7 +602,6 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         for (SoReturnNoticeDTO.PagingView obj : pagingViews) {
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
-            obj.setReturnTypeDictName(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
             ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(obj.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
@@ -612,6 +611,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             obj.setDeliveryQty(actualQty);
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             obj.setCustomerName(customerInfoEntity.getName());
+            obj.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnTypeDict()));
         }
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/soReturnNoticeExport.xlsx";

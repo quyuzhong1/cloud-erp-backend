@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -629,4 +630,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * 搜索SKU
      */
     List<SkuSimpleVO> searchSkuWithCombination(String searchKeyword);
+
+    List<SkuVO> getSkuInfoAdvanceQuery(AdvanceQueryContainer advanceQueryContainer);
 }

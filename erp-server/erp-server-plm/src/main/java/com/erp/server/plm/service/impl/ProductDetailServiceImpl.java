@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -423,12 +424,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BasicDictEntity isElectric = basicDictEntities.stream().filter(e -> e.getRemark().equals("isElectric")).findFirst().orElse(null);
                 if (Objects.nonNull(isElectric)){
                     req.setElectric(true);
-                    req.setInputParams(String.format("电压:%s%s/电流:%s%s/功率：%s%s/电池容量：%s%s",
+                    req.setInputParams(String.format("电压:%s%s/电流:%s%s/功率:%s%s/电池容量:%s%s",
                             req.getInputVoltage().stripTrailingZeros().toPlainString(),req.getVoltageUnit(),
                             req.getInputElectric().stripTrailingZeros().toPlainString(),req.getElectricUnit(),
                             req.getInputPower().stripTrailingZeros().toPlainString(),req.getPowerUnit(),
                             req.getInputBatteryCapacity().stripTrailingZeros().toPlainString(),req.getBatteryCapacityUnit()));
-                    req.setOutputParams(String.format("电压:%s%s/电流:%s%s/功率：%s%s/电池容量：%s%s",
+                    req.setOutputParams(String.format("电压:%s%s/电流:%s%s/功率:%s%s/电池容量:%s%s",
                             req.getOutputVoltage().stripTrailingZeros().toPlainString(),req.getVoltageUnit(),
                             req.getOutputElectric().stripTrailingZeros().toPlainString(),req.getElectricUnit(),
                             req.getOutputPower().stripTrailingZeros().toPlainString(),req.getPowerUnit(),
@@ -535,12 +536,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BasicDictEntity isElectric = basicDictEntities.stream().filter(e -> e.getRemark().equals("isElectric")).findFirst().orElse(null);
                 if (Objects.nonNull(isElectric)){
                     req.setElectric(true);
-                    req.setInputParams(String.format("电压:%s%s/电流:%s%s/功率：%s%s/电池容量：%s%s",
+                    req.setInputParams(String.format("电压:%s%s/电流:%s%s/功率:%s%s/电池容量:%s%s",
                             req.getInputVoltage().stripTrailingZeros().toPlainString(),req.getVoltageUnit(),
                             req.getInputElectric().stripTrailingZeros().toPlainString(),req.getElectricUnit(),
                             req.getInputPower().stripTrailingZeros().toPlainString(),req.getPowerUnit(),
                             req.getInputBatteryCapacity().stripTrailingZeros().toPlainString(),req.getBatteryCapacityUnit()));
-                    req.setOutputParams(String.format("电压:%s%s/电流:%s%s/功率：%s%s/电池容量：%s%s",
+                    req.setOutputParams(String.format("电压:%s%s/电流:%s%s/功率:%s%s/电池容量:%s%s",
                             req.getOutputVoltage().stripTrailingZeros().toPlainString(),req.getVoltageUnit(),
                             req.getOutputElectric().stripTrailingZeros().toPlainString(),req.getElectricUnit(),
                             req.getOutputPower().stripTrailingZeros().toPlainString(),req.getPowerUnit(),
@@ -755,12 +756,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BasicDictEntity isElectric = basicDictEntities.stream().filter(e -> e.getRemark().equals("isElectric")).findFirst().orElse(null);
                 if (Objects.nonNull(isElectric)){
                     req.setElectric(true);
-                    req.setInputParams(String.format("电压:%s%s/电流:%s%s/功率：%s%s/电池容量：%s%s",
+                    req.setInputParams(String.format("电压:%s%s/电流:%s%s/功率:%s%s/电池容量:%s%s",
                             req.getInputVoltage().stripTrailingZeros().toPlainString(),req.getVoltageUnit(),
                             req.getInputElectric().stripTrailingZeros().toPlainString(),req.getElectricUnit(),
                             req.getInputPower().stripTrailingZeros().toPlainString(),req.getPowerUnit(),
                             req.getInputBatteryCapacity().stripTrailingZeros().toPlainString(),req.getBatteryCapacityUnit()));
-                    req.setOutputParams(String.format("电压:%s%s/电流:%s%s/功率：%s%s/电池容量：%s%s",
+                    req.setOutputParams(String.format("电压:%s%s/电流:%s%s/功率:%s%s/电池容量:%s%s",
                             req.getOutputVoltage().stripTrailingZeros().toPlainString(),req.getVoltageUnit(),
                             req.getOutputElectric().stripTrailingZeros().toPlainString(),req.getElectricUnit(),
                             req.getOutputPower().stripTrailingZeros().toPlainString(),req.getPowerUnit(),
@@ -2031,14 +2032,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (Objects.isNull(productLogistics)){
             return;
         }
-        CfgSettingEntity setting = cfgSettingFeign.getByKey(CfgSettingEnum.LOGISTICS_PRODUCT_DEST_DECLARE_PRICE.getCode());
-        if (Objects.isNull(setting) || Objects.isNull(setting.getDataJson()) || CollectionUtils.isEmpty(setting.getDataJson().getJSONArray("data"))){
-            return;
-        }
-        List<DmpSkuCostEntity> skuCostList = dmpTaskFeign.listRedisBySkuNoList(Collections.singletonList(entity.getSkuNo()));
+
         //是否重算目的国申报价
         BigDecimal destDeclarePrice = productLogistics.getDestDeclarePrice();
         if (Objects.isNull(destDeclarePrice) || destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
+            //系统配置
+            CfgSettingEntity setting = cfgSettingFeign.getByKey(CfgSettingEnum.LOGISTICS_PRODUCT_DEST_DECLARE_PRICE.getCode());
+            if (Objects.isNull(setting) || Objects.isNull(setting.getDataJson()) || CollectionUtils.isEmpty(setting.getDataJson().getJSONArray("data"))){
+                return;
+            }
+            //sku信息
+            List<DmpSkuCostEntity> skuCostList = dmpTaskFeign.listRedisBySkuNoList(Collections.singletonList(entity.getSkuNo()));
             DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuNo().equals(entity.getSkuNo())).findFirst().orElse(null);
             if (Objects.isNull(skuCostDTO)){
                 return;
@@ -2048,19 +2052,30 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (StrUtil.isNotBlank(skuCostDTO.getCurrency()) && !CurrencyEnum.CNY.getCurrencyCode().equals(skuCostDTO.getCurrency())) {
                 exchangeRate = dmpTaskFeign.getRate(skuCostDTO.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
             }
+            if (Objects.isNull(exchangeRate)){
+                return;
+            }
             //含税成本
             BigDecimal actualTaxCost = BigDecimal.ZERO;
-            if (CollectionUtils.isNotEmpty(skuCostList)){
+            if (Objects.nonNull(skuCostDTO.getCostPrice())){
                 actualTaxCost = skuCostDTO.getCostPrice();
             }
-            BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, exchangeRate);
+            //获取人民币汇率下含税成本
+            BigDecimal actualTaxCostUsd = MathUtil.multiply(actualTaxCost, exchangeRate);
             List<CfgSettingValueDTO.LogisticsProductDestDeclarePrice> data = JSONUtil.toList(setting.getDataJson().getJSONArray("data"), CfgSettingValueDTO.LogisticsProductDestDeclarePrice.class);
             CfgSettingValueDTO.LogisticsProductDestDeclarePrice declarePrice = data.stream().filter(e -> e.getStartPrice().compareTo(actualTaxCostUsd) < 0 && e.getEndPrice().compareTo(actualTaxCostUsd) >= 0).findFirst().orElse(null);
             if (Objects.isNull(declarePrice) || Objects.isNull(declarePrice.getRate())){
                 return;
             }
             BigDecimal resultDestDeclarePrice = actualTaxCostUsd.multiply(declarePrice.getRate()).divide(MathUtil.BigDecimal_100, 4, RoundingMode.HALF_UP);
-            productLogistics.setDestDeclarePrice(resultDestDeclarePrice);
+            //统一换算成美元汇率
+            BigDecimal usdRate = dmpTaskFeign.getRate(skuCostDTO.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
+            if (Objects.isNull(usdRate)){
+                return;
+            }
+            productLogistics.setDestDeclarePrice(MathUtil.divide(resultDestDeclarePrice, usdRate));
+            productLogistics.setDestCurrency(CurrencyEnum.USD.getCurrencyCode());
+            productLogistics.setDestCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
             productLogisticsService.updateById(productLogistics);
         }
     }
@@ -4024,5 +4039,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public List<SkuSimpleVO> searchSkuWithCombination(String searchKeyword) {
         return baseMapper.searchSkuWithCombination(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
+    }
+
+    @Override
+    public List<SkuVO> getSkuInfoAdvanceQuery(AdvanceQueryContainer advanceQueryContainer) {
+        return baseMapper.getSkuInfoAdvanceQuery(advanceQueryContainer);
     }
 }

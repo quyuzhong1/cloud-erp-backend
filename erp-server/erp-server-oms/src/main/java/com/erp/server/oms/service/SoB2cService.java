@@ -786,6 +786,22 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void batchRemoveSignError(List<String> mainIds, String type);
 
     /**
+     * 单个更新订单预报号
+     * @param shippingOrderDTO
+     * @return
+     */
+    Boolean updateShippingOrderNoBySoId(TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO);
+    /**
+     * @description: 库存缺货校验
+     * @author Will
+     * @date: 2024/3/12 17:52
+     * @param dto
+     * @param detailList
+     * @return String
+     */
+    String checkSkuInventory(SoB2cDTO.AddDTO dto, List<SoB2cDetailDTO.AddDTO> detailList);
+
+    /**
      * 根据平台单号和平台查询B2C销售订单
      *
      * @date 2024-03-07

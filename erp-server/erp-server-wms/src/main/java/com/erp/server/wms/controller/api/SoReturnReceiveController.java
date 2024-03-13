@@ -9,13 +9,13 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.SoReturnReceiveEntity;
-import com.erp.server.wms.query.SoReturnInstockQueryHandler;
+import com.erp.server.wms.query.SoReturnReceiveQueryHandler;
 import com.erp.server.wms.service.SoReturnReceiveService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -56,7 +56,7 @@ public class SoReturnReceiveController extends BaseController {
             menuCode = "wms:soReturnReceive:paging",
             tableAlias = "srr"
     )
-    @WebAdvanceQuery(handler = SoReturnInstockQueryHandler.class)
+    @WebAdvanceQuery(handler = SoReturnReceiveQueryHandler.class)
     public ApiResult<PagingVO<SoReturnReceiveDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<SoReturnReceiveDTO.PagingParam> dto) {
         PagingVO<SoReturnReceiveDTO.PagingView> pagingVO = soReturnReceiveService.paging(dto);
         return success(pagingVO);
@@ -317,7 +317,7 @@ public class SoReturnReceiveController extends BaseController {
             menuCode = "wms:soReturnReceive:paging",
             tableAlias = "srr"
     )
-    @WebAdvanceQuery(handler = SoReturnInstockQueryHandler.class)
+    @WebAdvanceQuery(handler = SoReturnReceiveQueryHandler.class)
     public ApiResult exportExcel(@RequestBody SoReturnReceiveDTO.PagingParam dto, HttpServletResponse response) {
         Boolean flag = soReturnReceiveService.exportExcel(dto, response);
         return flag == true ? success() : failure();

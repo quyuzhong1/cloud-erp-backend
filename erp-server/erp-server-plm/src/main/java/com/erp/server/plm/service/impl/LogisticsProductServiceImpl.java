@@ -143,11 +143,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         BigDecimal actualTaxCost = BigDecimal.ZERO;
         String skuNo=productBaseInfo.getSkuNo();
         List<DmpSkuCostEntity>  skuCostList= dmpTaskFeign.listRedisBySkuNoList(Arrays.asList(skuNo));
-
-        if (CollectionUtils.isNotEmpty(skuCostList)) {
-            DmpSkuCostEntity  skuCostEntity = skuCostList.get(0);
-            actualTaxCost=skuCostEntity.getCostPrice();
-            actualNoTaxCost=skuCostEntity.getNotTaxCostPrice();
+        DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(Objects::nonNull).findFirst().orElse(null);
+        if (Objects.nonNull(skuCostDTO)) {
+            actualTaxCost=skuCostDTO.getCostPrice();
+            actualNoTaxCost=skuCostDTO.getNotTaxCostPrice();
         } else {
             //含税成本
             String actualTaxCostStr = productBaseInfo.getActualTaxCost();
@@ -179,12 +178,15 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         ProductLogisticsEntity productLogistics = productLogisticsService.getBySkuId(skuId);
 
         String usdCode = CurrencyEnum.USD.getCurrencyCode();
-        String nowDay = LocalDate.now().toString();
         //汇率
-        BigDecimal rate = dmpTaskFeign.getRate(nowDay, usdCode);
-        if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) == 0) {
-            rate = new BigDecimal("7.13");
+        BigDecimal rate;
+        if (Objects.nonNull(skuCostDTO) && Objects.nonNull(skuCostDTO.getCostDate())){
+            rate = dmpTaskFeign.getRate(skuCostDTO.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), usdCode);
+        }else {
+            rate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), usdCode);
         }
+        result.setExchangeRate(rate);
+
         String sourceCountryName = "";
 //        BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, rate);
         if (Objects.nonNull(productLogistics)) {
@@ -215,12 +217,12 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             BasicDictEntity isElectric = dictList.stream().filter(e -> e.getRemark().equals("isElectric")).findFirst().orElse(null);
             if (Objects.nonNull(isElectric)){
                 productBaseInfo.setElectric(true);
-                productBaseInfo.setInputParams(String.format("电压:%s%s/电流:%s%s/功率：%s%s/电池容量：%s%s",
+                productBaseInfo.setInputParams(String.format("电压:%s%s/电流:%s%s/功率:%s%s/电池容量:%s%s",
                         productLogistics.getInputVoltage().stripTrailingZeros().toPlainString(),productLogistics.getVoltageUnit(),
                         productLogistics.getInputElectric().stripTrailingZeros().toPlainString(),productLogistics.getElectricUnit(),
                         productLogistics.getInputPower().stripTrailingZeros().toPlainString(),productLogistics.getPowerUnit(),
                         productLogistics.getInputBatteryCapacity().stripTrailingZeros().toPlainString(),productLogistics.getBatteryCapacityUnit()));
-                productBaseInfo.setOutputParams(String.format("电压:%s%s/电流:%s%s/功率：%s%s/电池容量：%s%s",
+                productBaseInfo.setOutputParams(String.format("电压:%s%s/电流:%s%s/功率:%s%s/电池容量:%s%s",
                         productLogistics.getOutputVoltage().stripTrailingZeros().toPlainString(),productLogistics.getVoltageUnit(),
                         productLogistics.getOutputElectric().stripTrailingZeros().toPlainString(),productLogistics.getElectricUnit(),
                         productLogistics.getOutputPower().stripTrailingZeros().toPlainString(),productLogistics.getPowerUnit(),
@@ -254,37 +256,6 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         result.setCustomsList(customsList);
         return result;
-    }
-
-    /**
-     * 25美金及以下 60%
-     * <p>
-     * 25-50美金(含) 55%
-     * <p>
-     * 50-100美金(含)  50%
-     * <p>
-     * 100-300+   40%
-     *
-     * @param actualTaxCostUsd
-     * @return
-     */
-    private BigDecimal getDestDeclarePrice(BigDecimal actualTaxCostUsd) {
-        BigDecimal b2 = new BigDecimal("25");
-        BigDecimal b5 = new BigDecimal("50");
-        BigDecimal b100 = new BigDecimal("100");
-        if (actualTaxCostUsd.compareTo(b2) <= 0) {
-            return MathUtil.multiply(actualTaxCostUsd, new BigDecimal("0.6"));
-        }
-        if (actualTaxCostUsd.compareTo(b2) > 0 && actualTaxCostUsd.compareTo(b5) <= 0) {
-            return MathUtil.multiply(actualTaxCostUsd, new BigDecimal("0.55"));
-        }
-        if (actualTaxCostUsd.compareTo(b5) > 0 && actualTaxCostUsd.compareTo(b100) <= 0) {
-            return MathUtil.multiply(actualTaxCostUsd, new BigDecimal("0.5"));
-        }
-        if (actualTaxCostUsd.compareTo(b100) > 0) {
-            return MathUtil.multiply(actualTaxCostUsd, new BigDecimal("0.4"));
-        }
-        return actualTaxCostUsd;
     }
 
     /**
@@ -447,22 +418,32 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             if (Objects.isNull(productLogistics)) {
                 continue;
             }
-            //汇率
-            BigDecimal exchangeRate = BigDecimal.ONE;
-            if (StrUtil.isNotBlank(dmpSkuCostEntity.getCurrency()) && !CurrencyEnum.CNY.getCurrencyCode().equals(dmpSkuCostEntity.getCurrency())) {
-                exchangeRate = dmpTaskFeign.getRate(dmpSkuCostEntity.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), dmpSkuCostEntity.getCurrency());
+            BigDecimal destDeclarePrice = productLogistics.getDestDeclarePrice();
+            if (Objects.isNull(destDeclarePrice) || destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
+                //汇率
+                BigDecimal exchangeRate = BigDecimal.ONE;
+                if (StrUtil.isNotBlank(dmpSkuCostEntity.getCurrency()) && !CurrencyEnum.CNY.getCurrencyCode().equals(dmpSkuCostEntity.getCurrency())) {
+                    exchangeRate = dmpTaskFeign.getRate(dmpSkuCostEntity.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), dmpSkuCostEntity.getCurrency());
+                }
+                if (Objects.isNull(exchangeRate)){
+                    continue;
+                }
+                BigDecimal actualTaxCostUsd = MathUtil.multiply(dmpSkuCostEntity.getCostPrice(), exchangeRate);
+                CfgSettingValueDTO.LogisticsProductDestDeclarePrice declarePrice = settings.stream().filter(e -> e.getStartPrice().compareTo(actualTaxCostUsd) < 0 && e.getEndPrice().compareTo(actualTaxCostUsd) >= 0).findFirst().orElse(null);
+                if (Objects.isNull(declarePrice) || Objects.isNull(declarePrice.getRate())){
+                    continue;
+                }
+                BigDecimal resultDestDeclarePrice = actualTaxCostUsd.multiply(declarePrice.getRate()).divide(MathUtil.BigDecimal_100, 4, RoundingMode.HALF_UP);
+                //统一换算成美元汇率
+                BigDecimal usdRate = dmpTaskFeign.getRate(dmpSkuCostEntity.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
+                if (Objects.isNull(usdRate)){
+                    continue;
+                }
+                productLogistics.setDestDeclarePrice(MathUtil.divide(resultDestDeclarePrice, usdRate));
+                productLogistics.setDestCurrency(CurrencyEnum.USD.getCurrencyCode());
+                productLogistics.setDestCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+                productLogisticsService.updateById(productLogistics);
             }
-            if (Objects.isNull(exchangeRate)){
-                continue;
-            }
-            BigDecimal actualTaxCostUsd = MathUtil.divide(dmpSkuCostEntity.getCostPrice(), exchangeRate);
-            CfgSettingValueDTO.LogisticsProductDestDeclarePrice declarePrice = settings.stream().filter(e -> e.getStartPrice().compareTo(actualTaxCostUsd) < 0 && e.getEndPrice().compareTo(actualTaxCostUsd) >= 0).findFirst().orElse(null);
-            if (Objects.isNull(declarePrice) || Objects.isNull(declarePrice.getRate())){
-                continue;
-            }
-            BigDecimal resultDestDeclarePrice = actualTaxCostUsd.multiply(declarePrice.getRate()).divide(MathUtil.BigDecimal_100, 4, RoundingMode.HALF_UP);
-            productLogistics.setDestDeclarePrice(resultDestDeclarePrice);
-            productLogisticsService.updateById(productLogistics);
         }
 
     }

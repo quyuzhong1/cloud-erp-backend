@@ -175,6 +175,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      **/
     List<ShopInfoEntity> listShopByAmazon();
 
+    List<ShopSysUserAuthDTO.ViewShopDTO> listShopByAmazonAuth();
     /**
      * 根据条件查询是否存在店铺
      *

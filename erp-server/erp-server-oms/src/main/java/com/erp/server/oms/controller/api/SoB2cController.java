@@ -122,7 +122,7 @@ public class SoB2cController extends BaseController {
             SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
             if (warehouseRuleMatch) {
-                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, warehouseRuleResult.getMap());
+                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>());
                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
                 Boolean isRuleMatch = logisticsRuleResult.getIsRuleMatch();
                 //表示成功
@@ -218,7 +218,7 @@ public class SoB2cController extends BaseController {
                         SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(id, null, new HashMap<>());
                         Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
                         if (warehouseRuleMatch) {
-                            SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, warehouseRuleResult.getMap());
+                            SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>());
                             //表示成功
                             if(logisticsRuleResult.getIsRuleMatch()){
                                 //检查是否备案并修改状态
@@ -945,32 +945,17 @@ public class SoB2cController extends BaseController {
 
     }
 
-
     /**
-     * 重试生成销售出库单
-     *
-     * @Author Jim
-     * @Date 2024/03/25
-     **/
-    @PostMapping(value = "/b2cOrderRetry")
-    public ApiResult<List<BatchResultDTO>> b2cOrderRetry(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            try {
-                // id=B2c订单ID
-                BatchResultDTO currentResult = soB2cErrorService.retrySoOutStock(id);
-                resultDTOS.add(currentResult);
-            } catch (Exception e) {
-                log.error("重试生成销售出库单:{}", ExceptionUtil.stacktraceToString(e));
-                SoB2cEntity entity = soB2cService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    resultDTOS.add(BatchResultDTO.fail(id, id, "B2C订单不存在, 重试生成销售出库单失败"));
-                    continue;
-                }
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
-            }
-
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+     * 验证是否缺货
+     * @author Will
+     * @date: 2024/3/12 18:39
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/checkSkuInventory")
+    public ApiResult<String> checkSkuInventory(@RequestBody @Validated SoB2cDTO.AddDTO dto) {
+        String msg = soB2cService.checkSkuInventory(dto, dto.getDetailList());
+        return success( "", msg);
     }
+
 }

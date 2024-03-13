@@ -1098,7 +1098,10 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private String deliveryWarehouseName;
 
-
+        /**
+         * 采购组织
+         */
+        private String purchaseOrgId;
     }
 
     @Data
