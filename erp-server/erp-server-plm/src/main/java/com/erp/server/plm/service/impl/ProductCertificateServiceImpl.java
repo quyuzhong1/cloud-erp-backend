@@ -646,6 +646,10 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         Map<String, List<ProductCertificateEntity>> map = resultList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getDictProject())));
         for (Map.Entry<String, List<ProductCertificateEntity>> entry : map.entrySet()) {
             List<ProductCertificateEntity> value = entry.getValue();
+            //其他认证无需校验
+            if (ProductCertificateProjectEnum.OTHER_CERTIFICATE.getCode().equals(value.get(0).getDictProject())) {
+                continue;
+            }
             //验证保存时数据是否重复
             if (value.size() > MathUtil.ONE) {
                 String skuNo = productDetailEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), value.get(0).getSkuId())).map(ProductDetailEntity::getSkuNo).findFirst().orElse("");
