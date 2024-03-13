@@ -1,5 +1,6 @@
 package com.erp.server.admin.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -129,6 +130,9 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuEntity> impleme
                 .sorted(Comparator.comparing(MenuEntity::getIndex)).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(levelMenuList)) {
             return ;
+        }
+        if (ObjectUtil.isEmpty(sysMenu.getIndex())) {
+            throw new ServiceException("排序字段必填");
         }
         Integer index = sysMenu.getIndex() + 1;
         for (MenuEntity menuEntity : levelMenuList) {
