@@ -7,6 +7,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.sys.service.CommonService;
 import com.erp.server.sys.service.UserDatePermissionService;
 import io.seata.common.util.CollectionUtils;
+import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,9 @@ public class UserDatePermissionServiceImpl implements UserDatePermissionService 
      * @return java.lang.String
      */
     public String getUserDatePermissionSql(String tableField, String menuCode) {
+        if (StringUtil.isBlank(tableField) || StringUtil.isBlank(menuCode)) {
+            return "";
+        }
         LoginUser user = commonService.getUserInfo();
         List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(user.getUid());
         UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
