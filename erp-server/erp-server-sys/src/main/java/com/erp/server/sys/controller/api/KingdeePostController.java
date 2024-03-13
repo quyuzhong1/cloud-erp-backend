@@ -21,7 +21,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.sys.dto.KingdeePostDTO;
 
 /**
- * 金蝶岗位表
+ * 金蝶架构管理-岗位分配
  *
  * @author Lambda
  * @since 2024-03-11
@@ -34,6 +34,24 @@ public class KingdeePostController extends BaseController {
 
     @Resource
     private KingdeePostService kingdeePostService;
+
+
+
+
+
+    /**
+     * 初始化金蝶数据
+     * @author Lambda
+     * @date:  2024-03-11
+     * @return ApiResult<String>
+     */
+    @GetMapping("/init")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "初始化")
+    public ApiResult init() {
+        Boolean result = kingdeePostService.init();
+        return result ? success() : failure();
+    }
+
 
     /**
     * 新增

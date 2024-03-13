@@ -33,4 +33,13 @@ public interface KingdeePostService extends SuperService<KingdeePostEntity> {
     Boolean update(KingdeePostDTO.UpdateDTO dto);
 
 
+    /**
+     * 初始话金蝶岗位信息
+     * @description
+     * @param
+     * @return
+     * @date 2024-03-13 9:34
+     * @author Lambda
+     */
+    Boolean init();
 }

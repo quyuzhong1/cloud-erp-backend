@@ -1,5 +1,6 @@
 package com.erp.model.sys.dto;
 
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -17,6 +18,43 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 public class KingdeePostDTO implements Serializable {
+
+
+    @Data
+    @NoArgsConstructor
+    public static class KingdeeDTO{
+        /**
+         * 金蝶岗位id
+         */
+        @Alias("FPOSTID")
+        private String kingdeeId;
+
+        /**
+         * 金蝶岗位code
+         */
+        @Alias("FNumber")
+        private String code;
+
+
+        /**
+         * 金蝶名称
+         */
+        @Alias("FName")
+        private String name;
+
+        /**
+         *  使用组织code
+         */
+        @Alias("FUseOrgId.FNumber")
+        private String useOrgCode;
+
+        /**
+         * 金蝶部门code
+         */
+        @Alias("FDept.FNumber")
+        private String deptCode;
+    }
+
 
     @Data
     @NoArgsConstructor

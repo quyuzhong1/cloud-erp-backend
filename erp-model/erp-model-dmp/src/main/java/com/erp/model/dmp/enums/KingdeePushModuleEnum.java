@@ -43,6 +43,7 @@ public enum KingdeePushModuleEnum {
     CN_BANKACNT("CN_BANKACNT","银行账号"),
     BD_RECCONDITION("BD_RecCondition","收款条件"),
     BD_PAYMENTCONDITION("BD_PaymentCondition","付款条件"),
+    HR_ORG_HRPOST("HR_ORG_HRPOST","岗位信息"),
 
 
     ;
