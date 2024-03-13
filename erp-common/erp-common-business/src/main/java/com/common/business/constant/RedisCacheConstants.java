@@ -154,4 +154,11 @@ public interface RedisCacheConstants {
      * 平台请求频率:groupId:操作类型
      */
     String PLATFORM_RATE_LIMIT_PREFIX_LAST = "platform_rate_limit:{}:{}";
+
+
+    /**
+     * 亚马逊接口请求缓存响应信息:amz_sp_api_result:businessTypeName:请求的唯一key
+     */
+    String AMZ_SP_API_RESULT_PREFIX = "amz_sp_api_result:{}:{}";
+
 }

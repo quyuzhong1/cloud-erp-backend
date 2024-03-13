@@ -373,7 +373,7 @@ public class ReportsApiTest {
 //        String shopId = "1734478618731483137";
 //        String shopId = "1738050804738166786";
 //        String shopId = "1739563826220634113";
-        String shopId = "1739563826220634113";
+        String shopId = "1735553314990329858";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -402,8 +402,10 @@ public class ReportsApiTest {
 
 //        String reportDocumentId = "amzn1.spdoc.1.4.eu.2dab2b36-2509-427e-a09c-849f9aa3d2a1.T2YME8P5WMNUJ8.47700";
 //        String shopId = "1734478618723094530";
-        String reportDocumentId = "amzn1.spdoc.1.4.na.432063e2-6fd9-4f35-99ae-75e9e4e0adee.T11BXPXCLBFLJA.2511";
-        String shopId = "1739563826220634113";
+//        String reportDocumentId = "amzn1.spdoc.1.4.na.432063e2-6fd9-4f35-99ae-75e9e4e0adee.T11BXPXCLBFLJA.2511";
+//        String shopId = "1739563826220634113";
+        String reportDocumentId = "amzn1.spdoc.1.4.fe.4dc7329b-5531-419a-b544-7354af69538d.T24FP7H4UQD3KD.2511";
+        String shopId = "1735553314990329858";
 
 
         // 获取店铺授权信息

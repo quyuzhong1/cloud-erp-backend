@@ -173,11 +173,13 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
     @Override
     @DataIdempotent(keyIdName = "dto.redissonKey", waitTime = 20)
     public PlatformAmazonOrderDTO downloadDetail(PlatformAmazonOrderDTO dto, JSONObject extendObj) {
-//        if (!CollectionUtils.isEmpty(dto.getDetails())){
-//            // 已有信息不请求
-//            log.info("亚马逊详情已有不请求, UniqueId={}", dto.getUniqueId());
-//            return dto;
-//        }
+        // 缓存获取
+        String key = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS.getBusinessTypeName(), dto.getUniqueId());
+        Object resultObj = redisUtil.get(key);
+        if (null != resultObj) {
+            return JSONUtil.toBean(resultObj.toString(), PlatformAmazonOrderDTO.class);
+        }
+
         AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS;
         // 默认请求速率配置
         String limitKey = extendObj.getString(AmazonRequestTypeRateLimiterEnum.limitKey);
@@ -221,6 +223,8 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
             return dto;
         }
         dto.setDetails(allOrderItems);
+        // 缓存倒redis
+        redisUtil.set(key, JSONUtil.toJsonStr(dto), 300);
         log.info("查询亚马逊订单详情成功, UniqueId={}", dto.getUniqueId());
         return dto;
     }
