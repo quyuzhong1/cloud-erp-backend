@@ -201,14 +201,13 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             throw new ServiceException("店铺和仓库不能同时为空");
         }
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        //如果传仓库ID，查询对应服务商的sku，如果传店铺id，查询店铺下SKU
+        //如果传仓库ID，查询服务商，如果服务商为空，则查询仓库id，如果传店铺id，查询店铺下SKU
         if(StringUtils.isNotBlank(dto.getParams().getWarehouseId())){
             List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOS = wmsOverseasWarehouseFeign.listByWarehouseIdList(Arrays.asList(dto.getParams().getWarehouseId()));
-            if(CollectionUtils.isEmpty(viewDTOS)){
-                throw new ServiceException("获取不到仓库对应的服务商");
+            if(CollectionUtils.isNotEmpty(viewDTOS)){
+                OverseasProviderWarehouseDTO.ViewDTO viewDTO = viewDTOS.get(0);
+                pagingParamDTO.setProviderCode(viewDTO.getProviderCode());
             }
-            OverseasProviderWarehouseDTO.ViewDTO viewDTO = viewDTOS.get(0);
-            pagingParamDTO.setProviderCode(viewDTO.getProviderCode());
         }
         IPage<ListingInfoDTO.PageDTO> iPage = baseMapper.paging(query,pagingParamDTO);
         this.fillData(iPage.getRecords());

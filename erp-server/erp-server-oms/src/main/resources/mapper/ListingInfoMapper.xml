@@ -59,6 +59,9 @@
             and li.platform = #{params.providerCode}
             and ( sm.has_mapping_all = true or sm.warehouse_id = #{params.warehouseId})
         </if>
+        <if test="(params.providerCode == null or params.providerCode == '') and (params.warehouseId != null and params.warehouseId != '')">
+            and sm.warehouse_id = #{params.warehouseId}
+        </if>
     </select>
 
 </mapper>
