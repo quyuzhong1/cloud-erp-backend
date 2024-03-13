@@ -27,4 +27,6 @@ public interface SubcontractOrderDetailMapper extends BaseMapper<SubcontractOrde
      * @return List<SubcontractOrderDetailEntity>
      */
     List<SubcontractOrderDetailEntity> listBySourceDetailIds(@Param("sourceDetailIds") List<String> sourceDetailIds);
+
+    List<SubcontractOrderDetailEntity> listBySourceDetailIdsWithNoPurchase(@Param("sourceDetailIds") List<String> sourceDetailIds);
 }
