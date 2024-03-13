@@ -5722,8 +5722,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public String checkSkuInventory(SoB2cDTO.AddDTO dto, List<SoB2cDetailDTO.AddDTO> detailList) {
+    public String checkSkuInventory(SoB2cDTO.AddDTO dto, List<SoB2cDetailDTO.AddDTO> resultDetailList) {
         StringBuffer errMsg = new StringBuffer("");
+
+        //未录入仓库的无需校验库存
+        List<SoB2cDetailDTO.AddDTO> detailList = resultDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getWarehouseId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(detailList)) {
+            return errMsg.toString();
+        }
 
         // 忽略库存计算SKU
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
