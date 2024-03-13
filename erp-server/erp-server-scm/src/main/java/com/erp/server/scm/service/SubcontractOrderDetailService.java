@@ -101,6 +101,17 @@ public interface SubcontractOrderDetailService extends SuperService<SubcontractO
      * @return List<SubcontractOrderDetailEntity>
      */
     List<SubcontractOrderDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds);
+
+
+    /**
+     * @description: 根据来源明细ids查询未下推采购单的委外订单
+     * @author Will
+     * @date: 2023/6/14 15:06
+     * @param sourceDetailIds
+     * @return List<SubcontractOrderDetailEntity>
+     */
+    List<SubcontractOrderDetailEntity> listBySourceDetailIdsWithNoPurchase(List<String> sourceDetailIds);
+
     /**
      * @description: 变更新增明细
      * @author Will
