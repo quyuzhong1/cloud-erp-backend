@@ -11,6 +11,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 @RunWith(SpringRunner.class)
@@ -182,13 +185,26 @@ public class ImlServerTest {
     }
     @Test
     public void getOutboundBillTest() {
-        ImlGetOutboundReq imlGetOutboundReq = ImlGetOutboundReq.builder()
-                .orderCode("RV86526-240129-0001")
-                .pageSize(100)
-                .build();
+        // 假设您有一个时间戳
+        long timestamp = 1710175364977l; // 2021-03-09T00:00:00Z
 
-        List<ImlOutboundResp> respList = new ArrayList<>();
-        ImlResponse<List<ImlOutboundResp>> response = imlServer.getOutboundBatch(imlGetOutboundReq);
-        System.out.println(response);
+        // 使用时间戳创建Instant对象
+        Instant instant = Instant.ofEpochSecond(timestamp);
+
+        // 将Instant对象转换为本地日期时间(LocalDateTime)，需要提供时区信息
+        LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+
+        // 打印转换后的本地日期时间
+        System.out.println("LocalDateTime: " + localDateTime);
+//        ImlGetOutboundReq imlGetOutboundReq = ImlGetOutboundReq.builder()
+////                .orderCode("RV86526-240129-0001")
+//                .modifyDateFrom(localDateTime)
+//                .modifyDateTo(localDateTime.plusMinutes(1440))
+//                .pageSize(100)
+//                .build();
+//
+//        List<ImlOutboundResp> respList = new ArrayList<>();
+//        ImlResponse<List<ImlOutboundResp>> response = imlServer.getOutboundBatch(imlGetOutboundReq);
+//        System.out.println(response);
     }
 }

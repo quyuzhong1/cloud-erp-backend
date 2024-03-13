@@ -255,7 +255,10 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
     public List<SubcontractOrderDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds) {
         return  baseMapper.listBySourceDetailIds(sourceDetailIds);
     }
-
+    @Override
+    public List<SubcontractOrderDetailEntity> listBySourceDetailIdsWithNoPurchase(List<String> sourceDetailIds) {
+        return  baseMapper.listBySourceDetailIdsWithNoPurchase(sourceDetailIds);
+    }
     /**
      * 根据主表id查询父级SKU数据
      */
@@ -361,7 +364,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             //采购申请信息
             sourceDetailList = purchaseApplicationDetailService.listByIds(sourceDetailIds);
             //委外明细信息
-            refDetailList = this.listBySourceDetailIds(sourceDetailIds);
+            refDetailList = this.listBySourceDetailIdsWithNoPurchase(sourceDetailIds);
         }
         //查询下推采购单
         PurchaseApplicationRefPoDTO.SearchParamDTO searchParamDTO = new PurchaseApplicationRefPoDTO.SearchParamDTO();

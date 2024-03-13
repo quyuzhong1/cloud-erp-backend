@@ -4006,7 +4006,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             //箱规
             if (StrUtil.isNotBlank(productPackEntity.getBoxSize())) {
-                List<String> boxSizeList = Arrays.stream(productPackEntity.getProductSize().split("X")).filter(obj -> StrUtil.isNotBlank(obj)).collect(Collectors.toList());
+                List<String> boxSizeList = Arrays.stream(productPackEntity.getBoxSize().split("X")).filter(obj -> StrUtil.isNotBlank(obj)).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(boxSizeList) || boxSizeList.size() != 3) {
                     throw new ServiceException(ApiError.ERROR_BOX_SIZE_NOT_EXIST, detailEntity.getSkuNo());
                 }

@@ -201,14 +201,13 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             throw new ServiceException("店铺和仓库不能同时为空");
         }
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        //如果传仓库ID，查询对应服务商的sku，如果传店铺id，查询店铺下SKU
+        //如果传仓库ID，查询服务商，如果服务商为空，则查询仓库id，如果传店铺id，查询店铺下SKU
         if(StringUtils.isNotBlank(dto.getParams().getWarehouseId())){
             List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOS = wmsOverseasWarehouseFeign.listByWarehouseIdList(Arrays.asList(dto.getParams().getWarehouseId()));
-            if(CollectionUtils.isEmpty(viewDTOS)){
-                throw new ServiceException("获取不到仓库对应的服务商");
+            if(CollectionUtils.isNotEmpty(viewDTOS)){
+                OverseasProviderWarehouseDTO.ViewDTO viewDTO = viewDTOS.get(0);
+                pagingParamDTO.setProviderCode(viewDTO.getProviderCode());
             }
-            OverseasProviderWarehouseDTO.ViewDTO viewDTO = viewDTOS.get(0);
-            pagingParamDTO.setProviderCode(viewDTO.getProviderCode());
         }
         IPage<ListingInfoDTO.PageDTO> iPage = baseMapper.paging(query,pagingParamDTO);
         this.fillData(iPage.getRecords());
@@ -226,14 +225,13 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
         }
         List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Arrays.asList(dto.getWarehouseId()));
+        String provideCode;
         if(CollectionUtils.isEmpty(viewDTOList)){
-            throw new ServiceException("查询不到仓库服务商");
+            provideCode = "";
+        }else{
+            provideCode = viewDTOList.get(0).getProviderCode();
         }
-        String provideCode = viewDTOList.get(0).getProviderCode();
         PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(provideCode);
-        if(platformDictEnum == null){
-            throw new ServiceException("查询不到仓库服务商");
-        }
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Arrays.asList(dto.getSkuNo()));
         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(dto.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
         if (ObjectUtil.isEmpty(skuVO)) {
@@ -254,8 +252,8 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
         skuMappingEntity.setProductName(skuVO.getSkuName());
         skuMappingEntity.setListingId(listingInfoEntity.getId());
-        skuMappingEntity.setDictPlatform(platformDictEnum.getCode());
-        skuMappingEntity.setPlatformName(platformDictEnum.getName());
+        skuMappingEntity.setDictPlatform(platformDictEnum == null ? "":platformDictEnum.getCode());
+        skuMappingEntity.setPlatformName(platformDictEnum == null ? "":platformDictEnum.getName());
         skuMappingEntity.setHasMappingAll(true);
 
         //生效时间
