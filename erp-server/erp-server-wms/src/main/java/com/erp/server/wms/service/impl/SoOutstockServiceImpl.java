@@ -584,6 +584,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approveEnd(ApproveOneDTO dto, SoOutstockEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
@@ -2180,6 +2181,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (Objects.isNull(billDate)) {
             billDate = LocalDate.now();
         }
+        dto.setBillDate(billDate);
         // 出库日期
         soOutstock.setBillDate(billDate);
         soOutstock.setPlanDeliveryDate(billDate);
