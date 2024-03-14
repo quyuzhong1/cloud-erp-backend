@@ -173,6 +173,17 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             log.error("[订单规则处理失败]:order={},msg={}", dto.getPlatformCode(), e.getMessage());
         }
 
+        // 新的亚马逊FBA订单检查历史配送记录
+        if (resultDTO.isNewInsertOrder() && hasPlatformWarehouse && PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+            try {
+                Boolean result = dmpMongoDbFeign.checkSoOutStock(dto);
+                if (!result){
+                    log.warn("处理检查历史销售出库记录失败:platformOrderId={}", dto.getPlatformCode());
+                }
+            } catch (Exception e) {
+                log.warn("检查历史销售出库记录失败:platformOrderId={}", dto.getPlatformCode());
+            }
+        }
     }
 
     /**

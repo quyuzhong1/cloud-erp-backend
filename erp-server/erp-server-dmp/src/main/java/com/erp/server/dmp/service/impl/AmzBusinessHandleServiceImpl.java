@@ -19,6 +19,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.gyy.GyyShopInfoEntity;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFbaShipmentDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
@@ -36,6 +37,8 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -52,7 +55,7 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
     @Resource
     private BusinessServiceImpl businessService;
     @Resource
-    private MongoService mongoService;
+    private SoOutstockFeign soOutstockFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
@@ -71,26 +74,29 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
         if (CollectionUtils.isEmpty(list)) {
             return true;
         }
-        // 重新消费销售出库单
-        JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setShopId(dto.getShopId());
-        jobTaskDTO.setShopName(dto.getShopId());
-        jobTaskDTO.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
-        jobTaskDTO.setApiCode(BusinessTypeEnum.SO_OUT_STOCK.getCode());
-        jobTaskDTO.setIntervalTime(86400);
-        jobTaskDTO.setStatus(3);
-        jobTaskDTO.setRetryTimes(0);
-        jobTaskDTO.setApiName("亚马逊物流销售");
-        jobTaskDTO.setCreateTime(LocalDateTime.now());
-        jobTaskDTO.setUpdateTime(LocalDateTime.now());
-        jobTaskDTO.setPlatformCategory(PlatformCategoryEnum.THIRD_SYSTEM.getCode());
-        jobTaskDTO.setBillType(BusinessTypeEnum.SO_OUT_STOCK.getCode());
-        jobTaskDTO.setOperateType("pull");
-        jobTaskDTO.setSourceList(list);
-        RequestDTO requestDTO = new RequestDTO();
-        requestDTO.setJobTaskDTO(jobTaskDTO);
-        // 事务处理
-        businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(), jobTaskDTO.getBillType(), jobTaskDTO, null);
+
+        for (PlatformAmazonFulfilledShipmentsDTO currentDTO : list) {
+            // 重新消费销售出库单
+            JobTaskDTO jobTaskDTO = new JobTaskDTO();
+            jobTaskDTO.setShopId(dto.getShopId());
+            jobTaskDTO.setShopName(dto.getShopId());
+            jobTaskDTO.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
+            jobTaskDTO.setApiCode(BusinessTypeEnum.SO_OUT_STOCK.getCode());
+            jobTaskDTO.setIntervalTime(86400);
+            jobTaskDTO.setStatus(3);
+            jobTaskDTO.setRetryTimes(0);
+            jobTaskDTO.setApiName("亚马逊物流销售");
+            jobTaskDTO.setCreateTime(LocalDateTime.now());
+            jobTaskDTO.setUpdateTime(LocalDateTime.now());
+            jobTaskDTO.setPlatformCategory(PlatformCategoryEnum.THIRD_SYSTEM.getCode());
+            jobTaskDTO.setBillType(BusinessTypeEnum.SO_OUT_STOCK.getCode());
+            jobTaskDTO.setOperateType("pull");
+            jobTaskDTO.setSourceList(Collections.singletonList(currentDTO));
+            RequestDTO requestDTO = new RequestDTO();
+            requestDTO.setJobTaskDTO(jobTaskDTO);
+            // 事务处理
+            businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(), jobTaskDTO.getBillType(), jobTaskDTO, null);
+        }
         return true;
     }
 }

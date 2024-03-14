@@ -4718,6 +4718,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String msg = StrUtil.format("从【{}】平台下载订单成功", dto.getDictPlatform());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "新增操作");
             resultDTO.setSoB2cEntity(entity);
+            // 记录是新增的订单
+            resultDTO.setNewInsertOrder(true);
             return resultDTO;
         } else {
             // 历史异常记录修复
