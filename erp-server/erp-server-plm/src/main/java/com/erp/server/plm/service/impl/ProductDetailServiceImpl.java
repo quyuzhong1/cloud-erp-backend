@@ -4002,7 +4002,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             }
             if (StrUtil.isBlank(productPackEntity.getBoxSize())) {
-                throw new ServiceException(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST,detailEntity.getSkuNo());
+                throw new ServiceException(ApiError.ERROR_BOX_SIZE_NOT_EXIST,detailEntity.getSkuNo());
             }
             //箱规
             if (StrUtil.isNotBlank(productPackEntity.getBoxSize())) {
