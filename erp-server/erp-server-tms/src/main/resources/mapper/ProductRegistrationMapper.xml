@@ -17,6 +17,32 @@
        <result column="declare_platform" property="declarePlatform" />
        <result column="remark" property="remark" />
        <result column="status" property="status" />
+       <result column="product_name" property="productName" />
+       <result column="product_name_cn" property="productNameCn" />
+       <result column="product_name_en" property="productNameEn" />
+       <result column="declare_unit" property="declareUnit" />
+       <result column="good_id" property="goodId" />
+       <result column="spu" property="spu" />
+       <result column="currency" property="currency" />
+       <result column="declare_price" property="declarePrice" />
+       <result column="gross_weight" property="grossWeight" />
+       <result column="length" property="length" />
+       <result column="width" property="width" />
+       <result column="height" property="height" />
+       <result column="is_battery" property="isBattery" />
+       <result column="battery_type" property="batteryType" />
+       <result column="declare_name_cn" property="declareNameCn" />
+       <result column="customs_code" property="customsCode" />
+       <result column="first_number" property="firstNumber" />
+       <result column="second_number" property="secondNumber" />
+       <result column="declare_element" property="declareElement" />
+       <result column="supplier_code" property="supplierCode" />
+       <result column="barcode_type" property="barcodeType" />
+       <result column="custom_barcode" property="customBarcode" />
+       <result column="is_invoice" property="isInvoice" />
+       <result column="is_parts" property="isParts" />
+       <result column="battery_note" property="batteryNote" />
+       <result column="url" property="url" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -30,7 +56,7 @@
         update_time,
         version,
         is_deleted,
-        sku_id, sku_no, declare_platform, remark, status
+        sku_id, sku_no, declare_platform, remark, status, product_name, product_name_cn, product_name_en, declare_unit, good_id, spu, currency, declare_price, gross_weight, length, width, height, is_battery, battery_type, declare_name_cn, customs_code, first_number, second_number, declare_element, supplier_code, barcode_type, custom_barcode, is_invoice, is_parts, battery_note, url
     </sql>
 
 

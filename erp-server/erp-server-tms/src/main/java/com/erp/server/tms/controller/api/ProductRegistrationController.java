@@ -23,14 +23,49 @@ import com.erp.model.tms.dto.ProductRegistrationDTO;
 /**
  * 产品备案表
  *
- * @author lambda
- * @since 2024-01-19
+ * @author lrp
+ * @since 2024-03-14
  */
 @Slf4j
 @RestController
 @LogSystemModule("产品备案表")
 @RequestMapping("/productRegistration")
 public class ProductRegistrationController extends BaseController {
+
+    @Resource
+    private ProductRegistrationService productRegistrationService;
+
+    /**
+    * 新增
+    * @author lrp
+    * @date:  2024-03-14
+    * @param dto
+    * @return ApiResult<String>
+    */
+    @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "产品备案表新增")
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated ProductRegistrationDTO.AddDTO dto) {
+        return success(productRegistrationService.add(dto));
+    }
+
+    /**
+    * 修改
+    * @author lrp
+    * @date:  2024-03-14
+    * @param dto
+    * @return ApiResult
+    */
+    @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "产品备案表修改")
+        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+        tableField = "create_user_id",
+        menuCode = "tms:productRegistration:update",
+        serviceClass = ProductRegistrationService.class,
+        keyIdName = "id")
+    public ApiResult<?> update(@RequestBody @Validated ProductRegistrationDTO.UpdateDTO dto) {
+        productRegistrationService.update(dto);
+        return success();
+    }
 
 
 

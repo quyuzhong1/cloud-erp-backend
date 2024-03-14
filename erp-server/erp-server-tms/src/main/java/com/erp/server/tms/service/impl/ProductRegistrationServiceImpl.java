@@ -31,14 +31,19 @@ import com.common.core.enums.ApiError;
  * 产品备案表 服务实现类
  * </p>
  *
- * @author lambda
- * @since 2024-01-19
+ * @author lrp
+ * @since 2024-03-14
  */
 @Slf4j
 @Service
 public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegistrationMapper, ProductRegistrationEntity> implements ProductRegistrationService {
+    @Autowired
+    private OperateLogService operateLogService;
+    @Autowired
+    private CommonService commonService;
 
-
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ProductRegistrationDTO.AddDTO addDTO) {
         ProductRegistrationEntity productRegistrationEntity = new ProductRegistrationEntity();
@@ -49,33 +54,54 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
 
         log.info("开始新增产品备案单");
         boolean save = super.save(productRegistrationEntity);
-        if (!save) {
+        if(!save) {
             throw new ServiceException("产品备案单保存失败");
         }
+
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "产品备案单" , productRegistrationEntity.getId());
+        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLog(msg, null, productRegistrationEntity.getId(), "新增操作");
+        // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(productRegistrationEntity.getId(), productRegistrationEntity.getId());
     }
 
     /**
-     * 修改
-     */
+    * 修改
+    */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(ProductRegistrationDTO.UpdateDTO updateDTO) {
         ProductRegistrationEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品备案单"));
-        ProductRegistrationEntity productRegistrationEntity = BeanMapperUtils.map(ProductRegistrationEntity.class, updateDTO);
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "产品备案单"));
+        ProductRegistrationEntity productRegistrationEntity =  BeanMapperUtils.map(ProductRegistrationEntity.class, updateDTO);
 
         // 数据处理
         handleData(productRegistrationEntity);
         log.info("编辑 开始修改产品备案单数据，id：【{}】", old.getId());
         boolean save = super.updateById(productRegistrationEntity);
-        if (!save) {
+        if(!save) {
             throw new ServiceException("产品备案单保存失败");
         }
+        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
+        // 记录主单操作日志
+            log.info("编辑 开始记录产品备案单日志数据，id：【{}】", productRegistrationEntity.getId());
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), productRegistrationEntity.getId(), "产品备案单");
+        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLogByObj(old, productRegistrationEntity, null, productRegistrationEntity.getId(), msg);
         return Boolean.TRUE;
     }
+
+
+    /**
+    * 新增修改处理数据
+    */
+    private void handleData(ProductRegistrationEntity productRegistrationEntity) {
+    // TODO 验证数据 & 数据赋值
+    }
+
 
     @Override
     public List<ProductRegistrationEntity> listBySkuNoList(List<String> skuNoList) {
@@ -101,17 +127,10 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                 eq(ProductRegistrationEntity::getDeclarePlatform,declarePlatform).
                 eq(ProductRegistrationEntity::getStatus,registered).
                 in(ProductRegistrationEntity::getSkuNo,skuNoList).list();
-         //这个是查询到的
+        //这个是查询到的
         List<String> dbSkuNoList = dbList.stream().map(ProductRegistrationEntity::getSkuNo).collect(Collectors.toList());
 
         return skuNoList.stream().filter(s->!dbSkuNoList.contains(s)).collect(Collectors.toList());
     }
 
-
-    /**
-     * 新增修改处理数据
-     */
-    private void handleData(ProductRegistrationEntity productRegistrationEntity) {
-        // TODO 验证数据 & 数据赋值
-    }
 }

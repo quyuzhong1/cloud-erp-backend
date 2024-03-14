@@ -12,15 +12,15 @@ import java.util.List;
  * 产品备案表 服务类
  * </p>
  *
- * @author lambda
- * @since 2024-01-19
+ * @author lrp
+ * @since 2024-03-14
  */
 public interface ProductRegistrationService extends SuperService<ProductRegistrationEntity> {
 
     /**
     * 新增
-    * @author lambda
-    * @date: 2024-01-19
+    * @author lrp
+    * @date: 2024-03-14
     * @param dto
     * @return
     */
@@ -28,13 +28,12 @@ public interface ProductRegistrationService extends SuperService<ProductRegistra
 
     /**
     * 修改
-    * @author lambda
-    * @date: 2024-01-19
+    * @author lrp
+    * @date: 2024-03-14
     * @param dto
     * @return
     */
     Boolean update(ProductRegistrationDTO.UpdateDTO dto);
-
 
     /**
      * 根据sku 查询
