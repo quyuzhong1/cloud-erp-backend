@@ -45,17 +45,14 @@ public class MercadoOrderHandler extends AbstractOrderHandler<MercadoOrderDTO, P
     private MercadoSdkClientService mercadoSdkClientService;
 
     public static void main(String[] args) {
-        String baseUrl = "https://api.mercadolibre.com/marketplace/orders/search";
+/*        String baseUrl = "https://api.mercadolibre.com/marketplace/orders/search";
 
 
         //入参
         HashMap<String, Object> params = new HashMap<>(2);
-        params.put("order.status", "cancelled,paid,invalid");
-        params.put("limit", "100");
-        params.put("offset", "0");
         //设置请求头
         Map<String, String> headerMap = new HashMap<>(1);
-        headerMap.put("Authorization", "Bearer "+ "APP_USR-3457166802805723-030621-a30174aed7afd6db7bf0ca156255048d-1509269799");
+        headerMap.put("Authorization", "Bearer "+ "APP_USR-3457166802805723-031403-f51fe8b29ba502ea781d0ec93f2f3a08-1509269799");
 
         //拉取数据
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
@@ -64,7 +61,7 @@ public class MercadoOrderHandler extends AbstractOrderHandler<MercadoOrderDTO, P
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}",
                     baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
         }
-        System.out.println(apiResult.getData());
+        System.out.println(apiResult.getData());*/
 
 
 /*        String baseUrl2 = "https://api.mercadolibre.com/marketplace/orders/2000007633674134";
@@ -84,28 +81,33 @@ public class MercadoOrderHandler extends AbstractOrderHandler<MercadoOrderDTO, P
         }*/
 
 //        String shippingUrl = "http://api.mercadolibre.com/marketplace/shipments/43116658829?access_token=APP_USR-3457166802805723-030522-d406385a02d509c2ecc8a9234e425f34-1509269799&seller=1511265855";
-/*        String shippingUrl1 = "https://api.mercadolibre.com/marketplace/shipments/43116658829";
+        String shippingUrl1 = "https://api.mercadolibre.com/marketplace/shipments/43106673373";
         String shippingUrl2 = "https://api.mercadolibre.com/marketplace/shipments/43116658829/costs";
+        String shippingUrl3 = "http://api.mercadolibre.com/marketplace/shipments/43106673373/labels";
+        String shippingUrl4 = "http://api.mercadolibre.com/marketplace/shipments/43116658829/tracking";
+        String shippingUrl5 = "https://api.mercadolibre.com/marketplace/shipments/43116658829";
+        String shippingUrl6 = "https://api.mercadolibre.com/marketplace/shipments/43116658829/history";
 
         //入参
-        HashMap<String, Object> shippingParams = new HashMap<>(2);
+        HashMap<String, Object> shippingParams = new HashMap<>(1);
+        shippingParams.put("tracking_id","1");
+        shippingParams.put("carrier","name carrier");
 
         //设置请求头
-        Map<String, String> shippingHeaderMap = new HashMap<>(3);
-        shippingHeaderMap.put("Authorization", "Bearer "+"APP_USR-3457166802805723-030621-a30174aed7afd6db7bf0ca156255048d-1509269799");
-        shippingHeaderMap.put("x-format-new", "true");
 
-*//*        String bodyStr = OkHttpUtils.doGet(shippingUrl1, shippingParams, shippingHeaderMap);
-        System.out.println(bodyStr);*//*
+        Map<String, String> shippingHeaderMap = new HashMap<>(1);
+        shippingHeaderMap.put("Authorization", "Bearer "+ "APP_USR-3457166802805723-031323-518d575dc107a24dd7710ce58ff860b8-1509269799");
+
         //拉取数据
-        ApiResult apiResult2 = HttpCommonUtil.sendOkHttpApiResult(shippingUrl1, JSONUtil.toJsonStr(shippingParams), null, shippingHeaderMap, RequestMethod.GET);
+        ApiResult apiResult2 = HttpCommonUtil.sendOkHttpApiResult(shippingUrl4, null, null, shippingHeaderMap, RequestMethod.GET);
         if (!Objects.equals(apiResult2.getCode(), 200)) {
-            log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", shippingUrl1, shippingParams.toString(), JSONUtil.toJsonStr(apiResult2));
+            log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", shippingUrl3, shippingParams.toString(), JSONUtil.toJsonStr(apiResult2));
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}",
-                    shippingUrl1, shippingParams.toString(), JSONUtil.toJsonStr(apiResult2)));
+                    shippingUrl3, shippingParams.toString(), JSONUtil.toJsonStr(apiResult2)));
         }
 
-        System.out.println(JSONUtil.toJsonStr(apiResult2.getData()));*/
+        System.out.println(JSONUtil.toJsonStr(apiResult2.getData()));
+
     }
 
     @Override

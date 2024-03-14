@@ -29,7 +29,7 @@ import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.dto.SoReturnDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
-import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
+import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -181,9 +181,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Override
     public List<SoReturnDTO.StatusCountDTO> listCount(PermissionsDTO dto) {
-        SOReturnChangeListTypeEnum[] values = SOReturnChangeListTypeEnum.values();
+        SoReturnChangeListTypeEnum[] values = SoReturnChangeListTypeEnum.values();
         List<SoReturnDTO.StatusCountDTO> list = new ArrayList<>();
-        for (SOReturnChangeListTypeEnum item : values) {
+        for (SoReturnChangeListTypeEnum item : values) {
             SoReturnDTO.PagingParam pagingParam = new SoReturnDTO.PagingParam();
             pagingParam.setPermissionSql(dto.getPermissionSql());
             SoReturnDTO.StatusCountDTO resultDTO = new SoReturnDTO.StatusCountDTO();

@@ -143,6 +143,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
             JSONObject extendDataJson = new JSONObject();
             extendDataJson.put("mode",shipmentViewDTO.getLogistic().getMode());
             extendDataJson.put("logisticType", shipmentViewDTO.getLogistic().getType());
+            extendDataJson.put("shipmentId", orderBean.getShipping().getId());
             orderDTO.setExtendData(extendDataJson.toString());
         }
 

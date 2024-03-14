@@ -1300,6 +1300,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         result.setOrderTime(billDate.atStartOfDay());
         result.setChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
+        result.setLogisticType(soB2cLogisticsEntity.getLogisticType());
         result.setSourceType(SourceTypeEnum.SO_B2C.getCode());
         result.setOrderId(id);
         String aliExpress = PlatformDictEnum.ALI_EXPRESS.getCode();
@@ -1528,6 +1529,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cDelivery.setLogisticsChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
         soB2cDelivery.setLogisticsChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
         soB2cDelivery.setTransportNo(soB2cLogisticsEntity.getCode());
+        if (OrderLogisticTypeEnum.TRANSIT_WAREHOUSE.getCode().equals(soB2cLogisticsEntity.getLogisticType())) {
+            soB2cDelivery.setLogisticType(B2cDeliveryLogisticTypeEnum.TRANSIT_SHIPMENT.getCode());
+        }
+
         List<String> skuIdList = list.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
         //获取子SKU集合
         List<SoB2cDeliveryDetailDTO.AddDTO> deliveryDetailList = new ArrayList<>(list.size());

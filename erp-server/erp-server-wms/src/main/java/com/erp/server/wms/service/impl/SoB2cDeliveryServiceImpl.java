@@ -3,12 +3,14 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
@@ -19,17 +21,25 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.PlatformSaveHandler;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
-import com.common.message.constant.RocketMqConsumerGroup;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cErrorEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -42,16 +52,22 @@ import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
-import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
 import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
-import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.SoB2cDeliveryDTO;
+import com.erp.model.wms.dto.SoB2cDeliveryDetailDTO;
+import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.*;
+import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.enums.DeliverTypeEnum;
+import com.erp.model.wms.enums.PickingTypeEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryPrintTypeEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -65,31 +81,21 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.mapper.SoB2cDeliveryMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import cn.hutool.core.util.ObjectUtil;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Resource;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.annotation.Resource;
 
 /**
  * <p>
@@ -613,9 +619,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 //如果打印面单
                 if (SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode().equals(printType)) {
                     //先获取订单的面单，没有就请求sdk获取
-                    String logisticsWaybill = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(printWayBillPdf.getSoId())).map(req -> req.getLogisticsBase64()).findFirst().orElse("");
-                    if (StringUtils.isNotBlank(logisticsWaybill)) {
-                        base64List.add(logisticsWaybill);
+                    List<String> logisticsWaybillList = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(printWayBillPdf.getSoId())).map(req -> req.getLogisticsBase64()).findFirst().orElse(null);
+                    if (CollectionUtils.isNotEmpty(logisticsWaybillList)) {
+                        base64List.addAll(logisticsWaybillList);
                     }
                 } else if (SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(printType)) {
 
@@ -632,9 +638,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     }
                 } else {
                     //先获取订单的面单，没有就请求sdk获取
-                    String logisticsWaybill = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(printWayBillPdf.getSoId())).map(req -> req.getLogisticsBase64()).findFirst().orElse("");
-                    if (StringUtils.isNotBlank(logisticsWaybill)) {
-                        base64List.add(logisticsWaybill);
+                    List<String> logisticsWaybillList = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(printWayBillPdf.getSoId())).map(req -> req.getLogisticsBase64()).findFirst().orElse(null);
+                    if (CollectionUtils.isNotEmpty(logisticsWaybillList)) {
+                        base64List.addAll(logisticsWaybillList);
                     }
 
                     // 配货单需要根据渠道查询是否是自定义配置，自定义配置需要组装数据
@@ -823,6 +829,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             printLogisticsWaybill.setB2cSoId(detailDTO.getSoB2cId());
             printLogisticsWaybill.setDeliveryNo(detailDTO.getSoCode());
             printLogisticsWaybill.setShopId(detailDTO.getShopId());
+            printLogisticsWaybill.setShopId(detailDTO.getShopId());
+            printLogisticsWaybill.setLogisticType(detailDTO.getLogisticType());
 
             SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO logisticsWaybillDetailDTO = waybillDetailDTOList.stream().filter(req -> req.getSoB2cId().equals(detailDTO.getSoB2cId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(logisticsWaybillDetailDTO)) {
@@ -837,7 +845,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * 新增修改处理数据
      */
     private void handleData(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> detailEntityList) {
-
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listBySourceIds(Arrays.asList(soB2cDeliveryEntity.getSourceId()));
         List<SoB2cDeliveryEntity> deliveryEntityList = soB2cDeliveryEntities.stream()
                 .filter(req -> !SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus().equals(req.getStatus()))

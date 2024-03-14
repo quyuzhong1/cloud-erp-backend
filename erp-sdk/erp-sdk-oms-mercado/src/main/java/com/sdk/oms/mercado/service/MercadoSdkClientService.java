@@ -19,6 +19,7 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.sdk.oms.mercado.dto.MercadoShipOrderDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.google.common.collect.Lists;
@@ -51,10 +52,12 @@ import java.util.stream.Collectors;
 @Component
 public class MercadoSdkClientService {
     public static void main(String[] args) {
-//        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=authorization_code&grant_type=authorization_code&client_id=3457166802805723&client_secret=QucvI4VWHO0w3AZftOElz5liVOurfjQG&code=TG-65e84c33beaa890001c29f80-1715441696&redirect_uri=https://erptest.ulanzi.cn:8020/store-permission-result";
-
+//        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=authorization_code&client_id=3457166802805723&client_secret=QucvI4VWHO0w3AZftOElz5liVOurfjQG&code=TG-65e84c33beaa890001c29f80-1715441696&redirect_uri=https://erptest.ulanzi.cn:8020/store-permission-result";
+//        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=authorization_code&client_id=3457166802805723&client_secret=QucvI4VWHO0w3AZftOElz5liVOurfjQG&code=TG-65f29b46a699630001e07f5b-1715441696&redirect_uri=https://erptest.ulanzi.cn:8020/store-permission-result";
+//{"access_token":"APP_USR-3457166802805723-031402-17b6fbb732670467f62b20061ede0901-1715441696","token_type":"Bearer","expires_in":21600,"scope":"offline_access read write","user_id":1715441696,"refresh_token":"TG-65f29b597c47900001b2091a-1715441696"}
         //组装刷新token请求的url
-        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=refresh_token&client_id=3457166802805723&client_secret=QucvI4VWHO0w3AZftOElz5liVOurfjQG&refresh_token=TG-65e67868ceddf000015d733a-1509269799";
+        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=refresh_token&client_id=3457166802805723&client_secret=QucvI4VWHO0w3AZftOElz5liVOurfjQG&refresh_token=TG-65ea8afdd926bf0001865f9c-1509269799";
+
 
         //入参（无）
         Map<String, Object> param = new HashMap<>();
@@ -95,7 +98,8 @@ public class MercadoSdkClientService {
         String redirectUri = paramMap.get("redirectUri");
         String url = paramMap.get("baseUrl");
         String code = paramMap.get("code");
-        //https://api.mercadolibre.com
+
+        //https://api.mercadolibre.com/oauth/token?grant_type=authorization_code&client_id=%s&client_secret=%s&code=%s&redirect_uri=%s
         String path = "/oauth/token?grant_type=authorization_code&client_id=%s&client_secret=%s&code=%s&redirect_uri=%s";
         String baseUrl = String.format(url + path, clientId, clientSecret, code, redirectUri);
 
@@ -429,46 +433,66 @@ public class MercadoSdkClientService {
 
     }
 
+
+
     /**
-     * 发送POST请求查询订单
-     *
-     * @param baseUrl
-     * @param accessToken
-     * @param paramMap 入参
+     * 根据发货id查询发货详情
+     * @param authMap
+     * @param shippingId
      * @return
      */
-    public String sendMercadoPost(String baseUrl, String accessToken, Map<String, Object> paramMap) {
+    public String printShippingLabel(Map<String, String> authMap, Long shippingId) {
 
-        //请求头
-        Map<String, String> headerMap = new HashMap<>();
-        headerMap.put("Authorization", "Bearer "+ accessToken);
+        String orderUrl = "https://api.mercadolibre.com/marketplace/shipments/"+shippingId+"/labels";
+        String token = authMap.get("token");
 
-        //发起POST请求
-        String bodyStr = OkHttpUtils.doPost(baseUrl, paramMap, headerMap);
+        //入参
+        HashMap<String, Object> orderParams = new HashMap<>(1);
 
-        //返回token实体
-        return bodyStr;
+        //设置请求头
+        Map<String, String> orderHeaderMap = new HashMap<>(1);
+        orderHeaderMap.put("Authorization", "Bearer " + token);
+        orderHeaderMap.put("x-format-new", "true");
+
+        //拉取数据
+        ApiResult shipmentResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
+        if (!Objects.equals(shipmentResult.getCode(), 200) && !Objects.equals(shipmentResult.getCode(), 201)) {
+            log.error("调用url={},入参params={}, 美客多marketplace/shipments数据失败，返回值 responseMap={}", orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多marketplace/shipments数据失败，返回值 responseMap={}",
+                    orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult)));
+        }
+
+        //解析数据
+        return String.valueOf(shipmentResult.getData());
+
     }
 
     /**
-     * 发送GET请求查询订单
-     *
-     * @param baseUrl
-     * @param accessToken
-     * @param paramMap 入参
-     * @return
+     * 标记发货
      */
-    public String sendMercadoGet(String baseUrl, String accessToken, Map<String, Object> paramMap) {
+    public void shipOrder(MercadoShipOrderDTO shipOrderDTO) {
+        //  根据店铺ID获取授权
+        MercadoShopInfoDTO shopInfoByShopId = this.getShopInfoByShopId(shipOrderDTO.getShopId());
 
-        //请求头
-        Map<String, String> headerMap = new HashMap<>();
-        headerMap.put("Authorization", "Bearer "+ accessToken);
+        String orderUrl = "https://api.mercadolibre.com/marketplace/shipments/"+shipOrderDTO.getShipmentId()+"/tracking ";
+        String token = shopInfoByShopId.getAccessToken();
 
-        //发起POST请求
-        String bodyStr = OkHttpUtils.doGet(baseUrl, paramMap, headerMap);
+        //入参
+        HashMap<String, Object> orderParams = new HashMap<>(3);
+        orderParams.put("tracking_id", shipOrderDTO.getTrackingId());
+        orderParams.put("tracking_url", shipOrderDTO.getTrackingUrl());
+        orderParams.put("carrier", shipOrderDTO.getCarrier());
+        //设置请求头
+        Map<String, String> orderHeaderMap = new HashMap<>(1);
+        orderHeaderMap.put("Authorization", "Bearer " + token);
 
-        //返回token实体
-        return bodyStr;
+        //拉取数据
+        ApiResult shipmentResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.POST);
+        if (!Objects.equals(shipmentResult.getCode(), 200) && !Objects.equals(shipmentResult.getCode(), 201)) {
+            log.error("调用url={},入参params={}, 美客多标记发货shipments/tracking数据失败，返回值 responseMap={}", orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多shipments/tracking数据失败，返回值 responseMap={}",
+                    orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult)));
+        }
+
     }
-
 }
