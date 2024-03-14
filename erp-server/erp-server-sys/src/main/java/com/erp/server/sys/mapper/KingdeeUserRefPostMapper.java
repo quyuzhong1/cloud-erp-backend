@@ -1,8 +1,12 @@
 package com.erp.server.sys.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.sys.dto.KingdeeUserRefPostDTO;
 import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -16,4 +20,14 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface KingdeeUserRefPostMapper extends BaseMapper<KingdeeUserRefPostEntity> {
 
+    
+    /**
+     * 分页获取员工
+     * @description
+     * @param
+     * @return
+     * @date 2024-03-14 11:02
+     * @author Lambda
+     */
+    IPage<KingdeeUserRefPostDTO.PagingUserViewDTO> paging(Page query, @Param("params") KingdeeUserRefPostDTO.PagingParamDTO paramDTO);
 }

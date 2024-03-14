@@ -1,23 +1,43 @@
 package com.erp.server.sys.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.sys.dto.KingdeePostDTO;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.model.sys.entity.KingdeePostEntity;
 import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
+import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.sys.mapper.KingdeeUserRefPostMapper;
-import com.erp.server.sys.service.KingdeeUserRefPostService;
+import com.erp.server.sys.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.sys.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.sys.dto.KingdeeUserRefPostDTO;
+
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.ws.rs.POST;
+
 /**
  * <p>
  * 金蝶员工任岗表 服务实现类
@@ -30,8 +50,18 @@ import com.common.core.enums.ApiError;
 @Service
 public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserRefPostMapper, KingdeeUserRefPostEntity> implements KingdeeUserRefPostService {
 
+
     @Autowired
-    private CommonService commonService;
+    private SysAccountingCompanyService sysAccountingCompanyService;
+
+    @Autowired
+    private KingdeeDepartmentService kingdeeDepartmentService;
+
+    @Autowired
+    private SysUserInfoService sysUserInfoService;
+
+    @Autowired
+    private KingdeePostService kingdeePostService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -45,44 +75,208 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
 
         log.info("开始新增金蝶员工任岗单");
         boolean save = super.save(kingdeeUserRefPostEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("金蝶员工任岗单保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "金蝶员工任岗单" , kingdeeUserRefPostEntity.getId());
-
 
         return new BaseResultDTO.AddDTO(kingdeeUserRefPostEntity.getId(), kingdeeUserRefPostEntity.getId());
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(KingdeeUserRefPostDTO.UpdateDTO updateDTO) {
         KingdeeUserRefPostEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶员工任岗单"));
-        KingdeeUserRefPostEntity kingdeeUserRefPostEntity =  BeanMapperUtils.map(KingdeeUserRefPostEntity.class, updateDTO);
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶员工任岗单"));
+        KingdeeUserRefPostEntity kingdeeUserRefPostEntity = BeanMapperUtils.map(KingdeeUserRefPostEntity.class, updateDTO);
 
         // 数据处理
         handleData(kingdeeUserRefPostEntity);
         log.info("编辑 开始修改金蝶员工任岗单数据，id：【{}】", old.getId());
         boolean save = super.updateById(kingdeeUserRefPostEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("金蝶员工任岗单保存失败");
         }
-
-
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean init() {
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_NEWSTAFF.getCode());
+        LinkedList<String> queryFilters = new LinkedList<>();
+        //审核状态
+        queryFilters.add(StrUtil.format(" FDocumentStatus = {}", "'C'"));
+        //禁用状态
+        queryFilters.add(StrUtil.format(" FFORBIDSTATUS = {}", "'A'"));
+        //查询
+        String fieldKeys = "FSTAFFID,FStaffNumber,FName,FUseOrgId.FNumber,FDept.FNumber,FPosition.FNumber";
+        String filterStr = String.join(" and ", queryFilters);
+        // 当前页数
+        Integer pageIndex = 0;
+        // 每次最多获取10ing条
+        Integer pageSize = 1000;
+        List<KingdeeUserRefPostDTO.KingdeeDTO> userPostList = new ArrayList<>(20);
+        Boolean dataSign = true;
+        while (dataSign) {
+            List<Map<String, Object>> result = apiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, 0);
+            if (result.size() < pageSize) {
+                dataSign = false;
+            }
+            List<KingdeeUserRefPostDTO.KingdeeDTO> entityList = result.stream().map(obj ->
+                    BeanUtil.toBean(obj, KingdeeUserRefPostDTO.KingdeeDTO.class)).collect(Collectors.toList());
+            userPostList.addAll(entityList);
+            pageIndex++;
+        }
+        //数据库存在的
+        List<KingdeeUserRefPostEntity> dbList = this.list();
+        List<BaseIdDTO.CodeDTO> orgList = sysAccountingCompanyService.getByIds(Collections.emptyList());
+        //岗位列表
+        List<KingdeePostEntity> postList = kingdeePostService.list();
+
+
+        List<KingdeeUserRefPostEntity> saveOrUpdateList = new ArrayList<>(20);
+        List<SysUserInfoEntity> userList = sysUserInfoService.listErpUser();
+        for (KingdeeUserRefPostDTO.KingdeeDTO item : userPostList) {
+            String kingdeeId = item.getKingdeeId();
+            //员工任岗code
+            String userPostCode = item.getCode();
+            //使用组织code
+            String useOrgCode = item.getUseOrgCode();
+            //岗位code
+            String postCode = item.getKingdeePostCode();
+
+            //用户名
+            String userName = item.getUserName();
+            String userId = userList.stream().filter(u -> userName.equals(u.getRealName())).
+                    findFirst().map(SysUserInfoEntity::getUid).orElse("");
+            if (StringUtils.isBlank(userId)) {
+                continue;
+            }
+            KingdeePostEntity postEntity = postList.stream().filter(p -> p.getCode().equals(postCode)).
+                    findFirst().orElse(null);
+            if (Objects.isNull(postEntity)) {
+                continue;
+            }
+            BaseIdDTO.CodeDTO orgInfo = orgList.stream().filter(org -> org.getCode().equals(useOrgCode)).
+                    findFirst().orElse(null);
+            if (Objects.isNull(orgInfo)) {
+                continue;
+            }
+            String useOrgId = orgInfo.getId();
+            //组织名
+            String useOrgName = orgInfo.getName();
+            String kingdeePostId = postEntity.getId();
+            String kingdeeDeptId = postEntity.getKingdeeDeptId();
+            KingdeeUserRefPostEntity dbEntity = dbList.stream().filter(entity -> entity.getKingdeeId().equals(kingdeeId)).
+                    findFirst().orElse(null);
+            //表示没有
+            if (Objects.isNull(dbEntity)) {
+                KingdeeUserRefPostEntity addEntity = new KingdeeUserRefPostEntity();
+                addEntity.setKingdeeId(kingdeeId);
+                addEntity.setCode(userPostCode);
+                addEntity.setUseOrgId(useOrgId);
+                addEntity.setErpUserId(userId);
+                addEntity.setUseOrgName(useOrgName);
+                addEntity.setKingdeePostId(kingdeePostId);
+                addEntity.setKingdeeDepartmentId(kingdeeDeptId);
+                saveOrUpdateList.add(addEntity);
+            } else {
+                if (!dbEntity.getCode().equals(userPostCode) ||
+                        !dbEntity.getUseOrgId().equals(orgInfo.getId()) ||
+                        !dbEntity.getErpUserId().equals(userId) ||
+                        !dbEntity.getKingdeePostId().equals(kingdeePostId)) {
+
+                    dbEntity.setCode(userPostCode);
+                    dbEntity.setUseOrgId(useOrgId);
+                    dbEntity.setUseOrgName(useOrgName);
+                    dbEntity.setKingdeePostId(kingdeeDeptId);
+                    dbEntity.setErpUserId(userId);
+                    dbEntity.setKingdeeDepartmentId(kingdeeDeptId);
+                    saveOrUpdateList.add(dbEntity);
+                }
+            }
+
+        }
+
+        return this.saveOrUpdateBatch(saveOrUpdateList);
+
+    }
+
+    @Override
+    public PagingVO<KingdeeUserRefPostDTO.PagingUserViewDTO> paging(PagingDTO<KingdeeUserRefPostDTO.PagingParamDTO> dto) {
+        KingdeeUserRefPostDTO.PagingParamDTO paramDTO = dto.getParams();
+        paramDTO.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<KingdeeUserRefPostDTO.PagingUserViewDTO> pageData = this.baseMapper.paging(query, paramDTO);
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public KingdeeUserRefPostDTO.UserPostViewDTO view(String id) {
+        SysUserInfoEntity userInfo = sysUserInfoService.getById(id);
+        if (Objects.isNull(userInfo)) {
+            throw new ServiceException("员工不存在");
+        }
+        KingdeeUserRefPostDTO.UserPostViewDTO viewDTO = new KingdeeUserRefPostDTO.UserPostViewDTO();
+        viewDTO.setId(id);
+        viewDTO.setMobile(userInfo.getMobile());
+        viewDTO.setUserName(userInfo.getUserName());
+        viewDTO.setRealName(userInfo.getRealName());
+        List<KingdeeUserRefPostEntity> userPostList = this.listByUserId(id);
+        List<KingdeeUserRefPostDTO.ViewDTO> userPostViewList = new ArrayList<>(userPostList.size());
+        List<String> kingdeePostIdList=userPostList.stream().map(KingdeeUserRefPostEntity::getKingdeePostId).
+                collect(Collectors.toList());
+
+        List<String> kingdeeDeptIdList=userPostList.stream().map(KingdeeUserRefPostEntity::getKingdeeDepartmentId).
+                collect(Collectors.toList());
+        //任岗信息
+        Boolean postIsNotEmpty=CollectionUtils.isNotEmpty(kingdeePostIdList);
+
+        //部门
+        Boolean deptIsNotEmpty=CollectionUtils.isNotEmpty(kingdeeDeptIdList);
+
+        //任岗信息
+        List<KingdeePostEntity> kingdeePostList = postIsNotEmpty ? kingdeePostService.listByIds(kingdeePostIdList) : Collections.emptyList();
+
+        //部门信息
+        List<KingdeeDepartmentEntity> kingdeeDeptList = deptIsNotEmpty ? kingdeeDepartmentService.listByIds(kingdeeDeptIdList) : Collections.emptyList();
+
+        for (KingdeeUserRefPostEntity item : userPostList) {
+            KingdeeUserRefPostDTO.ViewDTO itemView = new KingdeeUserRefPostDTO.ViewDTO();
+            itemView.setId(item.getId());
+            itemView.setKingdeePostId(item.getKingdeePostId());
+            itemView.setKingdeeDeptId(item.getKingdeeDepartmentId());
+            String postName=kingdeePostList.stream().filter(k->k.getId().equals(item.getKingdeePostId())).map(KingdeePostEntity::getName).
+                    findFirst().orElse("");
+            itemView.setPostName(postName);
+            String deptName=kingdeeDeptList.stream().filter(k->k.getId().equals(item.getKingdeeDepartmentId())).map(KingdeeDepartmentEntity::getKingdeeDeptName).
+                    findFirst().orElse("");
+            itemView.setKingdeeDeptName(deptName);
+            itemView.setUseOrgId(item.getUseOrgId());
+            itemView.setUseOrgName(item.getUseOrgName());
+            userPostViewList.add(itemView);
+        }
+        viewDTO.setUserPostList(userPostViewList);
+        return viewDTO;
+    }
+
+    /**
+     * 根据user is查询
+     *
+     * @param userId
+     * @return
+     */
+    private List<KingdeeUserRefPostEntity> listByUserId(String userId) {
+        return this.lambdaQuery().eq(KingdeeUserRefPostEntity::getErpUserId, userId).list();
     }
 
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(KingdeeUserRefPostEntity kingdeeUserRefPostEntity) {
-    // TODO 验证数据 & 数据赋值
+        // TODO 验证数据 & 数据赋值
     }
 }

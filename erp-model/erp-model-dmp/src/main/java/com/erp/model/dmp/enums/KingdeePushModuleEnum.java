@@ -44,7 +44,7 @@ public enum KingdeePushModuleEnum {
     BD_RECCONDITION("BD_RecCondition","收款条件"),
     BD_PAYMENTCONDITION("BD_PaymentCondition","付款条件"),
     HR_ORG_HRPOST("HR_ORG_HRPOST","岗位信息"),
-
+    BD_NEWSTAFF("BD_NEWSTAFF","员工任岗位信息"),
 
     ;
     private String code;

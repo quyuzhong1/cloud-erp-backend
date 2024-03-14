@@ -1,7 +1,12 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.vo.PagingVO;
+import com.erp.model.sys.dto.KingdeePostDTO;
+import com.erp.server.sys.query.KingdeeUserQueryHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
@@ -21,7 +26,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.sys.dto.KingdeeUserRefPostDTO;
 
 /**
- * 金蝶员工任岗表
+ * 金蝶架构管理-员工任岗
  *
  * @author Lambda
  * @since 2024-03-11
@@ -29,11 +34,55 @@ import com.erp.model.sys.dto.KingdeeUserRefPostDTO;
 @Slf4j
 @RestController
 @LogSystemModule("金蝶员工任岗表")
-@RequestMapping("/kingdeeUserRefPost")
+@RequestMapping("/kingdeeUserPost")
 public class KingdeeUserRefPostController extends BaseController {
 
     @Resource
     private KingdeeUserRefPostService kingdeeUserRefPostService;
+
+
+
+
+
+
+    /**
+     * 分页查询
+     * @param dto
+     * @return
+     */
+    @PostMapping("/paging")
+    @WebAdvanceQuery(handler = KingdeeUserQueryHandler.class)
+    public ApiResult<PagingVO<KingdeeUserRefPostDTO.PagingUserViewDTO>> paging(@RequestBody @Validated PagingDTO<KingdeeUserRefPostDTO.PagingParamDTO> dto) {
+        PagingVO<KingdeeUserRefPostDTO.PagingUserViewDTO> pagingVO = kingdeeUserRefPostService.paging(dto);
+        return success(pagingVO);
+    }
+
+
+    /**
+     * 初始化金蝶数据
+     * @author Lambda
+     * @date:  2024-03-11
+     * @return ApiResult<String>
+     */
+    @GetMapping("/init")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "初始化")
+    public ApiResult init() {
+        Boolean result = kingdeeUserRefPostService.init();
+        return result ? success() : failure();
+    }
+
+    /**
+     * 员工详情
+     * @author Lambda
+     * @date:  2024-03-11
+     * @return ApiResult<String>
+     */
+    @GetMapping("/view")
+    @LogViewService
+    public ApiResult<KingdeeUserRefPostDTO.UserPostViewDTO> view(@Param("id") String id) {
+        return success(kingdeeUserRefPostService.view(id));
+    }
+
 
     /**
     * 新增

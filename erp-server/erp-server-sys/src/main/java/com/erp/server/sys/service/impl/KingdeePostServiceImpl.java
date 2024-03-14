@@ -176,8 +176,8 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
                 saveOrUpdateList.add(addEntity);
             } else {
                 if (!dbEntity.getCode().equals(code) || !dbEntity.getName().equals(name) ||
-                        dbEntity.getUseOrgId().equals(orgInfo.getId()) ||
-                        dbEntity.getKingdeeDeptId().equals(kingdeeDeptId)) {
+                        !dbEntity.getUseOrgId().equals(orgInfo.getId()) ||
+                        !dbEntity.getKingdeeDeptId().equals(kingdeeDeptId)) {
 
                     dbEntity.setCode(code);
                     dbEntity.setName(name);

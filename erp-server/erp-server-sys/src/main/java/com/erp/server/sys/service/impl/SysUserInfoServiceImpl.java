@@ -485,6 +485,12 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         updateWrapper.in(SysUserInfoEntity::getUid, stateDTO.getIds());
         this.update(updateWrapper);
     }
+
+    @Override
+    public List<SysUserInfoEntity> listErpUser() {
+        return this.lambdaQuery().eq(SysUserInfoEntity::getUserType, UserTypeEnum.ERP.getCode()).list();
+    }
+
     /**
      * 设置登录ip
      *

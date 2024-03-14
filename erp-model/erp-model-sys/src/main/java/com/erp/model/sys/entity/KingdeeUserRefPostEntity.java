@@ -29,11 +29,42 @@ public class KingdeeUserRefPostEntity extends BaseEntity<KingdeeUserRefPostEntit
     */
     @TableField("erp_user_id")
     private String erpUserId;
+
     /**
     * 金蝶岗位表id kingdee_post 表
     */
     @TableField("kingdee_post_id")
     private String kingdeePostId;
+
+    /**
+     * 金蝶id
+     */
+    @TableField("kingdee_id")
+    private String kingdeeId;
+
+    /**
+     * 金蝶code
+     */
+    @TableField("code")
+    private String code;
+
+    /**
+     * 使用组织id
+     */
+    @TableField("use_org_id")
+    private String useOrgId;
+
+    /**
+     * 使用组织名
+     */
+    @TableField("use_org_name")
+    private String useOrgName;
+
+    /**
+     * 金蝶部门id
+     */
+    @TableField("kingdee_department_id")
+    private String kingdeeDepartmentId;
 
 
     public static final String ERP_USER_ID = "erp_user_id";
