@@ -109,9 +109,9 @@ public enum SkuMappingRuleEnum implements EnumMessage{
             String suffixes = Objects.isNull(ruleConditionsDTO.getIgnoringSuffixes())?"":ruleConditionsDTO.getIgnoringSuffixes();
             prefix = escapeSpecialCharacters(prefix);
             suffixes = escapeSpecialCharacters(suffixes);
-            String prefixRegex = StringUtils.isNotBlank(prefix)?"\"^"+ prefix+"(.*?)$\"" : "123";
+            String prefixRegex = StringUtils.isNotBlank(prefix)?"\"^"+ prefix+"(.*?)$\"" : "";
             list.add(prefixRegex);
-            String suffixesRegex = StringUtils.isNotBlank(suffixes)?"\"^(.*?)"+suffixes+"$\"" : "123";
+            String suffixesRegex = StringUtils.isNotBlank(suffixes)?"\"^(.*?)"+suffixes+"$\"" : "";
             list.add(suffixesRegex);
         }
         return list;
@@ -205,7 +205,7 @@ public enum SkuMappingRuleEnum implements EnumMessage{
             String regex = finalRegex.replaceAll("【#】",startSymbol).replaceAll("【%】",endSymbol);
             if(ruleConditionsDTO.getValidStartingSymbolPosition().equals(ruleConditionsDTO.getValidEndSymbolPosition())
             &&  StringUtils.isNotBlank(startSymbol) && StringUtils.isNotBlank(endSymbol) &&startSymbol.equals(endSymbol)){
-                regex = "123";
+                regex = "";
             }
             list.add(regex);
         }

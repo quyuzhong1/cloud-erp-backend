@@ -133,11 +133,6 @@ public class SkuMappingRuleController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/getSkuRuleTest")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:skuMappingRule:update",
-            serviceClass = SkuMappingRuleService.class,
-            keyIdName = "id")
     public ApiResult<List<String>> getSkuRuleTest(@RequestBody @Validated SkuMappingRuleDTO.RuleTestDTO dto) {
         List<String> result = skuMappingRuleService.getSkuRuleTest(dto);
         return success(result);
