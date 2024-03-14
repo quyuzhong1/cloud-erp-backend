@@ -938,4 +938,18 @@ public class SoB2cController extends BaseController {
        return result ? success() : failure();
 
     }
+
+    /**
+     * 验证是否缺货
+     * @author Will
+     * @date: 2024/3/12 18:39
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/checkSkuInventory")
+    public ApiResult<String> checkSkuInventory(@RequestBody @Validated SoB2cDTO.AddDTO dto) {
+        String msg = soB2cService.checkSkuInventory(dto, dto.getDetailList());
+        return success( "", msg);
+    }
+
 }
