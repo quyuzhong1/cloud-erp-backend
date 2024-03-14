@@ -60,6 +60,10 @@ public class KingdeeUserRefPostEntity extends BaseEntity<KingdeeUserRefPostEntit
     @TableField("use_org_name")
     private String useOrgName;
 
+
+    @TableField(exist = false)
+    private String useOrgCode;
+
     /**
      * 金蝶部门id
      */

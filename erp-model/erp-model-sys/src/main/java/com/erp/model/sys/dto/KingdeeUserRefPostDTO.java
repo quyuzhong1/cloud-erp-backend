@@ -228,17 +228,25 @@ public class KingdeeUserRefPostDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * erp 员工id
+        * erp 员工不能为空
         */
         @NotBlank(message = "erp 员工id不能为空")
-        @Size(max = 19,message = "erp 员工id最大长度不能超过19位")
         private String erpUserId;
 
         /**
-        * 金蝶岗位表id kingdee_post 表
+         * 组织 来源 http://172.16.100.11:3002/project/36/interface/api/30795
+         */
+        @NotBlank(message = "组织不能为空")
+        private String useOrgId;
+
+
+        @NotBlank(message = "所属部门不能为空")
+        private String kingdeeDepartmentId;
+
+        /**
+        * 金蝶岗位表id 来源 http://172.16.100.11:3002/project/36/interface/api/30859
         */
-        @NotBlank(message = "金蝶岗位表id kingdee_post 表不能为空")
-        @Size(max = 19,message = "金蝶岗位表id kingdee_post 表最大长度不能超过19位")
+        @NotBlank(message = "金蝶岗位能为空")
         private String kingdeePostId;
 
 

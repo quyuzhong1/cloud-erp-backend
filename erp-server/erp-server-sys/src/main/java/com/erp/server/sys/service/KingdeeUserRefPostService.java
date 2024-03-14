@@ -22,7 +22,7 @@ public interface KingdeeUserRefPostService extends SuperService<KingdeeUserRefPo
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(KingdeeUserRefPostDTO.AddDTO dto);
+    Boolean add(KingdeeUserRefPostDTO.AddDTO dto);
 
     /**
     * 修改
@@ -60,4 +60,16 @@ public interface KingdeeUserRefPostService extends SuperService<KingdeeUserRefPo
      * @return
      */
     KingdeeUserRefPostDTO.UserPostViewDTO view(String id);
+
+    /**
+     * 删除
+     * @description
+     * @param
+     * @return
+     * @date 2024-03-14 14:12
+     * @author Lambda
+     */
+    BatchResultDTO delete(String id);
+
+    Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId, String syncKingdeeCode);
 }

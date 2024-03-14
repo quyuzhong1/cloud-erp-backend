@@ -8,16 +8,18 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.KingdeePostDTO;
-import com.erp.model.sys.entity.KingdeeDepartmentEntity;
-import com.erp.model.sys.entity.KingdeePostEntity;
-import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
-import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.sys.mapper.KingdeeUserRefPostMapper;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeePostService;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeUserPostService;
 import com.erp.server.sys.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
@@ -63,23 +65,23 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
     @Autowired
     private KingdeePostService kingdeePostService;
 
+    @Autowired
+    private SyncKingdeeUserPostService syncKingdeeUserPostService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(KingdeeUserRefPostDTO.AddDTO addDTO) {
+    public Boolean add(KingdeeUserRefPostDTO.AddDTO addDTO) {
         KingdeeUserRefPostEntity kingdeeUserRefPostEntity = new KingdeeUserRefPostEntity();
         BeanMapperUtils.copy(addDTO, kingdeeUserRefPostEntity);
-
         // 数据处理
         handleData(kingdeeUserRefPostEntity);
-
-        log.info("开始新增金蝶员工任岗单");
         boolean save = super.save(kingdeeUserRefPostEntity);
         if (!save) {
             throw new ServiceException("金蝶员工任岗单保存失败");
         }
-
-        return new BaseResultDTO.AddDTO(kingdeeUserRefPostEntity.getId(), kingdeeUserRefPostEntity.getId());
+        syncKingdeeUserPostService.syncDataToKingdee(kingdeeUserRefPostEntity, SyncOperateEnum.OPERATE_ADD.getCode());
+        return save;
     }
 
     /**
@@ -91,14 +93,16 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
         KingdeeUserRefPostEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶员工任岗单"));
         KingdeeUserRefPostEntity kingdeeUserRefPostEntity = BeanMapperUtils.map(KingdeeUserRefPostEntity.class, updateDTO);
-
+        kingdeeUserRefPostEntity.setKingdeeId(old.getKingdeeId());
+        kingdeeUserRefPostEntity.setCode(old.getCode());
         // 数据处理
         handleData(kingdeeUserRefPostEntity);
-        log.info("编辑 开始修改金蝶员工任岗单数据，id：【{}】", old.getId());
         boolean save = super.updateById(kingdeeUserRefPostEntity);
         if (!save) {
             throw new ServiceException("金蝶员工任岗单保存失败");
         }
+        //金蝶推送
+        syncKingdeeUserPostService.syncDataToKingdee(kingdeeUserRefPostEntity, SyncOperateEnum.OPERATE_UPDATE.getCode());
         return Boolean.TRUE;
     }
 
@@ -262,6 +266,20 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
         return viewDTO;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(String id) {
+        KingdeeUserRefPostEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶员工任岗"));
+        Boolean result = this.removeById(id);
+        if (result && StringUtils.isNotBlank(entity.getKingdeeId())) {
+            //金蝶推送
+            syncKingdeeUserPostService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+
+    }
+
     /**
      * 根据user is查询
      *
@@ -276,7 +294,23 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
     /**
      * 新增修改处理数据
      */
-    private void handleData(KingdeeUserRefPostEntity kingdeeUserRefPostEntity) {
-        // TODO 验证数据 & 数据赋值
+    private void handleData(KingdeeUserRefPostEntity entity) {
+        String useOrgId = entity.getUseOrgId();
+        SysAccountingCompanyEntity orgInfo = sysAccountingCompanyService.getById(useOrgId);
+        if (Objects.isNull(orgInfo)) {
+            throw new ServiceException("组织信息不存在");
+        }
+        entity.setUseOrgName(orgInfo.getCompanyName());
+        entity.setUseOrgCode(orgInfo.getCode());
     }
+
+    @Override
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId, String syncKingdeeCode) {
+        return this.lambdaUpdate()
+                .eq(KingdeeUserRefPostEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), KingdeeUserRefPostEntity::getKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncKingdeeCode), KingdeeUserRefPostEntity::getCode, syncKingdeeCode)
+                .update();
+    }
+
 }

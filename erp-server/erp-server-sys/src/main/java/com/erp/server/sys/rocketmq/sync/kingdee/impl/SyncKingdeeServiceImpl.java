@@ -2,10 +2,7 @@ package com.erp.server.sys.rocketmq.sync.kingdee.impl;
 
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeService;
-import com.erp.server.sys.service.KingdeeDepartmentService;
-import com.erp.server.sys.service.KingdeePostService;
-import com.erp.server.sys.service.SysDepartmentService;
-import com.erp.server.sys.service.SysUserInfoService;
+import com.erp.server.sys.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -30,6 +27,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     @Resource
     private KingdeePostService kingdeePostService;
 
+    @Resource
+    private KingdeeUserRefPostService kingdeeUserRefPostService;
+
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
         //模块类型编码
@@ -47,15 +47,24 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //系统用户
         if (ApiModuleTypeEnum.SYS_USER_INFO.getCode().toString().equals(code)) {
             sysUserInfoService.updateSyncKingdeeId(businessId,syncKingdeeId);
+            return;
         }
         //部门
         if (ApiModuleTypeEnum.SYS_DEPARTMENT.getCode().toString().equals(code)) {
             kingdeeDepartmentService.updateSyncKingdeeId(businessId,syncKingdeeId,syncKingdeeCode);
+            return;
         }
 
         //岗位
         if (ApiModuleTypeEnum.SYS_POST.getCode().toString().equals(code)) {
             kingdeePostService.updateSyncKingdeeId(businessId,syncKingdeeId,syncKingdeeCode);
+            return;
+        }
+
+        //员工任岗
+        if (ApiModuleTypeEnum.SYS_USER_POST.getCode().toString().equals(code)) {
+            kingdeeUserRefPostService.updateSyncKingdeeId(businessId,syncKingdeeId,syncKingdeeCode);
+            return;
         }
     }
 }

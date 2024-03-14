@@ -44,6 +44,7 @@ public enum ApiModuleTypeEnum {
     PO_RECEIVE(32, "poReceive", "采购收货单","wms"),
     SUBCONTRACT_ISSUE(33, "subcontractIssue", "委外发料单","wms"),
     SYS_POST(34, "post", "金蝶岗位","sys"),
+    SYS_USER_POST(35, "userPost", "金蝶员工任岗","sys"),
     ;
     private Integer code;
 

@@ -5,6 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.KingdeePostDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 金蝶岗位表 服务类
@@ -78,4 +80,16 @@ public interface KingdeePostService extends SuperService<KingdeePostEntity> {
      * @return
      */
     PagingVO<KingdeePostDTO.PagingViewDTO> paging(PagingDTO<KingdeePostDTO.PagingParamDTO> dto);
+
+    List<KingdeePostEntity> listByOrgId(String orgId);
+
+    /**
+     * 根据部门id 查询数据
+     * @description
+     * @param deptId
+     * @return
+     * @date 2024-03-14 15:30
+     * @author Lambda
+     */
+    List<KingdeePostEntity> listByKingdeptId(String deptId);
 }

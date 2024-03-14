@@ -4,11 +4,16 @@ package com.erp.server.sys.controller.api;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.KingdeePostDTO;
+import com.erp.model.sys.entity.KingdeePostEntity;
+import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
 import com.erp.server.sys.query.KingdeeUserQueryHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
+import javax.validation.Valid;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -24,6 +29,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.sys.dto.KingdeeUserRefPostDTO;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * 金蝶架构管理-员工任岗
@@ -93,8 +102,9 @@ public class KingdeeUserRefPostController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "金蝶员工任岗表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated KingdeeUserRefPostDTO.AddDTO dto) {
-        return success(kingdeeUserRefPostService.add(dto));
+    public ApiResult add(@RequestBody @Validated KingdeeUserRefPostDTO.AddDTO dto) {
+        Boolean result = kingdeeUserRefPostService.add(dto);
+        return result ? success() : failure();
     }
 
     /**
@@ -106,14 +116,36 @@ public class KingdeeUserRefPostController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "金蝶员工任岗表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "sys:kingdeeUserRefPost:update",
-        serviceClass = KingdeeUserRefPostService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated KingdeeUserRefPostDTO.UpdateDTO dto) {
-        kingdeeUserRefPostService.update(dto);
-        return success();
+    public ApiResult update(@RequestBody @Validated KingdeeUserRefPostDTO.UpdateDTO dto) {
+        Boolean result = kingdeeUserRefPostService.update(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 删除
+     * @param dto
+     * @return
+     */
+    @PostMapping("/delete")
+    public ApiResult<List<BatchResultDTO>>  delete(@RequestBody  @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = kingdeeUserRefPostService.delete(id);
+            }catch (Exception e){
+                log.error("金蝶员工任岗位 删除失败===>{}", e.getMessage());
+                KingdeeUserRefPostEntity entity = kingdeeUserRefPostService.getById(id);
+                if (Objects.isNull(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "金蝶员工岗位不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 

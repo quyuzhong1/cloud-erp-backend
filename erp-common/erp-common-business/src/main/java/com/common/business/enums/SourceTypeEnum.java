@@ -100,6 +100,7 @@ public enum SourceTypeEnum {
     SYS_DEPARTMENT("sysDepartment", "部门","sys_department"),
     SYS_USER_INFO("sysUserInfo", "用户","sys_user_info"),
     SYS_POST("sysPost", "岗位","kingdee_post"),
+    SYS_USER_POST("sysUserPost", "员工任岗","kingdee_user_ref_post"),
 
     //Mabang
     MABANG_FBA_DELIVERY("MB_FBA_DELIVERY", "马帮FBA发货单",""),

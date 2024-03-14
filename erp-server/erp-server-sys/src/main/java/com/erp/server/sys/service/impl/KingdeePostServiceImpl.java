@@ -242,6 +242,16 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
         return new PagingVO(pageData);
     }
 
+    @Override
+    public List<KingdeePostEntity> listByOrgId(String orgId) {
+        return this.lambdaQuery().eq(KingdeePostEntity::getUseOrgId, orgId).list();
+    }
+
+    @Override
+    public List<KingdeePostEntity> listByKingdeptId(String deptId) {
+        return this.lambdaQuery().eq(KingdeePostEntity::getKingdeeDeptId,deptId).list();
+    }
+
 
     /**
      * 新增修改处理数据

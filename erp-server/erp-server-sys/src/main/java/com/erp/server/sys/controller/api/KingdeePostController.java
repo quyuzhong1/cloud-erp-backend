@@ -8,8 +8,10 @@ import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.entity.KingdeePostEntity;
 import com.erp.server.sys.query.KingdeePostQueryHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
 import javax.validation.Valid;
 
@@ -32,6 +34,7 @@ import com.erp.model.sys.dto.KingdeePostDTO;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 金蝶架构管理-岗位分配
@@ -51,6 +54,7 @@ public class KingdeePostController extends BaseController {
 
     /**
      * 分页查询
+     *
      * @param dto
      * @return
      */
@@ -61,12 +65,29 @@ public class KingdeePostController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 根据部门获取下拉列表
+     *
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2024-03-11
+     */
+    @GetMapping("/listByDeptId")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listByDeptId(@RequestParam("deptId") String deptId) {
+        List<KingdeePostEntity> list = kingdeePostService.listByKingdeptId(deptId);
+        List<BaseDropDownDTO.CommonDTO> result = list.stream().filter(d-> StringUtils.isNotBlank(d.getCode()))
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getId(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
 
     /**
      * 初始化金蝶数据
-     * @author Lambda
-     * @date:  2024-03-11
+     *
      * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2024-03-11
      */
     @GetMapping("/init")
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "初始化")
@@ -77,12 +98,13 @@ public class KingdeePostController extends BaseController {
 
 
     /**
-    * 新增
-    * @author Lambda
-    * @date:  2024-03-11
-    * @param dto
-    * @return ApiResult<String>
-    */
+     * 新增
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2024-03-11
+     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "金蝶岗位表新增")
     public ApiResult add(@RequestBody @Validated KingdeePostDTO.AddDTO dto) {
@@ -93,9 +115,10 @@ public class KingdeePostController extends BaseController {
 
     /**
      * 详情
-     * @author Lambda
-     * @date:  2024-03-11
+     *
      * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2024-03-11
      */
     @GetMapping("/view")
     @LogViewService
@@ -104,12 +127,13 @@ public class KingdeePostController extends BaseController {
     }
 
     /**
-    * 修改
-    * @author Lambda
-    * @date:  2024-03-11
-    * @param dto
-    * @return ApiResult
-    */
+     * 修改
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Lambda
+     * @date: 2024-03-11
+     */
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated KingdeePostDTO.UpdateDTO dto) {
         Boolean result = kingdeePostService.update(dto);
@@ -118,17 +142,18 @@ public class KingdeePostController extends BaseController {
 
     /**
      * 删除
+     *
      * @param dto
      * @return
      */
     @PostMapping("/delete")
-    public ApiResult<List<BatchResultDTO>>  delete(@RequestBody  @Valid BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
                 deleteResult = kingdeePostService.delete(id);
-            }catch (Exception e){
+            } catch (Exception e) {
                 log.error("金蝶岗位删除失败===>{}", e.getMessage());
                 KingdeePostEntity entity = kingdeePostService.getById(id);
                 if (Objects.isNull(entity)) {
