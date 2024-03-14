@@ -3,8 +3,10 @@ package com.erp.server.tms.service.transfer;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.threadlocal.TransferLogisticsContext;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
+import com.erp.model.tms.dto.transfer.TransferLogisticsCreateProductReq;
 import com.erp.server.tms.ErpServerTmsApplication;
 import com.erp.server.tms.handler.TransferLogisticsRegistry;
 import com.erp.server.tms.service.TransferLogisticsService;
@@ -60,6 +62,26 @@ public class BaoHongTransferHandlerImplTest {
     @Test
     public void getAllProductInfo() {
         baoHongTransferHandler.getAllProductInfo();
+    }
+
+    @Test
+    public void createProduct() {
+        TransferLogisticsCreateProductReq req = TransferLogisticsCreateProductReq.builder()
+                .sku("2462")
+                .name("三脚架")
+                .englishName("Tripod")
+                .unit("007")
+                .currencyCode("RMB")
+                .declaredValue(BigDecimal.valueOf(14.4))
+                .weight(BigDecimal.valueOf(342))
+                .hasBattery(false)
+                .hsName("三脚架")
+                .hsCode("9620009000")
+                .hsElement("1|0|品牌:Ulanzi|相机拍摄用|型号:MT-40|cas|w")
+                .firstQauntity(BigDecimal.valueOf(342))
+                .build();
+        ApiResult<String> result = baoHongTransferHandler.createProduct(req);
+        System.out.println(result);
     }
 
     @Test

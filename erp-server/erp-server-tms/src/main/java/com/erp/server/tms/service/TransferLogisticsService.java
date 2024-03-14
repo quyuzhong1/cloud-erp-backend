@@ -3,10 +3,7 @@ package com.erp.server.tms.service;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
-import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
-import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
-import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
-import com.erp.model.tms.dto.transfer.TransferLogisticsProductDTO;
+import com.erp.model.tms.dto.transfer.*;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 
@@ -59,6 +56,10 @@ public interface TransferLogisticsService {
      */
     ApiResult<String> printLabel(String orderCode, String authId);
 
-
-
+    /**
+     * 备案产品
+     * @param authId
+     * @return
+     */
+    ApiResult<String> createProduct(TransferLogisticsCreateProductReq createProductReq, String authId);
 }

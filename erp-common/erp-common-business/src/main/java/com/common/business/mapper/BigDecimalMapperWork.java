@@ -14,6 +14,13 @@ import java.text.ParseException;
 @Named("BigDecimalMapperWork")
 public class BigDecimalMapperWork {
 
+    @Named("bigDecimalToFloat")
+    public Float bigDecimalToFloat(BigDecimal val) throws ParseException {
+        if (val == null){
+            return null;
+        }
+        return val.floatValue();
+    }
 
     @Named("bigDecimalToInt")
     public Integer bigDecimalToInt(BigDecimal val) throws ParseException {

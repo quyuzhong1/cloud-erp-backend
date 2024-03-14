@@ -133,6 +133,7 @@ public enum SourceTypeEnum {
 
     TRANSFER_LOGISTICS_GET_SHIPPING("transferLogisticsGetShipping", "物流报关商获取物流产品数据","dmp_pull_task"),
     TRANSFER_LOGISTICS_CREATE_ORDER("transferLogisticsCreateOrder", "物流报关商创建订单","dmp_push_task"),
+    TRANSFER_LOGISTICS_CREATE_PRODUCT("transferLogisticsCreateProduct", "物流报关商备案产品","dmp_push_task"),
     TRANSFER_LOGISTICS_GET_ORDER_BY_CODE("transferLogisticsGetOrderByCode", "物流报关商获取单个订单","dmp_pull_task"),
     TRANSFER_LOGISTICS_GET_ALL_PRODUCT_INFO("transferLogisticsGetAllProductInfo", "物流报关商获取备案产品","dmp_pull_task"),
     TRANSFER_LOGISTICS_CREATE_INBOUND("transferLogisticsCreateInbound", "物流报关商创建入库单","dmp_push_task"),

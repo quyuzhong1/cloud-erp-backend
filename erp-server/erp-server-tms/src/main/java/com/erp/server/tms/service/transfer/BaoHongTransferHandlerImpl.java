@@ -4,10 +4,7 @@ import com.common.business.annotation.TransferLogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
-import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
-import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
-import com.erp.model.tms.dto.transfer.TransferLogisticsProductDTO;
+import com.erp.model.tms.dto.transfer.*;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.server.tms.convert.BaoHongConverter;
@@ -17,6 +14,8 @@ import com.sdk.tms.baohong.api.order.CreateOrderInfo;
 import com.sdk.tms.baohong.api.order.OrderDataArr;
 import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.api.product.DataRow;
+import com.sdk.tms.baohong.api.product.RecordItemRequest;
+import com.sdk.tms.baohong.api.product.RecordItemResponse;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import com.sdk.tms.baohong.service.BaoHongService;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +55,16 @@ public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
         }
         List<TransferLogisticsChannelEntity> transferLogisticsChannelEntityList = BaoHongConverter.INSTANCE.transferLogisticsChannelConvert(baoHongResponse.getData());
         return success(transferLogisticsChannelEntityList);
+    }
+
+    @Override
+    protected ApiResult<String> createProduct(TransferLogisticsCreateProductReq createProductReq) {
+        RecordItemRequest recordItemRequest  = BaoHongConverter.INSTANCE.createProductConvert(createProductReq);
+        BaoHongResponse<RecordItemResponse> result = baoHongService.filingProduct(recordItemRequest);
+        if(isFailure(result)){
+            return failure(result.getMessage());
+        }
+        return success(result.getData().getMessage());
     }
 
 

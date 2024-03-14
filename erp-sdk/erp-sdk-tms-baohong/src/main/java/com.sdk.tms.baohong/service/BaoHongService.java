@@ -7,10 +7,9 @@ import com.sdk.tms.baohong.api.asn.ASNData;
 import com.sdk.tms.baohong.api.asn.ReceivingInfo;
 import com.sdk.tms.baohong.api.asn.ServiceForAsn;
 import com.sdk.tms.baohong.api.order.*;
-import com.sdk.tms.baohong.api.product.DataRow;
-import com.sdk.tms.baohong.api.product.ErrorCodeMsgType;
-import com.sdk.tms.baohong.api.product.ProductRow;
-import com.sdk.tms.baohong.api.product.ServiceForProduct;
+import com.sdk.tms.baohong.api.order.ErrorType;
+import com.sdk.tms.baohong.api.order.HeaderRequest;
+import com.sdk.tms.baohong.api.product.*;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import com.sdk.tms.baohong.utils.BaoHongUtils;
 import org.apache.commons.codec.binary.Base64;
@@ -18,8 +17,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
 import javax.xml.ws.Holder;
+import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -154,6 +156,24 @@ public class BaoHongService {
         return BaoHongUtils.buildBaseResponse(askHolder,messageHolder,data.value);
     }
 
+
+    /**
+     * 产品备案
+     * @return
+     */
+    public BaoHongResponse<RecordItemResponse> filingProduct(RecordItemRequest recordItem){
+        com.sdk.tms.baohong.api.product.HeaderRequest headerRequest = BaoHongUtils.getProductHeader();
+        ServiceForProduct service = BaoHongUtils.getProductService();
+        CreateRecordRequest parameters = new CreateRecordRequest();
+        parameters.setHeaderRequest(headerRequest);
+        parameters.setRecordItem(Collections.singletonList(recordItem));
+        CreateRecordResponse createRecordResponse = service.createRecord(parameters);
+        if(createRecordResponse.getAsk() != 1){
+            return BaoHongUtils.buildBaseResponse(String.valueOf(createRecordResponse.getAsk()),createRecordResponse.getMessage(),null);
+        }
+        RecordItemResponse response = createRecordResponse.getRecordItem().get(0);
+        return BaoHongUtils.buildBaseResponse(String.valueOf(response.getStatus()),response.getMessage(),response);
+    }
     /**
      * 创建入库单
      * @return

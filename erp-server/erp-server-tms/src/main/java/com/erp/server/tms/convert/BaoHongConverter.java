@@ -4,6 +4,7 @@ import com.common.business.mapper.BigDecimalMapperWork;
 import com.common.business.mapper.BooleanMapperWork;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
+import com.erp.model.tms.dto.transfer.TransferLogisticsCreateProductReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
@@ -17,6 +18,7 @@ import com.sdk.tms.baohong.api.order.OrderDataArr;
 import com.sdk.tms.baohong.api.order.ProductDeatil;
 import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.api.product.DataRow;
+import com.sdk.tms.baohong.api.product.RecordItemRequest;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -135,4 +137,16 @@ public interface BaoHongConverter {
     })
     LogisticsSaleChannelEntity channelConvert(SmRow data);
     List<LogisticsSaleChannelEntity> channelConvert(List<SmRow> data);
+
+    @Mappings({
+            @Mapping(target = "declaredValue", source = "declaredValue",qualifiedByName = "bigDecimalToFloat"),
+            @Mapping(target = "weight", source = "weight",qualifiedByName = "bigDecimalToFloat"),
+            @Mapping(target = "length", source = "length",qualifiedByName = "bigDecimalToFloat"),
+            @Mapping(target = "width", source = "width",qualifiedByName = "bigDecimalToFloat"),
+            @Mapping(target = "height", source = "height",qualifiedByName = "bigDecimalToFloat"),
+            @Mapping(target = "hasBattery", source = "hasBattery",qualifiedByName = "boolToInteger"),
+            @Mapping(target = "firstQauntity", source = "firstQauntity",qualifiedByName = "bigDecimalToFloat"),
+            @Mapping(target = "secondQauntity", source = "secondQauntity",qualifiedByName = "bigDecimalToFloat")
+    })
+    RecordItemRequest createProductConvert(TransferLogisticsCreateProductReq createProductReq);
 }
