@@ -3,6 +3,7 @@ package com.erp.model.sys.dto;
 import cn.hutool.core.annotation.Alias;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -24,6 +25,38 @@ import javax.validation.constraints.Size;
 @Data
 @NoArgsConstructor
 public class KingdeeDepartmentDTO implements Serializable {
+
+
+    @Data
+    @NoArgsConstructor
+    public static class TreeViewDTO{
+
+        /**
+         * id
+         */
+        private String id;
+
+
+        /**
+         * 部门名称
+         */
+        private String name;
+
+        /**
+         * 部门父级id
+         */
+        private String parentId;
+
+
+        /**
+         * 部门父级名
+         */
+        private String parentName;
+
+        @JsonInclude(value= JsonInclude.Include.NON_NULL)
+        private List<TreeViewDTO> childrenList;
+
+    }
 
     @Data
     @NoArgsConstructor

@@ -240,6 +240,9 @@ public class KingdeeUserRefPostDTO implements Serializable {
         private String useOrgId;
 
 
+        /**
+         *所属部门  来源 http://172.16.100.11:3002/project/36/interface/api/30879
+         */
         @NotBlank(message = "所属部门不能为空")
         private String kingdeeDepartmentId;
 

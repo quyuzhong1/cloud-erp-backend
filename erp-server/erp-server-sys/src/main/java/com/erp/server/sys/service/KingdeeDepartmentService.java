@@ -88,4 +88,14 @@ public interface KingdeeDepartmentService extends SuperService<KingdeeDepartment
      * @author Lambda
      */
     List<KingdeeDepartmentEntity> listByOrgId(String orgId);
+
+    /**
+     * 树行结构
+     * @description
+     * @param orgId
+     * @return
+     * @date 2024-03-14 17:48
+     * @author Lambda
+     */
+    List<KingdeeDepartmentDTO.TreeViewDTO> tree(String orgId);
 }

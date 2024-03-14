@@ -31,7 +31,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- *  金蝶组织部门
+ *  金蝶架构管理-组织部门
  *
  * @author Lambda
  * @since 2024-03-11
@@ -60,10 +60,10 @@ public class KingdeeDepartmentController extends BaseController {
     }
 
     /**
-     * 上级部门下拉
+     * 部门下拉
      * @return
      */
-    @GetMapping("/parentList")
+    @GetMapping("/list")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> parentList(@RequestParam("orgId") String orgId){
         List<KingdeeDepartmentEntity> list=kingdeeDepartmentService.listByOrgId(orgId);
         List<BaseDropDownDTO.CommonDTO> result = list.stream().filter(d-> StringUtils.isNotBlank(d.getKingdeeDeptCode()))
@@ -71,6 +71,16 @@ public class KingdeeDepartmentController extends BaseController {
                 .collect(Collectors.toList());
         return success(result);
 
+    }
+
+    /**
+     * 部门树结构
+     * @return
+     */
+    @GetMapping("/tree")
+    public ApiResult<List<KingdeeDepartmentDTO.TreeViewDTO>> tree(@RequestParam("orgId") String orgId){
+        List<KingdeeDepartmentDTO.TreeViewDTO> list = kingdeeDepartmentService.tree(orgId);
+        return success(list);
     }
 
     /**

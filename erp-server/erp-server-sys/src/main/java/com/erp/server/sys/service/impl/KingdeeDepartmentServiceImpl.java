@@ -278,6 +278,39 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
         return this.lambdaQuery().eq(KingdeeDepartmentEntity::getUseOrgId, orgId).list();
     }
 
+    @Override
+    public List<KingdeeDepartmentDTO.TreeViewDTO> tree(String orgId) {
+        List<KingdeeDepartmentEntity> allList=this.listByOrgId(orgId);
+        List<KingdeeDepartmentDTO.TreeViewDTO> resultList = new ArrayList<>(20);
+        List<KingdeeDepartmentEntity> pList=allList.stream().filter(d->d.getParentKingdeeCode().equals("0")).collect(Collectors.toList());
+        for (KingdeeDepartmentEntity item : pList) {
+            KingdeeDepartmentDTO.TreeViewDTO treeView=new KingdeeDepartmentDTO.TreeViewDTO();
+            treeView.setId(item.getId());
+            treeView.setName(item.getKingdeeDeptName());
+            treeView.setParentId("0");
+            treeView.setParentName("");
+            treeView.setChildrenList(getChildrenList(item,allList));
+            resultList.add(treeView);
+        }
+        return resultList;
+    }
+
+    private List<KingdeeDepartmentDTO.TreeViewDTO> getChildrenList(KingdeeDepartmentEntity item, List<KingdeeDepartmentEntity> allList) {
+        List<KingdeeDepartmentDTO.TreeViewDTO> resultList=new ArrayList<>(10);
+        List<KingdeeDepartmentEntity> list=allList.stream().filter(d->d.getParentKingdeeCode().equals(item.getKingdeeDeptCode())).collect(Collectors.toList());
+        for (KingdeeDepartmentEntity entity : list) {
+            KingdeeDepartmentDTO.TreeViewDTO treeView=new KingdeeDepartmentDTO.TreeViewDTO();
+            treeView.setId(entity.getId());
+            treeView.setName(entity.getKingdeeDeptName());
+            treeView.setParentId(item.getId());
+            treeView.setParentName(item.getKingdeeDeptName());
+            treeView.setChildrenList(getChildrenList(entity,allList));
+            resultList.add(treeView);
+        }
+        return CollectionUtils.isEmpty(resultList) ? null : resultList;
+
+    }
+
     private KingdeeDepartmentEntity getParentDeptByKingdeeCode(String parentKingdeeCode) {
         return this.lambdaQuery().eq(KingdeeDepartmentEntity::getKingdeeDeptCode, parentKingdeeCode).last("LIMIT 1").one();
     }
