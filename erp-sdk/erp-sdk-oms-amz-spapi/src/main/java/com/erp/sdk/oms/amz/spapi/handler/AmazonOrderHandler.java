@@ -179,6 +179,15 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         if (null != resultObj) {
             return JSONUtil.toBean(resultObj.toString(), PlatformAmazonOrderDTO.class);
         }
+        // 检查来源
+        if (null == dto.getOrder()){
+            String msg = StrUtil.format("订单来源为空:{}", JSONUtil.toJsonStr(dto));
+            throw new ServiceException(msg);
+        }
+        if (StringUtils.isBlank(dto.getOrder().getAmazonOrderId())){
+            String msg = StrUtil.format("订单来源ID为空:{}", JSONUtil.toJsonStr(dto));
+            throw new ServiceException(msg);
+        }
 
         AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS;
         // 默认请求速率配置
@@ -194,7 +203,8 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         OrdersV0Api ordersVoApi = OrdersV0Api.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
         OrderItemList allOrderItems = null;
         try {
-            ApiResponse<GetOrderItemsResponse> itemResponse = ordersVoApi.getOrderItemsWithHttpInfo(dto.getUniqueId(), null);
+            String orderId = dto.getOrder().getAmazonOrderId();
+            ApiResponse<GetOrderItemsResponse> itemResponse = ordersVoApi.getOrderItemsWithHttpInfo(orderId, null);
             List<String> limitArray = itemResponse.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
             rateLimitStr = limitArray.get(0);
             GetOrderItemsResponse orderItems = itemResponse.getData();
@@ -202,7 +212,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
             String currentNextToken = orderItems.getPayload().getNextToken();
             OrderItemList resultOrderItemsList = orderItems.getPayload().getOrderItems();
             while (StringUtils.isNotBlank(currentNextToken)) {
-                ApiResponse<GetOrderItemsResponse> currentOrderItemsResp = ordersVoApi.getOrderItemsWithHttpInfo(dto.getUniqueId(), currentNextToken);
+                ApiResponse<GetOrderItemsResponse> currentOrderItemsResp = ordersVoApi.getOrderItemsWithHttpInfo(orderId, currentNextToken);
                 GetOrderItemsResponse currentOrderItems = currentOrderItemsResp.getData();
                 List<String> currentLimitArray = itemResponse.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
                 rateLimitStr = currentLimitArray.get(0);
@@ -242,9 +252,10 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         if (null != obj){
             rdtToken = (String) obj;
         } else {
+            String orderId = dto.getOrder().getAmazonOrderId();
             AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
             TokensApi api = TokensApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
-            CreateRestrictedDataTokenRequest body = CreateRestrictedDataTokenRequest.builderByOrderId(dto.getUniqueId());
+            CreateRestrictedDataTokenRequest body = CreateRestrictedDataTokenRequest.builderByOrderId(orderId);
             try {
                 CreateRestrictedDataTokenResponse response = api.createRestrictedDataToken(body);
                 rdtToken = response.getRestrictedDataToken();
@@ -287,7 +298,8 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         // 修改x-amz-access-token的token
         ordersVoApi.getApiClient().addDefaultHeader(ApiClient.SIGNED_ACCESS_TOKEN_HEADER_NAME, rdtToken);
         try {
-            ApiResponse<GetOrderAddressResponse> orderAddressResp = ordersVoApi.getOrderAddressWithHttpInfo(dto.getUniqueId());
+            String orderId = dto.getOrder().getAmazonOrderId();
+            ApiResponse<GetOrderAddressResponse> orderAddressResp = ordersVoApi.getOrderAddressWithHttpInfo(orderId);
             List<String> limitArray = orderAddressResp.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
             rateLimitStr = limitArray.get(0);
             GetOrderAddressResponse response = orderAddressResp.getData();
