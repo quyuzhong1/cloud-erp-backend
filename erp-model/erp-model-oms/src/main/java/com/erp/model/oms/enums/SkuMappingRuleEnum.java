@@ -102,11 +102,11 @@ public enum SkuMappingRuleEnum implements EnumMessage{
     private static List<String> getIgnorePrefixesAndSuffixesRegex(SkuMappingRuleDTO.RuleDTO commonDTO){
         List<String> list = new ArrayList<>(commonDTO.getRuleContentList().size());
         for(SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO : commonDTO.getRuleContentList()){
-            if(Objects.isNull(ruleConditionsDTO.getIgnorePrefix()) && Objects.isNull(ruleConditionsDTO.getIgnoringSuffixes())){
+            if(StringUtils.isBlank(ruleConditionsDTO.getIgnorePrefix()) && StringUtils.isBlank(ruleConditionsDTO.getIgnoringSuffixes())){
                 throw new ServiceException(ApiError.ERROR_SKU_MAPPING_RULE_NULL);
             }
-            String prefix = Objects.isNull(ruleConditionsDTO.getIgnorePrefix())?"":ruleConditionsDTO.getIgnorePrefix();
-            String suffixes = Objects.isNull(ruleConditionsDTO.getIgnoringSuffixes())?"":ruleConditionsDTO.getIgnoringSuffixes();
+            String prefix = StringUtils.isBlank(ruleConditionsDTO.getIgnorePrefix())?"":ruleConditionsDTO.getIgnorePrefix();
+            String suffixes = StringUtils.isBlank(ruleConditionsDTO.getIgnoringSuffixes())?"":ruleConditionsDTO.getIgnoringSuffixes();
             prefix = escapeSpecialCharacters(prefix);
             suffixes = escapeSpecialCharacters(suffixes);
             String prefixRegex = StringUtils.isNotBlank(prefix)?"\"^"+ prefix+"(.*?)$\"" : "";
