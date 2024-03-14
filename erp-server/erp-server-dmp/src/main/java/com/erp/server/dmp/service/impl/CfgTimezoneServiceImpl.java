@@ -10,6 +10,7 @@ import com.erp.server.dmp.mapper.CfgTimezoneMapper;
 import com.erp.server.dmp.service.CfgTimezoneService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.ListOperations;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -34,9 +35,10 @@ import java.util.stream.Collectors;
 public class CfgTimezoneServiceImpl extends SuperServiceImpl<CfgTimezoneMapper, CfgTimezoneEntity> implements CfgTimezoneService {
 
     @Resource
-    private ListOperations<String, CfgTimezoneEntity> listOperations;
+    private RedisTemplate redisTemplate;
     @Resource
-    private ValueOperations<String, CfgTimezoneEntity> valueOperations;
+    private RedisUtil redisUtil;
+
 
     @Override
     public Map<String, CfgTimezoneEntity> mapByCountry() {
@@ -52,7 +54,7 @@ public class CfgTimezoneServiceImpl extends SuperServiceImpl<CfgTimezoneMapper, 
     public List<CfgTimezoneEntity> listAndCache() {
         String listKey = RedisCacheConstants.CFG_TIMEZONE;
         // 缓存获取
-        List<CfgTimezoneEntity> cacheList = listOperations.range(listKey, 0, -1);
+        List<CfgTimezoneEntity> cacheList = redisTemplate.opsForList().range(listKey, 0, -1);
         if (!CollectionUtils.isEmpty(cacheList)){
             return cacheList;
         }
@@ -62,7 +64,7 @@ public class CfgTimezoneServiceImpl extends SuperServiceImpl<CfgTimezoneMapper, 
         }
         for (CfgTimezoneEntity entity : list) {
             String currentKey = StrUtil.format(RedisCacheConstants.CFG_TIMEZONE_PREFIX, entity.getCountry());
-            listOperations.rightPush(currentKey, entity);
+            redisTemplate.opsForList().rightPush(currentKey, entity);
         }
         return list;
     }
@@ -70,9 +72,9 @@ public class CfgTimezoneServiceImpl extends SuperServiceImpl<CfgTimezoneMapper, 
     @Override
     public CfgTimezoneEntity getAndCacheByCountry(String country) {
         String currentKey = StrUtil.format(RedisCacheConstants.CFG_TIMEZONE_PREFIX, country);
-        CfgTimezoneEntity entity = valueOperations.get(currentKey);
-        if (null != entity ){
-            return entity;
+        Object obj = redisUtil.get(currentKey);
+        if (null != obj ){
+            return (CfgTimezoneEntity) obj;
         }
         return mapByCountry().get(country);
     }
