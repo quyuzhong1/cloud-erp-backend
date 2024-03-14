@@ -590,6 +590,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approveEnd(ApproveOneDTO dto, SoOutstockEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
@@ -677,7 +678,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 .set(SoOutstockEntity::getApproveUserName, userInfo.getUserName())
                 .set(SoOutstockEntity::getApproveStatus, approveStatus)
                 .set(SoOutstockEntity::getApproveTime, LocalDateTime.now())
-                .set(SoOutstockEntity::getActualDeliveryDate, LocalDateTime.now())
+                .set(!isB2c,SoOutstockEntity::getActualDeliveryDate, LocalDateTime.now())
                 .update(new SoOutstockEntity());
     }
 
@@ -2070,6 +2071,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     public Boolean generateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO) {
         Boolean result = createB2cSoOutstock(generateB2cDTO);
+        if (result) {
+            this.removeSoB2cOutstockError(generateB2cDTO.getSoId());
+        }
         return result;
     }
 
@@ -2088,10 +2092,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @return
      */
     public Boolean createB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto) {
-
-        String soB2cId = dto.getSoId();
-        String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
-        String paramJson = JSONUtil.toJsonStr(dto);
         try {
             String id = this.addB2cSoOutstock(dto);
             //表示添加成功
@@ -2116,12 +2116,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     this.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
                 }
             }
-            SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-            deleteDTO.setMainId(soB2cId);
-            deleteDTO.setType(type);
-            soB2cFeign.deleteError(deleteDTO);
             return Boolean.TRUE;
         } catch (Exception e) {
+            String soB2cId = dto.getSoId();
+            String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+            String paramJson = JSONUtil.toJsonStr(dto);
             String message = e.getMessage();
             log.error("创建B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", soB2cId, paramJson, message);
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
@@ -2131,11 +2130,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             addError.setParamJson(paramJson);
             soB2cFeign.addSoB2cError(addError);
         }
-
-
         return Boolean.FALSE;
     }
 
+
+    /**
+     * 删除B2C销售订单 生成销售出库单异常
+     * @param soB2cId
+     */
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void  removeSoB2cOutstockError(String soB2cId) {
+        String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+        deleteDTO.setMainId(soB2cId);
+        deleteDTO.setType(type);
+        soB2cFeign.deleteError(deleteDTO);
+    }
     /**
      * 添加B2C销售出库单
      *
@@ -2176,18 +2186,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
                 if (ObjectUtil.isNotEmpty(soB2cLogisticsEntities)) {
                     LocalDateTime deliveryTime = soB2cLogisticsEntities.get(0).getDeliveryTime();
+                    if(Objects.isNull(deliveryTime)){
+                       throw new ServiceException("发货日期不能为空");
+                    }
                     billDate = deliveryTime.toLocalDate();
-                    soOutstock.setPlanDeliveryDate(deliveryTime.toLocalDate());
-                    soOutstock.setActualDeliveryDate(deliveryTime);
                 }
             }
         }
         if (Objects.isNull(billDate)) {
             billDate = LocalDate.now();
         }
+        dto.setBillDate(billDate);
         // 出库日期
         soOutstock.setBillDate(billDate);
-
+        soOutstock.setPlanDeliveryDate(billDate);
+        soOutstock.setActualDeliveryDate(billDate.atStartOfDay());
+        soOutstock.setPackDate(billDate);
         Boolean addResult = this.save(soOutstock);
         if (addResult) {
             soOutstockDetailService.add(soOutstock.getId(), detailList, OrderTypeEnum.B2C.getCode());
