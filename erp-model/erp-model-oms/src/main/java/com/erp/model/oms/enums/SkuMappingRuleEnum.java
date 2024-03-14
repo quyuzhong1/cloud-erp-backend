@@ -230,7 +230,11 @@ public enum SkuMappingRuleEnum implements EnumMessage{
     }
 
     private static String handleRegex(String ruleType,String regex,String inputStr){
+        SkuMappingRuleEnum skuMappingRuleEnum = EnumMessage.getByCode(SkuMappingRuleEnum.class, ruleType);
         if(StringUtils.isBlank(regex)){
+            if(skuMappingRuleEnum.equals(SkuMappingRuleEnum.EXTRACT_BETWEEN_START_AND_END)){
+                return "";
+            }
             return inputStr;
         }
         regex = regex.replaceAll("\"","");
@@ -239,8 +243,7 @@ public enum SkuMappingRuleEnum implements EnumMessage{
         if (matcher.find()) {
             return matcher.group(1);
         }else{
-            SkuMappingRuleEnum skuMappingRuleEnum = EnumMessage.getByCode(SkuMappingRuleEnum.class, ruleType);
-            if(skuMappingRuleEnum.equals(SkuMappingRuleEnum.IGNORE_FIRST_AND_LAST_DIGITS)){
+            if(skuMappingRuleEnum.equals(SkuMappingRuleEnum.IGNORE_FIRST_AND_LAST_DIGITS) || skuMappingRuleEnum.equals(SkuMappingRuleEnum.EXTRACT_BETWEEN_START_AND_END)){
                 return "";
             }
             return inputStr;
