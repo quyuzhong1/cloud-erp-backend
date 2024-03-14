@@ -55,9 +55,9 @@ public interface SdkSoOutStockConverter {
             @Mapping(target = "platformDetailUniqueId", source = "shipmentItemId"),
             @Mapping(target = "platformCode", source = "amazonOrderId"),
             @Mapping(target = "platformOrderDetailId", source = "amazonOrderItemId"),
-            @Mapping(target = "platformOrderCreateTime", expression = "java(java.time.OffsetDateTime.parse(sourceDetail.getPurchaseDate()))"),
-            @Mapping(target = "platformPayTime", expression = "java(java.time.OffsetDateTime.parse(sourceDetail.getPaymentsDate()))"),
-            @Mapping(target = "platformDeliveryTime", expression = "java(java.time.OffsetDateTime.parse(sourceDetail.getShipmentDate()))"),
+            @Mapping(target = "platformOrderCreateTime", expression = "java(java.time.OffsetDateTime.parse(sourceDetail.getPurchaseDateLocale()))"),
+            @Mapping(target = "platformPayTime", expression = "java(java.time.OffsetDateTime.parse(sourceDetail.getPaymentsDateLocale()))"),
+            @Mapping(target = "platformDeliveryTime", expression = "java(java.time.OffsetDateTime.parse(sourceDetail.getShipmentDateLocale()))"),
             @Mapping(target = "qtyShipped", source = "quantityShipped"),
     })
     PlatformSoOutStockDetailDTO amazonConvertDetailDTO(PlatformAmazonFulfilledShipmentsDTO sourceDetail);

@@ -50,9 +50,15 @@ public class PlatformAmazonFulfilledShipmentsDTO extends CleanBaseDTO {
 
     private String purchaseDate;
 
+    private String purchaseDateLocale;
+
     private String paymentsDate;
 
+    private String paymentsDateLocale;
+
     private String shipmentDate;
+
+    private String shipmentDateLocale;
 
     private String reportingDate;
 

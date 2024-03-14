@@ -71,11 +71,6 @@ public class CfgTimezoneServiceImpl extends SuperServiceImpl<CfgTimezoneMapper, 
 
     @Override
     public CfgTimezoneEntity getAndCacheByCountry(String country) {
-        String currentKey = StrUtil.format(RedisCacheConstants.CFG_TIMEZONE_PREFIX, country);
-        Object obj = redisUtil.get(currentKey);
-        if (null != obj ){
-            return (CfgTimezoneEntity) obj;
-        }
         return mapByCountry().get(country);
     }
 }

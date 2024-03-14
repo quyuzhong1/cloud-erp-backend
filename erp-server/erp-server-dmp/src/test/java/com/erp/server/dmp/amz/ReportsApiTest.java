@@ -17,6 +17,9 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
+import com.common.business.constant.RedisCacheConstants;
+import com.common.business.service.impl.RedisService;
+import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.message.service.mq.MQProducerService;
@@ -44,6 +47,7 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.junit.Test;
 
@@ -68,6 +72,8 @@ public class ReportsApiTest {
     private CfgAmzReportFieldService cfgAmzReportFieldService;
     @Resource
     private RocketMQTemplate rocketMQTemplate;
+    @Resource
+    private RedisTemplate redisTemplate;
 
 
     /**

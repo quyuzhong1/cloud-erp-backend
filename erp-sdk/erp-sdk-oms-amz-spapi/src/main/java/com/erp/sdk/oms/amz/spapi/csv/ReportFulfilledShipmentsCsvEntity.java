@@ -1,11 +1,15 @@
 package com.erp.sdk.oms.amz.spapi.csv;
 
+import io.reactivex.Single;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 
 /**
@@ -31,9 +35,15 @@ public class ReportFulfilledShipmentsCsvEntity implements Serializable {
 
     private String purchaseDate;
 
+    private String purchaseDateLocale;
+
     private String paymentsDate;
 
+    private String paymentsDateLocale;
+
     private String shipmentDate;
+
+    private String shipmentDateLocale;
 
     private String reportingDate;
 
@@ -110,9 +120,27 @@ public class ReportFulfilledShipmentsCsvEntity implements Serializable {
     private String pointsGranted;
 
     public String convertShipmentDate(){
-        if (StringUtils.isBlank(this.shipmentDate)){
+        if (StringUtils.isBlank(this.shipmentDateLocale)){
             return "";
         }
         return OffsetDateTime.parse(this.shipmentDate).toLocalDate().toString();
+    }
+
+    public void checkAndSetAllDateLocale(Integer utfDiffHour) {
+        if (null == utfDiffHour){
+            return;
+        }
+        if (StringUtils.isNotBlank(this.shipmentDate)){
+            OffsetDateTime parseDate = OffsetDateTime.parse(this.shipmentDate);
+            this.setShipmentDateLocale(parseDate.withOffsetSameInstant(ZoneOffset.ofHours(utfDiffHour)).toString());
+        }
+        if (StringUtils.isNotBlank(this.paymentsDate)){
+            OffsetDateTime parseDate = OffsetDateTime.parse(this.paymentsDate);
+            this.setPaymentsDateLocale(parseDate.withOffsetSameInstant(ZoneOffset.ofHours(utfDiffHour)).toString());
+        }
+        if (StringUtils.isNotBlank(this.purchaseDate)){
+            OffsetDateTime parseDate = OffsetDateTime.parse(this.purchaseDate);
+            this.setPurchaseDateLocale(parseDate.withOffsetSameInstant(ZoneOffset.ofHours(utfDiffHour)).toString());
+        }
     }
 }

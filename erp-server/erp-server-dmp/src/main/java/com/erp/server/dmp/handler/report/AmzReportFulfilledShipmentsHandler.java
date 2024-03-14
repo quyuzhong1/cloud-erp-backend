@@ -12,6 +12,7 @@ import com.common.business.enums.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.AmzReportInfoEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
+import com.erp.model.dmp.entity.CfgTimezoneEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -19,10 +20,14 @@ import com.erp.sdk.oms.amz.spapi.convert.SdkSoOutStockConverter;
 import com.erp.sdk.oms.amz.spapi.csv.ReportFulfilledShipmentsCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonHandleStatusEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonFulfilledShipmentsHandler;
 import com.erp.server.dmp.pull.mongo.MongoService;
+import com.erp.server.dmp.service.CfgTimezoneService;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.util.StringUtil;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -31,6 +36,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -49,6 +55,8 @@ public class AmzReportFulfilledShipmentsHandler extends AmzReportBusinessHandler
     private BusinessServiceImpl businessService;
     @Resource
     private SoB2cFeign soB2cFeign;
+    @Resource
+    private CfgTimezoneService cfgTimezoneService;
 
 
     @Override
@@ -60,6 +68,19 @@ public class AmzReportFulfilledShipmentsHandler extends AmzReportBusinessHandler
             return;
         }
         List<ReportFulfilledShipmentsCsvEntity> allList = JSONUtil.toList(jsonArray, ReportFulfilledShipmentsCsvEntity.class);
+        // 根据报告市场匹配国家
+        String currentMarketplace = Arrays.stream(reportInfo.getMarketplaceIds().split(",")).findFirst().orElse(null);
+        if (StringUtils.isNotBlank(currentMarketplace)){
+            AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByMarketplaceId(currentMarketplace);
+            CfgTimezoneEntity timeZoneEntity = cfgTimezoneService.getAndCacheByCountry(marketplaceEnum.getCountryCode());
+            if (null != timeZoneEntity){
+                allList.forEach(e-> {
+                    // 设置所有本地时区
+                    e.checkAndSetAllDateLocale(timeZoneEntity.getUtcDiffHour());
+                });
+            }
+        }
+
         List<String> amazonOrderIds = allList.stream()
                 .map(ReportFulfilledShipmentsCsvEntity::getAmazonOrderId)
                 .distinct()

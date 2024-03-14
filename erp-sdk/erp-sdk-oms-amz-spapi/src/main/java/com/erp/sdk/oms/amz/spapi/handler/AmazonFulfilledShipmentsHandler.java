@@ -63,7 +63,7 @@ public class AmazonFulfilledShipmentsHandler extends AbstractSoOutStockHandler<P
                 .map(e -> SdkSoOutStockConverter.INSTANCE.sourceDtoToOutStockDto(e,
                         data.getPlatformApiId(),
                         data.getShopId(),
-                        StrUtil.format("{}_{}_{}", e.getAmazonOrderId(), e.getShipmentDate(), data.getShopId()),
+                        StrUtil.format("{}_{}_{}", e.getAmazonOrderId(), e.convertShipmentDate(), data.getShopId()),
                         AmazonHandleStatusEnum.NONE.getCode()))
                 .collect(Collectors.toList());
     }
