@@ -65,7 +65,7 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
         Query query = new Query();
         query.addCriteria(
                 Criteria.where("amazonOrderId").is(dto.getPlatformCode())
-                        .and("shopId").is(dto.getShopId()).and("isClear").ne(2)
+                        .and("shopId").is(dto.getShopId())
         );
         List<PlatformAmazonFulfilledShipmentsDTO> list = mongoTemplate.find(query, PlatformAmazonFulfilledShipmentsDTO.class, tableName);
         if (CollectionUtils.isEmpty(list)) {
