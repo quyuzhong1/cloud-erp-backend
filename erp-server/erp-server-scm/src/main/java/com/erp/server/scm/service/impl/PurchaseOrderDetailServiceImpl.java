@@ -654,9 +654,6 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         List<PurchaseOrderEntity> mainList = purchaseOrderService.getList(mainIds);
         //更新明细中的交货状态
         this.updateArrivalStatusByIds(ExecutionStatusEnum.CLOSED.getCode(), ids, purchaseOrderDetailList, remark);
-        if(true) {
-            throw new ServiceException("回滚测试");
-        }
         //TODO 关闭时，更新订单明细状态
         if (CollectionUtils.isNotEmpty(ids)){
             JSONObject jsonObject = new JSONObject();
