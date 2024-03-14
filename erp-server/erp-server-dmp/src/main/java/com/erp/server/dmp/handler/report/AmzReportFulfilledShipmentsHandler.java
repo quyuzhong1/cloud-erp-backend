@@ -13,6 +13,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.AmzReportInfoEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.model.dmp.entity.CfgTimezoneEntity;
+import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -139,8 +140,10 @@ public class AmzReportFulfilledShipmentsHandler extends AmzReportBusinessHandler
                 .map(e -> SdkSoOutStockConverter.INSTANCE.sourceDtoToOutStockDto(e,
                         taskEntity.getReportId(),
                         taskEntity.getShopId(),
-                        StrUtil.format("{}_{}_{}", e.getAmazonOrderId(), e.getShipmentDate(), taskEntity.getShopId()),
-                        AmazonHandleStatusEnum.WAIT_DOWNLOAD.getCode()))
+                        StrUtil.format("{}_{}_{}", e.getAmazonOrderId(), e.convertShipmentDate(), taskEntity.getShopId()),
+                        AmazonHandleStatusEnum.WAIT_DOWNLOAD.getCode(),
+                        CleanStatusEnum.NONE.getCode()
+                ))
                 .collect(Collectors.toList());
         businessService.handleSaveOrUpdateMongo(sourceList, MongoTableNameContant.THIRD_SYSTEM_AMAZON_SO_OUT_STOCK, PlatformAmazonFulfilledShipmentsDTO.class, new ArrayList<>());
     }

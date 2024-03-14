@@ -5,6 +5,7 @@ import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressListingDTO;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressOrderDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFbaShipmentDTO;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.sdk.oms.shopee.dto.PlatformShopeeListingDTO;
@@ -44,6 +45,7 @@ public enum CleanDataTableEnum {
     AMAZON_ORDER("Amazon", "third_system_Amazon_order","third_system", "order","Amazon订单数据", PlatformAmazonOrderDTO.class),
     AMAZON_PRODUCT("Amazon", "third_system_Amazon_product","third_system", "product","Amazon产品数据", PlatformAmazonListingDTO.class),
     AMAZON_FBA_SHIPMENT("Amazon", "third_system_Amazon_fba_shipment","third_system", "fba_shipment","AmazonFBA货件", PlatformAmazonFbaShipmentDTO.class),
+    AMAZON_SO_OUT_STOCK("Amazon", "third_system_Amazon_so_out_stock","third_system", "so_out_stock","Amazon物流销售出库", PlatformAmazonFulfilledShipmentsDTO.class),
 
 
     //track123

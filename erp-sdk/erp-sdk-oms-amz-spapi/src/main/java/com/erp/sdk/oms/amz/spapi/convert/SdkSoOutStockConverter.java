@@ -4,6 +4,7 @@ import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDetailDTO;
 import com.erp.sdk.oms.amz.spapi.csv.ReportFulfilledShipmentsCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
+import jnr.ffi.annotations.In;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -31,12 +32,14 @@ public interface SdkSoOutStockConverter {
             @Mapping(target = "handleStatus", source = "handleStatus"),
             @Mapping(target = "shopId", source = "shopId"),
             @Mapping(target = "groupId", source = "groupId"),
+            @Mapping(target = "isClean", source = "isClean"),
     })
     PlatformAmazonFulfilledShipmentsDTO sourceDtoToOutStockDto(ReportFulfilledShipmentsCsvEntity csvEntity,
                                                                String reportId,
                                                                String shopId,
                                                                String groupId,
-                                                               String handleStatus
+                                                               String handleStatus,
+                                                               Integer isClean
     );
 
 

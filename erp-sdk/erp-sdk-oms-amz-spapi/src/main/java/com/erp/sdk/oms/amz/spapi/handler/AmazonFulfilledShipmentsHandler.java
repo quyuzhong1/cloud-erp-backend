@@ -11,6 +11,7 @@ import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractSoOutStockHandler;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.oms.amz.spapi.convert.SdkSoOutStockConverter;
 import com.erp.sdk.oms.amz.spapi.csv.ReportFulfilledShipmentsCsvEntity;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +66,9 @@ public class AmazonFulfilledShipmentsHandler extends AbstractSoOutStockHandler<P
                         data.getPlatformApiId(),
                         data.getShopId(),
                         StrUtil.format("{}_{}_{}", e.getAmazonOrderId(), e.convertShipmentDate(), data.getShopId()),
-                        AmazonHandleStatusEnum.NONE.getCode()))
+                        AmazonHandleStatusEnum.NONE.getCode(),
+                        CleanStatusEnum.UNCLEAN.getCode()
+                ))
                 .collect(Collectors.toList());
     }
 
@@ -74,22 +78,30 @@ public class AmazonFulfilledShipmentsHandler extends AbstractSoOutStockHandler<P
         if (CollectionUtils.isEmpty(sourceDataList)){
             return Collections.emptyList();
         }
+        return sourceDataList.stream()
+                .map(e-> SdkSoOutStockConverter.INSTANCE.amazonConvertDTO(
+                        e.getAmazonOrderId(),
+                        e.getShopId(),
+                        e.getUniqueId(),
+                        Collections.singletonList(e)
+                )).collect(Collectors.toList());
+
         // 亚马逊物流销售报告转为发送mq数据
         // 根据订单ID分组
-        Map<String, List<PlatformAmazonFulfilledShipmentsDTO>> groupMap = sourceDataList
-                .stream()
-                .collect(Collectors.groupingBy(PlatformAmazonFulfilledShipmentsDTO::getGroupId));
-
-        // 包含数据过滤数据 数据转换 数据合并拆分等操作
-        return groupMap.entrySet().stream()
-                // 组装
-                .map(e -> SdkSoOutStockConverter.INSTANCE.amazonConvertDTO(
-                        e.getValue().get(0).getAmazonOrderId(),
-                        e.getValue().get(0).getShopId(),
-                        e.getKey(),
-                        e.getValue()
-                ))
-                .collect(Collectors.toList());
+//        Map<String, List<PlatformAmazonFulfilledShipmentsDTO>> groupMap = sourceDataList
+//                .stream()
+//                .collect(Collectors.groupingBy(PlatformAmazonFulfilledShipmentsDTO::getGroupId));
+//
+//        // 包含数据过滤数据 数据转换 数据合并拆分等操作
+//        return groupMap.entrySet().stream()
+//                // 组装
+//                .map(e -> SdkSoOutStockConverter.INSTANCE.amazonConvertDTO(
+//                        e.getValue().get(0).getAmazonOrderId(),
+//                        e.getValue().get(0).getShopId(),
+//                        e.getKey(),
+//                        e.getValue()
+//                ))
+//                .collect(Collectors.toList());
     }
 
     @Override
