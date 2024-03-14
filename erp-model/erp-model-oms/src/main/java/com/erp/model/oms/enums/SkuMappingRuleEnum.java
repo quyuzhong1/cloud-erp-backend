@@ -25,7 +25,7 @@ public enum SkuMappingRuleEnum implements EnumMessage{
     COMPLETE_SKU("completeSku","完整SKU",v-> new ArrayList<>(),(type,regex,v)-> v),
     IGNORE_PREFIXES_AND_SUFFIXES("ignorePrefixesAndSuffixes","忽略前缀/后缀",SkuMappingRuleEnum::getIgnorePrefixesAndSuffixesRegex,SkuMappingRuleEnum::handleRegex),
     IGNORE_FIRST_AND_LAST_DIGITS("ignoreFirstAndLastDigits","忽略前几位/后几位",SkuMappingRuleEnum::getIgnoreFirstAndLastDigitsRegex,SkuMappingRuleEnum::handleRegex),
-    EXTRACT_FIRST_TO_LAST_DIGITS("extractFirstToLast","截取第几位到第几位",SkuMappingRuleEnum::getExtractFirstToLastRegex,SkuMappingRuleEnum::handleRegex),
+    EXTRACT_FIRST_TO_LAST_DIGITS("extractFirstToLast","截取第几位到第几位",SkuMappingRuleEnum::getExtractFirstToLastRegex,SkuMappingRuleEnum::handleSubStrRegex),
     EXTRACT_BETWEEN_START_AND_END("extractBetweenStartAndEnd","截取两个字符之间的SKU",SkuMappingRuleEnum::getExtractBetweenStartAndEndRegex,SkuMappingRuleEnum::handleRegex),
     ;
     private final String code;
@@ -142,11 +142,13 @@ public enum SkuMappingRuleEnum implements EnumMessage{
             if(prefix < 1 || suffixes < 1){
                 throw new ServiceException("截取位数不能小于1");
             }
-            prefix --;
             if (suffixes<prefix){
                 throw new ServiceException("后面位数不能小于前面位数");
             }
-            String regex = ".{" + prefix + "}(.{" + (suffixes - prefix) + "}).*";
+            prefix --;
+//            String regex = ".{" + prefix + "}(.{" + (suffixes - prefix) + "}).*";
+            //不使用正则，方便控制
+            String regex = "{" + prefix + ":"+suffixes+"}";
             list.add(regex);
         }
         return list;
@@ -229,6 +231,36 @@ public enum SkuMappingRuleEnum implements EnumMessage{
         return list;
     }
 
+    private static String handleSubStrRegex(String ruleType,String regex,String inputStr){
+        SkuMappingRuleEnum skuMappingRuleEnum = EnumMessage.getByCode(SkuMappingRuleEnum.class, ruleType);
+        if(EXTRACT_FIRST_TO_LAST_DIGITS!=skuMappingRuleEnum){
+            return inputStr;
+        }
+        if(StringUtils.isBlank(regex)){
+            return inputStr;
+        }
+        regex = regex.replaceAll("\"","");
+        //提取数字
+        Pattern pattern = Pattern.compile("\\{(\\d+):(\\d+)\\}");
+        Matcher matcher = pattern.matcher(regex);
+        if (matcher.find()) {
+            int prefix = Integer.parseInt(matcher.group(1));
+            int suffixes = Integer.parseInt(matcher.group(2));
+            int strLength = inputStr.length();
+            if(strLength == 0){
+                return inputStr;
+            }
+            if(prefix >= strLength){
+                return "";
+            }
+            suffixes = Math.min(suffixes, inputStr.length());
+            inputStr = inputStr.substring(prefix, suffixes);
+            return inputStr;
+        } else {
+            return inputStr;
+        }
+    }
+
     private static String handleRegex(String ruleType,String regex,String inputStr){
         SkuMappingRuleEnum skuMappingRuleEnum = EnumMessage.getByCode(SkuMappingRuleEnum.class, ruleType);
         if(StringUtils.isBlank(regex)){
@@ -286,5 +318,20 @@ public enum SkuMappingRuleEnum implements EnumMessage{
             }
         }
         return escapedStr.toString();
+    }
+
+    public static void main(String[] args) {
+        String originalString = "Hello123";
+
+        // 定义要截取的起始和结束索引
+        int startIndex = 5; // 开始索引（包含）
+//        int endIndex = originalString.length();   // 结束索引（不包含）
+        int endIndex = 8;
+        // 使用substring方法截取子字符串
+        String extractedString = originalString.substring(startIndex, endIndex);
+
+//         打印截取的子字符串
+        System.out.println("Extracted substring: " + extractedString);
+
     }
 }
