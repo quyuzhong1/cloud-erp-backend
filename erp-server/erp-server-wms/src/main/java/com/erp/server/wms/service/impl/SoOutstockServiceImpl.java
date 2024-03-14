@@ -2098,13 +2098,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (StringUtils.isNotBlank(id)) {
                 if (null != dto.getSalesOrgId() && null != dto.getBillDate()){
                     // 校验是否存在已库存关账时间
-                    LocalDate existClosedDate = inventoryClosedRecordService.checkClosed(dto.getSalesOrgId(), dto.getBillDate());
+                    LocalDate existClosedDate = inventoryClosedRecordService.checkClosed(dto.getWarehouseOrgId(), dto.getBillDate());
                     if (null != existClosedDate){
                         // 库存关账时间之前的单据不提交
                         return true;
                     }
                     List<String> skuIds = dto.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
-                    boolean closed = stocktakingProfitLossService.checkClosed(Collections.singletonList(dto.getSalesOrgId()), skuIds, dto.getBillDate());
+                    boolean closed = stocktakingProfitLossService.checkClosed(Collections.singletonList(dto.getWarehouseOrgId()), skuIds, dto.getBillDate());
                     if (closed){
                         // 已有盘盈盘亏单不提交
                         return true;
@@ -2303,13 +2303,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 log.warn("【亚马逊物流销售报告】生成销售出库单失败:dto={}", JSONUtil.toJsonStr(genDTO));
             }
         }
-
-        // 记录订单支付支付日期
-//        OffsetDateTime platformPayTime = dto.getDetailList().get(0).getPlatformPayTime();
-//        if (null != platformPayTime){
-//            soB2cEntity.setPayTime(platformPayTime.toLocalDateTime());
-//            soB2cFeign.updateById(soB2cEntity);
-//        }
     }
 
     @Override

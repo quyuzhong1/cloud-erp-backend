@@ -105,10 +105,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
@@ -5795,6 +5792,54 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .eq(StringUtils.isNotBlank(shopId), SoB2cEntity::getShopId, shopId)
                 .eq(SoB2cEntity::getDictPlatform, dictPlatform)
                 .list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean checkAndFillBySoOutStock(PlatformSoOutStockDTO dto) {
+        List<SoB2cEntity> soB2cEntityList = this.getByPlatformCodeList(Collections.singletonList(dto.getPlatformCode()), dto.getDictPlatform(), dto.getShopId());
+        SoB2cEntity soB2cEntity = soB2cEntityList.stream().findFirst().orElse(null);
+        if (null == soB2cEntity){
+            return false;
+        }
+        List<PlatformSoOutStockDetailDTO> detailList = dto.getDetailList();
+        if (CollectionUtils.isEmpty(detailList)){
+            return false;
+        }
+//        OffsetDateTime earliestPaymentDateTime  = detailList.stream()
+//                .map(PlatformSoOutStockDetailDTO::getPlatformPayTime)
+//                .min(Comparator.naturalOrder())
+//                .orElse(null);
+//        if (null != earliestPaymentDateTime){
+//            soB2cEntity.setPayTime(earliestPaymentDateTime.toLocalDateTime());
+//            if (!this.updateById(soB2cEntity)){
+//                throw new ServiceException("");
+//            }
+//        }
+        OffsetDateTime earliestDeliveryDateTime  = detailList.stream()
+                .map(PlatformSoOutStockDetailDTO::getPlatformDeliveryTime)
+                .min(Comparator.naturalOrder())
+                .orElse(null);
+        if (null == earliestDeliveryDateTime) {
+            return true;
+        }
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(soB2cEntity.getId());
+        if (null == logisticsEntity){
+            return true;
+        }
+        // 对比获取最早时间之前
+        if (null != logisticsEntity.getDeliveryTime()) {
+            // 取最早的时间
+            if (!earliestDeliveryDateTime.toLocalDateTime().isBefore(logisticsEntity.getDeliveryTime())){
+                return true;
+            }
+        }
+        logisticsEntity.setDeliveryTime(earliestDeliveryDateTime.toLocalDateTime());
+        if (!soB2cLogisticsService.updateById(logisticsEntity)){
+            throw new ServiceException("更新发货时间失败:id=" + logisticsEntity.getId());
+        }
+        return true;
     }
 
 

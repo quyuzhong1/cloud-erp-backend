@@ -1,5 +1,6 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.UpdateStateDTO;
@@ -404,4 +405,8 @@ public interface SoB2cFeign {
 
     @PostMapping("/feign/soB2c/updateById")
     Boolean updateById(@RequestBody SoB2cEntity soB2cEntity);
+
+
+    @PostMapping("/feign/soB2c/checkAndFillBySoOutStock")
+    Boolean checkAndFillBySoOutStock(@RequestBody PlatformSoOutStockDTO dto);
 }

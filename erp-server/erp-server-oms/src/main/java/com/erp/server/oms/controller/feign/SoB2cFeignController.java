@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.feign;
 
 
+import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.UpdateStateDTO;
@@ -544,5 +545,10 @@ public class SoB2cFeignController extends BaseController {
     @PostMapping("/updateById")
     public Boolean updateById(@RequestBody SoB2cEntity soB2cEntity) {
         return soB2cService.updateById(soB2cEntity);
+    }
+
+    @PostMapping("/checkAndFillBySoOutStock")
+    public Boolean checkAndFillBySoOutStock(@RequestBody PlatformSoOutStockDTO dto){
+        return soB2cService.checkAndFillBySoOutStock(dto);
     }
 }

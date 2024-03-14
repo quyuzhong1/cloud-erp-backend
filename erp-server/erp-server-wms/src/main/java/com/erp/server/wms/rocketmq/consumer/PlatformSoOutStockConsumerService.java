@@ -112,16 +112,6 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
         // 亚马逊物流销售消费服务
         log.info("[销售出库单] 消费:dto={}", JSONUtil.toJsonStr(ext));
         PlatformSoOutStockDTO dto = JSONUtil.toBean(ext.toString(), PlatformSoOutStockDTO.class);
-        // TODO 本次移除
-        if (!dto.getPlatformCode().equalsIgnoreCase(dto.getDetailList().get(0).getPlatformCode())){
-            // 跳过历史脏数据
-            return ApiResult.success();
-        }
-        if (dto.getDetailList().stream().anyMatch(e-> null == dto.getShopId())){
-            // 跳过历史脏数据
-            return ApiResult.success();
-        }
-
         // 已有出库详情/不保存订单
         Boolean hasDeliveryDetail = Boolean.FALSE;
         if (StringUtils.isNotEmpty(dto.getPlatformCode()) && StringUtils.isNotEmpty(dto.getDictPlatform())){
@@ -141,6 +131,9 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
             log.warn("[亚马逊物流销售消费服务]:B2C销售单不存在：单号={}", dto.getPlatformCode());
             throw new ServiceException("B2C销售单不存在：单号=" + dto.getPlatformCode());
         }
+        // 记录订单数据（独立事务）
+        soB2cFeign.checkAndFillBySoOutStock(dto);
+
         SoB2cEntity soB2cEntity = soB2cEntityList.get(0);
         // B2C销售订单添加整个销售出库单的基础信息
         SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(soB2cEntity.getId());
