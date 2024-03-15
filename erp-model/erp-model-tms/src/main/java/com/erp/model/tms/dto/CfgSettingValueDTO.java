@@ -4,9 +4,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Digits;
-import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 
 /**
  * <p>
@@ -19,6 +20,10 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 public class CfgSettingValueDTO implements Serializable {
+
+    /**
+     * 申报规则
+     */
     @Data
     @NoArgsConstructor
     public static class LogisticsProductDestDeclarePrice{
@@ -39,4 +44,93 @@ public class CfgSettingValueDTO implements Serializable {
         private BigDecimal rate;
     }
 
+    /**
+     * 通知管理
+     */
+    @Data
+    @NoArgsConstructor
+    public static class NoticeDTO{
+
+        /**
+         * 在途异常岗位id集合
+         */
+        private List<String> inTransitPostIdList;
+
+        /**
+         * 在途异常抄送人id集合
+         */
+        private List<String> inTransitUserIdList;
+
+        /**
+         * 渠道更换岗位id集合
+         */
+        private List<String> channelPostIdList;
+
+        /**
+         * 渠道更换用id集合
+         */
+        private List<String> channelUserIdList;
+
+        /**
+         * 在途异常是否使用店铺负责人
+         */
+        private Boolean isInTransitShopCharge;
+
+        /**
+         * 渠道更换是否使用店铺负责人
+         */
+        private Boolean isChannelShopCharge;
+
+    }
+
+    /**
+     * 对账周期
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ReconciliationCycleDTO{
+
+        /**
+         * 头程对账类型
+         */
+        private String firstMileReconciliationType;
+
+        /**
+         * 头程对账日期
+         */
+        private LocalDate firstMileReconciliationDate;
+
+        /**
+         * 报关对账类型
+         */
+        private String declareReconciliationType;
+
+        /**
+         * 报关对账日期
+         */
+        private String declareReconciliationDate;
+    }
+
+    /**
+     * 对账周期
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BillAutoAddDTO{
+
+        /**
+         * 物流单自动生成
+         */
+        private Boolean isAutoLogistics;
+
+        /**
+         * 头程报关自动生成
+         */
+        private Boolean isAutoFirstMileDeclare;
+
+        /**
+         * 头程报关自动生成
+         */
+        private Boolean isAutoB2BDeclare;
+    }
 }
