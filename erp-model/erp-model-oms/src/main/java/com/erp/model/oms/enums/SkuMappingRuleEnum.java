@@ -196,7 +196,7 @@ public enum SkuMappingRuleEnum implements EnumMessage{
                 if(ruleConditionsDTO.getValidEndSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code)){
                     finalRegex = "([^【%】]*)【%】";
                 }else{
-                    finalRegex = "(.*)【%】.";
+                    finalRegex = "(.*)【%】";
                 }
             }
             String startSymbol = ruleConditionsDTO.getStartingSymbol();
