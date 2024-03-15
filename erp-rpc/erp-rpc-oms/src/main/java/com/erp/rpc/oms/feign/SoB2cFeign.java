@@ -129,6 +129,16 @@ public interface SoB2cFeign {
     @PostMapping("/feign/soB2cError/delete")
     void deleteError(@RequestBody SoB2cErrorDTO.DeleteDTO deleteDTO);
 
+
+    /**
+     * 根据订单ID和明细ID删除
+     *
+     * @date 2024-03-07
+     * @author Jim
+     */
+    @PostMapping("/feign/soB2cError/deleteDetail")
+    void deleteDetailError(@RequestBody SoB2cErrorDTO.DeleteDetailDTO deleteDTO);
+
     /**
      * 批量删除异常信息
      *

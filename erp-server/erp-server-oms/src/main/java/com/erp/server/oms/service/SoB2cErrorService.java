@@ -100,9 +100,7 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
     void batchAddSoB2cError(SoB2cErrorDTO.BatchAdd batchAdd);
 
     /**
-     * 重新生成销售出库单
-     * @author Jim
-     * {@code @date:} 2024-03-11
+     * 根据明细ID删除
      */
-    BatchResultDTO retrySoOutStock(String soBcId);
+    Boolean deleteDetail(SoB2cErrorDTO.DeleteDetailDTO dto);
 }

@@ -375,6 +375,9 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      **/
     Boolean generateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO);
 
+
+    Boolean handleCreateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto);
+
     /**
      * 生成B2C销售出库单
      * @author yl
@@ -392,7 +395,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @author Jim
      * @date 2024-03-07
      */
-    void checkAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity);
+    Boolean checkAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity);
 
     /**
      * 默认重推销售出库单逻辑

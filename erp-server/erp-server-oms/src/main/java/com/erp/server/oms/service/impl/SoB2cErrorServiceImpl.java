@@ -25,6 +25,7 @@ import com.erp.server.oms.service.SoB2cService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,6 +68,7 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
             soB2cErrorEntity.setMessage(addDTO.getMessage());
             soB2cErrorEntity.setMainId(addDTO.getMainId());
             soB2cErrorEntity.setType(addDTO.getType());
+            soB2cErrorEntity.setDetailId(StringUtils.isNotBlank(addDTO.getDetailId()) ? addDTO.getDetailId() : "");
         }
         boolean save = super.saveOrUpdate(soB2cErrorEntity);
         if(!save) {
@@ -190,25 +192,19 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO retrySoOutStock(String soBcId) {
-        SoB2cEntity soB2cEntity = soB2cService.getById(soBcId);
-        if (Objects.isNull(soB2cEntity)){
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+    public Boolean deleteDetail(SoB2cErrorDTO.DeleteDetailDTO dto) {
+        Boolean result = baseMapper.deleteB2cErrorByDetailId(dto);
+        if (result){
+            // 检查历史明细是否存在
+            Integer count = this.lambdaQuery()
+                    .eq(SoB2cErrorEntity::getMainId, dto.getMainId())
+                    .eq(SoB2cErrorEntity::getType, dto.getType())
+                    .count();
+            if(0 == count){
+                soB2cService.removeSignError(dto.getMainId(),dto.getType());
+            }
         }
-
-        SoB2cErrorEntity errorEntity = this.getByMainIdAndType(soB2cEntity.getId(), SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
-        if (null == errorEntity){
-            return BatchResultDTO.success(soBcId, soB2cEntity.getCode(), "重试成功");
-        }
-        // TODO
-//        soOutstockFeign.generateB2cSoOutstock();
-        //删除订单异常记录
-        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-        deleteDTO.setMainId(soB2cEntity.getId());
-        deleteDTO.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
-        this.delete(deleteDTO);
-
-        return BatchResultDTO.success(soBcId, soB2cEntity.getCode(), "重试执行成功");
+        return true;
     }
 
 

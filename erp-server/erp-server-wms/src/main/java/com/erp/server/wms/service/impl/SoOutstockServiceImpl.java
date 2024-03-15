@@ -51,7 +51,6 @@ import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
-import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -92,7 +91,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -2093,29 +2091,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     public Boolean createB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto) {
         try {
-            String id = this.addB2cSoOutstock(dto);
-            //表示添加成功
-            if (StringUtils.isNotBlank(id)) {
-                if (null != dto.getSalesOrgId() && null != dto.getBillDate()){
-                    // 校验是否存在已库存关账时间
-                    LocalDate existClosedDate = inventoryClosedRecordService.checkClosed(dto.getWarehouseOrgId(), dto.getBillDate());
-                    if (null != existClosedDate){
-                        // 库存关账时间之前的单据不提交
-                        return true;
-                    }
-                    List<String> skuIds = dto.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
-                    boolean closed = stocktakingProfitLossService.checkClosed(Collections.singletonList(dto.getWarehouseOrgId()), skuIds, dto.getBillDate());
-                    if (closed){
-                        // 已有盘盈盘亏单不提交
-                        return true;
-                    }
-                }
-                //提交
-                Boolean submitResult = this.submit(Arrays.asList(id));
-                if (submitResult) {
-                    this.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
-                }
-            }
+            this.handleCreateB2cSoOutstock(dto);
             return Boolean.TRUE;
         } catch (Exception e) {
             String soB2cId = dto.getSoId();
@@ -2131,6 +2107,35 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soB2cFeign.addSoB2cError(addError);
         }
         return Boolean.FALSE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean handleCreateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto) {
+        String id = this.addB2cSoOutstock(dto);
+        //表示添加成功
+        if (StringUtils.isNotBlank(id)) {
+            if (null != dto.getWarehouseOrgId() && null != dto.getBillDate()){
+                // 校验是否存在已库存关账时间
+                LocalDate existClosedDate = inventoryClosedRecordService.checkClosed(dto.getWarehouseOrgId(), dto.getBillDate());
+                if (null != existClosedDate){
+                    // 库存关账时间之前的单据不提交
+                    return true;
+                }
+                List<String> skuIds = dto.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
+                boolean closed = stocktakingProfitLossService.checkClosed(Collections.singletonList(dto.getWarehouseOrgId()), skuIds, dto.getBillDate());
+                if (closed){
+                    // 已有盘盈盘亏单不提交
+                    return true;
+                }
+            }
+            //提交
+            Boolean submitResult = this.submit(Arrays.asList(id));
+            if (submitResult) {
+                this.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
+            }
+        }
+        return Boolean.TRUE;
     }
 
 
@@ -2235,7 +2240,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void checkAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity) {
+    public Boolean checkAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity) {
         // 补充来源
         generateB2cDTO.setSourceCode(soB2cEntity.getPlatformCode());
         generateB2cDTO.setSourceId(soB2cEntity.getId());
@@ -2261,7 +2266,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             if (CollectionUtils.isEmpty(generateSourceDetailList)){
                 log.warn("所有明细已生成销售出库单忽略处理, B2C销售订单={}, 来源明细IDS={}", dto.getPlatformCode(), existSourceDetailIds);
-                return;
+                return true;
             }
         }
 
@@ -2299,10 +2304,34 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 
         for (SoOutstockDTO.GenerateB2cDTO genDTO : generateB2cList) {
-            if (!this.generateB2cSoOutstock(genDTO)){
-                log.warn("【亚马逊物流销售报告】生成销售出库单失败:dto={}", JSONUtil.toJsonStr(genDTO));
+            try {
+                if (!this.handleCreateB2cSoOutstock(genDTO)){
+                    log.warn("【亚马逊物流销售报告】生成销售出库单失败:dto={}", JSONUtil.toJsonStr(genDTO));
+                } else {
+                    String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+                    SoB2cErrorDTO.DeleteDetailDTO deleteDTO = new SoB2cErrorDTO.DeleteDetailDTO();
+                    deleteDTO.setMainId(soB2cEntity.getId());
+                    deleteDTO.setType(type);
+                    List<String> detailIds = genDTO.getDetailList().stream()
+                            .map(SoOutstockDetailDTO.AddDTO::getSoDetailId)
+                            .collect(Collectors.toList());
+                    deleteDTO.setDetailIdList(detailIds);
+                    soB2cFeign.deleteDetailError(deleteDTO);
+                }
+            } catch (Exception e) {
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+                addError.setParamJson(JSONUtil.toJsonStr(genDTO));
+                addError.setReturnJson("");
+                addError.setMainId(soB2cEntity.getId());
+                addError.setDetailId(genDTO.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getSoDetailId).findFirst().orElse(""));
+                addError.setMessage(StrUtil.format("自动生成销售出库单失败：{}", e.getMessage()));
+                soB2cFeign.addSoB2cError(addError);
             }
         }
+
+
+        return true;
     }
 
     @Override

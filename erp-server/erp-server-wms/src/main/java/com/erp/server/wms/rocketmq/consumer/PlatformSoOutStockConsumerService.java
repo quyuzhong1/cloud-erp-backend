@@ -7,6 +7,7 @@ import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -17,6 +18,7 @@ import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -116,32 +118,30 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
 
         SoB2cEntity soB2cEntity = soB2cEntityList.get(0);
 
-        try {
-            // B2C销售订单添加整个销售出库单的基础信息
-            SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(soB2cEntity.getId());
-            // 校验sku映射关系
-            if (generateB2cDTO.getDetailList().stream().anyMatch(e-> StringUtils.isBlank(e.getSkuId()))){
-                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
-                addError.setParamJson(JSONUtil.toJsonStr(ext));
-                addError.setReturnJson("");
-                addError.setMainId(soB2cEntity.getId());
-                addError.setMessage(StrUtil.format("自动生成销售出库单失败：订单未匹配Sku映射关系"));
-                soB2cFeign.addSoB2cError(addError);
-                return ApiResult.success();
-            }
-            // 检查和生成销售出库单
-            soOutstockService.checkAndGenerate(generateB2cDTO, dto, soB2cEntity);
-        }catch (Exception e){
+        // （独立事务）
+//         表示有仓库为空且是已发货并且是平台仓订单
+//         那么就要去找店铺的仓库 然后匹配上仓库
+//         [排除速卖通订单]
+        if (Objects.nonNull(soB2cEntity) && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform())) {
+            soB2cFeign.updateWarehouseByShopId(soB2cEntity.getId(), soB2cEntity.getShopId());
+        }
+
+        // B2C销售订单添加整个销售出库单的基础信息
+        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(soB2cEntity.getId());
+        // 校验sku映射关系
+        if (generateB2cDTO.getDetailList().stream().anyMatch(e-> StringUtils.isBlank(e.getSkuId()))){
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
             addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
-            addError.setParamJson("");
+            addError.setParamJson(JSONUtil.toJsonStr(ext));
             addError.setReturnJson("");
+            addError.setDetailId(generateB2cDTO.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getSoDetailId).findFirst().orElse(""));
             addError.setMainId(soB2cEntity.getId());
-            addError.setMessage(e.getMessage());
+            addError.setMessage(StrUtil.format("自动生成销售出库单失败：订单未匹配Sku映射关系"));
             soB2cFeign.addSoB2cError(addError);
-            log.error("[生成销售出库单异常]:order={},msg={}", soB2cEntity.getCode(), e.getMessage());
+            return ApiResult.success();
         }
+        // 检查和生成销售出库单
+        soOutstockService.checkAndGenerate(generateB2cDTO, dto, soB2cEntity);
         return ApiResult.success();
     }
 }
