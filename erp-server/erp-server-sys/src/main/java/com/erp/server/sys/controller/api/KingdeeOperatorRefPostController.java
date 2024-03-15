@@ -85,9 +85,22 @@ public class KingdeeOperatorRefPostController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "金蝶业务员表新增")
-    public ApiResult add(@RequestBody @Validated KingdeeOperatorRefPostDTO.AddDTO dto) {
-        Boolean result = kingdeeOperatorRefPostService.add(dto);
-        return result ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> add(@RequestBody @Validated KingdeeOperatorRefPostDTO.AddDTO dto) {
+        List<String> userPostIdList = dto.getUserPostIdList();
+        String typeCode = dto.getTypeCode();
+
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(userPostIdList.size());
+        for (String userPostId : userPostIdList) {
+            BatchResultDTO addResult;
+            try {
+                addResult = kingdeeOperatorRefPostService.add(typeCode,userPostId);
+            }catch (Exception e){
+                log.error("金蝶业务员 添加失败===>{}", e.getMessage());
+                addResult = BatchResultDTO.fail(userPostId, typeCode, e.getMessage());
+            }
+            resultDTOS.add(addResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 

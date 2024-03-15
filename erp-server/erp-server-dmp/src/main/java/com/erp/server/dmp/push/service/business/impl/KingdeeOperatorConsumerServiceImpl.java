@@ -13,7 +13,7 @@ import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
-import com.erp.server.dmp.push.service.business.KingdeeUserPostConsumerService;
+import com.erp.server.dmp.push.service.business.KingdeeOperatorConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
@@ -28,14 +28,14 @@ import java.util.stream.Collectors;
 
 /**
  * @author Lambda
- * @Classname KingdeeUserPostConsumerServiceImpl
+ * @Classname KingdeeOperatorConsumerServiceImpl
  * @Description TODO
- * @Date 2024-03-14 14:31
+ * @Date 2024-03-15 14:57
  * @Created by yl
  */
 @Service
 @Slf4j
-public class KingdeeUserPostConsumerServiceImpl implements KingdeeUserPostConsumerService {
+public class KingdeeOperatorConsumerServiceImpl implements KingdeeOperatorConsumerService {
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
@@ -44,7 +44,7 @@ public class KingdeeUserPostConsumerServiceImpl implements KingdeeUserPostConsum
     @Transactional(rollbackFor = Exception.class)
     public void executeConsumer(Map<String, Object> map) {
         //模块类型
-        Integer type = ApiModuleTypeEnum.SYS_USER_POST.getCode();
+        Integer type = ApiModuleTypeEnum.KINGDEE_OPERATOR.getCode();
         //业务id
         String  businessId = String.valueOf(map.get("id"));
         //业务编码
@@ -57,7 +57,7 @@ public class KingdeeUserPostConsumerServiceImpl implements KingdeeUserPostConsum
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_NEWSTAFF.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_OPERATOR.getCode());
 
         /**
          * 添加
@@ -66,12 +66,6 @@ public class KingdeeUserPostConsumerServiceImpl implements KingdeeUserPostConsum
             operateAddOrUpdate(apiUtils,platformEntity,map,type);
         }
 
-        /**
-         * 添加
-         */
-        if (SyncOperateEnum.OPERATE_UPDATE.getCode().equals(operate)) {
-            operateAddOrUpdate(apiUtils,platformEntity,map,type);
-        }
         /**
          * 删除
          */
@@ -123,16 +117,8 @@ public class KingdeeUserPostConsumerServiceImpl implements KingdeeUserPostConsum
         }
     }
 
-    /**
-     * 删除
-     * @param apiUtils
-     * @param platformEntity
-     * @param map
-     * @param operate
-     */
     public void operateDelete(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, String operate) {
         //删除
-        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.SYS_USER_POST.getCode(),operate);
-        return;
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.KINGDEE_OPERATOR.getCode(),operate);
     }
 }

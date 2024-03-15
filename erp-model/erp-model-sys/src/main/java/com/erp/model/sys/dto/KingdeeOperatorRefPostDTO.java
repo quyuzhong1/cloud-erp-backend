@@ -159,25 +159,23 @@ public class KingdeeOperatorRefPostDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
-
-
-    }
-
-    /**
-    * 修改
-    */
-    @Data
-    @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class AddDTO  {
 
         /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
+         * 业务员类型code 来源 http://172.16.100.11:3002/project/36/interface/api/30927
+         */
+        private String typeCode;
+
+        /**
+         * 任岗明细id
+         */
+        @NotNull(message = "员工任岗不能为空")
+        @Size(message = "至少需要选择一个任岗信息")
+        private List<String> userPostIdList;
 
     }
+
+
 
     @Data
     @NoArgsConstructor

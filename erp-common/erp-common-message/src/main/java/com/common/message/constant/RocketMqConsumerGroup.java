@@ -44,6 +44,12 @@ public class RocketMqConsumerGroup {
      * 金蝶员工任岗
      */
     public static final String SYNC_KINGDEE_SYS_USER_POST = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_sys_user_post";
+
+    /**
+     * 金蝶员工任岗
+     */
+    public static final String SYNC_KINGDEE_OPERATOR = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_operator";
+
     /**
      * 金蝶采购订单（采购订单）
      */

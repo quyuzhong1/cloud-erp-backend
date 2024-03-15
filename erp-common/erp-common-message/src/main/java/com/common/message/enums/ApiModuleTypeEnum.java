@@ -45,6 +45,7 @@ public enum ApiModuleTypeEnum {
     SUBCONTRACT_ISSUE(33, "subcontractIssue", "委外发料单","wms"),
     SYS_POST(34, "post", "金蝶岗位","sys"),
     SYS_USER_POST(35, "userPost", "金蝶员工任岗","sys"),
+    KINGDEE_OPERATOR(36, "kingdeeOperator", "金蝶业务员","sys"),
     ;
     private Integer code;
 

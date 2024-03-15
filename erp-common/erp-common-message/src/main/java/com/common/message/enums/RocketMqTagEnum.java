@@ -320,6 +320,11 @@ public enum RocketMqTagEnum {
      * 员工任岗同步金蝶
      */
     KINGDEE_SYS_USER_POST_TAG(1032, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_sys_user_post_tag"),
+
+    /**
+     * 业务员同步金蝶
+     */
+    KINGDEE_OPERATOR_TAG(1033, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_operator_tag"),
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 
     /**

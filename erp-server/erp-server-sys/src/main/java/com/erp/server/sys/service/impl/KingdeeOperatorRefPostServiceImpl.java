@@ -9,6 +9,8 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -22,12 +24,16 @@ import com.erp.model.sys.entity.KingdeePostEntity;
 import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.sys.mapper.KingdeeOperatorRefPostMapper;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeOperatorService;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeService;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeUserPostService;
 import com.erp.server.sys.service.CommonService;
 import com.erp.server.sys.service.KingdeeOperatorRefPostService;
 import com.erp.server.sys.service.KingdeeUserRefPostService;
 import com.erp.server.sys.service.SysAccountingCompanyService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,46 +62,39 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     private KingdeeUserRefPostService kingdeeUserRefPostService;
 
 
+    @Autowired
+    private SyncKingdeeOperatorService syncKingdeeOperatorService;
+
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean add(KingdeeOperatorRefPostDTO.AddDTO addDTO) {
-        KingdeeOperatorRefPostEntity kingdeeOperatorRefPostEntity = new KingdeeOperatorRefPostEntity();
-        BeanMapperUtils.copy(addDTO, kingdeeOperatorRefPostEntity);
-
-        // 数据处理
-        handleData(kingdeeOperatorRefPostEntity);
-
-        log.info("开始新增金蝶业务员单");
-        boolean save = super.save(kingdeeOperatorRefPostEntity);
-        if(!save) {
-            throw new ServiceException("金蝶业务员单保存失败");
+    public BatchResultDTO add(String typeCode,String userPostId) {
+        KingdeeUserRefPostEntity userPost = kingdeeUserRefPostService.getById(userPostId);
+        if (Objects.isNull(userPost) || StringUtils.isBlank(userPost.getCode())) {
+             throw new ServiceException("用户岗位不存在");
         }
-        return save;
+        KingdeeOperatorRefPostEntity kingdeeOperator=this.getByTypeAndUserPost(typeCode,userPostId);
+        if (Objects.nonNull(kingdeeOperator)) {
+            throw new ServiceException("该业务类型已存在");
+        }
+        KingdeeOperatorRefPostEntity addEntity =new KingdeeOperatorRefPostEntity();
+        addEntity.setUserPostId(userPostId);
+        addEntity.setTypeCode(typeCode);
+        addEntity.setUseOrgId(userPost.getUseOrgId());
+        addEntity.setUseOrgName(userPost.getUseOrgName());
+        Boolean  result=this.save(addEntity);
+        if(result){
+            syncKingdeeOperatorService.syncDataToKingdee(addEntity, SyncOperateEnum.OPERATE_ADD.getCode());
+        }
+        return BatchResultDTO.success(addEntity.getId(), addEntity.getId(), OperationTypeEnum.ADD);
     }
 
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(KingdeeOperatorRefPostDTO.UpdateDTO updateDTO) {
-        KingdeeOperatorRefPostEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶业务员单"));
-        KingdeeOperatorRefPostEntity kingdeeOperatorRefPostEntity =  BeanMapperUtils.map(KingdeeOperatorRefPostEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(kingdeeOperatorRefPostEntity);
-        log.info("编辑 开始修改金蝶业务员单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(kingdeeOperatorRefPostEntity);
-        if(!save) {
-            throw new ServiceException("金蝶业务员单保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-
-        return Boolean.TRUE;
+    private KingdeeOperatorRefPostEntity getByTypeAndUserPost(String typeCode, String userPostId) {
+        return this.lambdaQuery().eq(KingdeeOperatorRefPostEntity::getTypeCode,typeCode).
+                eq(KingdeeOperatorRefPostEntity::getUserPostId,userPostId).last("LIMIT 1").one();
     }
+
 
     @Override
     public Boolean init() {
@@ -199,7 +198,14 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
 
     @Override
     public BatchResultDTO delete(String id) {
-        return null;
+        KingdeeOperatorRefPostEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶业务员"));
+        Boolean result = this.removeById(id);
+        if (result && StringUtils.isNotBlank(entity.getCode())) {
+            //金蝶推送
+            syncKingdeeOperatorService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
 
@@ -208,5 +214,15 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     */
     private void handleData(KingdeeOperatorRefPostEntity kingdeeOperatorRefPostEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+
+    @Override
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId, String syncKingdeeCode) {
+        return this.lambdaUpdate()
+                .eq(KingdeeOperatorRefPostEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), KingdeeOperatorRefPostEntity::getKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncKingdeeCode), KingdeeOperatorRefPostEntity::getCode, syncKingdeeCode)
+                .update();
     }
 }

@@ -30,6 +30,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     @Resource
     private KingdeeUserRefPostService kingdeeUserRefPostService;
 
+    @Resource
+    private KingdeeOperatorRefPostService kingdeeOperatorRefPostService;
+
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
         //模块类型编码
@@ -64,6 +67,12 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //员工任岗
         if (ApiModuleTypeEnum.SYS_USER_POST.getCode().toString().equals(code)) {
             kingdeeUserRefPostService.updateSyncKingdeeId(businessId,syncKingdeeId,syncKingdeeCode);
+            return;
+        }
+
+        //业务员
+        if (ApiModuleTypeEnum.KINGDEE_OPERATOR.getCode().toString().equals(code)) {
+            kingdeeOperatorRefPostService.updateSyncKingdeeId(businessId,syncKingdeeId,syncKingdeeCode);
             return;
         }
     }

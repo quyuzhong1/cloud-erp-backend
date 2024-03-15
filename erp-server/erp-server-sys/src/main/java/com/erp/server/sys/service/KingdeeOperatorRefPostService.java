@@ -19,19 +19,12 @@ public interface KingdeeOperatorRefPostService extends SuperService<KingdeeOpera
     * 新增
     * @author Lambda
     * @date: 2024-03-11
-    * @param dto
+    * @param userPostId
     * @return
     */
-    Boolean add(KingdeeOperatorRefPostDTO.AddDTO dto);
+    BatchResultDTO add(String typeCode,String userPostId);
 
-    /**
-    * 修改
-    * @author Lambda
-    * @date: 2024-03-11
-    * @param dto
-    * @return
-    */
-    Boolean update(KingdeeOperatorRefPostDTO.UpdateDTO dto);
+
 
 
     /**
@@ -51,4 +44,7 @@ public interface KingdeeOperatorRefPostService extends SuperService<KingdeeOpera
     PagingVO<KingdeeOperatorRefPostDTO.PagingViewDTO> paging(PagingDTO<KingdeeOperatorRefPostDTO.PagingParamDTO> dto);
 
     BatchResultDTO delete(String id);
+
+
+    Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId, String syncKingdeeCode);
 }
