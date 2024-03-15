@@ -252,6 +252,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         List<String> ids = records.stream().map(PurchaseOrderDTO.ListDTO::getId).distinct().collect(Collectors.toList());
         //送货信息
         List<DeliveryOrderDetailEntity> deliveryOrderDetailList = deliveryOrderDetailService.listDetailByDetailSourceIds(podIds);
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(ids);
         records.forEach(obj -> {
             //已收货数量
             Integer receiveQty = MathUtil.ZERO;
