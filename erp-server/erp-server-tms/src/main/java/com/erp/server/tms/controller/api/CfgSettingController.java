@@ -53,8 +53,8 @@ public class CfgSettingController extends BaseController {
      */
     @GetMapping("/view")
     @LogAction(value = LogActionEnum.UPDATE, desc = "系统配置管理修改")
-    public ApiResult<CfgSettingDTO.ViewDTO> view(@RequestParam("id") String id) {
-        CfgSettingDTO.ViewDTO view = cfgSettingService.view(id);
+    public ApiResult<CfgSettingDTO.ViewDTO> view() {
+        CfgSettingDTO.ViewDTO view = cfgSettingService.view();
         return success(view);
     }
 

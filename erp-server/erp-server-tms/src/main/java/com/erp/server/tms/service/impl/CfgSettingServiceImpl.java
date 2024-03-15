@@ -1,7 +1,6 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -61,18 +60,20 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     }
 
     @Override
-    public CfgSettingDTO.ViewDTO view(String id) {
+    public CfgSettingDTO.ViewDTO view() {
         CfgSettingDTO.ViewDTO viewDTO = new CfgSettingDTO.ViewDTO();
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING.getType());
         if (CollectionUtils.isEmpty(dictList)) {
             return viewDTO;
         }
         //查询已有配置信息
-        CfgSettingEntity entity = this.getById(id);
-        if (ObjectUtil.isEmpty(entity)) {
+        List<CfgSettingEntity> list = listCfgSetting();
+        if (CollectionUtils.isEmpty(list)) {
             return viewDTO;
         }
-        handleViewEnum(entity,viewDTO);
+        for (CfgSettingEntity cfgSetting : list) {
+            handleViewEnum(cfgSetting,viewDTO);
+        }
         return viewDTO;
     }
     /**
@@ -89,6 +90,18 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case LOGISTICS_PRODUCT_DEST_DECLARE_PRICE:
                 List<CfgSettingValueDTO.LogisticsProductDestDeclarePrice> prices = JSONUtil.toList(cfgSetting.getDataJson().getJSONArray("data"), CfgSettingValueDTO.LogisticsProductDestDeclarePrice.class);
                 viewDTO.setLogisticsProductDestDeclarePrices(prices);
+                break;
+            case NOTIC:
+                CfgSettingValueDTO.NoticeDTO noticeDTO = JSONUtil.toBean(cfgSetting.getDataJson(),CfgSettingValueDTO.NoticeDTO.class);
+                viewDTO.setNoticeDTO(noticeDTO);
+                break;
+            case RECONCILIATION_CYCLE:
+                CfgSettingValueDTO.ReconciliationCycleDTO reconciliationCycleDTO = JSONUtil.toBean(cfgSetting.getDataJson(),CfgSettingValueDTO.ReconciliationCycleDTO.class);
+                viewDTO.setReconciliationCycleDTO(reconciliationCycleDTO);
+                break;
+            case BILL_AUTO_ADD:
+                CfgSettingValueDTO.BillAutoAddDTO billAutoAddDTO = JSONUtil.toBean(cfgSetting.getDataJson(),CfgSettingValueDTO.BillAutoAddDTO.class);
+                viewDTO.setBillAutoAddDTO(billAutoAddDTO);
                 break;
             default:
                 break;

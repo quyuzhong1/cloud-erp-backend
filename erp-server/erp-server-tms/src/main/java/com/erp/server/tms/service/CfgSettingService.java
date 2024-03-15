@@ -30,7 +30,7 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      * @date: 2024/1/11 14:35
      * @return ViewDTO
      */
-    CfgSettingDTO.ViewDTO view(String id);
+    CfgSettingDTO.ViewDTO view();
 
     /**
      * 根据key查询配置
