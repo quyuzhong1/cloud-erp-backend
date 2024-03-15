@@ -434,7 +434,7 @@ public class PurchaseOrderController extends BaseController {
             serviceClass = PurchaseOrderService.class,
             keyIdName = "ids")
     public ApiResult finishDelivery(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        Boolean result = purchaseOrderService.finishDelivery(dto.getIds(), dto.getRemark(),Boolean.TRUE);
+        Boolean result = purchaseOrderDetailService.finishDelivery(dto.getIds(), dto.getRemark(),Boolean.TRUE);
         return result == true ? success() : failure();
     }
 

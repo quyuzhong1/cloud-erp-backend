@@ -233,6 +233,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private BigDecimal taxPrice;
 
         /**
+         * 不含税金额
+         */
+        private BigDecimal notTaxPurchaseAmount;
+
+        /**
          * 含税金额
          */
         private BigDecimal purchaseAmount;

@@ -247,7 +247,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         ids.addAll(childList);
         List<String> podIds = baseMapper.listPodIdsByDetailIds(ids);
         if (CollectionUtils.isNotEmpty(podIds)) {
-            purchaseOrderService.finishDelivery(podIds, remark,Boolean.FALSE);
+            purchaseOrderDetailService.finishDelivery(podIds, remark,Boolean.FALSE);
         }
         //委外订单更新到货状态
         subcontractOrderDetailService.updateArrivalStatusByIds(ArrivalStatusEnum.ARRIVED.getCode(),ids,Boolean.TRUE);
