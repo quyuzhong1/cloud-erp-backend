@@ -9,8 +9,12 @@
         count(*) AS count
         FROM so_b2c_delivery sbd
         WHERE
-        ${params.sqlMap.default}
         is_deleted=FALSE
+
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         GROUP BY sbd.status
     </select>
 

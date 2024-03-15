@@ -13,8 +13,11 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
             String searchType = value.toString();
             if ("all".equals(searchType)) {
                 return getQueryAllSql();
+            } else {
+                super.buildDefaultDTO("sbd.logistic_type", searchType);
             }
         }
+
         if("sbd.tab".equals(field)){
             String searchType = value.toString();
             if ("all".equals(searchType)) {
