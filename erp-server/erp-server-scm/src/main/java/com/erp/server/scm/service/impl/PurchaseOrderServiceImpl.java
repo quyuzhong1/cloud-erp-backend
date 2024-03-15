@@ -740,6 +740,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             detailDTO.setUnitName("个");
             //不含税单价（不含税价格=含税价格/（1+增值税税率））
             detailDTO.setPrice(MathUtil.divide(detailDTO.getTaxPrice(),MathUtil.add(BigDecimal.ONE,detailDTO.getTaxRate())));
+            detailDTO.setNotTaxPurchaseAmount(MathUtil.multiply(detailDTO.getPrice(),detailDTO.getPurchaseQty()));
             detailDTO.setTaxRate(MathUtil.multiply(detailDTO.getTaxRate(), MathUtil.BigDecimal_100));
             details.add(detailDTO);
         }
