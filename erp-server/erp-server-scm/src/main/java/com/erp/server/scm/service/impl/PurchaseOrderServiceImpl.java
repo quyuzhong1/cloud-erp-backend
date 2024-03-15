@@ -744,8 +744,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             detailDTO.setTaxRate(MathUtil.multiply(detailDTO.getTaxRate(), MathUtil.BigDecimal_100));
             details.add(detailDTO);
         }
+        //含税金额合计
         BigDecimal totalAmount = details.stream().map(PurchaseOrderDetailDTO.ExportPdfDTO::getPurchaseAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        //不含税金额合计
+        BigDecimal totalNotTaxAmount = details.stream().map(PurchaseOrderDetailDTO.ExportPdfDTO::getNotTaxPurchaseAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         exportPdfDTO.setTotalAmount(totalAmount);
+        exportPdfDTO.setTotalNotTaxAmount(totalNotTaxAmount);
         exportPdfDTO.setCurrency(list.get(0).getCurrency());
         exportPdfDTO.setDetails(details);
         return exportPdfDTO;

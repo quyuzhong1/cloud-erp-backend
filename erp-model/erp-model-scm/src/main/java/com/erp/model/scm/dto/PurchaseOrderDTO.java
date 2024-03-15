@@ -659,9 +659,14 @@ public class PurchaseOrderDTO implements Serializable {
         private String payMethodName;
 
         /**
-         * 合计
+         * 含税金额合计
          */
         private BigDecimal totalAmount;
+
+        /**
+         * 不含税金额合计
+         */
+        private BigDecimal totalNotTaxAmount;
 
         /**
          * 币别
