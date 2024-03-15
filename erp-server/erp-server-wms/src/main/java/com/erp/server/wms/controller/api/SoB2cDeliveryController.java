@@ -98,6 +98,7 @@ public class SoB2cDeliveryController extends BaseController {
         return success(soB2cDeliveryService.paging(dto));
     }
 
+
     /**
      * 详情
      *

@@ -15,7 +15,6 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -284,69 +283,7 @@ public class SoB2cDeliveryDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
-        /**
-         * tab
-         */
-        private String tabFlag;
-        /**
-         * 单号
-         */
-        private String code;
-        /**
-         * 平台集合（platform字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-         */
-        private List<String> dictPlatformList;
-        /**
-         * 店铺
-         * 地址：http://172.16.100.11:3002/project/110/interface/api/24424
-         */
-        private List<String> shopIdList;
-        /**
-         * 销售单号
-         */
-        private String soCode;
-        /**
-         * 状态
-         */
-        private List<String> statusList;
-        /**
-         * 拣货类型：/wms/common/enumDropDown?type=PickingType
-         */
-        private List<String> pickingTypeList;
-        /**
-         * 物流渠道
-         * 地址：http://172.16.100.11:3002/project/128/interface/api/25621
-         */
-        private List<String> logisticsChannelIdList;
-        /**
-         * 货件是否打印
-         */
-        private Boolean isPrintPicking;
-        /**
-         * 是否验货
-         */
-        private Boolean isInspection;
-        /**
-         * 是否称重
-         */
-        private Boolean isWeigh;
-        /**
-         * sku编号
-         */
-        private List<String> skuNoList;
-        /**
-         * 发货仓库id
-         * 地址：http://172.16.100.11:3002/project/92/interface/api/26953
-         */
-        private List<String> warehouseIdList;
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-        /**
-         * 发货时间
-         */
-        private List<LocalDate> deliveryTimeList;
+
     }
 
     /**
