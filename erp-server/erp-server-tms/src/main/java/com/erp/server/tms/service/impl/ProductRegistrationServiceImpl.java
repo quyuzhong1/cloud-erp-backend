@@ -2,29 +2,41 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.tms.dto.SettingForecastDTO;
-import com.erp.model.tms.entity.ProductRegistrationEntity;
-import com.erp.model.tms.enums.ProductRegistrationStatusEnum;
-import com.erp.server.tms.mapper.ProductRegistrationMapper;
-import com.erp.server.tms.service.ProductRegistrationService;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DeclarePlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
+import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.plm.dto.LogisticsProductDTO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.ProductRegistrationDTO;
+import com.erp.model.tms.dto.SettingForecastDTO;
+import com.erp.model.tms.dto.transfer.TransferLogisticsCreateProductReq;
+import com.erp.model.tms.entity.ProductRegistrationEntity;
+import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
+import com.erp.model.tms.enums.ProductRegistrationEnum;
+import com.erp.rpc.plm.feign.LogisticsProductFeign;
+import com.erp.server.tms.convert.ProductRegistrationConverter;
+import com.erp.server.tms.handler.TransferLogisticsRegistry;
+import com.erp.server.tms.mapper.ProductRegistrationMapper;
+import com.erp.server.tms.service.*;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 /**
  * <p>
@@ -42,75 +54,89 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
     @Autowired
     private CommonService commonService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
+    @Resource
+    private LogisticsProductFeign logisticsProductFeign;
+
+    @Resource
+    private TransferLogisticsRegistry transferLogisticsRegistry;
+
+    @Resource
+    private TransferLogisticsAuthService transferLogisticsAuthService;
+
+    @Resource
+    private ProductRegistrationServiceImpl service;
+
     @Override
-    public BaseResultDTO.AddDTO add(ProductRegistrationDTO.AddDTO addDTO) {
-        ProductRegistrationEntity productRegistrationEntity = new ProductRegistrationEntity();
-        BeanMapperUtils.copy(addDTO, productRegistrationEntity);
-
-        // 数据处理
-        handleData(productRegistrationEntity);
-
-        log.info("开始新增产品备案单");
-        boolean save = super.save(productRegistrationEntity);
-        if(!save) {
-            throw new ServiceException("产品备案单保存失败");
+    public List<BatchResultDTO> add(ProductRegistrationDTO.AddDTO addDTO) {
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        //查询授权信息
+        TransferLogisticsAuthEntity transferLogisticsAuthEntity = transferLogisticsAuthService.getByMainId("",addDTO.getDeclareSupplierId());
+        if(Objects.isNull(transferLogisticsAuthEntity)){
+            throw new ServiceException("授权信息为空");
+        }
+        TransferLogisticsService transferLogisticsService = transferLogisticsRegistry.getHandler(transferLogisticsAuthEntity.getLogisticsPlatform());
+        if(Objects.isNull(transferLogisticsService)){
+            throw new ServiceException("未开发平台");
+        }
+        List<String> skuIds = addDTO.getSkuIds();
+        List<ProductRegistrationEntity> entities = this.listBySkuListAndPlatform(skuIds,addDTO.getDeclareSupplierId());
+        Set<String> existSkuIds = entities.stream().map(ProductRegistrationEntity::getSkuId).collect(Collectors.toSet());
+        //过滤掉备案表存在的sku id
+        skuIds = skuIds.stream().filter(v->!existSkuIds.contains(v)).collect(Collectors.toList());
+        List<ProductRegistrationEntity> addList = new ArrayList<>();
+        //产品信息
+        List<LogisticsProductDTO.ProductDTO> productDTOList = logisticsProductFeign.listBySkuIdList(skuIds);
+        for(String skuId : skuIds){
+            ProductRegistrationEntity entity = entities.stream().filter(v->v.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if(Objects.nonNull(entity)){
+                resultDTOList.add(BatchResultDTO.fail(entity.getSkuId(),entity.getSkuNo(),"SKU已备案"));
+                continue;
+            }
+            LogisticsProductDTO.ProductDTO productDTO = productDTOList.stream().filter(v->v.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if(Objects.isNull(productDTO)){
+                resultDTOList.add(BatchResultDTO.fail(skuId,skuId,"查询不到物流产品备案信息"));
+                continue;
+            }
+            TransferLogisticsCreateProductReq createProductReq = ProductRegistrationConverter.INSTANCE.convertToCreateProduct(productDTO);
+            //备案产品
+            ApiResult<String> result = transferLogisticsService.createProduct(createProductReq,transferLogisticsAuthEntity.getId());
+            if(result.isSuccess()){
+                //备案成功，查询产品信息回写表
+                ApiResult<ProductRegistrationEntity> queryResult = transferLogisticsService.getProductBySku(productDTO.getSkuNo(),transferLogisticsAuthEntity.getId());
+                if(queryResult.isSuccess()){
+                    ProductRegistrationEntity addEntity = queryResult.getData();
+                    addEntity.setSkuId(skuId);
+                    addEntity.setLatestTime(LocalDateTime.now());
+                    addEntity.setDeclareSupplierId(transferLogisticsAuthEntity.getMainId());
+                    addEntity.setDeclareSupplierName(transferLogisticsAuthEntity.getName());
+                    addList.add(addEntity);
+                }else{
+                    //失败返回原因
+                    resultDTOList.add(BatchResultDTO.fail(skuId,productDTO.getSkuNo(),"备案产品成功，但在拉取产品信息时失败，请点击拉取备案拉取产品。"+result.getMsg()));
+                }
+            }else{
+                //失败返回原因
+                resultDTOList.add(BatchResultDTO.fail(skuId,productDTO.getSkuNo(),result.getMsg()));
+            }
         }
 
+        if(CollectionUtils.isNotEmpty(addList)){
+            service.saveBatch(addList);
+        }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "产品备案单" , productRegistrationEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, productRegistrationEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(productRegistrationEntity.getId(), productRegistrationEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】sku为【%s】", commonService.getUserInfo().getUserName(), "产品备案信息");
+        List<Pair<String, String>> pairList = addList.stream().map(obj -> new Pair<>(obj.getId(), obj.getSkuNo())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_REGISTRATION.getCode(), pairList, "新增操作");
+        return resultDTOList;
     }
-
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(ProductRegistrationDTO.UpdateDTO updateDTO) {
-        ProductRegistrationEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "产品备案单"));
-        ProductRegistrationEntity productRegistrationEntity =  BeanMapperUtils.map(ProductRegistrationEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(productRegistrationEntity);
-        log.info("编辑 开始修改产品备案单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(productRegistrationEntity);
-        if(!save) {
-            throw new ServiceException("产品备案单保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录产品备案单日志数据，id：【{}】", productRegistrationEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), productRegistrationEntity.getId(), "产品备案单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, productRegistrationEntity, null, productRegistrationEntity.getId(), msg);
-        return Boolean.TRUE;
-    }
-
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(ProductRegistrationEntity productRegistrationEntity) {
-    // TODO 验证数据 & 数据赋值
-    }
-
 
     @Override
-    public List<ProductRegistrationEntity> listBySkuNoList(List<String> skuNoList) {
-        if (CollectionUtils.isEmpty(skuNoList)) {
+    public List<ProductRegistrationEntity> listBySkuListAndPlatform(List<String> skuIdList,String declareSupplierId) {
+        if (CollectionUtils.isEmpty(skuIdList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(ProductRegistrationEntity::getSkuNo, skuNoList).list();
+        return this.lambdaQuery().in(ProductRegistrationEntity::getSkuId, skuIdList).eq(ProductRegistrationEntity::getDeclareSupplierId,declareSupplierId).list();
     }
-
 
     /**
      * 查询是否备案 获取未备案的skuNo
@@ -121,7 +147,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
     @Override
     public List<String> listNotRegistrationByParam(SettingForecastDTO.CheckRegistrationDTO dto) {
         String declarePlatform = dto.getDeclarePlatform();
-        String registered = ProductRegistrationStatusEnum.REGISTERED.getCode();
+        String registered = ProductRegistrationEnum.StatusEnum.REGISTERED.getCode();
         List<String> skuNoList = dto.getSkuNoList();
         List<ProductRegistrationEntity> dbList=this.lambdaQuery().
                 eq(ProductRegistrationEntity::getDeclarePlatform,declarePlatform).
@@ -131,6 +157,43 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
         List<String> dbSkuNoList = dbList.stream().map(ProductRegistrationEntity::getSkuNo).collect(Collectors.toList());
 
         return skuNoList.stream().filter(s->!dbSkuNoList.contains(s)).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ProductRegistrationDTO.TabListDTO> tabList() {
+        return baseMapper.tabList();
+    }
+
+    @Override
+    public PagingVO<ProductRegistrationDTO.PagingVO> paging(PagingDTO<ProductRegistrationDTO.PagingParamDTO> dto) {
+        ProductRegistrationDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<ProductRegistrationDTO.PagingVO> pageData = baseMapper.paging(query, params);
+        List<ProductRegistrationDTO.PagingVO> list = pageData.getRecords();
+        fillPagingDb(list);
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public ProductRegistrationDTO.ViewVO view(String id) {
+        ProductRegistrationEntity old = super.getById(id);
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "产品备案单"));
+
+        ProductRegistrationDTO.ViewVO view = BeanMapperUtils.map(ProductRegistrationDTO.ViewVO.class, old);
+        view.setDeclarePlatformName(EnumMessage.getNameByCode(DeclarePlatformEnum.class,view.getDeclarePlatform()));
+        view.setStatusName(EnumMessage.getNameByCode(ProductRegistrationEnum.StatusEnum.class,view.getStatus()));
+        //TODO:明细推送拉取信息
+        view.setDetailList(ProductRegistrationEnum.DetailDescEnum.convertToViewList());
+        return view;
+    }
+
+    private void fillPagingDb(List<ProductRegistrationDTO.PagingVO> list) {
+        //TODO：待处理备案审核状态
+        list.forEach(v->{
+            v.setStatusName(EnumMessage.getNameByCode(ProductRegistrationEnum.StatusEnum.class,v.getStatus()));
+            v.setDeclarePlatformName(EnumMessage.getNameByCode(DeclarePlatformEnum.class,v.getDeclarePlatform()));
+        });
     }
 
 }

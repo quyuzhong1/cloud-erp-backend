@@ -99,6 +99,10 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
     }
 
     @Override
+    public ApiResult<ProductRegistrationEntity> getProductBySku(String skuNo,String authId) {
+        return handleAndRemoveContext(() -> getProductBySku(skuNo), authId, SourceTypeEnum.TRANSFER_LOGISTICS_GET_ORDER_BY_CODE,skuNo);
+    }
+    @Override
     public ApiResult<String> createInbound(TransferLogisticsCreateInboundReq createInboundReq, String authId) {
         return handleAndRemoveContext(() -> createInbound(createInboundReq), authId, SourceTypeEnum.TRANSFER_LOGISTICS_CREATE_INBOUND,createInboundReq.getReferenceCode());
     }
@@ -117,6 +121,8 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
     protected abstract ApiResult<TransferLogisticsOrderDTO> getOrderByCode(String orderCode);
 
     protected abstract ApiResult<List<ProductRegistrationEntity>> getAllProductInfo();
+
+    protected abstract ApiResult<ProductRegistrationEntity> getProductBySku(String skuNo);
 
     protected abstract ApiResult<String> createInbound(TransferLogisticsCreateInboundReq createInboundReq);
 

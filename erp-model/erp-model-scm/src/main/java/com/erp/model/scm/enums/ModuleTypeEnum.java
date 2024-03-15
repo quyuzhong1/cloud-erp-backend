@@ -75,6 +75,7 @@ public enum ModuleTypeEnum {
     PACKAGE_FORECAST("66", "组包预报"),
     CUSTOMER_B2B_SELLER_CHANGE("63", "b2b客户销售员变更单"),
     PRODUCT_CERTIFICATE("64", "产品认证"),
+    PRODUCT_REGISTRATION("68", "产品备案"),
     ;
 
 

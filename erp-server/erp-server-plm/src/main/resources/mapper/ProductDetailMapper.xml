@@ -1530,9 +1530,18 @@
              pl.declare_model,pl.declare_unit,pl.declare_currency,pl.declare_currency_symbol,pl.dest_declare_price,
              pl.dest_currency,pl.dest_currency_symbol,pl.source_cargo,pl.exemption,pl.source_country,
              pl.combination_declare_type,
-             (select gross_weight from product_pack where is_deleted=false and sku_id=pl.sku_id LIMIT 1) AS grossWeight
+             pp.gross_weight as  grossWeight,
+            CASE WHEN split_part(pp.box_size, 'X',1) = '' THEN null ELSE split_part(pp.box_size, 'X',1) END AS boxSizeLength,
+            CASE WHEN split_part(pp.box_size, 'X',2) = '' THEN null ELSE split_part(pp.box_size, 'X',2) END AS boxSizeWide,
+             CASE WHEN split_part(pp.box_size, 'X',3) = '' THEN null ELSE split_part(pp.box_size, 'X',3) END AS boxSizeHigh,
+            (select value from basic_dict  where is_deleted=false and id=pl.product_property_id LIMIT 1) AS productProperty,
+            pd.name as cnName,pd.name_en as enName,
+            pi.spu_no as spuNo
          FROM product_logistics pl
-         WHERE  pl.is_deleted=false
+        left join product_detail pd on pl.sku_id = pd.id and pd.is_deleted = false
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        left join product_pack pp on pp.sku_id = pl.sku_id and pp.is_deleted = false
+        WHERE  pl.is_deleted=false
          <if test="skuIdList !=null and skuIdList.size>0">
             AND pl.sku_id IN
             <foreach collection="skuIdList" item="item" open="(" separator="," close=")">

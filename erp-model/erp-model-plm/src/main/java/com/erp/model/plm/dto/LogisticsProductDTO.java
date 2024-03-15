@@ -909,7 +909,34 @@ public class LogisticsProductDTO {
     @NoArgsConstructor
     public static class ProductDTO{
 
+        /**
+         * 第一数量
+         */
+        private BigDecimal firstQty;
 
+        /**
+         * 第二数量
+         */
+        private BigDecimal secondQty;
+
+        /**
+         * 长
+         */
+        private BigDecimal boxSizeLength;
+
+        /**
+         * 宽
+         */
+        private BigDecimal boxSizeWide;
+        /**
+         * 高
+         */
+        private BigDecimal boxSizeHigh;
+
+        /**
+         * 产品属性
+         */
+        private String productProperty;
         /**
          * 子订单id
          */
@@ -920,6 +947,7 @@ public class LogisticsProductDTO {
 
        private BigDecimal amount;
 
+       private String spuNo;
         /**
          * 数量
          */
@@ -941,16 +969,16 @@ public class LogisticsProductDTO {
          * 是否带电
          */
         private Boolean isElectric;
-        
-        
+
+
+        /**
+         * 是否带电
+         */
+        private String batteryType;
+
         private String skuId;
 
         private String skuNo;
-
-        /**
-         * 属性
-         */
-        private String productProperty;
 
 
         /**
@@ -973,6 +1001,15 @@ public class LogisticsProductDTO {
          */
         private String declareEnglishName;
 
+        /**
+         * 产品中文品名
+         */
+        private String cnName;
+
+        /**
+         * 产品英文品名
+         */
+        private String enName;
 
 
         /**

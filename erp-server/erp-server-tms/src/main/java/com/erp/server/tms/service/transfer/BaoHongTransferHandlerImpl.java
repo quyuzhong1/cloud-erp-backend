@@ -14,6 +14,7 @@ import com.sdk.tms.baohong.api.order.CreateOrderInfo;
 import com.sdk.tms.baohong.api.order.OrderDataArr;
 import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.api.product.DataRow;
+import com.sdk.tms.baohong.api.product.ProductRow;
 import com.sdk.tms.baohong.api.product.RecordItemRequest;
 import com.sdk.tms.baohong.api.product.RecordItemResponse;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
@@ -76,6 +77,16 @@ public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
         }
         List<ProductRegistrationEntity> transferLogisticsChannelEntityList = BaoHongConverter.INSTANCE.productRegistrationConvert(baoHongResponse.getData());
         return success(transferLogisticsChannelEntityList);
+    }
+
+    @Override
+    protected ApiResult<ProductRegistrationEntity> getProductBySku(String skuNo) {
+        BaoHongResponse<ProductRow> baoHongResponse = baoHongService.getProductInfo(skuNo);
+        if(isFailure(baoHongResponse)){
+            return failure(baoHongResponse.getMessage());
+        }
+        ProductRegistrationEntity entity = BaoHongConverter.INSTANCE.productInfoConvert(baoHongResponse.getData());
+        return success(entity);
     }
 
     @Override

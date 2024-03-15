@@ -1,10 +1,16 @@
 package com.erp.model.tms.dto;
 
 import java.math.BigDecimal;
+
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -23,6 +29,204 @@ import javax.validation.constraints.Digits;
 public class ProductRegistrationDTO implements Serializable {
 
 
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewVO  {
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 备案状态
+         */
+        private String status;
+
+        /**
+         * 备案状态名称
+         */
+        private String statusName;
+
+        /**
+         * 备案平台
+         */
+        private String declarePlatform;
+
+        /**
+         * 备案平台名称
+         */
+        private String declarePlatformName;
+
+        /**
+         * 备案推送/拉取时间(最新)(可排序)
+         */
+        private LocalDateTime latestTime;
+
+        /**
+         * 详情
+         */
+        private List<ViewDetailVO> detailList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDetailVO  {
+        /**
+         * 接口字段中文
+         */
+        private String interfaceFieldCn;
+        /**
+         * 接口字段英文
+         */
+        private String interfaceFieldEn;
+
+        /**
+         * 数大臣字段
+         */
+        private String erpField;
+
+        /**
+         * 推送信息
+         */
+        private String pushValue;
+
+        /**
+         * 拉取信息
+         */
+        private String pullValue;
+    }
+
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
+
+    /**
+     * 分页
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingVO {
+
+        private String id;
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku(可排序)
+         */
+        private String skuNo;
+
+        /**
+         * 报关物流商名称(可排序)
+         */
+        private String declareSupplierName;
+
+        /**
+         * 报关型号规格(可排序)
+         */
+        private String spu;
+
+        /**
+         * 备案平台(可排序)
+         */
+        private String declarePlatform;
+
+        /**
+         * 备案平台名称(可排序)
+         */
+        private String declarePlatformName;
+
+        /**
+         * 备案状态(可排序)
+         */
+        private String status;
+
+        /**
+         * 备案状态名称(可排序)
+         */
+        private String statusName;
+
+        /**
+         * 备案审核状态
+         */
+        private String registrationApproveStatus;
+
+        /**
+         * 备案审核状态名称
+         */
+        private String registrationApproveStatusName;
+
+        /**
+         * 中文报关名(可排序)
+         */
+        private String declareCnName;
+
+        /**
+         * 报关申报价
+         */
+        private BigDecimal declarePrice;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 报关HSCODE(可排序)
+         */
+        private String customsCode;
+
+        /**
+         * 申报要素(可排序)
+         */
+        private String declareElement;
+
+        /**
+         * 备案推送/拉取时间(最新)(可排序)
+         */
+        private LocalDateTime latestTime;
+
+    }
+
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO {
+        /**
+         * 类型
+         */
+        private String tabFlag;
+
+        /**
+         * 类型名
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
 
 
     /**
@@ -200,8 +404,19 @@ public class ProductRegistrationDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
+    public static class AddDTO {
 
+        /**
+         * skuIds
+         */
+        @NotNull(message = "skuIds不能为空")
+        private List<String> skuIds;
+
+        /**
+         * 备案平台id
+         */
+        @NotBlank(message = "备案平台不能为空")
+        private String declareSupplierId;
 
     }
 

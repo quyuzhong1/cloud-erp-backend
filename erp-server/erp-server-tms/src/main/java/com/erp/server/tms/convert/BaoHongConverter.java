@@ -18,6 +18,7 @@ import com.sdk.tms.baohong.api.order.OrderDataArr;
 import com.sdk.tms.baohong.api.order.ProductDeatil;
 import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.api.product.DataRow;
+import com.sdk.tms.baohong.api.product.ProductRow;
 import com.sdk.tms.baohong.api.product.RecordItemRequest;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -146,7 +147,29 @@ public interface BaoHongConverter {
             @Mapping(target = "height", source = "height",qualifiedByName = "bigDecimalToFloat"),
             @Mapping(target = "hasBattery", source = "hasBattery",qualifiedByName = "boolToInteger"),
             @Mapping(target = "firstQauntity", source = "firstQauntity",qualifiedByName = "bigDecimalToFloat"),
+            @Mapping(target = "batteryType", expression = "java(com.sdk.tms.baohong.enums.BaoHongEnum.BatteryEnum.getCodeByErp(createProductReq.getProductProperty()))"),
             @Mapping(target = "secondQauntity", source = "secondQauntity",qualifiedByName = "bigDecimalToFloat")
     })
     RecordItemRequest createProductConvert(TransferLogisticsCreateProductReq createProductReq);
+
+
+    @Mappings({
+            @Mapping(target = "declarePlatform", constant = "BaoHong"),
+            @Mapping(target = "skuNo", source = "productSku"),
+            @Mapping(target = "customBarcode", source = "productBarcode"),
+            @Mapping(target = "productName", source = "productTitle"),
+            @Mapping(target = "productNameCn", source = "productTitle"),
+            @Mapping(target = "productNameEn", source = "productTitleEn"),
+            @Mapping(target = "status", expression = "java(com.common.core.constant.EnumMessage.getByCode(com.sdk.tms.baohong.enums.BaoHongEnum.ProductStatusEnum.class,data.getProductStatus()).getProductRegistrationStatusEnum().getCode())"),
+            @Mapping(target = "declareNameCn", source = "hsGoodsName"),
+            @Mapping(target = "customsCode", source = "hsCode"),
+            @Mapping(target = "grossWeight", source = "productWeight"),
+            @Mapping(target = "declarePrice", source = "productDeclaredValue"),
+            @Mapping(target = "isParts", source = "isAccessories",qualifiedByName="strToBooleanByNum"),
+            @Mapping(target = "isInvoice", source = "hasInvoice",qualifiedByName = "strToBooleanByNum"),
+            @Mapping(target = "currency", source = "currencyCode"),
+            @Mapping(target = "declareElement", source = "modelSerial"),
+            @Mapping(target = "failureReason", source = "rejectReason"),
+    })
+    ProductRegistrationEntity productInfoConvert(ProductRow data);
 }

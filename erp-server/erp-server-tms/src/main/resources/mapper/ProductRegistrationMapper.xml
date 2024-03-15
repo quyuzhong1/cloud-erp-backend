@@ -45,19 +45,45 @@
        <result column="url" property="url" />
     </resultMap>
 
-    <!-- 通用查询结果列 -->
-    <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        sku_id, sku_no, declare_platform, remark, status, product_name, product_name_cn, product_name_en, declare_unit, good_id, spu, currency, declare_price, gross_weight, length, width, height, is_battery, battery_type, declare_name_cn, customs_code, first_number, second_number, declare_element, supplier_code, barcode_type, custom_barcode, is_invoice, is_parts, battery_note, url
-    </sql>
+    <select id="tabList" resultType="com.erp.model.tms.dto.ProductRegistrationDTO$TabListDTO">
+        SELECT tabFlag, tabFlagName, sum(num) as count
+        FROM (SELECT case when status = 'registered' then 'registered' else 'notRegister' end as tabFlag,
+                     case when status = 'registered' then '已备案' else '未备案' end          as tabFlagName,
+                     count(1)                                                                 as num
+              FROM "product_registration"
+              group by status) a
+        GROUP BY tabFlag, tabFlagName
+    </select>
 
+    <select id="paging" resultType="com.erp.model.tms.dto.ProductRegistrationDTO$PagingVO">
+        select pr.id,
+            pr.sku_id as skuId,
+            pr.sku_no as skuNo,
+            pr.spu,
+            pr.declare_platform as declarePlatform,
+            pr.status,
+            pr.declare_name_cn as declareCnName,
+            pr.declare_price as declare_price,
+            pr.currency,
+            pr.customs_code as customsCode,
+            pr.declare_element as declareElement,
+            pr.latest_time as  latestTime,
+            pr.declare_supplier_name as declareSupplierName
+        from product_registration pr
+        where
+            ${params.sqlMap.default}
+          and  pr.is_deleted=false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pr.latest_time DESC
+    </select>
 
 </mapper>

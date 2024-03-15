@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -180,7 +182,28 @@ public class ProductRegistrationEntity extends BaseEntity<ProductRegistrationEnt
     */
     @TableField("url")
     private String url;
+    /**
+     * 备案不通过原因
+     */
+    @TableField("failure_reason")
+    private String failureReason;
+    /**
+     * 图片url
+     */
+    @TableField("latest_time")
+    private LocalDateTime latestTime;
 
+    /**
+     * 报关商id
+     */
+    @TableField("declare_supplier_id")
+    private String declareSupplierId;
+
+    /**
+     * 报关商名称
+     */
+    @TableField("declare_supplier_name")
+    private String declareSupplierName;
 
     public static final String SKU_ID = "sku_id";
 

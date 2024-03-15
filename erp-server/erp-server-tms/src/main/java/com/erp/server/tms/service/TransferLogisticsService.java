@@ -44,6 +44,11 @@ public interface TransferLogisticsService {
     ApiResult<List<ProductRegistrationEntity>> getAllProductInfo(String authId);
 
     /**
+     * 查询单个sku
+     */
+    ApiResult<ProductRegistrationEntity> getProductBySku(String skuNo,String authId);
+
+    /**
      * 创建入库单
      * @return 服务商入库单号
      */

@@ -1,8 +1,14 @@
 package com.erp.server.tms.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.tms.dto.ProductRegistrationDTO;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +22,7 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface ProductRegistrationMapper extends BaseMapper<ProductRegistrationEntity> {
 
+    List<ProductRegistrationDTO.TabListDTO> tabList();
+
+    IPage<ProductRegistrationDTO.PagingVO> paging(Page query, @Param("params") ProductRegistrationDTO.PagingParamDTO params);
 }

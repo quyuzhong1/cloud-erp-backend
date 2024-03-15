@@ -44,6 +44,16 @@ public class TransferLogisticsCreateProductReq {
     private String unit;
 
     /**
+     * 产品型号
+     */
+    private String model;
+
+    /**
+     * 产品属性
+     */
+    private String productProperty;
+
+    /**
      * 币别
      */
     @NotBlank(message = "币别不能为空")
