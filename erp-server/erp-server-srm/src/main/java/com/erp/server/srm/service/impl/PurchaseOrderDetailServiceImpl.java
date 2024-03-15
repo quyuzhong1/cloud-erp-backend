@@ -256,18 +256,22 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         records.forEach(obj -> {
             //已收货数量
             Integer receiveQty = MathUtil.ZERO;
+            //收货数量
+            if (CollectionUtils.isNotEmpty(receiveList)) {
+                receiveQty = receiveList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) )
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            obj.setReceiveQty(receiveQty);
             //已送货数量
             Integer waitReceiveQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
                 waitReceiveQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
                         .map(DeliveryOrderDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-                receiveQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
-                        .map(DeliveryOrderDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             obj.setWaitReceiveQty(waitReceiveQty);
             //待交货量
             obj.setDeliveryQty(obj.getPurchaseQty() - waitReceiveQty - receiveQty);
-            obj.setReceiveQty(receiveQty);
+
             //交货周期
             Boolean deliveryCycleFlag = false;
             if(Objects.nonNull(obj.getDeliveryCycle())){
