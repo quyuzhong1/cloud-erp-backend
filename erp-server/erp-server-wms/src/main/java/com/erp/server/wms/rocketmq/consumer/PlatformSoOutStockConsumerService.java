@@ -15,6 +15,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -27,10 +28,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -127,7 +131,30 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
         }
 
         // B2C销售订单添加整个销售出库单的基础信息
-        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(soB2cEntity.getId());
+        SoOutstockDTO.GenerateB2cDTO generateB2cDTO;
+        try {
+            generateB2cDTO = soB2cFeign.getSoOutstockInfoById(soB2cEntity.getId());
+        } catch (Exception e) {
+            // 生成明细异常记录
+            List<SoB2cDetailEntity> detailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId()));
+            if (CollectionUtils.isEmpty(detailList)){
+                throw new ServiceException("明细ID为空, 订单ID=" + soB2cEntity.getId());
+            }
+            String platformOrderDetailId = dto.getDetailList().get(0).getPlatformOrderDetailId();
+            SoB2cDetailEntity detailEntity = detailList.stream().filter(d -> d.getSourceDetailId().equals(platformOrderDetailId))
+                    .findFirst()
+                    .orElseThrow(() -> new ServiceException("未找到明细"));
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+            addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+            addError.setParamJson(JSONUtil.toJsonStr(ext));
+            addError.setReturnJson("");
+            addError.setDetailId(detailEntity.getId());
+            addError.setMainId(soB2cEntity.getId());
+            addError.setMessage(StrUtil.format("自动生成销售出库单失败：{}", e.getMessage()));
+            soB2cFeign.addSoB2cError(addError);
+            return ApiResult.success();
+        }
+
         // 校验sku映射关系
         if (generateB2cDTO.getDetailList().stream().anyMatch(e-> StringUtils.isBlank(e.getSkuId()))){
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
