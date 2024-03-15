@@ -635,6 +635,7 @@
         INNER JOIN po_receive_detail prd ON prd.main_id = pr.id
         WHERE
         pr.approve_status = 'approve'
+        AND pr.source_id = ''
         <if test="purchaseOrderIds !=null and purchaseOrderIds.size>0">
             AND pr.purchase_order_id IN
             <foreach collection="purchaseOrderIds" item="purchaseOrderId" open="(" separator="," close=")">
