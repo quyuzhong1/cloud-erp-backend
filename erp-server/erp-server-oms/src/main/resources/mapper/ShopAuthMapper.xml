@@ -87,7 +87,7 @@
             auth.token_expire_time,
             auth.refresh_status,
             auth.refresh_error_msg,
-            info.dict_platform,
+            info.dict_platform
         FROM shop_auth auth
         INNER JOIN shop_info info ON auth.shop_id = info."id" and info.auth_status = 'already'
         WHERE auth.is_deleted = FALSE
