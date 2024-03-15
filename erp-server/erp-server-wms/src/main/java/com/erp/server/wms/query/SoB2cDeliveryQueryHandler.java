@@ -1,7 +1,5 @@
 package com.erp.server.wms.query;
 
-import com.common.business.enums.QueryConditionEnum;
-import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import org.springframework.stereotype.Component;
