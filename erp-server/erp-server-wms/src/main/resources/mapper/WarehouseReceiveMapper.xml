@@ -628,7 +628,8 @@
 
     <select id="getReceiveListByPurchaseOrderIds" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PurchaseOrderDetailDTO">
         SELECT
-        SUM( prd.receive_qty ) AS receiveQty,
+        pr.source_id as sourceId,
+        prd.receive_qty  AS receiveQty,
         prd.purchase_order_detail_id AS purchaseOrderDetailId
         FROM
         po_receive pr
@@ -642,6 +643,5 @@
                 #{purchaseOrderId}
             </foreach>
         </if>
-        GROUP BY prd.purchase_order_detail_id
     </select>
 </mapper>
