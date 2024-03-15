@@ -2452,10 +2452,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         Map<String, List<PurchaseEndReceiveImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getCode().concat(obj.getSkuNo())));
         for (Map.Entry<String,List<PurchaseEndReceiveImportExcelDTO>> entry : map.entrySet()) {
-            List<String> errorMsgList = new ArrayList<>();
             List<PurchaseEndReceiveImportExcelDTO> value = entry.getValue();
             Boolean isError = Boolean.FALSE;
             for (PurchaseEndReceiveImportExcelDTO excelDTO : value) {
+                List<String> errorMsgList = new ArrayList<>();
                 //判断导入数据是否重复
                 if (value.size() > 1) {
                     errorMsgList.add("存在两条相同的数据，请重新导入");
@@ -2483,6 +2483,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             //结束交货
             if (!isError) {
+                List<String> errorMsgList = new ArrayList<>();
                 PurchaseEndReceiveImportExcelDTO excelDTO = value.get(0);
                 try {
                     purchaseOrderDetailService.finishDelivery(Arrays.asList(excelDTO.getDetailId()),excelDTO.getRemark(),Boolean.TRUE);
