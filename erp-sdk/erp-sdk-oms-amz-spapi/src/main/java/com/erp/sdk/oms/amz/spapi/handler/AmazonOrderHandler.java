@@ -328,4 +328,64 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         return shopInfoDTO;
     }
 
+
+    public List<PlatformAmazonOrderDTO> downloadByOrderIds(List<String> orderIds, String shopId, String groupId) {
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+        AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_LIST;
+        // 默认请求速率配置
+        String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT_PREFIX, groupId);
+        RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
+        String rateLimitStr;
+
+        // 亚马逊订单下载
+        OrdersV0Api api = OrdersV0Api.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
+        // 正式环境请求
+        try {
+            List<String> marketplaceIds = Collections.singletonList(marketPlaceEnum.getMarketplaceId());
+            // 发起请求
+            ApiResponse<GetOrdersResponse> ordersWithHttpInfo = api.getOrdersWithHttpInfo(marketplaceIds,
+                    null, null, null, null, null, null, null, null, null, 100,
+                    null, null, null, orderIds, null, null, null, null, null, null, null);
+            List<String> limitArray = ordersWithHttpInfo.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
+            rateLimitStr = limitArray.get(0);
+            GetOrdersResponse orders = ordersWithHttpInfo.getData();
+
+            List<Order> orderList = new LinkedList<>(orders.getPayload().getOrders());
+            String currentNextToken = orders.getPayload().getNextToken();
+            int currentSize = orders.getPayload().getOrders().size();
+            while (StringUtils.isNotBlank(currentNextToken) && currentSize == 100) {
+                // 上一次请求的响应频率设置
+                if (StringUtils.isNotBlank(rateLimitStr)){
+                    RateLimitConfigurationOnRequests rateLimitConfigurationRequests = (RateLimitConfigurationOnRequests) rateLimitConfig;
+                    rateLimitConfigurationRequests.setRateLimitPermit(Double.parseDouble(rateLimitStr));
+                    api.getApiClient().setRateLimiter(rateLimitConfigurationRequests);
+                }
+                GetOrdersResponse currentResp = api.getOrders(marketplaceIds, null, null, null, null, null, null, null, null, null, 100, null, null, currentNextToken, null, null, null, null, null, null, null, null);
+                orderList.addAll(currentResp.getPayload().getOrders());
+                // 亚马逊接口响应时间UTC转换8区
+//                LocalDateTime currentParse = LocalDateTime.parse(currentResp.getPayload().getLastUpdatedBefore(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+//                nextStartTime = DateUtil.utcSamePlus8(currentParse);
+                currentNextToken = currentResp.getPayload().getNextToken();
+                currentSize = currentResp.getPayload().getOrders().size();
+                List<String> currentLimitArray = ordersWithHttpInfo.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
+                rateLimitStr = currentLimitArray.get(0);
+            }
+            if (StringUtils.isNotBlank(rateLimitStr)){
+                // 设置动态速率，失效时间=1/limit
+                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+            }
+            // 返回下载源数据
+            return orderList.stream()
+                    .map(e-> new PlatformAmazonOrderDTO(e, shopInfoDTO.getId()))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new RuntimeException("根据订单IDS请求亚马逊SP-APi订单失败,body=" + JSONUtil.toJsonStr(e));
+        }
+    }
 }
