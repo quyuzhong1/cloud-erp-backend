@@ -24,15 +24,13 @@ public class ErpServerSysApplicationTests {
     @Test
     public void contextLoads() {
         LinkedList<String> queryFilters = new LinkedList<>();
-        //审核状态
-        queryFilters.add(StrUtil.format(" FDocumentStatus = {}", "'C'"));
         //禁用状态
-        queryFilters.add(StrUtil.format(" FFORBIDSTATUS = {}", "'A'"));
+        queryFilters.add(StrUtil.format(" FForbiddenStatus = {}", "'0'"));
 
         String filterStr = String.join(" and ", queryFilters);
         System.out.println("拉取金蝶条件为>>>>>>>>>>"+ filterStr);
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_DEPARTMENT.getCode());
-        String fieldKeys = "FDEPTID,FNumber,FName,FUseOrgId.FNumber,FParentID.FNumber,FDocumentStatus,FFORBIDSTATUS";
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_OPERATOR.getCode());
+        String fieldKeys = "FOperatorType,FBizOrgId.FNumber,FNumber,FStaffId.FStaffNumber,FForbiddenStatus";
         List<Map<String, Object>> list = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
         System.out.println(">>>>>>>>>"+ JSONUtil.toJsonStr(list));
 

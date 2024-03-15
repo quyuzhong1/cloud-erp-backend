@@ -24,11 +24,7 @@ import com.common.business.enums.ApproveStatusEnum;
 @TableName("kingdee_operator_type")
 public class KingdeeOperatorTypeEntity extends BaseEntity<KingdeeOperatorTypeEntity> {
 
-    /**
-    * 金蝶id
-    */
-    @TableField("kingdee_id")
-    private String kingdeeId;
+
     /**
     * 金蝶code
     */

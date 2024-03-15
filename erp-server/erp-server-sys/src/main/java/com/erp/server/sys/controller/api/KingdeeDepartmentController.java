@@ -64,7 +64,7 @@ public class KingdeeDepartmentController extends BaseController {
      * @return
      */
     @GetMapping("/list")
-    public ApiResult<List<BaseDropDownDTO.CommonDTO>> parentList(@RequestParam("orgId") String orgId){
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> list(@RequestParam("orgId") String orgId){
         List<KingdeeDepartmentEntity> list=kingdeeDepartmentService.listByOrgId(orgId);
         List<BaseDropDownDTO.CommonDTO> result = list.stream().filter(d-> StringUtils.isNotBlank(d.getKingdeeDeptCode()))
                 .map(x -> new BaseDropDownDTO.CommonDTO(x.getId(), x.getKingdeeDeptName()))

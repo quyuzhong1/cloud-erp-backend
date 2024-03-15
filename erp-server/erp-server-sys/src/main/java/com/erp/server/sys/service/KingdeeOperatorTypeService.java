@@ -21,7 +21,7 @@ public interface KingdeeOperatorTypeService extends SuperService<KingdeeOperator
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(KingdeeOperatorTypeDTO.AddDTO dto);
+    Boolean add(KingdeeOperatorTypeDTO.AddDTO dto);
 
     /**
     * 修改

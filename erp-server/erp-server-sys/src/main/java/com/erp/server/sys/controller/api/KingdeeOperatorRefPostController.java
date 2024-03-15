@@ -1,9 +1,18 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.vo.PagingVO;
+import com.erp.model.sys.dto.KingdeeUserRefPostDTO;
+import com.erp.model.sys.entity.KingdeeOperatorRefPostEntity;
+import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
+import com.erp.server.sys.query.KingdeeOperatorQueryHandler;
+import com.erp.server.sys.query.KingdeeUserQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
+import javax.validation.Valid;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -20,8 +29,12 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
 /**
- * 金蝶业务员表
+ * 金蝶架构管理-业务员管理
  *
  * @author Lambda
  * @since 2024-03-11
@@ -29,11 +42,39 @@ import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 @Slf4j
 @RestController
 @LogSystemModule("金蝶业务员表")
-@RequestMapping("/kingdeeOperatorRefPost")
+@RequestMapping("/kingdeeOperator")
 public class KingdeeOperatorRefPostController extends BaseController {
 
     @Resource
     private KingdeeOperatorRefPostService kingdeeOperatorRefPostService;
+
+
+
+    /**
+     * 初始化金蝶数据
+     * @author Lambda
+     * @date:  2024-03-11
+     * @return ApiResult<String>
+     */
+    @GetMapping("/init")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "初始化")
+    public ApiResult init() {
+        Boolean result = kingdeeOperatorRefPostService.init();
+        return result ? success() : failure();
+    }
+
+
+    /**
+     * 分页查询
+     * @param dto
+     * @return
+     */
+    @PostMapping("/paging")
+    @WebAdvanceQuery(handler = KingdeeOperatorQueryHandler.class)
+    public ApiResult<PagingVO<KingdeeOperatorRefPostDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<KingdeeOperatorRefPostDTO.PagingParamDTO> dto) {
+        PagingVO<KingdeeOperatorRefPostDTO.PagingViewDTO> pagingVO = kingdeeOperatorRefPostService.paging(dto);
+        return success(pagingVO);
+    }
 
     /**
     * 新增
@@ -44,29 +85,39 @@ public class KingdeeOperatorRefPostController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "金蝶业务员表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated KingdeeOperatorRefPostDTO.AddDTO dto) {
-        return success(kingdeeOperatorRefPostService.add(dto));
+    public ApiResult add(@RequestBody @Validated KingdeeOperatorRefPostDTO.AddDTO dto) {
+        Boolean result = kingdeeOperatorRefPostService.add(dto);
+        return result ? success() : failure();
     }
+
+
 
     /**
-    * 修改
-    * @author Lambda
-    * @date:  2024-03-11
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "金蝶业务员表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "sys:kingdeeOperatorRefPost:update",
-        serviceClass = KingdeeOperatorRefPostService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated KingdeeOperatorRefPostDTO.UpdateDTO dto) {
-        kingdeeOperatorRefPostService.update(dto);
-        return success();
+     * 删除
+     * @param dto
+     * @return
+     */
+    @PostMapping("/delete")
+    public ApiResult<List<BatchResultDTO>>  delete(@RequestBody  @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = kingdeeOperatorRefPostService.delete(id);
+            }catch (Exception e){
+                log.error("金蝶员工任岗位 删除失败===>{}", e.getMessage());
+                KingdeeOperatorRefPostEntity entity = kingdeeOperatorRefPostService.getById(id);
+                if (Objects.isNull(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "金蝶员工岗位不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
-
 
 
 }

@@ -1,4 +1,5 @@
 package com.erp.server.sys.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.entity.KingdeeOperatorRefPostEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -21,7 +22,7 @@ public interface KingdeeOperatorRefPostService extends SuperService<KingdeeOpera
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(KingdeeOperatorRefPostDTO.AddDTO dto);
+    Boolean add(KingdeeOperatorRefPostDTO.AddDTO dto);
 
     /**
     * 修改
@@ -33,4 +34,21 @@ public interface KingdeeOperatorRefPostService extends SuperService<KingdeeOpera
     Boolean update(KingdeeOperatorRefPostDTO.UpdateDTO dto);
 
 
+    /**
+     * 初始化金蝶数据
+     * @description
+     * @return
+     * @date 2024-03-15 9:32
+     * @author Lambda
+     */
+    Boolean init();
+
+    /**
+     *  分页查询
+     * @param dto
+     * @return
+     */
+    PagingVO<KingdeeOperatorRefPostDTO.PagingViewDTO> paging(PagingDTO<KingdeeOperatorRefPostDTO.PagingParamDTO> dto);
+
+    BatchResultDTO delete(String id);
 }

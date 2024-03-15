@@ -198,6 +198,11 @@ public class KingdeePostDTO implements Serializable {
          */
         private String kingdeeDeptName;
 
+        /**
+         * 岗位名称
+         */
+        private String name;
+
     }
 
 

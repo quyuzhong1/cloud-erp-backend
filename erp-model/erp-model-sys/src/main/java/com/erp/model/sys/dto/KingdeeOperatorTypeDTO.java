@@ -35,10 +35,7 @@ public class KingdeeOperatorTypeDTO implements Serializable {
         */
         private String  id;
 
-        /**
-        * 金蝶id
-        */
-        private String kingdeeId;
+
 
         /**
         * 金蝶code
@@ -85,15 +82,13 @@ public class KingdeeOperatorTypeDTO implements Serializable {
         /**
         * 金蝶id
         */
-        @NotBlank(message = "金蝶id不能为空")
-        @Size(max = 19,message = "金蝶id最大长度不能超过19位")
-        private String kingdeeId;
+        @NotBlank(message = "金蝶业务员类型code不能为空")
+        private String code;
 
         /**
         * 金蝶name
         */
-        @NotBlank(message = "金蝶name不能为空")
-        @Size(max = 32,message = "金蝶name最大长度不能超过32位")
+        @NotBlank(message = "金蝶业务员类型名称不能为空")
         private String name;
 
 

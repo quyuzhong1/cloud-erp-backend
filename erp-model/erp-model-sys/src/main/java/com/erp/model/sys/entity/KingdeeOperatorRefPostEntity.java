@@ -25,15 +25,26 @@ import com.common.business.enums.ApproveStatusEnum;
 public class KingdeeOperatorRefPostEntity extends BaseEntity<KingdeeOperatorRefPostEntity> {
 
     /**
-    * 金蝶业务员类型表id kingdee_operator_type
+    * 金蝶业务员类型表code kingdee_operator_type
     */
-    @TableField("type_id")
-    private String typeId;
+    @TableField("type_code")
+    private String typeCode;
+
     /**
     * 金蝶员工任岗表id  kingdee_user_ref_post 表
     */
     @TableField("user_post_id")
     private String userPostId;
+
+    @TableField("code")
+    private String code;
+
+    @TableField("use_org_id")
+    private String useOrgId;
+
+
+    @TableField("use_org_name")
+    private String useOrgName;
 
 
     public static final String TYPE_ID = "type_id";
