@@ -9,6 +9,12 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
+        if ("sbd.logistic_type".equals(field)) {
+            String searchType = value.toString();
+            if ("all".equals(searchType)) {
+                return getQueryAllSql();
+            }
+        }
         if("sbd.tab".equals(field)){
             String searchType = value.toString();
             if ("all".equals(searchType)) {
