@@ -8,7 +8,9 @@
         sbd.status AS tabFlag,
         count(*) AS count
         FROM so_b2c_delivery sbd
-        WHERE is_deleted=FALSE
+        WHERE
+        ${params.sqlMap.default}
+        is_deleted=FALSE
         GROUP BY sbd.status
     </select>
 
@@ -39,7 +41,8 @@
         sbd.delivery_time AS deliveryTime
         FROM so_b2c_delivery sbd
         LEFT JOIN so_b2c_delivery_detail sbdd ON sbd.id = sbdd.main_id AND sbd.is_deleted = FALSE
-        WHERE sbdd.is_deleted = FALSE
+        WHERE ${params.sqlMap.default}
+        AND sbdd.is_deleted = FALSE
         <!--tab状态-->
         <if test="params.tabFlag != null and params.tabFlag != ''">
             AND sbd.status = #{params.tabFlag}

@@ -29,7 +29,7 @@ public interface SoB2cDeliveryMapper extends BaseMapper<SoB2cDeliveryEntity> {
      * @param searchParam
      * @return java.util.List<com.erp.model.wms.dto.SoB2cDeliveryDTO.TabListDTO>
      **/
-    List<SoB2cDeliveryDTO.TabListDTO> tabList(SoB2cDeliveryDTO.PagingParamDTO searchParam);
+    List<SoB2cDeliveryDTO.TabListDTO> tabList(@Param("params") SoB2cDeliveryDTO.PagingParamDTO searchParam);
 
     /**
      * 分页查询

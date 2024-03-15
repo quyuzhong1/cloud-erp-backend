@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
@@ -17,6 +18,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -273,6 +275,15 @@ public class SoB2cDeliveryDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
         /**
          * tab
          */
