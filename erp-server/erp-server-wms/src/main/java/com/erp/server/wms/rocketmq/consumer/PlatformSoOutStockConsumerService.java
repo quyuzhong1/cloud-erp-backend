@@ -1,57 +1,37 @@
 package com.erp.server.wms.rocketmq.consumer;
 
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.business.dto.*;
+import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.DmpSyncTaskIdDTO;
+import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
-import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.oms.feign.OmsTaskFeign;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
-import com.erp.server.wms.service.CfgAmzFulfillmentCenterService;
-import com.erp.server.wms.service.FbaShipmentService;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * 销售出库单消费服务
@@ -135,23 +115,33 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
         soB2cFeign.checkAndFillBySoOutStock(dto);
 
         SoB2cEntity soB2cEntity = soB2cEntityList.get(0);
-        // B2C销售订单添加整个销售出库单的基础信息
-        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(soB2cEntity.getId());
 
-        // 校验sku映射关系
-        if (generateB2cDTO.getDetailList().stream().anyMatch(e-> StringUtils.isBlank(e.getSkuId()))){
+        try {
+            // B2C销售订单添加整个销售出库单的基础信息
+            SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(soB2cEntity.getId());
+            // 校验sku映射关系
+            if (generateB2cDTO.getDetailList().stream().anyMatch(e-> StringUtils.isBlank(e.getSkuId()))){
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+                addError.setParamJson(JSONUtil.toJsonStr(ext));
+                addError.setReturnJson("");
+                addError.setMainId(soB2cEntity.getId());
+                addError.setMessage(StrUtil.format("自动生成销售出库单失败：订单未匹配Sku映射关系"));
+                soB2cFeign.addSoB2cError(addError);
+                return ApiResult.success();
+            }
+            // 检查和生成销售出库单
+            soOutstockService.checkAndGenerate(generateB2cDTO, dto, soB2cEntity);
+        }catch (Exception e){
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
             addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
-            addError.setParamJson(JSONUtil.toJsonStr(ext));
+            addError.setParamJson("");
             addError.setReturnJson("");
             addError.setMainId(soB2cEntity.getId());
-            addError.setMessage(StrUtil.format("自动生成销售出库单失败：订单未匹配Sku映射关系"));
+            addError.setMessage(e.getMessage());
             soB2cFeign.addSoB2cError(addError);
-            return ApiResult.success();
+            log.error("[生成销售出库单异常]:order={},msg={}", soB2cEntity.getCode(), e.getMessage());
         }
-
-        // 检查和生成销售出库单
-        soOutstockService.checkAndGenerate(generateB2cDTO, dto, soB2cEntity);
         return ApiResult.success();
     }
 }
