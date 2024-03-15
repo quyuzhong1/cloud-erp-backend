@@ -2465,7 +2465,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                         .collect(Collectors.toList());
                 //验证是否存在未作废数据
                 if (CollectionUtils.isEmpty(detailList)) {
-                    errorMsgList.add(StrUtil.format("系统中存在多条采购订单【{}】SKU【{}】的数据，请在页面上操作",excelDTO.getCode(),excelDTO.getSkuNo()));
+                    errorMsgList.add(StrUtil.format("采购订单【{}】SKU【{}】不存在",excelDTO.getCode(),excelDTO.getSkuNo()));
                 } else {
                     //存在多条相同sku则不允许更新
                     if (detailList.size() > MathUtil.ONE) {
