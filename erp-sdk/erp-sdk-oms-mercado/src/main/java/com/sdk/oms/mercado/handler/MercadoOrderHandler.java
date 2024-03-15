@@ -131,7 +131,10 @@ public class MercadoOrderHandler extends AbstractOrderHandler<MercadoOrderDTO, P
 
     @Override
     public List<PlatformOrderDTO> convert(List<MercadoOrderDTO> sourceDataList) {
-        return null;
+        // 包含数据过滤数据 数据转换 数据合并拆分等操作
+        return sourceDataList.stream()
+                // 组装
+                .map(MercadoOrderDTO::convertDTO).collect(Collectors.toList());
     }
 
     @Override
