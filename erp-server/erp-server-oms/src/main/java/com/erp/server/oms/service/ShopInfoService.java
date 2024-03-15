@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
@@ -276,4 +277,10 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return void
      **/
     ResponseEntity<String> shopRedactTest(String data, HttpServletResponse response, HttpServletRequest request);
+
+    /**
+     * 店铺下拉
+     * @return
+     */
+    List<BaseDropDownDTO.DisabledDTO> listShopSelect();
 }
