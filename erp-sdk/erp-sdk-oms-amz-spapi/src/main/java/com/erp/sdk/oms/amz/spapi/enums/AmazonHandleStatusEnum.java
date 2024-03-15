@@ -16,8 +16,8 @@ import lombok.Getter;
 public enum AmazonHandleStatusEnum {
 
     NONE("-1",	"无需处理(已有订单直接处理)"),
-    WAIT_DOWNLOAD("0",	"待下载订单(检查订单下载处理)"),
-    WAIT_HANDLE("1",	"待处理销售出库单(订单已下载处理)"),
+    WAIT_DOWNLOAD("0",	"待下载主订单信息(检查订单下载处理)"),
+    WAIT_HANDLE("1",	"已下载主订单信息(订单已下载处理)"),
     HANDLE("2",	"已处理"),
 
     ;

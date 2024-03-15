@@ -29,6 +29,7 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.sdk.oms.amz.spapi.convert.SdkFbaShipmentConverter;
 import com.erp.sdk.oms.amz.spapi.dto.*;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonHandleStatusEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonListingStatusEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
@@ -854,5 +855,87 @@ public class PullAmzJob {
         } else {
             return StrUtil.format("{}_{}", entity.getPlatformShopCode(), marketplaceEnum.getEndpointsEnum().name());
         }
+    }
+
+    /**
+     * 根据物流销售记录补充订单【亚马逊】->ERP
+     */
+    @XxlJob("amazonFulfilledCheckOrder")
+    public ReturnT<String> amazonFulfilledCheckOrder() {
+        Integer size;
+        String jobParamStr = XxlJobHelper.getJobParam();
+        if (StrUtil.isNotBlank(jobParamStr)) {
+            JSONObject jobParam = JSON.parseObject(jobParamStr);
+            size = jobParam.getInteger("size");
+        } else {
+            size = 100;
+        }
+        XxlJobHelper.log("[ 根据物流销售记录补充订单【亚马逊】->ERP] amazonFulfilledCheckOrder 任务开始,size={}", size);
+        // 查询所有任务列表
+        List<PlatformApiTaskEntity> taskList = platformApiTaskService.listByPlatformAndBillType(PlatformDictEnum.AMAZON.getCode(), AmazonRequestTypeRateLimiterEnum.ORDER_LIST.getBusinessTypeName());
+        if (CollectionUtils.isEmpty(taskList)) {
+            XxlJobHelper.log("[ 根据物流销售记录补充订单【亚马逊】->ERP] amazonFulfilledCheckOrder 任务结束,未找到需执行的任务");
+            return ReturnT.SUCCESS;
+        }
+        // 根据groupId分组店铺id
+        Map<String, List<PlatformApiTaskEntity>> taskGroupMap = taskList.stream().collect(Collectors.groupingBy(PlatformApiTaskEntity::getGroupId));
+        XxlJobHelper.log("[ 根据物流销售记录补充订单【亚马逊】->ERP] amazonFulfilledCheckOrder 开始,预计分组线程数量={}", taskGroupMap.size());
+        String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
+        String platform = PlatformDictEnum.AMAZON.getCode();
+        String business = BusinessTypeEnum.ORDER.getCode();
+
+        CompletableFuture<Void> allOf = CompletableFuture.allOf(taskGroupMap.entrySet().stream()
+                .map(entry -> CompletableFuture.runAsync(() -> {
+                    // 异步任务的逻辑
+                    String key = entry.getKey();
+                    List<PlatformApiTaskEntity> value = entry.getValue();
+                    handlerFulfilledCheckOrder(key, value, size, platform, category, business);
+                    log.info("[ 根据物流销售记录补充订单【亚马逊】->ERP] amazonFulfilledCheckOrder 当前线程执行完毕");
+                    XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonFulfilledCheckOrder 当前线程执行完毕");
+                })).toArray(CompletableFuture[]::new));
+
+        allOf.thenRun(() -> XxlJobHelper.log("[ 根据物流销售记录补充订单【亚马逊】->ERP] amazonFulfilledCheckOrder 所有任务执行完毕")).join();
+
+        XxlJobHelper.log("[ 根据物流销售记录补充订单【亚马逊】->ERP] amazonFulfilledCheckOrder 任务结束");
+        return ReturnT.SUCCESS;
+    }
+
+    public void handlerFulfilledCheckOrder(String key, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business) {
+        // 拉取未存在的主订单
+        List<String> shopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
+        // 查询当前分组未下载的mongo订单
+        List<PlatformAmazonFulfilledShipmentsDTO> dtoList = this.findHandleStatusAndShopId(0, shopIds, 1, size);
+
+        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_LIST;
+
+        // 根据shopId分组
+        Map<String, List<PlatformAmazonFulfilledShipmentsDTO>> dtoGroupList = dtoList.stream().collect(Collectors.groupingBy(PlatformAmazonFulfilledShipmentsDTO::getShopId));
+        for (Map.Entry<String, List<PlatformAmazonFulfilledShipmentsDTO>> entry : dtoGroupList.entrySet()) {
+            // 动态请求配置
+            // 平台请求中:平台类型:sellerId:业务类型:请求的端点区域
+            String redissonKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, platform, key, requestTypeRateLimiterEnum.getBusinessTypeName());
+            JSONObject extentJsonObj = requestTypeRateLimiterEnum.getExtentJsonObj();
+            extentJsonObj.put(AmazonRequestTypeRateLimiterEnum.limitKey, redissonKey);
+
+            // 根据订单ID下载分组查询
+            List<PlatformAmazonOrderDTO> newOrderDTOList = amazonOrderHandler.download(null);
+            // 订单主体保存倒mongo
+            businessService.handleSaveOrUpdateMongo(newOrderDTOList, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER, PlatformAmazonOrderDTO.class, new ArrayList<>());
+            // 更新物流销售记录mongo
+            entry.getValue().forEach(e-> e.setHandleStatus(AmazonHandleStatusEnum.WAIT_HANDLE.getCode()));
+            businessService.handleSaveOrUpdateMongo(entry.getValue(), MongoTableNameContant.THIRD_SYSTEM_AMAZON_SO_OUT_STOCK, PlatformAmazonFulfilledShipmentsDTO.class, new ArrayList<>());
+        }
+    }
+
+    private List<PlatformAmazonFulfilledShipmentsDTO> findHandleStatusAndShopId(Integer handleStatus, List<String> shopIds, int currentPage, Integer pageSize) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("shopId").in(shopIds)
+                .and("handleStatus").is(handleStatus)
+        );
+
+        if (currentPage > 0 && pageSize > 0) {
+            query.skip((long) (currentPage - 1) * pageSize).limit(pageSize);
+        }
+        return mongoTemplate.find(query, PlatformAmazonFulfilledShipmentsDTO.class, MongoTableNameContant.THIRD_SYSTEM_AMAZON_SO_OUT_STOCK);
     }
 }

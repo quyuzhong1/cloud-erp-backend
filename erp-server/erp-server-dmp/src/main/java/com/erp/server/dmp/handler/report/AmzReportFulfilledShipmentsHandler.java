@@ -20,6 +20,7 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.sdk.oms.amz.spapi.convert.SdkSoOutStockConverter;
 import com.erp.sdk.oms.amz.spapi.csv.ReportFulfilledShipmentsCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonHandleStatusEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonFulfilledShipmentsHandler;
@@ -29,6 +30,9 @@ import com.erp.server.dmp.service.impl.BusinessServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.StringUtil;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -36,10 +40,8 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -58,6 +60,8 @@ public class AmzReportFulfilledShipmentsHandler extends AmzReportBusinessHandler
     private SoB2cFeign soB2cFeign;
     @Resource
     private CfgTimezoneService cfgTimezoneService;
+    @Resource
+    private MongoTemplate mongoTemplate;
 
 
     @Override
@@ -82,29 +86,47 @@ public class AmzReportFulfilledShipmentsHandler extends AmzReportBusinessHandler
             }
         }
 
-        List<String> amazonOrderIds = allList.stream()
-                .map(ReportFulfilledShipmentsCsvEntity::getAmazonOrderId)
+        List<String> uniqueIds = allList.stream()
+                .map(e -> StrUtil.format("{}_{}", e.getAmazonOrderId(), taskEntity.getShopId()))
                 .distinct()
                 .collect(Collectors.toList());
         // 查询亚马逊订单是否存在
-        List<SoB2cEntity> existOrderList = soB2cFeign.getByPlatformCode(amazonOrderIds, PlatformDictEnum.AMAZON.getCode(), taskEntity.getShopId());
+//        List<SoB2cEntity> existOrderList = soB2cFeign.getByPlatformCode(amazonOrderIds, PlatformDictEnum.AMAZON.getCode(), taskEntity.getShopId());
+        List<PlatformAmazonOrderDTO> existOrderList = findAllMongoData(uniqueIds, taskEntity.getShopId());
+
         if (CollectionUtils.isEmpty(existOrderList)){
             // 都不存在直接保存mongo等待重新触发
             // 不存在保存mongo等待重新触发
-            directSaveMongo(taskEntity, allList);
+            directSaveMongo(taskEntity, allList, AmazonHandleStatusEnum.WAIT_DOWNLOAD);
             return;
         }
-        List<String> existOrderIds = existOrderList.stream().map(SoB2cEntity::getPlatformCode).distinct().collect(Collectors.toList());
-        // 按订单存在分组
-        Map<Boolean, List<ReportFulfilledShipmentsCsvEntity>> gourpMap = allList.stream()
-                .collect(Collectors.groupingBy(e -> existOrderIds.contains(e.getAmazonOrderId())));
+        Map<String, PlatformAmazonOrderDTO> existMap = existOrderList.stream()
+                .collect(Collectors.toMap(e -> e.getOrder().getAmazonOrderId(), Function.identity()));
 
-        List<ReportFulfilledShipmentsCsvEntity> existList = gourpMap.get(true);
-        List<ReportFulfilledShipmentsCsvEntity> notExistList = gourpMap.get(false);
+        List<ReportFulfilledShipmentsCsvEntity> existList = new LinkedList<>();
+        List<ReportFulfilledShipmentsCsvEntity> notExistList = new LinkedList<>();
+        List<ReportFulfilledShipmentsCsvEntity> existMainList = new LinkedList<>();
+
+        for (ReportFulfilledShipmentsCsvEntity source : allList) {
+            PlatformAmazonOrderDTO dto = existMap.get(source.getAmazonOrderId());
+            if (null == dto){
+                notExistList.add(source);
+                continue;
+            }
+            if (0 == dto.getDownloadStatus()){
+                existMainList.add(source);
+            } else {
+                existList.add(source);
+            }
+        }
 
         if (!CollectionUtils.isEmpty(notExistList)){
             // 不存在保存mongo等待重新触发
-            directSaveMongo(taskEntity, notExistList);
+            directSaveMongo(taskEntity, notExistList, AmazonHandleStatusEnum.WAIT_DOWNLOAD);
+        }
+        if (!CollectionUtils.isEmpty(existMainList)){
+            // 不存在保存mongo等待重新触发
+            directSaveMongo(taskEntity, existMainList, AmazonHandleStatusEnum.WAIT_HANDLE);
         }
 
         // 存在的订单直接触发销售出库单
@@ -135,13 +157,22 @@ public class AmzReportFulfilledShipmentsHandler extends AmzReportBusinessHandler
         }
     }
 
-    private void directSaveMongo(AmzReportTaskEntity taskEntity, List<ReportFulfilledShipmentsCsvEntity> allList) {
+    private List<PlatformAmazonOrderDTO> findAllMongoData(List<String> uniqueIds, String shopId) {
+        Query query = new Query();
+        query.addCriteria(
+                Criteria.where("uniqueId").in(uniqueIds)
+                        .and("shopId").is(shopId)
+        );
+        return mongoTemplate.find(query, PlatformAmazonOrderDTO.class, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER);
+    }
+
+    private void directSaveMongo(AmzReportTaskEntity taskEntity, List<ReportFulfilledShipmentsCsvEntity> allList, AmazonHandleStatusEnum handleStatusEnum) {
         List<PlatformAmazonFulfilledShipmentsDTO> sourceList = allList.stream()
                 .map(e -> SdkSoOutStockConverter.INSTANCE.sourceDtoToOutStockDto(e,
                         taskEntity.getReportId(),
                         taskEntity.getShopId(),
                         StrUtil.format("{}_{}_{}", e.getAmazonOrderId(), e.convertShipmentDate(), taskEntity.getShopId()),
-                        AmazonHandleStatusEnum.WAIT_DOWNLOAD.getCode(),
+                        handleStatusEnum.getCode(),
                         CleanStatusEnum.NONE.getCode()
                 ))
                 .collect(Collectors.toList());

@@ -140,15 +140,19 @@ public class ReportsApiTest {
         // 亚马逊物流预留库存报告
 //        body.setReportType("GET_RESERVED_INVENTORY_DATA");
         // 亚马逊物流管理库存状况报告
-        body.setReportType("GET_FBA_INVENTORY_PLANNING_DATA");
-        body.setMarketplaceIds(Arrays.asList("ATVPDKIKX0DER"));
-        String shopId = "";
+//        body.setReportType("GET_FBA_INVENTORY_PLANNING_DATA");
+        // 亚马逊物流销售报告
+        body.setReportType("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL");
+        String shopId = "1735553314990329858";
         // 获取店铺授权信息
-        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        body.setMarketplaceIds(Arrays.asList(marketplaceEnum.getMarketplaceId()));
+        body.setDataStartTime("2024-01-01T00:00Z");
+        body.setDataEndTime("2024-01-08T00:00Z");
         ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         CreateReportResponse response = api.createReport(body);
         System.out.println("创建报告");
