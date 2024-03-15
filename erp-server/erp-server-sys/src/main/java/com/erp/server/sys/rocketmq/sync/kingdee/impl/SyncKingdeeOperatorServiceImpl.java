@@ -14,6 +14,7 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeOperatorService;
 import com.erp.server.sys.service.KingdeeOperatorRefPostService;
+import com.erp.server.sys.service.KingdeeUserRefPostService;
 import com.erp.server.sys.service.SysAccountingCompanyService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -22,9 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author Lambda
@@ -42,7 +41,7 @@ public class SyncKingdeeOperatorServiceImpl implements SyncKingdeeOperatorServic
     private DmpMqFeign dmpMqFeign;
 
     @Resource
-    private KingdeeOperatorRefPostService kingdeeOperatorRefPostService;
+    private KingdeeUserRefPostService kingdeeUserRefPostService;
 
     @Resource
     private SysAccountingCompanyService sysAccountingCompanyService;
@@ -60,21 +59,24 @@ public class SyncKingdeeOperatorServiceImpl implements SyncKingdeeOperatorServic
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getKingdeeId());
         resultMap.put("operate", operate);
+        //业务类型
+        resultMap.put("typeCode", entity.getTypeCode());
+
+        List<Map<String, Object>> list = new ArrayList<>(1);
+        Map<String, Object> itemMap = new HashMap<>();
 
         SysAccountingCompanyEntity org = sysAccountingCompanyService.getById(entity.getUseOrgId());
         if (Objects.nonNull(org)) {
             //业务组织
-            resultMap.put("useOrgCode", org.getCode());
+            itemMap.put("useOrgCode", org.getCode());
         }
 
-        //业务类型
-        resultMap.put("typeCode", entity.getTypeCode());
-
-        KingdeeOperatorRefPostEntity userPost = kingdeeOperatorRefPostService.getById(entity.getUserPostId());
+        KingdeeUserRefPostEntity userPost = kingdeeUserRefPostService.getById(entity.getUserPostId());
         if(Objects.nonNull(userPost)){
-            resultMap.put("userPostCode", entity.getCode());
+            itemMap.put("userPostCode", userPost.getCode());
         }
-
+        list.add(itemMap);
+        resultMap.put("list", list);
         //生成任务
         sendMqAndSaveTask(entity, operate, resultMap);
     }

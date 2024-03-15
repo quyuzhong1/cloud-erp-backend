@@ -200,8 +200,9 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     public BatchResultDTO delete(String id) {
         KingdeeOperatorRefPostEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶业务员"));
+        String kingdeeId = entity.getKingdeeId();
         Boolean result = this.removeById(id);
-        if (result && StringUtils.isNotBlank(entity.getCode())) {
+        if (result && StringUtils.isNotBlank(kingdeeId)) {
             //金蝶推送
             syncKingdeeOperatorService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
         }

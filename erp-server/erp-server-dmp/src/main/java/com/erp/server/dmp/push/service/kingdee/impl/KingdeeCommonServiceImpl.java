@@ -650,6 +650,32 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         return result;
     }
 
+    @Override
+    public Boolean save(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param, Integer type) {
+        String msg = "新增数据";
+        if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
+            msg = "修改数据";
+        }
+        log.warn("msg>>>>>{}，param>>>>>>>{},json>>>>>>>>{}", msg, JSONUtil.toJsonStr(param), json);
+        SaveResult save = apiUtils.save(param);
+        if (!save.isSuccessfully()) {
+            throw new ServiceException(ApiError.ERROR_ADD_KINGDEE_DATA);
+        }
+        //数据id
+        String id = save.getResult().getId();
+        RepoStatus repoStatus=save.getResult().getResponseStatus();
+        String kingdeeCode="";
+        if(repoStatus.isIsSuccess()){
+            kingdeeCode= repoStatus.getSuccessEntitys().get(0).getNumber();
+        }
+        //金蝶id
+        map.put("syncKingdeeId", id);
+        //更新业务表中的金蝶id
+        updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), "", id,kingdeeCode);
+        return Boolean.TRUE;
+
+    }
+
     /**
      * @param apiUtils
      * @param kingdeeId

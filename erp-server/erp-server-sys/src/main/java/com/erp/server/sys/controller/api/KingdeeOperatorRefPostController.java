@@ -118,10 +118,10 @@ public class KingdeeOperatorRefPostController extends BaseController {
             try {
                 deleteResult = kingdeeOperatorRefPostService.delete(id);
             }catch (Exception e){
-                log.error("金蝶员工任岗位 删除失败===>{}", e.getMessage());
+                log.error("金蝶业务员 删除失败===>{}", e.getMessage());
                 KingdeeOperatorRefPostEntity entity = kingdeeOperatorRefPostService.getById(id);
                 if (Objects.isNull(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "金蝶员工岗位不存在, 删除失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "金蝶业务员不存在, 删除失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }

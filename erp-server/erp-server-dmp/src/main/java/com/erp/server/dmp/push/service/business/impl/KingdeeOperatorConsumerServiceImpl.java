@@ -94,7 +94,7 @@ public class KingdeeOperatorConsumerServiceImpl implements KingdeeOperatorConsum
             //未查找到数据，新增数据
             JSONObject firstJson = json;
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            kingdeeCommonService.save(platformEntity,map,apiUtils,json,param,type);
             return;
         }
         //查找到数据后，判断其审核状态
@@ -113,7 +113,7 @@ public class KingdeeOperatorConsumerServiceImpl implements KingdeeOperatorConsum
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            kingdeeCommonService.save(platformEntity, map, apiUtils, json, param, type);
         }
     }
 
