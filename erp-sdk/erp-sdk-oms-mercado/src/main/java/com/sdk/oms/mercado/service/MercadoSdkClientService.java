@@ -83,6 +83,11 @@ public class MercadoSdkClientService {
     @Resource
     private DmpTaskFeign dmpTaskFeign;
 
+    @Resource
+    public void setRedisUtil(RedisUtil redisUtil) {
+        MercadoSdkClientService.redisUtil = redisUtil;
+    }
+
     /**
      * 发送请求到美客多获取token
      * @Author Luo_WG

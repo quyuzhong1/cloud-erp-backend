@@ -1,5 +1,7 @@
 package com.sdk.oms.mercado.handler;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -10,6 +12,8 @@ import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractProductHandler;
 import com.common.business.utils.RedisUtil;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -19,10 +23,10 @@ import com.sdk.oms.mercado.dto.mercado.listing.ListingViewDTO;
 import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -44,6 +48,27 @@ public class MercadoListingHandler extends AbstractProductHandler<MercadoListing
     private ShopInfoFeign shopInfoFeign;
     @Resource
     private MercadoSdkClientService mercadoSdkClientService;
+
+    public static void main(String[] args) {
+        String baseUrl = "https://api.mercadolibre.com/items";
+//        String baseUrl = "https://api.mercadolibre.com/products/CBT1870347315";
+
+        //入参
+        HashMap<String, Object> params = new HashMap<>(1);
+        params.put("ids", "CBT1870347315,CBT1908735880,CBT1908723878,CBT1885832065,CBT1908898756,CBT1908873808,CBT1908858870,CBT1908815982,CBT1908713864,CBT1886138265,CBT1886113867,CBT1886022863,CBT1885988119,CBT1910174848,CBT1910137756,CBT1910109186,CBT1910107728,CBT1910078390,CBT1910013762,CBT1909985010");
+
+        //设置请求头
+        Map<String, String> headerMap = new HashMap<>(1);
+        headerMap.put("Authorization", "Bearer APP_USR-3457166802805723-031804-00ff0046f7add42f162f8b4ac58bb0cd-1509269799");
+
+        //拉取数据
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+        if (!Objects.equals(apiResult.getCode(), 200)) {
+            log.error("调用url={},入参params={}, 美客多Listing数据失败，返回值 responseMap={}", baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多Listing数据失败，返回值 responseMap={}",
+                    baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
+        }
+    }
 
     @Override
     public List<MercadoListingDTO> download(JobTaskDTO data) {
