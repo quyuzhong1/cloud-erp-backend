@@ -151,12 +151,12 @@ public class SkuMappingRuleDTO implements Serializable {
         /**
          * 替换前字符
          */
-        private String beforeReplacingCharacters;
+        private String beforeReplacingCharacters = "";
 
         /**
          * 替换后字符
          */
-        private String afterReplacingCharacters;
+        private String afterReplacingCharacters = "";
     }
 
     /**
