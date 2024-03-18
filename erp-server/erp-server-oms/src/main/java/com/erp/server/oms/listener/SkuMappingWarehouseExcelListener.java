@@ -27,6 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -134,7 +136,6 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
      * @date 2023-06-28 18:12
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void invoke(SkuMappingWarehouseImportExcelDTO importExcelDTO, AnalysisContext analysisContext) {
         List<String> msgList = FieldValidUtil.fieldValid(importExcelDTO);
         //注解验证信息
@@ -409,33 +410,35 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
     //所有执行玩后 在执行
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-        if (CollectionUtils.isNotEmpty(addListingInfoEntityList)) {
-            listingInfoService.saveBatch(addListingInfoEntityList);
-        }
-
-        if (CollectionUtils.isNotEmpty(updateSkuMappingList)){
-            if (!skuMappingService.updateBatchById(updateSkuMappingList)){
-                throw new ServiceException("映射关系更新异常");
-            }
-        }
-        if (CollectionUtils.isNotEmpty(updateListingInfoList)){
-            if (!listingInfoService.updateBatchById(updateListingInfoList)){
-                throw new ServiceException("Listing更新异常");
-            }
-        }
-        if (CollectionUtils.isNotEmpty(addSkuMappingList)) {
-            skuMappingService.saveBatch(addSkuMappingList);
-        }
-
-        if(CollectionUtils.isNotEmpty(removeIds)){
-            skuMappingService.removeByIds(removeIds);
-        }
-        if (CollectionUtils.isNotEmpty(addLogPairList)) {
-            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】新增了sku映射表",commonService.getUserInfo().getUserName())+"id为【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), addLogPairList,"新增操作");
-        }
-        if (CollectionUtils.isNotEmpty(updateLogPairList)) {
-            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】编辑sku映射表",commonService.getUserInfo().getUserName())+"，【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), updateLogPairList,"编辑操作");
-        }
+        listingInfoService.saveBatchImport(addListingInfoEntityList,updateSkuMappingList,updateListingInfoList,addSkuMappingList,removeIds,addLogPairList,updateLogPairList);
+//        if (CollectionUtils.isNotEmpty(addListingInfoEntityList)) {
+//            listingInfoService.saveBatch(addListingInfoEntityList);
+//        }
+//
+//        if (CollectionUtils.isNotEmpty(updateSkuMappingList)){
+//            if (!skuMappingService.updateBatchById(updateSkuMappingList)){
+//                throw new ServiceException("映射关系更新异常");
+//            }
+//        }
+//        if (CollectionUtils.isNotEmpty(updateListingInfoList)){
+//            if (!listingInfoService.updateBatchById(updateListingInfoList)){
+//                throw new ServiceException("Listing更新异常");
+//            }
+//        }
+//        if (CollectionUtils.isNotEmpty(addSkuMappingList)) {
+//            skuMappingService.saveBatch(addSkuMappingList);
+//        }
+//
+//        if(CollectionUtils.isNotEmpty(removeIds)){
+//            skuMappingService.removeByIds(removeIds);
+//        }
+//        if (CollectionUtils.isNotEmpty(addLogPairList)) {
+//            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】新增了sku映射表",commonService.getUserInfo().getUserName())+"id为【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), addLogPairList,"新增操作");
+//        }
+//        if (CollectionUtils.isNotEmpty(updateLogPairList)) {
+//            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】编辑sku映射表",commonService.getUserInfo().getUserName())+"，【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), updateLogPairList,"编辑操作");
+//        }
+//        throw new ServiceException("回滚");
     }
 
 
