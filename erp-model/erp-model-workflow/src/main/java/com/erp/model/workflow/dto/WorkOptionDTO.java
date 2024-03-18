@@ -168,7 +168,7 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         private String moduleStatus;
 
         /**
-         * 地址（预留）
+         * 地址
          */
         private String moduleUrl;
 
@@ -178,7 +178,7 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         private String path;
 
         /**
-         * 入参（预留）
+         * 入参
          */
         private String moduleParam;
 
@@ -186,6 +186,21 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          * 待办数量
          */
         private Integer tableNumber;
+
+        /**
+         * 数据权限字段
+         */
+        private String tableField;
+
+        /**
+         * 菜单编码
+         */
+        private String menuCode;
+
+        /**
+         * 是否查询审核流程里的待我审核数据
+         */
+        private Boolean isApprovalWorkflow;
     }
 
     /**

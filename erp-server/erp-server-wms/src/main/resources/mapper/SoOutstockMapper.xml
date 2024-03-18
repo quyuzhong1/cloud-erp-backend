@@ -208,9 +208,8 @@
          GROUP BY approve_status,invalid_status
     </select>
     <select id="getIdsByTemp" resultType="java.lang.String">
-        SELECT so.id FROM "temp_recovry_record" trr
-          left join ${tableName} so on trr.code = so.code and so.is_deleted = false
-        where so.approve_status = 'approve' limit 1000
+        SELECT so.id FROM "temp_recovry_record" trr,${tableName} so where trr.code = so.code and so.is_deleted = false
+        and so.approve_status = 'approve' limit 1000
     </select>
 
     <select id="pdaPaging" resultType="com.erp.model.wms.dto.SoOutstockDTO$PdaPagingViewDTO">

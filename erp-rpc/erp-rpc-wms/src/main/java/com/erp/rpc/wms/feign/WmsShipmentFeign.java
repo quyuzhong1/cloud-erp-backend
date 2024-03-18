@@ -2,6 +2,7 @@ package com.erp.rpc.wms.feign;
 
 import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.dmp.lingxing.FbaReceiveGroupEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,5 +27,5 @@ public interface WmsShipmentFeign {
      * @author Jim
      */
     @PostMapping("/feign/shipment/saveAndCheckTransfer")
-    Boolean saveAndCheckTransfer(@RequestBody List<FbaShipmentReceiveEntity> entityList);
+    Boolean saveAndCheckTransfer(@RequestBody FbaReceiveGroupEntity groupEntity);
 }

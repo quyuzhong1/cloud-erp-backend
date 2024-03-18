@@ -8,5 +8,6 @@
         FROM ${params.moduleCode}
         where 1=1
         AND ${params.moduleStatusField} = #{params.moduleStatus}
+        AND is_deleted = FALSE
     </select>
 </mapper>

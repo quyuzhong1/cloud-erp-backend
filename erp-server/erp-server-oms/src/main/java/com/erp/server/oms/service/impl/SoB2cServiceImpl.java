@@ -5139,6 +5139,35 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return updateResult;
     }
 
+    /**
+     * 修改b2c销售单状态发货时间
+     * @Author Luo_WG
+     * @Date 2023/12/27 20:14
+     * @param deliveryTimeDTO
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean updateSoB2cStatusAndDeliveryTime(SoB2cDTO.UpdateDeliveryTimeDTO deliveryTimeDTO) {
+        if (CollectionUtils.isEmpty(deliveryTimeDTO.getSoB2cIds())) {
+            return Boolean.FALSE;
+        }
+
+        //修改状态
+        Boolean updateResult = lambdaUpdate().in(SoB2cEntity::getId, deliveryTimeDTO.getSoB2cIds())
+                .set(SoB2cEntity::getBillStatus, deliveryTimeDTO.getStatus())
+                .update();
+
+        //修改发货时间
+        soB2cLogisticsService.updateDeliveryTimeByMainIds(deliveryTimeDTO.getSoB2cIds(), deliveryTimeDTO.getDeliveryTime());
+
+        String statusName = SoB2cBillStatusEnum.getName(deliveryTimeDTO.getStatus());
+        String msg = "销售订单状态变更为:" + statusName;
+        for (String id : deliveryTimeDTO.getSoB2cIds()) {
+            operateLogService.addModuleOperateLog(StrUtil.format(msg, id), ModuleTypeEnum.SO_B2C.getCode(), id, "已发货");
+        }
+        return updateResult;
+    }
+
     @Override
     public List<PrintWayBillPdfDTO> printWayBillPdf(List<String> soIds) {
         List<SoB2cEntity> soB2cEntities = this.listByIds(soIds);

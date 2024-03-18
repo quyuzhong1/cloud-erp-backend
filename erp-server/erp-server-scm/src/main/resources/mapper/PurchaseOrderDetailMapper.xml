@@ -26,6 +26,7 @@
         <result column="plan_delivery_date" property="planDeliveryDate" />
         <result column="is_gift" property="isGift" />
         <result column="remark" property="remark" />
+        <result column="execution_status" property="executionStatus" />
         <result column="tax_rate" property="taxRate" />
     </resultMap>
 

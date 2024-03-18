@@ -38,7 +38,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      */
-    Boolean pullShipment(FbaShipmentDTO.pullShipmentDTO dto);
+    Boolean pullShipment(FbaShipmentDTO.PullShipmentDTO dto);
 
     /**
      * 查询发货记录
@@ -215,7 +215,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @Author Jim
      * @Date 2023/12/04
      */
-    Tuple generateTransferOut(ShopInfoEntity entity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList, Boolean isToOnwayWarehouse, String remark, LocalDate billDate, String transferDirection);
+    Tuple generateTransferOut(ShopInfoEntity shopEntity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList, Boolean isToOnwayWarehouse, String remark, LocalDate billDate, String transferDirection, Map<String, LocalDate> closedDateMap);
 
     /**
      * 重新直接调拨单
@@ -230,10 +230,8 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
     void export(FbaShipmentDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
-     * 检查当前Fba货件是否停止生成签收记录
+     * 检查当前Fba货件是停止生成签收记录得日期
      *
-     * @param entity Fba主表信息
-     * @return ture=停止生成签收记录
      */
-    boolean checkStopGenReceived(FbaShipmentEntity entity);
+    LocalDate getStopGenReceivedDate(FbaShipmentEntity fbaShipmentEntity);
 }

@@ -12,4 +12,15 @@ public class UserStateConstants {
      * UTF-8 字符集
      */
     public static final Integer USER_DISABLE = 0;
+
+    /**
+     * 系统默认用户ID
+     */
+    public static final String USER_SYSTEM_ID = "0";
+
+    /**
+     * 系统默认用户名称
+     */
+    public static final String USER_SYSTEM = "system";
+
 }

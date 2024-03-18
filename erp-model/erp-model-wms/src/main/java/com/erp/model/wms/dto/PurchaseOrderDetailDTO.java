@@ -305,16 +305,9 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private String remark;
 
         /**
-        * 到货状态（0未到货，1部分到货，2已到货）
-        */
-        @NotBlank(message = "到货状态（0未到货，1部分到货，2已到货）不能为空")
-        @Size(max = 1,message = "到货状态（0未到货，1部分到货，2已到货）最大长度不能超过1位")
-        private String arrivalStatus;
-
-        /**
-        * 到货时间
-        */
-        private LocalDateTime arrivalTime;
+         * 执行状态
+         */
+        private String executionStatus;
 
         /**
         * 税率

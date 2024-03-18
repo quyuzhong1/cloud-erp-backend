@@ -1223,6 +1223,10 @@ public class WarehouseReceiveDTO {
          */
         private String purchaseOrderDetailId;
         /**
+         * 来源记录id
+         */
+        private String sourceId;
+        /**
          * 收货数量
          */
         private Integer receiveQty;

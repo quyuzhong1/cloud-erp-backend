@@ -5,11 +5,13 @@ import cn.hutool.json.JSONObject;
 import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.entity.FbaInventoryEntity;
+import com.erp.model.dmp.lingxing.FbaReceiveGroupEntity;
+import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
+import com.erp.server.wms.convert.FbaShipmentReceiveConverter;
 import com.erp.server.wms.rocketmq.consumer.PlatformFbaShipmentConsumerService;
-import com.erp.server.wms.service.FbaInventoryService;
 import com.erp.server.wms.service.FbaShipmentReceiveService;
+import com.erp.server.wms.service.FbaShipmentService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,9 +51,14 @@ public class ShipmentFeignController extends BaseController {
      * @author Jim
      */
     @PostMapping("/saveAndCheckTransfer")
-    public Boolean saveAndCheckTransfer(@RequestBody List<FbaShipmentReceiveEntity> entityList){
-        Map<String, List<FbaShipmentReceiveEntity>> groupMap = entityList.stream().collect(Collectors.groupingBy(e -> StrUtil.format("{}_{}", e.getFbaShipmentId(), e.getReceiveDate())));
-        groupMap.forEach((key, value) -> fbaShipmentReceiveService.saveAndCheckTransfer(value));
+    public Boolean saveAndCheckTransfer(@RequestBody FbaReceiveGroupEntity groupEntity){
+        FbaShipmentEntity entity = fbaShipmentReceiveService.getAndPullResend(groupEntity);
+        if (null == entity){
+            return true;
+        }
+        List<FbaShipmentReceiveEntity> receiveEntityList = FbaShipmentReceiveConverter.INSTANCE.sourceListToEntityList(groupEntity.getDetailList());
+        Map<String, List<FbaShipmentReceiveEntity>> groupMap = receiveEntityList.stream().collect(Collectors.groupingBy(e -> StrUtil.format("{}_{}", e.getFbaShipmentId(), e.getReceiveDate())));
+        groupMap.forEach((key, value) -> fbaShipmentReceiveService.saveAndCheckTransfer(value, entity));
         return true;
     }
 

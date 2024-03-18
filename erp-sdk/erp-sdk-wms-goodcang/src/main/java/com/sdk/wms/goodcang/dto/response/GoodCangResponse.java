@@ -1,6 +1,7 @@
 package com.sdk.wms.goodcang.dto.response;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.common.core.controller.vo.ApiResult;
 import lombok.*;
 
 import java.io.Serializable;
@@ -40,4 +41,12 @@ public class GoodCangResponse<T> implements Serializable {
     //取消状态
     @JSONField(name = "cancel_status")
     private Integer cancelStatus;
+
+    public static <T> GoodCangResponse<T> error(String msg) {
+        GoodCangResponse<T> apiResult = new GoodCangResponse<>();
+        apiResult.setAsk("Failure");
+        apiResult.setMessage(msg);
+        return apiResult;
+    }
+
 }

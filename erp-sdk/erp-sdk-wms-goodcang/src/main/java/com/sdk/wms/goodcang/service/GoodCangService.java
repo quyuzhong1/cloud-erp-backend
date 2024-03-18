@@ -3,6 +3,7 @@ package com.sdk.wms.goodcang.service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
+import com.common.core.controller.vo.ApiResult;
 import com.sdk.wms.goodcang.constants.GoodCangConstants;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
@@ -36,7 +37,11 @@ public class GoodCangService {
     public GoodCangResponse<List<GoodCangSkuResp>> getSkuList(@Valid GoodCangGetSkuReq goodCangGetSkuReq){
         String json = JSON.toJSONString(goodCangGetSkuReq);
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_SKU_LIST,json);
-        return JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangSkuResp>>>() {}.getType());
+        GoodCangResponse<List<GoodCangSkuResp>> result = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangSkuResp>>>() {}.getType());
+        if(Objects.isNull(result)){
+            return GoodCangResponse.error("谷仓接口返回为空:"+response);
+        }
+        return result;
     }
 
     /**
@@ -44,7 +49,11 @@ public class GoodCangService {
      */
     public GoodCangResponse<List<GoodCangWarehouseResp>> getWarehouse(){
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_WAREHOUSE,new HashMap<>());
-        return JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangWarehouseResp>>>() {}.getType());
+        GoodCangResponse<List<GoodCangWarehouseResp>> result = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangWarehouseResp>>>() {}.getType());
+        if(Objects.isNull(result)){
+            return GoodCangResponse.error("谷仓接口返回为空:"+response);
+        }
+        return result;
     }
 
     /**
@@ -52,7 +61,11 @@ public class GoodCangService {
      */
     public GoodCangResponse<GoodCangLogisticsAndWarehouseResp> getSmCodeTwcToWarehouse(){
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_SMCODE_TWC_TO_WAREHOUSE,new HashMap<>());
-        return JSONObject.parseObject(response,new TypeReference<GoodCangResponse<GoodCangLogisticsAndWarehouseResp>>() {}.getType());
+        GoodCangResponse<GoodCangLogisticsAndWarehouseResp> result = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<GoodCangLogisticsAndWarehouseResp>>() {}.getType());
+        if(Objects.isNull(result)){
+            return GoodCangResponse.error("谷仓接口返回为空:"+response);
+        }
+        return result;
     }
 
     /**
@@ -64,6 +77,9 @@ public class GoodCangService {
         paramsMap.put("receiving_code",receivingCode);
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_GRN_DETAIL,paramsMap);
         GoodCangResponse<GoodCangReceiptBatchResp> respDto = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<GoodCangReceiptBatchResp>>() {}.getType());
+        if(Objects.isNull(respDto)){
+            return GoodCangResponse.error("谷仓接口返回为空:"+response);
+        }
         return respDto;
     }
 
@@ -91,7 +107,11 @@ public class GoodCangService {
     public GoodCangResponse<List<GoodCangOutboundResp>> getOutboundBatch(GoodCangGetOutBoundReq goodCangGetOutBoundReq){
         String json = JSON.toJSONString(goodCangGetOutBoundReq);
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_ORDER_LIST,json);
-        return JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangOutboundResp>>>() {}.getType());
+        GoodCangResponse<List<GoodCangOutboundResp>> respDto = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangOutboundResp>>>() {}.getType());
+        if(Objects.isNull(respDto)){
+            return GoodCangResponse.error("谷仓接口返回为空:"+response);
+        }
+        return respDto;
     }
 
     /**
@@ -100,7 +120,11 @@ public class GoodCangService {
     public GoodCangResponse<List<GoodCangInventoryResp>> getProductInventory(@Valid GoodCangGetInventoryReq goodCangGetInventoryReq){
         String json = JSON.toJSONString(goodCangGetInventoryReq);
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_PRODUCT_INVENTORY,json);
-        return JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangInventoryResp>>>() {}.getType());
+        GoodCangResponse<List<GoodCangInventoryResp>> respDto = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangInventoryResp>>>() {}.getType());
+        if(Objects.isNull(respDto)){
+            return GoodCangResponse.error("谷仓接口返回为空:"+response);
+        }
+        return respDto;
     }
 
     /**
@@ -112,7 +136,11 @@ public class GoodCangService {
             paramsMap.put("warehouseCode",warehouseCode);
         }
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_SHIPPING_METHOD,paramsMap);
-        return JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangLogisticsProductsResp>>>() {}.getType());
+        GoodCangResponse<List<GoodCangLogisticsProductsResp>> respDto = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangLogisticsProductsResp>>>() {}.getType());
+        if(Objects.isNull(respDto)){
+            return GoodCangResponse.error("谷仓接口返回为空:"+response);
+        }
+        return respDto;
     }
 
     /**

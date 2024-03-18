@@ -2,7 +2,6 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
@@ -122,7 +121,7 @@ public class FbaShipmentController extends BaseController {
      */
     @PostMapping("/pullShipment")
     @LogAction(value = LogActionEnum.INSERT, desc = "拉取货件")
-    public ApiResult pullShipment(@RequestBody @Validated FbaShipmentDTO.pullShipmentDTO dto) {
+    public ApiResult pullShipment(@RequestBody @Validated FbaShipmentDTO.PullShipmentDTO dto) {
         Boolean flag = fbaShipmentService.pullShipment(dto);
         return flag ? success() : failure();
     }

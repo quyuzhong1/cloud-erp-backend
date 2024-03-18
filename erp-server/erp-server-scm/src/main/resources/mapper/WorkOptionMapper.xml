@@ -8,5 +8,6 @@
         FROM ${moduleCode}
         where 1=1
         AND approve_status = #{moduleStatus}
+        AND is_deleted = FALSE
     </select>
 </mapper>

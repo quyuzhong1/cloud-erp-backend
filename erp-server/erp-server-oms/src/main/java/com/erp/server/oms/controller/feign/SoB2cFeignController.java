@@ -239,6 +239,17 @@ public class SoB2cFeignController extends BaseController {
         return soB2cService.updateSoB2cStatus(soB2cIds, status);
     }
 
+    /**
+     * 修改b2c销售单状态发货时间
+     * @Author Luo_WG
+     * @Date 2023/12/27 20:14
+     * @param deliveryTimeDTO
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/updateSoB2cStatusAndDeliveryTime")
+    Boolean updateSoB2cStatusAndDeliveryTime(@RequestBody SoB2cDTO.UpdateDeliveryTimeDTO deliveryTimeDTO) {
+        return soB2cService.updateSoB2cStatusAndDeliveryTime(deliveryTimeDTO);
+    }
 
     /**
      * 获取销售订单物流渠道 根据渠道id

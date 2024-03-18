@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -10,9 +9,10 @@ import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -381,7 +381,8 @@ public class FbaShipmentDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class pullShipmentDTO {
+    @AllArgsConstructor
+    public static class PullShipmentDTO {
         /**
          * 店铺id
          */
