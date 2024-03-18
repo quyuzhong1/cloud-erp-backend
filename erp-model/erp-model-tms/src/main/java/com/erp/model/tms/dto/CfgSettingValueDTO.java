@@ -4,9 +4,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -93,22 +93,24 @@ public class CfgSettingValueDTO implements Serializable {
         /**
          * 头程对账类型，/wms/dict/drop/down?type=reconciliationType
          */
+        @NotBlank(message = "头程对账类型不能为空")
         private String firstMileReconciliationType;
 
         /**
          * 头程对账日期
          */
-        private LocalDate firstMileReconciliationDate;
+        private Integer firstMileReconciliationDate;
 
         /**
          * 报关对账类型，/wms/dict/drop/down?type=reconciliationType
          */
+        @NotBlank(message = "报关对账类型不能为空")
         private String declareReconciliationType;
 
         /**
          * 报关对账日期
          */
-        private String declareReconciliationDate;
+        private Integer declareReconciliationDate;
     }
 
     /**

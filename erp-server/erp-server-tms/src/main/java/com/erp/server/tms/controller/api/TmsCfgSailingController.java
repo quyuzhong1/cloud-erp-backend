@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -17,6 +18,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsCfgSailingDTO;
 import com.erp.model.tms.entity.TmsCfgSailingEntity;
+import com.erp.server.tms.query.TmsCfgSailingQueryHandler;
 import com.erp.server.tms.service.TmsCfgSailingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -55,6 +57,7 @@ public class TmsCfgSailingController extends BaseController {
             menuCode = "tms:tmsCfgSailing:paging",
             tableAlias = "tcs"
     )
+    @WebAdvanceQuery(handler = TmsCfgSailingQueryHandler.class)
     public ApiResult<PagingVO<TmsCfgSailingDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<TmsCfgSailingDTO.PagingParamDTO> dto) {
         return success(tmsCfgSailingService.paging(dto));
     }

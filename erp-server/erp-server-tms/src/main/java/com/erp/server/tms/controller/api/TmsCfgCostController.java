@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -17,6 +18,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsCfgCostDTO;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
+import com.erp.server.tms.query.TmsCfgCostQueryHandler;
 import com.erp.server.tms.service.TmsCfgCostService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -55,6 +57,7 @@ public class TmsCfgCostController extends BaseController {
             menuCode = "tms:tmsCfgCost:paging",
             tableAlias = "tcc"
     )
+    @WebAdvanceQuery(handler = TmsCfgCostQueryHandler.class)
     public ApiResult<PagingVO<TmsCfgCostDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<TmsCfgCostDTO.PagingParamDTO> dto) {
         return success(tmsCfgCostService.paging(dto));
     }
