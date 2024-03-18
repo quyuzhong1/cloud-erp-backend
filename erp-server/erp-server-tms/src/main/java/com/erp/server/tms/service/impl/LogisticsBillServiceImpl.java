@@ -956,10 +956,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(v->v.getOutstockId().equals(soOutstock.getId())).findFirst().orElse(null);
             if(Objects.isNull(logisticsBillEntity)){
                 //如果是修改，返回成功
-                if(!isAdd){
-                    batchResultDTOList.add(BatchResultDTO.success(soOutstock.getId(),soOutstock.getCode(),"操作成功"));
-                    return batchResultDTOList;
-                }
                 batchResultDTOList.add(BatchResultDTO.fail(soOutstock.getId(),soOutstock.getCode(),"未生成物流单，无法更新跟踪号"));
                 continue;
             }
@@ -1002,7 +998,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             this.updateBatchById(updateEntityList);
         }
         //如果不是新增的，将原来的删除
-        if(!isAdd){
+        if(!isAdd && CollectionUtils.isNotEmpty(logisticsBillEntityList)){
             logisticsBillDetailService.removeByMainIds(logisticsBillEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
         }
         if(CollectionUtils.isNotEmpty(addDetailEntityList)){

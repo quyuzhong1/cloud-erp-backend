@@ -191,11 +191,6 @@ public class PurchaseOrderController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修更新备注采购订单:ids={ids},明细备注={remark}")
     @PostMapping("/updateRemark")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id",
-            menuCode = "scm:purchaseOrder:update",
-            serviceClass = PurchaseOrderService.class,
-            keyIdName = "ids")
     public ApiResult updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         Boolean flag = purchaseOrderService.updateRemark(dto);
         return flag == true ? success() : failure();
@@ -428,13 +423,8 @@ public class PurchaseOrderController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "结束采购订单交货:ids={ids},备注={remark}")
     @PostMapping("/finishDelivery")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id",
-            menuCode = "scm:purchaseOrder:finishDelivery",
-            serviceClass = PurchaseOrderService.class,
-            keyIdName = "ids")
     public ApiResult finishDelivery(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        Boolean result = purchaseOrderService.finishDelivery(dto.getIds(), dto.getRemark(),Boolean.TRUE);
+        Boolean result = purchaseOrderDetailService.finishDelivery(dto.getIds(), dto.getRemark(),Boolean.TRUE);
         return result == true ? success() : failure();
     }
 

@@ -87,5 +87,21 @@
         </where>
     </select>
 
+    <select id="listBySourceDetailIdsWithNoPurchase" resultType="com.erp.model.scm.entity.SubcontractOrderDetailEntity">
+        select
+        <include refid="Base_Column_List"></include>
+        from subcontract_order so
+        inner join subcontract_order_detail sod on so.id = sod.main_id and sod.is_deleted = false
+        left join purchase_order_detail pod on pod.source_detail_id = sod.id and pod.is_deleted = false
+        <where>
+            so.is_deleted = false and so.invalid_status = false and pod.id is null
+            <if test="sourceDetailIds != null and sourceDetailIds.size > 0">
+                and sod.source_detail_id in
+                <foreach collection="sourceDetailIds" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
 
 </mapper>

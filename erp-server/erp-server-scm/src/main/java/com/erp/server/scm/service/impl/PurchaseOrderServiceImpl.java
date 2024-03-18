@@ -53,7 +53,6 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
-import com.erp.model.wms.dto.inventory.InventoryFinishDeliveryDetailDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
@@ -657,43 +656,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<PurchaseOrderEntity> toWmsList = this.getList(ids);
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
 
-        return Boolean.TRUE;
-    }
-
-    @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean finishDelivery(List<String> ids, String remark,Boolean isValid) {
-        //ids为采购订单明细id集合
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByIds(ids);
-        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98026);
-        }
-        //已确认、已拒绝、送货中允许结束交货
-        long count = purchaseOrderDetailList.stream().filter(obj -> !ExecutionStatusEnum.CONFIRM.getCode().equals(obj.getExecutionStatus())
-                && !ExecutionStatusEnum.REJECT.getCode().equals(obj.getExecutionStatus())
-                && !ExecutionStatusEnum.DELIVERY.getCode().equals(obj.getExecutionStatus())
-                ).count();
-        if (count > 0 && isValid) {
-            throw new ServiceException(ApiError.ERROR_98035);
-        }
-        List<String> mainIds = purchaseOrderDetailList.stream().map(PurchaseOrderDetailEntity::getPurchaseOrderId).distinct().collect(Collectors.toList());
-        List<PurchaseOrderEntity> mainList = this.getList(mainIds);
-        //更新明细中的交货状态
-        purchaseOrderDetailService.updateArrivalStatusByIds(ExecutionStatusEnum.CLOSED.getCode(), ids, purchaseOrderDetailList, remark);
-        //TODO 关闭时，更新订单明细状态
-        if (CollectionUtils.isNotEmpty(ids)){
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.putOpt("detailIds",ids);
-            jsonObject.putOpt("executionStatus",ExecutionStatusEnum.CLOSED.getCode());
-            //同步scm 确认订单 到 srm
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG.getName(),jsonObject, IdUtil.simpleUUID());
-        }
-        // 更新库存
-        updateInventoryFinish(mainList, purchaseOrderDetailList);
-        //操作日志
-        List<Pair<String, String>> pairList = purchaseOrderDetailList.stream().map(obj -> new Pair<>(obj.getPurchaseOrderId(), obj.getSkuNo())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("SKU【%s】结束交货，结束原因：".concat(StrUtils.null2EmptyWithTrim(remark)), ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "结束交货操作");
         return Boolean.TRUE;
     }
 
@@ -1765,7 +1727,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     /**
      * 根据ids查询数据
      */
-    private List<PurchaseOrderEntity> getList(List<String> ids) {
+    @Override
+    public List<PurchaseOrderEntity> getList(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
@@ -1869,87 +1832,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         inventoryFeign.generateByPurchaseOrderBatch(Arrays.asList(inventoryForcastDTO));
     }
 
-    /**
-     * 更新库存（结束交货）
-     * @param list
-     * @param details
-     */
-    public void updateInventoryFinish(List<PurchaseOrderEntity> list, List<PurchaseOrderDetailEntity> details) {
-        Map<String, PurchaseOrderEntity> poMap = list.stream().collect(Collectors.toMap(PurchaseOrderEntity::getId, Function.identity()));
-        Map<String,List<PurchaseOrderDetailEntity>> detailMap = details.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getPurchaseOrderId));
-
-        List<String> podIds = details.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
-        // 收货信息（结束交货一定会存在下推收货单）
-        List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
-        // 采购入库（无收货单）信息（采购入库会扣减在途库存）
-        List<PoInstockDetailEntity> poInstockDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
-        //退货数量
-        List<PoReturnDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
-
-        List<InstockForcastDTO.FinishDeliveryDTO> inventoryList = Lists.newArrayList();
-
-        poMap.forEach((mainId, po)->{
-
-            InstockForcastDTO.FinishDeliveryDTO inventoryDTO = new InstockForcastDTO.FinishDeliveryDTO();
-            inventoryDTO.setPurchaseOrderId(mainId);
-            List<PurchaseOrderDetailEntity> detailMembers = detailMap.get(mainId);
-
-            List<InventoryFinishDeliveryDetailDTO.AddDTO> inventoryMembers = Lists.newArrayListWithExpectedSize(detailMembers.size());
-            detailMembers.stream().forEach(member->{
-                //执行状态已完成或已关闭
-                // 的无需再次结束交货
-                if (ExecutionStatusEnum.FINISH.getCode().equals(member.getExecutionStatus()) ) {
-                    log.info("采购订单明细id:{}，对应采购订单:{}, 已经到货，无需结束交货", member.getId(), po.getCode());
-                    return;
-                }
-                InventoryFinishDeliveryDetailDTO.AddDTO inventoryMember = new InventoryFinishDeliveryDetailDTO.AddDTO();
-                inventoryMember.setSkuId(member.getSkuId());
-                inventoryMember.setSkuNo(member.getSkuNo());
-                inventoryMember.setPurchaseOrderDetailId(member.getId());
-                Integer receiveQty = MathUtil.ZERO;
-                if (CollUtil.isNotEmpty(receiveDetailList)) {
-                    // 此处收货单需过滤为审核通过的，只有审核通过的才占用库存数量
-                    receiveQty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(member.getId())
-                            && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
-                            .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                }
-                Integer poQty = MathUtil.ZERO;
-                if(CollUtil.isNotEmpty(poInstockDetailList)) {
-                    // 采购入库单（无收货单），只有审核通过的才占用库存数量
-                    poQty = poInstockDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(member.getId())
-                            && Objects.equals(e.getSourceDetailId(), member.getId())
-                            && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
-                            .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
-                }
-                Integer returnQty = MathUtil.ZERO;
-                if(CollUtil.isNotEmpty(purchaseReturnOrderDetailEntities)) {
-                    // 退货单（退货补货的才会导致在途数量变化）
-                    returnQty = purchaseReturnOrderDetailEntities.stream().filter(e -> e.getPurchaseOrderDetailId().equals(member.getId())
-                            && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
-                            && StrUtils.isNotEmpty(e.getPurchaseOrderDetailId())
-                            && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode()))
-                            .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-                }
-                log.info("采购订单明细id:{}，对应采购订单:{}, 采购订单明细采购数量:{}", member.getId(), po.getCode(), member.getPurchaseQty());
-                log.info("采购订单明细id:{}，对应采购订单:{}, 采购订单明细对应收货单收货数量:{}", member.getId(), po.getCode(), receiveQty);
-                log.info("采购订单明细id:{}，对应采购订单:{}, 采购订单明细对应采购入库单（无收货单）入库数量:{}", member.getId(), po.getCode(), poQty);
-                log.info("采购订单明细id:{}，对应采购订单:{}, 采购订单明细对应退货单（退货补货）退货数量:{}", member.getId(), po.getCode(), returnQty);
-                // 采购订单增加的在途，收货单，采购订单直接生成入库单减少的在途未必一样
-                Integer deliveryQty = member.getPurchaseQty() + returnQty - receiveQty - poQty;
-                log.info("采购订单明细id:{}，对应采购订单:{}, 采购订单明细剩余待交数量:{}", member.getId(), po.getCode(), deliveryQty);
-                inventoryMember.setQty(deliveryQty);
-                inventoryMembers.add(inventoryMember);
-            });
-            if (CollectionUtils.isEmpty(inventoryMembers)) {
-                return;
-            }
-            inventoryDTO.setMembers(inventoryMembers);
-            inventoryList.add(inventoryDTO);
-        });
-        if (CollectionUtils.isNotEmpty(inventoryList)) {
-            inventoryFeign.finishDeliveryBatch(inventoryList);
-        }
-    }
 
     /**
      * 导出网采合同
@@ -2558,7 +2440,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @param successList
      * @param errorList
      */
-    private void handleImportEndReceiveFile (List<PurchaseEndReceiveImportExcelDTO> successList,List<PurchaseEndReceiveImportExcelDTO> errorList) {
+    public void handleImportEndReceiveFile (List<PurchaseEndReceiveImportExcelDTO> successList,List<PurchaseEndReceiveImportExcelDTO> errorList) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
@@ -2570,10 +2452,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         Map<String, List<PurchaseEndReceiveImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getCode().concat(obj.getSkuNo())));
         for (Map.Entry<String,List<PurchaseEndReceiveImportExcelDTO>> entry : map.entrySet()) {
-            List<String> errorMsgList = new ArrayList<>();
             List<PurchaseEndReceiveImportExcelDTO> value = entry.getValue();
             Boolean isError = Boolean.FALSE;
             for (PurchaseEndReceiveImportExcelDTO excelDTO : value) {
+                List<String> errorMsgList = new ArrayList<>();
                 //判断导入数据是否重复
                 if (value.size() > 1) {
                     errorMsgList.add("存在两条相同的数据，请重新导入");
@@ -2601,9 +2483,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             //结束交货
             if (!isError) {
+                List<String> errorMsgList = new ArrayList<>();
                 PurchaseEndReceiveImportExcelDTO excelDTO = value.get(0);
                 try {
-                    finishDelivery(Arrays.asList(excelDTO.getDetailId()),excelDTO.getRemark(),Boolean.TRUE);
+                    purchaseOrderDetailService.finishDelivery(Arrays.asList(excelDTO.getDetailId()),excelDTO.getRemark(),Boolean.TRUE);
                 } catch (Exception e) {
                     errorMsgList.add(e.getMessage());
                 }

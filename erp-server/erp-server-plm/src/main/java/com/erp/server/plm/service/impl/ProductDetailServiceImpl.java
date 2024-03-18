@@ -2062,18 +2062,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             //获取人民币汇率下含税成本
             BigDecimal actualTaxCostUsd = MathUtil.multiply(actualTaxCost, exchangeRate);
-            List<CfgSettingValueDTO.LogisticsProductDestDeclarePrice> data = JSONUtil.toList(setting.getDataJson().getJSONArray("data"), CfgSettingValueDTO.LogisticsProductDestDeclarePrice.class);
-            CfgSettingValueDTO.LogisticsProductDestDeclarePrice declarePrice = data.stream().filter(e -> e.getStartPrice().compareTo(actualTaxCostUsd) < 0 && e.getEndPrice().compareTo(actualTaxCostUsd) >= 0).findFirst().orElse(null);
-            if (Objects.isNull(declarePrice) || Objects.isNull(declarePrice.getRate())){
-                return;
-            }
-            BigDecimal resultDestDeclarePrice = actualTaxCostUsd.multiply(declarePrice.getRate()).divide(MathUtil.BigDecimal_100, 4, RoundingMode.HALF_UP);
             //统一换算成美元汇率
             BigDecimal usdRate = dmpTaskFeign.getRate(skuCostDTO.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
             if (Objects.isNull(usdRate)){
                 return;
             }
-            productLogistics.setDestDeclarePrice(MathUtil.divide(resultDestDeclarePrice, usdRate));
+            actualTaxCostUsd = MathUtil.divide(actualTaxCostUsd, usdRate);
+            List<CfgSettingValueDTO.LogisticsProductDestDeclarePrice> data = JSONUtil.toList(setting.getDataJson().getJSONArray("data"), CfgSettingValueDTO.LogisticsProductDestDeclarePrice.class);
+            //根据美元计算比例
+            BigDecimal finalActualTaxCostUsd = actualTaxCostUsd;
+            CfgSettingValueDTO.LogisticsProductDestDeclarePrice declarePrice = data.stream().filter(e -> e.getStartPrice().compareTo(finalActualTaxCostUsd) < 0 && e.getEndPrice().compareTo(finalActualTaxCostUsd) >= 0).findFirst().orElse(null);
+            if (Objects.isNull(declarePrice) || Objects.isNull(declarePrice.getRate())){
+                return;
+            }
+            BigDecimal resultDestDeclarePrice = actualTaxCostUsd.multiply(declarePrice.getRate()).divide(MathUtil.BigDecimal_100, 4, RoundingMode.HALF_UP);
+            productLogistics.setDestDeclarePrice(resultDestDeclarePrice);
             productLogistics.setDestCurrency(CurrencyEnum.USD.getCurrencyCode());
             productLogistics.setDestCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
             productLogisticsService.updateById(productLogistics);
@@ -3973,6 +3976,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductPackEntity> productPackList = productPackService.listBySkuIdList(skuIdList);
 
         for (ProductDetailEntity detailEntity : entityList) {
+            StringBuffer errMsg = new StringBuffer("");
+
             //SPU信息
             ProductInfoEntity productInfo = productInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getProductId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(productInfo)) {
@@ -3986,43 +3991,46 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
              */
             ProductPackEntity productPackEntity = productPackList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), detailEntity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(productPackEntity)) {
-                throw new ServiceException(ApiError.ERROR_PRODUCT_PACK_NOT_EXIST,detailEntity.getSkuNo());
+                errMsg.append(StrUtil.format(ApiError.ERROR_PRODUCT_PACK_NOT_EXIST.msg,detailEntity.getSkuNo())).append("</br>");
             }
             //包装尺寸
             if (StrUtil.isBlank(productPackEntity.getProductSize())) {
-                throw new ServiceException(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST,detailEntity.getSkuNo());
+                errMsg.append(StrUtil.format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.msg,detailEntity.getSkuNo())).append("</br>");
             }
             if (StrUtil.isNotBlank(productPackEntity.getProductSize())) {
                 List<String> productSizeList = Arrays.stream(productPackEntity.getProductSize().split("X")).filter(obj -> StrUtil.isNotBlank(obj)).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(productSizeList) || productSizeList.size() != 3) {
-                    throw new ServiceException(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST,detailEntity.getSkuNo());
+                    errMsg.append(StrUtil.format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.msg,detailEntity.getSkuNo())).append("</br>");
                 }
             }
             if (StrUtil.isBlank(productPackEntity.getBoxSize())) {
-                throw new ServiceException(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST,detailEntity.getSkuNo());
+                errMsg.append(StrUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg,detailEntity.getSkuNo())).append("</br>");
             }
             //箱规
             if (StrUtil.isNotBlank(productPackEntity.getBoxSize())) {
-                List<String> boxSizeList = Arrays.stream(productPackEntity.getProductSize().split("X")).filter(obj -> StrUtil.isNotBlank(obj)).collect(Collectors.toList());
+                List<String> boxSizeList = Arrays.stream(productPackEntity.getBoxSize().split("X")).filter(obj -> StrUtil.isNotBlank(obj)).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(boxSizeList) || boxSizeList.size() != 3) {
-                    throw new ServiceException(ApiError.ERROR_BOX_SIZE_NOT_EXIST, detailEntity.getSkuNo());
+                    errMsg.append(StrUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg,detailEntity.getSkuNo())).append("</br>");
                 }
             }
             //毛重
             if (MathUtil.compareTo(productPackEntity.getGrossWeight(),MathUtil.ZERO) == MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_GROSS_WEIGHT_NOT_EXIST,detailEntity.getSkuNo());
+                errMsg.append(StrUtil.format(ApiError.ERROR_GROSS_WEIGHT_NOT_EXIST.msg,detailEntity.getSkuNo())).append("</br>");
             }
             //单箱重量
             if (MathUtil.compareTo(productPackEntity.getBoxWeight(),MathUtil.ZERO) == MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_BOX_WEIGHT_NOT_EXIST,detailEntity.getSkuNo());
+                errMsg.append(StrUtil.format(ApiError.ERROR_BOX_WEIGHT_NOT_EXIST.msg,detailEntity.getSkuNo())).append("</br>");
             }
             //净重
             if (MathUtil.compareTo(productPackEntity.getNetWeight(),MathUtil.ZERO) == MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_NET_WEIGHT_NOT_EXIST,detailEntity.getSkuNo());
+                errMsg.append(StrUtil.format(ApiError.ERROR_NET_WEIGHT_NOT_EXIST.msg,detailEntity.getSkuNo())).append("</br>");
             }
             //单箱数量
             if (MathUtil.compareTo(productPackEntity.getBoxQty(),MathUtil.ZERO) == MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_BOX_QTY_NOT_EXIST,detailEntity.getSkuNo());
+                errMsg.append(StrUtil.format(ApiError.ERROR_BOX_QTY_NOT_EXIST.msg,detailEntity.getSkuNo()));
+            }
+            if (StrUtil.isNotBlank(errMsg)) {
+                throw new ServiceException(errMsg.toString());
             }
         }
     }

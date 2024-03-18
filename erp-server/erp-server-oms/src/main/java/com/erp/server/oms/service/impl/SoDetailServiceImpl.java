@@ -1,7 +1,6 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
@@ -18,7 +17,6 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
@@ -37,6 +35,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
@@ -120,6 +119,10 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     @Autowired
     private ScmTaskFeign scmTaskFeign;
+
+    @Autowired
+    private WmsTaskFeign wmsTaskFeign;
+
 
     @Autowired
     private RedisUtil redisUtil;
@@ -1004,8 +1007,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @date 2023-05-24 18:42
      */
     @Override
-    public List<String> checkSkuQty(String warehouseId, List<SoDetailDTO.AddDTO> detailList) {
-        List<String> scarceSkuList = new ArrayList<>(10);
+    public String checkSkuQty(String warehouseId, List<SoDetailDTO.AddDTO> detailList) {
+        StringBuffer errMsg = new StringBuffer("");
         // 忽略库存计算SKU
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkuIds = Lists.newArrayList();
@@ -1013,9 +1016,14 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
         }
         if (CollectionUtils.isNotEmpty(detailList)) {
+            //即时库存
             List<String> skuIdList = detailList.stream().map(SoDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
             List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
             List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSkuInventoryTotalList(skuIdList, warehouseId);
+
+            //仓库
+            List<WarehouseDTO.UpdateDTO> updateDTOS = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
+
             for (SoDetailDTO.AddDTO item : detailList) {
                 int qty = item.getQty();
                 String skuId = item.getSkuId();
@@ -1025,11 +1033,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 if (qty > curInventoryQty && !ignoreInventorySkuIds.contains(skuId)) {
                     String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                             flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
-                    scarceSkuList.add(skuNo);
+                    String msg = StrUtil.format("仓库【{}】SKU【{}】【缺货：{}个】", updateDTOS.get(0).getName(), skuNo, (qty - curInventoryQty));
+                    errMsg.append(msg).append("</br>");
                 }
             }
         }
-        return scarceSkuList;
+        return errMsg.toString();
     }
 
 
