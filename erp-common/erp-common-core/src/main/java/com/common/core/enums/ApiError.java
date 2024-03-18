@@ -1159,6 +1159,8 @@ public enum ApiError implements Serializable {
     ERROR_LOGISTICS_ID_NOT_EXIST(92129,"物流单的渠道不能为空"),
     PACKAGE_FORECAST_TRANSFER(92130,"销售订单【{}】关联强制组包，请在组包预报页面操作中转报关"),
 
+    SKU_MAPPING_NOT_ALLOW_HISTORY(92131,"当前映射关系在【{}】已存在过，无法修改"),
+
     /**
      * TMS 错误
      * 从94000 开始

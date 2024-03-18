@@ -23,8 +23,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
-import com.erp.model.bi.dto.BiTargetNewProductSettingDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
@@ -364,6 +362,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
 
         checkExist(id, listing.getId(), dto.getShopId());
+
+        checkHistory(id, listing.getId(), dto.getShopId(), dto.getProductSkuId());
 
         // 平台sku校验
         if (PlatformDictEnum.hasConnectionPlatform().contains(platformSkuNo)) {
@@ -899,6 +899,14 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
 
 
+    }
+
+    private void checkHistory(String id, String listingId, String shopId, String productSkuId) {
+        SkuMappingEntity oldEntity = this.baseMapper.findHistory(id, listingId, shopId, productSkuId);
+        if(null ==oldEntity){
+            return;
+        }
+        throw new ServiceException(ApiError.SKU_MAPPING_NOT_ALLOW_HISTORY, oldEntity.getExpireTime().toString());
     }
 
     /**
