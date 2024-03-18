@@ -6,6 +6,8 @@ package com.erp.server.plm.service;/**
  * @Created by yl
  */
 
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -100,4 +102,19 @@ public interface LogisticsProductService  extends SuperService<ProductDetailEnti
      * @param dmpSkuCostEntityList
      */
     void recalDestDeclarePrice(List<DmpSkuCostEntity> dmpSkuCostEntityList);
+    /**
+     * @description: 
+     * @author Will
+     * @date: 2024/3/18 16:45
+     * @param id 
+     * @param aTrue 
+     * @return BatchResultDTO 
+     */
+    BatchResultDTO submit(String id, Boolean aTrue);
+
+    BatchResultDTO cancelProcess(String id);
+
+    BatchResultDTO approve(ApproveOneDTO approveOneDTO);
+
+    BatchResultDTO disApprove(String id);
 }

@@ -76,6 +76,11 @@ public class TmsCfgCostDTO implements Serializable {
         private String  dictCostCategoryName;
 
         /**
+         * 费用项
+         */
+        private String  costName;
+
+        /**
          * 创建人名称【可排序】
          */
         private String  createUserName;

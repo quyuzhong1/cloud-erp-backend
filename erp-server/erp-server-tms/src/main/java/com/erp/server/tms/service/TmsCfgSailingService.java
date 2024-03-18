@@ -8,6 +8,8 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsCfgSailingDTO;
 import com.erp.model.tms.entity.TmsCfgSailingEntity;
 
+import java.util.List;
+
 /**
  * <p>
  * 截单开船配置 服务类
@@ -62,4 +64,12 @@ public interface TmsCfgSailingService extends SuperService<TmsCfgSailingEntity> 
      * @return BatchResultDTO
      */
     BatchResultDTO delete(String id);
+    /**
+     * @description: 根据物流供应商和物流渠道查询
+     * @author Will
+     * @date: 2024/3/18 17:06
+     * @param logisticsChannelIdList
+     * @return List<TmsCfgSailingEntity>
+     */
+    List<TmsCfgSailingEntity>  getByLogisticsChannelIdList (List<String> logisticsChannelIdList);
 }

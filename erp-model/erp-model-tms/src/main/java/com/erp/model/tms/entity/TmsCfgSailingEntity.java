@@ -9,7 +9,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 
 /**
@@ -55,7 +55,7 @@ public class TmsCfgSailingEntity extends BaseEntity<TmsCfgSailingEntity> {
     * 开船日期时间
     */
     @TableField("start_time")
-    private LocalDateTime startTime;
+    private LocalTime startTime;
     /**
     * 截单日期（周、月）
     */
@@ -65,7 +65,7 @@ public class TmsCfgSailingEntity extends BaseEntity<TmsCfgSailingEntity> {
     * 截单日期时间
     */
     @TableField("end_time")
-    private LocalDateTime endTime;
+    private LocalTime endTime;
 
     /**
      * 生效日期

@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
  * @author Will
  * @date: 2024/3/18 9:48
  */
-public enum TmsCfgSailingDateEnum implements EnumMessage {
+public enum TmsCfgSailingDateTypeEnum implements EnumMessage {
 
     WEEK("week", "周"),
     MONTH("month", "月")
@@ -28,7 +28,7 @@ public enum TmsCfgSailingDateEnum implements EnumMessage {
     private String name;
 
 
-    TmsCfgSailingDateEnum(String code, String name) {
+    TmsCfgSailingDateTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -47,7 +47,7 @@ public enum TmsCfgSailingDateEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (TmsCfgSailingDateEnum statusEnum : TmsCfgSailingDateEnum.values()) {
+        for (TmsCfgSailingDateTypeEnum statusEnum : TmsCfgSailingDateTypeEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }

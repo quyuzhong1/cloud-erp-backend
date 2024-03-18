@@ -2,15 +2,19 @@ package com.erp.model.tms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.tms.enums.TmsCfgSailingDateTypeEnum;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
@@ -163,7 +167,8 @@ public class TmsCfgSailingDTO implements Serializable {
         /**
         * 开船日期时间
         */
-        private LocalDateTime startTime;
+        @JsonFormat(pattern = "HH:mm")
+        private LocalTime startTime;
 
         /**
         * 截单日期（周、月）
@@ -173,7 +178,8 @@ public class TmsCfgSailingDTO implements Serializable {
         /**
         * 截单日期时间
         */
-        private LocalDateTime endTime;
+        @JsonFormat(pattern = "HH:mm")
+        private LocalTime endTime;
 
         /**
          * 生效日期
@@ -211,18 +217,10 @@ public class TmsCfgSailingDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 物流商id
-        */
-        @NotBlank(message = "物流商id不能为空")
-        @Size(max = 19,message = "物流商id最大长度不能超过19位")
-        private String logisticsSupplierId;
-
-        /**
         * 物流商渠道id
         */
-        @NotBlank(message = "物流商渠道id不能为空")
-        @Size(max = 19,message = "物流商渠道id最大长度不能超过19位")
-        private String logisticsChannelId;
+        @NotEmpty(message = "物流商渠道id不能为空")
+        private List<String> logisticsChannelIdList;
 
         /**
         * 日期值（每...周，每...月）
@@ -234,7 +232,7 @@ public class TmsCfgSailingDTO implements Serializable {
         * 日期类型，/tms/drop/down/dict/list?key=dateType
         */
         @NotBlank(message = "日期类型不能为空")
-        @Size(max = 32,message = "日期类型最大长度不能超过32位")
+        @StateEnumValue(clazz = TmsCfgSailingDateTypeEnum.class, message = "日期类型录入有误")
         private String dateType;
 
         /**
@@ -246,7 +244,8 @@ public class TmsCfgSailingDTO implements Serializable {
         /**
         * 开船日期时间
         */
-        private LocalDateTime startTime;
+        @JsonFormat(pattern = "HH:mm")
+        private LocalTime startTime;
 
         /**
         * 截单日期（周、月）
@@ -257,7 +256,8 @@ public class TmsCfgSailingDTO implements Serializable {
         /**
         * 截单日期时间
         */
-        private LocalDateTime endTime;
+        @JsonFormat(pattern = "HH:mm")
+        private LocalTime endTime;
 
         /**
          * 生效日期
