@@ -226,6 +226,14 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
     List<SkuSimpleVO> searchSkuWithCombination(@Param("searchKeyword") String searchKeyword, @Param("state") Integer state);
 
     List<SkuVO> getSkuInfoAdvanceQuery(@Param("params") AdvanceQueryContainer advanceQueryContainer);
+    /**
+     * @description: tab
+     * @author Will
+     * @date: 2024/3/18 19:26
+     * @param searchParamDTO
+     * @return Integer
+     */
+    Integer listCount(@Param("params") LogisticsProductDTO.PagingParamDTO searchParamDTO);
 }
 
 

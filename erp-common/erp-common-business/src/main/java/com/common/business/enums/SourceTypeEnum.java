@@ -95,6 +95,8 @@ public enum SourceTypeEnum {
     PROJECT_TASK("projectTask", "任务列表","project_task"),
     PRODUCT_CHANGE("productChange", "变更管理","product_change"),
     BASIC_CATEGORY("basicCategory", "产品分类","basic_category"),
+    PRODUCT_LOGISTICS("ProductLogistics", "物流产品","product_logistics"),
+
 
     //SYS
     SYS_DEPARTMENT("sysDepartment", "部门","sys_department"),

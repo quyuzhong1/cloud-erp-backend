@@ -1139,6 +1139,7 @@
             pd.sku_no AS skuNo,
             pd.name AS productName,
             pd.status AS approveStatus,
+            pl.approve_status AS logisticsApproveStatus,
             pd.create_time AS createTime,
             pd.update_time AS updateTime,
             pi.category_id AS categoryId,
@@ -1158,6 +1159,8 @@
             pl.declare_model AS declareModel,
             pl.source_country AS sourceCountry,
             pl.customs_code AS customsCode,
+            pl.first_qty AS firstQty,
+            pl.second_qty AS secondQty,
             ps.sale_state AS salesStatus
         FROM product_detail pd
         LEFT JOIN product_info pi
@@ -1287,6 +1290,7 @@
             pd.sku_no AS skuNo,
             pd.name AS productName,
             pd.status AS approveStatus,
+            pl.approve_status AS logisticsApproveStatus,
             pd.create_time AS createTime,
             pi.category_id AS categoryId,
             pi.category AS categoryName,
@@ -1314,6 +1318,8 @@
             pl.customs_code AS customsCode,
             pl.product_property_id AS propertyId,
             pl. product_property AS logisticsPropertyName,
+            pl.first_qty AS firstQty,
+            pl.second_qty AS secondQty,
             ps.sale_state AS salesStatus,
             pp.product_size,
             pp.gross_weight,
@@ -1627,5 +1633,30 @@
         WHERE
             ${params.sqlMap.default}
            and pi.is_deleted = FALSE AND pd.is_deleted = FALSE
+    </select>
+
+    <select id="listCount" resultType="java.lang.Integer">
+        select
+        count(distinct pl.id)
+        from product_detail pd
+        left join product_logistics pl on pd.id = pl.sku_id and pl.is_deleted = false
+        <where>
+            pd.is_deleted = false and pd.status = '2'
+            <if test="params.idList != null and params.idList.size > 0">
+                and pl.id in
+                <foreach collection="params.idList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and pl.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
     </select>
 </mapper>

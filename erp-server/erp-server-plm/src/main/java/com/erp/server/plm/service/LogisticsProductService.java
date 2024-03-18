@@ -15,6 +15,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductLogisticsEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -103,7 +104,7 @@ public interface LogisticsProductService  extends SuperService<ProductDetailEnti
      */
     void recalDestDeclarePrice(List<DmpSkuCostEntity> dmpSkuCostEntityList);
     /**
-     * @description: 
+     * @description: 提审
      * @author Will
      * @date: 2024/3/18 16:45
      * @param id 
@@ -111,10 +112,37 @@ public interface LogisticsProductService  extends SuperService<ProductDetailEnti
      * @return BatchResultDTO 
      */
     BatchResultDTO submit(String id, Boolean aTrue);
-
+    /**
+     * @description: 撤销流程
+     * @author Will
+     * @date: 2024/3/18 18:38
+     * @param id
+     * @return BatchResultDTO
+     */
     BatchResultDTO cancelProcess(String id);
-
+    /**
+     * @description: 审核
+     * @author Will
+     * @date: 2024/3/18 18:38
+     * @param approveOneDTO
+     * @return BatchResultDTO
+     */
     BatchResultDTO approve(ApproveOneDTO approveOneDTO);
-
+    /**
+     * @description: 反审核
+     * @author Will
+     * @date: 2024/3/18 18:38
+     * @param id
+     * @return BatchResultDTO
+     */
     BatchResultDTO disApprove(String id);
+    /**
+     * @description: 结束审核
+     * @author Will
+     * @date: 2024/3/18 18:54
+     * @param dto
+     * @param entity
+     * @return Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO dto, ProductLogisticsEntity entity);
 }

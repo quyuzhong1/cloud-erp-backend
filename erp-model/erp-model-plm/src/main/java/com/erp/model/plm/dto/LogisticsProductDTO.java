@@ -6,15 +6,13 @@ package com.erp.model.plm.dto;/**
  * @Created by yl
  */
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -143,6 +141,22 @@ public class LogisticsProductDTO {
          * sku 审核状态名
          */
         private String approveStatusName;
+
+        /**
+         * 备案审核状态
+         */
+        private ApproveStatusEnum logisticsApproveStatus;
+
+
+        /**
+         * 第一数量
+         */
+        private String firstQty;
+
+        /**
+         * 第二数量
+         */
+        private String secondQty;
 
         /**
          * 销售状态
@@ -286,6 +300,21 @@ public class LogisticsProductDTO {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * tab
+         */
+        private String tabFlag;
+        /**
+         * id集合
+         */
+        private List<String> idList;
+
+        /**
+         * 审核状态集合
+         */
+        private List<String> approveStatusList;
+
         /**
          * 分类id
          */
@@ -595,7 +624,7 @@ public class LogisticsProductDTO {
 
 
         /**
-         * 报关单位
+         * 报关单位,/api/plm/dict/list?type=declareUnit
          */
         private String declareUnit;
 
@@ -662,7 +691,33 @@ public class LogisticsProductDTO {
          */
         private String combinationDeclareType;
 
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+        /**
+         * 审核人名称
+         */
+        private String approveUserName;
+        /**
+         * 审核人id
+         */
+        private String approveUserId;
 
+        /**
+         * 单据审核状态
+         */
+        private ApproveStatusEnum approveStatus;
+
+        /**
+         * 第一数量
+         */
+        private String firstQty;
+
+        /**
+         * 第二数量
+         */
+        private String secondQty;
     }
 
     @Data
@@ -895,8 +950,24 @@ public class LogisticsProductDTO {
          */
         private String logisticsPropertyName;
 
+        /**
+         * 单据审核状态
+         */
+        private ApproveStatusEnum logisticsApproveStatus;
+        /**
+         * 单据审核状态
+         */
+        private String logisticsApproveStatusName;
 
+        /**
+         * 第一数量
+         */
+        private String firstQty;
 
+        /**
+         * 第二数量
+         */
+        private String secondQty;
 
 
     }

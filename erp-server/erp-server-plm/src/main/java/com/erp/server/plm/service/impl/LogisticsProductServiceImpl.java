@@ -1,49 +1,57 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FieldValidUtil;
-import com.common.core.utils.MapUtil;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.oms.dto.excel.LogisticsProductExcelDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.dto.ProductCustomsDTO;
-import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
-import com.erp.model.scm.dto.SkuCostDTO;
+import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.DictCountryDTO;
-import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.listener.LogisticsProductExcelListener;
 import com.erp.server.plm.mapper.ProductDetailMapper;
@@ -107,8 +115,12 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     @Resource
     private BasicDictService basicDictService;
 
+    @Resource
+    private CommonService commonService;
 
 
+    @Resource
+    private WorkflowFeign workflowFeign;
 
     @Override
     public PagingVO<LogisticsProductDTO.PagingVO> paging(PagingDTO<LogisticsProductDTO.PagingParamDTO> dto) {
@@ -348,14 +360,63 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
     @Override
     public List<LogisticsProductDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<LogisticsProductDTO.TabListDTO> list = new ArrayList<>();
         LogisticsProductDTO.TabListDTO tab = new LogisticsProductDTO.TabListDTO();
         List<String> fieldList = listField();
         Integer approvalStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         String permissionSql = dto.getPermissionSql();
-        Integer count = baseMapper.logisticsProductUpdateCount(approvalStatus, fieldList, permissionSql);
+        Integer updateCount = baseMapper.logisticsProductUpdateCount(approvalStatus, fieldList, permissionSql);
         tab.setType("update");
-        tab.setCount(count);
-        return Arrays.asList(tab);
+        tab.setCount(updateCount);
+        list.add(tab);
+        PageListTypeEnum[] values = PageListTypeEnum.values();
+        for (PageListTypeEnum item : values) {
+            LogisticsProductDTO.PagingParamDTO searchParamDTO = new LogisticsProductDTO.PagingParamDTO();
+            searchParamDTO.setPermissionSql(searchParamDTO.getPermissionSql());
+            LogisticsProductDTO.TabListDTO resultDTO = new LogisticsProductDTO.TabListDTO();
+            //搜索类型
+            searchParamDTO.setTabFlag(item.getCode());
+            //列表Tab查询状态处理
+            Boolean isFlag = doOpHandleTableParam(searchParamDTO);
+            Integer count = MathUtil.ZERO;
+            if (isFlag) {
+                count = this.baseMapper.listCount(searchParamDTO);
+            }
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setType(item.getCode());
+            list.add(resultDTO);
+        }
+        return list;
+    }
+
+    private Boolean doOpHandleTableParam (LogisticsProductDTO.PagingParamDTO params) {
+        List<String> approveStatusList = new ArrayList<>(1);
+        //待我审核
+        if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(params.getTabFlag())) {
+            approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+            //需要审核的业务ids
+            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
+            if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(businessIds)) {
+                return Boolean.FALSE;
+            }
+            params.setIdList(businessIds);
+        }
+        // 待提交
+        if (PageListTypeEnum.WAIT_SUBMIT.getCode().equals(params.getTabFlag())) {
+            approveStatusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        }
+        //已审核
+        if (PageListTypeEnum.APPROVE.getCode().equals(params.getTabFlag())) {
+            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
+        }
+        //不通过
+        if (PageListTypeEnum.REJECT.getCode().equals(params.getTabFlag())) {
+            approveStatusList.add(ApproveStatusEnum.REJECT.getStatus());
+        }
+        if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isNotEmpty(approveStatusList)) {
+            params.setApproveStatusList(approveStatusList);
+        }
+        return Boolean.TRUE;
     }
 
 
@@ -451,6 +512,166 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
     }
 
+    @Override
+    public BatchResultDTO submit(String id, Boolean aTrue) {
+        ProductLogisticsEntity entity = productLogisticsService.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到物流产品数据");
+        }
+        // 待提交或审核不通过并且未作废允许提交
+        if ((!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.equals(entity.getApproveStatus()))) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+
+        // 更新单据审核状态
+        log.info("提交 开始修改物流产品状态数据，id：【{}】", id);
+        this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
+
+        log.info("提交 开始启动物流产品流程，id=：【{}】", entity.getId());
+        startProcess(entity);
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.SUBMIT);
+    }
+
+    @Override
+    public BatchResultDTO cancelProcess(String id) {
+        ProductLogisticsEntity entity = productLogisticsService.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到物流产品数据");
+        }
+        // 只有审核中的单据允许撤销
+        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+
+        log.info("撤销 开始修改物流产品状态，id：【{}】", id);
+        updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+        ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setBusinessId(entity.getId());
+        revokeDTO.setBusinessKey(SourceTypeEnum.PRODUCT_LOGISTICS.getCode());
+        revokeDTO.setUserId(commonService.getUserInfo().getUid());
+        workflowFeign.revokeProcess(revokeDTO);
+        return BatchResultDTO.success(entity.getId(), entity.getCustomsCode(), OperationTypeEnum.CANCEL_PROCESS);
+    }
+
+    @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
+        if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
+            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+        }
+        ProductLogisticsEntity entity = productLogisticsService.getById(dto.getId());
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到物流产品数据");
+        }
+        // 审核中的数据允许审核
+        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+        // 调用流程审核
+        approveProcess(entity, dto);
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
+        return BatchResultDTO.success(entity.getId(), entity.getCustomsCode(), OperationTypeEnum.approveStatus(approveStatus));
+    }
+
+    @Override
+    public BatchResultDTO disApprove(String id) {
+        ProductLogisticsEntity entity = productLogisticsService.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到物流产品数据");
+        }
+        // 更新审核信息
+        updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+        return BatchResultDTO.success(entity.getId(), entity.getCustomsCode(), OperationTypeEnum.DISAPPROVE);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean approveEnd(ApproveOneDTO dto, ProductLogisticsEntity entity) {
+        if (ObjectUtil.isEmpty(entity)) {
+            return Boolean.TRUE;
+        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+        //更新状态
+        updateForApprove(entity.getId(), approveStatus.getStatus());
+        return Boolean.TRUE;
+    }
+
+
+    /**
+     * 更新审核状态
+     */
+    private void updateApproveStatus(String id, String approveStatus) {
+        productLogisticsService.lambdaUpdate().eq(ProductLogisticsEntity::getId, id)
+                .set(ProductLogisticsEntity::getApproveStatus, approveStatus)
+                .set(ProductLogisticsEntity::getApproveUserId, "")
+                .set(ProductLogisticsEntity::getApproveUserName, "")
+                .set(ProductLogisticsEntity::getApproveTime, null)
+                .update(new ProductLogisticsEntity());
+    }
+
+
+    /**
+     * 审核更新审核信息
+     * @param id
+     * @param approveStatus
+     */
+    public void updateForApprove(String id, String approveStatus) {
+        //当前登录人
+        LoginUser userInfo = commonService.getUserInfo();
+        productLogisticsService.lambdaUpdate().eq(ProductLogisticsEntity::getId, id)
+                .set(ProductLogisticsEntity::getApproveUserId, userInfo.getUid())
+                .set(ProductLogisticsEntity::getApproveUserName, userInfo.getUserName())
+                .set(ProductLogisticsEntity::getApproveStatus, approveStatus)
+                .set(ProductLogisticsEntity::getApproveTime, LocalDateTime.now())
+                .update(new ProductLogisticsEntity());
+    }
+    /**
+     * @description: 启动流程
+     * @author Will
+     * @date: 2024/3/18 18:48
+     * @param entity
+     */
+    public void startProcess(ProductLogisticsEntity entity) {
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getCustomsCode());
+        startDTO.setBusinessKey(SourceTypeEnum.PRODUCT_LOGISTICS.getCode());
+        startDTO.setBusinessName(entity.getCustomsCode());
+        startDTO.setUserId(commonService.getUserInfo().getUid());
+        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
+        if (!result.isSuccess()) {
+            throw new ServiceException(result.getMsg());
+        }
+    }
+
+    /**
+     * 审核流程处理
+     * @param entity
+     * @param dto
+     */
+    private void approveProcess(ProductLogisticsEntity entity, ApproveOneDTO dto) {
+        LoginUser userInfo = commonService.getUserInfo();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.PRODUCT_LOGISTICS.getCode());
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+        approveDTO.setComment(dto.getComment());
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
+        Integer code = approveResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(ApiError.ERROR_94006);
+        }
+        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(dto, entity);
+        }
+    }
 
     private List<String> listField() {
         List<String> fieldList = new ArrayList<>(10);
@@ -695,7 +916,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
         for (LogisticsProductDTO.ExportInfoDTO item : list) {
             String skuId = item.getSkuId();
-
+            item.setLogisticsApproveStatusName(item.getLogisticsApproveStatus().getName());
             //含税成本
             BigDecimal actualTaxCost = item.getActualTaxCost();
             if (Objects.isNull(actualTaxCost) || zero.compareTo(actualTaxCost) == 0) {
