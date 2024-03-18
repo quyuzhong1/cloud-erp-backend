@@ -16,21 +16,22 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.dto.KingdeeUserRefPostDTO;
+import com.erp.model.sys.dto.UserInfoDTO;
 import com.erp.model.sys.entity.KingdeeOperatorRefPostEntity;
 import com.erp.model.sys.entity.KingdeePostEntity;
 import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
+import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.sys.mapper.KingdeeOperatorRefPostMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeOperatorService;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeService;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeUserPostService;
-import com.erp.server.sys.service.CommonService;
-import com.erp.server.sys.service.KingdeeOperatorRefPostService;
-import com.erp.server.sys.service.KingdeeUserRefPostService;
-import com.erp.server.sys.service.SysAccountingCompanyService;
+import com.erp.server.sys.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -65,6 +67,12 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     @Autowired
     private SyncKingdeeOperatorService syncKingdeeOperatorService;
 
+    @Autowired
+    private SysUserInfoService sysUserInfoService;
+
+
+    @Resource
+    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -225,5 +233,46 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
                 .set(StringUtils.isNotBlank(syncKingdeeId), KingdeeOperatorRefPostEntity::getKingdeeId, syncKingdeeId)
                 .set(StringUtils.isNotBlank(syncKingdeeCode), KingdeeOperatorRefPostEntity::getCode, syncKingdeeCode)
                 .update();
+    }
+
+    @Override
+    public KingdeeOperatorRefPostDTO.OperatorDTO find(KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO dto) {
+        KingdeeOperatorRefPostDTO.OperatorDTO result = baseMapper.find(dto);
+        if(Objects.nonNull(result)){
+            SysUserInfoEntity userInfo = sysUserInfoService.getById(dto.getUserId());
+            if(Objects.nonNull(userInfo)){
+                result.setUserName(userInfo.getUserName());
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public List<UserInfoDTO.BusinessOperationUserDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
+        List<UserInfoDTO.BusinessOperationUserDTO> resultList = new ArrayList<>(10);
+        List<UserInfoDTO.BusinessOperationUserDTO> dbList = baseMapper.listInfo(dto);
+
+        String userId = commonService.getUserInfo().getUid();
+        UserInfoDTO.BusinessOperationUserDTO findUser = dbList.stream().filter(d -> d.getUserId().equals(userId)).findFirst().orElse(null);
+        if (findUser != null) {
+            findUser.setIsMyState(1);
+            resultList.add(findUser);
+        } else {
+            dbList.forEach(d -> d.setIsMyState(0));
+        }
+        List<UserInfoDTO.BusinessOperationUserDTO> wantList = dbList.stream().filter(d -> !userId.equals(d.getUserId())).collect(Collectors.toList());
+        resultList.addAll(wantList);
+        Integer zero= MathUtil.ZERO;
+        for (UserInfoDTO.BusinessOperationUserDTO item : resultList) {
+            Integer deleteState = item.getDeleteState();
+            Integer userState = item.getUserState();
+            if (zero.equals(deleteState) || zero.equals(userState)) {
+                item.setDisabled(Boolean.TRUE);
+            } else {
+                item.setDisabled(Boolean.FALSE);
+            }
+        }
+
+        return resultList;
     }
 }

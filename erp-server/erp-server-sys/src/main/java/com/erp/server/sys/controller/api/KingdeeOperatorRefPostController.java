@@ -3,7 +3,9 @@ package com.erp.server.sys.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeUserRefPostDTO;
+import com.erp.model.sys.dto.UserInfoDTO;
 import com.erp.model.sys.entity.KingdeeOperatorRefPostEntity;
 import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
 import com.erp.server.sys.query.KingdeeOperatorQueryHandler;
@@ -133,4 +135,13 @@ public class KingdeeOperatorRefPostController extends BaseController {
     }
 
 
+
+    /**
+     * 业务员列表 用于B2B 销售订单下拉
+     */
+    @PostMapping("/list")
+    public ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> list (@RequestBody KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
+        List<UserInfoDTO.BusinessOperationUserDTO> list = kingdeeOperatorRefPostService.listInfo(dto);
+        return success(list);
+    }
 }

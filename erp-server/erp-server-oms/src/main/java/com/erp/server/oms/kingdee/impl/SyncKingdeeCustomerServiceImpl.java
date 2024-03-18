@@ -21,6 +21,7 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
+import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -160,34 +161,13 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 
         resultMap.put("currency", viewDTOS1.get(MathUtil.ZERO).getKingdeeCode());
         resultMap.put("remark", entity.getRemark());
-/*        List<SellerDTO.ViewDTO> sellerList = customerSellerService.listByMainId(entity.getId());
-        if (CollectionUtils.isNotEmpty(sellerList)) {
-            SellerDTO.ViewDTO viewDTO = sellerList.get(MathUtil.ZERO);
-            String deptId = viewDTO.getDeptId();
-            if (StringUtils.isNotBlank(deptId)) {
-                SysDepartmentDTO dept = sysUserFeign.getUserDeptById(deptId);
-                if (dept != null) {
-                    resultMap.put("sellerDeptCode", dept.getCode());
-                }
-            }
-            List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoDTOS = sysUserFeign.listUserKingdeePostByUserIds(Collections.singletonList(viewDTO.getSellerId()));
-            if (CollectionUtils.isNotEmpty(userKingdeePostInfoDTOS)) {
-                resultMap.put("sellerUserCode", userKingdeePostInfoDTOS.get(MathUtil.ZERO).getKingdeePostCode());
-            }
-        }*/
+
         //销售员
         String sellerId = entity.getSellerId();
         String deptCode = "";
 
-        //当为空的时候 就取岗位表的
-        KingdeePostDTO.FindUserKingdeePostInfoDTO findUserPostKingdee = new KingdeePostDTO.FindUserKingdeePostInfoDTO();
-        findUserPostKingdee.setUserId(sellerId);
-        findUserPostKingdee.setOrgCode("100");
-        KingdeePostDTO.UserKingdeePostInfoDTO kingdeePost = kingdeeFeign.getUserKingdeePost(findUserPostKingdee);
-        if (kingdeePost != null) {
-            deptCode = kingdeePost.getKingdeeDeptCode();
-        }
-        resultMap.put("sellerDeptCode", deptCode);
+
+
         //获取业务员信息
         if (StringUtils.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
@@ -195,14 +175,15 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
             findBusinessOperator.setUserId(sellerId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
-            KingdeeBusinessOperatorEntity kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员
             if (!Objects.isNull(kingSellerInfo)) {
-                resultMap.put("sellerUserCode", kingSellerInfo.getKingdeePostCode());
+                resultMap.put("sellerUserCode", kingSellerInfo.getUserPostCode());
+                deptCode=kingSellerInfo.getDeptCode();
             }
         }
 
-
+        resultMap.put("sellerDeptCode", deptCode);
         List<DictBasicDTO.ViewDTO> settleModeList = dictBasicService.getByKey("settleMode");
         DictBasicDTO.ViewDTO settleMode = settleModeList.stream().filter(req -> req.getValue().equals(entity.getSettleDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
         resultMap.put("settleModeCode", settleMode.getRemark());

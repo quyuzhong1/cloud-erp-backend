@@ -1,8 +1,6 @@
 package com.erp.server.sys.rocketmq.sync.kingdee;
 
-import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.entity.KingdeeOperatorRefPostEntity;
-import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
 
 /**
  * @author Lambda

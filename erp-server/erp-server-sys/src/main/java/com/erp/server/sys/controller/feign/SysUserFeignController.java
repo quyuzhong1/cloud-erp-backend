@@ -61,7 +61,7 @@ public class SysUserFeignController extends BaseController {
     private SysRoleMenuService sysRoleMenuService;
 
     @Autowired
-    private UserKingdeePostService userKingdeePostService;
+    private KingdeeUserRefPostService kingdeeUserRefPostService;
 
     @Resource
     private SysUserWechatService wechatService;
@@ -389,18 +389,7 @@ public class SysUserFeignController extends BaseController {
     }
 
 
-    /**
-     * 根据用戶id 获取金蝶的对应岗位code
-     *
-     * @param userId
-     * @return com.erp.model.sys.dto.KingdeePostDTO.UserKingdeePostInfoDTO
-     * @author yl
-     * @date 2023-06-05 10:08
-     */
-    @PostMapping("/getUserKingdeePostByUserId")
-    public KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePostByUserId(@RequestBody String userId) {
-        return userKingdeePostService.getUserKingdeePostByUserId(userId);
-    }
+
     /**
      * 根据用戶ids 获取金蝶的对应岗位code
      *
@@ -408,18 +397,11 @@ public class SysUserFeignController extends BaseController {
      */
     @PostMapping("/listUserKingdeePostByUserIds")
     public List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByUserIds(@RequestBody List<String> userIds) {
-        return userKingdeePostService.listUserKingdeePostByUserIds(userIds);
+       // return userKingdeePostService.listUserKingdeePostByUserIds(userIds);
+        return null;
     }
 
-    /**
-     * 根据金蝶的对应岗位code获取信息
-     *
-     * @return
-     */
-    @PostMapping("/listUserKingdeePostByKingdeePostCodes")
-    public List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByKingdeePostCodes(@RequestBody List<String> codes) {
-        return userKingdeePostService.listUserKingdeePostByKingdeePostCodes(codes);
-    }
+
 
     /**
      * 获取到第三方绑定的用户

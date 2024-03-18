@@ -119,6 +119,6 @@ public class KingdeeOperatorConsumerServiceImpl implements KingdeeOperatorConsum
 
     public void operateDelete(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, String operate) {
         //删除
-        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.KINGDEE_OPERATOR.getCode(),operate);
+        kingdeeCommonService.delete(apiUtils,platformEntity,map,ApiModuleTypeEnum.KINGDEE_OPERATOR.getCode(),operate);
     }
 }

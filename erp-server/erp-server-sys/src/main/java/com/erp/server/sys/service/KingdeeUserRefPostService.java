@@ -1,5 +1,6 @@
 package com.erp.server.sys.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -72,4 +73,14 @@ public interface KingdeeUserRefPostService extends SuperService<KingdeeUserRefPo
     BatchResultDTO delete(String id);
 
     Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId, String syncKingdeeCode);
+
+    /**
+     * 获取员工任岗信息
+     * @description
+     * @param
+     * @return
+     * @date 2024-03-18 9:28
+     * @author Lambda
+     */
+    KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePost(KingdeePostDTO.FindUserKingdeePostInfoDTO dto);
 }

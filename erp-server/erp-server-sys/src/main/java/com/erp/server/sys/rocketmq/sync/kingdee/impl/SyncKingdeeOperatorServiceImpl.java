@@ -7,18 +7,15 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.entity.KingdeeOperatorRefPostEntity;
 import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeOperatorService;
-import com.erp.server.sys.service.KingdeeOperatorRefPostService;
 import com.erp.server.sys.service.KingdeeUserRefPostService;
 import com.erp.server.sys.service.SysAccountingCompanyService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.validator.constraints.EAN;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

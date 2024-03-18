@@ -1,12 +1,16 @@
 package com.erp.server.sys.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
+import com.erp.model.sys.dto.UserInfoDTO;
 import com.erp.model.sys.entity.KingdeeOperatorRefPostEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -29,4 +33,21 @@ public interface KingdeeOperatorRefPostMapper extends BaseMapper<KingdeeOperator
      * @author Lambda
      */
     IPage<KingdeeOperatorRefPostDTO.PagingViewDTO> paging(Page query, @Param("params")KingdeeOperatorRefPostDTO.PagingParamDTO paramDTO);
+
+    /**
+     * 获取金蝶业务员信息
+     * @param dto
+     * @return
+     */
+    KingdeeOperatorRefPostDTO.OperatorDTO find(@Param("params") KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO dto);
+
+    /**
+     * 下拉
+     * @description
+     * @param
+     * @return
+     * @date 2024-03-18 14:18
+     * @author Lambda
+     */
+    List<UserInfoDTO.BusinessOperationUserDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto);
 }

@@ -313,4 +313,27 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
                 .update();
     }
 
+    @Override
+    public KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePost(KingdeePostDTO.FindUserKingdeePostInfoDTO dto) {
+        String userId = dto.getUserId();
+        String orgCode = dto.getOrgCode();
+        List<BaseIdDTO.CodeDTO> orgList = sysAccountingCompanyService.listByCodes(Arrays.asList(orgCode));
+        if (CollectionUtils.isEmpty(orgList)) {
+            return null;
+        }
+        String orgId = orgList.get(0).getId();
+        KingdeePostDTO.UserKingdeePostInfoDTO result = baseMapper.getKingdeeUserPost(userId, orgId);
+        if(Objects.nonNull(result)){
+            result.setUseOrgName(orgList.get(0).getName());
+            result.setUseOrgCode(orgCode);
+        }
+        SysUserInfoEntity  userInfo=  sysUserInfoService.getById(userId);
+        if(Objects.nonNull(userInfo)){
+            result.setUserId(userId);
+            result.setUserName(userInfo.getUserName());
+            result.setKingdeeUserCode(userInfo.getCode());
+        }
+        return result;
+    }
+
 }

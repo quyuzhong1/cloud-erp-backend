@@ -106,6 +106,36 @@ public class KingdeeOperatorRefPostDTO implements Serializable {
         private String userName;
     }
 
+
+    /**
+     * 金蝶业务员信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class OperatorDTO{
+
+        /**
+         * 表id
+         */
+        private String id;
+
+        /**
+         * 员工任岗code
+         */
+        private String userPostCode;
+
+        /**
+         * 金蝶部门code
+         */
+        private String deptCode;
+
+        /**
+         * 用户名
+         */
+        private String userName;
+
+    }
+
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {

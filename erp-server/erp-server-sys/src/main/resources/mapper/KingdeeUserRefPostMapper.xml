@@ -56,6 +56,29 @@
         </if>
         su.uid desc
     </select>
+    <select id="getKingdeeUserPost" resultType="com.erp.model.sys.dto.KingdeePostDTO$UserKingdeePostInfoDTO">
+         SELECT
+            krp.code AS kingdeePostCode,
+            krp.use_org_id,
+            krp.use_org_name,
+            kd.kingdee_dept_code AS kingdeeDeptCode,
+            kd.kingdee_dept_name AS kingdeeDeptName,
+            kp.name AS postName
+         FROM kingdee_user_ref_post krp
+         LEFT JOIN kingdee_department kd
+         ON krp.kingdee_department_id=kd.id
+         LEFT JOIN kingdee_post kp
+         ON krp.kingdee_post_id=kp.id
+         AND kp.is_deleted=false
+         WHERE krp.is_deleted = false
+             AND krp.erp_user_id=#{userId}
+             AND krp.use_org_id=#{orgId}
+
+
+
+
+
+    </select>
 
 
 </mapper>

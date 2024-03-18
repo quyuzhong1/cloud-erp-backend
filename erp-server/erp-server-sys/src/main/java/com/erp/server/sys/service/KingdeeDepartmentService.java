@@ -1,5 +1,6 @@
 package com.erp.server.sys.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -98,4 +99,14 @@ public interface KingdeeDepartmentService extends SuperService<KingdeeDepartment
      * @author Lambda
      */
     List<KingdeeDepartmentDTO.TreeViewDTO> tree(String orgId);
+
+    /**
+     * 查询信息
+     * @description
+     * @param dto
+     * @return
+     * @date 2024-03-18 9:14
+     * @author Lambda
+     */
+    KingdeeDepartmentEntity getInfo(DeptKingdeeDTO.FindDeptKingdeeDTO dto);
 }

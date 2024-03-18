@@ -17,6 +17,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeDepartmentDTO;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
@@ -293,6 +294,15 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
             resultList.add(treeView);
         }
         return resultList;
+    }
+
+    @Override
+    public KingdeeDepartmentEntity getInfo(DeptKingdeeDTO.FindDeptKingdeeDTO dto) {
+        String erpDeptId = dto.getDeptId();
+        String orgId = dto.getOrgId();
+        KingdeeDepartmentEntity entity = this.lambdaQuery().eq(KingdeeDepartmentEntity::getUseOrgId, orgId).
+                eq(KingdeeDepartmentEntity::getErpDeptId, erpDeptId).last("LIMIT 1").one();
+        return entity;
     }
 
     private List<KingdeeDepartmentDTO.TreeViewDTO> getChildrenList(KingdeeDepartmentEntity item, List<KingdeeDepartmentEntity> allList) {

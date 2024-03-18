@@ -31,7 +31,7 @@ public class ErpServerSysApplicationTests {
         System.out.println("拉取金蝶条件为>>>>>>>>>>"+ filterStr);
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_OPERATOR.getCode());
         String fieldKeys = "FOperatorType,FEntryId,FOperatorType_ETY,FBizOrgId.FNumber,FNumber,FStaffId.FStaffNumber,FForbiddenStatus";
-        List<Map<String, Object>> list = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
+        List<Map<String, Object>> list = apiUtils.queryList(filterStr, "", 10, 1, 0);
         System.out.println(">>>>>>>>>"+ JSONUtil.toJsonStr(list));
 
     }

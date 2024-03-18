@@ -4,20 +4,18 @@ package com.erp.server.sys.controller.feign;
 import com.common.core.controller.BaseController;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
+import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
-import com.erp.model.sys.entity.DeptKingdeeEntity;
-import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
-import com.erp.server.sys.service.DeptKingdeeService;
-import com.erp.server.sys.service.KingdeeBusinessOperatorService;
-import com.erp.server.sys.service.UserKingdeePostService;
-import org.apache.commons.collections4.CollectionUtils;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.server.sys.service.KingdeeDepartmentService;
+import com.erp.server.sys.service.KingdeeOperatorRefPostService;
+import com.erp.server.sys.service.KingdeeUserRefPostService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 /**
  * <p>
@@ -32,14 +30,17 @@ import java.util.List;
 public class KingdeeFeignController extends BaseController {
 
 
-    @Resource
-    private DeptKingdeeService deptKingdeeService;
+
 
     @Resource
-    private UserKingdeePostService userKingdeePostService;
+    private KingdeeUserRefPostService kingdeeUserRefPostService;
+
 
     @Resource
-    private KingdeeBusinessOperatorService kingdeeBusinessOperatorService;
+    private KingdeeOperatorRefPostService kingdeeOperatorRefPostService;
+
+    @Resource
+    private KingdeeDepartmentService kingdeeDepartmentService;
 
     /**
      * 获取部门信息
@@ -48,8 +49,8 @@ public class KingdeeFeignController extends BaseController {
      * @return
      */
     @PostMapping("/getDeptInfo")
-    public DeptKingdeeEntity getInfo(@RequestBody DeptKingdeeDTO.FindDeptKingdeeDTO dto) {
-        return deptKingdeeService.getInfo(dto);
+    public KingdeeDepartmentEntity getInfo(@RequestBody DeptKingdeeDTO.FindDeptKingdeeDTO dto) {
+        return kingdeeDepartmentService.getInfo(dto);
     }
 
 
@@ -61,7 +62,7 @@ public class KingdeeFeignController extends BaseController {
      */
     @PostMapping("/getUserKingdeePost")
     public KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePost(@RequestBody KingdeePostDTO.FindUserKingdeePostInfoDTO dto) {
-        KingdeePostDTO.UserKingdeePostInfoDTO result = userKingdeePostService.getUserKingdeePost(dto);
+        KingdeePostDTO.UserKingdeePostInfoDTO result = kingdeeUserRefPostService.getUserKingdeePost(dto);
         return result;
     }
 
@@ -72,37 +73,11 @@ public class KingdeeFeignController extends BaseController {
      * @return
      */
     @PostMapping("/getBusinessOperator")
-    public KingdeeBusinessOperatorEntity getUserKingdeePost(@RequestBody KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO dto) {
-        KingdeeBusinessOperatorEntity result = kingdeeBusinessOperatorService.find(dto);
+    public KingdeeOperatorRefPostDTO.OperatorDTO getUserKingdeePost(@RequestBody KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO dto) {
+        KingdeeOperatorRefPostDTO.OperatorDTO result = kingdeeOperatorRefPostService.find(dto);
         return result;
     }
 
 
-    /**
-     * 获取员工任岗信息
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("/getUserKingdeePostByPostCode")
-    public KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePostByInfo(@RequestBody KingdeePostDTO.FindUserKingdeePostDTO dto) {
-        KingdeePostDTO.UserKingdeePostInfoDTO result = userKingdeePostService.getUserKingdeePostInfoByPostCode(dto);
-        return result;
-    }
-
-
-    /**
-     * 根据用户获取到业务员信息
-     *
-     * @param userIdList
-     * @return
-     */
-    @PostMapping("/listBusinessOperatorByUserIdList")
-    public List<KingdeeBusinessOperatorEntity> listBusinessOperatorByUserIdList(@RequestBody List<String> userIdList) {
-        if (CollectionUtils.isEmpty(userIdList)) {
-            return kingdeeBusinessOperatorService.list();
-        }
-        return kingdeeBusinessOperatorService.lambdaQuery().in(KingdeeBusinessOperatorEntity::getErpUserId, userIdList).list();
-    }
 
 }

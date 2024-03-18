@@ -1,9 +1,13 @@
 package com.erp.server.sys.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
+import com.erp.model.sys.dto.UserInfoDTO;
 import com.erp.model.sys.entity.KingdeeOperatorRefPostEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -47,4 +51,22 @@ public interface KingdeeOperatorRefPostService extends SuperService<KingdeeOpera
 
 
     Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId, String syncKingdeeCode);
+
+
+    /**
+     * 推送金蝶获取数据
+     * @param dto
+     * @return
+     */
+    KingdeeOperatorRefPostDTO.OperatorDTO find(KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO dto);
+
+    /**
+     * 业务员信息
+     * @description
+     * @param
+     * @return
+     * @date 2024-03-18 14:13
+     * @author Lambda
+     */
+    List<UserInfoDTO.BusinessOperationUserDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto);
 }
