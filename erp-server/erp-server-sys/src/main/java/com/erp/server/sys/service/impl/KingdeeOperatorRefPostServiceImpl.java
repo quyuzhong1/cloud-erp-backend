@@ -218,12 +218,7 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     }
 
 
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(KingdeeOperatorRefPostEntity kingdeeOperatorRefPostEntity) {
-    // TODO 验证数据 & 数据赋值
-    }
+
 
 
     @Override
@@ -272,6 +267,13 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
                 item.setDisabled(Boolean.FALSE);
             }
         }
+
+        return resultList;
+    }
+
+    @Override
+    public List<KingdeeOperatorRefPostDTO.OperatorDTO> listOperatorByUserIdList(List<String> userIdList) {
+        List<KingdeeOperatorRefPostDTO.OperatorDTO> resultList =baseMapper.listOperatorByUserIdList(userIdList);
 
         return resultList;
     }

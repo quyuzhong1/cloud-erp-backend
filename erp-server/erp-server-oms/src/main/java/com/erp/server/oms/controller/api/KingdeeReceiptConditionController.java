@@ -42,7 +42,7 @@ public class KingdeeReceiptConditionController extends BaseController {
 
 
     /**
-     * 付款条件下拉
+     * 收款条件下拉
      * @return
      */
     @GetMapping("/select")

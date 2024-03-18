@@ -2,6 +2,7 @@ package com.erp.model.sys.dto;
 
 import cn.hutool.core.annotation.Alias;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,6 +25,53 @@ import javax.validation.constraints.Size;
 @Data
 @NoArgsConstructor
 public class KingdeeUserRefPostDTO implements Serializable {
+
+
+
+    @Data
+    @NoArgsConstructor
+    public static class DetailPagingViewDTO{
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 用户名
+         */
+        private String userName;
+
+        /**
+         * 岗位名称
+         */
+        private String postName;
+
+        /**
+         * 部门名称
+         */
+        private String deptName;
+        /**
+         * 组织名称
+         */
+        private String orgName;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DetailPagingParamDTO  extends PermissionsDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
+
 
 
     @Data

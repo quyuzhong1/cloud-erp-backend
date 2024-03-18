@@ -69,4 +69,6 @@ public interface KingdeeOperatorRefPostService extends SuperService<KingdeeOpera
      * @author Lambda
      */
     List<UserInfoDTO.BusinessOperationUserDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto);
+
+    List<KingdeeOperatorRefPostDTO.OperatorDTO> listOperatorByUserIdList(List<String> userIdList);
 }

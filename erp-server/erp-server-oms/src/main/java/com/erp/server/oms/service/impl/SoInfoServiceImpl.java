@@ -8,7 +8,6 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -16,9 +15,11 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
-import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
@@ -31,33 +32,22 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.DictCountryDTO;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCurrencyEntity;
-import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.*;
@@ -79,9 +69,7 @@ import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.server.oms.constant.OmsConstant;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
-import com.erp.server.oms.listener.B2BSoExcelListener;
 import com.erp.server.oms.listener.B2BSoImportExcelListener;
 import com.erp.server.oms.mapper.SoInfoMapper;
 import com.erp.server.oms.service.*;
@@ -173,8 +161,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private DmpTaskFeign dmpTaskFeign;
 
-    @Resource
-    private DmpMqFeign dmpMqFeign;
+
     @Resource
     private KingdeeFeign kingdeeFeign;
 
@@ -2802,7 +2789,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //用户
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         //金蝶业务员列表
-        List<KingdeeBusinessOperatorEntity> kingdeeBusinessOperatorList = kingdeeFeign.listBusinessOperatorByUserIdList(new ArrayList<>());
+        List<KingdeeOperatorRefPostDTO.OperatorDTO> kingdeeBusinessOperatorList = kingdeeFeign.listBusinessOperatorByUserIdList(new ArrayList<>());
         //仓库
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
         //收款账号
@@ -2908,10 +2895,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (StringUtils.isBlank(sellerId)) {
                 errorMsgList.add("销售员不存在");
             }
-            String finalSalesOrgCode = salesOrgCode;
-            KingdeeBusinessOperatorEntity businessOperator = kingdeeBusinessOperatorList.stream().filter(k -> k.getErpUserId().equals(sellerId) &&
-                    k.getKingdeeOrgCode().equals(finalSalesOrgCode) &&
-                    xsyCode.equals(k.getKingdeeType())
+            String finalSalesOrgId1 = salesOrgId;
+            KingdeeOperatorRefPostDTO.OperatorDTO businessOperator = kingdeeBusinessOperatorList.stream().filter(k -> k.getUserId().equals(sellerId) &&
+                    k.getOrgId().equals(finalSalesOrgId1) &&
+                    xsyCode.equals(k.getTypeCode())
             ).findFirst().orElse(null);
             if (Objects.isNull(businessOperator)) {
                 errorMsgList.add("金蝶未存在该销售员");
@@ -2950,7 +2937,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (Objects.isNull(bankAccount)) {
                 errorMsgList.add("收款账号不存在");
             } else {
-                receiveAccount = bankAccount.getBankAccountNo();
+                receiveAccount = bankAccount.getId();
             }
             addSo.setReceiveAccount(receiveAccount);
 

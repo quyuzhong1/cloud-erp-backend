@@ -218,6 +218,16 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
     }
 
     @Override
+    public PagingVO<KingdeeUserRefPostDTO.DetailPagingViewDTO> detailPaging(PagingDTO<KingdeeUserRefPostDTO.DetailPagingParamDTO> dto) {
+        KingdeeUserRefPostDTO.DetailPagingParamDTO paramDTO = dto.getParams();
+        paramDTO.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<KingdeeUserRefPostDTO.DetailPagingViewDTO> pageData = this.baseMapper.detailPaging(query, paramDTO);
+        return new PagingVO(pageData);
+
+    }
+
+    @Override
     public KingdeeUserRefPostDTO.UserPostViewDTO view(String id) {
         SysUserInfoEntity userInfo = sysUserInfoService.getById(id);
         if (Objects.isNull(userInfo)) {

@@ -3,9 +3,12 @@ package com.erp.server.sys.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.entity.KingdeePostEntity;
 import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
+import com.erp.server.sys.query.KingdeeOperatorQueryHandler;
+import com.erp.server.sys.query.KingdeeUserPostDetailQueryHandler;
 import com.erp.server.sys.query.KingdeeUserQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -66,6 +69,18 @@ public class KingdeeUserRefPostController extends BaseController {
         return success(pagingVO);
     }
 
+
+    /**
+     * 任岗明细分页查询
+     * @param dto
+     * @return
+     */
+    @PostMapping("/detailPaging")
+    @WebAdvanceQuery(handler = KingdeeUserPostDetailQueryHandler.class)
+    public ApiResult<PagingVO<KingdeeUserRefPostDTO.DetailPagingViewDTO>> detailPaging(@RequestBody @Validated PagingDTO<KingdeeUserRefPostDTO.DetailPagingParamDTO> dto) {
+        PagingVO<KingdeeUserRefPostDTO.DetailPagingViewDTO> pagingVO = kingdeeUserRefPostService.detailPaging(dto);
+        return success(pagingVO);
+    }
 
     /**
      * 初始化金蝶数据

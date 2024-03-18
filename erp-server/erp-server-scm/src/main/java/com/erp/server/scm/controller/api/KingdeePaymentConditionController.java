@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 
+ * 金蝶付款条件
  *
  * @author Lambda
  * @since 2024-03-08

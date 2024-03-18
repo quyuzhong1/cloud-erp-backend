@@ -55,6 +55,15 @@ public interface KingdeeUserRefPostService extends SuperService<KingdeeUserRefPo
      */
     PagingVO<KingdeeUserRefPostDTO.PagingUserViewDTO> paging(PagingDTO<KingdeeUserRefPostDTO.PagingParamDTO> dto);
 
+
+    /**
+     * 任岗明细分页
+     * @param dto
+     * @return
+     */
+    PagingVO<KingdeeUserRefPostDTO.DetailPagingViewDTO> detailPaging(PagingDTO<KingdeeUserRefPostDTO.DetailPagingParamDTO> dto);
+
+
     /**
      * 详情
      * @param id
@@ -83,4 +92,6 @@ public interface KingdeeUserRefPostService extends SuperService<KingdeeUserRefPo
      * @author Lambda
      */
     KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePost(KingdeePostDTO.FindUserKingdeePostInfoDTO dto);
+
+
 }

@@ -26,6 +26,9 @@ import javax.validation.constraints.Size;
 public class KingdeeOperatorRefPostDTO implements Serializable {
 
 
+
+
+
     /**
      * 拉取的金蝶数据
      */
@@ -133,6 +136,12 @@ public class KingdeeOperatorRefPostDTO implements Serializable {
          * 用户名
          */
         private String userName;
+
+        private String userId;
+
+        private String orgId;
+
+        private String typeCode;
 
     }
 

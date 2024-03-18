@@ -49,5 +49,7 @@ public interface KingdeeOperatorRefPostMapper extends BaseMapper<KingdeeOperator
      * @date 2024-03-18 14:18
      * @author Lambda
      */
-    List<UserInfoDTO.BusinessOperationUserDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto);
+    List<UserInfoDTO.BusinessOperationUserDTO> listInfo(@Param("params") KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto);
+
+    List<KingdeeOperatorRefPostDTO.OperatorDTO> listOperatorByUserIdList(@Param("userIdList") List<String> userIdList);
 }

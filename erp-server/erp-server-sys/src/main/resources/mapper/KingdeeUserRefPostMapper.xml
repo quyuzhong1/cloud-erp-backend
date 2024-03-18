@@ -73,11 +73,32 @@
          WHERE krp.is_deleted = false
              AND krp.erp_user_id=#{userId}
              AND krp.use_org_id=#{orgId}
+    </select>
 
-
-
-
-
+    <select id="detailPaging" resultType="com.erp.model.sys.dto.KingdeeUserRefPostDTO$DetailPagingViewDTO">
+        SELECT kup.id,
+               kp.name              AS postName,
+               kd.kingdee_dept_name AS deptName,
+               kup.use_org_name     AS orgName,
+               su.user_name         AS userName
+        FROM kingdee_user_ref_post kup
+                 LEFT JOIN kingdee_post kp
+                           ON kup.kingdee_post_id = kp.id AND kp.is_deleted = false
+                 LEFT JOIN kingdee_department kd
+                           ON kup.kingdee_department_id = kd.id AND kd.is_deleted = false
+                 LEFT JOIN sys_user_info su
+                           ON kup.erp_user_id = su.uid
+        WHERE kup.is_deleted = false
+        AND
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        kup.id desc
     </select>
 
 

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * <p>
@@ -76,6 +77,18 @@ public class KingdeeFeignController extends BaseController {
     public KingdeeOperatorRefPostDTO.OperatorDTO getUserKingdeePost(@RequestBody KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO dto) {
         KingdeeOperatorRefPostDTO.OperatorDTO result = kingdeeOperatorRefPostService.find(dto);
         return result;
+    }
+
+
+    /**
+     * 获取到业务员信息
+     *
+     * @return
+     */
+    @PostMapping("/listOperatorByUserIdList")
+    public List<KingdeeOperatorRefPostDTO.OperatorDTO> listOperatorByUserIdList(@RequestBody  List<String> userIdList) {
+        List<KingdeeOperatorRefPostDTO.OperatorDTO> list = kingdeeOperatorRefPostService.listOperatorByUserIdList(userIdList);
+        return list;
     }
 
 

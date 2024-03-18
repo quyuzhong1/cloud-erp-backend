@@ -33,6 +33,17 @@ public interface KingdeeUserRefPostMapper extends BaseMapper<KingdeeUserRefPostE
     IPage<KingdeeUserRefPostDTO.PagingUserViewDTO> paging(Page query, @Param("params") KingdeeUserRefPostDTO.PagingParamDTO paramDTO);
 
     /**
+     * 明细分页
+     * @description
+     * @param
+     * @return
+     * @date 2024-03-18 16:35
+     * @author Lambda
+     */
+    IPage<KingdeeUserRefPostDTO.DetailPagingViewDTO> detailPaging(Page query, @Param("params")KingdeeUserRefPostDTO.DetailPagingParamDTO paramDTO);
+
+
+    /**
      * 获取员工任岗信息
      * @description
      * @param
@@ -41,4 +52,5 @@ public interface KingdeeUserRefPostMapper extends BaseMapper<KingdeeUserRefPostE
      * @author Lambda
      */
     KingdeePostDTO.UserKingdeePostInfoDTO getKingdeeUserPost(@Param("userId") String userId, @Param("orgId") String orgId);
+
 }
