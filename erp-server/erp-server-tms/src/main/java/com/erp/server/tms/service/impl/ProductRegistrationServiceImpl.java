@@ -35,6 +35,8 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -103,7 +105,12 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
             }
             TransferLogisticsCreateProductReq createProductReq = ProductRegistrationConverter.INSTANCE.convertToCreateProduct(productDTO);
             //备案产品
-            ApiResult<String> result = transferLogisticsService.createProduct(createProductReq,transferLogisticsAuthEntity.getId());
+            ApiResult<String> result;
+            try {
+                result = transferLogisticsService.createProduct(createProductReq,transferLogisticsAuthEntity.getId());
+            }catch (ConstraintViolationException violationException){
+                result = ApiResult.error(500,violationException.getConstraintViolations().stream().map(ConstraintViolation::getMessage).collect(Collectors.toList()).toString());
+            }
             if(result.isSuccess()){
                 //备案成功，查询产品信息回写表
                 ApiResult<ProductRegistrationEntity> queryResult = transferLogisticsService.getProductBySku(productDTO.getSkuNo(),transferLogisticsAuthEntity.getId());

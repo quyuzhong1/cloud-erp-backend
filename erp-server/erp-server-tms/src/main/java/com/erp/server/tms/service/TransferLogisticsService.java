@@ -7,6 +7,7 @@ import com.erp.model.tms.dto.transfer.*;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
@@ -66,5 +67,5 @@ public interface TransferLogisticsService {
      * @param authId
      * @return
      */
-    ApiResult<String> createProduct(TransferLogisticsCreateProductReq createProductReq, String authId);
+    ApiResult<String> createProduct(@Valid TransferLogisticsCreateProductReq createProductReq, String authId);
 }

@@ -99,7 +99,7 @@ public class ProductRegistrationController extends BaseController {
      */
     @PostMapping("/pushFailure")
     @LogAction(value = LogActionEnum.INSERT, desc = "产品备案表失败推送")
-    public ApiResult<List<BatchResultDTO>> add(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> pushFailure(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = productRegistrationService.pushFailure(dto.getIds());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

@@ -34,7 +34,7 @@ public class TransferLogisticsCreateProductReq {
     /**
      * 产品英文名
      */
-    @NotBlank(message = "产品英文名不能为空")
+    @NotNull(message = "产品英文名不能为空")
     private String englishName;
 
     /**
@@ -62,13 +62,13 @@ public class TransferLogisticsCreateProductReq {
     /**
      * 申报价值
      */
-    @DecimalMin( value = "0",message = "申报价值必须大于0")
+    @NotNull(message = "申报价值不能为空")
     private BigDecimal declaredValue;
 
     /**
      * 产品重量KG
      */
-    @DecimalMin( value = "0",message = "产品重量(KG)必须大于0")
+    @NotNull(message = "产品重量KG不能为空")
     private BigDecimal weight;
 
     /**
@@ -100,7 +100,7 @@ public class TransferLogisticsCreateProductReq {
     /**
      * 产品海关品名
      */
-    @NotBlank(message = "产品海关品名不能为空")
+    @NotNull(message = "产品海关品名不能为空")
     private String hsName;
 
     /**
@@ -118,12 +118,11 @@ public class TransferLogisticsCreateProductReq {
     /**
      * 法定数量（第一数量）
      */
-    @DecimalMin( value = "0",message = "法定数量（第一数量）必须大于0")
+    @NotNull(message = "法定数量（第一数量）不能为空")
     private BigDecimal firstQauntity;
 
     /**
      * 第二数量，当对应海关编码存在第二单位时必填
      */
-    @DecimalMin( value = "0",message = "第二数量必须大于0")
     private BigDecimal secondQauntity;
 }
