@@ -74,6 +74,88 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
     }
 
 
+
+    @Override
+    public List<String> getContentByObj(Object oldObj, Object newObj,String msg) {
+
+        List<String> resultList =  new ArrayList<>();
+        Map<Pair<String, String>, Pair<String, String>> operationLogMap = OperationLogUtil.getOperationLogMap(oldObj, newObj);
+        //判断是否为空
+        if (CollectionUtils.isEmpty(operationLogMap)) {
+            return resultList;
+        }
+        List<String> classPaths = operationLogMap.entrySet().stream().map(obj -> obj.getKey().getValue()).distinct().collect(Collectors.toList());
+        List<CfgOperateLogFieldEntity> fieldList = cfgOperateLogFieldService.listByClassPaths(classPaths);
+        if (CollectionUtils.isEmpty(fieldList)) {
+            return resultList;
+        }
+        List<OperateLogEntity> list = new LinkedList<>();
+        for (Map.Entry<Pair<String, String>, Pair<String, String>> entry : operationLogMap.entrySet()) {
+            //Pair<字段名称, 类路径>
+            Pair<String, String> keyPair = entry.getKey();
+            //去掉属性里的数字
+            String field = this.removeDigits(keyPair.getKey());
+            String fieldClass = keyPair.getValue();
+            //Pair<旧值, 新值>
+            Pair<String, String> valuePair = entry.getValue();
+            CfgOperateLogFieldEntity fieldEntity = fieldList.stream().filter(obj -> obj.getField().equals(field) && obj.getClassPath().equals(fieldClass)).findAny().orElse(null);
+            if (ObjectUtils.isEmpty(fieldEntity)) {
+                continue;
+            }
+            String fieldName = fieldEntity.getFieldName();
+            Integer type = fieldEntity.getType();
+            if (ModuleOperateLogFieldTypeEnum.TYPE_YES_NO.getCode().equals(type)) {
+                valuePair = setBooleanValue(fieldEntity, valuePair);
+            }
+            //枚举
+            if (ModuleOperateLogFieldTypeEnum.TYPE_ENUM.getCode().equals(type)) {
+                valuePair = setEnumValue(fieldEntity,valuePair);
+            }
+            //字典
+            if (ModuleOperateLogFieldTypeEnum.TYPE_DIST.getCode().equals(type)) {
+                valuePair = setDistValue(valuePair,fieldEntity.getValue());
+            }
+            //人员
+            if (ModuleOperateLogFieldTypeEnum.TYPE_USER.getCode().equals(type)) {
+                valuePair = setUserValue(valuePair);
+            }
+            //部门
+            if (ModuleOperateLogFieldTypeEnum.TYPE_DEPT.getCode().equals(type)) {
+                valuePair = setDeptValue(valuePair);
+            }
+            //国家
+            if (ModuleOperateLogFieldTypeEnum.TYPE_COUNTRY.getCode().equals(type)) {
+                valuePair = setCountryValue(valuePair);
+            }
+            //城市
+            if (ModuleOperateLogFieldTypeEnum.TYPE_CITY.getCode().equals(type)) {
+                valuePair = setCityValue(valuePair);
+            }
+            //客户
+            if (ModuleOperateLogFieldTypeEnum.TYPE_CUSTOMER.getCode().equals(type)) {
+                valuePair = setCustomerValue(valuePair);
+            }
+            //币别
+            if (ModuleOperateLogFieldTypeEnum.TYPE_CURRENCY.getCode().equals(type)) {
+                valuePair = setCurrencyValue(valuePair);
+            }
+            String oldValue = String.valueOf(valuePair.getKey());
+            String newValue = String.valueOf(valuePair.getValue());
+
+            if (oldValue.equals(newValue)) {
+                continue;
+            }
+            String content;
+            String concat = msg.concat("编辑了[").concat(fieldName).concat("]");
+            if (StringUtils.isBlank(valuePair.getKey())) {
+                content = concat.concat("由空值变更为[").concat(newValue).concat("]");
+            } else {
+                content = concat.concat("由[").concat(oldValue).concat("]").concat("变更为[").concat(newValue).concat("]");
+            }
+            resultList.add(content);
+        }
+        return resultList;
+    }
     @Override
     public Boolean addModuleOperateLogByObj(Object oldObj, Object newObj, String moduleType, String businessId, String pid, String msg) {
 

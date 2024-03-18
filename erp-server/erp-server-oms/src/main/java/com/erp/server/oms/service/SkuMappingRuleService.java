@@ -1,7 +1,9 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SkuMappingRuleDTO;
 import com.erp.model.oms.entity.SkuMappingRuleEntity;
 
@@ -36,7 +38,7 @@ public interface SkuMappingRuleService extends SuperService<SkuMappingRuleEntity
     Boolean update(SkuMappingRuleDTO.UpdateDTO dto);
 
 
-    List<SkuMappingRuleEntity> listOrderByPriority();
+    List<SkuMappingRuleEntity> listOrderByPriorityAndUpdateTime();
 
     Boolean enableOrDisable(SkuMappingRuleDTO.StatusDTO dto);
 
@@ -45,4 +47,6 @@ public interface SkuMappingRuleService extends SuperService<SkuMappingRuleEntity
     List<String> getSkuRuleTest(SkuMappingRuleDTO.RuleTestDTO dto);
 
     void handleSkuMapping();
+
+    PagingVO<SkuMappingRuleDTO.ListDTO> paging(PagingDTO<SkuMappingRuleDTO.ParamsDTO> dto);
 }

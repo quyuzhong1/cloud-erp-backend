@@ -39,6 +39,11 @@ public class SkuMappingRuleEntity extends BaseEntity<SkuMappingRuleEntity> {
     @TableField("rule_type")
     private String ruleType;
     /**
+     * 规则名称
+     */
+    @TableField("rule_name")
+    private String ruleName;
+    /**
     * 规则正则
     */
     @TableField("rule_regex")

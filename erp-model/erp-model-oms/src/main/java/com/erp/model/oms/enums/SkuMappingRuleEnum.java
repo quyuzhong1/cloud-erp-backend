@@ -22,11 +22,11 @@ import java.util.stream.Collectors;
 @ToString
 @AllArgsConstructor
 public enum SkuMappingRuleEnum implements EnumMessage{
-    COMPLETE_SKU("completeSku","识别完整的SKU",v-> new ArrayList<>(),(type,regex,v)-> v),
-    IGNORE_PREFIXES_AND_SUFFIXES("ignorePrefixesAndSuffixes","识别忽略前、后缀的SKU",SkuMappingRuleEnum::getIgnorePrefixesAndSuffixesRegex,SkuMappingRuleEnum::handleRegex),
-    IGNORE_FIRST_AND_LAST_DIGITS("ignoreFirstAndLastDigits","识别忽略前、后位数的SKU",SkuMappingRuleEnum::getIgnoreFirstAndLastDigitsRegex,SkuMappingRuleEnum::handleRegex),
-    EXTRACT_FIRST_TO_LAST_DIGITS("extractFirstToLast","识别截取后的SKU",SkuMappingRuleEnum::getExtractFirstToLastRegex,SkuMappingRuleEnum::handleRegex),
-    EXTRACT_BETWEEN_START_AND_END("extractBetweenStartAndEnd","截取SKU起始符与结束符之间的字符",SkuMappingRuleEnum::getExtractBetweenStartAndEndRegex,SkuMappingRuleEnum::handleRegex),
+    COMPLETE_SKU("completeSku","完整SKU",v-> new ArrayList<>(),(type,regex,v)-> v),
+    IGNORE_PREFIXES_AND_SUFFIXES("ignorePrefixesAndSuffixes","忽略前缀/后缀",SkuMappingRuleEnum::getIgnorePrefixesAndSuffixesRegex,SkuMappingRuleEnum::handleRegex),
+    IGNORE_FIRST_AND_LAST_DIGITS("ignoreFirstAndLastDigits","忽略前几位/后几位",SkuMappingRuleEnum::getIgnoreFirstAndLastDigitsRegex,SkuMappingRuleEnum::handleRegex),
+    EXTRACT_FIRST_TO_LAST_DIGITS("extractFirstToLast","截取第几位到第几位",SkuMappingRuleEnum::getExtractFirstToLastRegex,SkuMappingRuleEnum::handleSubStrRegex),
+    EXTRACT_BETWEEN_START_AND_END("extractBetweenStartAndEnd","截取两个字符之间的SKU",SkuMappingRuleEnum::getExtractBetweenStartAndEndRegex,SkuMappingRuleEnum::handleRegex),
     ;
     private final String code;
     private final String name;
@@ -89,6 +89,7 @@ public enum SkuMappingRuleEnum implements EnumMessage{
         SYMBOLIC_14("\\","\\",true),
         SYMBOLIC_15("/","/",false),
         SYMBOLIC_16("|","|",false),
+        SYMBOLIC_17(".",".",true),
         ;
         private final String code;
         private final String name;
@@ -96,16 +97,22 @@ public enum SkuMappingRuleEnum implements EnumMessage{
         private final Boolean isEscape;
     }
 
+    private final List<String> needEscepe = Arrays.asList("+","*","[","]","\\",".");
+
     private static List<String> getIgnorePrefixesAndSuffixesRegex(SkuMappingRuleDTO.RuleDTO commonDTO){
         List<String> list = new ArrayList<>(commonDTO.getRuleContentList().size());
         for(SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO : commonDTO.getRuleContentList()){
-            if(Objects.isNull(ruleConditionsDTO.getIgnorePrefix()) && Objects.isNull(ruleConditionsDTO.getIgnoringSuffixes())){
+            if(StringUtils.isBlank(ruleConditionsDTO.getIgnorePrefix()) && StringUtils.isBlank(ruleConditionsDTO.getIgnoringSuffixes())){
                 throw new ServiceException(ApiError.ERROR_SKU_MAPPING_RULE_NULL);
             }
-            String prefix = Objects.isNull(ruleConditionsDTO.getIgnorePrefix())?"":ruleConditionsDTO.getIgnorePrefix();
-            String suffixes = Objects.isNull(ruleConditionsDTO.getIgnoringSuffixes())?"":ruleConditionsDTO.getIgnoringSuffixes();
-            String regex = "\"^"+ prefix+"(.*?)"+suffixes+"$\"";
-            list.add(regex);
+            String prefix = StringUtils.isBlank(ruleConditionsDTO.getIgnorePrefix())?"":ruleConditionsDTO.getIgnorePrefix();
+            String suffixes = StringUtils.isBlank(ruleConditionsDTO.getIgnoringSuffixes())?"":ruleConditionsDTO.getIgnoringSuffixes();
+            prefix = escapeSpecialCharacters(prefix);
+            suffixes = escapeSpecialCharacters(suffixes);
+            String prefixRegex = StringUtils.isNotBlank(prefix)?"\"^"+ prefix+"(.*?)$\"" : "";
+            list.add(prefixRegex);
+            String suffixesRegex = StringUtils.isNotBlank(suffixes)?"\"^(.*?)"+suffixes+"$\"" : "";
+            list.add(suffixesRegex);
         }
         return list;
     }
@@ -135,11 +142,13 @@ public enum SkuMappingRuleEnum implements EnumMessage{
             if(prefix < 1 || suffixes < 1){
                 throw new ServiceException("截取位数不能小于1");
             }
-            prefix --;
             if (suffixes<prefix){
                 throw new ServiceException("后面位数不能小于前面位数");
             }
-            String regex = ".{" + prefix + "}(.{" + (suffixes - prefix) + "}).*";
+            prefix --;
+//            String regex = ".{" + prefix + "}(.{" + (suffixes - prefix) + "}).*";
+            //不使用正则，方便控制
+            String regex = "{" + prefix + ":"+suffixes+"}";
             list.add(regex);
         }
         return list;
@@ -147,63 +156,58 @@ public enum SkuMappingRuleEnum implements EnumMessage{
     private static List<String> getExtractBetweenStartAndEndRegex(SkuMappingRuleDTO.RuleDTO commonDTO){
         List<String> list = new ArrayList<>(commonDTO.getRuleContentList().size());
         String waitHandleRegex;
-        /**
-         分四种情况
-         1.起始符取左侧，结束符取右侧
-         2.起始符取右侧，结束符取右侧
-         3.起始符取左侧，结束符取左侧
-         4.起始符取右侧，结束符取左侧
-         【#】替换起始符，【%】替换结束符
-         */
-        if(commonDTO.getValidStartingSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code) &&
-                commonDTO.getValidEndSymbolPosition().equals(SkuMappingSymbolicSideEnum.FAR_RIGHT.code) ){
-            waitHandleRegex = "【#】(.*?)【%】(?!.*【%】)";
-        } else if (commonDTO.getValidStartingSymbolPosition().equals(SkuMappingSymbolicSideEnum.FAR_RIGHT.code) &&
-                commonDTO.getValidEndSymbolPosition().equals(SkuMappingSymbolicSideEnum.FAR_RIGHT.code) ) {
-            waitHandleRegex = "【#】((?:(?!【#】).)*?)【%】(?!.*【%】)";
-        } else if (commonDTO.getValidStartingSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code) &&
-                commonDTO.getValidEndSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code) ) {
-            waitHandleRegex = "【#】(.*?)(?=【%】.*$)";
-        } else if (commonDTO.getValidStartingSymbolPosition().equals(SkuMappingSymbolicSideEnum.FAR_RIGHT.code) &&
-                commonDTO.getValidEndSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code) ) {
-            waitHandleRegex = "【#】(?!.*【#】)(.*?)【%】";
-        }else{
-            throw new ServiceException("找不到起始符规则");
-        }
         for(SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO : commonDTO.getRuleContentList()){
+            /**
+             分四种情况
+             1.起始符取左侧，结束符取右侧
+             2.起始符取右侧，结束符取右侧
+             3.起始符取左侧，结束符取左侧
+             4.起始符取右侧，结束符取左侧
+             【#】替换起始符，【%】替换结束符
+             */
+            if(ruleConditionsDTO.getValidStartingSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code) &&
+                    ruleConditionsDTO.getValidEndSymbolPosition().equals(SkuMappingSymbolicSideEnum.FAR_RIGHT.code) ){
+                waitHandleRegex = "【#】(.*?)【%】(?!.*【%】)";
+            } else if (ruleConditionsDTO.getValidStartingSymbolPosition().equals(SkuMappingSymbolicSideEnum.FAR_RIGHT.code) &&
+                    ruleConditionsDTO.getValidEndSymbolPosition().equals(SkuMappingSymbolicSideEnum.FAR_RIGHT.code) ) {
+                waitHandleRegex = "【#】((?:(?!【#】).)*?)【%】(?!.*【%】)";
+            } else if (ruleConditionsDTO.getValidStartingSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code) &&
+                    ruleConditionsDTO.getValidEndSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code) ) {
+                waitHandleRegex = "【#】(.*?)(?=【%】.*$)";
+            } else if (ruleConditionsDTO.getValidStartingSymbolPosition().equals(SkuMappingSymbolicSideEnum.FAR_RIGHT.code) &&
+                    ruleConditionsDTO.getValidEndSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code) ) {
+                waitHandleRegex = "【#】(?!.*【#】)(.*?)【%】";
+            }else{
+                throw new ServiceException("找不到起始符规则");
+            }
             String finalRegex = waitHandleRegex;
             if(StringUtils.isBlank(ruleConditionsDTO.getStartingSymbol()) && StringUtils.isBlank(ruleConditionsDTO.getEndSymbol())){
                 throw new ServiceException(ApiError.ERROR_SKU_MAPPING_RULE_NULL);
             }
             //起始符或终止符为空，正则都不一样
             if(StringUtils.isNotBlank(ruleConditionsDTO.getStartingSymbol()) && StringUtils.isBlank(ruleConditionsDTO.getEndSymbol())){
-                if(commonDTO.getValidStartingSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code)){
+                if(ruleConditionsDTO.getValidStartingSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code)){
                     finalRegex = "【#】(.*)";
                 }else{
                     finalRegex = ".*【#】(.*)";
                 }
             }
             if(StringUtils.isBlank(ruleConditionsDTO.getStartingSymbol()) && StringUtils.isNotBlank(ruleConditionsDTO.getEndSymbol())){
-                if(commonDTO.getValidEndSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code)){
+                if(ruleConditionsDTO.getValidEndSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code)){
                     finalRegex = "([^【%】]*)【%】";
                 }else{
-                    finalRegex = "(.*)【%】.";
+                    finalRegex = "(.*)【%】";
                 }
             }
             String startSymbol = ruleConditionsDTO.getStartingSymbol();
             String endSymbol =ruleConditionsDTO.getEndSymbol();
-            SkuMappingSymbolicEnum startSymbolEnum = EnumMessage.getByCode(SkuMappingRuleEnum.SkuMappingSymbolicEnum.class,startSymbol);
-            SkuMappingSymbolicEnum endSymbolicEnum = EnumMessage.getByCode(SkuMappingRuleEnum.SkuMappingSymbolicEnum.class,endSymbol);
-            if(Objects.nonNull(startSymbolEnum) && startSymbolEnum.isEscape){
-                startSymbol = "\\\\"+startSymbol;
-            }
-            if(Objects.nonNull(endSymbolicEnum) && endSymbolicEnum.isEscape){
-                endSymbol = "\\\\"+endSymbol;
-            }
+            //转义
+            startSymbol = escapeSpecialCharacters(startSymbol);
+            endSymbol = escapeSpecialCharacters(endSymbol);
             String regex = finalRegex.replaceAll("【#】",startSymbol).replaceAll("【%】",endSymbol);
-            if(commonDTO.getValidStartingSymbolPosition().equals(commonDTO.getValidEndSymbolPosition())
+            if(ruleConditionsDTO.getValidStartingSymbolPosition().equals(ruleConditionsDTO.getValidEndSymbolPosition())
             &&  StringUtils.isNotBlank(startSymbol) && StringUtils.isNotBlank(endSymbol) &&startSymbol.equals(endSymbol)){
-                regex = "123";
+                regex = "";
             }
             list.add(regex);
         }
@@ -227,8 +231,42 @@ public enum SkuMappingRuleEnum implements EnumMessage{
         return list;
     }
 
-    private static String handleRegex(String ruleType,String regex,String inputStr){
+    private static String handleSubStrRegex(String ruleType,String regex,String inputStr){
+        SkuMappingRuleEnum skuMappingRuleEnum = EnumMessage.getByCode(SkuMappingRuleEnum.class, ruleType);
+        if(EXTRACT_FIRST_TO_LAST_DIGITS!=skuMappingRuleEnum){
+            return inputStr;
+        }
         if(StringUtils.isBlank(regex)){
+            return inputStr;
+        }
+        regex = regex.replaceAll("\"","");
+        //提取数字
+        Pattern pattern = Pattern.compile("\\{(\\d+):(\\d+)\\}");
+        Matcher matcher = pattern.matcher(regex);
+        if (matcher.find()) {
+            int prefix = Integer.parseInt(matcher.group(1));
+            int suffixes = Integer.parseInt(matcher.group(2));
+            int strLength = inputStr.length();
+            if(strLength == 0){
+                return inputStr;
+            }
+            if(prefix >= strLength){
+                return "";
+            }
+            suffixes = Math.min(suffixes, inputStr.length());
+            inputStr = inputStr.substring(prefix, suffixes);
+            return inputStr;
+        } else {
+            return inputStr;
+        }
+    }
+
+    private static String handleRegex(String ruleType,String regex,String inputStr){
+        SkuMappingRuleEnum skuMappingRuleEnum = EnumMessage.getByCode(SkuMappingRuleEnum.class, ruleType);
+        if(StringUtils.isBlank(regex)){
+            if(skuMappingRuleEnum.equals(SkuMappingRuleEnum.EXTRACT_BETWEEN_START_AND_END)){
+                return "";
+            }
             return inputStr;
         }
         regex = regex.replaceAll("\"","");
@@ -237,9 +275,7 @@ public enum SkuMappingRuleEnum implements EnumMessage{
         if (matcher.find()) {
             return matcher.group(1);
         }else{
-            SkuMappingRuleEnum skuMappingRuleEnum = EnumMessage.getByCode(SkuMappingRuleEnum.class, ruleType);
-            if(skuMappingRuleEnum.equals(SkuMappingRuleEnum.IGNORE_FIRST_AND_LAST_DIGITS)
-            || skuMappingRuleEnum.equals(SkuMappingRuleEnum.EXTRACT_BETWEEN_START_AND_END)){
+            if(skuMappingRuleEnum.equals(SkuMappingRuleEnum.IGNORE_FIRST_AND_LAST_DIGITS) || skuMappingRuleEnum.equals(SkuMappingRuleEnum.EXTRACT_BETWEEN_START_AND_END)){
                 return "";
             }
             return inputStr;
@@ -264,5 +300,38 @@ public enum SkuMappingRuleEnum implements EnumMessage{
             result = inputStr.replaceAll(key,value);
         }
         return result;
+    }
+
+    public static String escapeSpecialCharacters(String str) {
+        if(StringUtils.isBlank(str)){
+            return str;
+        }
+        StringBuilder escapedStr = new StringBuilder();
+        // 需要转义的特殊字符
+        String specialCharacters = ".$|()[{^?*+\\";
+        for (char ch : str.toCharArray()) {
+            // 如果字符是特殊字符，则进行转义
+            if (specialCharacters.indexOf(ch) != -1) {
+                escapedStr.append("\\").append(ch);
+            } else {
+                escapedStr.append(ch);
+            }
+        }
+        return escapedStr.toString();
+    }
+
+    public static void main(String[] args) {
+        String originalString = "Hello123";
+
+        // 定义要截取的起始和结束索引
+        int startIndex = 5; // 开始索引（包含）
+//        int endIndex = originalString.length();   // 结束索引（不包含）
+        int endIndex = 8;
+        // 使用substring方法截取子字符串
+        String extractedString = originalString.substring(startIndex, endIndex);
+
+//         打印截取的子字符串
+        System.out.println("Extracted substring: " + extractedString);
+
     }
 }
