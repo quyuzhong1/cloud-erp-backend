@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -68,6 +69,9 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
 
     @Override
     public List<BatchResultDTO> add(ProductRegistrationDTO.AddDTO addDTO) {
+        if(CollectionUtils.isEmpty(addDTO.getSkuIds())){
+            throw new ServiceException("sku不能为空");
+        }
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         //查询授权信息
         TransferLogisticsAuthEntity transferLogisticsAuthEntity = transferLogisticsAuthService.getByMainId("",addDTO.getDeclareSupplierId());
@@ -186,6 +190,31 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
         //TODO:明细推送拉取信息
         view.setDetailList(ProductRegistrationEnum.DetailDescEnum.convertToViewList());
         return view;
+    }
+
+    @Override
+    public List<BatchResultDTO> pushFailure(List<String> ids) {
+        return null;
+    }
+
+    @Override
+    public List<BatchResultDTO> cancel(List<String> ids) {
+        return null;
+    }
+
+    @Override
+    public void pull(ProductRegistrationDTO.AddDTO dto) {
+
+    }
+
+    @Override
+    public List<BatchResultDTO> delete(List<String> ids) {
+        return null;
+    }
+
+    @Override
+    public void export(ProductRegistrationDTO.PagingParamDTO dto, HttpServletResponse response) {
+
     }
 
     private void fillPagingDb(List<ProductRegistrationDTO.PagingVO> list) {

@@ -6,6 +6,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.ProductRegistrationDTO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -46,4 +47,14 @@ public interface ProductRegistrationService extends SuperService<ProductRegistra
     PagingVO<ProductRegistrationDTO.PagingVO> paging(PagingDTO<ProductRegistrationDTO.PagingParamDTO> dto);
 
     ProductRegistrationDTO.ViewVO view(String id);
+
+    List<BatchResultDTO> pushFailure(List<String> ids);
+
+    List<BatchResultDTO> cancel(List<String> ids);
+
+    void pull(ProductRegistrationDTO.AddDTO dto);
+
+    List<BatchResultDTO> delete(List<String> ids);
+
+    void export(ProductRegistrationDTO.PagingParamDTO dto, HttpServletResponse response);
 }

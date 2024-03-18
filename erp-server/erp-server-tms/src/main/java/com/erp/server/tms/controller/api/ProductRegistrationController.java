@@ -2,30 +2,25 @@ package com.erp.server.tms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.LogisticsBillDTO;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.annotations.Param;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import javax.validation.Valid;
-
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.ProductRegistrationService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.ProductRegistrationDTO;
+import com.erp.server.tms.service.ProductRegistrationService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.annotations.Param;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -90,7 +85,83 @@ public class ProductRegistrationController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "产品备案表新增")
     public ApiResult<List<BatchResultDTO>> add(@RequestBody @Validated ProductRegistrationDTO.AddDTO dto) {
-        return success(productRegistrationService.add(dto));
+        List<BatchResultDTO> resultDTOS = productRegistrationService.add(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+
+    /**
+     * 失败推送
+     * @author lrp
+     * @date:  2024-03-14
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/pushFailure")
+    @LogAction(value = LogActionEnum.INSERT, desc = "产品备案表失败推送")
+    public ApiResult<List<BatchResultDTO>> add(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = productRegistrationService.pushFailure(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+
+    /**
+     * 取消备案
+     * @author lrp
+     * @date:  2024-03-14
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/cancel")
+    @LogAction(value = LogActionEnum.INSERT, desc = "产品备案表取消备案")
+    public ApiResult<List<BatchResultDTO>> cancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = productRegistrationService.cancel(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 拉取备案
+     * @author lrp
+     * @date:  2024-03-14
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/pull")
+    @LogAction(value = LogActionEnum.INSERT, desc = "产品备案表拉取备案")
+    public ApiResult<String> pull(@RequestBody @Validated ProductRegistrationDTO.AddDTO dto) {
+        productRegistrationService.pull(dto);
+        return success();
+    }
+
+
+
+    /**
+     * 批量删除
+     * @author lrp
+     * @date:  2024-03-14
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.INSERT, desc = "产品备案表删除备案")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = productRegistrationService.delete(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 导出
+     * @author lrp
+     * @date:  2024-03-14
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/export")
+    @WebAdvanceQuery
+    public void export(@RequestBody @Validated ProductRegistrationDTO.PagingParamDTO dto, HttpServletResponse response) {
+        productRegistrationService.export(dto,response);
+    }
 }

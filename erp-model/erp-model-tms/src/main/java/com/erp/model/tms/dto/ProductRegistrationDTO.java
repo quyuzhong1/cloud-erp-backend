@@ -28,7 +28,6 @@ import javax.validation.constraints.Digits;
 @NoArgsConstructor
 public class ProductRegistrationDTO implements Serializable {
 
-
     /**
      * 分页参数
      */
@@ -409,7 +408,6 @@ public class ProductRegistrationDTO implements Serializable {
         /**
          * skuIds
          */
-        @NotNull(message = "skuIds不能为空")
         private List<String> skuIds;
 
         /**
