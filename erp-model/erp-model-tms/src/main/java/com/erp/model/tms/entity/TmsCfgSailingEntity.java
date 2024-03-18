@@ -1,14 +1,15 @@
 package com.erp.model.tms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -65,6 +66,12 @@ public class TmsCfgSailingEntity extends BaseEntity<TmsCfgSailingEntity> {
     */
     @TableField("end_time")
     private LocalDateTime endTime;
+
+    /**
+     * 生效日期
+     */
+    @TableField("effective_date")
+    private LocalDate effectiveDate;
 
 
     public static final String LOGISTICS_SUPPLIER_ID = "logistics_supplier_id";

@@ -1,8 +1,12 @@
 package com.erp.server.tms.mapper;
-import com.erp.model.tms.entity.TmsCfgCostEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.tms.dto.TmsCfgCostDTO;
+import com.erp.model.tms.entity.TmsCfgCostEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -15,5 +19,13 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface TmsCfgCostMapper extends BaseMapper<TmsCfgCostEntity> {
-
+    /**
+     * @description: 分页查询
+     * @author Will
+     * @date: 2024/3/18 11:50
+     * @param query
+     * @param params
+     * @return IPage<ListDTO>
+     */
+    IPage<TmsCfgCostDTO.ListDTO> paging(Page query,@Param("params") TmsCfgCostDTO.PagingParamDTO params);
 }

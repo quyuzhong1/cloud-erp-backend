@@ -57,7 +57,7 @@ public class CfgSettingValueDTO implements Serializable {
         private List<String> inTransitPostIdList;
 
         /**
-         * 在途异常抄送人id集合
+         * 在途异常抄送人id集合，/api/plm/common/findUserList
          */
         private List<String> inTransitUserIdList;
 
@@ -67,7 +67,7 @@ public class CfgSettingValueDTO implements Serializable {
         private List<String> channelPostIdList;
 
         /**
-         * 渠道更换用id集合
+         * 渠道更换抄送人id集合，/api/plm/common/findUserList
          */
         private List<String> channelUserIdList;
 
@@ -91,7 +91,7 @@ public class CfgSettingValueDTO implements Serializable {
     public static class ReconciliationCycleDTO{
 
         /**
-         * 头程对账类型
+         * 头程对账类型，/wms/dict/drop/down?type=reconciliationType
          */
         private String firstMileReconciliationType;
 
@@ -101,7 +101,7 @@ public class CfgSettingValueDTO implements Serializable {
         private LocalDate firstMileReconciliationDate;
 
         /**
-         * 报关对账类型
+         * 报关对账类型，/wms/dict/drop/down?type=reconciliationType
          */
         private String declareReconciliationType;
 

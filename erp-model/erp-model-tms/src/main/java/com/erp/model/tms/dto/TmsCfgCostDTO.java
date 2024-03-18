@@ -1,12 +1,16 @@
 package com.erp.model.tms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -21,6 +25,76 @@ import javax.validation.constraints.Size;
 public class TmsCfgCostDTO implements Serializable {
 
 
+    /**
+     * 分页查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
+
+    /**
+     * 分页查询列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+         * 主键id【可排序】
+         */
+        private String  id;
+
+        /**
+         * 费用归属【可排序】
+         */
+        private String  dictCostAttribution;
+
+        /**
+         * 费用归属名称
+         */
+        private String  dictCostAttributionName;
+
+        /**
+         * 费用分类【可排序】
+         */
+        private String  dictCostCategory;
+
+        /**
+         * 费用分类名称
+         */
+        private String  dictCostCategoryName;
+
+        /**
+         * 创建人名称【可排序】
+         */
+        private String  createUserName;
+
+        /**
+         * 创建时间【可排序】
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 更新人名称【可排序】
+         */
+        private String  updateUserName;
+
+        /**
+         * 更新时间【可排序】
+         */
+        private LocalDateTime  updateTime;
+    }
 
 
     /**
@@ -83,14 +157,14 @@ public class TmsCfgCostDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 费用归属（字典dictCostAttribution）
+        * 费用归属（字典dictCostAttribution），/tms/drop/down/dict/list?key=dictCostAttribution
         */
         @NotBlank(message = "费用归属（字典dictCostAttribution）不能为空")
         @Size(max = 32,message = "费用归属（字典dictCostAttribution）最大长度不能超过32位")
         private String dictCostAttribution;
 
         /**
-        * 费用分类（字典dictCostCategory）
+        * 费用分类（字典dictCostCategory），/tms/drop/down/dict/list?key=dictCostCategory
         */
         @NotBlank(message = "费用分类（字典dictCostCategory）不能为空")
         @Size(max = 32,message = "费用分类（字典dictCostCategory）最大长度不能超过32位")

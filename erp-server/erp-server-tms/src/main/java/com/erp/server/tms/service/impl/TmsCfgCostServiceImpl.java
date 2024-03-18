@@ -1,24 +1,38 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.tms.entity.TmsCfgCostEntity;
-import com.erp.server.tms.mapper.TmsCfgCostMapper;
-import com.erp.server.tms.service.TmsCfgCostService;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.tms.dto.TmsCfgCostDTO;
+import com.erp.model.tms.entity.DictBasicEntity;
+import com.erp.model.tms.entity.TmsCfgCostEntity;
+import com.erp.model.tms.enums.DictBasicEnum;
+import com.erp.server.tms.mapper.TmsCfgCostMapper;
+import com.erp.server.tms.service.CommonService;
+import com.erp.server.tms.service.DictBasicService;
+import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.TmsCfgCostService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.TmsCfgCostDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 /**
  * <p>
  * 费用管理配置表 服务实现类
@@ -35,6 +49,9 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
     @Autowired
     private CommonService commonService;
 
+    @Autowired
+    private DictBasicService dictBasicService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -50,13 +67,6 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
         if(!save) {
             throw new ServiceException("费用管理配置单保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "费用管理配置单" , tmsCfgCostEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, tmsCfgCostEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
         return new BaseResultDTO.AddDTO(tmsCfgCostEntity.getId(), tmsCfgCostEntity.getId());
     }
 
@@ -77,14 +87,36 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
         if(!save) {
             throw new ServiceException("费用管理配置单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录费用管理配置单日志数据，id：【{}】", tmsCfgCostEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), tmsCfgCostEntity.getId(), "费用管理配置单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, tmsCfgCostEntity, null, tmsCfgCostEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<TmsCfgCostDTO.ListDTO> paging(PagingDTO<TmsCfgCostDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<TmsCfgCostDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public TmsCfgCostDTO.ViewDTO view(String id) {
+        TmsCfgCostEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到费用管理数据"));
+        TmsCfgCostDTO.ViewDTO data = BeanMapperUtils.map(TmsCfgCostDTO.ViewDTO.class, entity);
+        return data;
+    }
+
+    @Override
+    public BatchResultDTO delete(String id) {
+        TmsCfgCostEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到费用管理数据"));
+        // 删除主单数据
+        log.info("删除 开始删除费用管理数据，id：【{}】", id);
+        this.removeById(id);
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
     }
 
 
@@ -93,5 +125,28 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
     */
     private void handleData(TmsCfgCostEntity tmsCfgCostEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+
+    private void fillList(List<TmsCfgCostDTO.ListDTO> list) {
+       if (CollectionUtil.isEmpty(list)) {
+           return;
+       }
+       //字典数据
+        List<DictBasicEntity> basicList = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.DICT_COST_CATEGORY.getType(), DictBasicEnum.DICT_COST_ATTRIBUTION.getType()));
+
+        for (TmsCfgCostDTO.ListDTO listDTO : list) {
+
+            //费用归属
+            String dictCostAttributionName = basicList.stream().filter(obj -> StrUtil.equals(obj.getType(), DictBasicEnum.DICT_COST_ATTRIBUTION.getType())
+                    && StrUtil.equals(obj.getCode(), listDTO.getDictCostAttribution())).findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            listDTO.setDictCostAttributionName(dictCostAttributionName);
+            //费用分类
+            String dictCostCategoryName = basicList.stream().filter(obj -> StrUtil.equals(obj.getType(), DictBasicEnum.DICT_COST_ATTRIBUTION.getType())
+                            && StrUtil.equals(obj.getCode(), listDTO.getDictCostAttribution())).findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            listDTO.setDictCostCategoryName(dictCostCategoryName);
+        }
     }
 }

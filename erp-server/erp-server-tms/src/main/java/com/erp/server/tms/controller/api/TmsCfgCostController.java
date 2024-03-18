@@ -1,24 +1,30 @@
 package com.erp.server.tms.controller.api;
 
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.TmsCfgCostService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsCfgCostDTO;
+import com.erp.model.tms.entity.TmsCfgCostEntity;
+import com.erp.server.tms.service.TmsCfgCostService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 费用管理配置表
@@ -34,6 +40,24 @@ public class TmsCfgCostController extends BaseController {
 
     @Resource
     private TmsCfgCostService tmsCfgCostService;
+
+
+    /**
+     * 分页查询
+     * @author Will
+     * @date: 2024/3/18 11:58
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsCfgCost:paging",
+            tableAlias = "tcc"
+    )
+    public ApiResult<PagingVO<TmsCfgCostDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<TmsCfgCostDTO.PagingParamDTO> dto) {
+        return success(tmsCfgCostService.paging(dto));
+    }
 
     /**
     * 新增
@@ -67,6 +91,57 @@ public class TmsCfgCostController extends BaseController {
         return success();
     }
 
+    /**
+     * 查看详情
+     * @author Will
+     * @date: 2024/3/18 9:10
+     * @param id
+     * @return ApiResult<ViewDTO>
+     */
+    @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsCfgCost:view",
+            serviceClass = TmsCfgCostService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult<TmsCfgCostDTO.ViewDTO> view(@RequestParam("id") String id) {
+        return success(tmsCfgCostService.view(id));
+    }
 
+    /**
+     * 删除
+     * @author Will
+     * @date: 2024/3/18 9:13
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsCfgCost:delete",
+            serviceClass = TmsCfgCostService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.DELETE, desc = "费用管理删除")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = tmsCfgCostService.delete(id);
+            }catch (Exception e){
+                log.error("费用管理删除失败",e);
+                TmsCfgCostEntity entity = tmsCfgCostService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "费用管理数据不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
 }

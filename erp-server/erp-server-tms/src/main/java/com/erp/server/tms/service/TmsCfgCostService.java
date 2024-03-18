@@ -1,8 +1,12 @@
 package com.erp.server.tms.service;
-import com.erp.model.tms.entity.TmsCfgCostEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsCfgCostDTO;
+import com.erp.model.tms.entity.TmsCfgCostEntity;
 
 /**
  * <p>
@@ -32,5 +36,28 @@ public interface TmsCfgCostService extends SuperService<TmsCfgCostEntity> {
     */
     Boolean update(TmsCfgCostDTO.UpdateDTO dto);
 
-
+    /**
+     * @description:
+     * @author Will
+     * @date: 2024/3/18 11:48
+     * @param dto
+     * @return ListDTO
+     */
+    PagingVO<TmsCfgCostDTO.ListDTO> paging(PagingDTO<TmsCfgCostDTO.PagingParamDTO> dto);
+    /**
+     * @description: 查看详情
+     * @author Will
+     * @date: 2024/3/18 11:59
+     * @param id
+     * @return ViewDTO
+     */
+    TmsCfgCostDTO.ViewDTO view(String id);
+    /**
+     * @description: 删除
+     * @author Will
+     * @date: 2024/3/18 12:01
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO delete(String id);
 }

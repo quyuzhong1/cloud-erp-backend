@@ -1,24 +1,43 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.tms.entity.TmsCfgSailingEntity;
-import com.erp.server.tms.mapper.TmsCfgSailingMapper;
-import com.erp.server.tms.service.TmsCfgSailingService;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.tms.dto.TmsCfgSailingDTO;
+import com.erp.model.tms.entity.DictBasicEntity;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.TmsCfgSailingEntity;
+import com.erp.model.tms.enums.DictBasicEnum;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.server.tms.mapper.TmsCfgSailingMapper;
+import com.erp.server.tms.service.CommonService;
+import com.erp.server.tms.service.DictBasicService;
+import com.erp.server.tms.service.LogisticsChannelService;
+import com.erp.server.tms.service.TmsCfgSailingService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.TmsCfgSailingDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 截单开船配置 服务实现类
@@ -30,10 +49,19 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapper, TmsCfgSailingEntity> implements TmsCfgSailingService {
-    @Autowired
-    private OperateLogService operateLogService;
+
     @Autowired
     private CommonService commonService;
+
+    @Autowired
+    private LogisticsChannelService logisticsChannelService;
+
+    @Autowired
+    private DictBasicService dictBasicService;
+
+    @Autowired
+    private ScmTaskFeign scmTaskFeign;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -50,12 +78,6 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
         if(!save) {
             throw new ServiceException("截单开船配置保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "截单开船配置" , tmsCfgSailingEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, tmsCfgSailingEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(tmsCfgSailingEntity.getId(), tmsCfgSailingEntity.getId());
     }
@@ -77,14 +99,36 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
         if(!save) {
             throw new ServiceException("截单开船配置保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录截单开船配置日志数据，id：【{}】", tmsCfgSailingEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), tmsCfgSailingEntity.getId(), "截单开船配置");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, tmsCfgSailingEntity, null, tmsCfgSailingEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<TmsCfgSailingDTO.ListDTO> paging(PagingDTO<TmsCfgSailingDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<TmsCfgSailingDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public TmsCfgSailingDTO.ViewDTO view(String id) {
+        TmsCfgSailingEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到截单发船数据"));
+        TmsCfgSailingDTO.ViewDTO data = BeanMapperUtils.map(TmsCfgSailingDTO.ViewDTO.class, entity);
+        return data;
+    }
+
+    @Override
+    public BatchResultDTO delete(String id) {
+        TmsCfgSailingEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到截单发船数据"));
+        // 删除主单数据
+        log.info("删除 开始删除截单发船数据，id：【{}】", id);
+        this.removeById(id);
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
     }
 
 
@@ -93,5 +137,44 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
     */
     private void handleData(TmsCfgSailingEntity tmsCfgSailingEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    /**
+     * 分页查询处理数据
+     */
+    private void fillList(List<TmsCfgSailingDTO.ListDTO> list) {
+       if (CollectionUtil.isEmpty(list)) {
+           return;
+       }
+       //物流商信息
+       List<String> supplierIdList = list.stream().map(TmsCfgSailingDTO.ListDTO::getLogisticsSupplierId).collect(Collectors.toList());
+       List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
+       //渠道信息
+       List<String> logisticsChannelIdList = list.stream().map(TmsCfgSailingDTO.ListDTO::getLogisticsChannelId).collect(Collectors.toList());
+       List<LogisticsChannelEntity> logisticsChannelList = logisticsChannelService.listByIds(logisticsChannelIdList);
+
+        List<DictBasicEntity> dictList  = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.WEEK.getType(), DictBasicEnum.MONTH.getType()));
+
+        for (TmsCfgSailingDTO.ListDTO listDTO : list) {
+
+           //物流商名称
+           String supplierName = supplierList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getId()))
+                   .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+           listDTO.setLogisticsSupplierName(supplierName);
+           //物流渠道
+           String logisticsChannelName = logisticsChannelList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getId()))
+                   .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+           listDTO.setLogisticsChannelName(logisticsChannelName);
+
+           //开船日期
+            String startDateName = dictList.stream().filter(obj -> StrUtil.equals(obj.getType(), listDTO.getDateType()) && StrUtil.equals(obj.getCode(), listDTO.getStartDate().toString()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            listDTO.setStartDateName(startDateName);
+            //截单日期
+            String endDateName = dictList.stream().filter(obj -> StrUtil.equals(obj.getType(), listDTO.getDateType()) && StrUtil.equals(obj.getCode(), listDTO.getEndDate().toString()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            listDTO.setEndDateName(endDateName);
+       }
+
     }
 }
