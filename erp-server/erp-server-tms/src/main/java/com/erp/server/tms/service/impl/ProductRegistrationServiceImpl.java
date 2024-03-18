@@ -37,6 +37,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -88,10 +89,10 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
         List<ProductRegistrationEntity> entities = this.listBySkuListAndPlatform(skuIds,addDTO.getDeclareSupplierId());
         Set<String> existSkuIds = entities.stream().map(ProductRegistrationEntity::getSkuId).collect(Collectors.toSet());
         //过滤掉备案表存在的sku id
-        skuIds = skuIds.stream().filter(v->!existSkuIds.contains(v)).collect(Collectors.toList());
+        List<String> noExistsSkuList = skuIds.stream().filter(v->!existSkuIds.contains(v)).collect(Collectors.toList());
         List<ProductRegistrationEntity> addList = new ArrayList<>();
         //产品信息
-        List<LogisticsProductDTO.ProductDTO> productDTOList = logisticsProductFeign.listBySkuIdList(skuIds);
+        List<LogisticsProductDTO.ProductDTO> productDTOList = logisticsProductFeign.listBySkuIdList(noExistsSkuList);
         for(String skuId : skuIds){
             ProductRegistrationEntity entity = entities.stream().filter(v->v.getSkuId().equals(skuId)).findFirst().orElse(null);
             if(Objects.nonNull(entity)){
@@ -104,6 +105,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                 continue;
             }
             TransferLogisticsCreateProductReq createProductReq = ProductRegistrationConverter.INSTANCE.convertToCreateProduct(productDTO);
+            createProductReq.setFirstQauntity(BigDecimal.valueOf(0.01));
             //备案产品
             ApiResult<String> result;
             try {
@@ -192,10 +194,12 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "产品备案单"));
 
         ProductRegistrationDTO.ViewVO view = BeanMapperUtils.map(ProductRegistrationDTO.ViewVO.class, old);
-        view.setDeclarePlatformName(EnumMessage.getNameByCode(DeclarePlatformEnum.class,view.getDeclarePlatform()));
+        view.setDeclarePlatformName(old.getDeclareSupplierName());
         view.setStatusName(EnumMessage.getNameByCode(ProductRegistrationEnum.StatusEnum.class,view.getStatus()));
-        //TODO:明细推送拉取信息
-        view.setDetailList(ProductRegistrationEnum.DetailDescEnum.convertToViewList());
+
+        List<LogisticsProductDTO.ProductDTO> productDTOList = logisticsProductFeign.listBySkuIdList(Arrays.asList(old.getSkuId()));
+        LogisticsProductDTO.ProductDTO productDTO = productDTOList.stream().findFirst().orElse(new LogisticsProductDTO.ProductDTO());
+        view.setDetailList(ProductRegistrationEnum.DetailDescEnum.convertToViewList(productDTO,old));
         return view;
     }
 

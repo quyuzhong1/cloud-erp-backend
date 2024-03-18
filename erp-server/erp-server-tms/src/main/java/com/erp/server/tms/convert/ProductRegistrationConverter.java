@@ -42,7 +42,7 @@ public interface ProductRegistrationConverter {
             @Mapping(target = "model", source = "spuNo"),
             @Mapping(target = "currencyCode", source = "declareCurrency"),
             @Mapping(target = "declaredValue", source = "declarePrice"),
-            @Mapping(target = "weight", source = "grossWeight"),
+            @Mapping(target = "weight", expression = "java(java.util.Objects.nonNull(productDTO.getGrossWeight())?productDTO.getGrossWeight().divide(java.math.BigDecimal.valueOf(1000)):null)"),
             @Mapping(target = "length", source = "boxSizeLength"),
             @Mapping(target = "width", source = "boxSizeWide"),
             @Mapping(target = "height", source = "boxSizeHigh"),
@@ -51,8 +51,8 @@ public interface ProductRegistrationConverter {
             @Mapping(target = "hsName", source = "declareChineseName"),
             @Mapping(target = "hsCode", source = "customsCode"),
             @Mapping(target = "hsElement", source = "declareElement"),
-            @Mapping(target = "firstQauntity", source = "firstQty"),
-            @Mapping(target = "secondQauntity", source = "secondQty"),
+            @Mapping(target = "firstQauntity", expression = "java(java.util.Objects.nonNull(productDTO.getFirstQty())?productDTO.getFirstQty().divide(java.math.BigDecimal.valueOf(1000)):null)"),
+            @Mapping(target = "secondQauntity", expression = "java(java.util.Objects.nonNull(productDTO.getSecondQty())?productDTO.getSecondQty().divide(java.math.BigDecimal.valueOf(1000)):null)"),
             @Mapping(target = "productProperty", source = "productProperty"),
     })
     TransferLogisticsCreateProductReq convertToCreateProduct(LogisticsProductDTO.ProductDTO productDTO);

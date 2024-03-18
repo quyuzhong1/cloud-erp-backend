@@ -163,7 +163,7 @@ public interface BaoHongConverter {
             @Mapping(target = "status", expression = "java(com.common.core.constant.EnumMessage.getByCode(com.sdk.tms.baohong.enums.BaoHongEnum.ProductStatusEnum.class,data.getProductStatus()).getProductRegistrationStatusEnum().getCode())"),
             @Mapping(target = "declareNameCn", source = "hsGoodsName"),
             @Mapping(target = "customsCode", source = "hsCode"),
-            @Mapping(target = "grossWeight", source = "productWeight"),
+            @Mapping(target = "grossWeight", expression = "java(new BigDecimal(data.getProductWeight()).multiply(java.math.BigDecimal.valueOf(1000)))"),
             @Mapping(target = "declarePrice", source = "productDeclaredValue"),
             @Mapping(target = "isParts", source = "isAccessories",qualifiedByName="strToBooleanByNum"),
             @Mapping(target = "isInvoice", source = "hasInvoice",qualifiedByName = "strToBooleanByNum"),
