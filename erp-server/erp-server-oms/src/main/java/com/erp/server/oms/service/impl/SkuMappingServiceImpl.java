@@ -1134,11 +1134,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     @Override
-    public List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(List<String> erpSkuIdList,String provideCode) {
-        if(CollectionUtils.isEmpty(erpSkuIdList) && StringUtils.isBlank(provideCode)){
+    public List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(List<String> erpSkuIdList,String provideCode,String warehouseId) {
+        if(CollectionUtils.isEmpty(erpSkuIdList) && StringUtils.isBlank(provideCode) && StringUtils.isBlank(warehouseId) ){
             return new ArrayList<>();
         }
-        return baseMapper.listByErpSkuIdAndType(erpSkuIdList,provideCode);
+        return baseMapper.listByErpSkuIdAndType(erpSkuIdList,provideCode, warehouseId);
     }
 
     @Override
