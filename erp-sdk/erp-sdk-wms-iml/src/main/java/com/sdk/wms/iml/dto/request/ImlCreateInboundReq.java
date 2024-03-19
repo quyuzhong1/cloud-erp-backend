@@ -96,7 +96,8 @@ public class ImlCreateInboundReq {
 
     //报关类型：Y：单独退税报关；N：无退税报关；;默认为空
     @JSONField(name = "customer_type")
-    private String customerType;
+    @Builder.Default
+    private String customerType = "Y";
 
     //保险服务：Y 是；N：否；默认为否 （保险服务只有在 中转代发才会生效-参考PC端）
     @JSONField(name = "is_insurance")

@@ -59,7 +59,7 @@ public class MercadoListingHandler extends AbstractProductHandler<MercadoListing
 
         //设置请求头
         Map<String, String> headerMap = new HashMap<>(1);
-        headerMap.put("Authorization", "Bearer APP_USR-3457166802805723-031804-00ff0046f7add42f162f8b4ac58bb0cd-1509269799");
+        headerMap.put("Authorization", "Bearer APP_USR-3457166802805723-031821-be13aaddbd3636599e087244fd12b3dd-1509269799");
 
         //拉取数据
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);

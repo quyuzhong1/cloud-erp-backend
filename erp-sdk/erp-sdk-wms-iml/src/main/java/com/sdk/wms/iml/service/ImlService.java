@@ -95,6 +95,7 @@ public class ImlService {
      * 创建入库单
      */
     public ImlResponse<String> createInboundBill(@Valid ImlCreateInboundReq imlGetReceiptReq){
+        imlGetReceiptReq.setCustomerType("Y");
         String response = ImlUtils.callService(ImlConstants.METHOD_CREATE_INBOUND,imlGetReceiptReq);
         ImlResponse<String> respDto = JSONObject.parseObject(response,new TypeReference<ImlResponse<String>>() {}.getType());
         //处理返回值
@@ -110,6 +111,7 @@ public class ImlService {
      * 编辑入库单
      */
     public ImlResponse<String> editInboundBill(@Valid ImlCreateInboundReq imlGetReceiptReq){
+        imlGetReceiptReq.setCustomerType("Y");
         String response = ImlUtils.callService(ImlConstants.METHOD_EDIT_INBOUND,imlGetReceiptReq);
         ImlResponse<String> respDto = JSONObject.parseObject(response,new TypeReference<ImlResponse<String>>() {}.getType());
         //处理返回值

@@ -8,7 +8,9 @@ import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.wms.dto.FbaShipmentDTO;
+import org.apache.commons.math3.util.Pair;
 
 import java.util.List;
 
@@ -79,4 +81,6 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
     PagingVO<ListingInfoDTO.PageDTO> paging(PagingDTO<ListingInfoDTO.PagingParamDTO> dto);
 
     Boolean warehouseSkuMapping(ListingInfoDTO.WarehouseSkuMappingParamDTO dto);
+
+    void saveBatchImport(List<ListingInfoEntity> addListingInfoEntityList, List<SkuMappingEntity> updateSkuMappingList, List<ListingInfoEntity> updateListingInfoList, List<SkuMappingEntity> addSkuMappingList, List<String> removeIds, List<Pair<String, String>> addLogPairList, List<Pair<String, String>> updateLogPairList);
 }

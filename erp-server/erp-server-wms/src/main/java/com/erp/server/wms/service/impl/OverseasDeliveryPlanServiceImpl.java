@@ -710,13 +710,13 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         }
 
         List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(warehouseId));
-        if(CollectionUtils.isEmpty(viewDTOList)){
-            throw new ServiceException("查询不到海外仓信息");
+        String provideCode = "";
+        if(CollectionUtils.isNotEmpty(viewDTOList)){
+            provideCode = viewDTOList.get(0).getProviderCode();
         }
-        String provideCode = viewDTOList.get(0).getProviderCode();
 
         //查询第三方SKU信息
-        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(new ArrayList<>(),provideCode);
+        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(new ArrayList<>(),provideCode,warehouseId);
 
         DeliveryPlanDetailExcelListener excelListenerUtil = new DeliveryPlanDetailExcelListener(thirdSkuNoList,listingWithSkuMappingDTOList,warehouseId);
         try {

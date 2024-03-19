@@ -83,4 +83,6 @@ public interface OperateLogService extends SuperService<OperateLogEntity> {
      * @param businessIds
      */
     void removeByBusinessIds(List<String> businessIds);
+
+    List<String> getContentByObj(Object oldObj, Object newObj,String msg);
 }

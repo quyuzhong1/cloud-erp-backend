@@ -253,7 +253,7 @@ public class MercadoSdkClientService {
 
         List<ListingViewDTO> resultList = new ArrayList<>();
         for (List<String> list : partition) {
-            String baseUrl = "http://api.mercadolibre.com/items";
+            String baseUrl = "https://api.mercadolibre.com/items";
 
             //入参
             HashMap<String, Object> params = new HashMap<>(1);
