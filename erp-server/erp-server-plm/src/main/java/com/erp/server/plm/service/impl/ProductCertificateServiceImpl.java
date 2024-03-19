@@ -468,10 +468,12 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     /**
      * 获取MultipartFile
      */
-    private MultipartFile getMulFileByPath(String filePath) {
+    private static MultipartFile getMulFileByPath(String filePath) {
         try {
+           String fileUrl = filePath.replace(" ","%20");
+
             // 打开 URL 连接
-            URL url = new URL(filePath);
+            URL url = new URL(fileUrl);
             URLConnection conn = url.openConnection();
             // 从连接获取输入流
             BufferedInputStream inputStream = new BufferedInputStream(conn.getInputStream());
