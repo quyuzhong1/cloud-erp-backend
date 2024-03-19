@@ -150,4 +150,12 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @return java.lang.Boolean
      **/
     Boolean updateWarehouseByMapping(WarehouseMappingDTO.MappingViewDTO viewDTO);
+
+    /**
+     * 检查和获取映射关系
+     *
+     * @Author Jim
+     * @since 2023-11-28
+     **/
+    ListingInfoWithSkuMappingDTO checkAndMappingDTO(List<ListingInfoWithSkuMappingDTO> mappingDTOList, String platformSpuNo);
 }

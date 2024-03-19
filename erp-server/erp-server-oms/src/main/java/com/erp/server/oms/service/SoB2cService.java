@@ -826,4 +826,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @author Jim
      */
     Boolean checkAndFillBySoOutStock(PlatformSoOutStockDTO dto);
+
+
+    /**
+     * 批量更新B2C订单映射关系
+     *
+     * @date 2024-03-19
+     * @author Jim
+     */
+    BatchResultDTO skuMappingBatch(String soId);
 }
