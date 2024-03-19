@@ -257,7 +257,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             }
         }
         addDTO.setTrackNo(logisticsDTOS.get(0).getCode());
-        addDTO.setTradeCreateTime(dto.getOrderCreateTime());
+        addDTO.setTradeCreateTime(dto.getPlatformOrderCreateTime());
         addDTO.setWarehouseName(warehouseName);
         aliexpressDeliveryFeign.add(addDTO);
     }
@@ -351,7 +351,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 .stream()
                 .map(PlatformOrderDetailDTO::getPlatformSkuNo)
                 .distinct().collect(Collectors.toList());
-        Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap = soB2cDetailService.mapListingByPlatformSkuNo(platformSkuList, dto.getDictPlatform(), dto.getShopId());
+        Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap = soB2cDetailService.mapListingByPlatformSkuNo(platformSkuList, dto.getDictPlatform(), dto.getShopId(), dto.getPlatformOrderCreateTime());
 
         // 查询当前店铺信息
         ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());

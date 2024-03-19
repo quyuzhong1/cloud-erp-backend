@@ -1575,6 +1575,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         param.setPlatform(platform);
         param.setSkuIdList(skuIdList);
         param.setShopIdList(Arrays.asList(shopId));
+        param.setIsExpire(false);
         //子件发货
         String singleDelivery = WarehouseDeliveryTypeEnum.SINGLE.getCode();
         //自建
@@ -4850,6 +4851,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         paramDTO.setShopIdList(Collections.singletonList(soB2cEntity.getShopId()));
         paramDTO.setType(typeCode);
         paramDTO.setPlatformSkuNoList(Collections.singletonList(platformSkuNo));
+        paramDTO.setLastExpireDate(soB2cEntity.getPlatformOrderCreateTime());
         List<ListingInfoWithSkuMappingDTO> skuMappingList = skuMappingService.findListDto(paramDTO);
         if (CollectionUtils.isEmpty(skuMappingList)) {
             throw new ServiceException(ApiError.ERROR_LISTING_NOT_EXIST);

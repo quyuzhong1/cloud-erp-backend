@@ -390,7 +390,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         LocalDateTime now = LocalDateTime.now();
         skuMaping.setExpireTime(now);
         skuMaping.setIsExpire(Boolean.TRUE);
-        skuMaping.setIsDeleted(true);
+//        skuMaping.setIsDeleted(true);
         if (!this.updateById(skuMaping)) {
             throw new ServiceException("[SkuMapping] 历史映射修改失败");
         }
@@ -615,7 +615,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         LocalDateTime now = LocalDateTime.now();
         skuMapping.setExpireTime(now);
         skuMapping.setIsExpire(Boolean.TRUE);
-        skuMapping.setIsDeleted(true);
+//        skuMapping.setIsDeleted(true);
         boolean updateResult = this.updateById(skuMapping);
         if (!updateResult) {
             throw new ServiceException("更新失败");
@@ -997,7 +997,22 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public List<ListingInfoWithSkuMappingDTO> findListDto(ListingInfoParamDTO dto) {
-        List<ListingInfoWithSkuMappingDTO> list = baseMapper.listByParams(dto);
+        List<ListingInfoWithSkuMappingDTO> list;
+        if(null == dto.getLastExpireDate()){
+            // 无过期时间查询当前最新的映射关系
+            dto.setIsExpire(false);
+            list = baseMapper.listByParams(dto);
+        } else {
+            dto.setIsExpire(null);
+            // 指定过期时间匹配小于或等于过期时间
+            List<ListingInfoWithSkuMappingDTO> allList = baseMapper.listByParams(dto);
+            Map<String, List<ListingInfoWithSkuMappingDTO>> groupMap = allList.stream().collect(Collectors.groupingBy(ListingInfoWithSkuMappingDTO::getListingId));
+            // 过滤取指定过期时间匹配小于或等于过期时间/空=最新匹配
+            list = groupMap.values()
+                    .stream()
+                    .map(listingInfoWithSkuMappingDTOS -> ListingInfoWithSkuMappingDTO.getActiveOne(listingInfoWithSkuMappingDTOS, dto.getLastExpireDate()))
+                    .collect(Collectors.toList());
+        }
         if (CollectionUtils.isEmpty(list) || RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType())){
             return list;
         }

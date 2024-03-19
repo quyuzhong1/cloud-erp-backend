@@ -1,27 +1,17 @@
 package com.erp.server.oms.listing;
 
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
-import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.server.oms.ErpServerOmsApplication;
 import com.erp.server.oms.service.*;
-import com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClientService;
-import com.sdk.oms.shopify.api.rest.ShopifyRestClient;
-import com.sdk.oms.shopify.api.rest.ShopifyRestClientService;
-import com.sdk.oms.shopify.api.rest.model.*;
-import com.sdk.oms.shopify.constant.ShopifyConstant;
-import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
-import com.sdk.oms.shopify.service.ShopSdkServer;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,7 +19,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -86,9 +77,12 @@ public class ErpServerOmsListingApplicationTests {
     @Test
     public void skuList(){
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-        paramDTO.setPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+        paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
-        paramDTO.setSkuNoList(Collections.singletonList("2775"));
+        paramDTO.setPlatformSkuNoList(Collections.singletonList("EU11-B012GBB1"));
+        paramDTO.setShopIdList(Collections.singletonList("1734476072977698818"));
+//        paramDTO.setIsExpire(false);
+        paramDTO.setLastExpireDate(LocalDateTime.parse("2024-03-01 17:30:16", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         List<ListingInfoWithSkuMappingDTO> skuMappingList = skuMappingService.findListDto(paramDTO);
         System.out.println("结果");
         System.out.println(JSONUtil.toJsonStr(skuMappingList));

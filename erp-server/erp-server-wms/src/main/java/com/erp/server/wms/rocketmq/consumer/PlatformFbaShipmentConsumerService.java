@@ -152,6 +152,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
             paramDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
             paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
             paramDTO.setMatchResult(true);
+            paramDTO.setIsExpire(false);
             // 查询ListingInfo和skuMapping的关系
             List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
 

@@ -1,13 +1,10 @@
 package com.erp.server.oms.listener;
 
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.OmsPlatformEnum;
-import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
@@ -17,7 +14,6 @@ import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.ListingInfoService;
@@ -27,9 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -247,6 +241,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
 //        paramDTO.setWarehouseIdList(Collections.singletonList(warehouse.getId()));
         paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
         paramDTO.setPlatformSkuNoList(Collections.singletonList(importExcelDTO.getWarehouseSkuNo()));
+        paramDTO.setIsExpire(false);
         List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
 
         String finalWarehouseId = warehouseId;

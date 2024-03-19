@@ -105,7 +105,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         // 订单日期
         orderDTO.setBillDate(LocalDateUtil.parseStrToLocalDate(sourceOrder.getGmtCreate()));
         // 订单创建时间
-        orderDTO.setOrderCreateTime(LocalDateUtil.parseStrToLocalTime(sourceOrder.getGmtCreate()));
+        orderDTO.setPlatformOrderCreateTime(LocalDateUtil.parseStrToLocalTime(sourceOrder.getGmtCreate()));
         // 平台订单号
         orderDTO.setPlatformCode(sourceOrder.getOrderId());
         // 销售平台

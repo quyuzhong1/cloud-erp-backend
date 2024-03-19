@@ -3,6 +3,7 @@ package com.erp.model.oms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -56,4 +57,14 @@ public class ListingInfoParamDTO {
      * 仓库ID列表
      */
     private List<String> warehouseIdList;
+
+    /**
+     * 是否已过期
+     */
+    private Boolean isExpire;
+
+    /**
+     * 最后过期的时间(空=查询最新映射关系)
+     */
+    private LocalDateTime lastExpireDate;
 }

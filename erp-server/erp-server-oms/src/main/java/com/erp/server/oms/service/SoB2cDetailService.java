@@ -11,6 +11,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -102,7 +103,7 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @Author Jim
      * @since 2023-11-28
      **/
-    Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(List<String> platformSkuList, String dictPlatform, String shopId);
+    Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(List<String> platformSkuList, String dictPlatform, String shopId, LocalDateTime platformOrderCreateTime);
 
     /**
      * 消费处理明细

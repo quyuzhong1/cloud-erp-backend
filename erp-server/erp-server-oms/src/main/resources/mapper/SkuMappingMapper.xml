@@ -612,8 +612,13 @@
         li.platform_fn_sku
         FROM sku_mapping sm
         INNER JOIN listing_info li
-        ON sm.listing_id=li.id AND li.is_deleted=FALSE AND sm.is_expire=FALSE
+        ON sm.listing_id=li.id AND li.is_deleted=FALSE
         WHERE sm.is_deleted=FALSE
+        <!--is_expire 是否过期-->
+        <if test="params.isExpire != null">
+            AND sm.is_expire = #{params.isExpire}
+        </if>
+
         <!--平台sku no 列表-->
         <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
             AND li.platform_sku_no IN
@@ -693,6 +698,7 @@
         inner join listing_info li on sm.listing_id = li.id
         where sm.is_deleted = false
         and li.is_deleted = false
+        and li.is_expire = false
         <if test="erpSkuIdList !=null and erpSkuIdList.size>0">
             AND sm.product_sku_id IN
             <foreach collection="erpSkuIdList" item="item" open="(" separator="," close=")">
@@ -717,7 +723,7 @@
                  inner join listing_info li on sm.listing_id = li.id
         where
             ${params.sqlMap.default}
-        and sm.is_deleted = false and li.is_deleted = false
+        and sm.is_deleted = false and li.is_deleted = false and li.is_expire = false
     </select>
 
     <select id="findHistory" resultMap="BaseResultMap">

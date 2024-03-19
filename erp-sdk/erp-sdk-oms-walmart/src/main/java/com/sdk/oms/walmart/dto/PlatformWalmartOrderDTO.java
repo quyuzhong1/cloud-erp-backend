@@ -86,6 +86,9 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         ZoneId zone = ZoneId.systemDefault();
         orderDTO.setPayTime(LocalDateTime.ofInstant(instant, zone));
 
+        // 平台订单创建时间
+        orderDTO.setPlatformOrderCreateTime(LocalDateTime.ofInstant(instant, zone));
+
         // 订单状态，详情金额汇总
         fieldHandler(orderBean.getOrderLines().getOrderLine(), orderDTO, orderBean.getShipNode().getType());
 
