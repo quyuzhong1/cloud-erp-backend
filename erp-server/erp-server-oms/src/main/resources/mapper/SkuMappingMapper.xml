@@ -703,6 +703,9 @@
             AND li.platform = #{provideCode}
             AND sm.dict_platform = #{provideCode}
         </if>
+        <if test="(provideCode == null or provideCode == '') and (warehouseId != null and warehouseId != '')">
+            and sm.warehouse_id = #{warehouseId}
+        </if>
     </select>
 
     <select id="advanceQuerySku" resultType="com.erp.model.oms.dto.ListingAdvanceQueryDTO">

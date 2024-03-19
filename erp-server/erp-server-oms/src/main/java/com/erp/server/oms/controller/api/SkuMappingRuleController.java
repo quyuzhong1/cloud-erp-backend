@@ -2,8 +2,11 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -42,7 +45,20 @@ public class SkuMappingRuleController extends BaseController {
      */
     @GetMapping("/list")
     public ApiResult<List<SkuMappingRuleDTO.ListDTO>> list() {
-        return success(SkuMappingRuleConverter.INSTANCE.entityToListDto(skuMappingRuleService.listOrderByPriority()));
+        return success(SkuMappingRuleConverter.INSTANCE.entityToListDto(skuMappingRuleService.listOrderByPriorityAndUpdateTime()));
+    }
+
+    /**
+     * 分页查询
+     * @author lrp
+     * @date:  2023-12-21
+     * @return ApiResult<String>
+     */
+    @PostMapping("/paging")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<SkuMappingRuleDTO.ListDTO>> paging(@RequestBody PagingDTO<SkuMappingRuleDTO.ParamsDTO> dto) {
+        PagingVO<SkuMappingRuleDTO.ListDTO> pagingVO = skuMappingRuleService.paging(dto);
+        return success(pagingVO);
     }
 
     /**
@@ -117,12 +133,6 @@ public class SkuMappingRuleController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/getSkuRuleTest")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "sku对照表匹配规则修改")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:skuMappingRule:update",
-            serviceClass = SkuMappingRuleService.class,
-            keyIdName = "id")
     public ApiResult<List<String>> getSkuRuleTest(@RequestBody @Validated SkuMappingRuleDTO.RuleTestDTO dto) {
         List<String> result = skuMappingRuleService.getSkuRuleTest(dto);
         return success(result);

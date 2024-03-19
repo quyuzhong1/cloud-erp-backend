@@ -740,11 +740,16 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             detailDTO.setUnitName("个");
             //不含税单价（不含税价格=含税价格/（1+增值税税率））
             detailDTO.setPrice(MathUtil.divide(detailDTO.getTaxPrice(),MathUtil.add(BigDecimal.ONE,detailDTO.getTaxRate())));
+            detailDTO.setNotTaxPurchaseAmount(MathUtil.multiply(detailDTO.getPrice(),detailDTO.getPurchaseQty()));
             detailDTO.setTaxRate(MathUtil.multiply(detailDTO.getTaxRate(), MathUtil.BigDecimal_100));
             details.add(detailDTO);
         }
+        //含税金额合计
         BigDecimal totalAmount = details.stream().map(PurchaseOrderDetailDTO.ExportPdfDTO::getPurchaseAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        //不含税金额合计
+        BigDecimal totalNotTaxAmount = details.stream().map(PurchaseOrderDetailDTO.ExportPdfDTO::getNotTaxPurchaseAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         exportPdfDTO.setTotalAmount(totalAmount);
+        exportPdfDTO.setTotalNotTaxAmount(totalNotTaxAmount);
         exportPdfDTO.setCurrency(list.get(0).getCurrency());
         exportPdfDTO.setDetails(details);
         return exportPdfDTO;
@@ -2465,7 +2470,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                         .collect(Collectors.toList());
                 //验证是否存在未作废数据
                 if (CollectionUtils.isEmpty(detailList)) {
-                    errorMsgList.add(StrUtil.format("系统中存在多条采购订单【{}】SKU【{}】的数据，请在页面上操作",excelDTO.getCode(),excelDTO.getSkuNo()));
+                    errorMsgList.add(StrUtil.format("采购订单【{}】SKU【{}】不存在",excelDTO.getCode(),excelDTO.getSkuNo()));
                 } else {
                     //存在多条相同sku则不允许更新
                     if (detailList.size() > MathUtil.ONE) {

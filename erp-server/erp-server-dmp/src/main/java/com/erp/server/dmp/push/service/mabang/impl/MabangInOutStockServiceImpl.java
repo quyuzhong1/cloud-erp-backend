@@ -148,9 +148,8 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         Map<String,Object> resultMap = MabangApiUtils.inOutStorage(taskName, mabangInOutStock);
         boolean isSuccess = (boolean)resultMap.get("success");
         if(isSuccess) {
-            JSONObject resultJson = JSONUtil.parseObj(resultMap.get("result").toString());
             // 更新出入库同步信息
-            dmpPullTaskService.updateSyncInfo(dmpPullTaskEntity.getId(), SyncStatusEnum.SUCCESS_SYNC.getCode(),JSONUtil.toJsonStr(resultJson));
+            dmpPullTaskService.updateSyncInfo(dmpPullTaskEntity.getId(), SyncStatusEnum.SUCCESS_SYNC.getCode(),resultMap.get("result").toString());
         } else {
             String msg = StrUtils.null2EmptyWithTrim(resultMap.get("msg"));
             // 更新出入库同步信息
