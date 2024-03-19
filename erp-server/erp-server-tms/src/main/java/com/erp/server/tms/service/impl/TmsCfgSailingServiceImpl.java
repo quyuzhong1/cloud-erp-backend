@@ -115,6 +115,7 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
     public TmsCfgSailingDTO.ViewDTO view(String id) {
         TmsCfgSailingEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到截单发船数据"));
         TmsCfgSailingDTO.ViewDTO data = BeanMapperUtils.map(TmsCfgSailingDTO.ViewDTO.class, entity);
+        data.setLogisticsChannelIdList(Arrays.asList(entity.getLogisticsChannelId()));
         return data;
     }
 

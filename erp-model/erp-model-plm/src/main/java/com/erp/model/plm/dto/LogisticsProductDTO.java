@@ -145,8 +145,12 @@ public class LogisticsProductDTO {
         /**
          * 备案审核状态
          */
-        private ApproveStatusEnum logisticsApproveStatus;
+        private String logisticsApproveStatus;
 
+        /**
+         * 备案审核状态名称
+         */
+        private String logisticsApproveStatusName;
 
         /**
          * 第一数量

@@ -881,6 +881,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             BomInfoEntity bomInfo = bomSkuList.stream().filter(b -> b.getParentSkuNo().equals(skuNo)).
                     findFirst().orElse(null);
             item.setIsCombination(Objects.nonNull(bomInfo));
+            item.setLogisticsApproveStatusName(ApproveStatusEnum.getName(item.getLogisticsApproveStatus()));
         }
     }
 

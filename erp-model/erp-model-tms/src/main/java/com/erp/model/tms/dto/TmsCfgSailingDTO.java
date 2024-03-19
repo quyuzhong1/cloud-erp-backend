@@ -145,9 +145,9 @@ public class TmsCfgSailingDTO implements Serializable {
         private String logisticsSupplierId;
 
         /**
-        * 物流商渠道id
-        */
-        private String logisticsChannelId;
+         * 物流渠道id集合
+         */
+        private List<String> logisticsChannelIdList;
 
         /**
         * 日期值（每...周，每...月）
