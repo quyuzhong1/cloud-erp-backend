@@ -18,8 +18,9 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.LogisticsProductDTO;
-import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.server.plm.service.LogisticsProductService;
+import com.erp.server.plm.service.ProductLogisticsService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -52,7 +53,8 @@ public class LogisticsProductController extends BaseController {
     @Resource
     private LogisticsProductService logisticsProductService;
 
-
+    @Resource
+    private ProductLogisticsService productLogisticsService;
     /**
      * 分页列表
      *
@@ -137,13 +139,13 @@ public class LogisticsProductController extends BaseController {
                 submit = logisticsProductService.submit(id,Boolean.TRUE);
             }catch (Exception e){
                 log.error("物流产品 提交审核失败",e);
-                ProductDetailEntity entity = logisticsProductService.getById(id);
+                ProductLogisticsEntity entity = productLogisticsService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, id, "物流产品不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCustomsCode(), e.getMessage());
             }
             resultDTOS.add(submit);
         }
@@ -167,13 +169,13 @@ public class LogisticsProductController extends BaseController {
                 cancelResult = logisticsProductService.cancelProcess(id);
             }catch (Exception e){
                 log.error("物流产品撤回流程失败",e);
-                ProductDetailEntity entity = logisticsProductService.getById(id);
+                ProductLogisticsEntity entity = productLogisticsService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     cancelResult = BatchResultDTO.fail(id, id, "物流产品不存在, 撤回流程失败");
                     resultDTOS.add(cancelResult);
                     continue;
                 }
-                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
+                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCustomsCode(), e.getMessage());
             }
             resultDTOS.add(cancelResult);
         }
@@ -198,13 +200,13 @@ public class LogisticsProductController extends BaseController {
                 approveResult = logisticsProductService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
             }catch (Exception e){
                 log.error("物流产品审核失败",e);
-                ProductDetailEntity entity = logisticsProductService.getById(id);
+                ProductLogisticsEntity entity = productLogisticsService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     approveResult = BatchResultDTO.fail(id, id, "物流产品不存在, 审核失败");
                     resultDTOS.add(approveResult);
                     continue;
                 }
-                approveResult = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCustomsCode(), e.getMessage());
             }
             resultDTOS.add(approveResult);
         }
@@ -228,13 +230,13 @@ public class LogisticsProductController extends BaseController {
                 disApproveResult = logisticsProductService.disApprove(id);
             }catch (Exception e){
                 log.error("委外发料单反审核失败",e);
-                ProductDetailEntity entity = logisticsProductService.getById(id);
+                ProductLogisticsEntity entity = productLogisticsService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     disApproveResult = BatchResultDTO.fail(id, id, "委外发料单不存在, 反审核失败");
                     resultDTOS.add(disApproveResult);
                     continue;
                 }
-                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
+                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getCustomsCode(), e.getMessage());
             }
             resultDTOS.add(disApproveResult);
         }

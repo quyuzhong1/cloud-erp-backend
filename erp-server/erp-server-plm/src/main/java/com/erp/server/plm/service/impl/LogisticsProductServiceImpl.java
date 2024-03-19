@@ -253,6 +253,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         //物流属性
         productBaseInfo.setLogisticsPropertyName(propertyName);
         declareInfo.setSourceCountryName(sourceCountryName);
+        declareInfo.setLogisticsApproveStatus(productLogistics.getApproveStatus().getStatus());
+        declareInfo.setLogisticsApproveStatusName(productLogistics.getApproveStatus().getName());
         //报关申报价币种
         String declareCurrency=declareInfo.getDeclareCurrency();
         //目的国申报价币种
@@ -471,6 +473,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
      * @param dmpSkuCostEntityList
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void recalDestDeclarePrice(List<DmpSkuCostEntity> dmpSkuCostEntityList) {
         if (CollectionUtils.isEmpty(dmpSkuCostEntityList)){
             return;
@@ -526,6 +529,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO submit(String id, Boolean aTrue) {
         ProductLogisticsEntity entity = productLogisticsService.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -546,6 +550,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelProcess(String id) {
         ProductLogisticsEntity entity = productLogisticsService.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -568,6 +573,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -588,6 +594,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO disApprove(String id) {
         ProductLogisticsEntity entity = productLogisticsService.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
