@@ -491,6 +491,9 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 }
                 BigDecimal actualTaxCostUsd = MathUtil.multiply(dmpSkuCostEntity.getCostPrice(), exchangeRate);
                 //统一换算成美元汇率
+                if (Objects.isNull(dmpSkuCostEntity.getCostDate())){
+                    continue;
+                }
                 BigDecimal usdRate = dmpTaskFeign.getRate(dmpSkuCostEntity.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
                 if (Objects.isNull(usdRate)){
                     continue;

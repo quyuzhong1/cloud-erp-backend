@@ -199,4 +199,15 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @return List<ImportEndReceiveDTO>
      */
     List<PurchaseOrderDetailDTO.ImportEndReceiveDTO> listImportEndReceive(List<String> codeList, List<String> skuNoList);
+
+    /**
+     * @description: 结束交货
+     * @author Will
+     * @date: 2023/3/16 11:35
+     * @param ids
+     * @param remark
+     * @param isValid
+     * @return Boolean
+     */
+    Boolean finishDelivery(List<String> ids, String remark,Boolean isValid);
 }

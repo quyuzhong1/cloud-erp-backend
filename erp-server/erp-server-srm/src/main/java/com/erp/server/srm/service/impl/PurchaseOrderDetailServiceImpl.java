@@ -256,9 +256,13 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         records.forEach(obj -> {
             //已收货数量
             Integer receiveQty = MathUtil.ZERO;
+            //计算历史交货数量
+            Integer oldReceiveQty = MathUtil.ZERO;
             //收货数量
             if (CollectionUtils.isNotEmpty(receiveList)) {
                 receiveQty = receiveList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) )
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                oldReceiveQty = receiveList.stream().filter(e -> StringUtils.isEmpty(e.getSourceId()) && e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()))
                         .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             obj.setReceiveQty(receiveQty);
@@ -270,7 +274,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             }
             obj.setWaitReceiveQty(waitReceiveQty);
             //待交货量
-            obj.setDeliveryQty(obj.getPurchaseQty() - waitReceiveQty - receiveQty);
+            obj.setDeliveryQty(obj.getPurchaseQty() - waitReceiveQty - oldReceiveQty);
 
             //交货周期
             Boolean deliveryCycleFlag = false;
