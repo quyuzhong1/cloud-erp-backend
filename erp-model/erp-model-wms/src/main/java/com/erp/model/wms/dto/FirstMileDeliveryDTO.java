@@ -1,25 +1,22 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import java.util.List;
-
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import org.springframework.validation.annotation.Validated;
 
-import java.io.Serializable;
-import java.util.Map;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -173,6 +170,22 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 编号
          */
         private String code;
+        /**
+         * 物流单状态编码
+         */
+        private String logisticsStatus;
+        /**
+         * 物流单状态中文
+         */
+        private String logisticsStatusName;
+        /**
+         * 报关单状态编码
+         */
+        private String declareStatus;
+        /**
+         * 报关单状态中文
+         */
+        private String declareStatusName;
 
         /**
          * 服务商编码
@@ -363,6 +376,7 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 审核时间
          */
         private LocalDateTime approveTime;
+
     }
 
     /**

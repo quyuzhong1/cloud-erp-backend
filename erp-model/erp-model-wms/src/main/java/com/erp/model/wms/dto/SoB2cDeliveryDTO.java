@@ -1,22 +1,23 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.base.SortDTO;
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.FmDeliveryDeclareStatusEnum;
+import com.erp.model.wms.enums.FmDeliveryLogisticsStatusEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
-import com.common.business.dto.base.SortDTO;
-import com.common.core.anno.StateEnumValue;
-import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
-import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import org.springframework.validation.annotation.Validated;
-
-import java.io.Serializable;
 import java.util.List;
-import javax.validation.Valid;
-import javax.validation.constraints.*;
 
 /**
  * <p>
