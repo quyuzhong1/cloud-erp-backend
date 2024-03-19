@@ -61,6 +61,10 @@ public class ProductRegistrationDTO implements Serializable {
          * 备案平台名称
          */
         private String declarePlatformName;
+        /**
+         * 报关物流商名称
+         */
+        private String declareSupplierName;
 
         /**
          * 备案推送/拉取时间(最新)(可排序)
