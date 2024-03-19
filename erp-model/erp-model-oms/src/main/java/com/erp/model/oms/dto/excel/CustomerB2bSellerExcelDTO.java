@@ -18,6 +18,9 @@ public class CustomerB2bSellerExcelDTO {
     @ExcelIgnore
     private String id;
 
+    @ExcelIgnore
+    private String mainId;
+
     @ColumnWidth(20)
     @ExcelProperty(value = "客户编码", index = 0)
     private String code;
