@@ -47,6 +47,7 @@ public enum KingdeePushModuleEnum {
     BD_NEWSTAFF("BD_NEWSTAFF","员工任岗位信息"),
     BD_OPERATOR("BD_OPERATOR","业务员信息"),
 
+
     ;
     private String code;
 

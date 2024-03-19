@@ -38,6 +38,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.checkerframework.checker.units.qual.K;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,8 +90,12 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
     @Autowired
     private BankAccountService bankAccountService;
+
     @Resource
     private MQProducerService mqProducerService;
+
+    @Resource
+    private KingdeeReceiptConditionService kingdeeReceiptConditionService;
     /**
      * 销售订单同步金碟
      *
@@ -226,12 +231,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             }
         }
         // 收款条件
-        List<DictBasicEntity> receiveConditionList = dictBasicMap.get(DictBasicTypeEnum.COLLECTION_TERMS.getType());
-        if (CollectionUtils.isNotEmpty(receiveConditionList) && StrUtils.isNotEmpty(entity.getReceiveCondition())) {
-            DictBasicEntity dictBasicEntity = receiveConditionList.stream().filter(obj -> Objects.equals(obj.getValue(), entity.getReceiveCondition())).findFirst().orElse(null);
-            if (Objects.nonNull(dictBasicEntity)) {
-                resultMap.put("receiveCondition", dictBasicEntity.getRemark());
-            }
+        KingdeeReceiptConditionEntity receiptCondition = kingdeeReceiptConditionService.getById(entity.getReceiveCondition());
+        if (Objects.nonNull(receiptCondition)) {
+            resultMap.put("receiveCondition", receiptCondition.getCode());
         }
 
         // 收款日期
@@ -243,10 +245,11 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             resultMap.put("receiveAmount", entity.getReceiveAmount());
         }
         // 收款账号
-        if (StrUtils.isNotEmpty(entity.getReceiveAccount())) {
-            List<BankAccountEntity> bankAccountList = bankAccountService.findByOrgIdAndAccountNo(entity.getSalesOrgId(), entity.getReceiveAccount());
-            if (CollUtil.isNotEmpty(bankAccountList)) {
-                resultMap.put("receiveAccount", entity.getReceiveAccount());
+        String receiveAccount = entity.getReceiveAccount();
+        if (StrUtils.isNotEmpty(receiveAccount)) {
+            BankAccountEntity bankAccount = bankAccountService.getById(receiveAccount);
+            if (Objects.nonNull(bankAccount)) {
+                resultMap.put("receiveAccount", bankAccount.getBankAccountNo());
             }
         }
 

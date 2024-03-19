@@ -20,14 +20,13 @@ import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeDepartmentDTO;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.model.sys.entity.KingdeePostEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.sys.mapper.KingdeeDepartmentMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysDeptService;
-import com.erp.server.sys.service.KingdeeDepartmentService;
-import com.erp.server.sys.service.SysAccountingCompanyService;
-import com.erp.server.sys.service.SysDepartmentService;
+import com.erp.server.sys.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -61,6 +60,9 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
 
     @Autowired
     private SyncKingdeeSysDeptService syncKingdeeSysDeptService;
+
+    @Autowired
+    private KingdeePostService kingdeePostService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -264,6 +266,11 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         KingdeeDepartmentEntity entity = super.getById(id);
+        List<KingdeePostEntity> postList = kingdeePostService.listByKingDeptId(id);
+        if (CollectionUtils.isNotEmpty(postList)) {
+            throw new ServiceException("该部门下存在任岗信息,无法删除");
+        }
+
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶部门不存在"));
         Boolean result = this.removeById(id);
         if (result && StringUtils.isNotBlank(entity.getKingdeeId())) {

@@ -91,5 +91,5 @@ public interface KingdeePostService extends SuperService<KingdeePostEntity> {
      * @date 2024-03-14 15:30
      * @author Lambda
      */
-    List<KingdeePostEntity> listByKingdeptId(String deptId);
+    List<KingdeePostEntity> listByKingDeptId(String deptId);
 }

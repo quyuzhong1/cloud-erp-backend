@@ -74,7 +74,24 @@ public class KingdeePostController extends BaseController {
      */
     @GetMapping("/listByDeptId")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> listByDeptId(@RequestParam("deptId") String deptId) {
-        List<KingdeePostEntity> list = kingdeePostService.listByKingdeptId(deptId);
+        List<KingdeePostEntity> list = kingdeePostService.listByKingDeptId(deptId);
+        List<BaseDropDownDTO.CommonDTO> result = list.stream().filter(d-> StringUtils.isNotBlank(d.getCode()))
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getId(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+
+    /**
+     * 根据组织获取下拉列表 如果传空默认为 深圳市唯迹科技有限公司
+     *
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2024-03-11
+     */
+    @GetMapping("/listByOrgId")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listByOrgId(@RequestParam("orgId") String orgId) {
+        List<KingdeePostEntity> list = kingdeePostService.listByOrgId(orgId);
         List<BaseDropDownDTO.CommonDTO> result = list.stream().filter(d-> StringUtils.isNotBlank(d.getCode()))
                 .map(x -> new BaseDropDownDTO.CommonDTO(x.getId(), x.getName()))
                 .collect(Collectors.toList());

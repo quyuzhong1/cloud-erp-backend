@@ -1,6 +1,9 @@
 package com.erp.server.sys.service;
 
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 
@@ -25,6 +28,14 @@ public interface DictGlobalAreaService extends SuperService<DictGlobalAreaEntity
      * @return java.lang.Boolean
      */
     Boolean addOrUpdate(List<DictGlobalAreaDTO.AddOrUpdateDTO> list);
+
+
+    /**
+     * 修改
+     * @param dto
+     * @return
+     */
+    Boolean update(DictGlobalAreaDTO.UpdateDTO dto);
 
     
     /**
@@ -52,4 +63,41 @@ public interface DictGlobalAreaService extends SuperService<DictGlobalAreaEntity
      * @return java.util.List<com.erp.model.sys.entity.DictGlobalAreaEntity>
      */
     List<DictGlobalAreaEntity> listGlobalArea();
+
+    /**
+     * 初始化金蝶数据
+     * @description
+     * @param
+     * @return
+     * @date 2024-03-19 10:36
+     * @author Lambda
+     */
+    Boolean init();
+
+    /**
+     * 分页
+     * @description
+     * @param
+     * @return
+     * @date 2024-03-19 14:00
+     * @author Lambda
+     */
+    PagingVO<DictGlobalAreaDTO.PagingViewDTO> paging(PagingDTO<DictGlobalAreaDTO.PagingParamDTO> dto);
+
+    /**
+     * 详情
+     * @param id
+     * @return
+     */
+    DictGlobalAreaDTO.ViewDTO view(String id);
+
+    /**
+     * 删除
+     * @description
+     * @param id
+     * @return
+     * @date 2024-03-19 15:55
+     * @author Lambda
+     */
+    BatchResultDTO delete(String id);
 }

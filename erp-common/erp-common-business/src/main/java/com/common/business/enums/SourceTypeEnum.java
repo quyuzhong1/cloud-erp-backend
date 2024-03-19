@@ -87,6 +87,7 @@ public enum SourceTypeEnum {
     BD_RATE("BD_Rate", "汇率列表",""),
 
 
+
     // PLM
     PRODUCT_BOM_INFO("productBomInfo", "BOM管理","product_bom_info"),
     PRODUCT_COMBINATION("productCombination", "组合产品",""),
@@ -102,6 +103,7 @@ public enum SourceTypeEnum {
     SYS_POST("sysPost", "岗位","kingdee_post"),
     SYS_USER_POST("sysUserPost", "员工任岗","kingdee_user_ref_post"),
     KINGDEE_OPERATOR("kingdeeOperator", "金蝶业务员","kingdee_operator_ref_post"),
+    GLOBAL_AREA("globalArea", "区域","dict_global_area"),
 
     //Mabang
     MABANG_FBA_DELIVERY("MB_FBA_DELIVERY", "马帮FBA发货单",""),

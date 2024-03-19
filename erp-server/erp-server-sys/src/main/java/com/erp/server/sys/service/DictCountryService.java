@@ -71,4 +71,15 @@ public interface DictCountryService extends SuperService<DictCountryEntity> {
      * @return
      */
     List<DictCountryEntity> listCountryByNames(List<String> names);
+
+
+    /**
+     * 根据区域查
+     * @description
+     * @param
+     * @return
+     * @date 2024-03-19 15:59
+     * @author Lambda
+     */
+    List<DictCountryEntity> listByRegionCode(String globalArea);
 }

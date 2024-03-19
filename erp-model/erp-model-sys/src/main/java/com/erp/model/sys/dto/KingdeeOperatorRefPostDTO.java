@@ -206,7 +206,7 @@ public class KingdeeOperatorRefPostDTO implements Serializable {
         private String typeCode;
 
         /**
-         * 任岗明细id
+         * 任岗明细id 来源 http://172.16.100.11:3002/project/36/interface/api/31063
          */
         @NotNull(message = "员工任岗不能为空")
         @Size(message = "至少需要选择一个任岗信息")

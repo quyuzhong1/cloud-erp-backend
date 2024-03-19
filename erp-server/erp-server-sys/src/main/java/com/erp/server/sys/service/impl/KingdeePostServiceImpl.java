@@ -32,6 +32,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import com.erp.server.sys.service.SysAccountingCompanyService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.checker.units.qual.K;
 import org.springframework.stereotype.Service;
@@ -244,11 +245,17 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
 
     @Override
     public List<KingdeePostEntity> listByOrgId(String orgId) {
+        if (StringUtils.isBlank(orgId)) {
+            List<BaseIdDTO.CodeDTO> orgList = sysAccountingCompanyService.listByCodes(Arrays.asList("100"));
+            if (CollectionUtils.isNotEmpty(orgList)) {
+                orgId = orgList.get(0).getId();
+            }
+        }
         return this.lambdaQuery().eq(KingdeePostEntity::getUseOrgId, orgId).list();
     }
 
     @Override
-    public List<KingdeePostEntity> listByKingdeptId(String deptId) {
+    public List<KingdeePostEntity> listByKingDeptId(String deptId) {
         return this.lambdaQuery().eq(KingdeePostEntity::getKingdeeDeptId,deptId).list();
     }
 

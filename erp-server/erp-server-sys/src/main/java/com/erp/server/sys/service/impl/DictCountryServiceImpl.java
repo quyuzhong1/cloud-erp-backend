@@ -18,6 +18,7 @@ import com.erp.server.sys.service.DictCityService;
 import com.erp.server.sys.service.DictCountryService;
 import com.erp.server.sys.service.DictGlobalAreaService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -196,6 +197,14 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(DictCountryEntity::getNameCn,names).list();
+    }
+
+    @Override
+    public List<DictCountryEntity> listByRegionCode(String regionCode) {
+        if(StringUtils.isEmpty(regionCode)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().eq(DictCountryEntity::getRegionCode,regionCode).list();
     }
 
 

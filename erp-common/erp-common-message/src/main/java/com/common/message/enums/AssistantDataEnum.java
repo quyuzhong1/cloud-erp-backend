@@ -10,6 +10,7 @@ public enum AssistantDataEnum {
 
     ONE_LEVEL_CATEGORY("oneLevelCategory", "一级分类"),
     SECOND_LEVEL_CATEGORY("secondLevelCategory", "二级分类"),
+    GLOBAL_AREA("globalArea", "区域"),
     ;
     private String code;
 
