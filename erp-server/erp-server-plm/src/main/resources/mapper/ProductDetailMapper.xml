@@ -1148,6 +1148,7 @@
             pi.property AS productPropertyName,
             pi.brand_name AS brandName,
             pi.charge_id AS chargeId,
+            pl.id as logisticsProductId,
             pl.declare_chinese_name AS declareChineseName,
             pl.declare_price AS declarePrice,
             pl.declare_currency AS declareCurrency,

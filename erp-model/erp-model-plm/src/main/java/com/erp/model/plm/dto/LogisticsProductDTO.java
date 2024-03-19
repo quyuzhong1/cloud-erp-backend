@@ -79,6 +79,10 @@ public class LogisticsProductDTO {
          */
         private String productPropertyName;
 
+        /**
+         * 物流产品信息id
+         */
+        private String logisticsProductId;
 
         /**
          * 出口申报价
