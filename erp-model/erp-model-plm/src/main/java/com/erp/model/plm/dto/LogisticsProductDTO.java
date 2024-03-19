@@ -155,12 +155,12 @@ public class LogisticsProductDTO {
         /**
          * 第一数量
          */
-        private String firstQty;
+        private Integer firstQty;
 
         /**
          * 第二数量
          */
-        private String secondQty;
+        private Integer secondQty;
 
         /**
          * 销售状态
@@ -716,12 +716,12 @@ public class LogisticsProductDTO {
         /**
          * 第一数量
          */
-        private String firstQty;
+        private Integer firstQty;
 
         /**
          * 第二数量
          */
-        private String secondQty;
+        private Integer secondQty;
     }
 
     @Data
@@ -966,12 +966,12 @@ public class LogisticsProductDTO {
         /**
          * 第一数量
          */
-        private String firstQty;
+        private Integer firstQty;
 
         /**
          * 第二数量
          */
-        private String secondQty;
+        private Integer secondQty;
 
 
     }
