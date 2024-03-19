@@ -1,13 +1,14 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -149,6 +150,16 @@ public class FirstMileDeliveryEntity extends BaseEntity<FirstMileDeliveryEntity>
     */
     @TableField("packing_status")
     private String packingStatus;
+    /**
+    * 物流单状态：none：无需生成，wait：未生成，finish：已生成
+    */
+    @TableField("logistics_status")
+    private String logisticsStatus;
+    /**
+    * 报关单状态：none：无需生成，wait：未生成，finish：已生成
+    */
+    @TableField("declare_status")
+    private String declareStatus;
 
 
     public static final String CODE = "code";

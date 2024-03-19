@@ -20,7 +20,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
-import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
+import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -157,23 +157,23 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Override
     public List<SoReturnReceiveDTO.StatusCountDTO> listCount(PermissionsDTO dto) {
-        SOReturnChangeListTypeEnum[] values = SOReturnChangeListTypeEnum.values();
+        SoReturnChangeListTypeEnum[] values = SoReturnChangeListTypeEnum.values();
         List<SoReturnReceiveDTO.StatusCountDTO> list = new ArrayList<>();
-        for (SOReturnChangeListTypeEnum item : values) {
+        for (SoReturnChangeListTypeEnum item : values) {
             SoReturnReceiveDTO.PagingParam pagingParam = new SoReturnReceiveDTO.PagingParam();
             pagingParam.setPermissionSql(dto.getPermissionSql());
             pagingParam.setInvalidStatus(Boolean.FALSE);
             SoReturnReceiveDTO.StatusCountDTO resultDTO = new SoReturnReceiveDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
-            if (SOReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+            if (SoReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
                 pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
-            if (SOReturnChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
+            if (SoReturnChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
                 pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
-            if (SOReturnChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
+            if (SoReturnChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
                 pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
