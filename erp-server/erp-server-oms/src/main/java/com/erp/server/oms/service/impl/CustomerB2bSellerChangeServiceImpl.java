@@ -29,6 +29,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
@@ -554,6 +555,17 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         }
         // 数据处理
         ExcelUtil.export("客户b2b销售变更单","客户b2b销售变更单",list,CustomerB2bSellerExcelDTO.class,response);
+    }
+
+    @Override
+    public CustomerB2bSellerChangeEntity getByMainId(String businessId) {
+        if(StringUtils.isBlank(businessId)){
+            return new CustomerB2bSellerChangeEntity();
+        }
+        return lambdaQuery()
+                .eq(CustomerB2bSellerChangeEntity::getMainId, businessId)
+                .last(" LIMIT 1")
+                .one();
     }
 
     /**
