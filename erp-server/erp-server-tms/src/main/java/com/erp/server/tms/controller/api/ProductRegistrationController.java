@@ -12,6 +12,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.ProductRegistrationDTO;
+import com.erp.server.tms.query.ProductRegistrationQueryHandler;
 import com.erp.server.tms.service.ProductRegistrationService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
@@ -56,7 +57,7 @@ public class ProductRegistrationController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = ProductRegistrationQueryHandler.class)
     public ApiResult<PagingVO<ProductRegistrationDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<ProductRegistrationDTO.PagingParamDTO> dto) {
         PagingVO<ProductRegistrationDTO.PagingVO> pagingVO = productRegistrationService.paging(dto);
         return success(pagingVO);
@@ -160,7 +161,7 @@ public class ProductRegistrationController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/export")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = ProductRegistrationQueryHandler.class)
     public void export(@RequestBody @Validated ProductRegistrationDTO.PagingParamDTO dto, HttpServletResponse response) {
         productRegistrationService.export(dto,response);
     }
