@@ -1,6 +1,7 @@
 package com.sdk.oms.mercado.dto;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.*;
@@ -42,10 +43,14 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         this.orderBean = orderBean;
         this.shopId = shopId;
         this.setIsClean(0);
-        this.setPlatform(PlatformDictEnum.WALMART.getCode());
-        this.setUniqueId(String.valueOf(orderBean.getId()));
+        this.setPlatform(PlatformDictEnum.MERCADO.getCode());
+        this.setUniqueId(combineUnique(String.valueOf(orderBean.getId()), this.shopId));
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
+    }
+
+    public static String combineUnique(String orderId, String shopId){
+        return StrUtil.format("{}_{}", orderId, shopId);
     }
 
     /**
@@ -57,7 +62,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
     }
 
     /**
-     * 根据PlatformWalmartListingDTO 转换 DTO
+     * 根据PlatformMercadoListingDTO 转换 DTO
      */
     private static PlatformOrderDTO initPlatformProductDTO(MercadoOrderDTO dto) {
         OrderViewDTO orderBean = dto.getOrderBean();
@@ -152,7 +157,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
 
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
-
+        orderDTO.setInvalidStatus(Boolean.FALSE);
         // 订单状态，详情金额汇总
         if (ObjectUtil.isNotEmpty(orderBean.getShipmentViewDTO())) {
             shipmentViewDTO = orderBean.getShipmentViewDTO();
