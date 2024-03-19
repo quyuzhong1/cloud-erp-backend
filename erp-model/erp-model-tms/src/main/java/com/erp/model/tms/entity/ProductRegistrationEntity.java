@@ -223,8 +223,6 @@ public class ProductRegistrationEntity extends BaseEntity<ProductRegistrationEnt
 
     public static final String PRODUCT_NAME = "product_name";
 
-    public static final String PRODUCT_NAME_CN = "product_name_cn";
-
     public static final String PRODUCT_NAME_EN = "product_name_en";
 
     public static final String DECLARE_UNIT = "declare_unit";

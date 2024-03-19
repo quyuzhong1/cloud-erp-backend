@@ -377,7 +377,6 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                 entity.setDeclareSupplierId(transferLogisticsAuthEntity.getMainId());
                 entity.setDeclareSupplierName(transferLogisticsAuthEntity.getName());
                 entity.setProductName(skuVO.getSkuName());
-                entity.setProductNameCn(skuVO.getSkuName());
                 entity.setDeclareElement(skuVO.getDeclareElement());
                 addList.add(entity);
             }else{
@@ -388,9 +387,6 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                 existEntity.setLatestTime(LocalDateTime.now());
                 if(StringUtils.isBlank(existEntity.getProductName())){
                     existEntity.setProductName(skuVO.getSkuName());
-                }
-                if(StringUtils.isBlank(existEntity.getProductNameCn())){
-                    existEntity.setProductNameCn(skuVO.getSkuName());
                 }
                 updateList.add(existEntity);
             }

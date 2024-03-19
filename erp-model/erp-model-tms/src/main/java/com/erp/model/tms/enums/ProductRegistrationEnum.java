@@ -47,7 +47,7 @@ public enum ProductRegistrationEnum {
     public enum DetailDescEnum {
         OPERATION("操作类型：1新增、2修改","operationType","默认字段",v-> "默认",null),
         SKU("产品SKU","sku","SKU",LogisticsProductDTO.ProductDTO::getSkuNo,ProductRegistrationEntity::getSkuNo),
-        NAME("产品中文名称","sku","产品品名(中文)",LogisticsProductDTO.ProductDTO::getCnName,ProductRegistrationEntity::getProductNameCn),
+        NAME("产品中文名称","sku","产品品名(中文)",LogisticsProductDTO.ProductDTO::getCnName,ProductRegistrationEntity::getProductName),
         ENGLISH_NAME("产品英文名称","englishName","产品品名(英文)",LogisticsProductDTO.ProductDTO::getEnName,ProductRegistrationEntity::getProductNameEn),
         COMMODITY_ID("商品ID","commodityId","",null,ProductRegistrationEntity::getGoodId),
         SUPPLIER_CODE("供应商代码","supplierCode","",null,ProductRegistrationEntity::getSupplierCode),
