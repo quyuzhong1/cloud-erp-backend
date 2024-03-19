@@ -370,7 +370,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             //撤销现有流程
             LoginUser userInfo = commonService.getUserInfo();
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
-            revokeDTO.setBusinessId(id);
+            revokeDTO.setBusinessId(entity.getMainId());
             revokeDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_B2B_CHANGE_SELLER.getCode());
             revokeDTO.setUserId(userInfo.getUid());
             workflowFeign.revokeProcess(revokeDTO);
@@ -435,7 +435,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
 
         LoginUser userInfo = commonService.getUserInfo();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
-        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessId(entity.getMainId());
         approveDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_B2B_CHANGE_SELLER.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
@@ -628,7 +628,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         LoginUser userInfo = commonService.getUserInfo();
         CustomerInfoEntity customerInfoEntity = customerInfoService.getById(entity.getMainId());
         ProcessManagementDTO.StartDTO dto = new ProcessManagementDTO.StartDTO();
-        dto.setBusinessId(entity.getId());
+        dto.setBusinessId(entity.getMainId());
         dto.setBusinessCode(customerInfoEntity.getCode());
         dto.setBusinessKey(SourceTypeEnum.CUSTOMER_B2B_CHANGE_SELLER.getCode());
         dto.setBusinessName(customerInfoEntity.getCode());
