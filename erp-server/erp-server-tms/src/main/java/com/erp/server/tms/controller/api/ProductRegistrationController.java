@@ -91,19 +91,19 @@ public class ProductRegistrationController extends BaseController {
     }
 
 
-    /**
-     * 失败推送
-     * @author lrp
-     * @date:  2024-03-14
-     * @param dto
-     * @return ApiResult<String>
-     */
-    @PostMapping("/pushFailure")
-    @LogAction(value = LogActionEnum.INSERT, desc = "产品备案表失败推送")
-    public ApiResult<List<BatchResultDTO>> pushFailure(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = productRegistrationService.pushFailure(dto.getIds());
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
+//    /**
+//     * 失败推送
+//     * @author lrp
+//     * @date:  2024-03-14
+//     * @param dto
+//     * @return ApiResult<String>
+//     */
+//    @PostMapping("/pushFailure")
+//    @LogAction(value = LogActionEnum.INSERT, desc = "产品备案表失败推送")
+//    public ApiResult<List<BatchResultDTO>> pushFailure(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+//        List<BatchResultDTO> resultDTOS = productRegistrationService.pushFailure(dto.getIds());
+//        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+//    }
 
 
 
