@@ -172,10 +172,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (!typeList.contains(type)) {
             throw new ServiceException("导入类型有误");
         }
-        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
-        List<SkuMappingEntity> skuMappingList = this.listEffectiveList();
-        List<ListingInfoEntity> list = listingInfoService.list();
         if (platform.equals(type)) {
+            List<SkuMappingEntity> skuMappingList = this.listEffectiveList();
+            List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+            List<ListingInfoEntity> list = listingInfoService.list();
             String key = DictBasicTypeEnum.SALES_PLATFORM.getType();
             List<DictBasicDTO.ViewDTO> dictBasicList = dictBasicService.getByKey(key);
             List<ShopInfoEntity> shopInfoList = shopInfoService.list();
@@ -205,7 +205,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             if (CollectionUtils.isNotEmpty(overseasWarehouseList)) {
                 overseasWarehouseMap = overseasWarehouseList.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getId, Function.identity()));
             }
-            SkuMappingWarehouseExcelListener excelListenerUtil = new SkuMappingWarehouseExcelListener(this, skuList, skuMappingList, warehouseList, overseasWarehouseMap, list, listingInfoService,operateLogService,commonService);
+            SkuMappingWarehouseExcelListener excelListenerUtil = new SkuMappingWarehouseExcelListener( warehouseList, overseasWarehouseMap);
             try {
                 EasyExcel.read(excelFile.getInputStream(), SkuMappingWarehouseImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             } catch (Exception e) {
@@ -957,6 +957,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public List<SkuMappingEntity> listByListingIds(List<String> listingIds) {
+        if(CollectionUtils.isEmpty(listingIds)){
+            return new ArrayList<>();
+        }
         return lambdaQuery()
                 .in(SkuMappingEntity::getListingId, listingIds)
                 .eq(SkuMappingEntity::getIsExpire, false)

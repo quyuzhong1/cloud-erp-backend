@@ -110,6 +110,14 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 one();
     }
 
+    @Override
+    public List<ListingInfoEntity> listByParam(String type, String platform, List<String> skuNoList) {
+        return lambdaQuery().eq(ListingInfoEntity::getType, type).
+                eq(ListingInfoEntity::getPlatform, platform).
+                in(ListingInfoEntity::getPlatformSkuNo, skuNoList)
+                .list();
+    }
+
 
     /**
      * 根据类型获取到对应数据
@@ -281,7 +289,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void saveBatchImport(List<ListingInfoEntity> addListingInfoEntityList, List<SkuMappingEntity> updateSkuMappingList, List<ListingInfoEntity> updateListingInfoList, List<SkuMappingEntity> addSkuMappingList, List<String> removeIds, List<Pair<String, String>> addLogPairList, List<Pair<String, String>> updateLogPairList) {
+    public void saveBatchImport(List<ListingInfoEntity> addListingInfoEntityList, List<SkuMappingEntity> updateSkuMappingList, List<ListingInfoEntity> updateListingInfoList, List<SkuMappingEntity> addSkuMappingList, List<Pair<String, String>> addLogPairList, List<Pair<String, String>> updateLogPairList) {
         if (CollectionUtils.isNotEmpty(addListingInfoEntityList)) {
             service.saveBatch(addListingInfoEntityList);
         }
@@ -298,10 +306,6 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         }
         if (CollectionUtils.isNotEmpty(addSkuMappingList)) {
             skuMappingService.saveBatch(addSkuMappingList);
-        }
-
-        if(CollectionUtils.isNotEmpty(removeIds)){
-            skuMappingService.removeByIds(removeIds);
         }
         if (CollectionUtils.isNotEmpty(addLogPairList)) {
             operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】新增了sku映射表",commonService.getUserInfo().getUserName())+"id为【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), addLogPairList,"新增操作");
