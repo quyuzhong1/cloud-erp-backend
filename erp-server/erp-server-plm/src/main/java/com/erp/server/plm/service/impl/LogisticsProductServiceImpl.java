@@ -628,9 +628,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void pushRegistration(LogisticsProductDTO.PushRegistrationDTO pushRegistrationDTO) {
-        List<String> logisticsProductIdList = pushRegistrationDTO.getLogisticsProductIdList();
-        List<ProductLogisticsEntity> productLogisticsList = productLogisticsService.listByIds(logisticsProductIdList);
+    public List<BatchResultDTO> pushRegistration(LogisticsProductDTO.PushRegistrationDTO dto) {
+        List<ProductLogisticsEntity> productLogisticsList = productLogisticsService.listByIds(dto.getLogisticsProductIdList());
         if (CollectionUtils.isEmpty(productLogisticsList)) {
             throw new ServiceException("未找到物流产品信息");
         }
@@ -639,12 +638,11 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             throw new ServiceException(StrUtil.format("物流产品信息海关编码【{}】备案未审核完成，不支持推送备案",customsCode));
         }
         List<String> skuIdList = productLogisticsList.stream().map(ProductLogisticsEntity::getSkuId).collect(Collectors.toList());
-        for (String dictPlatForm : pushRegistrationDTO.getDictPlatformList()) {
-            ProductRegistrationDTO.AddDTO addDTO = new ProductRegistrationDTO.AddDTO();
-            addDTO.setDeclareSupplierId(dictPlatForm);
-            addDTO.setSkuIds(skuIdList);
-            forecastFeign.add(addDTO);
-        }
+        ProductRegistrationDTO.AddDTO addDTO = new ProductRegistrationDTO.AddDTO();
+        addDTO.setDeclareSupplierId(dto.getDeclareSupplierId());
+        addDTO.setSkuIds(skuIdList);
+        List<BatchResultDTO> resultList = forecastFeign.add(addDTO);
+        return resultList;
     }
 
 
