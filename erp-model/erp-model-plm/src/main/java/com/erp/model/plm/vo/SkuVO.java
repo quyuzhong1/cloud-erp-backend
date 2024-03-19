@@ -39,6 +39,11 @@ public class SkuVO implements Serializable {
     private String skuImagesUrl;
 
     /**
+     * 申报币种符号
+     */
+    private String declareCurrencySymbol;
+
+    /**
      * 销售方式
      */
     private String saleMethod;

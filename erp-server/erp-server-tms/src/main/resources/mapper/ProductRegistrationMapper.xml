@@ -64,7 +64,7 @@
             pr.status,
             pr.declare_name_cn as declareCnName,
             pr.declare_price as declare_price,
-            pr.currency,
+            pr.declare_currency_symbol as declareCurrencySymbol,
             pr.customs_code as customsCode,
             pr.declare_element as declareElement,
             pr.latest_time as  latestTime,

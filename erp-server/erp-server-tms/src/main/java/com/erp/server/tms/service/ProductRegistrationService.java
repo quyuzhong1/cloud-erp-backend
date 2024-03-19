@@ -1,5 +1,6 @@
 package com.erp.server.tms.service;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.common.business.service.SuperService;
@@ -30,10 +31,11 @@ public interface ProductRegistrationService extends SuperService<ProductRegistra
 
     /**
      * 根据sku 查询
-     * @param skuNoList
      * @return
      */
-    List<ProductRegistrationEntity> listBySkuListAndPlatform(List<String> skuNoList,String platform);
+    List<ProductRegistrationEntity> listBySkuListAndPlatform(List<String> skuIdList,String platform);
+
+    List<ProductRegistrationEntity> listBySkuNoListAndPlatform(List<String> skuNoList,String platform);
 
     /**
      * 根据平台和 报关商获取备案产品 判断是否备案
@@ -52,9 +54,11 @@ public interface ProductRegistrationService extends SuperService<ProductRegistra
 
     List<BatchResultDTO> cancel(List<String> ids);
 
-    void pull(ProductRegistrationDTO.AddDTO dto);
+    List<BatchResultDTO> pull(ProductRegistrationDTO.AddDTO dto);
 
     List<BatchResultDTO> delete(List<String> ids);
 
     void export(ProductRegistrationDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    ApiResult<?> pullAllProduct(String declareSupplierId);
 }

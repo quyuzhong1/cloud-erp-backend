@@ -130,9 +130,9 @@ public class ProductRegistrationController extends BaseController {
      */
     @PostMapping("/pull")
     @LogAction(value = LogActionEnum.INSERT, desc = "产品备案表拉取备案")
-    public ApiResult<String> pull(@RequestBody @Validated ProductRegistrationDTO.AddDTO dto) {
-        productRegistrationService.pull(dto);
-        return success();
+    public ApiResult<List<BatchResultDTO>> pull(@RequestBody @Validated ProductRegistrationDTO.AddDTO dto) {
+        List<BatchResultDTO> resultDTOS = productRegistrationService.pull(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 

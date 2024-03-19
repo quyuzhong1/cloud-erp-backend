@@ -2,6 +2,9 @@ package com.erp.model.tms.dto;
 
 import java.math.BigDecimal;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
+import com.alibaba.excel.annotation.ExcelProperty;
+import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -122,85 +125,115 @@ public class ProductRegistrationDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingVO {
 
+        @ExcelIgnore
         private String id;
         /**
          * skuId
          */
+        @ExcelIgnore
         private String skuId;
 
         /**
          * sku(可排序)
          */
+        @ExcelProperty(value = "sku")
+        @ColumnWidth(20)
         private String skuNo;
-
-        /**
-         * 报关物流商名称(可排序)
-         */
-        private String declareSupplierName;
 
         /**
          * 报关型号规格(可排序)
          */
+        @ExcelProperty(value = "报关型号规格")
+        @ColumnWidth(20)
         private String spu;
+
+        /**
+         * 报关物流商名称(可排序)
+         */
+        @ExcelProperty(value = "备案平台")
+        private String declareSupplierName;
 
         /**
          * 备案平台(可排序)
          */
+        @ExcelIgnore
         private String declarePlatform;
 
         /**
          * 备案平台名称(可排序)
          */
+        @ExcelIgnore
         private String declarePlatformName;
 
         /**
          * 备案状态(可排序)
          */
+        @ExcelIgnore
         private String status;
 
         /**
          * 备案状态名称(可排序)
          */
+        @ExcelProperty(value = "备案状态")
         private String statusName;
 
         /**
          * 备案审核状态
          */
+        @ExcelIgnore
         private String registrationApproveStatus;
 
         /**
          * 备案审核状态名称
          */
+        @ExcelProperty(value = "备案审核状态")
         private String registrationApproveStatusName;
 
         /**
          * 中文报关名(可排序)
          */
+        @ExcelProperty(value = "中文报关名")
+        @ColumnWidth(20)
         private String declareCnName;
 
         /**
          * 报关申报价
          */
+        @ExcelIgnore
         private BigDecimal declarePrice;
 
         /**
-         * 币种
+         * 币种符号
          */
-        private String currency;
+        @ExcelIgnore
+        private String declareCurrencySymbol;
+
+        /**
+         * 报关申报价+币种
+         */
+        @ExcelProperty(value = "报关申报价")
+        private String completePrice;
 
         /**
          * 报关HSCODE(可排序)
          */
+        @ExcelProperty(value = "报关HSCODE")
+        @ColumnWidth(20)
         private String customsCode;
 
         /**
          * 申报要素(可排序)
          */
+        @ExcelProperty(value = "申报要素")
+        @ColumnWidth(40)
         private String declareElement;
+
 
         /**
          * 备案推送/拉取时间(最新)(可排序)
          */
+        @ExcelProperty(value = "备案推送/拉取时间(最新)")
+        @ColumnWidth(20)
         private LocalDateTime latestTime;
 
     }

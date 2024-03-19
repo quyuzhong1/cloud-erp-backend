@@ -205,6 +205,12 @@ public class ProductRegistrationEntity extends BaseEntity<ProductRegistrationEnt
     @TableField("declare_supplier_name")
     private String declareSupplierName;
 
+    /**
+     * 报关申报价币种符号
+     */
+    @TableField(value = "declare_currency_symbol")
+    private String declareCurrencySymbol;
+
     public static final String SKU_ID = "sku_id";
 
     public static final String SKU_NO = "sku_no";

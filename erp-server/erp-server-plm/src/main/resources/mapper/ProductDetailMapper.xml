@@ -739,6 +739,7 @@
         pl.declare_chinese_name as declareName,
         pl.declare_model as declareModel,
         pl.product_property_id AS productPropertyId,
+        pl.declare_currency_symbol as declareCurrencySymbol,
         pi.materials,
         pi.function_desc,
         pi.grade AS productGrade,
@@ -1543,7 +1544,10 @@
              CASE WHEN split_part(pp.box_size, 'X',3) = '' THEN null ELSE split_part(pp.box_size, 'X',3) END AS boxSizeHigh,
             (select value from basic_dict  where is_deleted=false and id=pl.product_property_id LIMIT 1) AS productProperty,
             pd.name as cnName,pd.name_en as enName,
-            pi.spu_no as spuNo
+            pi.spu_no as spuNo,
+            pl.first_qty as firstQty,
+            pl.second_qty as secondQty,
+            pl.approve_status as approveStatus
          FROM product_logistics pl
         left join product_detail pd on pl.sku_id = pd.id and pd.is_deleted = false
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE

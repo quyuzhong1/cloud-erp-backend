@@ -5,10 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.time.format.DateTimeParseException;
@@ -485,6 +482,16 @@ public class DateUtil {
                 .toLocalDateTime();
     }
 
+    /**
+     * 获取当前年月日
+     */
+    public static String currentYMD() {
+        // 获取当前日期
+        LocalDate currentDate = LocalDate.now();
+        // 格式化当前日期为字符串，格式为"yyyyMMdd"
+
+        return currentDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+    }
     /**
      * 获取某年的全部日子
      * @param year

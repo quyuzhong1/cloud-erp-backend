@@ -989,6 +989,11 @@ public class LogisticsProductDTO {
     public static class ProductDTO{
 
         /**
+         * 备案审核状态
+         */
+        private String approveStatus;
+
+        /**
          * 第一数量
          */
         private BigDecimal firstQty;
