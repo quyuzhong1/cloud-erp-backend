@@ -80,6 +80,7 @@
     <select id="export" resultType="com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO">
         select
             cbs.id,
+            cbs.main_id as mainId,
             ci.code,
             ci,name,
             ci.short_name as shortName,
