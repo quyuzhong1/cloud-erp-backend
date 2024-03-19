@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.TmsFirstMileLogisticMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.TmsFirstMileLogisticEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="transport_no" property="transportNo" />
+       <result column="counter_no" property="counterNo" />
+       <result column="reconciliation_status" property="reconciliationStatus" />
+       <result column="invoices_status" property="invoicesStatus" />
+       <result column="logistics_status" property="logisticsStatus" />
+       <result column="shipping_method" property="shippingMethod" />
+       <result column="logistics_supplier_id" property="logisticsSupplierId" />
+       <result column="logistics_channel_id" property="logisticsChannelId" />
+       <result column="remark" property="remark" />
+       <result column="logistics_order_time" property="logisticsOrderTime" />
+       <result column="ship_time" property="shipTime" />
+       <result column="transit_time" property="transitTime" />
+       <result column="arrival_time" property="arrivalTime" />
+       <result column="sign_time" property="signTime" />
+       <result column="actual_weight" property="actualWeight" />
+       <result column="actual_weight_unit" property="actualWeightUnit" />
+       <result column="actual_volume_weight" property="actualVolumeWeight" />
+       <result column="actual_volume_weight_unit" property="actualVolumeWeightUnit" />
+       <result column="currency" property="currency" />
+       <result column="exchange_rate_id" property="exchangeRateId" />
+       <result column="exchange_rate" property="exchangeRate" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        transport_no, counter_no, reconciliation_status, invoices_status, logistics_status, shipping_method, logistics_supplier_id, logistics_channel_id, remark, logistics_order_time, ship_time, transit_time, arrival_time, sign_time, actual_weight, actual_weight_unit, actual_volume_weight, actual_volume_weight_unit, currency, exchange_rate_id, exchange_rate
+    </sql>
+
+
+</mapper>
