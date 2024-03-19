@@ -753,6 +753,7 @@
         pc.target_tax_cost,
         pc.retail_price,
         ppk.product_size,
+        pl.declare_element as declareElement,
         ppk.net_weight
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE

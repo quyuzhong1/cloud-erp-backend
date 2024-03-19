@@ -25,7 +25,7 @@ public enum ProductRegistrationEnum {
     @Getter
     public enum StatusEnum implements EnumMessage {
 
-        DRAFT("draft","备案不通过"),
+        DRAFT("reject","备案不通过"),
         REGISTERING("registering","备案中"),
         REGISTERED("registered","已备案"),
         FREEZE("freeze","冻结"),

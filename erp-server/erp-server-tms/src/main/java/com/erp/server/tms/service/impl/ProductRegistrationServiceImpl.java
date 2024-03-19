@@ -376,11 +376,23 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                 entity.setDeclareCurrencySymbol(skuVO.getDeclareCurrencySymbol());
                 entity.setDeclareSupplierId(transferLogisticsAuthEntity.getMainId());
                 entity.setDeclareSupplierName(transferLogisticsAuthEntity.getName());
+                entity.setProductName(skuVO.getSkuName());
+                entity.setProductNameCn(skuVO.getSkuName());
+                entity.setDeclareElement(skuVO.getDeclareElement());
                 addList.add(entity);
             }else{
-                BeanUtil.copyProperties(existEntity,entity, CopyOptions.create().setIgnoreNullValue(true));
-                entity.setLatestTime(LocalDateTime.now());
-                updateList.add(entity);
+                SkuVO skuVO = skuVOS.stream().filter(v->v.getSkuNo().equals(entity.getSkuNo())).findFirst().orElse(new SkuVO());
+                existEntity.setDeclareCurrencySymbol(skuVO.getDeclareCurrencySymbol());
+                existEntity.setDeclareElement(skuVO.getDeclareElement());
+                BeanUtil.copyProperties(entity,existEntity, CopyOptions.create().setIgnoreNullValue(true));
+                existEntity.setLatestTime(LocalDateTime.now());
+                if(StringUtils.isBlank(existEntity.getProductName())){
+                    existEntity.setProductName(skuVO.getSkuName());
+                }
+                if(StringUtils.isBlank(existEntity.getProductNameCn())){
+                    existEntity.setProductNameCn(skuVO.getSkuName());
+                }
+                updateList.add(existEntity);
             }
         }
         this.batchAddOrUpdate(addList,updateList);

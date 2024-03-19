@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class SkuVO implements Serializable {
 
+    private String declareElement;
     /**
      * sku版本号
      */
