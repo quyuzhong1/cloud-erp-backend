@@ -44,6 +44,7 @@ import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
+import com.erp.model.tms.dto.ProductRegistrationDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -51,11 +52,13 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
+import com.erp.rpc.tms.feign.ForecastFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.listener.LogisticsProductExcelListener;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -121,6 +124,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private ForecastFeign forecastFeign;
+
 
     @Override
     public PagingVO<LogisticsProductDTO.PagingVO> paging(PagingDTO<LogisticsProductDTO.PagingParamDTO> dto) {
@@ -617,6 +624,30 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         updateForApprove(entity.getId(), approveStatus.getStatus());
         return Boolean.TRUE;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void pushRegistration(LogisticsProductDTO.PushRegistrationDTO pushRegistrationDTO) {
+        List<String> logisticsProductIdList = pushRegistrationDTO.getLogisticsProductIdList();
+        List<ProductLogisticsEntity> productLogisticsList = productLogisticsService.listByIds(logisticsProductIdList);
+        if (CollectionUtils.isEmpty(productLogisticsList)) {
+            throw new ServiceException("未找到物流产品信息");
+        }
+        String customsCode = productLogisticsList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.equals(obj.getApproveStatus())).map(obj -> obj.getCustomsCode()).collect(Collectors.joining(","));
+        if (StrUtil.isNotBlank(customsCode)) {
+            throw new ServiceException(StrUtil.format("物流产品信息海关编码【{}】备案未审核完成，不支持推送备案",customsCode));
+        }
+        List<String> skuIdList = productLogisticsList.stream().map(ProductLogisticsEntity::getSkuId).collect(Collectors.toList());
+        for (String dictPlatForm : pushRegistrationDTO.getDictPlatformList()) {
+            ProductRegistrationDTO.AddDTO addDTO = new ProductRegistrationDTO.AddDTO();
+            addDTO.setDeclareSupplierId(dictPlatForm);
+            addDTO.setSkuIds(skuIdList);
+            forecastFeign.add(addDTO);
+        }
+    }
+
+
 
 
     /**

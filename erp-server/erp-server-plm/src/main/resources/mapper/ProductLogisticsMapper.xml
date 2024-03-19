@@ -41,4 +41,16 @@
         WHERE pd.id = #{skuId} AND pd.is_deleted = FALSE
         ORDER BY pd.id desc
     </select>
+
+    <select id="selectSku" resultType="com.erp.model.plm.dto.LogisticsProductDTO$SelectDTO">
+        select
+           pd.id as skuId,
+           pd.sku_no as skuNo
+        from  product_detail pd
+        inner join product_logistics pl on pd.id = pl.sku_id and pl.is_deleted = false
+        <where>
+            pd.is_deleted = false and pd.status = 2 and pl.approve_status = 'approve'
+        </where>
+    </select>
+
 </mapper>

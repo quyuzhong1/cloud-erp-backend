@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -1176,5 +1177,36 @@ public class LogisticsProductDTO {
          */
         private String combinationDeclareType;
 
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PushRegistrationDTO{
+
+        /**
+         * 物流产品id集合
+         */
+        @NotEmpty(message = "物流产品id集合不能为空")
+        private List<String> logisticsProductIdList;
+
+        /**
+         * 平台集合，/tms/transferLogisticsSupplier/listAll
+         */
+        @NotEmpty(message = "平台集合不能为空")
+        private List<String> dictPlatformList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编码
+         */
+        private String skuNo;
     }
 }

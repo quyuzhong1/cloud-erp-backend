@@ -1,10 +1,12 @@
 package com.erp.server.tms.controller.feign;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
+import com.erp.model.tms.dto.ProductRegistrationDTO;
 import com.erp.model.tms.dto.SettingForecastDTO;
-import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.server.tms.service.ProductRegistrationService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,5 +44,17 @@ public class ProductRegistrationFeignController {
         List<String> list = productRegistrationService.listNotRegistrationByParam(dto);
         return list;
 
+    }
+    /**
+     * 新增
+     * @author Will
+     * @date: 2024/3/19 14:38
+     * @param dto
+     * @return List<BatchResultDTO>
+     */
+    @PostMapping("/add")
+    public List<BatchResultDTO> add(@RequestBody @Validated ProductRegistrationDTO.AddDTO dto) {
+        List<BatchResultDTO> add = productRegistrationService.add(dto);
+        return add;
     }
 }

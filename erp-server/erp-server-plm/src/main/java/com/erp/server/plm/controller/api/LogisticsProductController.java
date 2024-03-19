@@ -296,5 +296,28 @@ public class LogisticsProductController extends BaseController {
         return success();
     }
 
+    /**
+     * 已审核备案SKU下拉
+     * @author Will
+     * @date: 2024/3/19 15:05
+     * @return ApiResult<List<SelectDTO>>
+     */
+    @GetMapping("/selectSku")
+    public ApiResult<List<LogisticsProductDTO.SelectDTO>> selectSku() {
+        List<LogisticsProductDTO.SelectDTO> list = productLogisticsService.selectSku();
+        return success(list);
+
+    }
+
+    /**
+     * 推送备案
+     * @author Will
+     * @date: 2024/3/19 14:21
+     * @param pushRegistrationDTO
+     */
+    @PostMapping("/pushRegistration")
+    public void pushRegistration(@RequestBody LogisticsProductDTO.PushRegistrationDTO pushRegistrationDTO) {
+        logisticsProductService.pushRegistration(pushRegistrationDTO);
+    }
 
 }

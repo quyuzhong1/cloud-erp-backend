@@ -145,4 +145,12 @@ public interface LogisticsProductService  extends SuperService<ProductDetailEnti
      * @return Boolean
      */
     Boolean approveEnd(ApproveOneDTO dto, ProductLogisticsEntity entity);
+    /**
+     * @description: 推送备案
+     * @author Will
+     * @date: 2024/3/19 14:22
+     * @param pushRegistrationDTO
+     */
+    void pushRegistration(LogisticsProductDTO.PushRegistrationDTO pushRegistrationDTO);
+
 }

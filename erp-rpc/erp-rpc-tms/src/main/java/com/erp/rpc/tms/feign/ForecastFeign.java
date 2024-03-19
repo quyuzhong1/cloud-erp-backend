@@ -1,12 +1,16 @@
 package com.erp.rpc.tms.feign;
 
+import com.common.business.dto.base.BatchResultDTO;
+import com.erp.model.tms.dto.ProductRegistrationDTO;
 import com.erp.model.tms.dto.SettingForecastDTO;
-import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.SettingForecastEntity;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -35,6 +39,16 @@ public interface ForecastFeign {
      */
     @PostMapping("/feign/productRegistration/listNotRegistrationByParam")
     List<String> listNotRegistrationByParam(@RequestBody SettingForecastDTO.CheckRegistrationDTO dto);
+
+    /**
+     * 新增备案信息
+     * @author Will
+     * @date: 2024/3/19 14:40
+     * @param dto
+     * @return List<BatchResultDTO>
+     */
+    @PostMapping("/feign/productRegistration/add")
+    List<BatchResultDTO> add(@RequestBody @Validated ProductRegistrationDTO.AddDTO dto);
 
     /**
      * 根据供应商id 获取到对应的有效时间的预报设置信息

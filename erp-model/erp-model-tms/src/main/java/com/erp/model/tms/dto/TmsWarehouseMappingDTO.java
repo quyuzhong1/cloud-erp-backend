@@ -1,11 +1,15 @@
 package com.erp.model.tms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -26,6 +30,15 @@ public class TmsWarehouseMappingDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO {
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
     }
 
 
@@ -35,7 +48,40 @@ public class TmsWarehouseMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListDTO {
+        /**
+         * 主键id【可排序】
+         */
+        private String  id;
 
+        /**
+         * 仓库代码（物流商）【可排序】
+         */
+        private String logisticsWarehouseCode;
+
+        /**
+         * 仓库id（数大臣）【可排序】
+         */
+        private String erpWarehouseId;
+
+        /**
+         * 仓库名称（数大臣）【可排序】
+         */
+        private String erpWarehouseName;
+
+        /**
+         * 创建人名称【可排序】
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间【可排序】
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 更新时间【可排序】
+         */
+        private LocalDateTime updateTime;
     }
 
     /**
@@ -110,13 +156,6 @@ public class TmsWarehouseMappingDTO implements Serializable {
         @NotBlank(message = "仓库id（数大臣）不能为空")
         @Size(max = 19,message = "仓库id（数大臣）最大长度不能超过19位")
         private String erpWarehouseId;
-
-        /**
-        * 仓库名称（数大臣）
-        */
-        @NotBlank(message = "仓库名称（数大臣）不能为空")
-        @Size(max = 255,message = "仓库名称（数大臣）最大长度不能超过255位")
-        private String erpWarehouseName;
 
 
     }

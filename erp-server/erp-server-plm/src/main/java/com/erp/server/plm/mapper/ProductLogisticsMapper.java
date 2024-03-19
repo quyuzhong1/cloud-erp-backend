@@ -1,7 +1,7 @@
 package com.erp.server.plm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.plm.dto.ProductCertificateShowDTO;
+import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.dto.ProductLogisticsShowDTO;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -31,6 +31,13 @@ public interface ProductLogisticsMapper extends BaseMapper<ProductLogisticsEntit
      * @return java.util.List<com.erp.model.plm.dto.ProductCostShowDTO>
      **/
     List<ProductLogisticsShowDTO> listBySkuId(@Param("skuId") String skuId);
+    /**
+     * @description: 已审核备案SKU下拉
+     * @author Will
+     * @date: 2024/3/19 15:11
+     * @return List<SelectDTO>
+     */
+    List<LogisticsProductDTO.SelectDTO> selectSku();
 }
 
 

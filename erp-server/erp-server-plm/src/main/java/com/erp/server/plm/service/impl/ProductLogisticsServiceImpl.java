@@ -1,22 +1,18 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.common.business.interceptor.CommonInterceptor;
-import com.common.business.vo.LoginUser;
+import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.dto.ProductLogisticsDTO;
 import com.erp.model.plm.dto.ProductLogisticsShowDTO;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.server.plm.mapper.ProductLogisticsMapper;
 import com.erp.server.plm.service.ProductLogisticsService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 
@@ -113,6 +109,11 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(ProductLogisticsEntity::getSkuId,skuIdList).list();
+    }
+
+    @Override
+    public List<LogisticsProductDTO.SelectDTO> selectSku() {
+        return baseMapper.selectSku();
     }
 }
 
