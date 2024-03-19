@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.shipment;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
@@ -27,43 +27,43 @@ public class ShippingAddressBeanX {
      * delivery_preference : business
      */
 
-    @SerializedName("address_id")
+    @JsonProperty("address_id")
     private int addressId;
-    @SerializedName("address_line")
+    @JsonProperty("address_line")
     private String addressLine;
-    @SerializedName("street_name")
+    @JsonProperty("street_name")
     private String streetName;
-    @SerializedName("street_number")
+    @JsonProperty("street_number")
     private String streetNumber;
-    @SerializedName("comment")
+    @JsonProperty("comment")
     private String comment;
-    @SerializedName("zip_code")
+    @JsonProperty("zip_code")
     private String zipCode;
-    @SerializedName("city")
+    @JsonProperty("city")
     private CityBeanX city;
-    @SerializedName("state")
+    @JsonProperty("state")
     private StateBeanX state;
-    @SerializedName("country")
+    @JsonProperty("country")
     private CountryBeanX country;
-    @SerializedName("neighborhood")
+    @JsonProperty("neighborhood")
     private NeighborhoodBeanX neighborhood;
-    @SerializedName("municipality")
+    @JsonProperty("municipality")
     private MunicipalityBeanX municipality;
-    @SerializedName("agency")
+    @JsonProperty("agency")
     private AgencyBeanX agency;
-    @SerializedName("latitude")
+    @JsonProperty("latitude")
     private double latitude;
-    @SerializedName("longitude")
+    @JsonProperty("longitude")
     private double longitude;
-    @SerializedName("geolocation_type")
+    @JsonProperty("geolocation_type")
     private String geolocationType;
-    @SerializedName("geolocation_last_updated")
+    @JsonProperty("geolocation_last_updated")
     private String geolocationLastUpdated;
-    @SerializedName("geolocation_source")
+    @JsonProperty("geolocation_source")
     private String geolocationSource;
-    @SerializedName("delivery_preference")
+    @JsonProperty("delivery_preference")
     private String deliveryPreference;
-    @SerializedName("types")
+    @JsonProperty("types")
     private List<String> types;
 
     public int getAddressId() {

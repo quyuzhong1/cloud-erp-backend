@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class PagingBean {
     /**
@@ -9,11 +9,11 @@ public class PagingBean {
      * total : 35
      */
 
-    @SerializedName("limit")
+    @JsonProperty("limit")
     private int limit;
-    @SerializedName("offset")
+    @JsonProperty("offset")
     private int offset;
-    @SerializedName("total")
+    @JsonProperty("total")
     private int total;
 
     public int getLimit() {

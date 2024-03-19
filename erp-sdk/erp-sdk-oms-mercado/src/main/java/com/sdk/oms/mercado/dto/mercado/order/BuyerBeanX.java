@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
@@ -12,13 +12,13 @@ public class BuyerBeanX {
      * first_name : WILBERT
      */
 
-    @SerializedName("id")
+    @JsonProperty("id")
     private int fid;
-    @SerializedName("nickname")
+    @JsonProperty("nickname")
     private String nickname;
-    @SerializedName("last_name")
+    @JsonProperty("last_name")
     private String lastName;
-    @SerializedName("first_name")
+    @JsonProperty("first_name")
     private String firstName;
 
 }

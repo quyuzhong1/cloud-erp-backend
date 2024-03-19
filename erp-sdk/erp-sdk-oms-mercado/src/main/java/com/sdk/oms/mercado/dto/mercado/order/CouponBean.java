@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
@@ -10,9 +10,9 @@ public class CouponBean {
      * amount : 36.27
      */
 
-    @SerializedName("id")
-    private Object fid;
-    @SerializedName("amount")
+    @JsonProperty("id")
+    private String fid;
+    @JsonProperty("amount")
     private double amount;
 
 }

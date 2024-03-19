@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
@@ -11,11 +11,11 @@ public class ValuesBean {
      * struct : {"number":1,"unit":"months"}
      */
 
-    @SerializedName("id")
+    @JsonProperty("id")
     private String fid;
-    @SerializedName("name")
+    @JsonProperty("name")
     private String name;
-    @SerializedName("struct")
+    @JsonProperty("struct")
     private StructBean struct;
 
 }

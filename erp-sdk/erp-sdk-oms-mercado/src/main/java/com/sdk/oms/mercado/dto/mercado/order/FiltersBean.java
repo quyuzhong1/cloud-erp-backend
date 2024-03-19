@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
@@ -14,13 +14,13 @@ public class FiltersBean {
      * values : ["1511265855"]
      */
 
-    @SerializedName("id")
+    @JsonProperty("id")
     private String fid;
-    @SerializedName("name")
+    @JsonProperty("name")
     private String name;
-    @SerializedName("type")
+    @JsonProperty("type")
     private String type;
-    @SerializedName("values")
+    @JsonProperty("values")
     private List<String> values;
 
 }

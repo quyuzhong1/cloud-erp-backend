@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.shipment;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class TimeFrameBean {
     /**
@@ -8,9 +8,9 @@ public class TimeFrameBean {
      * to :
      */
 
-    @SerializedName("from")
+    @JsonProperty("from")
     private String from;
-    @SerializedName("to")
+    @JsonProperty("to")
     private String to;
 
     public String getFrom() {

@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
@@ -12,13 +12,13 @@ public class SellerAddressBeanX {
      * id : 1332219696
      */
 
-    @SerializedName("city")
+    @JsonProperty("city")
     private CityBean city;
-    @SerializedName("state")
+    @JsonProperty("state")
     private CityBean state;
-    @SerializedName("country")
+    @JsonProperty("country")
     private CityBean country;
-    @SerializedName("id")
+    @JsonProperty("id")
     private int fid;
 
 }

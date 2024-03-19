@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
@@ -10,9 +10,9 @@ public class CityBean {
      * name : Kwai Tsing
      */
 
-    @SerializedName("id")
+    @JsonProperty("id")
     private String fid;
-    @SerializedName("name")
+    @JsonProperty("name")
     private String name;
 
 }

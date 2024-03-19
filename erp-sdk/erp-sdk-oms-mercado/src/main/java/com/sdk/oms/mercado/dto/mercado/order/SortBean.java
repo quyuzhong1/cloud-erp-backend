@@ -1,5 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
@@ -10,9 +11,9 @@ public class SortBean {
      * name : Date ascending
      */
 
-    @SerializedName("id")
+    @JsonProperty("id")
     private String fid;
-    @SerializedName("name")
+    @JsonProperty("name")
     private String name;
 
 }

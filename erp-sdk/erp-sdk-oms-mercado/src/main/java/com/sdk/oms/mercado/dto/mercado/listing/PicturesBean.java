@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
@@ -14,17 +14,17 @@ public class PicturesBean {
      * quality :
      */
 
-    @SerializedName("id")
+    @JsonProperty("id")
     private String fid;
-    @SerializedName("url")
+    @JsonProperty("url")
     private String url;
-    @SerializedName("secure_url")
+    @JsonProperty("secure_url")
     private String secureUrl;
-    @SerializedName("size")
+    @JsonProperty("size")
     private String size;
-    @SerializedName("max_size")
+    @JsonProperty("max_size")
     private String maxSize;
-    @SerializedName("quality")
+    @JsonProperty("quality")
     private String quality;
 
 }

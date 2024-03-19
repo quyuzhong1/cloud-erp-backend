@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.enums.PlatformDictEnum;
@@ -19,10 +18,13 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
-import com.sdk.oms.mercado.dto.MercadoShipOrderDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import com.sdk.oms.mercado.dto.MercadoShipOrderDTO;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.PlatformMercadoRefreshTokenDTO;
 import com.sdk.oms.mercado.dto.mercado.PlatformMercadoTokenDTO;
@@ -219,7 +221,16 @@ public class MercadoSdkClientService {
             }
 
             //解析数据
-            ListingDTO listingDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), ListingDTO.class);
+            ObjectMapper objectMapper = new ObjectMapper();
+            ListingDTO listingDTO = null;
+            try {
+                listingDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), ListingDTO.class);
+            } catch (JsonProcessingException e) {
+                log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult));
+                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+                        baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
+            }
+
             if (CollectionUtils.isEmpty(listingDTO.getResults())) {
                 break;
             }
@@ -271,7 +282,16 @@ public class MercadoSdkClientService {
                         baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
-            List<ListingViewDTO> dataList = JSONObject.parseArray(JSONUtil.toJsonStr(apiResult.getData()), ListingViewDTO.class);
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            List<ListingViewDTO> dataList = null;
+            try {
+                dataList = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), new TypeReference<List<ListingViewDTO>>() {});
+            } catch (JsonProcessingException e) {
+                log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult));
+                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+                        baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
+            }
             if(CollectionUtil.isEmpty(dataList)){
                 break;
             }
@@ -317,12 +337,20 @@ public class MercadoSdkClientService {
             ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
             if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
                 log.error("调用url={},入参params={}, 美客多marketplace/orders/search数据失败，返回值 responseMap={}", baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult));
-                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多marketplace/orders/search数据失败，返回值 responseMap={}",
+                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
                         baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
-
+            ObjectMapper objectMapper = new ObjectMapper();
+            OrderDTO orderDTO = null;
+            try {
+                orderDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), OrderDTO.class);
+            } catch (JsonProcessingException e) {
+                log.error("美客多orders/search接口数据解析错误，数据={}", apiResult.getData());
+                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+                        baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
+            }
             //解析数据
-            OrderDTO orderDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), OrderDTO.class);
+//            OrderDTO orderDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), OrderDTO.class);
             if (CollectionUtils.isEmpty(orderDTO.getResults())) {
                 break;
             }
@@ -347,7 +375,7 @@ public class MercadoSdkClientService {
                     ApiResult orderResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
                     if (!Objects.equals(orderResult.getCode(), 200) && !Objects.equals(orderResult.getCode(), 201)) {
                         log.error("调用url={},入参params={}, 美客多marketplace/orders数据失败，返回值 responseMap={}", orderUrl, orderParams.toString(), JSONUtil.toJsonStr(orderResult));
-                        throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多marketplace/orders数据失败，返回值 responseMap={}",
+                        throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
                                 orderUrl, orderParams.toString(), JSONUtil.toJsonStr(orderResult)));
                     }
 
@@ -387,13 +415,20 @@ public class MercadoSdkClientService {
         ApiResult shipmentResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
         if (!Objects.equals(shipmentResult.getCode(), 200) && !Objects.equals(shipmentResult.getCode(), 201)) {
             log.error("调用url={},入参params={}, 美客多marketplace/shipments数据失败，返回值 responseMap={}", orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult));
-            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多marketplace/shipments数据失败，返回值 responseMap={}",
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
                     orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult)));
         }
 
         //解析数据
-        ShipmentViewDTO orderViewDTO = JSONUtil.toBean(JSONUtil.toJsonStr(shipmentResult.getData()), ShipmentViewDTO.class);
-
+        ObjectMapper objectMapper = new ObjectMapper();
+        ShipmentViewDTO orderViewDTO = null;
+        try {
+            orderViewDTO = objectMapper.readValue(JSONUtil.toJsonStr(shipmentResult.getData()), ShipmentViewDTO.class);
+        } catch (JsonProcessingException e) {
+            log.error("美客多shipments/'shippingId'/接口数据解析错误，数据={}", shipmentResult.getData());
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+                    orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult)));
+        }
         return orderViewDTO;
 
     }

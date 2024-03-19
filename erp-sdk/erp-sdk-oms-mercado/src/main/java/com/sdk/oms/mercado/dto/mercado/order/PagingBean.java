@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class PagingBean {
     /**
@@ -9,11 +9,11 @@ public class PagingBean {
      * offset : 1
      */
 
-    @SerializedName("total")
+    @JsonProperty("total")
     private int total;
-    @SerializedName("limit")
+    @JsonProperty("limit")
     private int limit;
-    @SerializedName("offset")
+    @JsonProperty("offset")
     private int offset;
 
     public int getTotal() {

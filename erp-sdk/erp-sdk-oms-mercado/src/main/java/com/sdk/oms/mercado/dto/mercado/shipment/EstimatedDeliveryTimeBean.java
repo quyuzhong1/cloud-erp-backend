@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.shipment;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class EstimatedDeliveryTimeBean {
     /**
@@ -15,23 +15,23 @@ public class EstimatedDeliveryTimeBean {
      * schedule : null
      */
 
-    @SerializedName("type")
+    @JsonProperty("type")
     private String type;
-    @SerializedName("date")
+    @JsonProperty("date")
     private String date;
-    @SerializedName("unit")
+    @JsonProperty("unit")
     private String unit;
-    @SerializedName("offset")
+    @JsonProperty("offset")
     private OffsetBean offset;
-    @SerializedName("time_frame")
+    @JsonProperty("time_frame")
     private TimeFrameBean timeFrame;
-    @SerializedName("pay_before")
+    @JsonProperty("pay_before")
     private String payBefore;
-    @SerializedName("shipping")
+    @JsonProperty("shipping")
     private int shipping;
-    @SerializedName("handling")
+    @JsonProperty("handling")
     private int handling;
-    @SerializedName("schedule")
+    @JsonProperty("schedule")
     private Object schedule;
 
     public String getType() {

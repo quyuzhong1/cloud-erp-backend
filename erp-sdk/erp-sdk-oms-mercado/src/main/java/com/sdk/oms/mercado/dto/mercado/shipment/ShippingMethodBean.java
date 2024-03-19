@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.shipment;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
@@ -12,13 +12,13 @@ public class ShippingMethodBean {
      * deliver_to : address
      */
 
-    @SerializedName("id")
+    @JsonProperty("id")
     private int fid;
-    @SerializedName("type")
+    @JsonProperty("type")
     private String type;
-    @SerializedName("name")
+    @JsonProperty("name")
     private String name;
-    @SerializedName("deliver_to")
+    @JsonProperty("deliver_to")
     private String deliverTo;
 
 }

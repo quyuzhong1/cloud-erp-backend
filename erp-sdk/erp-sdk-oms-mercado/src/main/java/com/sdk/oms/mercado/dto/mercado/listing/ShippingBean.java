@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
@@ -16,21 +16,21 @@ public class ShippingBean {
      * store_pick_up : false
      */
 
-    @SerializedName("mode")
+    @JsonProperty("mode")
     private String mode;
-    @SerializedName("dimensions")
+    @JsonProperty("dimensions")
     private Object dimensions;
-    @SerializedName("local_pick_up")
+    @JsonProperty("local_pick_up")
     private boolean localPickUp;
-    @SerializedName("free_shipping")
+    @JsonProperty("free_shipping")
     private boolean freeShipping;
-    @SerializedName("logistic_type")
+    @JsonProperty("logistic_type")
     private String logisticType;
-    @SerializedName("store_pick_up")
+    @JsonProperty("store_pick_up")
     private boolean storePickUp;
-    @SerializedName("methods")
+    @JsonProperty("methods")
     private List<?> methods;
-    @SerializedName("tags")
+    @JsonProperty("tags")
     private List<?> tags;
 
     public String getMode() {

@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class FeedbackBean {
     /**
@@ -8,9 +8,9 @@ public class FeedbackBean {
      * sale : null
      */
 
-    @SerializedName("purchase")
+    @JsonProperty("purchase")
     private Object purchase;
-    @SerializedName("sale")
+    @JsonProperty("sale")
     private Object sale;
 
     public Object getPurchase() {

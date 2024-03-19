@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class AtmTransferReferenceBean {
     /**
@@ -8,9 +8,9 @@ public class AtmTransferReferenceBean {
      * transaction_id : 611672965
      */
 
-    @SerializedName("company_id")
+    @JsonProperty("company_id")
     private Object companyId;
-    @SerializedName("transaction_id")
+    @JsonProperty("transaction_id")
     private String transactionId;
 
     public Object getCompanyId() {

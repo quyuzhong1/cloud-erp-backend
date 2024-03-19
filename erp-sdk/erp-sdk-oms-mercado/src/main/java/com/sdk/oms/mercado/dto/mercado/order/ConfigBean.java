@@ -1,11 +1,12 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
 public class ConfigBean {
-    @SerializedName("items")
+    @JsonProperty("items")
     private List<ItemsBean> items;
 
     public List<ItemsBean> getItems() {

@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.shipment;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class OriginBean {
     /**
@@ -9,11 +9,11 @@ public class OriginBean {
      * type : selling_address
      */
 
-    @SerializedName("sender_id")
+    @JsonProperty("sender_id")
     private int senderId;
-    @SerializedName("shipping_address")
+    @JsonProperty("shipping_address")
     private ShippingAddressBean shippingAddress;
-    @SerializedName("type")
+    @JsonProperty("type")
     private String type;
 
     public int getSenderId() {

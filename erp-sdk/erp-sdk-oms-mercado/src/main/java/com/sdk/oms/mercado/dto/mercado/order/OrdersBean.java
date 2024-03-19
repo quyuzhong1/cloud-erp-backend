@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
@@ -16,17 +16,17 @@ public class OrdersBean {
      * seller : {"id":1511265855}
      */
 
-    @SerializedName("id")
+    @JsonProperty("id")
     private long fid;
-    @SerializedName("items")
+    @JsonProperty("items")
     private Object items;
-    @SerializedName("feedback")
+    @JsonProperty("feedback")
     private FeedbackBean feedback;
-    @SerializedName("seller")
+    @JsonProperty("seller")
     private SellerBean seller;
-    @SerializedName("payments")
+    @JsonProperty("payments")
     private List<PaymentsBean> payments;
-    @SerializedName("mediations")
+    @JsonProperty("mediations")
     private List<?> mediations;
 
 }

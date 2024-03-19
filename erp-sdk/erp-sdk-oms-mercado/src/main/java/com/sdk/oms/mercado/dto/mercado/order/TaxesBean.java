@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class TaxesBean {
     /**
@@ -8,9 +8,9 @@ public class TaxesBean {
      * currency_id : USD
      */
 
-    @SerializedName("amount")
+    @JsonProperty("amount")
     private int amount;
-    @SerializedName("currency_id")
+    @JsonProperty("currency_id")
     private String currencyId;
 
     public int getAmount() {

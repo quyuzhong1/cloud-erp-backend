@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
@@ -16,17 +16,17 @@ public class AttributesBean {
      * value_type : string
      */
 
-    @SerializedName("id")
+    @JsonProperty("id")
     private String fid;
-    @SerializedName("name")
+    @JsonProperty("name")
     private String name;
-    @SerializedName("value_id")
+    @JsonProperty("value_id")
     private String valueId;
-    @SerializedName("value_name")
+    @JsonProperty("value_name")
     private String valueName;
-    @SerializedName("value_type")
+    @JsonProperty("value_type")
     private String valueType;
-    @SerializedName("values")
+    @JsonProperty("values")
     private List<ValuesBeanX> values;
 
 }

@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.shipment;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class AgencyBeanX {
     /**
@@ -12,17 +12,17 @@ public class AgencyBeanX {
      * type : null
      */
 
-    @SerializedName("agency_id")
+    @JsonProperty("agency_id")
     private Object agencyId;
-    @SerializedName("carrier_id")
+    @JsonProperty("carrier_id")
     private Object carrierId;
-    @SerializedName("description")
+    @JsonProperty("description")
     private Object description;
-    @SerializedName("open_hours")
+    @JsonProperty("open_hours")
     private Object openHours;
-    @SerializedName("phone")
+    @JsonProperty("phone")
     private Object phone;
-    @SerializedName("type")
+    @JsonProperty("type")
     private Object type;
 
     public Object getAgencyId() {

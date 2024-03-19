@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
@@ -18,17 +18,17 @@ public class ListingDTO {
      * available_orders : [{"id":"stop_time_asc","name":"Order by stop time ascending"},{"id":"stop_time_desc","name":"Order by stop time descending"},{"id":"start_time_asc","name":"Order by start time ascending"},{"id":"start_time_desc","name":"Order by start time descending"},{"id":"available_quantity_asc","name":"Order by available quantity ascending"},{"id":"available_quantity_desc","name":"Order by available quantity descending"},{"id":"sold_quantity_asc","name":"Order by sold quantity ascending"},{"id":"sold_quantity_desc","name":"Order by sold quantity descending"},{"id":"price_asc","name":"Order by price ascending"},{"id":"price_desc","name":"Order by price descending"},{"id":"last_updated_desc","name":"Order by lastUpdated descending"},{"id":"last_updated_asc","name":"Order by last updated ascending"},{"id":"total_sold_quantity_asc","name":"Order by total sold quantity ascending"},{"id":{"id":"total_sold_quantity_desc","field":"sold_quantity","missing":"_last","order":"desc"},"name":"Order by total sold quantity descending"},{"id":{"id":"inventory_id_asc","field":"inventory_id","missing":"_last","order":"asc"},"name":"Order by inventory id ascending"}]
      */
 
-    @SerializedName("seller_id")
+    @JsonProperty("seller_id")
     private String sellerId;
-    @SerializedName("paging")
+    @JsonProperty("paging")
     private PagingBean paging;
-    @SerializedName("query")
+    @JsonProperty("query")
     private Object query;
-    @SerializedName("results")
+    @JsonProperty("results")
     private List<String> results;
-    @SerializedName("orders")
+    @JsonProperty("orders")
     private List<OrdersBean> orders;
-    @SerializedName("available_orders")
+    @JsonProperty("available_orders")
     private List<AvailableOrdersBean> availableOrders;
 
     public String getSellerId() {

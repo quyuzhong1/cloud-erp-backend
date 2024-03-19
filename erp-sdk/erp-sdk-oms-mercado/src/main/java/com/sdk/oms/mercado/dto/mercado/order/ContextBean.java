@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
@@ -12,13 +12,13 @@ public class ContextBean {
      * application : buyingflow-api
      */
 
-    @SerializedName("channel")
+    @JsonProperty("channel")
     private String channel;
-    @SerializedName("site")
+    @JsonProperty("site")
     private String site;
-    @SerializedName("application")
+    @JsonProperty("application")
     private String application;
-    @SerializedName("flows")
+    @JsonProperty("flows")
     private List<String> flows;
 
     public String getChannel() {

@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -44,71 +44,71 @@ public class PaymentsBeanX {
      * date_last_modified : 2024-03-01T12:34:02.000-04:00
      */
 
-    @SerializedName("id")
-    private long paymentId;
-    @SerializedName("order_id")
+    @JsonProperty("id")
+    private long fid;
+    @JsonProperty("order_id")
     private long orderId;
-    @SerializedName("payer_id")
+    @JsonProperty("payer_id")
     private int payerId;
-    @SerializedName("collector")
+    @JsonProperty("collector")
     private BuyerBean collector;
-    @SerializedName("card_id")
+    @JsonProperty("card_id")
     private int cardId;
-    @SerializedName("site_id")
+    @JsonProperty("site_id")
     private String siteId;
-    @SerializedName("reason")
+    @JsonProperty("reason")
     private String reason;
-    @SerializedName("payment_method_id")
+    @JsonProperty("payment_method_id")
     private String paymentMethodId;
-    @SerializedName("currency_id")
+    @JsonProperty("currency_id")
     private String currencyId;
-    @SerializedName("installments")
+    @JsonProperty("installments")
     private int installments;
-    @SerializedName("issuer_id")
+    @JsonProperty("issuer_id")
     private String issuerId;
-    @SerializedName("atm_transfer_reference")
+    @JsonProperty("atm_transfer_reference")
     private AtmTransferReferenceBean atmTransferReference;
-    @SerializedName("coupon_id")
+    @JsonProperty("coupon_id")
     private Object couponId;
-    @SerializedName("activation_uri")
+    @JsonProperty("activation_uri")
     private Object activationUri;
-    @SerializedName("operation_type")
+    @JsonProperty("operation_type")
     private String operationType;
-    @SerializedName("payment_type")
+    @JsonProperty("payment_type")
     private String paymentType;
-    @SerializedName("status")
+    @JsonProperty("status")
     private String status;
-    @SerializedName("status_code")
+    @JsonProperty("status_code")
     private Object statusCode;
-    @SerializedName("status_detail")
+    @JsonProperty("status_detail")
     private String statusDetail;
-    @SerializedName("transaction_amount")
+    @JsonProperty("transaction_amount")
     private double transactionAmount;
-    @SerializedName("taxes_amount")
+    @JsonProperty("taxes_amount")
     private BigDecimal taxesAmount;
-    @SerializedName("shipping_cost")
+    @JsonProperty("shipping_cost")
     private BigDecimal shippingCost;
-    @SerializedName("coupon_amount")
+    @JsonProperty("coupon_amount")
     private double couponAmount;
-    @SerializedName("overpaid_amount")
+    @JsonProperty("overpaid_amount")
     private int overpaidAmount;
-    @SerializedName("total_paid_amount")
+    @JsonProperty("total_paid_amount")
     private BigDecimal totalPaidAmount;
-    @SerializedName("installment_amount")
+    @JsonProperty("installment_amount")
     private int installmentAmount;
-    @SerializedName("deferred_period")
+    @JsonProperty("deferred_period")
     private Object deferredPeriod;
-    @SerializedName("date_approved")
+    @JsonProperty("date_approved")
     private String dateApproved;
-    @SerializedName("authorization_code")
+    @JsonProperty("authorization_code")
     private String authorizationCode;
-    @SerializedName("transaction_order_id")
+    @JsonProperty("transaction_order_id")
     private Object transactionOrderId;
-    @SerializedName("date_created")
+    @JsonProperty("date_created")
     private String dateCreated;
-    @SerializedName("date_last_modified")
+    @JsonProperty("date_last_modified")
     private String dateLastModified;
-    @SerializedName("available_actions")
+    @JsonProperty("available_actions")
     private List<String> availableActions;
 
 }

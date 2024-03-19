@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
@@ -55,95 +55,95 @@ public class BodyBean {
      * catalog_listing : false
      */
 
-    @SerializedName("id")
+    @JsonProperty("id")
     private String fid;
-    @SerializedName("site_id")
+    @JsonProperty("site_id")
     private String siteId;
-    @SerializedName("title")
+    @JsonProperty("title")
     private String title;
-    @SerializedName("seller_id")
+    @JsonProperty("seller_id")
     private int sellerId;
-    @SerializedName("category_id")
+    @JsonProperty("category_id")
     private String categoryId;
-    @SerializedName("official_store_id")
+    @JsonProperty("official_store_id")
     private Object officialStoreId;
-    @SerializedName("price")
+    @JsonProperty("price")
     private double price;
-    @SerializedName("base_price")
+    @JsonProperty("base_price")
     private double basePrice;
-    @SerializedName("original_price")
+    @JsonProperty("original_price")
     private Object originalPrice;
-    @SerializedName("currency_id")
+    @JsonProperty("currency_id")
     private String currencyId;
-    @SerializedName("initial_quantity")
+    @JsonProperty("initial_quantity")
     private int initialQuantity;
-    @SerializedName("buying_mode")
+    @JsonProperty("buying_mode")
     private String buyingMode;
-    @SerializedName("listing_type_id")
+    @JsonProperty("listing_type_id")
     private String listingTypeId;
-    @SerializedName("condition")
+    @JsonProperty("condition")
     private String condition;
-    @SerializedName("permalink")
+    @JsonProperty("permalink")
     private String permalink;
-    @SerializedName("thumbnail_id")
+    @JsonProperty("thumbnail_id")
     private String thumbnailId;
-    @SerializedName("thumbnail")
+    @JsonProperty("thumbnail")
     private String thumbnail;
-    @SerializedName("video_id")
+    @JsonProperty("video_id")
     private Object videoId;
-    @SerializedName("accepts_mercadopago")
+    @JsonProperty("accepts_mercadopago")
     private boolean acceptsMercadopago;
-    @SerializedName("shipping")
+    @JsonProperty("shipping")
     private ShippingBean shipping;
-    @SerializedName("international_delivery_mode")
+    @JsonProperty("international_delivery_mode")
     private String internationalDeliveryMode;
-    @SerializedName("seller_address")
+    @JsonProperty("seller_address")
     private SellerAddressBean sellerAddress;
-    @SerializedName("seller_contact")
+    @JsonProperty("seller_contact")
     private Object sellerContact;
-    @SerializedName("location")
+    @JsonProperty("location")
     private LocationBean location;
-    @SerializedName("listing_source")
+    @JsonProperty("listing_source")
     private String listingSource;
-    @SerializedName("status")
+    @JsonProperty("status")
     private String status;
-    @SerializedName("warranty")
+    @JsonProperty("warranty")
     private String warranty;
-    @SerializedName("catalog_product_id")
+    @JsonProperty("catalog_product_id")
     private Object catalogProductId;
-    @SerializedName("domain_id")
+    @JsonProperty("domain_id")
     private String domainId;
-    @SerializedName("parent_item_id")
+    @JsonProperty("parent_item_id")
     private Object parentItemId;
-    @SerializedName("automatic_relist")
+    @JsonProperty("automatic_relist")
     private boolean automaticRelist;
-    @SerializedName("date_created")
+    @JsonProperty("date_created")
     private String dateCreated;
-    @SerializedName("last_updated")
+    @JsonProperty("last_updated")
     private String lastUpdated;
-    @SerializedName("health")
+    @JsonProperty("health")
     private Object health;
-    @SerializedName("catalog_listing")
+    @JsonProperty("catalog_listing")
     private boolean catalogListing;
-    @SerializedName("sale_terms")
+    @JsonProperty("sale_terms")
     private List<SaleTermsBean> saleTerms;
-    @SerializedName("pictures")
+    @JsonProperty("pictures")
     private List<PicturesBean> pictures;
-    @SerializedName("descriptions")
+    @JsonProperty("descriptions")
     private List<?> descriptions;
-    @SerializedName("non_mercado_pago_payment_methods")
+    @JsonProperty("non_mercado_pago_payment_methods")
     private List<?> nonMercadoPagoPaymentMethods;
-    @SerializedName("coverage_areas")
+    @JsonProperty("coverage_areas")
     private List<?> coverageAreas;
-    @SerializedName("attributes")
+    @JsonProperty("attributes")
     private List<AttributesBean> attributes;
-    @SerializedName("variations")
+    @JsonProperty("variations")
     private List<?> variations;
-    @SerializedName("sub_status")
+    @JsonProperty("sub_status")
     private List<String> subStatus;
-    @SerializedName("tags")
+    @JsonProperty("tags")
     private List<String> tags;
-    @SerializedName("deal_ids")
+    @JsonProperty("deal_ids")
     private List<?> dealIds;
 
 }

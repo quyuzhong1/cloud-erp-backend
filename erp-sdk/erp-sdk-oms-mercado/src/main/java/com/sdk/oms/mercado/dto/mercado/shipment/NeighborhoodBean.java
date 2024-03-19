@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.shipment;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
@@ -10,9 +10,8 @@ public class NeighborhoodBean {
      * name : null
      */
 
-    @SerializedName("id")
-    private String fid;
-    @SerializedName("name")
-    private String name;
-
+    @JsonProperty("id")
+    private Object fid;
+    @JsonProperty("name")
+    private Object name;
 }

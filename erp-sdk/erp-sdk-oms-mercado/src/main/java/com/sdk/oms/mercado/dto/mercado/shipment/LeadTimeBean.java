@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.shipment;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.math.BigDecimal;
 
@@ -16,21 +16,21 @@ public class LeadTimeBean {
      * estimated_delivery_time : {"type":"known_frame","date":"2024-03-01T00:00:00.000-06:00","unit":"hour","offset":{"date":"2024-03-14T00:00:00.000-06:00","shipping":216},"time_frame":{"from":"","to":""},"pay_before":"2024-02-19T10:00:00.000-06:00","shipping":168,"handling":72,"schedule":null}
      */
 
-    @SerializedName("option_id")
+    @JsonProperty("option_id")
     private int optionId;
-    @SerializedName("shipping_method")
+    @JsonProperty("shipping_method")
     private ShippingMethodBean shippingMethod;
-    @SerializedName("currency_id")
+    @JsonProperty("currency_id")
     private String currencyId;
-    @SerializedName("cost")
+    @JsonProperty("cost")
     private BigDecimal cost;
-    @SerializedName("list_cost")
+    @JsonProperty("list_cost")
     private BigDecimal listCost;
-    @SerializedName("cost_type")
+    @JsonProperty("cost_type")
     private String costType;
-    @SerializedName("service_id")
+    @JsonProperty("service_id")
     private int serviceId;
-    @SerializedName("estimated_delivery_time")
+    @JsonProperty("estimated_delivery_time")
     private EstimatedDeliveryTimeBean estimatedDeliveryTime;
 
     public int getOptionId() {

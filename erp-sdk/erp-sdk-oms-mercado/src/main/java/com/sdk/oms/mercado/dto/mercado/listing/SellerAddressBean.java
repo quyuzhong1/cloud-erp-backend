@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SellerAddressBean {
 
@@ -9,7 +9,7 @@ public class SellerAddressBean {
      * seller_address : {"city":{"id":"SEstSEtLd2FpIFRzaW5n","name":"Kwai Tsing"},"state":{"id":"HK-HK","name":"Hong Kong"},"country":{"id":"HK","name":"Hong Kong"},"id":1332219696}
      */
 
-    @SerializedName("seller_address")
+    @JsonProperty("seller_address")
     private SellerAddressBeanX sellerAddress;
 
     public SellerAddressBeanX getSellerAddress() {

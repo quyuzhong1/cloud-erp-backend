@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.shipment;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class OffsetBean {
     /**
@@ -8,9 +8,9 @@ public class OffsetBean {
      * shipping : 216
      */
 
-    @SerializedName("date")
+    @JsonProperty("date")
     private String date;
-    @SerializedName("shipping")
+    @JsonProperty("shipping")
     private int shipping;
 
     public String getDate() {

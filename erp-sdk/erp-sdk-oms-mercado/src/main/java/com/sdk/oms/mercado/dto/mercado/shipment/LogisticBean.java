@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.shipment;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class LogisticBean {
     /**
@@ -9,11 +9,11 @@ public class LogisticBean {
      * direction : forward
      */
 
-    @SerializedName("mode")
+    @JsonProperty("mode")
     private String mode;
-    @SerializedName("type")
+    @JsonProperty("type")
     private String type;
-    @SerializedName("direction")
+    @JsonProperty("direction")
     private String direction;
 
     public String getMode() {

@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ValueStructBean {
     /**
@@ -8,9 +8,9 @@ public class ValueStructBean {
      * unit : months
      */
 
-    @SerializedName("number")
+    @JsonProperty("number")
     private int number;
-    @SerializedName("unit")
+    @JsonProperty("unit")
     private String unit;
 
     public int getNumber() {

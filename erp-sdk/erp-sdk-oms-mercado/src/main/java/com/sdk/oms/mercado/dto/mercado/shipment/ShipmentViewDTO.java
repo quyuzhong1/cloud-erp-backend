@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.shipment;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
@@ -30,43 +30,43 @@ public class ShipmentViewDTO {
      * sender_id : 0
      */
 
-    @SerializedName("id")
+    @JsonProperty("id")
     private long fid;
-    @SerializedName("order_id")
+    @JsonProperty("order_id")
     private int orderId;
-    @SerializedName("status")
+    @JsonProperty("status")
     private String status;
-    @SerializedName("substatus")
+    @JsonProperty("substatus")
     private String substatus;
-    @SerializedName("declared_value")
+    @JsonProperty("declared_value")
     private double declaredValue;
-    @SerializedName("currency_id")
+    @JsonProperty("currency_id")
     private String currencyId;
-    @SerializedName("date_created")
+    @JsonProperty("date_created")
     private String dateCreated;
-    @SerializedName("last_updated")
+    @JsonProperty("last_updated")
     private String lastUpdated;
-    @SerializedName("tracking_number")
+    @JsonProperty("tracking_number")
     private String trackingNumber;
-    @SerializedName("tracking_method")
+    @JsonProperty("tracking_method")
     private String trackingMethod;
-    @SerializedName("origin")
+    @JsonProperty("origin")
     private OriginBean origin;
-    @SerializedName("destination")
+    @JsonProperty("destination")
     private DestinationBean destination;
-    @SerializedName("dimensions")
+    @JsonProperty("dimensions")
     private DimensionsBean dimensions;
-    @SerializedName("external_reference")
+    @JsonProperty("external_reference")
     private Object externalReference;
-    @SerializedName("lead_time")
+    @JsonProperty("lead_time")
     private LeadTimeBean leadTime;
-    @SerializedName("source")
+    @JsonProperty("source")
     private SourceBean source;
-    @SerializedName("logistic")
+    @JsonProperty("logistic")
     private LogisticBean logistic;
-    @SerializedName("sender_id")
+    @JsonProperty("sender_id")
     private int senderId;
-    @SerializedName("tags")
+    @JsonProperty("tags")
     private List<?> tags;
 
 }

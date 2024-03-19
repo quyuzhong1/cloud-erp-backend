@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.shipment;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class DimensionsBean {
     /**
@@ -10,13 +10,13 @@ public class DimensionsBean {
      * width : 5
      */
 
-    @SerializedName("height")
+    @JsonProperty("height")
     private int height;
-    @SerializedName("length")
+    @JsonProperty("length")
     private int length;
-    @SerializedName("weight")
+    @JsonProperty("weight")
     private int weight;
-    @SerializedName("width")
+    @JsonProperty("width")
     private int width;
 
     public int getHeight() {

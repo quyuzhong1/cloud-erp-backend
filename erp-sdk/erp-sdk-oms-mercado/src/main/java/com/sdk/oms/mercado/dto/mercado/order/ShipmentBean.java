@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
@@ -12,9 +12,9 @@ public class ShipmentBean {
      * payments : []
      */
 
-    @SerializedName("id")
+    @JsonProperty("id")
     private long fid;
-    @SerializedName("payments")
+    @JsonProperty("payments")
     private List<?> payments;
 
 }

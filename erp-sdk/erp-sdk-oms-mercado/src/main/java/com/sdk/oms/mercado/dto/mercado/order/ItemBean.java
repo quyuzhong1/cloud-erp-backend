@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
@@ -20,25 +20,25 @@ public class ItemBean {
      * parent_item_id : CBT1908713864
      */
 
-    @SerializedName("id")
+    @JsonProperty("id")
     private String fid;
-    @SerializedName("title")
+    @JsonProperty("title")
     private String title;
-    @SerializedName("category_id")
+    @JsonProperty("category_id")
     private String categoryId;
-    @SerializedName("variation_id")
+    @JsonProperty("variation_id")
     private Object variationId;
-    @SerializedName("seller_custom_field")
+    @JsonProperty("seller_custom_field")
     private Object sellerCustomField;
-    @SerializedName("warranty")
+    @JsonProperty("warranty")
     private String warranty;
-    @SerializedName("condition")
+    @JsonProperty("condition")
     private String condition;
-    @SerializedName("seller_sku")
+    @JsonProperty("seller_sku")
     private String sellerSku;
-    @SerializedName("parent_item_id")
+    @JsonProperty("parent_item_id")
     private String parentItemId;
-    @SerializedName("variation_attributes")
+    @JsonProperty("variation_attributes")
     private List<?> variationAttributes;
 
 }

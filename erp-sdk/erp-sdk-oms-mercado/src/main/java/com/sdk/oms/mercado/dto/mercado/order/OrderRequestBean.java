@@ -1,6 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
@@ -10,9 +10,9 @@ public class OrderRequestBean {
      * change : null
      */
 
-    @SerializedName("return")
+    @JsonProperty("return")
     private Object returnX;
-    @SerializedName("change")
+    @JsonProperty("change")
     private Object change;
 
 }

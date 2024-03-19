@@ -1,5 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.shipment;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.SerializedName;
 
 public class SourceBean {
@@ -7,7 +8,7 @@ public class SourceBean {
      * site_id : MLM
      */
 
-    @SerializedName("site_id")
+    @JsonProperty("site_id")
     private String siteId;
 
     public String getSiteId() {
