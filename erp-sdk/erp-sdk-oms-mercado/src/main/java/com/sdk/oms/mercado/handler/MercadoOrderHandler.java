@@ -141,5 +141,7 @@ public class MercadoOrderHandler extends AbstractOrderHandler<MercadoOrderDTO, P
     public String getTargetPlatform() {
         return PlatformEnum.ERP.getDesc();
     }
+
+
 }
 

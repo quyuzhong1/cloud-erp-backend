@@ -1,7 +1,9 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 
+@Data
 public class CouponBean {
     /**
      * id : null
@@ -9,23 +11,8 @@ public class CouponBean {
      */
 
     @SerializedName("id")
-    private Object id;
+    private Object fid;
     @SerializedName("amount")
     private double amount;
 
-    public Object getId() {
-        return id;
-    }
-
-    public void setId(Object id) {
-        this.id = id;
-    }
-
-    public double getAmount() {
-        return amount;
-    }
-
-    public void setAmount(double amount) {
-        this.amount = amount;
-    }
 }

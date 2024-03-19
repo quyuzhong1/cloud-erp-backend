@@ -44,7 +44,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         this.shopId = shopId;
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.MERCADO.getCode());
-        this.setUniqueId(combineUnique(String.valueOf(orderBean.getId()), this.shopId));
+        this.setUniqueId(combineUnique(String.valueOf(orderBean.getFid()), this.shopId));
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
     }
@@ -71,7 +71,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
 
         //平台订单号
-        orderDTO.setPlatformCode(String.valueOf(orderBean.getId()));
+        orderDTO.setPlatformCode(String.valueOf(orderBean.getFid()));
 
         //销售平台
         orderDTO.setDictPlatform(PlatformDictEnum.MERCADO.getCode());
@@ -114,7 +114,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         orderDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
 
         // 来源id
-        orderDTO.setSourceId(String.valueOf(orderBean.getId()));
+        orderDTO.setSourceId(String.valueOf(orderBean.getFid()));
 
         // 来源编码
         orderDTO.setSourceCode("");
@@ -148,7 +148,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
             JSONObject extendDataJson = new JSONObject();
             extendDataJson.put("mode",shipmentViewDTO.getLogistic().getMode());
             extendDataJson.put("logisticType", shipmentViewDTO.getLogistic().getType());
-            extendDataJson.put("shipmentId", orderBean.getShipping().getId());
+            extendDataJson.put("shipmentId", orderBean.getShipping().getFid());
             orderDTO.setExtendData(extendDataJson.toString());
         }
 
@@ -198,7 +198,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         //B2C销售订单财务信息表
         orderDTO.setFinances(parseFinances(orderBean));
         orderDTO.setPlatform(PlatformDictEnum.MERCADO.getCode());
-        orderDTO.setUniqueId(String.valueOf(orderBean.getId()));
+        orderDTO.setUniqueId(String.valueOf(orderBean.getFid()));
         return orderDTO;
     }
     /**
@@ -230,7 +230,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         detailDTO.setPlatformSkuNo(orderItemsBean.getItem().getParentItemId());
 
         //平台产品id
-        detailDTO.setPlatformSpuNo(orderItemsBean.getItem().getId());
+        detailDTO.setPlatformSpuNo(orderItemsBean.getItem().getFid());
 
         // 库存sku编号
         detailDTO.setWarehouseName("");
@@ -253,7 +253,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
         // 来源明细id
-        detailDTO.setSourceDetailId(orderItemsBean.getItem().getId());
+        detailDTO.setSourceDetailId(orderItemsBean.getItem().getFid());
         // 标签json
         detailDTO.setLabelJson("");
         // 库存组织id
@@ -280,13 +280,13 @@ public class MercadoOrderDTO extends CleanBaseDTO {
 
         return PlatformOrderReceiverDTO.builder()
                 .loginId("")
-                .customerId(String.valueOf(orderViewDTO.getBuyer().getId()))
+                .customerId(String.valueOf(orderViewDTO.getBuyer().getFid()))
                 .name(orderViewDTO.getBuyer().getLastName()+" "+orderViewDTO.getBuyer().getFirstName())
                 .receiverName(orderViewDTO.getShipmentViewDTO().getDestination().getReceiverName())
                 .telNumber(orderViewDTO.getShipmentViewDTO().getDestination().getReceiverPhone())
                 .receiverTelNumber(orderViewDTO.getShipmentViewDTO().getDestination().getReceiverPhone())
                 .email("")
-                .country(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getCountry().getId())
+                .country(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getCountry().getFid())
                 .provinceName(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getState().getName())
                 .cityName(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getCity().getName())
                 .districtName(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getAddressLine())

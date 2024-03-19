@@ -31,7 +31,7 @@ public class MercadoListingDTO extends CleanBaseDTO {
         this.setIsClean(0);
         this.shopId = dto.getShopId();
         super.setPlatform(PlatformDictEnum.MERCADO.getCode());
-        this.setUniqueId(bodyBean.getId());
+        this.setUniqueId(bodyBean.getFid());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
     }
@@ -50,7 +50,7 @@ public class MercadoListingDTO extends CleanBaseDTO {
     private static PlatformProductDTO initPlatformProductDTO(MercadoListingDTO dto) {
         BodyBean bodyBean = dto.getBodyBean();
         PlatformProductDTO resultDto = new PlatformProductDTO();
-        AttributesBean attributesBean = bodyBean.getAttributes().stream().filter(req -> "seller_sku".equals(req.getId())).findFirst().orElse(null);
+        AttributesBean attributesBean = bodyBean.getAttributes().stream().filter(req -> "seller_sku".equals(req.getFid())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(attributesBean)) {
             //平台sku
             resultDto.setPlatformSkuNo(attributesBean.getValueName());
@@ -64,12 +64,12 @@ public class MercadoListingDTO extends CleanBaseDTO {
         // 平台
         resultDto.setPlatform(dto.getPlatform());
         //平台产品id
-        resultDto.setPlatformProductNo(bodyBean.getId());
+        resultDto.setPlatformProductNo(bodyBean.getFid());
         // 平台产品名称
         resultDto.setPlatformProductName(bodyBean.getTitle());
         //图片
         resultDto.setProductImageUrl(bodyBean.getPictures().get(0).getUrl());
-        resultDto.setUniqueId(bodyBean.getId());
+        resultDto.setUniqueId(bodyBean.getFid());
         resultDto.setShopId(dto.getShopId());
         resultDto.setPlatformUpdateTime(LocalDateTime.now());
         return resultDto;

@@ -1,7 +1,9 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 
+@Data
 public class ValuesBeanX {
     /**
      * id : 2537728
@@ -10,33 +12,10 @@ public class ValuesBeanX {
      */
 
     @SerializedName("id")
-    private String id;
+    private String fid;
     @SerializedName("name")
     private String name;
     @SerializedName("struct")
     private Object struct;
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Object getStruct() {
-        return struct;
-    }
-
-    public void setStruct(Object struct) {
-        this.struct = struct;
-    }
 }

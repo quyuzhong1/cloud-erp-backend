@@ -331,7 +331,7 @@ public class MercadoSdkClientService {
 
 
             for (ResultsBean result : orderDTO.getResults()) {
-                List<Long> orderIdList = result.getOrders().stream().map(req -> req.getId()).collect(Collectors.toList());
+                List<Long> orderIdList = result.getOrders().stream().map(req -> req.getFid()).collect(Collectors.toList());
 
                 for (Long id : orderIdList) {
                     String orderUrl = "https://api.mercadolibre.com/marketplace/orders/" + id + "";
@@ -355,7 +355,7 @@ public class MercadoSdkClientService {
                     OrderViewDTO orderViewDTO = JSONUtil.toBean(JSONUtil.toJsonStr(orderResult.getData()), OrderViewDTO.class);
 
                     //根据发货id查询发货详情
-                    ShipmentViewDTO shippingRecords = getShippingRecords(shopInfoDTO, orderViewDTO.getShipping().getId());
+                    ShipmentViewDTO shippingRecords = getShippingRecords(shopInfoDTO, orderViewDTO.getShipping().getFid());
                     if (ObjectUtil.isNotEmpty(shippingRecords)) {
                         orderViewDTO.setShipmentViewDTO(shippingRecords);
                     }

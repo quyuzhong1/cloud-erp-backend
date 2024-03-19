@@ -1,9 +1,11 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 
 import java.util.List;
 
+@Data
 public class SaleTermsBean {
     /**
      * id : WARRANTY_TIME
@@ -16,7 +18,7 @@ public class SaleTermsBean {
      */
 
     @SerializedName("id")
-    private String id;
+    private String fid;
     @SerializedName("name")
     private String name;
     @SerializedName("value_id")
@@ -30,59 +32,4 @@ public class SaleTermsBean {
     @SerializedName("values")
     private List<ValuesBean> values;
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Object getValueId() {
-        return valueId;
-    }
-
-    public void setValueId(Object valueId) {
-        this.valueId = valueId;
-    }
-
-    public String getValueName() {
-        return valueName;
-    }
-
-    public void setValueName(String valueName) {
-        this.valueName = valueName;
-    }
-
-    public ValueStructBean getValueStruct() {
-        return valueStruct;
-    }
-
-    public void setValueStruct(ValueStructBean valueStruct) {
-        this.valueStruct = valueStruct;
-    }
-
-    public String getValueType() {
-        return valueType;
-    }
-
-    public void setValueType(String valueType) {
-        this.valueType = valueType;
-    }
-
-    public List<ValuesBean> getValues() {
-        return values;
-    }
-
-    public void setValues(List<ValuesBean> values) {
-        this.values = values;
-    }
 }

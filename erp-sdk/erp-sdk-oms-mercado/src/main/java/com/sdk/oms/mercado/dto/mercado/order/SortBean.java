@@ -1,7 +1,9 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 
+@Data
 public class SortBean {
     /**
      * id : date_asc
@@ -9,23 +11,8 @@ public class SortBean {
      */
 
     @SerializedName("id")
-    private String id;
+    private String fid;
     @SerializedName("name")
     private String name;
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 }

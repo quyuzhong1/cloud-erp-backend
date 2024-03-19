@@ -1,9 +1,11 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 
 import java.util.List;
 
+@Data
 public class AttributesBean {
     /**
      * id : BRAND
@@ -15,7 +17,7 @@ public class AttributesBean {
      */
 
     @SerializedName("id")
-    private String id;
+    private String fid;
     @SerializedName("name")
     private String name;
     @SerializedName("value_id")
@@ -27,51 +29,4 @@ public class AttributesBean {
     @SerializedName("values")
     private List<ValuesBeanX> values;
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getValueId() {
-        return valueId;
-    }
-
-    public void setValueId(String valueId) {
-        this.valueId = valueId;
-    }
-
-    public String getValueName() {
-        return valueName;
-    }
-
-    public void setValueName(String valueName) {
-        this.valueName = valueName;
-    }
-
-    public String getValueType() {
-        return valueType;
-    }
-
-    public void setValueType(String valueType) {
-        this.valueType = valueType;
-    }
-
-    public List<ValuesBeanX> getValues() {
-        return values;
-    }
-
-    public void setValues(List<ValuesBeanX> values) {
-        this.values = values;
-    }
 }

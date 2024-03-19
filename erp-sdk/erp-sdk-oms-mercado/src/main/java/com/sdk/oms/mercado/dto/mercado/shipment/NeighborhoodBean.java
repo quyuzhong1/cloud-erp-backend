@@ -1,7 +1,9 @@
 package com.sdk.oms.mercado.dto.mercado.shipment;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 
+@Data
 public class NeighborhoodBean {
     /**
      * id : null
@@ -9,23 +11,8 @@ public class NeighborhoodBean {
      */
 
     @SerializedName("id")
-    private Object id;
+    private String fid;
     @SerializedName("name")
-    private Object name;
+    private String name;
 
-    public Object getId() {
-        return id;
-    }
-
-    public void setId(Object id) {
-        this.id = id;
-    }
-
-    public Object getName() {
-        return name;
-    }
-
-    public void setName(Object name) {
-        this.name = name;
-    }
 }

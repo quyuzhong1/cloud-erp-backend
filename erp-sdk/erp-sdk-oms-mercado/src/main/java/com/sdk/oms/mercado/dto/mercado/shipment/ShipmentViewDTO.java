@@ -31,7 +31,7 @@ public class ShipmentViewDTO {
      */
 
     @SerializedName("id")
-    private long id;
+    private long fid;
     @SerializedName("order_id")
     private int orderId;
     @SerializedName("status")

@@ -1,20 +1,15 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 
+@Data
 public class ShippingBean {
     /**
      * id : 43116658829
      */
 
     @SerializedName("id")
-    private long id;
+    private long fid;
 
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
 }

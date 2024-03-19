@@ -1,9 +1,11 @@
 package com.sdk.oms.mercado.dto.mercado.order;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 
 import java.util.List;
 
+@Data
 public class ShipmentBean {
     /**
      * id : 43116658829
@@ -11,23 +13,8 @@ public class ShipmentBean {
      */
 
     @SerializedName("id")
-    private long id;
+    private long fid;
     @SerializedName("payments")
     private List<?> payments;
 
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public List<?> getPayments() {
-        return payments;
-    }
-
-    public void setPayments(List<?> payments) {
-        this.payments = payments;
-    }
 }

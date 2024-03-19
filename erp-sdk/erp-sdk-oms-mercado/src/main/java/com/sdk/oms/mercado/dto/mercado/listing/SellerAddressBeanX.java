@@ -1,7 +1,9 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 
+@Data
 public class SellerAddressBeanX {
     /**
      * city : {"id":"SEstSEtLd2FpIFRzaW5n","name":"Kwai Tsing"}
@@ -17,37 +19,6 @@ public class SellerAddressBeanX {
     @SerializedName("country")
     private CityBean country;
     @SerializedName("id")
-    private int id;
+    private int fid;
 
-    public CityBean getCity() {
-        return city;
-    }
-
-    public void setCity(CityBean city) {
-        this.city = city;
-    }
-
-    public CityBean getState() {
-        return state;
-    }
-
-    public void setState(CityBean state) {
-        this.state = state;
-    }
-
-    public CityBean getCountry() {
-        return country;
-    }
-
-    public void setCountry(CityBean country) {
-        this.country = country;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
 }
