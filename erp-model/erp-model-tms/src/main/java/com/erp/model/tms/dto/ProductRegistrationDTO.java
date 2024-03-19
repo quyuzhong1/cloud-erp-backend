@@ -308,11 +308,6 @@ public class ProductRegistrationDTO implements Serializable {
         private String productName;
 
         /**
-        * 产品中文名称
-        */
-        private String productNameCn;
-
-        /**
         * 产品英文名称
         */
         private String productNameEn;
@@ -508,13 +503,6 @@ public class ProductRegistrationDTO implements Serializable {
         @NotBlank(message = "产品名称不能为空")
         @Size(max = 64,message = "产品名称最大长度不能超过64位")
         private String productName;
-
-        /**
-        * 产品中文名称
-        */
-        @NotBlank(message = "产品中文名称不能为空")
-        @Size(max = 64,message = "产品中文名称最大长度不能超过64位")
-        private String productNameCn;
 
         /**
         * 产品英文名称

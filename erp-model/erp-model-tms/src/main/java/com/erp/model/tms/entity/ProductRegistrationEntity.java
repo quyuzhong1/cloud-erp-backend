@@ -58,11 +58,6 @@ public class ProductRegistrationEntity extends BaseEntity<ProductRegistrationEnt
     @TableField("product_name")
     private String productName;
     /**
-    * 产品中文名称
-    */
-    @TableField("product_name_cn")
-    private String productNameCn;
-    /**
     * 产品英文名称
     */
     @TableField("product_name_en")
