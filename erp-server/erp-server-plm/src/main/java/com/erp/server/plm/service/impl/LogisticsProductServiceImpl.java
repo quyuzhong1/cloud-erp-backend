@@ -127,6 +127,11 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         LogisticsProductDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        //列表Tab查询状态处理
+        Boolean isFlag = doOpHandleTableParam(params);
+        if (!isFlag) {
+            return new PagingVO(new Page());
+        }
         Integer approvalStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         IPage pageData = baseMapper.logisticsProductPaging(query, params, approvalStatus);
         List<LogisticsProductDTO.PagingVO> list = pageData.getRecords();
@@ -301,6 +306,11 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
     @Override
     public Boolean exportExcel(LogisticsProductDTO.ExportDTO dto, HttpServletResponse response) {
+        //列表Tab查询状态处理
+        Boolean isFlag = doOpHandleTableParam(dto);
+        if (!isFlag) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
         Integer approvalStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         List<LogisticsProductDTO.ExportInfoDTO> list = baseMapper.listExport(dto, approvalStatus);
         fillExport(list);
