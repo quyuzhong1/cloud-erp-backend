@@ -149,8 +149,8 @@ public interface LogisticsProductService  extends SuperService<ProductDetailEnti
      * @description: 推送备案
      * @author Will
      * @date: 2024/3/19 14:22
-     * @param pushRegistrationDTO
+     * @param dto
      */
-    void pushRegistration(LogisticsProductDTO.PushRegistrationDTO pushRegistrationDTO);
+    List<BatchResultDTO>  pushRegistration(LogisticsProductDTO.PushRegistrationDTO dto);
 
 }

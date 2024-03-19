@@ -1191,10 +1191,10 @@ public class LogisticsProductDTO {
         private List<String> logisticsProductIdList;
 
         /**
-         * 平台集合，/tms/transferLogisticsSupplier/listAll
+         * 报关物流商集合，/tms/transferLogisticsSupplier/listAll
          */
-        @NotEmpty(message = "平台集合不能为空")
-        private List<String> dictPlatformList;
+        @NotEmpty(message = "报关物流商Id集合不能为空")
+        private String declareSupplierId;
     }
 
     @Data

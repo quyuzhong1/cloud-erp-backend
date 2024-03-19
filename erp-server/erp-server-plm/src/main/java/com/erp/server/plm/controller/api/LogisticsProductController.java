@@ -313,11 +313,12 @@ public class LogisticsProductController extends BaseController {
      * 推送备案
      * @author Will
      * @date: 2024/3/19 14:21
-     * @param pushRegistrationDTO
+     * @param dto
      */
     @PostMapping("/pushRegistration")
-    public void pushRegistration(@RequestBody LogisticsProductDTO.PushRegistrationDTO pushRegistrationDTO) {
-        logisticsProductService.pushRegistration(pushRegistrationDTO);
+    public  ApiResult<List<BatchResultDTO>> pushRegistration(@RequestBody LogisticsProductDTO.PushRegistrationDTO dto) {
+        List<BatchResultDTO> resultDTOS = logisticsProductService.pushRegistration(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 }
