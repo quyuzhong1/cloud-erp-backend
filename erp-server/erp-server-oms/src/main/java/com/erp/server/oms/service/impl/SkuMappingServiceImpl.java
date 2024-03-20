@@ -394,9 +394,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (!this.updateById(skuMaping)) {
             throw new ServiceException("[SkuMapping] 历史映射修改失败");
         }
-        if (!this.removeById(skuMaping.getId())) {
-            throw new ServiceException("[SkuMapping] 原数据删除失败");
-        }
+//        if (!this.removeById(skuMaping.getId())) {
+//            throw new ServiceException("[SkuMapping] 原数据删除失败");
+//        }
         SkuMappingEntity addSkuMaping = new SkuMappingEntity();
         addSkuMaping.setShopId(dto.getShopId());
         addSkuMaping.setDictPlatform(skuMaping.getDictPlatform());
