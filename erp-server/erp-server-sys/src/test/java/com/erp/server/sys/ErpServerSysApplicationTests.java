@@ -23,17 +23,19 @@ public class ErpServerSysApplicationTests {
 
     @Test
     public void contextLoads() {
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_OPERATOR.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-
         //禁用状态
-        queryFilters.add(StrUtil.format(" FId.FNumber = {}", "'Country'"));
-
+        queryFilters.add(StrUtil.format(" FForbiddenStatus = {}", "'0'"));
+        //查询
+        String fieldKeys = "FEntity_FEntryId,FOperatorType,FBizOrgId.FNumber,FNumber,FStaffId.FStaffNumber";
         String filterStr = String.join(" and ", queryFilters);
-        System.out.println("拉取金蝶条件为>>>>>>>>>>"+ filterStr);
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils("BOS_ASSISTANTDATA_DETAIL");
-       String fieldKeys = "FEntryID,FNumber,FDataValue,FId.FNumber,FParentId,FSeq";
-        List<Map<String, Object>> list = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
-        System.out.println(">>>>>>>>>"+ JSONUtil.toJsonStr(list));
+        // 当前页数
+        Integer pageIndex = 0;
+        // 每次最多获取10ing条
+        Integer pageSize = 1000;
+        List<Map<String, Object>> resultList = apiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, 0);
+        System.out.println("==================="+JSONUtil.toJsonStr(resultList));
 
     }
 

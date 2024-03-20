@@ -111,7 +111,7 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
         //禁用状态
         queryFilters.add(StrUtil.format(" FForbiddenStatus = {}", "'0'"));
         //查询
-        String fieldKeys = "FOperatorType,FBizOrgId.FNumber,FNumber,FStaffId.FStaffNumber";
+        String fieldKeys = "FEntity_FEntryId,FOperatorType,FBizOrgId.FNumber,FNumber,FStaffId.FStaffNumber";
         String filterStr = String.join(" and ", queryFilters);
 
         // 当前页数
@@ -140,6 +140,9 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
         for (KingdeeOperatorRefPostDTO.KingdeeDTO item : operatorList) {
             //code
             String code = item.getCode();
+
+            //code
+            String kingdeeId = item.getKingdeeId();
             //类型code
             String typeCode=item.getTypeCode();
 
@@ -163,7 +166,7 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
             //组织名
             String useOrgName = orgInfo.getName();
             String userPostId = userPostEntity.getId();
-            KingdeeOperatorRefPostEntity dbEntity = dbList.stream().filter(entity -> entity.getCode().equals(code)).
+            KingdeeOperatorRefPostEntity dbEntity = dbList.stream().filter(entity -> entity.getKingdeeId().equals(kingdeeId)).
                     findFirst().orElse(null);
             //表示没有
             if(Objects.isNull(dbEntity)){
@@ -174,6 +177,7 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
                 addEntity.setUseOrgName(useOrgName);
                 addEntity.setTypeCode(typeCode);
                 addEntity.setUserPostId(userPostId);
+                addEntity.setKingdeeId(kingdeeId);
                 saveOrUpdateList.add(addEntity);
             }else{
                 if(!dbEntity.getCode().equals(code) ||

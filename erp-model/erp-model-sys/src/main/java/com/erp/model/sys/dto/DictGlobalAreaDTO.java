@@ -89,6 +89,11 @@ public class DictGlobalAreaDTO implements Serializable {
          */
         private String regionCode;
 
+        /**
+         * 金蝶code
+         */
+        private String kingdeeCode;
+
     }
     @Data
     @NoArgsConstructor

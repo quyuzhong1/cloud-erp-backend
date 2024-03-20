@@ -37,10 +37,16 @@ public class KingdeeOperatorRefPostDTO implements Serializable {
     public static class KingdeeDTO{
 
         /**
-         * 金蝶任岗id
+         * 金蝶类型
          */
         @Alias("FOperatorType")
         private String typeCode;
+
+        /**
+         * 金蝶类型
+         */
+        @Alias("FEntity_FEntryId")
+        private String kingdeeId;
 
         /**
          * 金蝶code
