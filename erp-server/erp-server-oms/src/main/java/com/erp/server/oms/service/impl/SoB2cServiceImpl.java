@@ -99,6 +99,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -111,6 +113,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static cn.hutool.json.XMLTokener.entity;
 
 /**
  * <p>
@@ -4845,39 +4849,72 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         ProductDetailEntity skuEntity = skuList.get(0);
         //平台sku
-        String platformSkuNo = detailEntity.getPlatformSkuNo();
-        String typeCode = RuleTypeEnum.PLATFORM.getCode();
-        String salesPlatform = soB2cEntity.getDictPlatform();
 
-        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-        paramDTO.setPlatform(salesPlatform);
-        paramDTO.setShopIdList(Collections.singletonList(soB2cEntity.getShopId()));
-        paramDTO.setType(typeCode);
-        paramDTO.setPlatformSkuNoList(Collections.singletonList(platformSkuNo));
-        paramDTO.setLastExpireDate(soB2cEntity.getPlatformOrderCreateTime());
-        List<ListingInfoWithSkuMappingDTO> skuMappingList = skuMappingService.findListDto(paramDTO);
-        if (CollectionUtils.isEmpty(skuMappingList)) {
-            throw new ServiceException(ApiError.ERROR_LISTING_NOT_EXIST);
+        //根据平台sku查询映射信息
+        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+        listingInfoParamDTO.setPlatformSkuNoList(Collections.singletonList(detailEntity.getPlatformSkuNo()));
+        listingInfoParamDTO.setPlatformSpuNoList(Collections.singletonList(detailEntity.getPlatformSpuNo()));
+        listingInfoParamDTO.setPlatform(soB2cEntity.getDictPlatform());
+        listingInfoParamDTO.setShopIdList(Collections.singletonList(soB2cEntity.getShopId()));
+        List<SkuMappingDTO.MappingSkuViewDTO> skuDTOS = skuMappingService.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+        List<SkuMappingDTO.MappingSkuViewDTO> collect = skuDTOS.stream()
+                .filter(req -> req.getPlatformSkuNo().equals(detailEntity.getPlatformSkuNo())
+                        && req.getPlatformSpuNo().equals(detailEntity.getPlatformSpuNo())
+                        && StringUtils.isNotBlank(req.getProductSkuNo()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(collect)) {
+            throw new ServiceException(ApiError.EXIST_SKU_MAPPING);
         }
-        ListingInfoWithSkuMappingDTO skuMapping = skuMappingList.get(0);
-        String listingId = skuMapping.getListingId();
-        listingInfoService.updateMatchResult(listingId, Boolean.TRUE);
-
-        SkuMappingDTO.UpdateSkuMappingDTO updateSkuMappingDTO = new SkuMappingDTO.UpdateSkuMappingDTO();
-        String skuNo = skuEntity.getSkuNo();
-        updateSkuMappingDTO.setProductName(skuEntity.getName());
-        updateSkuMappingDTO.setProductSkuId(skuEntity.getId());
-        updateSkuMappingDTO.setProductSkuNo(skuNo);
-        updateSkuMappingDTO.setListingId(skuMapping.getListingId());
-        updateSkuMappingDTO.setIsExpire(Boolean.FALSE);
+        if (ObjectUtil.isEmpty(skuDTOS)) {
+            throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
+        }
 
         detailEntity.setSkuId(skuEntity.getId());
-        detailEntity.setSkuNo(skuNo);
+        detailEntity.setSkuNo(skuEntity.getSkuNo());
         //更新明细
         soB2cDetailService.updateById(detailEntity);
-        return skuMappingService.updateSkuMapping(updateSkuMappingDTO);
 
+        FbaShipmentDTO.skuMappingParamDTO updateDTO = new FbaShipmentDTO.skuMappingParamDTO();
+        //映射sku
+        updateDTO.setSkuNo(detailEntity.getSkuNo());
+        updateDTO.setMsku(detailEntity.getPlatformSkuNo());
+        updateDTO.setShopId(soB2cEntity.getShopId());
+        updateDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        updateDTO.setId(skuDTOS.get(0).getId());
+        Boolean flag = listingInfoService.skuMapping(updateDTO);
+        if (flag) {
+            //操作日志
+            operateLogService.addModuleOperateLog(String.format("映射了一个sku【%s】", skuEntity.getSkuNo()), ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "编辑信息");
+        }
+        return flag;
 
+//        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+//        paramDTO.setPlatform(salesPlatform);
+//        paramDTO.setShopIdList(Collections.singletonList(soB2cEntity.getShopId()));
+//        paramDTO.setType(typeCode);
+//        paramDTO.setPlatformSkuNoList(Collections.singletonList(platformSkuNo));
+//        paramDTO.setLastExpireDate(soB2cEntity.getPlatformOrderCreateTime());
+//        List<ListingInfoWithSkuMappingDTO> skuMappingList = skuMappingService.findListDto(paramDTO);
+//        if (CollectionUtils.isEmpty(skuMappingList)) {
+//            throw new ServiceException(ApiError.ERROR_LISTING_NOT_EXIST);
+//        }
+//        ListingInfoWithSkuMappingDTO skuMapping = skuMappingList.get(0);
+//        String listingId = skuMapping.getListingId();
+//        listingInfoService.updateMatchResult(listingId, Boolean.TRUE);
+//
+//        SkuMappingDTO.UpdateSkuMappingDTO updateSkuMappingDTO = new SkuMappingDTO.UpdateSkuMappingDTO();
+//        String skuNo = skuEntity.getSkuNo();
+//        updateSkuMappingDTO.setProductName(skuEntity.getName());
+//        updateSkuMappingDTO.setProductSkuId(skuEntity.getId());
+//        updateSkuMappingDTO.setProductSkuNo(skuNo);
+//        updateSkuMappingDTO.setListingId(skuMapping.getListingId());
+//        updateSkuMappingDTO.setIsExpire(Boolean.FALSE);
+//
+//        detailEntity.setSkuId(skuEntity.getId());
+//        detailEntity.setSkuNo(skuNo);
+//        //更新明细
+//        soB2cDetailService.updateById(detailEntity);
+//        return skuMappingService.updateSkuMapping(updateSkuMappingDTO);
     }
 
     /**

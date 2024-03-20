@@ -150,7 +150,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         }
         LocalDateTime now = LocalDateTime.now();
         skuMapping.setExpireTime(now);
-        skuMapping.setIsDeleted(true);
+//        skuMapping.setIsDeleted(true);
         skuMapping.setIsExpire(Boolean.TRUE);
         if (!skuMappingService.updateById(skuMapping)) {
             throw new ServiceException("[SkuMapping] 历史映射修改失败");
@@ -173,6 +173,8 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
         skuMappingService.save(skuMappingEntity);
 
+        // 记录日志
+        operateLogService.addModuleOperateLogByObj(skuMapping, skuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntity.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",commonService.getUserInfo().getUserName()));
         return lambdaUpdate()
                 .set(ListingInfoEntity::getMatchResult, Boolean.TRUE)
                 .eq(ListingInfoEntity::getId, listingInfoEntity.getId())

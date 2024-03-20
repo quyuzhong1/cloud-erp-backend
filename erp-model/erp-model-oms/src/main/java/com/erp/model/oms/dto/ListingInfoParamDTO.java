@@ -67,4 +67,9 @@ public class ListingInfoParamDTO {
      * 最后过期的时间(空=查询最新映射关系)
      */
     private LocalDateTime lastExpireDate;
+
+    /**
+     * 平台spu no 列表
+     */
+    private List<String> platformSpuNoList;
 }
