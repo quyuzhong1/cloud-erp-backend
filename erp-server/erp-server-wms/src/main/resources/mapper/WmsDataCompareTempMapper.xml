@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.WmsDataCompareTempMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.WmsDataCompareTempEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="task_id" property="taskId" />
+       <result column="main_data_type" property="mainDataType" />
+       <result column="compare_status" property="compareStatus" />
+       <result column="diff_fields" property="diffFields" />
+       <result column="pk_field_value" property="pkFieldValue" />
+       <result column="system_data_id" property="systemDataId" />
+       <result column="compare_result" property="compareResult" />
+       <result column="import_data_json" property="importDataJson" />
+       <result column="system_data_json" property="systemDataJson" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        task_id, main_data_type, compare_status, diff_fields, pk_field_value, system_data_id, compare_result, import_data_json, system_data_json
+    </sql>
+
+
+</mapper>

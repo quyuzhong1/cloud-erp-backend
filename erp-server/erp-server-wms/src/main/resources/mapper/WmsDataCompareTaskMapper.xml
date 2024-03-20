@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.WmsDataCompareTaskMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.WmsDataCompareTaskEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="name" property="name" />
+       <result column="bill_type" property="billType" />
+       <result column="status" property="status" />
+       <result column="sub_status" property="subStatus" />
+       <result column="error_message" property="errorMessage" />
+       <result column="error_count" property="errorCount" />
+       <result column="system_data_condition" property="systemDataCondition" />
+       <result column="system_data_count" property="systemDataCount" />
+       <result column="import_data_count" property="importDataCount" />
+       <result column="import_data_mapping" property="importDataMapping" />
+       <result column="result_same_count" property="resultSameCount" />
+       <result column="result_exceed_count" property="resultExceedCount" />
+       <result column="result_miss_count" property="resultMissCount" />
+       <result column="result_diff_count" property="resultDiffCount" />
+       <result column="result_report_url" property="resultReportUrl" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        code, name, bill_type, status, sub_status, error_message, error_count, system_data_condition, system_data_count, import_data_count, import_data_mapping, result_same_count, result_exceed_count, result_miss_count, result_diff_count, result_report_url
+    </sql>
+
+
+</mapper>
