@@ -176,6 +176,12 @@ public class MercadoOrderDTO extends CleanBaseDTO {
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
                 orderDTO.setInvalidStatus(Boolean.TRUE);
                 orderDTO.setRemark("平台取消");
+            } else if ("delivered".equals(shipmentViewDTO.getStatus())) {
+                orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
+                orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            } else if ("not_delivered".equals(shipmentViewDTO.getStatus())) {
+                orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
+                orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             }
 
         }
