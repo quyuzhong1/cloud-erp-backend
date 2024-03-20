@@ -35,6 +35,27 @@
         is_deleted,
         priority, rule_type, rule_regex, extend_rule_type, extend_rule_regex, disabled, rule_content, extend_rule_content
     </sql>
+    <select id="paging" resultType="com.erp.model.oms.dto.SkuMappingRuleDTO$ListDTO">
+        select
+            id as id,
+            priority as priority,
+            rule_name as ruleName,
+            rule_type as ruleType,
+            disabled as disabled,
+            update_user_name as updateUserName,
+            update_time as updateTime
+            from sku_mapping_rule
+        where
+            ${params.sqlMap.default}
+        and is_deleted = false
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        priority ASC ,update_time DESC
+    </select>
 
 
 </mapper>

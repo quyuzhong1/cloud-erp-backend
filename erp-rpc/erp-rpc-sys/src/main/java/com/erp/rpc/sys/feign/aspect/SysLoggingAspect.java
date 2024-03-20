@@ -289,7 +289,7 @@ public class SysLoggingAspect {
                     try {
                         params.append(com.alibaba.fastjson.JSONObject.toJSONString(o)).append(" ");
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        log.error("日志记录中转换传参异常：{}",e.getMessage());
                     }
                 }
             }

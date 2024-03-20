@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.ReflectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -19,15 +20,19 @@ import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.oms.mapper.ListingInfoMapper;
+import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.ListingInfoService;
+import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SkuMappingService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,6 +63,13 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
 
     @Resource
     private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
+
+    @Resource
+    private ListingInfoServiceImpl service;
+    @Resource
+    private OperateLogService operateLogService;
+    @Resource
+    private CommonService commonService;
     /**
      * 添加库存sku
      *
@@ -96,6 +108,14 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 eq(ListingInfoEntity::getPlatform, platform).
                 last("LIMIT 1").
                 one();
+    }
+
+    @Override
+    public List<ListingInfoEntity> listByParam(String type, String platform, List<String> skuNoList) {
+        return lambdaQuery().eq(ListingInfoEntity::getType, type).
+                eq(ListingInfoEntity::getPlatform, platform).
+                in(ListingInfoEntity::getPlatformSkuNo, skuNoList)
+                .list();
     }
 
 
@@ -265,6 +285,34 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 .set(ListingInfoEntity::getMatchResult, Boolean.TRUE)
                 .eq(ListingInfoEntity::getId, listingInfoEntity.getId())
                 .update();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveBatchImport(List<ListingInfoEntity> addListingInfoEntityList, List<SkuMappingEntity> updateSkuMappingList, List<ListingInfoEntity> updateListingInfoList, List<SkuMappingEntity> addSkuMappingList, List<Pair<String, String>> addLogPairList, List<Pair<String, String>> updateLogPairList) {
+        if (CollectionUtils.isNotEmpty(addListingInfoEntityList)) {
+            service.saveBatch(addListingInfoEntityList);
+        }
+
+        if (CollectionUtils.isNotEmpty(updateSkuMappingList)){
+            if (!skuMappingService.updateBatchById(updateSkuMappingList)){
+                throw new ServiceException("映射关系更新异常");
+            }
+        }
+        if (CollectionUtils.isNotEmpty(updateListingInfoList)){
+            if (!service.updateBatchById(updateListingInfoList)){
+                throw new ServiceException("Listing更新异常");
+            }
+        }
+        if (CollectionUtils.isNotEmpty(addSkuMappingList)) {
+            skuMappingService.saveBatch(addSkuMappingList);
+        }
+        if (CollectionUtils.isNotEmpty(addLogPairList)) {
+            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】新增了sku映射表",commonService.getUserInfo().getUserName())+"id为【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), addLogPairList,"新增操作");
+        }
+        if (CollectionUtils.isNotEmpty(updateLogPairList)) {
+            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】编辑sku映射表",commonService.getUserInfo().getUserName())+"，【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), updateLogPairList,"编辑操作");
+        }
     }
 
     private void fillData(List<ListingInfoDTO.PageDTO> records) {

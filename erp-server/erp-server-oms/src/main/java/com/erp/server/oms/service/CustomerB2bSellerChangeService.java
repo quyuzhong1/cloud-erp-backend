@@ -65,4 +65,6 @@ public interface CustomerB2bSellerChangeService extends SuperService<CustomerB2b
     Boolean approveEnd(BaseApproveParamDTO dto, CustomerB2bSellerChangeEntity entity,BatchResultDTO batchResultDTO,CustomerInfoEntity customerInfoEntity );
 
     void export(CustomerB2bSellerChangeDTO.ParamDTO dto, HttpServletResponse response);
+
+    CustomerB2bSellerChangeEntity getByMainId(String businessId);
 }
