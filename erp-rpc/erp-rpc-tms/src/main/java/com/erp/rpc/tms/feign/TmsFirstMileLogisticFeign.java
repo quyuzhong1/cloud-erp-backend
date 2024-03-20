@@ -1,6 +1,6 @@
 package com.erp.rpc.tms.feign;
 
-import com.erp.model.tms.entity.TmsFirstMileLogisticEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,5 +18,5 @@ public interface TmsFirstMileLogisticFeign {
      * @return com.common.business.dto.base.BaseResultDTO.AddDTO
      **/
     @PostMapping("/feign/tmsFirstMileLogistic/listBySourceIds")
-    List<TmsFirstMileLogisticEntity> listBySourceIds(@RequestBody List<String> sourceIds);
+    List<LogisticsBillEntity> listBySourceIds(@RequestBody List<String> sourceIds);
 }

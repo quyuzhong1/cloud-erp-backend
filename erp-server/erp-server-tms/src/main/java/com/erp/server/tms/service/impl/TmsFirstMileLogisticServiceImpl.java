@@ -3,14 +3,18 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
-import com.erp.model.tms.entity.TmsFirstMileLogisticEntity;
-import com.erp.server.tms.mapper.TmsFirstMileLogisticMapper;
+import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.server.tms.mapper.LogisticsBillMapper;
 import com.erp.server.tms.service.CommonService;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.TmsFirstMileLogisticService;
@@ -19,7 +23,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +40,7 @@ import java.util.Optional;
  */
 @Slf4j
 @Service
-public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<TmsFirstMileLogisticMapper, TmsFirstMileLogisticEntity> implements TmsFirstMileLogisticService {
+public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsBillMapper, LogisticsBillEntity> implements TmsFirstMileLogisticService {
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
@@ -43,9 +50,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<TmsFirstMi
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(TmsFirstMileLogisticDTO.AddDTO addDTO) {
-        TmsFirstMileLogisticEntity tmsFirstMileLogisticEntity = new TmsFirstMileLogisticEntity();
+        LogisticsBillEntity tmsFirstMileLogisticEntity = new LogisticsBillEntity();
         BeanMapperUtils.copy(addDTO, tmsFirstMileLogisticEntity);
-
         // 数据处理
         handleData(tmsFirstMileLogisticEntity);
 
@@ -70,9 +76,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<TmsFirstMi
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(TmsFirstMileLogisticDTO.UpdateDTO updateDTO) {
-        TmsFirstMileLogisticEntity old = super.getById(updateDTO.getId());
+        LogisticsBillEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "头程物流单"));
-        TmsFirstMileLogisticEntity tmsFirstMileLogisticEntity =  BeanMapperUtils.map(TmsFirstMileLogisticEntity.class, updateDTO);
+        LogisticsBillEntity tmsFirstMileLogisticEntity =  BeanMapperUtils.map(LogisticsBillEntity.class, updateDTO);
 
         // 数据处理
         handleData(tmsFirstMileLogisticEntity);
@@ -92,17 +98,102 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<TmsFirstMi
     }
 
     @Override
-    public List<TmsFirstMileLogisticEntity> listBySourceIds(List<String> sourceIds) {
+    public List<LogisticsBillEntity> listBySourceIds(List<String> sourceIds) {
         if (CollectionUtil.isEmpty(sourceIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(TmsFirstMileLogisticEntity::getSourceId, sourceIds).list();
+        return lambdaQuery().in(LogisticsBillEntity::getSourceId, sourceIds).list();
     }
+    @Override
+    public List<TmsFirstMileLogisticDTO.TabListDTO> tabList() {
+        return null;
+    }
+
+    @Override
+    public PagingVO<TmsFirstMileLogisticDTO.PagingVO> paging(PagingDTO<TmsFirstMileLogisticDTO.PagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public TmsFirstMileLogisticDTO.StatisticsVO statistics() {
+        return null;
+    }
+
+    @Override
+    public TmsFirstMileLogisticDTO.ViewDTO view(String id) {
+        return null;
+    }
+
+    @Override
+    public List<BatchResultDTO> updateLogisticsStatus(TmsFirstMileLogisticDTO.UpdateLogisticsStatusDTO dto) {
+        return null;
+    }
+
+    @Override
+    public List<BatchResultDTO> updateInvoicesStatus(TmsFirstMileLogisticDTO.UpdateInvoicesStatusDTO dto) {
+        return null;
+    }
+
+    @Override
+    public void exportInvoices(List<String> ids, HttpServletResponse response) {
+
+    }
+
+    @Override
+    public List<BatchResultDTO> updateChannel(TmsFirstMileLogisticDTO.UpdateChannelDTO dto) {
+        return null;
+    }
+
+    @Override
+    public List<BatchResultDTO> generateReconciliation(TmsFirstMileLogisticDTO.GenerateReconciliationDTO dto) {
+        return null;
+    }
+
+    @Override
+    public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+
+    }
+
+    @Override
+    public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
+        return null;
+    }
+
+    @Override
+    public void export(TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
+
+    }
+
+    @Override
+    public void exportFeeDetail(TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
+
+    }
+
+    @Override
+    public List<BatchResultDTO> delete(List<String> ids) {
+        return null;
+    }
+
+    @Override
+    public TmsFirstMileLogisticDTO.HistoryTrackDTO getHistoryTrack(String id) {
+        return null;
+    }
+
+    @Override
+    public TmsFirstMileLogisticDTO.DeliveryDTO getCanGenerateDeliveryOrder(TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean updateRemark(TmsFirstMileLogisticDTO.UpdateRemarkDTO dto) {
+        return null;
+    }
+
 
     /**
     * 新增修改处理数据
     */
-    private void handleData(TmsFirstMileLogisticEntity tmsFirstMileLogisticEntity) {
+    private void handleData(LogisticsBillEntity tmsFirstMileLogisticEntity) {
     // TODO 验证数据 & 数据赋值
     }
 }

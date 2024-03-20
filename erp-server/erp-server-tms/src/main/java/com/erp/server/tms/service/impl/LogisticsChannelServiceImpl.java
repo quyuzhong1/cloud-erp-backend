@@ -490,6 +490,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
+    public LogisticsChannelDTO.LogisticsShippingDTO getLogisticsAndShipping(String logisticsChannelId) {
+        return null;
+    }
+
+    @Override
     public LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelId(String channelId) {
         LogisticsChannelDTO.SignShipDTO signShipDTO = new LogisticsChannelDTO.SignShipDTO();
         LogisticsChannelEntity channelEntity = this.getById(channelId);

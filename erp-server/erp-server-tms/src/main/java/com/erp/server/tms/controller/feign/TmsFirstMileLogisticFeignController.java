@@ -1,7 +1,7 @@
 package com.erp.server.tms.controller.feign;
 
 import com.common.core.anno.LogSystemModule;
-import com.erp.model.tms.entity.TmsFirstMileLogisticEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.server.tms.service.TmsFirstMileLogisticService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,7 +28,7 @@ public class TmsFirstMileLogisticFeignController {
      * @return com.common.business.dto.base.BaseResultDTO.AddDTO
      **/
     @PostMapping("/listBySourceIds")
-    public List<TmsFirstMileLogisticEntity> listBySourceIds(@RequestBody List<String> sourceIds) {
+    public List<LogisticsBillEntity> listBySourceIds(@RequestBody List<String> sourceIds) {
         return tmsFirstMileLogisticService.listBySourceIds(sourceIds);
     }
 }

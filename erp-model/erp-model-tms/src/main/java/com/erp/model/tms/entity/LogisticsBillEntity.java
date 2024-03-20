@@ -101,11 +101,42 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     @TableField("order_type")
     private String orderType;
 
+    /**
+     * 柜号
+     */
+    @TableField("counter_no")
+    private String counterNo;
 
 
+    /**
+     * 发票状态
+     */
+    @TableField("invoices_status")
+    private String invoicesStatus;
 
+    /**
+     * 运输方式
+     */
+    @TableField("shipping_method")
+    private String shippingMethod;
 
+    /**
+     * 物流商id
+     */
+    @TableField("logistics_supplier_id")
+    private String logisticsSupplierId;
 
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
+    /**
+     * 开船时间
+     */
+    @TableField("ship_time")
+    private LocalDateTime shipTime;
 
     public static final String SALES_PLATFORM = "sales_platform";
 

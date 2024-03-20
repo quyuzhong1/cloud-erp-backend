@@ -1,10 +1,16 @@
 package com.erp.server.tms.service;
 
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
-import com.erp.model.tms.entity.TmsFirstMileLogisticEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -15,7 +21,7 @@ import java.util.List;
  * @author lrp
  * @since 2024-03-19
  */
-public interface TmsFirstMileLogisticService extends SuperService<TmsFirstMileLogisticEntity> {
+public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillEntity> {
 
     /**
     * 新增
@@ -42,7 +48,40 @@ public interface TmsFirstMileLogisticService extends SuperService<TmsFirstMileLo
      * @param sourceIds
      * @return List<TmsFirstMileLogisticEntity>
      **/
-    List<TmsFirstMileLogisticEntity> listBySourceIds(List<String> sourceIds);
+    List<LogisticsBillEntity> listBySourceIds(List<String> sourceIds);
 
 
+    List<TmsFirstMileLogisticDTO.TabListDTO> tabList();
+
+    PagingVO<TmsFirstMileLogisticDTO.PagingVO> paging(PagingDTO<TmsFirstMileLogisticDTO.PagingParamDTO> dto);
+
+    TmsFirstMileLogisticDTO.StatisticsVO statistics();
+
+    TmsFirstMileLogisticDTO.ViewDTO view(String id);
+
+    List<BatchResultDTO> updateLogisticsStatus(TmsFirstMileLogisticDTO.UpdateLogisticsStatusDTO dto);
+
+    List<BatchResultDTO> updateInvoicesStatus(TmsFirstMileLogisticDTO.UpdateInvoicesStatusDTO dto);
+
+    void exportInvoices(List<String> ids, HttpServletResponse response);
+
+    List<BatchResultDTO> updateChannel(TmsFirstMileLogisticDTO.UpdateChannelDTO dto);
+
+    List<BatchResultDTO> generateReconciliation(TmsFirstMileLogisticDTO.GenerateReconciliationDTO dto);
+
+    void exportTemplate(HttpServletRequest request, HttpServletResponse response);
+
+    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
+
+    void export(TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response);
+
+    void exportFeeDetail(TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response);
+
+    List<BatchResultDTO> delete(List<String> ids);
+
+    TmsFirstMileLogisticDTO.HistoryTrackDTO getHistoryTrack(String id);
+
+    TmsFirstMileLogisticDTO.DeliveryDTO getCanGenerateDeliveryOrder(TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO dto);
+
+    Boolean updateRemark(TmsFirstMileLogisticDTO.UpdateRemarkDTO dto);
 }
