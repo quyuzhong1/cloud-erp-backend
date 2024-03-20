@@ -1,24 +1,28 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.TmsFirstMileLogisticEntity;
 import com.erp.server.tms.mapper.TmsFirstMileLogisticMapper;
-import com.erp.server.tms.service.TmsFirstMileLogisticService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.TmsFirstMileLogisticService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 /**
  * <p>
  * 头程物流单 服务实现类
@@ -87,6 +91,13 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<TmsFirstMi
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<TmsFirstMileLogisticEntity> listBySourceIds(List<String> sourceIds) {
+        if (CollectionUtil.isEmpty(sourceIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(TmsFirstMileLogisticEntity::getSourceId, sourceIds).list();
+    }
 
     /**
     * 新增修改处理数据

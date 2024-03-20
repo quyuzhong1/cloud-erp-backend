@@ -1,6 +1,10 @@
 package com.erp.model.wms.dto;
 
 import java.time.LocalDateTime;
+
+import com.alibaba.excel.annotation.ExcelProperty;
+import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.common.core.anno.FieldValid;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -77,9 +81,19 @@ public class FirstMileDeliveryLogisticsDTO implements Serializable {
         private String logisticsRemark;
 
         /**
-         * 物流跟踪号
+         * 物流运单号
          */
         private List<String> trackingNoList;
+
+        /**
+         * 发货地址
+         */
+        private String deliveryFromAddress;
+
+        /**
+         * 收货地址
+         */
+        private String receiveToAddress;
     }
 
     /**

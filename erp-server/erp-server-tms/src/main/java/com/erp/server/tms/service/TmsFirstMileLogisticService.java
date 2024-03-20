@@ -1,8 +1,11 @@
 package com.erp.server.tms.service;
-import com.erp.model.tms.entity.TmsFirstMileLogisticEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
+import com.erp.model.tms.entity.TmsFirstMileLogisticEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -31,6 +34,15 @@ public interface TmsFirstMileLogisticService extends SuperService<TmsFirstMileLo
     * @return
     */
     Boolean update(TmsFirstMileLogisticDTO.UpdateDTO dto);
+
+    /**
+     * 根据来源id查询物流单
+     * @Author Luo_WG
+     * @Date 2024/3/20 10:35
+     * @param sourceIds
+     * @return List<TmsFirstMileLogisticEntity>
+     **/
+    List<TmsFirstMileLogisticEntity> listBySourceIds(List<String> sourceIds);
 
 
 }

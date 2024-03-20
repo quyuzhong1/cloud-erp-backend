@@ -964,12 +964,7 @@ public enum ApiError implements Serializable {
     ERROR_TRANSFER_DECLARE_DETAIL_NOT_EXIST(92136,"入库预报订单明细不能为空"),
     ERROR_UPLOAD_SUCCES_CAN_ORDER_FORCAST(92137,"仅支持订单预报为【待上传/上传失败】，可操作【订单预报】"),
     THIRD_WAREHOUSE_NAME_EXIST(92132,"平台【{}】第三方仓【{}】不能重复绑定多个仓库"),
-
     ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED(92133,"已有盘盈盘亏单【{}】不允许操作【{}】之前单据"),
-
-
-
-
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
     ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST(92125,"委外发料单明细不存在"),
     ERROR_SUBCONTRACT_ISSUE_QTY_EXCEED(92126,"委外发料单SKU【{}】数量不能大于【{}】"),
@@ -979,7 +974,8 @@ public enum ApiError implements Serializable {
     PO_RETURN_NOT_EXISTS(92129,"未找到采购退货单"),
     CFG_SETTING_NOT_EXISTS(92129,"退货配置不存在，请先配置异常处理人"),
     RECEIVE_SHOULD_GENERATE_BY_DELIVERY(92130,"【{}】已开启系统收货协同，请从送货单下推收货单"),
-
+    NOT_PACKAGE_NO_APPROVE(92133,"单号{}尚未完成装箱信息，请完成后审核"),
+    TMS_FIRST_MILE_LOGISTIC_EXISTS(92134,"物流单【{}】已生成，不可反审核"),
 
 
 
@@ -1158,7 +1154,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_LOGISTICS_COMPARE_LENGTH(92128,"产品尺寸为{}，超出渠道配置尺寸{}"),
     ERROR_LOGISTICS_ID_NOT_EXIST(92129,"物流单的渠道不能为空"),
     PACKAGE_FORECAST_TRANSFER(92130,"销售订单【{}】关联强制组包，请在组包预报页面操作中转报关"),
-    NOT_PACKAGE_NO_APPROVE(92131,"单号{}尚未完成装箱信息，请完成后审核"),
+
 
     /**
      * TMS 错误

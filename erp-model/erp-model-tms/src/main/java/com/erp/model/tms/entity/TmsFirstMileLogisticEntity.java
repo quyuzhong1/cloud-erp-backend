@@ -1,15 +1,15 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 
 /**
@@ -131,7 +131,21 @@ public class TmsFirstMileLogisticEntity extends BaseEntity<TmsFirstMileLogisticE
     */
     @TableField("exchange_rate")
     private String exchangeRate;
-
+    /**
+    * 来源类型
+    */
+    @TableField("source_type")
+    private String sourceType;
+    /**
+    * 来源id
+    */
+    @TableField("source_id")
+    private String sourceId;
+    /**
+    * 来源code
+    */
+    @TableField("source_code")
+    private String sourceCode;
 
     public static final String TRANSPORT_NO = "transport_no";
 
