@@ -33,7 +33,7 @@ public class ShipmentViewDTO {
     @JsonProperty("id")
     private long fid;
     @JsonProperty("order_id")
-    private int orderId;
+    private long orderId;
     @JsonProperty("status")
     private String status;
     @JsonProperty("substatus")

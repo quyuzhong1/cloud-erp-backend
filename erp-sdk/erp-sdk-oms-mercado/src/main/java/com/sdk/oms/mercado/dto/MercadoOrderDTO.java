@@ -84,7 +84,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         //使用 DateTimeFormatter 解析字符串日期
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
         if (CollectionUtils.isNotEmpty(orderBean.getPayments())) {
-            OffsetDateTime offsetDateTime = OffsetDateTime.parse(orderBean.getPayments().get(0).getDateLastModified(), formatter);
+            OffsetDateTime offsetDateTime = OffsetDateTime.parse(orderBean.getPayments().get(0).getDateCreated(), formatter);
             // 转换为 LocalDateTime
             LocalDateTime payTime = offsetDateTime.toLocalDateTime();
             orderDTO.setPayTime(payTime);
@@ -281,7 +281,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         return PlatformOrderReceiverDTO.builder()
                 .loginId("")
                 .customerId(String.valueOf(orderViewDTO.getBuyer().getFid()))
-                .name(orderViewDTO.getBuyer().getLastName()+" "+orderViewDTO.getBuyer().getFirstName())
+                .name(orderViewDTO.getBuyer().getFirstName()+" "+orderViewDTO.getBuyer().getLastName())
                 .receiverName(orderViewDTO.getShipmentViewDTO().getDestination().getReceiverName())
                 .telNumber(orderViewDTO.getShipmentViewDTO().getDestination().getReceiverPhone())
                 .receiverTelNumber(orderViewDTO.getShipmentViewDTO().getDestination().getReceiverPhone())
@@ -291,7 +291,9 @@ public class MercadoOrderDTO extends CleanBaseDTO {
                 .cityName(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getCity().getName())
                 .districtName(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getAddressLine())
                 .postCode(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getZipCode())
-                .firstAddress("")
+                .firstAddress(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getNeighborhood()+" "+
+                        orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getMunicipality()+" "+
+                        orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getComment())
                 .secondAddress("")
                 .fullAddress(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getNeighborhood()+" "+
                         orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getMunicipality()+" "+

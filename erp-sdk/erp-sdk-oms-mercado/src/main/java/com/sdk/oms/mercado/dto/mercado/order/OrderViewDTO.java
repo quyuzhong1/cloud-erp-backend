@@ -78,7 +78,6 @@ public class OrderViewDTO {
     private TaxesBean taxes;
     @JsonProperty("context")
     private ContextBean context;
-    @JsonProperty("mediations")
     private List<?> mediations;
     @JsonProperty("order_items")
     private List<OrderItemsBean> orderItems;

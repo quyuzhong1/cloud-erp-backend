@@ -1,7 +1,6 @@
 package com.sdk.oms.mercado.dto.mercado.shipment;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.gson.annotations.JsonProperty;
 
 public class DestinationBean {
     /**

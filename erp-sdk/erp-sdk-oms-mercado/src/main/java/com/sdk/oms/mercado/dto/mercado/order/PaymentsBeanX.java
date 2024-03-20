@@ -49,11 +49,11 @@ public class PaymentsBeanX {
     @JsonProperty("order_id")
     private long orderId;
     @JsonProperty("payer_id")
-    private int payerId;
+    private long payerId;
     @JsonProperty("collector")
     private BuyerBean collector;
     @JsonProperty("card_id")
-    private int cardId;
+    private long cardId;
     @JsonProperty("site_id")
     private String siteId;
     @JsonProperty("reason")

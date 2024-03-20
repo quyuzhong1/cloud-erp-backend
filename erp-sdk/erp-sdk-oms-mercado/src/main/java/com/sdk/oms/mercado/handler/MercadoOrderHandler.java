@@ -115,7 +115,7 @@ public class MercadoOrderHandler extends AbstractOrderHandler<MercadoOrderDTO, P
         // Shopify订单下载
         MercadoShopInfoDTO shopInfoDTO = mercadoSdkClientService.getShopInfoByShopId(task.getShopId());
         if (null == shopInfoDTO) {
-            log.error("[Shopify订单下载]从缓存中获取shopify token 失败: shopId={}", task.getShopId());
+            log.error("[美客多订单下载]从缓存中获取美客多 token 失败: shopId={}", task.getShopId());
             return Collections.emptyList();
         }
 

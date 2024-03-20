@@ -1,9 +1,11 @@
 package com.sdk.oms.mercado.dto.mercado.shipment;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
 
 import java.math.BigDecimal;
 
+@Data
 public class LeadTimeBean {
     /**
      * option_id : 1338705174
@@ -17,7 +19,7 @@ public class LeadTimeBean {
      */
 
     @JsonProperty("option_id")
-    private int optionId;
+    private long optionId;
     @JsonProperty("shipping_method")
     private ShippingMethodBean shippingMethod;
     @JsonProperty("currency_id")
@@ -33,67 +35,4 @@ public class LeadTimeBean {
     @JsonProperty("estimated_delivery_time")
     private EstimatedDeliveryTimeBean estimatedDeliveryTime;
 
-    public int getOptionId() {
-        return optionId;
-    }
-
-    public void setOptionId(int optionId) {
-        this.optionId = optionId;
-    }
-
-    public ShippingMethodBean getShippingMethod() {
-        return shippingMethod;
-    }
-
-    public void setShippingMethod(ShippingMethodBean shippingMethod) {
-        this.shippingMethod = shippingMethod;
-    }
-
-    public String getCurrencyId() {
-        return currencyId;
-    }
-
-    public void setCurrencyId(String currencyId) {
-        this.currencyId = currencyId;
-    }
-
-    public BigDecimal getCost() {
-        return cost;
-    }
-
-    public void setCost(BigDecimal cost) {
-        this.cost = cost;
-    }
-
-    public BigDecimal getListCost() {
-        return listCost;
-    }
-
-    public void setListCost(BigDecimal listCost) {
-        this.listCost = listCost;
-    }
-
-    public String getCostType() {
-        return costType;
-    }
-
-    public void setCostType(String costType) {
-        this.costType = costType;
-    }
-
-    public int getServiceId() {
-        return serviceId;
-    }
-
-    public void setServiceId(int serviceId) {
-        this.serviceId = serviceId;
-    }
-
-    public EstimatedDeliveryTimeBean getEstimatedDeliveryTime() {
-        return estimatedDeliveryTime;
-    }
-
-    public void setEstimatedDeliveryTime(EstimatedDeliveryTimeBean estimatedDeliveryTime) {
-        this.estimatedDeliveryTime = estimatedDeliveryTime;
-    }
 }

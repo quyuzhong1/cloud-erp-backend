@@ -380,7 +380,15 @@ public class MercadoSdkClientService {
                     }
 
                     //解析数据
-                    OrderViewDTO orderViewDTO = JSONUtil.toBean(JSONUtil.toJsonStr(orderResult.getData()), OrderViewDTO.class);
+                    OrderViewDTO orderViewDTO = null;
+                    ObjectMapper objectMapperBase = new ObjectMapper();
+                    try {
+                        orderViewDTO = objectMapperBase.readValue(JSONUtil.toJsonStr(orderResult.getData()), OrderViewDTO.class);
+                    } catch (JsonProcessingException e) {
+                        log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", orderUrl, orderParams.toString(), JSONUtil.toJsonStr(orderResult.getData()));
+                        throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+                                orderUrl, orderParams.toString(), JSONUtil.toJsonStr(orderResult.getData())));
+                    }
 
                     //根据发货id查询发货详情
                     ShipmentViewDTO shippingRecords = getShippingRecords(shopInfoDTO, orderViewDTO.getShipping().getFid());

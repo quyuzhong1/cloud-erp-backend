@@ -44,8 +44,8 @@ public enum CleanDataTableEnum {
     AMAZON_PRODUCT("Amazon", "third_system_Amazon_product","third_system", "product","Amazon产品数据", PlatformAmazonListingDTO.class),
     AMAZON_FBA_SHIPMENT("Amazon", "third_system_Amazon_fba_shipment","third_system", "fba_shipment","AmazonFBA货件", PlatformAmazonFbaShipmentDTO.class),
     //美客多
-    MERCADO_ORDER("Mercado", "third_system_Mercado_order","third_system", "order","美客多订单数据", MercadoOrderDTO.class),
-    MERCADO_PRODUCT("Mercado", "third_system_Mercado_product","third_system", "product","美客多产品数据", MercadoListingDTO.class),
+    MERCADO_ORDER("mercadolibre", "third_system_mercadolibre_order","third_system", "order","美客多订单数据", MercadoOrderDTO.class),
+    MERCADO_PRODUCT("mercadolibre", "third_system_mercadolibre_product","third_system", "product","美客多产品数据", MercadoListingDTO.class),
 
 
     //track123
