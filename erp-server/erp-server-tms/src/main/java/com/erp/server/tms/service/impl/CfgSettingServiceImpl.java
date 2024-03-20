@@ -185,11 +185,11 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 break;
             case RECONCILIATION_CYCLE:
                 //周期时清空日期
-                if (ObjectUtil.isNotEmpty(addDTO.getReconciliationCycleDTO()) && ReconciliationTypeEnum.CREAT_BY_PERIOD.getCode().equals(addDTO.getReconciliationCycleDTO().getDeclareReconciliationType())) {
+                if (ObjectUtil.isNotEmpty(addDTO.getReconciliationCycleDTO()) && ReconciliationTypeEnum.CREAT_BY_MONTH.getCode().equals(addDTO.getReconciliationCycleDTO().getDeclareReconciliationType())) {
                     addDTO.getReconciliationCycleDTO().setDeclareReconciliationDate(null);
                 }
                 //周期时清空日期
-                if (ObjectUtil.isNotEmpty(addDTO.getReconciliationCycleDTO()) && ReconciliationTypeEnum.CREAT_BY_PERIOD.getCode().equals(addDTO.getReconciliationCycleDTO().getFirstMileReconciliationType())) {
+                if (ObjectUtil.isNotEmpty(addDTO.getReconciliationCycleDTO()) && ReconciliationTypeEnum.CREAT_BY_MONTH.getCode().equals(addDTO.getReconciliationCycleDTO().getFirstMileReconciliationType())) {
                     addDTO.getReconciliationCycleDTO().setFirstMileReconciliationDate(null);
                 }
                 jsonObject = JSONUtil.parseObj(addDTO.getReconciliationCycleDTO());
