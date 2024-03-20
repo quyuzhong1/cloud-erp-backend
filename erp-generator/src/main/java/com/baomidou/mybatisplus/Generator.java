@@ -37,7 +37,7 @@ public class Generator {
     /**
      * 项目路径
      */
-    private static final String PROJECT_PATH = System.getProperty("user.dir");
+    private static String PROJECT_PATH;
     /**
      * 当前环境是否Windows
      */
@@ -112,6 +112,11 @@ public class Generator {
         MODULE_NAME = StrUtil.format("erp-model-{}", MODEL);
         SERVER_NAME = StrUtil.format("erp-server-{}", MODEL);
         DB_URL = "jdbc:postgresql://172.16.100.12:5432/" + StrUtil.format( "erp-{}", MODEL) + "?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false";
+        PROJECT_PATH = System.getProperty("user.dir");
+        if(!PROJECT_PATH.endsWith("cloud-erp-backend")) {
+        	int endIndex = PROJECT_PATH.lastIndexOf("cloud-erp-backend") + "cloud-erp-backend".length();
+        	PROJECT_PATH = PROJECT_PATH.substring(0, endIndex);
+        }
         
         generateByTables(tableNames);
     }
