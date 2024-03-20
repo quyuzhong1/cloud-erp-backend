@@ -44,17 +44,14 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
-import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
-import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.listener.PackingExcelListener;
 import com.erp.server.wms.mapper.FirstMileDeliveryMapper;
 import com.erp.server.wms.service.*;
@@ -124,13 +121,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Autowired
     private WmsAttachmentService wmsAttachmentService;
     @Autowired
-    private LogisticsBillFeign logisticsBillFeign;
-    @Autowired
     private ShopInfoFeign shopInfoFeign;
     @Autowired
     private TransferInfoService transferInfoService;
-    @Autowired
-    private OmsListingInfoFeign omsListingInfoFeign;
     @Autowired
     private SkuMappingFeign skuMappingFeign;
     @Autowired
@@ -145,10 +138,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private OverseasDeliveryPlanService overseasDeliveryPlanService;
     @Autowired
     private DictBasicService dictBasicService;
-    @Resource
-    private ThirdWarehouseRegistry thirdWarehouseRegistry;
-    @Resource
-    private OverseasProviderService overseasProviderService;
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
     @Resource
@@ -784,12 +773,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //发货单主信息
         FirstMileDeliveryEntity firstMileDeliveryEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到发货单数据"));
         FirstMileDeliveryDTO.ViewDTO data = BeanMapperUtils.map(FirstMileDeliveryDTO.ViewDTO.class, firstMileDeliveryEntity);
-        //物流信息
-        FirstMileDeliveryLogisticsEntity firstMileDeliveryLogisticsEntity = firstMileDeliveryLogisticsService.listByMainId(id);
 
         //查询头程物流单
         List<TmsFirstMileLogisticEntity> tmsFirstMileLogisticEntities = tmsFirstMileLogisticFeign.listBySourceIds(Arrays.asList(id));
-
 
         //发货单详情
         List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(id));
@@ -1650,6 +1636,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         viewDTO.setTrackingNo(StringUtils.join(logisticsEntity.getTrackingNoList(), ","));
         viewDTO.setInstockStatus(OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode());
         viewDTO.setInstockStatusName(OverseasInstockStatusEnum.TO_BE_SHIPPED.getName());
+
+        //查询头程物流单
+        List<TmsFirstMileLogisticEntity> tmsFirstMileLogisticEntities = tmsFirstMileLogisticFeign.listBySourceIds(Arrays.asList(id));
+        if (CollectionUtils.isNotEmpty(tmsFirstMileLogisticEntities)) {
+            TmsFirstMileLogisticEntity tmsFirstMileLogisticEntity = tmsFirstMileLogisticEntities.get(0);
+            viewDTO.setLogisticsMethod(tmsFirstMileLogisticEntity.getShippingMethod());
+            viewDTO.setTrackingNo(tmsFirstMileLogisticEntity.getTransportNo());
+        }
+
         // 平台信息
         viewDTO.setDictPlatform(dictPlatform);
         OmsPlatformEnum platformEnum = OmsPlatformEnum.getByCode(dictPlatform);
