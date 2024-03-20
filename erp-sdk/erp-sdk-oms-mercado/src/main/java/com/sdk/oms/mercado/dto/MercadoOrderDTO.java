@@ -126,18 +126,18 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         if (ObjectUtil.isNotEmpty(orderBean.getShipmentViewDTO())) {
             shipmentViewDTO = orderBean.getShipmentViewDTO();
 
-            if ("m2".equalsIgnoreCase(shipmentViewDTO.getLogistic().getMode()) && MercadoOrderLogisticTypeEnum.FULFILLMENT.getCode().equalsIgnoreCase(shipmentViewDTO.getLogistic().getType())) {
+            if ("me2".equalsIgnoreCase(shipmentViewDTO.getLogistic().getMode()) && MercadoOrderLogisticTypeEnum.FULFILLMENT.getCode().equalsIgnoreCase(shipmentViewDTO.getLogistic().getType())) {
                 //如果是平台仓，状态审核通过
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
                 lableMap.put("logisticType", shipmentViewDTO.getLogistic().getType());
                 logisticType = OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
-            } else if ("m2".equalsIgnoreCase(shipmentViewDTO.getLogistic().getMode())
+            } else if ("me2".equalsIgnoreCase(shipmentViewDTO.getLogistic().getMode())
                     && (MercadoOrderLogisticTypeEnum.DROP_OFF.getCode().equals(shipmentViewDTO.getLogistic().getType()) || MercadoOrderLogisticTypeEnum.CROSS_DOCKING.getCode().equalsIgnoreCase(shipmentViewDTO.getLogistic().getType()))
             ){
                 //中转发货
                 lableMap.put("logisticType", shipmentViewDTO.getLogistic().getType());
                 logisticType = OrderLogisticTypeEnum.TRANSIT_WAREHOUSE.getCode();
-            } else if ("m1".equalsIgnoreCase(shipmentViewDTO.getLogistic().getMode())) {
+            } else if ("me1".equalsIgnoreCase(shipmentViewDTO.getLogistic().getMode())) {
                 //自发货
                 lableMap.put("logisticType", MercadoOrderLogisticTypeEnum.DEFAULT.getCode());
                 logisticType = OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
@@ -289,7 +289,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         }
 
         return PlatformOrderReceiverDTO.builder()
-                .loginId("")
+                .loginId(String.valueOf(orderViewDTO.getBuyer().getFid()))
                 .customerId(String.valueOf(orderViewDTO.getBuyer().getFid()))
                 .name(orderViewDTO.getBuyer().getFirstName()+" "+orderViewDTO.getBuyer().getLastName())
                 .receiverName(orderViewDTO.getShipmentViewDTO().getDestination().getReceiverName())
@@ -301,12 +301,12 @@ public class MercadoOrderDTO extends CleanBaseDTO {
                 .cityName(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getCity().getName())
                 .districtName(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getAddressLine())
                 .postCode(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getZipCode())
-                .firstAddress(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getNeighborhood()+" "+
-                        orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getMunicipality()+" "+
+                .firstAddress(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getNeighborhood().getName()+" "+
+                        orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getMunicipality().getName()+" "+
                         orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getComment())
                 .secondAddress("")
-                .fullAddress(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getNeighborhood()+" "+
-                        orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getMunicipality()+" "+
+                .fullAddress(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getNeighborhood().getName()+" "+
+                        orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getMunicipality().getName()+" "+
                         orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getComment())
                 .build();
     }
