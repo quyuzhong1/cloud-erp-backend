@@ -19,7 +19,7 @@ public class ListingDTO {
      */
 
     @JsonProperty("seller_id")
-    private String sellerId;
+    private Long sellerId;
     @JsonProperty("paging")
     private PagingBean paging;
     @JsonProperty("query")
@@ -31,51 +31,4 @@ public class ListingDTO {
     @JsonProperty("available_orders")
     private List<AvailableOrdersBean> availableOrders;
 
-    public String getSellerId() {
-        return sellerId;
-    }
-
-    public void setSellerId(String sellerId) {
-        this.sellerId = sellerId;
-    }
-
-    public PagingBean getPaging() {
-        return paging;
-    }
-
-    public void setPaging(PagingBean paging) {
-        this.paging = paging;
-    }
-
-    public Object getQuery() {
-        return query;
-    }
-
-    public void setQuery(Object query) {
-        this.query = query;
-    }
-
-    public List<String> getResults() {
-        return results;
-    }
-
-    public void setResults(List<String> results) {
-        this.results = results;
-    }
-
-    public List<OrdersBean> getOrders() {
-        return orders;
-    }
-
-    public void setOrders(List<OrdersBean> orders) {
-        this.orders = orders;
-    }
-
-    public List<AvailableOrdersBean> getAvailableOrders() {
-        return availableOrders;
-    }
-
-    public void setAvailableOrders(List<AvailableOrdersBean> availableOrders) {
-        this.availableOrders = availableOrders;
-    }
 }
