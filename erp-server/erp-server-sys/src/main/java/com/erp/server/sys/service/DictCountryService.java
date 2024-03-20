@@ -37,7 +37,7 @@ public interface DictCountryService extends SuperService<DictCountryEntity> {
     Boolean add(DictCountryDTO.AddDTO dto);
 
 
-    Boolean update(DictCountryDTO.AddDTO dto);
+    Boolean update(DictCountryDTO.UpdateDTO dto);
     /**
      * @description: 根据参数查询国家
      * @author Will

@@ -88,17 +88,32 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
     }
 
     @Override
-    public Boolean update(DictCountryDTO.AddDTO dto) {
-        return null;
+    public Boolean update(DictCountryDTO.UpdateDTO dto) {
+        DictCountryEntity entity = new DictCountryEntity();
+        entity.setNameCn(dto.getName());
+        entity.setId(dto.getCode());
+        entity.setRegionCode(dto.getParentRegionId());
+        entity.setKingdeeCode(dto.getCode());
+        handleData(entity);
+        Boolean updateResult = this.saveOrUpdate(entity);
+        if (updateResult) {
+            syncKingdeeCountryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        }
+        return updateResult;
     }
 
     public void handleData(DictCountryEntity entity) {
         String id = entity.getId();
-        int codeCount = this.lambdaQuery().eq(DictCountryEntity::getId, id).count();
+        int codeCount = this.lambdaQuery().
+                eq(DictCountryEntity::getKingdeeCode, entity.getKingdeeCode()).
+                ne(StringUtils.isNotBlank(id), DictCountryEntity::getId,id).
+                count();
         if (codeCount > 0) {
             throw new ServiceException("国家二字码已存在");
         }
-        int nameCount = this.lambdaQuery().eq(DictCountryEntity::getNameCn, entity.getNameCn()).count();
+        int nameCount = this.lambdaQuery().eq(DictCountryEntity::getNameCn, entity.getNameCn()).
+                ne(StringUtils.isNotBlank(id), DictCountryEntity::getId,id).
+                count();
         if (nameCount > 0) {
             throw new ServiceException("国家名已存在");
         }
@@ -359,10 +374,13 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateSyncKingdeeId(String id, String syncKingdeeId, String syncKingdeeCode) {
-        Boolean result= this.lambdaUpdate()
-                .eq(DictCountryEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeCode), DictCountryEntity::getKingdeeCode, syncKingdeeCode)
-                .update();
+        Boolean result = false;
+        if (StringUtils.isNotBlank(syncKingdeeCode)) {
+            result = this.lambdaUpdate()
+                    .eq(DictCountryEntity::getId, id)
+                    .set(StringUtils.isNotBlank(syncKingdeeCode), DictCountryEntity::getKingdeeCode, syncKingdeeCode)
+                    .update();
+        }
 
         ThirdpartyRefBusinessEntity refBusinessEntity = thirdpartyRefBusinessService.getByBusinessId(id);
         if (Objects.isNull(refBusinessEntity)) {
