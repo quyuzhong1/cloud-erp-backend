@@ -1,11 +1,13 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BodyBean {
     /**
      * id : CBT1909985010
@@ -65,6 +67,8 @@ public class BodyBean {
     private int sellerId;
     @JsonProperty("category_id")
     private String categoryId;
+    @JsonProperty("user_product_id")
+    private Object userProductId;
     @JsonProperty("official_store_id")
     private Object officialStoreId;
     @JsonProperty("price")
@@ -130,20 +134,20 @@ public class BodyBean {
     @JsonProperty("pictures")
     private List<PicturesBean> pictures;
     @JsonProperty("descriptions")
-    private List<?> descriptions;
+    private List<Object> descriptions;
     @JsonProperty("non_mercado_pago_payment_methods")
-    private List<?> nonMercadoPagoPaymentMethods;
+    private List<Object> nonMercadoPagoPaymentMethods;
     @JsonProperty("coverage_areas")
-    private List<?> coverageAreas;
+    private List<Object> coverageAreas;
     @JsonProperty("attributes")
     private List<AttributesBean> attributes;
     @JsonProperty("variations")
-    private List<?> variations;
+    private List<Object> variations;
     @JsonProperty("sub_status")
     private List<String> subStatus;
     @JsonProperty("tags")
     private List<String> tags;
     @JsonProperty("deal_ids")
-    private List<?> dealIds;
+    private List<Object> dealIds;
 
 }

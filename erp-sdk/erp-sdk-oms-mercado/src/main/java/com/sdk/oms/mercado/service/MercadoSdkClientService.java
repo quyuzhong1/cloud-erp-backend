@@ -288,6 +288,7 @@ public class MercadoSdkClientService {
             try {
                 dataList = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), new TypeReference<List<ListingViewDTO>>() {});
             } catch (JsonProcessingException e) {
+                e.printStackTrace();
                 log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
                         baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));

@@ -11,7 +11,7 @@ public class AvailableOrdersBean {
      */
 
     @JsonProperty("id")
-    private String fid;
+    private Object fid;
     @JsonProperty("name")
     private String name;
 
