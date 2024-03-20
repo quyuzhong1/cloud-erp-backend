@@ -36,6 +36,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
+import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -309,7 +310,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
 
 
 
-            if (ObjectUtil.isNotEmpty(soDetailEntity) && ObjectUtil.isNotEmpty(soInfoEntity)) {
+            if (StringUtil.isNotBlank(soDetailEntity.getKingdeeDetailId()) && StringUtil.isNotBlank(soInfoEntity.getSyncKingdeeId())) {
                 List<Map<String, Object>> mapList = new ArrayList<>();
                 Map<String, Object> mapPush = new HashMap<>();
                 mapPush.put("soKingdeeDetailId", soDetailEntity.getKingdeeDetailId());
