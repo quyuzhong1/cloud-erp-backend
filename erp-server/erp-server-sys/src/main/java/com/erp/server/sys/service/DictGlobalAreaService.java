@@ -19,15 +19,7 @@ import java.util.List;
  */
 public interface DictGlobalAreaService extends SuperService<DictGlobalAreaEntity> {
 
-    
-    /**
-     * 添加地区
-     * @author yl
-     * @date 2023-05-11 14:57
-     * @param list
-     * @return java.lang.Boolean
-     */
-    Boolean addOrUpdate(List<DictGlobalAreaDTO.AddOrUpdateDTO> list);
+
 
 
     /**
@@ -100,4 +92,9 @@ public interface DictGlobalAreaService extends SuperService<DictGlobalAreaEntity
      * @author Lambda
      */
     BatchResultDTO delete(String id);
+
+    Boolean addGlobalArea(DictGlobalAreaDTO.AddDTO dto);
+
+
+    Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId, String syncKingdeeCode);
 }

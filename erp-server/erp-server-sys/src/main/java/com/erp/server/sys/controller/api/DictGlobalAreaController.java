@@ -2,6 +2,7 @@ package com.erp.server.sys.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -14,10 +15,12 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.model.sys.entity.KingdeePostEntity;
 import com.erp.server.sys.query.DictGlobalAreaQueryHandler;
 import com.erp.server.sys.query.KingdeeDepartmentQueryHandler;
 import com.erp.server.sys.service.DictGlobalAreaService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +30,7 @@ import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 地址管理-区域管理
@@ -67,6 +71,22 @@ public class DictGlobalAreaController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 区域下拉
+     *
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2024-03-11
+     */
+    @GetMapping("/list")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> list() {
+        List<DictGlobalAreaEntity> list = dictGlobalAreaService.list();
+        List<BaseDropDownDTO.CommonDTO> result = list.stream()
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getId(), x.getRegionName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
 
     /**
      * 详情
@@ -83,14 +103,16 @@ public class DictGlobalAreaController extends BaseController {
     /**
      * 添加地区
      *
-     * @param list
+     * @param dto
      * @return
      */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated List<DictGlobalAreaDTO.AddOrUpdateDTO> list) {
-        Boolean result = dictGlobalAreaService.addOrUpdate(list);
+    public ApiResult add(@RequestBody @Validated DictGlobalAreaDTO.AddDTO dto) {
+        Boolean result = dictGlobalAreaService.addGlobalArea(dto);
         return result ? success() : failure();
     }
+
+
 
     /**
      * 修改地区

@@ -12,13 +12,13 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.common.message.enums.AssistantDataEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.dto.KingdeeDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
+import com.erp.model.sys.enums.KingdeeAssistDataTypeEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.sys.mapper.DictGlobalAreaMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeGlobalAreaService;
@@ -53,23 +53,8 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
 
     @Resource
     private DictCountryService dictCountryService;
-    /**
-     * 添加地区
-     *
-     * @param list
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-05-11 14:57
-     */
 
-    @Override
-    public Boolean addOrUpdate(List<DictGlobalAreaDTO.AddOrUpdateDTO> list) {
-        if (CollectionUtils.isNotEmpty(list)) {
-            List<DictGlobalAreaEntity> addOrList = BeanMapper.copyList(list, DictGlobalAreaEntity.class);
-            return this.saveOrUpdateBatch(addOrList);
-        }
-        return Boolean.TRUE;
-    }
+
 
     @Override
     public Boolean update(DictGlobalAreaDTO.UpdateDTO dto) {
@@ -153,7 +138,7 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
 
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BOS_ASSISTANTDATA_DETAIL.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        String areaCode = AssistantDataEnum.GLOBAL_AREA.getCode();
+        String areaCode = KingdeeAssistDataTypeEnum.AREA.getCode();
         //类别
         queryFilters.add(StrUtil.format(" FId.FNumber = {}", "'" + areaCode + "'"));
         //查询
@@ -187,8 +172,6 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
             String kingdeeId = item.getKingdeeId();
             String kingdeeCode = item.getKingdeeCode();
             String name = item.getName();
-            String parentId = item.getParentId();
-            String indexStr = item.getIndex();
             DictGlobalAreaEntity dbEntity = dbList.stream().filter(entity ->
                             entity.getKingdeeCode().equals(kingdeeCode)
                                     || entity.getRegionCode().equals(kingdeeCode) ).
@@ -197,7 +180,6 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
             if (Objects.isNull(dbEntity)) {
                 DictGlobalAreaEntity addEntity = new DictGlobalAreaEntity();
                 String id = kingdeeCode;
-                addEntity.setIndex(Integer.valueOf(indexStr));
                 addEntity.setKingdeeCode(kingdeeCode);
                 addEntity.setRegionCode(kingdeeCode);
                 addEntity.setRegionName(name);
@@ -214,7 +196,6 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
                 if (!dbEntity.getRegionName().equals(name)
                         || !dbEntity.getRegionCode().equals(kingdeeCode)
                         || !dbEntity.getKingdeeCode().equals(kingdeeCode)) {
-                    dbEntity.setIndex(Integer.valueOf(indexStr));
                     dbEntity.setKingdeeCode(kingdeeCode);
                     dbEntity.setRegionCode(kingdeeCode);
                     dbEntity.setRegionName(name);
@@ -268,6 +249,7 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         DictGlobalAreaEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -281,9 +263,39 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
         if (result ) {
             //金蝶推送
             syncKingdeeGlobalAreaService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+            thirdpartyRefBusinessService.removeByBusinessId(id);
+
         }
 
         return null;
+    }
+
+    @Override
+    public Boolean addGlobalArea(DictGlobalAreaDTO.AddDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId, String syncKingdeeCode) {
+        Boolean result= this.lambdaUpdate()
+                .eq(DictGlobalAreaEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeCode), DictGlobalAreaEntity::getKingdeeCode, syncKingdeeCode)
+                .update();
+
+        ThirdpartyRefBusinessEntity refBusinessEntity = thirdpartyRefBusinessService.getByBusinessId(id);
+        if (Objects.isNull(refBusinessEntity)) {
+            Class<DictGlobalAreaEntity> areaClass = DictGlobalAreaEntity.class;
+            TableName tableName = areaClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String businessType = tableName.value();
+            ThirdpartyRefBusinessEntity refEntity = new ThirdpartyRefBusinessEntity();
+            refEntity.setBusinessType(businessType);
+            refEntity.setBusinessId(id);
+            refEntity.setThirdpartyId(syncKingdeeId);
+            thirdpartyRefBusinessService.save(refEntity);
+        }
+
+        return result;
     }
 
 

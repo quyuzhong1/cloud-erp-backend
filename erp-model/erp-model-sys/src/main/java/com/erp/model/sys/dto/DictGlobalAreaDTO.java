@@ -96,33 +96,23 @@ public class DictGlobalAreaDTO implements Serializable {
         @NotBlank(message = "区域不能为空")
         private String id;
 
-        @NotBlank(message = "区域名为空")
+        @NotBlank(message = "区域名不能为空")
         private String  regionName;
 
     }
 
     @Data
     @NoArgsConstructor
-    public static class AddOrUpdateDTO {
+    public static class AddDTO {
 
-        private String id;
-
-        /**
-         * 国家所属子区域例如“北欧”、“中东”等
-         */
-        private String subregionName;
-
-        /**
-         * 国家所属的大洲或地理区域code
-         */
-        private String regionCode;
 
         /**
          * 国家所属的大洲或地理区域例如“欧洲”、“亚洲”、“南美洲”等
          */
+        @NotBlank(message = "区域名不能为空")
         private String regionName;
 
-        private Integer index;
+
 
 
     }

@@ -31,10 +31,10 @@
     <select id="paging" resultType="com.erp.model.sys.dto.DictGlobalAreaDTO$PagingViewDTO">
           SELECT
               dga.id,
-              dga.region_name,
-              dga.kingdee_code,
-              dga.update_time,
-              dga.update_time
+              dga.region_name AS regionName,
+              dga.kingdee_code AS kingdeeCode,
+              dga.update_time AS regionName,
+              dga.update_user_name AS regionName
           FROM  dict_global_area dga
           WHERE dga.is_deleted = FALSE
           AND

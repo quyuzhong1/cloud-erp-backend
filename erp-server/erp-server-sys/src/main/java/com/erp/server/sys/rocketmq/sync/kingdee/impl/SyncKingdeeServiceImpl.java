@@ -33,6 +33,12 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     @Resource
     private KingdeeOperatorRefPostService kingdeeOperatorRefPostService;
 
+    @Resource
+    private DictGlobalAreaService dictGlobalAreaService;
+
+    @Resource
+    private DictCountryService dictCountryService;
+
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
         //模块类型编码
@@ -73,6 +79,18 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //业务员
         if (ApiModuleTypeEnum.KINGDEE_OPERATOR.getCode().toString().equals(code)) {
             kingdeeOperatorRefPostService.updateSyncKingdeeId(businessId,syncKingdeeId,syncKingdeeCode);
+            return;
+        }
+
+        //区域
+        if (ApiModuleTypeEnum.GLOBAL_AREA.getCode().toString().equals(code)) {
+            dictGlobalAreaService.updateSyncKingdeeId(businessId,syncKingdeeId,syncKingdeeCode);
+            return;
+        }
+
+        //国家
+        if (ApiModuleTypeEnum.COUNTRY.getCode().toString().equals(code)) {
+            dictCountryService.updateSyncKingdeeId(businessId,syncKingdeeId,syncKingdeeCode);
             return;
         }
     }

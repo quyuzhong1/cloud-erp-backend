@@ -26,13 +26,11 @@ public class ErpServerSysApplicationTests {
         LinkedList<String> queryFilters = new LinkedList<>();
 
         //禁用状态
-        queryFilters.add(StrUtil.format(" FId.FNumber = {}", "'0101'"));
+        queryFilters.add(StrUtil.format(" FId.FNumber = {}", "'Country'"));
 
         String filterStr = String.join(" and ", queryFilters);
         System.out.println("拉取金蝶条件为>>>>>>>>>>"+ filterStr);
         KingdeeApiUtils apiUtils = new KingdeeApiUtils("BOS_ASSISTANTDATA_DETAIL");
-    //    String fieldKeys = "FDETAILID,FNumber,FDataValue,FTypeId.FNUMBER,FSeq";
-
        String fieldKeys = "FEntryID,FNumber,FDataValue,FId.FNumber,FParentId,FSeq";
         List<Map<String, Object>> list = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
         System.out.println(">>>>>>>>>"+ JSONUtil.toJsonStr(list));

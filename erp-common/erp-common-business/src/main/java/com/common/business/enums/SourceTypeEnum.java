@@ -104,6 +104,7 @@ public enum SourceTypeEnum {
     SYS_USER_POST("sysUserPost", "员工任岗","kingdee_user_ref_post"),
     KINGDEE_OPERATOR("kingdeeOperator", "金蝶业务员","kingdee_operator_ref_post"),
     GLOBAL_AREA("globalArea", "区域","dict_global_area"),
+    COUNTRY("country", "国家","dict_country"),
 
     //Mabang
     MABANG_FBA_DELIVERY("MB_FBA_DELIVERY", "马帮FBA发货单",""),

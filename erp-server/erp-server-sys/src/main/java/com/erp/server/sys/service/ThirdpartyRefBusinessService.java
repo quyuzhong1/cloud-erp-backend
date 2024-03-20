@@ -1,8 +1,6 @@
 package com.erp.server.sys.service;
 import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.ThirdpartyRefBusinessDTO;
 
 import java.util.List;
 
@@ -22,8 +20,14 @@ public interface ThirdpartyRefBusinessService extends SuperService<ThirdpartyRef
 
     /**
      * 根据业务id获取
-     * @param id
+     * @param businessId
      * @return
      */
     ThirdpartyRefBusinessEntity getByBusinessId(String businessId);
+
+    /**
+     * 根据业务id删除
+     * @param id
+     */
+    void removeByBusinessId(String businessId);
 }

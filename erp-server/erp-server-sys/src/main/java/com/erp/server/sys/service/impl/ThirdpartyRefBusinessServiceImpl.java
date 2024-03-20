@@ -40,4 +40,11 @@ public class ThirdpartyRefBusinessServiceImpl extends SuperServiceImpl<Thirdpart
         }
         return this.lambdaQuery().eq(ThirdpartyRefBusinessEntity::getBusinessId, businessId).last("LIMIT 1").one();
     }
+
+    @Override
+    public void removeByBusinessId(String businessId) {
+        if (StringUtils.isNotBlank(businessId)) {
+            this.lambdaUpdate().eq(ThirdpartyRefBusinessEntity::getBusinessId, businessId).remove();
+        }
+    }
 }

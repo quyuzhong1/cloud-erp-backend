@@ -1,6 +1,8 @@
 package com.erp.server.sys.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 
@@ -26,6 +28,16 @@ public interface DictCountryService extends SuperService<DictCountryEntity> {
      */
     List<DictCountryDTO.ListDTO> listCountry();
 
+
+    /**
+     * 添加
+     * @param dto
+     * @return
+     */
+    Boolean add(DictCountryDTO.AddDTO dto);
+
+
+    Boolean update(DictCountryDTO.AddDTO dto);
     /**
      * @description: 根据参数查询国家
      * @author Will
@@ -82,4 +94,26 @@ public interface DictCountryService extends SuperService<DictCountryEntity> {
      * @author Lambda
      */
     List<DictCountryEntity> listByRegionCode(String globalArea);
+
+    /**
+     * 初始化金蝶数据
+     * @return
+     */
+    Boolean init();
+
+    /**
+     * 分页
+     * @param dto
+     * @return
+     */
+    PagingVO<DictCountryDTO.PagingViewDTO> paging(PagingDTO<DictCountryDTO.PagingParamDTO> dto);
+
+    /**
+     * 详情
+     * @param id
+     * @return
+     */
+    DictCountryDTO.ViewDTO view(String id);
+
+    Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId, String syncKingdeeCode);
 }
