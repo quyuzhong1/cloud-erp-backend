@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -54,7 +55,7 @@ public class DictCountryDTO implements Serializable {
         /**
          * 更新时间
          */
-        private String updateTime;
+        private LocalDateTime updateTime;
         /**
          * 更新人
          */

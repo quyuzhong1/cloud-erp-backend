@@ -32,4 +32,11 @@ public interface DictGlobalAreaMapper extends BaseMapper<DictGlobalAreaEntity> {
     List<DictGlobalAreaDTO.InfoDTO> listByCountryIds(@Param("countryIds") List<String> countryIds);
 
     IPage<DictGlobalAreaDTO.PagingViewDTO> paging(Page query, @Param("params")DictGlobalAreaDTO.PagingParamDTO paramDTO);
+
+    /**
+     * 导出
+     * @param dto
+     * @return
+     */
+    List<DictGlobalAreaDTO.PagingViewDTO> listExport(@Param("params")DictGlobalAreaDTO.PagingParamDTO dto);
 }

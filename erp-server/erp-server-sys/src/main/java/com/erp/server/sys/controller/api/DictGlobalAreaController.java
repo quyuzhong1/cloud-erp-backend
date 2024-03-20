@@ -14,18 +14,15 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.KingdeeDepartmentEntity;
-import com.erp.model.sys.entity.KingdeePostEntity;
 import com.erp.server.sys.query.DictGlobalAreaQueryHandler;
-import com.erp.server.sys.query.KingdeeDepartmentQueryHandler;
 import com.erp.server.sys.service.DictGlobalAreaService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +66,17 @@ public class DictGlobalAreaController extends BaseController {
     public ApiResult<PagingVO<DictGlobalAreaDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<DictGlobalAreaDTO.PagingParamDTO> dto) {
         PagingVO<DictGlobalAreaDTO.PagingViewDTO> pagingVO = dictGlobalAreaService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 导出excel
+     * @param
+     * @return
+     */
+    @PostMapping("/export")
+    @WebAdvanceQuery(handler = DictGlobalAreaQueryHandler.class)
+    public void paging(@RequestBody @Validated DictGlobalAreaDTO.PagingParamDTO dto, HttpServletResponse response) {
+        dictGlobalAreaService.exportList(dto,response);
     }
 
     /**

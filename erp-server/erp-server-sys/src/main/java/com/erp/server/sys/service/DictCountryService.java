@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -126,4 +127,5 @@ public interface DictCountryService extends SuperService<DictCountryEntity> {
     BatchResultDTO delete(String id);
 
 
+    void exportList(DictCountryDTO.PagingParamDTO dto, HttpServletResponse response);
 }

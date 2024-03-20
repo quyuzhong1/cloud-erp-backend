@@ -22,6 +22,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +56,17 @@ public class DictCityController extends BaseController {
     public ApiResult<PagingVO<DictCityDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<DictCityDTO.ProvincePagingParamDTO> dto) {
         PagingVO<DictCityDTO.PagingViewDTO> pagingVO = dictCityService.provincePaging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 省份导出
+     * @param
+     * @return
+     */
+    @PostMapping("/provinceExport")
+    @WebAdvanceQuery(handler = DictParentBaseQueryHandler.class)
+    public void provinceExport(@RequestBody @Validated DictCityDTO.ProvincePagingParamDTO dto, HttpServletResponse response) {
+         dictCityService.provinceExport(dto,response);
     }
 
     /**
@@ -103,6 +115,16 @@ public class DictCityController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 城市导出
+     * @param
+     * @return
+     */
+    @PostMapping("/cityExport")
+    @WebAdvanceQuery(handler = DictParentBaseQueryHandler.class)
+    public void cityExport(@RequestBody @Validated DictCityDTO.ProvincePagingParamDTO dto, HttpServletResponse response) {
+        dictCityService.cityExport(dto,response);
+    }
     /**
      * 添加城市
      * @param

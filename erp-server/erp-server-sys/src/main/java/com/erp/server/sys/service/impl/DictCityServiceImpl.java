@@ -1,5 +1,6 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -10,8 +11,11 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -27,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -311,6 +316,44 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         }
         return updateResult;
 
+    }
+
+    @Override
+    public void provinceExport(DictCityDTO.ProvincePagingParamDTO dto, HttpServletResponse response) {
+        List<DictCityDTO.PagingViewDTO> list = this.baseMapper.provinceExport(dto);
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/province.xlsx";
+        String name = "省份Excel导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+    }
+
+    @Override
+    public void cityExport(DictCityDTO.ProvincePagingParamDTO dto, HttpServletResponse response) {
+        List<DictCityDTO.PagingViewDTO> list = this.baseMapper.cityExport(dto);
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/city.xlsx";
+        String name = "城市Excel导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
     }
 
     public void handleData(DictCityEntity entity) {

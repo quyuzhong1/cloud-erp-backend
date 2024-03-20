@@ -6,15 +6,11 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.server.sys.query.DictGlobalAreaQueryHandler;
 import com.erp.server.sys.query.DictParentBaseQueryHandler;
 import com.erp.server.sys.service.DictCountryService;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +19,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +63,17 @@ public class DictCountryController extends BaseController {
     public ApiResult<PagingVO<DictCountryDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<DictCountryDTO.PagingParamDTO> dto) {
         PagingVO<DictCountryDTO.PagingViewDTO> pagingVO = dictCountryService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 导出excel
+     * @param
+     * @return
+     */
+    @PostMapping("/export")
+    @WebAdvanceQuery(handler = DictParentBaseQueryHandler.class)
+    public void paging(@RequestBody @Validated DictCountryDTO.PagingParamDTO dto, HttpServletResponse response) {
+        dictCountryService.exportList(dto,response);
     }
 
     /**

@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -115,4 +116,17 @@ public interface DictCityService extends SuperService<DictCityEntity> {
      * @return
      */
     Boolean updateCity(DictCityDTO.UpdateCityDTO dto);
+
+    /**
+     * 省导出
+     * @param dto
+     */
+    void provinceExport(DictCityDTO.ProvincePagingParamDTO dto, HttpServletResponse response);
+
+    /**
+     * 城市导出
+     * @param dto
+     * @param response
+     */
+    void cityExport(DictCityDTO.ProvincePagingParamDTO dto, HttpServletResponse response);
 }

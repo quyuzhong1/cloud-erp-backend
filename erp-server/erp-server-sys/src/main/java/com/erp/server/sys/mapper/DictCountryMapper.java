@@ -48,4 +48,6 @@ public interface DictCountryMapper extends BaseMapper<DictCountryEntity> {
      * @author Lambda
      */
     IPage<DictCountryDTO.PagingViewDTO> paging(Page query, @Param("params")DictCountryDTO.PagingParamDTO paramDTO);
+
+    List<DictCountryDTO.PagingViewDTO> listExport(@Param("params")DictCountryDTO.PagingParamDTO dto);
 }

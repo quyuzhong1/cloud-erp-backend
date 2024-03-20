@@ -38,4 +38,14 @@ public interface DictCityMapper extends BaseMapper<DictCityEntity> {
      * @return
      */
     IPage<DictCityDTO.PagingViewDTO> cityPaging(Page query,@Param("params") DictCityDTO.CityPagingParamDTO paramDTO);
+
+    /**
+     * 省份导出
+     * @param dto
+     * @return
+     */
+    List<DictCityDTO.PagingViewDTO> provinceExport(@Param("params")DictCityDTO.ProvincePagingParamDTO dto);
+
+    List<DictCityDTO.PagingViewDTO> cityExport(@Param("params")DictCityDTO.ProvincePagingParamDTO dto);
+
 }
