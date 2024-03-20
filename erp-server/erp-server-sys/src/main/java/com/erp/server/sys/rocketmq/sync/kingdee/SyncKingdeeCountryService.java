@@ -16,5 +16,5 @@ public interface SyncKingdeeCountryService {
      * @param entity
      * @param
      */
-    void syncDataToKingdee(DictCountryEntity entity, String code);
+    void syncDataToKingdee(DictCountryEntity entity, String operate);
 }

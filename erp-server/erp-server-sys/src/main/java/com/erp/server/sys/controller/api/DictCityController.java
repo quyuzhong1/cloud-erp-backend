@@ -1,25 +1,39 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.DictCityDTO;
+import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.server.sys.query.DictParentBaseQueryHandler;
 import com.erp.server.sys.service.DictCityService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
- *字典管理
+ *地址管理-省份管理
  *
  * @author Lambda
  * @since 2023-03-21
  */
+@Slf4j
 @RestController
 @LogSystemModule("系统管理通用")
 @RequestMapping("/dict/city")
@@ -27,6 +41,43 @@ public class DictCityController extends BaseController {
 
     @Resource
     private DictCityService dictCityService;
+
+
+
+
+    /**
+     * 省份分页
+     * @param dto
+     * @return
+     */
+    @PostMapping("/provincePaging")
+    @WebAdvanceQuery(handler = DictParentBaseQueryHandler.class)
+    public ApiResult<PagingVO<DictCityDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<DictCityDTO.ProvincePagingParamDTO> dto) {
+        PagingVO<DictCityDTO.PagingViewDTO> pagingVO = dictCityService.provincePaging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 添加省
+     * @param
+     * @return
+     */
+    @PostMapping("/addProvince")
+    public ApiResult addProvince(@RequestBody @Validated DictCityDTO.AddProvinceDTO dto) {
+        Boolean result = dictCityService.addProvinceDTO(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 修改省
+     * @param
+     * @return
+     */
+    @PostMapping("/updateProvince")
+    public ApiResult updateProvince(@RequestBody @Validated DictCityDTO.UpdateProvinceDTO dto) {
+        Boolean result = dictCityService.updateProvince(dto);
+        return result ? success() : failure();
+    }
 
 
     /**
@@ -52,6 +103,33 @@ public class DictCityController extends BaseController {
     public ApiResult<List<DictCityDTO.ListDTO>> list(@RequestParam("countryCode") String countryCode) {
         List<DictCityDTO.ListDTO> list = dictCityService.listCity(countryCode);
         return success(list);
+    }
+
+    /**
+     * 删除
+     * @param dto
+     * @return
+     */
+    @PostMapping("/delete")
+    public ApiResult<List<BatchResultDTO>>  delete(@RequestBody  @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = dictCityService.delete(id);
+            }catch (Exception e){
+                log.error("金蝶省市删除失败===>{}", e.getMessage());
+                DictCityEntity entity = dictCityService.getById(id);
+                if (Objects.isNull(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "省市不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getKingdeeCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 }

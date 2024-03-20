@@ -48,6 +48,7 @@ public enum ApiModuleTypeEnum {
     KINGDEE_OPERATOR(36, "kingdeeOperator", "金蝶业务员","sys"),
     GLOBAL_AREA(37, "globalArea", "区域","sys"),
     COUNTRY(38, "country", "国家","sys"),
+    PROVINCE_CITY(39, "provinceCity", "省市","sys"),
 
     ;
     private Integer code;

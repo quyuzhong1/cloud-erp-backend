@@ -1,12 +1,16 @@
 package com.erp.model.sys.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -18,6 +22,114 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class DictCityDTO implements Serializable {
+
+    /**
+     * 添加省
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddProvinceDTO {
+        /**
+         * 国家id 来源
+         */
+        @NotBlank(message = "国家不能为空")
+        private String country;
+
+        /**
+         * 省份名称
+         */
+        @NotBlank(message = "省份名称不能为空")
+        private String name;
+
+        /**
+         * 省份code 必填
+         */
+        @NotBlank(message = "省份code不能为空")
+        private String code;
+    }
+
+    /**
+     * 添加省
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateProvinceDTO {
+
+        /**
+         * id
+         */
+        @NotBlank(message = "省份不能为空")
+        private String id;
+        /**
+         * 国家id 来源
+         */
+        @NotBlank(message = "国家不能为空")
+        private String country;
+
+        /**
+         * 省份名称
+         */
+        @NotBlank(message = "省份名称不能为空")
+        private String name;
+
+    }
+
+
+    /**
+     * 分页响应
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO{
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 金蝶编码
+         */
+        private String kingdeeCode;
+
+
+        /**
+         * 上级名称
+         */
+        private String parentName;
+
+        /**
+         * 更新时间
+         */
+        private String updateTime;
+        /**
+         * 更新人
+         */
+        private String updateUserName;
+
+    }
+
+    /**
+     * 省份参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProvincePagingParamDTO extends SortDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
 
     @Data
     @NoArgsConstructor

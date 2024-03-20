@@ -39,6 +39,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     @Resource
     private DictCountryService dictCountryService;
 
+    @Resource
+    private DictCityService dictCityService;
+
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
         //模块类型编码
@@ -91,6 +94,12 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //国家
         if (ApiModuleTypeEnum.COUNTRY.getCode().toString().equals(code)) {
             dictCountryService.updateSyncKingdeeId(businessId,syncKingdeeId,syncKingdeeCode);
+            return;
+        }
+
+        //省城市
+        if (ApiModuleTypeEnum.PROVINCE_CITY.getCode().toString().equals(code)) {
+            dictCityService.updateSyncKingdeeId(businessId,syncKingdeeId,syncKingdeeCode);
             return;
         }
     }

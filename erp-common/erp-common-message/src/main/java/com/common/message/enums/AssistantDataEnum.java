@@ -12,6 +12,7 @@ public enum AssistantDataEnum {
     SECOND_LEVEL_CATEGORY("secondLevelCategory", "二级分类"),
     GLOBAL_AREA("globalArea", "区域"),
     COUNTRY("country", "国家"),
+    PROVINCE("province", "省"),
     ;
     private String code;
 

@@ -105,6 +105,7 @@ public enum SourceTypeEnum {
     KINGDEE_OPERATOR("kingdeeOperator", "金蝶业务员","kingdee_operator_ref_post"),
     GLOBAL_AREA("globalArea", "区域","dict_global_area"),
     COUNTRY("country", "国家","dict_country"),
+    PROVINCE_CITY("provinceCity", "省市","dict_city"),
 
     //Mabang
     MABANG_FBA_DELIVERY("MB_FBA_DELIVERY", "马帮FBA发货单",""),
