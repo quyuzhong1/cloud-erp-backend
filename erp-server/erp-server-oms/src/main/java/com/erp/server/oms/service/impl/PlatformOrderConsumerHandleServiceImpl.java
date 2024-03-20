@@ -351,7 +351,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 .stream()
                 .map(PlatformOrderDetailDTO::getPlatformSkuNo)
                 .distinct().collect(Collectors.toList());
-        Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap = soB2cDetailService.mapListingByPlatformSkuNo(platformSkuList, dto.getDictPlatform(), dto.getShopId(), dto.getPlatformOrderCreateTime());
+        Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap = soB2cDetailService.mapListingByPlatformSkuNo(platformSkuList, dto.getDictPlatform(), dto.getShopId(), dto.getPlatformOrderCreateTime(), false);
 
         // 查询当前店铺信息
         ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());

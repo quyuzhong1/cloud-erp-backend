@@ -108,6 +108,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 paramDTO.setShopIdList(Collections.singletonList(dto.getShopId()));
                 paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
                 paramDTO.setPlatformSkuNoList(Collections.singletonList(dto.getPlatformSkuNo()));
+                paramDTO.setIsExpire(false);
                 List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
 
                 if (!CollectionUtils.isEmpty(listDto)) {

@@ -83,6 +83,7 @@ public class ErpServerOmsListingApplicationTests {
         paramDTO.setShopIdList(Collections.singletonList("1734476072977698818"));
 //        paramDTO.setIsExpire(false);
         paramDTO.setLastExpireDate(LocalDateTime.parse("2024-03-01 17:30:16", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        paramDTO.setIsExpire(false);
         List<ListingInfoWithSkuMappingDTO> skuMappingList = skuMappingService.findListDto(paramDTO);
         System.out.println("结果");
         System.out.println(JSONUtil.toJsonStr(skuMappingList));

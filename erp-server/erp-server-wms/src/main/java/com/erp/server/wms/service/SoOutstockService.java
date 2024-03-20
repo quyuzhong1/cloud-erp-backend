@@ -11,6 +11,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
@@ -377,6 +378,25 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
 
 
     Boolean handleCreateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto);
+
+
+    /**
+     * 检查关账或已有盘盈盘亏单据，并记录明细备注
+     */
+    Boolean checkClosedAndUpdateRemark(SoOutstockDTO.GenerateB2cDTO dto, String soOutStockId);
+
+    /**
+     * 审核并提交
+     */
+    void submitAndApprove(String id);
+
+    /**
+     * 保存与（提交, 审核）事务分开
+     */
+    Boolean handleCreateB2cSoOutstockWithoutTx(SoOutstockDTO.GenerateB2cDTO dto);
+
+
+    String addB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto);
 
     /**
      * 生成B2C销售出库单

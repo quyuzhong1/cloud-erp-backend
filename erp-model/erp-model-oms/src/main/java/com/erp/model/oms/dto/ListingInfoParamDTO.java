@@ -59,7 +59,7 @@ public class ListingInfoParamDTO {
     private List<String> warehouseIdList;
 
     /**
-     * 是否已过期
+     * 是否已过期(空==所有)
      */
     private Boolean isExpire;
 

@@ -168,6 +168,14 @@ public class ListingInfoWithSkuMappingDTO {
         if (1 == dtoList.size()){
             return dtoList.get(0);
         }
+        if (null == lastExpireDate){
+            // 无指定日期提供最新映射关系
+           return dtoList.stream()
+                   .filter(e-> !e.getIsExpire())
+                   .max(Comparator.comparing(ListingInfoWithSkuMappingDTO::getExpireTime))
+                   .orElse(null);
+        }
+
         Optional<ListingInfoWithSkuMappingDTO> optional = dtoList.stream()
                 // 指定时间=生效时间 或 生效时间 < 指定时间 < 结束时间
                 .filter(dto -> lastExpireDate.isEqual(dto.getEffectiveTime()) || (lastExpireDate.isAfter(dto.getEffectiveTime()) && lastExpireDate.isBefore(dto.getExpireTime())))

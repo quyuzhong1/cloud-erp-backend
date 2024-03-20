@@ -1164,6 +1164,9 @@ public enum ApiError implements Serializable {
     IS_B2C_DELIVERY_NOT_UPDATE_MAPPING(92133,"已生成发货单，不允许修改映射关系"),
     IS_NOT_B2C_NOT_UPDATE_MAPPING(92134,"非平台来源的B2C销售订单不可修改映射关系"),
 
+    SKU_MAPPING_INVENTORY_INSUFFICIENT(92135,"需要扣除的映射关系SKU【{}】可用库存不足"),
+
+
     /**
      * TMS 错误
      * 从94000 开始

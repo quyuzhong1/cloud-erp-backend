@@ -611,7 +611,7 @@
         li.platform_spu_name,
         li.platform_fn_sku
         FROM sku_mapping sm
-        INNER JOIN listing_info li
+        LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
         WHERE sm.is_deleted=FALSE
         <!--is_expire 是否过期-->
