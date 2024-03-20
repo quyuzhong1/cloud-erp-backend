@@ -669,7 +669,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         // Map<仓库ID_库存组织_skuId_仓位, 当前库存数量>
         Map<String, Integer> inventoryQtyMap = inventoryEntityList
                 .stream()
-                .collect(Collectors.toMap(e -> StrUtil.format("{}_{}_{}_{}", e.getId(), e.getOrgId(), e.getSkuId(), e.getWarehouseLocation()), InventoryEntity::getQty));
+                .collect(Collectors.toMap(e -> StrUtil.format("{}_{}_{}_{}", e.getWarehouseId(), e.getOrgId(), e.getSkuId(), e.getWarehouseLocation()), InventoryEntity::getQty));
         ConcurrentHashMap<String, Integer> currentInventoryQtyMap = new ConcurrentHashMap<>(inventoryQtyMap);
         // 查询仓库是否开启负库存
         WarehouseDTO.UpdateDTO warehouseDTO = warehouseService.detailWithCache(dto.getWarehouseId());
