@@ -15,13 +15,14 @@ import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeCityService;
-import com.erp.server.sys.service.DictCityService;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeProvinceService;
 import com.erp.server.sys.service.DictCountryService;
 import com.erp.server.sys.service.ThirdpartyRefBusinessService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
@@ -30,23 +31,26 @@ import java.util.Objects;
 
 /**
  * @author Lambda
- * @Classname SyncKingdeeCityServiceImpl
+ * @Classname SyncKingdeeProvinceServiceImpl
  * @Description TODO
- * @Date 2024-03-20 14:33
+ * @Date 2024-03-20 11:10
  * @Created by yl
  */
 @Slf4j
 @Service
-public class SyncKingdeeCityServiceImpl implements SyncKingdeeCityService {
+public class SyncKingdeeProvinceServiceImpl implements SyncKingdeeProvinceService {
+
     @Resource
     private ThirdpartyRefBusinessService thirdpartyRefBusinessService;
     @Resource
-    private DictCityService dictCityService;
+    private DictCountryService dictCountryService;
 
     @Resource
     private DmpMqFeign dmpMqFeign;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(DictCityEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         Boolean isExistParent = true;
@@ -68,24 +72,23 @@ public class SyncKingdeeCityServiceImpl implements SyncKingdeeCityService {
         //模块类型
         Integer moduleType = ApiModuleTypeEnum.PROVINCE_CITY.getCode();
         //辅助资料类型编码
-        String fNumber = AssistantDataEnum.CITY.getCode();
+        String fNumber = AssistantDataEnum.PROVINCE.getCode();
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
             sendMqAndSaveTask(entity,operate,resultMap);
             return;
         }
         if(isExistParent){
-            DictCityEntity cityEntity = dictCityService.getById(entity.getParentId());
-            if (Objects.isNull(cityEntity) || StringUtils.isBlank(cityEntity.getKingdeeCode())) {
-                throw new ServiceException(new ApiResult(1, "未找到上级省或者省未同步到金蝶"));
+            DictCountryEntity countryEntity = dictCountryService.getById(entity.getCountryCode());
+            if (Objects.isNull(countryEntity) || StringUtils.isBlank(countryEntity.getKingdeeCode())) {
+                throw new ServiceException(new ApiResult(1, "未找到上级国家或者国家未同步到金蝶"));
             }
             //上级编码
-            resultMap.put("parentCode",cityEntity.getKingdeeCode());
+            resultMap.put("parentCode",countryEntity.getKingdeeCode());
         }
         resultMap.put("moduleType",moduleType);
         resultMap.put("fNumber", fNumber);
         sendMqAndSaveTask(entity,operate,resultMap);
-
     }
 
     private void sendMqAndSaveTask(DictCityEntity entity, String operate, Map<String, Object> resultMap) {
@@ -103,5 +106,4 @@ public class SyncKingdeeCityServiceImpl implements SyncKingdeeCityService {
         dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
 
     }
-
 }

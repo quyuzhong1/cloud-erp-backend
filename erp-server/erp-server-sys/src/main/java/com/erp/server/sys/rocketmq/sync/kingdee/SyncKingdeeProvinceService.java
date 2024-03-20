@@ -4,12 +4,12 @@ import com.erp.model.sys.entity.DictCityEntity;
 
 /**
  * @author Lambda
- * @Classname SyncKingdeeCityService
+ * @Classname SyncKingdeeProvinceService
  * @Description TODO
- * @Date 2024-03-20 14:31
+ * @Date 2024-03-20 11:10
  * @Created by yl
  */
-public interface SyncKingdeeCityService {
+public interface SyncKingdeeProvinceService {
 
     /**
      * 同步金蝶

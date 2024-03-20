@@ -30,7 +30,7 @@ public class DictCityDTO implements Serializable {
     @NoArgsConstructor
     public static class AddProvinceDTO {
         /**
-         * 国家id 来源
+         * 国家id 来源 http://172.16.100.11:3002/project/36/interface/api/13390
          */
         @NotBlank(message = "国家不能为空")
         private String country;
@@ -48,8 +48,89 @@ public class DictCityDTO implements Serializable {
         private String code;
     }
 
+
     /**
      * 添加省
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddCityDTO {
+        /**
+         * 省id 来源
+         */
+        @NotBlank(message = "省不能为空")
+        private String provinceId;
+
+        /**
+         * 城市名称
+         */
+        @NotBlank(message = "城市名称不能为空")
+        private String name;
+
+        /**
+         * 城市code 必填
+         */
+        @NotBlank(message = "城市code不能为空")
+        private String code;
+    }
+
+    /**
+     * 修改市
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateCityDTO {
+
+        /**
+         * id
+         */
+        @NotBlank(message = "城市不能为空")
+        private String id;
+
+        /**
+         * 省id 来源
+         */
+        @NotBlank(message = "省不能为空")
+        private String provinceId;
+
+        /**
+         * 城市名
+         */
+        @NotBlank(message = "城市名称不能为空")
+        private String name;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO{
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+
+
+
+        /**
+         * 上级名称
+         */
+        private String parentName;
+
+        /**
+         * 上级名称
+         */
+        private String parentId;
+
+
+    }
+    /**
+     * 修改省
      */
     @Data
     @NoArgsConstructor
@@ -61,7 +142,7 @@ public class DictCityDTO implements Serializable {
         @NotBlank(message = "省份不能为空")
         private String id;
         /**
-         * 国家id 来源
+         * 国家id 来源 http://172.16.100.11:3002/project/36/interface/api/13390
          */
         @NotBlank(message = "国家不能为空")
         private String country;
@@ -73,6 +154,8 @@ public class DictCityDTO implements Serializable {
         private String name;
 
     }
+
+
 
 
     /**
@@ -120,6 +203,23 @@ public class DictCityDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ProvincePagingParamDTO extends SortDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
+
+    /**
+     * 省份参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CityPagingParamDTO extends SortDTO {
         /**
          * 页面高级查询
          */

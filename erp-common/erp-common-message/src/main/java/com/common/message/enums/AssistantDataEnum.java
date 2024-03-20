@@ -13,6 +13,7 @@ public enum AssistantDataEnum {
     GLOBAL_AREA("globalArea", "区域"),
     COUNTRY("country", "国家"),
     PROVINCE("province", "省"),
+    CITY("city", "城市"),
     ;
     private String code;
 

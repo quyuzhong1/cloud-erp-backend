@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- *地址管理-省份管理
+ *地址管理-省份城市管理
  *
  * @author Lambda
  * @since 2023-03-21
@@ -64,8 +64,19 @@ public class DictCityController extends BaseController {
      */
     @PostMapping("/addProvince")
     public ApiResult addProvince(@RequestBody @Validated DictCityDTO.AddProvinceDTO dto) {
-        Boolean result = dictCityService.addProvinceDTO(dto);
+        Boolean result = dictCityService.addProvince(dto);
         return result ? success() : failure();
+    }
+
+    /**
+     * 省详情
+     * @param id
+     * @return
+     */
+    @GetMapping("/provinceView")
+    public ApiResult<DictCityDTO.ViewDTO> provinceView(@RequestParam("id") String id) {
+        DictCityDTO.ViewDTO result = dictCityService.provinceView(id);
+        return success(result);
     }
 
     /**
@@ -81,17 +92,51 @@ public class DictCityController extends BaseController {
 
 
     /**
-     * 添加城市
-     *
+     * 城市分页
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.INSERT, desc = "添加城市")
-    @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated DictCityDTO.AddDTO dto) {
-        Boolean result = dictCityService.add(dto);
+    @PostMapping("/cityPaging")
+    @WebAdvanceQuery(handler = DictParentBaseQueryHandler.class)
+    public ApiResult<PagingVO<DictCityDTO.PagingViewDTO>> cityPaging(@RequestBody @Validated PagingDTO<DictCityDTO.CityPagingParamDTO> dto) {
+        PagingVO<DictCityDTO.PagingViewDTO> pagingVO = dictCityService.cityPaging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 添加城市
+     * @param
+     * @return
+     */
+    @PostMapping("/addCity")
+    public ApiResult addCity(@RequestBody @Validated DictCityDTO.AddCityDTO dto) {
+        Boolean result = dictCityService.addCity(dto);
         return result ? success() : failure();
     }
+
+    /**
+     * 城市详情
+     * @param
+     * @return
+     */
+    @GetMapping("/cityView")
+    public ApiResult<DictCityDTO.ViewDTO> cityView(@RequestParam("id") String id) {
+        DictCityDTO.ViewDTO result = dictCityService.cityView(id);
+        return success(result);
+    }
+
+    /**
+     * 修改城市
+     * @param
+     * @return
+     */
+    @PostMapping("/updateCity")
+    public ApiResult updateCity(@RequestBody @Validated DictCityDTO.UpdateCityDTO dto) {
+        Boolean result = dictCityService.updateCity(dto);
+        return result ? success() : failure();
+    }
+
+
 
     /**
      * 获取省份城市列表

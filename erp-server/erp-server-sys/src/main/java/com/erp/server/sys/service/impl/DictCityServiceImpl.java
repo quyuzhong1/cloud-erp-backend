@@ -13,14 +13,14 @@ import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.dto.DictCityDTO;
-import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
 import com.erp.server.sys.mapper.DictCityMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeCityService;
-import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeCountryService;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeProvinceService;
 import com.erp.server.sys.service.DictCityService;
+import com.erp.server.sys.service.DictCountryService;
 import com.erp.server.sys.service.ThirdpartyRefBusinessService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -48,18 +48,19 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
 
 
     @Resource
+    private SyncKingdeeProvinceService syncKingdeeProvinceService;
+
+    @Resource
     private SyncKingdeeCityService syncKingdeeCityService;
+
+    @Resource
+    private DictCountryService dictCountryService;
 
     @Resource
     private ThirdpartyRefBusinessService thirdpartyRefBusinessService;
 
 
-    @Override
-    public Boolean add(DictCityDTO.AddDTO dto) {
-        List<DictCityEntity> batchList = new LinkedList<>();
-        getSaveTree("0", batchList, dto);
-        return this.saveBatch(batchList);
-    }
+
 
 
     /**
@@ -126,7 +127,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
     }
 
     @Override
-    public Boolean addProvinceDTO(DictCityDTO.AddProvinceDTO dto) {
+    public Boolean addProvince(DictCityDTO.AddProvinceDTO dto) {
         DictCityEntity addEntity = new DictCityEntity();
         String code = dto.getCode();
         addEntity.setKingdeeCode(code);
@@ -139,7 +140,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         handleData(addEntity);
         Boolean addResult = this.save(addEntity);
         if (addResult) {
-            syncKingdeeCityService.syncDataToKingdee(addEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            syncKingdeeProvinceService.syncDataToKingdee(addEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return addResult;
     }
@@ -186,7 +187,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         handleData(entity);
         Boolean updateResult = this.updateById(entity);
         if (updateResult) {
-            syncKingdeeCityService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            syncKingdeeProvinceService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return updateResult;
     }
@@ -210,6 +211,105 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         }
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
 
+
+    }
+
+
+    @Override
+    public DictCityDTO.ViewDTO provinceView(String id) {
+        DictCityDTO.ViewDTO viewDTO=new DictCityDTO.ViewDTO();
+        DictCityEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException("省份不存在");
+        }
+        viewDTO.setId(id);
+        viewDTO.setName(entity.getName());
+        viewDTO.setParentId(entity.getCountryCode());
+        DictCountryEntity country = dictCountryService.getById(entity.getCountryCode());
+        if(Objects.nonNull(country)){
+            viewDTO.setParentName(country.getNameCn());
+        }
+        return viewDTO;
+    }
+
+    /**
+     * 城市分页
+     * @param dto
+     * @return
+     */
+    @Override
+    public PagingVO<DictCityDTO.PagingViewDTO> cityPaging(PagingDTO<DictCityDTO.CityPagingParamDTO> dto) {
+        DictCityDTO.CityPagingParamDTO paramDTO = dto.getParams();
+        paramDTO.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<DictCityDTO.PagingViewDTO> pageData = this.baseMapper.cityPaging(query, paramDTO);
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public Boolean addCity(DictCityDTO.AddCityDTO dto) {
+        DictCityEntity addEntity = new DictCityEntity();
+        //省id
+        String provinceId = dto.getProvinceId();
+        DictCityEntity province = this.getById(provinceId);
+        if (Objects.isNull(province)) {
+            throw new ServiceException("上级省不存在");
+        }
+        String code = dto.getCode();
+        addEntity.setKingdeeCode(code);
+        addEntity.setName(dto.getName());
+        addEntity.setCode(code);
+        addEntity.setType(city);
+        addEntity.setCountryCode(province.getCountryCode());
+        addEntity.setParentId(provinceId);
+        addEntity.setLevel(2);
+        handleData(addEntity);
+        Boolean addResult = this.save(addEntity);
+        if (addResult) {
+            syncKingdeeCityService.syncDataToKingdee(addEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        }
+        return addResult;
+    }
+
+    /**
+     * 城市详情
+     * @param id
+     * @return
+     */
+    @Override
+    public DictCityDTO.ViewDTO cityView(String id) {
+        DictCityEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException("城市不存在");
+        }
+        //省id
+        String provinceId = entity.getParentId();
+        DictCityEntity province = this.getById(provinceId);
+        if (Objects.isNull(province)) {
+            throw new ServiceException("上级省不存在");
+        }
+        DictCityDTO.ViewDTO viewDTO=new DictCityDTO.ViewDTO();
+        viewDTO.setId(id);
+        viewDTO.setName(entity.getName());
+        viewDTO.setParentId(provinceId);
+        viewDTO.setParentName(province.getName());
+        return viewDTO;
+    }
+
+    @Override
+    public Boolean updateCity(DictCityDTO.UpdateCityDTO dto) {
+        String id = dto.getId();
+        DictCityEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException("城市不存在");
+        }
+        entity.setName(dto.getName());
+        handleData(entity);
+        Boolean updateResult = this.updateById(entity);
+        if (updateResult) {
+            syncKingdeeCityService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        }
+        return updateResult;
 
     }
 

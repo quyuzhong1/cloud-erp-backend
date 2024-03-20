@@ -19,7 +19,6 @@ import java.util.List;
  */
 public interface DictCityService extends SuperService<DictCityEntity> {
 
-    Boolean add(DictCityDTO.AddDTO dto);
 
     
     /**
@@ -58,7 +57,7 @@ public interface DictCityService extends SuperService<DictCityEntity> {
      * @param dto
      * @return
      */
-    Boolean addProvinceDTO(DictCityDTO.AddProvinceDTO dto);
+    Boolean addProvince(DictCityDTO.AddProvinceDTO dto);
 
     Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId, String syncKingdeeCode);
 
@@ -78,4 +77,42 @@ public interface DictCityService extends SuperService<DictCityEntity> {
      * @author Lambda
      */
     BatchResultDTO delete(String id);
+
+    /**
+     * 省详情
+     * @param id
+     * @return
+     */
+    DictCityDTO.ViewDTO provinceView(String id);
+
+    /**
+     * 城市分页
+     * @param dto
+     * @return
+     */
+    PagingVO<DictCityDTO.PagingViewDTO> cityPaging(PagingDTO<DictCityDTO.CityPagingParamDTO> dto);
+
+    /**
+     * 添加城市
+     * @param dto
+     * @return
+     */
+    Boolean addCity(DictCityDTO.AddCityDTO dto);
+
+    /**
+     * 城市详情
+     * @description
+     * @param id
+     * @return
+     * @date 2024-03-20 14:44
+     * @author Lambda
+     */
+    DictCityDTO.ViewDTO cityView(String id);
+
+    /**
+     * 修改城市
+     * @param dto
+     * @return
+     */
+    Boolean updateCity(DictCityDTO.UpdateCityDTO dto);
 }
