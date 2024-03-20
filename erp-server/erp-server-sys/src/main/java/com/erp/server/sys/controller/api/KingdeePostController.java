@@ -89,9 +89,13 @@ public class KingdeePostController extends BaseController {
      * @author Lambda
      * @date: 2024-03-11
      */
-    @GetMapping("/listByOrgId")
-    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listByOrgId(@RequestParam("orgId") String orgId) {
-        List<KingdeePostEntity> list = kingdeePostService.listByOrgId(orgId);
+    @PostMapping("/listByOrgId")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listByOrgId(@RequestBody BaseIdDTO dto) {
+        String id="";
+         if(Objects.nonNull(dto)){
+             id=dto.getId();
+         }
+        List<KingdeePostEntity> list = kingdeePostService.listByOrgId(id);
         List<BaseDropDownDTO.CommonDTO> result = list.stream().filter(d-> StringUtils.isNotBlank(d.getCode()))
                 .map(x -> new BaseDropDownDTO.CommonDTO(x.getId(), x.getName()))
                 .collect(Collectors.toList());

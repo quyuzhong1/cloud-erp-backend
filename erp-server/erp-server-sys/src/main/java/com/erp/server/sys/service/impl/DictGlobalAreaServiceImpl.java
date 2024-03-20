@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -267,7 +268,8 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
 
         }
 
-        return null;
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
+
     }
 
     @Override
@@ -277,10 +279,13 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
 
     @Override
     public Boolean updateSyncKingdeeId(String id, String syncKingdeeId, String syncKingdeeCode) {
-        Boolean result= this.lambdaUpdate()
-                .eq(DictGlobalAreaEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeCode), DictGlobalAreaEntity::getKingdeeCode, syncKingdeeCode)
-                .update();
+        Boolean result= false;
+        if(StringUtils.isNotBlank(syncKingdeeCode)){
+            result= this.lambdaUpdate()
+                    .eq(DictGlobalAreaEntity::getId, id)
+                    .set(StringUtils.isNotBlank(syncKingdeeCode), DictGlobalAreaEntity::getKingdeeCode, syncKingdeeCode)
+                    .update();
+        }
 
         ThirdpartyRefBusinessEntity refBusinessEntity = thirdpartyRefBusinessService.getByBusinessId(id);
         if (Objects.isNull(refBusinessEntity)) {
@@ -293,6 +298,12 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
             refEntity.setBusinessId(id);
             refEntity.setThirdpartyId(syncKingdeeId);
             thirdpartyRefBusinessService.save(refEntity);
+        }else{
+            String thirdpartyId = refBusinessEntity.getThirdpartyId();
+            if(!syncKingdeeId.equals(thirdpartyId)){
+                refBusinessEntity.setThirdpartyId(syncKingdeeId);
+                thirdpartyRefBusinessService.updateById(refBusinessEntity);
+            }
         }
 
         return result;

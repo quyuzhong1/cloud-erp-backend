@@ -1,5 +1,6 @@
 package com.erp.server.sys.service;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -116,4 +117,13 @@ public interface DictCountryService extends SuperService<DictCountryEntity> {
     DictCountryDTO.ViewDTO view(String id);
 
     Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId, String syncKingdeeCode);
+
+    /**
+     * 删除
+     * @param id
+     * @return
+     */
+    BatchResultDTO delete(String id);
+
+
 }

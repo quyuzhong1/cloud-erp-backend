@@ -12,12 +12,15 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.dto.KingdeeDTO;
@@ -62,6 +65,8 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
 
     @Resource
     private SyncKingdeeCountryService syncKingdeeCountryService;
+
+
 
 
     @Override
@@ -393,9 +398,36 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
             refEntity.setBusinessId(id);
             refEntity.setThirdpartyId(syncKingdeeId);
             thirdpartyRefBusinessService.save(refEntity);
+        }else{
+            String thirdpartyId = refBusinessEntity.getThirdpartyId();
+            if(!syncKingdeeId.equals(thirdpartyId)){
+                refBusinessEntity.setThirdpartyId(syncKingdeeId);
+                thirdpartyRefBusinessService.updateById(refBusinessEntity);
+            }
         }
 
         return result;
+    }
+
+    @Override
+    public BatchResultDTO delete(String id) {
+        DictCountryEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException("国家不存在");
+        }
+        List<DictCityDTO.ListDTO> cityList = dictCityService.listCity(id);
+        if(CollectionUtils.isNotEmpty(cityList)){
+            throw new ServiceException("国家下存在省市，无法删除");
+        }
+        Boolean result= this.removeById(id);
+        if (result ) {
+            //金蝶推送
+            syncKingdeeCountryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+            thirdpartyRefBusinessService.removeByBusinessId(id);
+
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
+
     }
 
 

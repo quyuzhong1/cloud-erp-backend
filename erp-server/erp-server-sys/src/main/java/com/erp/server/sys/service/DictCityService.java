@@ -41,4 +41,6 @@ public interface DictCityService extends SuperService<DictCityEntity> {
      * @return
      */
     DictCityEntity getReginByName(String reginName,Integer level);
+
+
 }
