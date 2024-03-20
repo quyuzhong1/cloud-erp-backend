@@ -571,4 +571,15 @@ public class FirstMileDeliveryController extends BaseController {
         Boolean result = firstMileDeliveryService.importFile(excelFile, response);
         return result == true ? success() : failure();
     }
+
+
+    /**
+     * 生成状态更新
+     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "生成状态更新")
+    @PostMapping("/generateStatusUpdate")
+    public ApiResult generateStatusUpdate(@RequestBody FirstMileDeliveryDTO.GenerateStatusUpdateDTO dto) {
+        Boolean result = firstMileDeliveryService.generateStatusUpdate(dto);
+        return result == true ? success() : failure();
+    }
 }

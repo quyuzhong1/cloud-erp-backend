@@ -341,6 +341,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+
+        //已装箱才能审核
+        if (PackingStatusEnum.NOT_PACKING.getCode().equals(entity.getPackingStatus())) {
+            throw new ServiceException(ApiError.NOT_PACKAGE_NO_APPROVE, entity.getCode());
+        }
+
         //包含组合产品的发货单，必须有关联的下推的加工组装单且加工单审核通过，否则提示：发货单【发货单号】包含组合产品，请先下推加工单并且审核通过后重试
         List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
         List<FirstMileDeliveryDetailEntity> isCombinationList = detailEntityList.stream().filter(req -> req.getIsCombination()).collect(Collectors.toList());
@@ -597,6 +603,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (ObjectUtil.isNotEmpty(inboundEntity)) {
             throw new ServiceException(ApiError.GENERATE_INBOUND_NOT_DIS_APPROVE, inboundEntity.getCode());
         }
+
+        //校验下游单据是否生成【包含报关单，物流单】状态为已生成 不可反审核【提示：报关单/物流单[单号]已生成，不可反审核】
+
         return true;
     }
 
@@ -1776,5 +1785,19 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         return true;
     }
 
+    @Override
+    public Boolean generateStatusUpdate(FirstMileDeliveryDTO.GenerateStatusUpdateDTO dto) {
+        if (CollectionUtils.isEmpty(dto.getIds()) || CollectionUtils.isEmpty(dto.getBillTypes())) {
+            return false;
+        }
+        for (String billType : dto.getBillTypes()) {
+            lambdaUpdate()
+                    .set(FmDeliveryBillTypeEnum.DECLARE.getCode().equals(billType), FirstMileDeliveryEntity::getDeliveryStatus, FmDeliveryDeclareStatusEnum.NONE.getCode())
+                    .set(FmDeliveryBillTypeEnum.LOGISTICS.getCode().equals(billType), FirstMileDeliveryEntity::getDeliveryStatus, FmDeliveryLogisticsStatusEnum.NONE.getCode())
+                    .in(FirstMileDeliveryEntity::getId, dto.getIds())
+                    .update();
+        }
+        return Boolean.TRUE;
+    }
 }
 

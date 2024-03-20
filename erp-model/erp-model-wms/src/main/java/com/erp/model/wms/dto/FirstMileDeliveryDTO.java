@@ -1056,5 +1056,20 @@ public class FirstMileDeliveryDTO implements Serializable {
         private Integer boxQty;
     }
 
-
+    /**
+     * 生成状态修改入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateStatusUpdateDTO {
+        /**
+         * 单据id
+         */
+        private List<String> ids;
+        /**
+         * 单据类型
+         * 接口：/wms/dict/list?key=fmDeliveryBillType
+         */
+        private List<String> billTypes;
+    }
 }
