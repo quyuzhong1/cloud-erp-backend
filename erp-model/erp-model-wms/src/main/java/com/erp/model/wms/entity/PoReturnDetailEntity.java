@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -111,6 +112,10 @@ public class PoReturnDetailEntity extends BaseEntity<PoReturnDetailEntity> {
 
     @TableField(exist = false)
     private String approveStatus;
+
+    @TableField(exist = false)
+    private LocalDateTime approveTime;
+
 
     @TableField(exist = false)
     private String returnMode;

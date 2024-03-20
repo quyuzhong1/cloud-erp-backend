@@ -54,6 +54,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -538,6 +539,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     .eq(PurchaseOrderDetailEntity::getId,detailId)
                     .set(PurchaseOrderDetailEntity::getExecutionStatus,executionStatus)
                     .set(PurchaseOrderDetailEntity::getIsEndReceive,Boolean.TRUE)
+                    .set(PurchaseOrderDetailEntity::getEndReceiveTime, LocalDateTime.now())
                     .set(PurchaseOrderDetailEntity::getRemark, newRemark)
                     .update();
         });

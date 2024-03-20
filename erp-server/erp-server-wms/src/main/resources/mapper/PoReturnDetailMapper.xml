@@ -35,6 +35,7 @@
         select
         prod.id,
         pro.approve_status,
+        pro.approve_time,
         prod.main_id,
         prod.sku_id,
         prod.sku_no,
