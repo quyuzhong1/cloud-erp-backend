@@ -1,6 +1,8 @@
 package com.erp.model.tms.entity;
 
 import java.math.BigDecimal;
+
+import cn.hutool.core.annotation.Alias;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -109,6 +111,23 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     @TableField("remark")
     private String remark;
 
+    /**
+     * 汇率
+     */
+    @TableField("exchange_rate")
+    private BigDecimal exchangeRate;
+
+    /**
+     * 实际体积重(物流商)
+     */
+    @TableField("volume_weight_logistics")
+    private BigDecimal volumeWeightLogistics;
+
+    /**
+     * 实重(物流商)
+     */
+    @TableField("weight_logistics")
+    private BigDecimal weightLogistics;
 
     public static final String RECONCILIATION_STATUS = "reconciliation_status";
 
