@@ -30,7 +30,7 @@ public class WmsDataComparePlanEntity extends BaseEntity<WmsDataComparePlanEntit
     @TableField("name")
     private String name;
     /**
-    * 单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收
+    * 单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收  枚举：WmsDataComparePlanBillTypeEnum
     */
     @TableField("bill_type")
     private String billType;

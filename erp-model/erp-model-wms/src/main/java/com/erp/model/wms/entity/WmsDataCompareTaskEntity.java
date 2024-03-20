@@ -35,17 +35,17 @@ public class WmsDataCompareTaskEntity extends BaseEntity<WmsDataCompareTaskEntit
     @TableField("name")
     private String name;
     /**
-    * 单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收
+    * 单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收  枚举：WmsDataCompareTaskBillTypeEnum
     */
     @TableField("bill_type")
     private String billType;
     /**
-    * 任务状态：init=初始，doing=进行中，finish=已完成，error=异常
+    * 任务状态：init=初始，doing=进行中，finish=已完成，error=异常  枚举：WmsDataCompareTaskStatusEnum
     */
     @TableField("status")
     private String status;
     /**
-    * 子任务状态：wait_parse=待解析，wait_compare=待比对，wait_upload=待上传，finish=已完成，error=异常
+    * 子任务状态：wait_parse=待解析，wait_compare=待比对，wait_upload=待上传，finish=已完成，error=异常  枚举：WmsDataCompareTaskSubStatusEnum
     */
     @TableField("sub_status")
     private String subStatus;

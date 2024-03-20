@@ -35,7 +35,7 @@ public class WmsDataCompareImportEntity extends BaseEntity<WmsDataCompareImportE
     @TableField("file_url")
     private String fileUrl;
     /**
-    * 解析状态：wait=待解析，finish=已解析
+    * 解析状态：wait=待解析，finish=已解析  枚举：WmsDataCompareImportParseStatusEnum
     */
     @TableField("parse_status")
     private String parseStatus;

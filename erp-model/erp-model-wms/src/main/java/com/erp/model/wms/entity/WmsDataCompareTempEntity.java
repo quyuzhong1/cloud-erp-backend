@@ -30,12 +30,12 @@ public class WmsDataCompareTempEntity extends BaseEntity<WmsDataCompareTempEntit
     @TableField("task_id")
     private String taskId;
     /**
-    * 主数据类型：system=系统数据，import=导入数据
+    * 主数据类型：system=系统数据，import=导入数据  枚举：WmsDataCompareTempMainDataTypeEnum
     */
     @TableField("main_data_type")
     private String mainDataType;
     /**
-    * 对比状态：wait=待对比，finish=对比完成
+    * 对比状态：wait=待对比，finish=对比完成  枚举：WmsDataCompareTempCompareStatusEnum
     */
     @TableField("compare_status")
     private String compareStatus;
@@ -55,7 +55,7 @@ public class WmsDataCompareTempEntity extends BaseEntity<WmsDataCompareTempEntit
     @TableField("system_data_id")
     private String systemDataId;
     /**
-    * 对比结果：same=完全一致，exceed=系统多单，miss=系统漏单，diff=差异
+    * 对比结果：same=完全一致，exceed=系统多单，miss=系统漏单，diff=差异  枚举：WmsDataCompareTempCompareResultEnum
     */
     @TableField("compare_result")
     private String compareResult;
