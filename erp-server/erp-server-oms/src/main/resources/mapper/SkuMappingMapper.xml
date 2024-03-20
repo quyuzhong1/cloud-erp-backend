@@ -698,7 +698,7 @@
         inner join listing_info li on sm.listing_id = li.id
         where sm.is_deleted = false
         and li.is_deleted = false
-        and li.is_expire = false
+        and sm.is_expire = false
         <if test="erpSkuIdList !=null and erpSkuIdList.size>0">
             AND sm.product_sku_id IN
             <foreach collection="erpSkuIdList" item="item" open="(" separator="," close=")">
@@ -723,7 +723,7 @@
                  inner join listing_info li on sm.listing_id = li.id
         where
             ${params.sqlMap.default}
-        and sm.is_deleted = false and li.is_deleted = false and li.is_expire = false
+        and sm.is_deleted = false and li.is_deleted = false and sm.is_expire = false
     </select>
 
     <select id="findHistory" resultMap="BaseResultMap">
