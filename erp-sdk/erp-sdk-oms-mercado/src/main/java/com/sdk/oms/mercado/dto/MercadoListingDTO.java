@@ -50,7 +50,7 @@ public class MercadoListingDTO extends CleanBaseDTO {
     private static PlatformProductDTO initPlatformProductDTO(MercadoListingDTO dto) {
         BodyBean bodyBean = dto.getBodyBean();
         PlatformProductDTO resultDto = new PlatformProductDTO();
-        AttributesBean attributesBean = bodyBean.getAttributes().stream().filter(req -> "seller_sku".equals(req.getFid())).findFirst().orElse(null);
+        AttributesBean attributesBean = bodyBean.getAttributes().stream().filter(req -> "SELLER_SKU".equalsIgnoreCase(req.getFid())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(attributesBean)) {
             //平台sku
             resultDto.setPlatformSkuNo(attributesBean.getValueName());

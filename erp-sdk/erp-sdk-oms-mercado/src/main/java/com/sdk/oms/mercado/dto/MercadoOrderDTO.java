@@ -126,18 +126,18 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         if (ObjectUtil.isNotEmpty(orderBean.getShipmentViewDTO())) {
             shipmentViewDTO = orderBean.getShipmentViewDTO();
 
-            if ("m2".equals(shipmentViewDTO.getLogistic().getMode()) && MercadoOrderLogisticTypeEnum.FULFILLMENT.getCode().equals(shipmentViewDTO.getLogistic().getType())) {
+            if ("m2".equalsIgnoreCase(shipmentViewDTO.getLogistic().getMode()) && MercadoOrderLogisticTypeEnum.FULFILLMENT.getCode().equalsIgnoreCase(shipmentViewDTO.getLogistic().getType())) {
                 //如果是平台仓，状态审核通过
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
                 lableMap.put("logisticType", shipmentViewDTO.getLogistic().getType());
                 logisticType = OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
-            } else if ("m2".equals(shipmentViewDTO.getLogistic().getMode())
-                    && (MercadoOrderLogisticTypeEnum.DROP_OFF.getCode().equals(shipmentViewDTO.getLogistic().getType()) || MercadoOrderLogisticTypeEnum.CROSS_DOCKING.getCode().equals(shipmentViewDTO.getLogistic().getType()))
+            } else if ("m2".equalsIgnoreCase(shipmentViewDTO.getLogistic().getMode())
+                    && (MercadoOrderLogisticTypeEnum.DROP_OFF.getCode().equals(shipmentViewDTO.getLogistic().getType()) || MercadoOrderLogisticTypeEnum.CROSS_DOCKING.getCode().equalsIgnoreCase(shipmentViewDTO.getLogistic().getType()))
             ){
                 //中转发货
                 lableMap.put("logisticType", shipmentViewDTO.getLogistic().getType());
                 logisticType = OrderLogisticTypeEnum.TRANSIT_WAREHOUSE.getCode();
-            } else if ("m1".equals(shipmentViewDTO.getLogistic().getMode())) {
+            } else if ("m1".equalsIgnoreCase(shipmentViewDTO.getLogistic().getMode())) {
                 //自发货
                 lableMap.put("logisticType", MercadoOrderLogisticTypeEnum.DEFAULT.getCode());
                 logisticType = OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
@@ -162,24 +162,24 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         if (ObjectUtil.isNotEmpty(orderBean.getShipmentViewDTO())) {
             shipmentViewDTO = orderBean.getShipmentViewDTO();
 
-            if ("handling".equals(shipmentViewDTO.getStatus())) {
+            if ("handling".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE_ING.getStatus());
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-            } else if ("ready_to_ship".equals(shipmentViewDTO.getStatus())) {
+            } else if ("ready_to_ship".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE_ING.getStatus());
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-            } else if ("shipped".equals(shipmentViewDTO.getStatus())) {
+            } else if ("shipped".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-            } else if ("cancelled".equals(shipmentViewDTO.getStatus())) {
+            } else if ("cancelled".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
                 orderDTO.setInvalidStatus(Boolean.TRUE);
                 orderDTO.setRemark("平台取消");
-            } else if ("delivered".equals(shipmentViewDTO.getStatus())) {
+            } else if ("delivered".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-            } else if ("not_delivered".equals(shipmentViewDTO.getStatus())) {
+            } else if ("not_delivered".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             }
