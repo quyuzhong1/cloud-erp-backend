@@ -1,17 +1,23 @@
 package com.baomidou.mybatisplus;
 
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.baomidou.mybatisplus.generator.AutoGenerator;
-import com.baomidou.mybatisplus.generator.config.*;
-import com.baomidou.mybatisplus.generator.config.converts.PostgreSqlTypeConvert;
-import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
-import com.baomidou.mybatisplus.generator.engine.FreemarkerTemplateEngine;
-import lombok.SneakyThrows;
-
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
+
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.generator.AutoGenerator;
+import com.baomidou.mybatisplus.generator.config.ConstVal;
+import com.baomidou.mybatisplus.generator.config.DataSourceConfig;
+import com.baomidou.mybatisplus.generator.config.GlobalConfig;
+import com.baomidou.mybatisplus.generator.config.PackageConfig;
+import com.baomidou.mybatisplus.generator.config.StrategyConfig;
+import com.baomidou.mybatisplus.generator.config.converts.PostgreSqlTypeConvert;
+import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
+import com.baomidou.mybatisplus.generator.engine.FreemarkerTemplateEngine;
+
+import cn.hutool.core.util.StrUtil;
+import lombok.SneakyThrows;
 
 /**
  * mybatisplus自动生成工具
@@ -21,13 +27,13 @@ import java.util.Map;
 public class Generator {
 
     /**
-       模块名（需要更改）
+       模块名（需要更改）新加控制台输入，无需改动代码
      */
-    private static final String MODEL = "tms";
+    private static String MODEL = "tms";
     /**
-     * 作者（需要更改）
+     * 作者（需要更改）新加控制台输入，无需改动代码
      */
-    private static final String AUTHOR = "lrp";
+    private static String AUTHOR = "lrp";
     /**
      * 项目路径
      */
@@ -39,20 +45,20 @@ public class Generator {
     /**
      * 指定server包名
      */
-    private static String BASE_PACKAGE_NAME = StrUtil.format("com.erp.server.{}", MODEL);
+    private static String BASE_PACKAGE_NAME;
     /**
      * 指定Model包名 如com.erp.model.wms
      */
-    private static String BASE_PACKAGE_MODEL_NAME = StrUtil.format("com.erp.model.{}", MODEL);
+    private static String BASE_PACKAGE_MODEL_NAME;
     private static final String BASE_MODEl_PROJECT_NAME = "erp-model";
     /**
      * 模块名
      */
-    private static final String MODULE_NAME = StrUtil.format("erp-model-{}", MODEL);
+    private static String MODULE_NAME;
     /**
      * 服务名
      */
-    private static final String SERVER_NAME = StrUtil.format("erp-server-{}", MODEL);
+    private static String SERVER_NAME;
     /**
      * 输出路径(为空默认为项目路径)
      */
@@ -65,7 +71,7 @@ public class Generator {
     /**
      * 数据库链接
      */
-    private static final String DB_URL = "jdbc:postgresql://172.16.100.12:5432/" + StrUtil.format( "erp-{}", MODEL) + "?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false";
+    private static String DB_URL;
     /**
      * 数据库用户名
      */
@@ -75,10 +81,38 @@ public class Generator {
      */
     private static final String DB_PASSWORD = "admin@viji";
 
-    public static void main(String[] args) {
+    public static String scanner(String tip) throws Exception {
+        Scanner scanner = new Scanner(System.in);
+        StringBuilder help = new StringBuilder();
+        help.append("请输入" + tip + "：");
+        System.out.println(help.toString());
+        if (scanner.hasNext()) {
+            String ipt = scanner.next();
+            if (org.apache.commons.lang.StringUtils.isNotBlank(ipt)) {
+                return ipt;
+            }
+        }
+        throw new Exception("请输入正确的" + tip + "！");
+    }
+    
+    public static void main(String[] args) throws Exception{
         // 需要生成的表名（特别注意：请确保生成多个表时在同一个数据库，如果一次性生成多个，中间有异常不会中断后续生成）
         // 现设置的是文件不覆盖，即生成时如果已经存在该文件则不会生成导致覆盖，设置成true覆盖，如果需要覆盖请将全局配置fileOverride设置成true
-        String[] tableNames = {"logistics_channel_constraint"};
+    	MODEL = scanner("模块名");
+        AUTHOR = scanner("作者");
+        String tableName = scanner("表名，多个英文逗号分割");
+//        String[] tableNames = {"logistics_channel_constraint"};
+        String[] tableNames = tableName.split(",");
+        if(tableNames.length == 1) {
+        	tableNames = tableName.split("，");
+        }
+        
+        BASE_PACKAGE_NAME = StrUtil.format("com.erp.server.{}", MODEL);
+        BASE_PACKAGE_MODEL_NAME = StrUtil.format("com.erp.model.{}", MODEL);
+        MODULE_NAME = StrUtil.format("erp-model-{}", MODEL);
+        SERVER_NAME = StrUtil.format("erp-server-{}", MODEL);
+        DB_URL = "jdbc:postgresql://172.16.100.12:5432/" + StrUtil.format( "erp-{}", MODEL) + "?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false";
+        
         generateByTables(tableNames);
     }
 
