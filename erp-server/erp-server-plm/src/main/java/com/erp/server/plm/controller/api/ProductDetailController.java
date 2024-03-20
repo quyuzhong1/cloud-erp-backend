@@ -21,14 +21,11 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
 import com.erp.model.plm.entity.*;
-import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
-import com.erp.rpc.wms.feign.WarehouseLocationFeign;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.listener.ProductWarehouseLocationListener;
 import com.erp.server.plm.service.*;
@@ -50,7 +47,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 产品管理
@@ -791,7 +787,7 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "产品信息-状态操作-审核通过")
     @PostMapping("/approvalPass")
     public ApiResult approvalPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
-        Boolean result = productDetailService.approvalPass(dto);
+        Boolean result = productDetailService.approvalPass(dto,Boolean.TRUE);
         return result == true ? success() : failure();
     }
 
