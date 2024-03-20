@@ -230,7 +230,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param dto
      * @return Boolean
      */
-    Boolean approvalPass(ProductDetailOperateDTO dto);
+    Boolean approvalPass(ProductDetailOperateDTO dto,Boolean isCheck);
     /**
      * @description: 审核不通过
      * @author Will
