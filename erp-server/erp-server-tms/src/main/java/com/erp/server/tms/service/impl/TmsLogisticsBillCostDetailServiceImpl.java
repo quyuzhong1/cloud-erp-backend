@@ -21,11 +21,11 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
  * <p>
- *  服务实现类
+ * 自发货费用明细 服务实现类
  * </p>
  *
  * @author will
- * @since 2024-03-19
+ * @since 2024-03-20
  */
 @Slf4j
 @Service
@@ -45,14 +45,14 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
         // 数据处理
         handleData(tmsLogisticsBillCostDetailEntity);
 
-        log.info("开始新增");
+        log.info("开始新增自发货费用明细");
         boolean save = super.save(tmsLogisticsBillCostDetailEntity);
         if(!save) {
-            throw new ServiceException("保存失败");
+            throw new ServiceException("自发货费用明细保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "" , tmsLogisticsBillCostDetailEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "自发货费用明细" , tmsLogisticsBillCostDetailEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, tmsLogisticsBillCostDetailEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -67,21 +67,21 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
     @Override
     public Boolean update(TmsLogisticsBillCostDetailDTO.UpdateDTO updateDTO) {
         TmsLogisticsBillCostDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用明细"));
         TmsLogisticsBillCostDetailEntity tmsLogisticsBillCostDetailEntity =  BeanMapperUtils.map(TmsLogisticsBillCostDetailEntity.class, updateDTO);
 
         // 数据处理
         handleData(tmsLogisticsBillCostDetailEntity);
-        log.info("编辑 开始修改数据，id：【{}】", old.getId());
+        log.info("编辑 开始修改自发货费用明细数据，id：【{}】", old.getId());
         boolean save = super.updateById(tmsLogisticsBillCostDetailEntity);
         if(!save) {
-            throw new ServiceException("保存失败");
+            throw new ServiceException("自发货费用明细保存失败");
         }
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录日志数据，id：【{}】", tmsLogisticsBillCostDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), tmsLogisticsBillCostDetailEntity.getId(), "");
+            log.info("编辑 开始记录自发货费用明细日志数据，id：【{}】", tmsLogisticsBillCostDetailEntity.getId());
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), tmsLogisticsBillCostDetailEntity.getId(), "自发货费用明细");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, tmsLogisticsBillCostDetailEntity, null, tmsLogisticsBillCostDetailEntity.getId(), msg);
         return Boolean.TRUE;

@@ -12,11 +12,11 @@ import javax.validation.constraints.Digits;
 
 /**
  * <p>
- * 请求响应实体
+ * 自发货费用明细请求响应实体
  * </p>
  *
  * @author will
- * @since 2024-03-19
+ * @since 2024-03-20
 */
 @Data
 @NoArgsConstructor
@@ -61,6 +61,16 @@ public class TmsLogisticsBillCostDetailDTO implements Serializable {
         * 币别
         */
         private String currency;
+
+        /**
+        * 汇率
+        */
+        private BigDecimal exchangeRate;
+
+        /**
+        * 费用设置id
+        */
+        private String cfgCostId;
 
 
     }
@@ -127,6 +137,20 @@ public class TmsLogisticsBillCostDetailDTO implements Serializable {
         @NotBlank(message = "币别不能为空")
         @Size(max = 32,message = "币别最大长度不能超过32位")
         private String currency;
+
+        /**
+        * 汇率
+        */
+        @NotNull(message = "汇率不能为空")
+        @Digits(integer = 12, fraction = 4, message = "汇率整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal exchangeRate;
+
+        /**
+        * 费用设置id
+        */
+        @NotBlank(message = "费用设置id不能为空")
+        @Size(max = 19,message = "费用设置id最大长度不能超过19位")
+        private String cfgCostId;
 
 
     }

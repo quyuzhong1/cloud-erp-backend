@@ -7,11 +7,11 @@ import org.apache.ibatis.annotations.Mapper;
 
 /**
  * <p>
- *  Mapper 接口
+ * 自发货费用明细 Mapper 接口
  * </p>
  *
  * @author will
- * @since 2024-03-19
+ * @since 2024-03-20
  */
 @Mapper
 public interface TmsLogisticsBillCostDetailMapper extends BaseMapper<TmsLogisticsBillCostDetailEntity> {

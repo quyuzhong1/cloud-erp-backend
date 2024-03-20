@@ -1,23 +1,23 @@
 package com.erp.model.tms.entity;
 
-import com.baomidou.mybatisplus.annotation.TableField;
+import java.math.BigDecimal;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.baomidou.mybatisplus.annotation.TableField;
+import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-
-import java.io.Serializable;
-import java.math.BigDecimal;
+import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
  * <p>
- * 
+ * 自发货费用明细
  * </p>
  *
  * @author will
- * @since 2024-03-19
+ * @since 2024-03-20
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -50,6 +50,16 @@ public class TmsLogisticsBillCostDetailEntity extends BaseEntity<TmsLogisticsBil
     */
     @TableField("currency")
     private String currency;
+    /**
+    * 汇率
+    */
+    @TableField("exchange_rate")
+    private BigDecimal exchangeRate;
+    /**
+    * 费用设置id
+    */
+    @TableField("cfg_cost_id")
+    private String cfgCostId;
 
 
     public static final String MAIN_ID = "main_id";
@@ -61,6 +71,10 @@ public class TmsLogisticsBillCostDetailEntity extends BaseEntity<TmsLogisticsBil
     public static final String COST_VALUE = "cost_value";
 
     public static final String CURRENCY = "currency";
+
+    public static final String EXCHANGE_RATE = "exchange_rate";
+
+    public static final String CFG_COST_ID = "cfg_cost_id";
 
     @Override
     public Serializable pkVal() {

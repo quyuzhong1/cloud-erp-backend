@@ -6,18 +6,18 @@ import com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO;
 
 /**
  * <p>
- *  服务类
+ * 自发货费用明细 服务类
  * </p>
  *
  * @author will
- * @since 2024-03-19
+ * @since 2024-03-20
  */
 public interface TmsLogisticsBillCostDetailService extends SuperService<TmsLogisticsBillCostDetailEntity> {
 
     /**
     * 新增
     * @author will
-    * @date: 2024-03-19
+    * @date: 2024-03-20
     * @param dto
     * @return
     */
@@ -26,7 +26,7 @@ public interface TmsLogisticsBillCostDetailService extends SuperService<TmsLogis
     /**
     * 修改
     * @author will
-    * @date: 2024-03-19
+    * @date: 2024-03-20
     * @param dto
     * @return
     */
