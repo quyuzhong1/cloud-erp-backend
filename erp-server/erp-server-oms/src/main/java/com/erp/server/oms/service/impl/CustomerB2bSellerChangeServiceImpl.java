@@ -29,6 +29,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
@@ -104,7 +105,6 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         }else{
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "查询不到销售员");
         }
-
         CustomerInfoEntity customerInfoEntity = customerInfoService.getById(addDTO.getMainId());
         if(Objects.isNull(customerInfoEntity)){
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "客户信息为空");
@@ -177,7 +177,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     public PagingVO<CustomerB2bSellerChangeDTO.ListDTO> paging(PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage<CustomerB2bSellerChangeDTO.ListDTO> listDTOList = baseMapper.paging(query,dto.getParams());
-        List<String> ids = listDTOList.getRecords().stream().map(CustomerB2bSellerChangeDTO.ListDTO::getId).collect(Collectors.toList());
+        List<String> ids = listDTOList.getRecords().stream().map(CustomerB2bSellerChangeDTO.ListDTO::getCustomerId).collect(Collectors.toList());
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         ids.forEach(obj -> {
             dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_B2B_CHANGE_SELLER.getCode(), obj));
@@ -194,7 +194,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
             //最新待审核人
             if (listApiResult != null && org.apache.commons.collections4.CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(record.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(record.getCustomerId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 if(StringUtils.isNotBlank(curApprove)){
                     record.setApproveUserName(curApprove);
                 }
@@ -530,7 +530,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         if(CollUtil.isEmpty(list)) {
             return;
         }
-        List<String> ids = list.stream().map(CustomerB2bSellerExcelDTO::getId).collect(Collectors.toList());
+        List<String> ids = list.stream().map(CustomerB2bSellerExcelDTO::getMainId).collect(Collectors.toList());
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         ids.forEach(obj -> {
             dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_B2B_CHANGE_SELLER.getCode(), obj));
@@ -547,7 +547,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             customerB2bSellerExcelDTO.setApproveStatusName(ApproveStatusEnum.getName(customerB2bSellerExcelDTO.getApproveStatus()));
             //最新待审核人
             if (listApiResult != null && org.apache.commons.collections4.CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(customerB2bSellerExcelDTO.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(customerB2bSellerExcelDTO.getMainId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 if(StringUtils.isNotBlank(curApprove)){
                     customerB2bSellerExcelDTO.setApproveUserName(curApprove);
                 }
@@ -555,6 +555,17 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         }
         // 数据处理
         ExcelUtil.export("客户b2b销售变更单","客户b2b销售变更单",list,CustomerB2bSellerExcelDTO.class,response);
+    }
+
+    @Override
+    public CustomerB2bSellerChangeEntity getByMainId(String businessId) {
+        if(StringUtils.isBlank(businessId)){
+            return new CustomerB2bSellerChangeEntity();
+        }
+        return lambdaQuery()
+                .eq(CustomerB2bSellerChangeEntity::getMainId, businessId)
+                .last(" LIMIT 1")
+                .one();
     }
 
     /**

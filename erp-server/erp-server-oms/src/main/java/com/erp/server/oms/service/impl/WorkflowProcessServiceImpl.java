@@ -104,8 +104,8 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
 
     private Boolean customerB2bChangeSellerApproveEnd(EndProcessDTO dto) {
         //销售变更单
-        CustomerB2bSellerChangeEntity entity = customerB2bSellerChangeService.getById(dto.getBusinessId());
-        CustomerInfoEntity customerInfo = customerInfoService.getById(entity.getMainId());
+        CustomerInfoEntity customerInfo = customerInfoService.getById(dto.getBusinessId());
+        CustomerB2bSellerChangeEntity entity = customerB2bSellerChangeService.getByMainId(customerInfo.getId());
         BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
         baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
