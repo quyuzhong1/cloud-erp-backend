@@ -203,8 +203,12 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         orderDTO.setLogisticsList(parseLogistics(orderBean, logisticType));
         //B2C销售订单财务信息表
         orderDTO.setFinances(parseFinances(orderBean));
-        orderDTO.setPlatform(PlatformDictEnum.MERCADO.getCode());
-        orderDTO.setUniqueId(String.valueOf(orderBean.getFid()));
+        // 平台类型
+        orderDTO.setPlatform(dto.getPlatform());
+        // 唯一ID
+        orderDTO.setUniqueId(dto.getUniqueId());
+        // 同步任务ID
+        orderDTO.setDmpSyncTaskId(dto.getDmpSyncTaskId());
         return orderDTO;
     }
     /**

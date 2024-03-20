@@ -61,17 +61,21 @@ public class MercadoListingDTO extends CleanBaseDTO {
         resultDto.setPlatformType("platform");
         //产品规格
         resultDto.setProductSpec("");
-        // 平台
-        resultDto.setPlatform(dto.getPlatform());
         //平台产品id
         resultDto.setPlatformProductNo(bodyBean.getFid());
         // 平台产品名称
         resultDto.setPlatformProductName(bodyBean.getTitle());
         //图片
         resultDto.setProductImageUrl(bodyBean.getPictures().get(0).getUrl());
-        resultDto.setUniqueId(bodyBean.getFid());
         resultDto.setShopId(dto.getShopId());
         resultDto.setPlatformUpdateTime(LocalDateTime.now());
+
+        // 平台类型
+        resultDto.setPlatform(dto.getPlatform());
+        // 唯一ID
+        resultDto.setUniqueId(dto.getUniqueId());
+        // 同步任务ID
+        resultDto.setDmpSyncTaskId(dto.getDmpSyncTaskId());
         return resultDto;
     }
 }
