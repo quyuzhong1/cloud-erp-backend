@@ -20,16 +20,40 @@
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
+        create_user_id as createUserId,
+        create_user_name as createUserName,
+        create_time as createTime,
+        update_user_id as updateUserId,
+        update_user_name as updateUserName,
+        update_time as updateTime,
         version,
-        is_deleted,
-        logistics_warehouse_code, erp_warehouse_id, erp_warehouse_name
+        is_deleted as isDeleted,
+        logistics_warehouse_code as logisticsWarehouseCode,
+        erp_warehouse_id as erpWarehouseId,
+        erp_warehouse_name as erpWarehouseName
     </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.tms.dto.TmsWarehouseMappingDTO$ListDTO">
+        select
+              <include refid="Base_Column_List" />
+        from tms_warehouse_mapping twm
+        <where>
+            ${params.sqlMap.default}
+            and twm.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            twm.id desc
+        </where>
+    </select>
 
 
 </mapper>

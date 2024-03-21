@@ -1,12 +1,16 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -15,9 +19,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.tms.dto.TmsWarehouseMappingDTO;
-import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
+import com.erp.model.tms.dto.excel.TmsWarehouseMappingExcelDTO;
 import com.erp.model.tms.entity.TmsWarehouseMappingEntity;
-import com.erp.server.tms.listener.LogisticsBillCostExcelListener;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.server.tms.listener.TmsWarehouseMappingExcelListener;
 import com.erp.server.tms.mapper.TmsWarehouseMappingMapper;
 import com.erp.server.tms.service.CommonService;
 import com.erp.server.tms.service.OperateLogService;
@@ -37,9 +43,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  *  服务实现类
@@ -56,12 +65,19 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
     @Autowired
     private CommonService commonService;
 
+    @Autowired
+    private WmsTaskFeign wmsTaskFeign;
+
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(TmsWarehouseMappingDTO.AddDTO addDTO) {
         TmsWarehouseMappingEntity tmsWarehouseMappingEntity = new TmsWarehouseMappingEntity();
         BeanMapperUtils.copy(addDTO, tmsWarehouseMappingEntity);
+
+        //数据校验
+        checkData(tmsWarehouseMappingEntity);
 
         // 数据处理
         handleData(tmsWarehouseMappingEntity);
@@ -71,12 +87,6 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
         if(!save) {
             throw new ServiceException("保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "" , tmsWarehouseMappingEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, tmsWarehouseMappingEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(tmsWarehouseMappingEntity.getId(), tmsWarehouseMappingEntity.getId());
     }
@@ -91,6 +101,8 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
         TmsWarehouseMappingEntity tmsWarehouseMappingEntity =  BeanMapperUtils.map(TmsWarehouseMappingEntity.class, updateDTO);
 
+        //数据校验
+        checkData(tmsWarehouseMappingEntity);
         // 数据处理
         handleData(tmsWarehouseMappingEntity);
         log.info("编辑 开始修改数据，id：【{}】", old.getId());
@@ -98,29 +110,57 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
         if(!save) {
             throw new ServiceException("保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录日志数据，id：【{}】", tmsWarehouseMappingEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), tmsWarehouseMappingEntity.getId(), "");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, tmsWarehouseMappingEntity, null, tmsWarehouseMappingEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
+    /**
+     * @description: 数据校验
+     * @author Will
+     * @date: 2024/3/21 14:38
+     * @param tmsWarehouseMappingEntity
+     */
+    private void checkData (TmsWarehouseMappingEntity tmsWarehouseMappingEntity) {
+        TmsWarehouseMappingEntity old = getByLogisticsWarehouseCode(tmsWarehouseMappingEntity.getLogisticsWarehouseCode());
+        if (ObjectUtil.isNotEmpty(old) && !StrUtil.equals(tmsWarehouseMappingEntity.getId(),old.getId())) {
+            throw new ServiceException(ApiError.ERROR_WAREHOUSE_MAPPING_EXIST,tmsWarehouseMappingEntity.getLogisticsWarehouseCode());
+        }
+    }
+
+    /**
+     * @description: 根据物流仓库编码查询
+     * @author Will
+     * @date: 2024/3/21 14:40
+     * @param logisticsWarehouseCode
+     * @return TmsWarehouseMappingEntity
+     */
+    private TmsWarehouseMappingEntity getByLogisticsWarehouseCode (String logisticsWarehouseCode) {
+       return lambdaQuery().eq(TmsWarehouseMappingEntity::getLogisticsWarehouseCode,logisticsWarehouseCode)
+                .last("limit 1")
+                .one();
+    }
+
     @Override
-    public PagingVO<TmsWarehouseMappingDTO.ListDTO> paging(PagingDTO<TmsWarehouseMappingDTO.PagingParamDTO> dto) {
-        return null;
+    public PagingVO<TmsWarehouseMappingDTO.ListDTO> paging(PagingDTO<TmsWarehouseMappingDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<TmsWarehouseMappingDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        return new PagingVO(pageData);
     }
 
     @Override
     public TmsWarehouseMappingDTO.ViewDTO view(String id) {
-        return null;
+        TmsWarehouseMappingEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到仓库匹配数据"));
+        TmsWarehouseMappingDTO.ViewDTO data = BeanMapperUtils.map(TmsWarehouseMappingDTO.ViewDTO.class, entity);
+        return data;
     }
 
     @Override
     public BatchResultDTO delete(String id) {
-        return null;
+        TmsWarehouseMappingEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到仓库匹配数据"));
+        // 删除主单数据
+        log.info("删除 开始删除仓库匹配数据，id：【{}】", id);
+        this.removeById(id);
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
     }
 
     @Override
@@ -147,9 +187,9 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        LogisticsBillCostExcelListener excelListenerUtil = new LogisticsBillCostExcelListener();
+        TmsWarehouseMappingExcelListener excelListenerUtil = new TmsWarehouseMappingExcelListener();
         try {
-            EasyExcel.read(excelFile.getInputStream(), LogisticsBillCostExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(excelFile.getInputStream(), TmsWarehouseMappingExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -157,15 +197,15 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
-        List<LogisticsBillCostExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        List<TmsWarehouseMappingExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.ERROR_95123);
         }
-        List<LogisticsBillCostExcelDTO> errorList = excelListenerUtil.getErrorList();
+        List<TmsWarehouseMappingExcelDTO> errorList = excelListenerUtil.getErrorList();
 
-        List<LogisticsBillCostExcelDTO> successList = excelListenerUtil.getSuccessList();
+        List<TmsWarehouseMappingExcelDTO> successList = excelListenerUtil.getSuccessList();
         //处理验证成功数据
-        //handleImportSuccessList(successList, errorList);
+        handleImportSuccessList(successList, errorList);
 
         if (errorList.size() > 0) {
             StringBuffer sb = new StringBuffer();
@@ -207,11 +247,24 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
         return Boolean.TRUE;
     }
 
+    private void handleImportSuccessList (List<TmsWarehouseMappingExcelDTO> successList,List<TmsWarehouseMappingExcelDTO> errorList) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+        List<String> collect = successList.stream().map(TmsWarehouseMappingExcelDTO::getErpWarehouseName).collect(Collectors.toList());
+
+
+    }
 
     /**
     * 新增修改处理数据
     */
     private void handleData(TmsWarehouseMappingEntity tmsWarehouseMappingEntity) {
-    // TODO 验证数据 & 数据赋值
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(tmsWarehouseMappingEntity.getErpWarehouseId()));
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        tmsWarehouseMappingEntity.setErpWarehouseName(warehouseList.get(0).getName());
     }
+
 }

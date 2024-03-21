@@ -134,7 +134,7 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
     private void checkData(TmsCfgCostEntity tmsCfgCostEntity) {
         TmsCfgCostEntity old = getByCostName(tmsCfgCostEntity);
         if (ObjUtil.isNotEmpty(old) && !StrUtil.equals(tmsCfgCostEntity.getId(),old.getId())) {
-            throw new ServiceException(ApiError.ERROR_CFG_COST,tmsCfgCostEntity.getCostName());
+            throw new ServiceException(ApiError.ERROR_CFG_COST_EXIST,tmsCfgCostEntity.getCostName());
         }
     }
 

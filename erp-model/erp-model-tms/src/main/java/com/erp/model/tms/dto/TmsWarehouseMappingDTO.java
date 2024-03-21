@@ -1,6 +1,7 @@
 package com.erp.model.tms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -28,7 +29,7 @@ public class TmsWarehouseMappingDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO {
+    public static class PagingParamDTO  extends SortDTO {
 
         /**
          * 页面高级查询
@@ -147,7 +148,7 @@ public class TmsWarehouseMappingDTO implements Serializable {
         * 仓库代码（物流商）
         */
         @NotBlank(message = "仓库代码（物流商）不能为空")
-        @Size(max = 64,message = "仓库代码（物流商）最大长度不能超过64位")
+        @Size(max = 64,message = "仓库代码（物流商）最大长度不能超过200位")
         private String logisticsWarehouseCode;
 
         /**

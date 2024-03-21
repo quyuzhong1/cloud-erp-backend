@@ -1,8 +1,12 @@
 package com.erp.server.tms.mapper;
-import com.erp.model.tms.entity.TmsWarehouseMappingEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.tms.dto.TmsWarehouseMappingDTO;
+import com.erp.model.tms.entity.TmsWarehouseMappingEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -15,5 +19,13 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface TmsWarehouseMappingMapper extends BaseMapper<TmsWarehouseMappingEntity> {
-
+    /**
+     * @description: 分页查询
+     * @author Will
+     * @date: 2024/3/21 14:26
+     * @param query
+     * @param params
+     * @return IPage<ListDTO>
+     */
+    IPage<TmsWarehouseMappingDTO.ListDTO> paging(Page query,@Param("params") TmsWarehouseMappingDTO.PagingParamDTO params);
 }
