@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -346,5 +347,29 @@ public class OtherOutstockController extends BaseController {
     public ApiResult exportExcel(@RequestBody OtherOutstockDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = otherOutstockService.exportExcel(dto, response);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 下载导入模板
+     *
+     * @author Jim
+     * {@code @date:} 2024/03/21
+     */
+    @GetMapping("/downloadTemplate")
+    public ApiResult<?> downloadTemplate(HttpServletResponse response) {
+        otherOutstockService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
+     * 导入
+     * @author Jim
+     * {@code @date:} 2024/03/21
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入其他出库单")
+    @PostMapping("/import")
+    public ApiResult<?> exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = otherOutstockService.importFile(excelFile, response);
+        return result ? success() : failure();
     }
 }
