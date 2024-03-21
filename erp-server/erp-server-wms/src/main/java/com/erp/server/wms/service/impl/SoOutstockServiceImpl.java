@@ -2240,7 +2240,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String code = docNoGenHelper.generateCode(businessNoType);
         soOutstock.setCode(code);
         LocalDate billDate = dto.getBillDate();
-        Boolean billDateIsNull = Objects.isNull(billDate);
+        boolean billDateIsNull = Objects.isNull(billDate);
         if(billDateIsNull){
             //速卖通菜鸟仓发货单生产的销售出库单，发货日期都取平台出库日期
             SoB2cEntity soB2cEntity = soB2cFeign.getById(dto.getSoId());

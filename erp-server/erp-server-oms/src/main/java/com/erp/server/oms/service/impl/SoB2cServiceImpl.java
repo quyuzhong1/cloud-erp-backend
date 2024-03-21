@@ -5019,6 +5019,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setWarehouseId(warehouseId);
         dto.setWarehouseName(detailList.get(0).getWarehouseName());
         dto.setWarehouseOrgId(detailList.get(0).getWarehouseOrgId());
+        dto.setWarehouseOrgName(detailList.get(0).getWarehouseOrgName());
         LinkedList<SoOutstockDetailDTO.AddDTO> wantDetailList = new LinkedList<>();
 
         List<String> skuIdList = detailList.stream().map(SoB2cDetailEntity::getSkuId).
