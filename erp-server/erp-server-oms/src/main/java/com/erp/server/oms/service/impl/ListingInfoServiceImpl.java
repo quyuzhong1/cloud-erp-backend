@@ -283,6 +283,8 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
         skuMappingService.save(skuMappingEntity);
 
+        operateLogService.addModuleOperateLogByObj(skuMapping, skuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMapping.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",commonService.getUserInfo().getUserName()));
+
         return lambdaUpdate()
                 .set(ListingInfoEntity::getMatchResult, Boolean.TRUE)
                 .eq(ListingInfoEntity::getId, listingInfoEntity.getId())
