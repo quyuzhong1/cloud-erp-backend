@@ -4852,7 +4852,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(soB2cEntity.getDictPlatform())){
             listingInfoParamDTO.setPlatformSpuNoList(Collections.singletonList(detailEntity.getPlatformSpuNo()));
         }
-        listingInfoParamDTO.setPlatformSpuNoList(Collections.singletonList(detailEntity.getPlatformSpuNo()));
         listingInfoParamDTO.setPlatform(soB2cEntity.getDictPlatform());
         listingInfoParamDTO.setShopIdList(Collections.singletonList(soB2cEntity.getShopId()));
         List<SkuMappingDTO.MappingSkuViewDTO> skuDTOS = skuMappingService.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
