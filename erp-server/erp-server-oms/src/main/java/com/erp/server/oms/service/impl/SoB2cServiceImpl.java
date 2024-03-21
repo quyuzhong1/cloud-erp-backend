@@ -3412,7 +3412,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //根据SKU查询BOM判断是否是组合SKU
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
-
+        String combination = BomTypeEnum.COMBINATION.getType();
+        bomChildrenList=bomChildrenList.stream().filter(b->combination.equals(b.getType())).collect(Collectors.toList());
         SoB2cDTO.FinancialParamDTO dto = new SoB2cDTO.FinancialParamDTO();
         dto.setId(soB2cEntity.getId());
         dto.setIsCny(Boolean.TRUE);
@@ -3556,7 +3557,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ProductDetailDTO.ProductDTO productDTO = productList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(productDTO)) {
                 detailMap.put("category", productDTO.getCategory());
-                detailMap.put("property", productDTO.getProperty());
+                detailMap.put("propertyId", productDTO.getLogisticsPropertyId());
             }
             detailMap.put("deliveryWarehouseId", detailEntity.getWarehouseId());
             detailMap.put("deliveryWarehouseLocation", detailEntity.getWarehouseLocation());
