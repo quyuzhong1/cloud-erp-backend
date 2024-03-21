@@ -268,8 +268,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         //目的国申报价币种
         String destCurrency=declareInfo.getDestCurrency();
         if(StringUtils.isBlank(declareCurrency)){
-            declareInfo.setDeclareCurrency(CurrencyEnum.USD.getCurrencyCode());
-            declareInfo.setDeclareCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+            declareInfo.setDeclareCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            declareInfo.setDeclareCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         }
         if(StringUtils.isBlank(destCurrency)){
             declareInfo.setDestCurrency(CurrencyEnum.USD.getCurrencyCode());
