@@ -127,10 +127,10 @@ public class MercadoSdkClientService {
             tokenDTO = JSONUtil.toBean(bodyStr, PlatformMercadoTokenDTO.class);
 //            log.info(String.format("::::: 美客多授权 ::::: 请求地址 => %s, 平台返回值 => %s ", baseUrl, tokenDTO));
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADO.getName(), bodyStr);
+            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
         }
         if (StringUtil.isBlank(tokenDTO.getAccessToken())) {
-            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADO.getName(), bodyStr);
+            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
         }
 
         //返回token实体
@@ -165,10 +165,10 @@ public class MercadoSdkClientService {
             refreshTokenDTO = JSONUtil.toBean(bodyStr, PlatformMercadoRefreshTokenDTO.class);
 //            log.info(String.format("::::: 美客多刷新token ::::: 请求地址 => %s, 平台返回值 => %s ", baseUrl, refreshTokenDTO));
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADO.getName(), bodyStr);
+            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
         }
         if (StringUtil.isBlank(refreshTokenDTO.getAccessToken())) {
-            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADO.getName(), bodyStr);
+            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
         }
 
         //返回token实体
@@ -448,7 +448,7 @@ public class MercadoSdkClientService {
      * @return
      */
     public MercadoShopInfoDTO getShopInfoByShopId(String shopId) {
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADO.getCode(), shopId);
+        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE.getCode(), shopId);
         // 缓存获取
         Object tokenObj = redisUtil.get(tokenKey);
         if (null != tokenObj) {

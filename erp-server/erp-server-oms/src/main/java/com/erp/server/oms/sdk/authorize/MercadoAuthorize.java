@@ -45,7 +45,7 @@ import java.util.*;
  */
 @Slf4j
 @Component
-@PlatformAnnotate(method = PlatformDictEnum.MERCADO)
+@PlatformAnnotate(method = PlatformDictEnum.MERCADOLIBRE)
 public class MercadoAuthorize implements IShopAuthorizeService<T> {
 
     @Resource
@@ -193,7 +193,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         shopInfoDTO.setName(shopInfo.getName());
         shopInfoDTO.setAccessToken(platformMercadoTokenDTO.getAccessToken());
         shopInfoDTO.setUserId(platformMercadoTokenDTO.getUserId());
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADO.getCode(), shopId);
+        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE.getCode(), shopId);
         redisUtil.set(tokenKey, shopInfoDTO, platformMercadoTokenDTO.getExpiresIn());
 
         redisUtil.del(stateKey);
@@ -228,7 +228,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         }
         // 移除缓存
         // platform-token:平台名称:店铺ID
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADO.getCode(), shopInfo.getId());
+        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE.getCode(), shopInfo.getId());
         Object shopInfoObj = redisUtil.get(tokenKey);
         if (null != shopInfoObj) {
             redisUtil.del(tokenKey);
@@ -300,7 +300,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         shopInfoDTO.setAccessToken(accessToken);
 
         //设置缓存
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADO.getCode(), dto.getShopId());
+        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE.getCode(), dto.getShopId());
         redisUtil.set(tokenKey, shopInfoDTO, expiresIn);
 
         return Boolean.TRUE;
@@ -308,7 +308,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
 
     private void refreshErrorWarn(ShopAuthEntity shopAuthEntity, Exception e) {
         //记录错误次数
-        String refreshTokenKey = StrUtil.format(RedisCacheConstants.REDIS_REFRESH_PLATFORM_TOKEN, PlatformDictEnum.MERCADO.getCode(), shopAuthEntity.getShopId());
+        String refreshTokenKey = StrUtil.format(RedisCacheConstants.REDIS_REFRESH_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE.getCode(), shopAuthEntity.getShopId());
         redisUtil.incr(refreshTokenKey, 1);
 
         //获取错误次数
@@ -321,9 +321,9 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
 
                 //预警通知
                 WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-                warnMsgInfo.setBizName(PlatformDictEnum.MERCADO.getName());
+                warnMsgInfo.setBizName(PlatformDictEnum.MERCADOLIBRE.getName());
                 warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-                warnMsgInfo.setTitle(StrUtil.format("平台【{}】店铺id{}刷新token失败",PlatformDictEnum.MERCADO.getName(),shopAuthEntity.getShopId()));
+                warnMsgInfo.setTitle(StrUtil.format("平台【{}】店铺id{}刷新token失败",PlatformDictEnum.MERCADOLIBRE.getName(),shopAuthEntity.getShopId()));
                 warnMsgInfo.setTableName("shop_auth");
                 warnMsgInfo.setTableId(shopAuthEntity.getId());
                 warnMsgInfo.setKeyInfo(e.getMessage());

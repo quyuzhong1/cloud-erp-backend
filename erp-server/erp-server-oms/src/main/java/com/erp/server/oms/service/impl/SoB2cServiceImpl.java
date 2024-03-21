@@ -2034,7 +2034,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException(ApiError.ERROR_SO_B2C_SHOPEE_NOT_MERGE, entity.getCode());
             }
             //美客多订单不支持合并
-            if (PlatformDictEnum.MERCADO.getCode().equals(entity.getDictPlatform())) {
+            if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(entity.getDictPlatform())) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_MERCADO_NOT_MERGE, entity.getCode());
             }
         }
@@ -3301,7 +3301,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (PlatformDictEnum.SHOPEE.getCode().equals(entity.getDictPlatform())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_SHOPEE_NOT_SPLIT, entity.getCode());
         }
-        if (PlatformDictEnum.MERCADO.getCode().equals(entity.getDictPlatform())) {
+        if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(entity.getDictPlatform())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_MERCADO_NOT_SPLIT, entity.getCode());
         }
 
@@ -3471,7 +3471,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         map.put("dictPlatform", soB2cEntity.getDictPlatform());
 
         //如果是美客多，取订单标签里面的发货类型标识匹配订单规则
-        if (PlatformDictEnum.MERCADO.getCode().equals(soB2cEntity.getPlatformCode())) {
+        if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(soB2cEntity.getPlatformCode())) {
             SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(soB2cEntity.getLabelJson(), SoB2cDTO.LabelDTO.class);
             map.put("mercadoOrderDeliveryType", labelJsonDTO.getLogisticType());
         }
@@ -3569,7 +3569,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("orderProfitRate", financialInfo.getProfitRateFlag());
 
             //如果是美客多，取订单标签里面的发货类型标识匹配订单规则
-            if (PlatformDictEnum.MERCADO.getCode().equals(soB2cEntity.getPlatformCode())) {
+            if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(soB2cEntity.getPlatformCode())) {
                 SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(soB2cEntity.getLabelJson(), SoB2cDTO.LabelDTO.class);
                 map.put("mercadoOrderDeliveryType", labelJsonDTO.getLogisticType());
             }

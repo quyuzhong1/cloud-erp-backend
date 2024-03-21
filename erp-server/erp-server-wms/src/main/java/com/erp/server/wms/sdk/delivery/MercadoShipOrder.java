@@ -22,7 +22,7 @@ import java.util.List;
 
 @Slf4j
 @Component
-@PlatformShipOrderAnno(method = PlatformDictEnum.MERCADO)
+@PlatformShipOrderAnno(method = PlatformDictEnum.MERCADOLIBRE)
 public class MercadoShipOrder implements IPlatformService {
     @Resource
     private SoB2cFeign soB2cFeign;

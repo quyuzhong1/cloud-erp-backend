@@ -43,7 +43,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         this.orderBean = orderBean;
         this.shopId = shopId;
         this.setIsClean(0);
-        this.setPlatform(PlatformDictEnum.MERCADO.getCode());
+        this.setPlatform(PlatformDictEnum.MERCADOLIBRE.getCode());
         this.setUniqueId(combineUnique(String.valueOf(orderBean.getFid()), this.shopId));
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
@@ -74,7 +74,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         orderDTO.setPlatformCode(String.valueOf(orderBean.getFid()));
 
         //销售平台
-        orderDTO.setDictPlatform(PlatformDictEnum.MERCADO.getCode());
+        orderDTO.setDictPlatform(PlatformDictEnum.MERCADOLIBRE.getCode());
 
         // 店铺ID
         orderDTO.setShopId(dto.getShopId());

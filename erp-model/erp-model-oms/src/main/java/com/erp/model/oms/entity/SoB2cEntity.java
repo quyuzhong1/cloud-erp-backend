@@ -378,7 +378,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
             }
         }
         //美客多
-        if (PlatformDictEnum.MERCADO.getCode().equalsIgnoreCase(this.dictPlatform)) {
+        if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(this.dictPlatform)) {
             if (StrUtil.isNotBlank(this.labelJson)) {
                 SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
                 //平台仓发货

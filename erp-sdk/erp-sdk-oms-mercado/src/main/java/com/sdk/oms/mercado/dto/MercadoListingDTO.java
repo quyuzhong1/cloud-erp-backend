@@ -30,7 +30,7 @@ public class MercadoListingDTO extends CleanBaseDTO {
         this.bodyBean = bodyBean;
         this.setIsClean(0);
         this.shopId = dto.getShopId();
-        super.setPlatform(PlatformDictEnum.MERCADO.getCode());
+        super.setPlatform(PlatformDictEnum.MERCADOLIBRE.getCode());
         this.setUniqueId(bodyBean.getFid());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());

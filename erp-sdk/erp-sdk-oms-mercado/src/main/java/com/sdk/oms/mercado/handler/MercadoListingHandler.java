@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
-@PlatformType(PlatformDictEnum.MERCADO)
+@PlatformType(PlatformDictEnum.MERCADOLIBRE)
 @BusinessType(BusinessTypeEnum.PRODUCT)
 public class MercadoListingHandler extends AbstractProductHandler<MercadoListingDTO, PlatformProductDTO> {
     @Resource

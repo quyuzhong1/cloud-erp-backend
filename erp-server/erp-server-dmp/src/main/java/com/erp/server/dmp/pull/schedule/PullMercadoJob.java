@@ -35,7 +35,7 @@ public class PullMercadoJob {
     @XxlJob("mercadoExecute")
     public void execute() {
         // 分组查询
-        List<String> groupIds = platformApiTaskService.findGroupIdByPlatform(PlatformDictEnum.MERCADO.getCode());
+        List<String> groupIds = platformApiTaskService.findGroupIdByPlatform(PlatformDictEnum.MERCADOLIBRE.getCode());
         if (CollectionUtils.isEmpty(groupIds)) {
             XxlJobHelper.log("[拉取沃尔玛任务] 任务结束:无任务 =====");
             return;
@@ -47,7 +47,7 @@ public class PullMercadoJob {
 
     @XxlJob("mercadoCleanExecute")
     public void mercadoCleanExecute() {
-        List<CleanDataTableEnum> platforms = CleanDataTableEnum.getByPlatform(PlatformDictEnum.MERCADO.getCode());
+        List<CleanDataTableEnum> platforms = CleanDataTableEnum.getByPlatform(PlatformDictEnum.MERCADOLIBRE.getCode());
         if (CollectionUtils.isNotEmpty(platforms)){
             platforms.forEach(cleanDataTableEnum -> {
                 JobTaskDTO jobTaskDTO = new JobTaskDTO();

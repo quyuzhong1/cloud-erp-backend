@@ -252,7 +252,7 @@ public class ShopeeAuthorize implements IShopAuthorizeService<T> {
 
                 //预警通知
                 WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-                warnMsgInfo.setBizName(PlatformDictEnum.MERCADO.getName());
+                warnMsgInfo.setBizName(PlatformDictEnum.MERCADOLIBRE.getName());
                 warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
                 warnMsgInfo.setTitle(StrUtil.format("平台【{}】店铺id{}刷新token失败",PlatformDictEnum.SHOPEE.getName(),authEntity.getShopId()));
                 warnMsgInfo.setTableName("shop_auth");

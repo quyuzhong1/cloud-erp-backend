@@ -111,7 +111,7 @@ public class ShopAuthorizeDTO implements Serializable {
 
         // 美客多
         if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code) && StrUtil.startWith(this.code, "TG")){
-            this.setPlatformCode(PlatformDictEnum.MERCADO.getCode());
+            this.setPlatformCode(PlatformDictEnum.MERCADOLIBRE.getCode());
             return this;
         }
 
