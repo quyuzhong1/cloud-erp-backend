@@ -47,7 +47,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -393,6 +392,12 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
         }
         this.batchAddOrUpdate(addList,updateList);
         return ApiResult.success();
+    }
+
+    @Override
+    public List<ProductRegistrationEntity> listBySkuId(String skuId) {
+        return lambdaQuery().eq(ProductRegistrationEntity::getSkuId,skuId)
+                .list();
     }
 
     public void batchAddOrUpdate(List<ProductRegistrationEntity> addList,List<ProductRegistrationEntity> updateList){

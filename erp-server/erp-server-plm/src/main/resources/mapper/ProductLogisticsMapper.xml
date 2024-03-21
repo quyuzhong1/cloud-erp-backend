@@ -53,4 +53,54 @@
         </where>
     </select>
 
+
+    <select id="getEntityById" resultType="com.erp.model.plm.entity.ProductLogisticsEntity">
+        SELECT
+            pl.id,
+            pd.sku_no,
+            pl.sku_id,
+            pl.product_property,
+            pl.product_property_id,
+            pl.declare_model,
+            pl.declare_chinese_name,
+            pl.declare_english_name,
+            pl.declare_price,
+            pl.customs_code,
+            pl.declare_unit,
+            pl.declare_element,
+            pl.english_material,
+            pl.english_usage,
+            pl.declare_currency,
+            pl.declare_currency_symbol,
+            pl.dest_declare_price,
+            pl.dest_currency,
+            pl.dest_currency_symbol,
+            pl.exemption,
+            pl.source_cargo,
+            pl.source_country,
+            pl.combination_declare_type,
+            pl.input_voltage,
+            pl.output_voltage,
+            pl.voltage_unit,
+            pl.input_electric,
+            pl.output_electric,
+            pl.electric_unit,
+            pl.input_power,
+            pl.output_power,
+            pl.power_unit,
+            pl.input_battery_capacity,
+            pl.output_battery_capacity,
+            pl.battery_capacity_unit,
+            pl.approve_time,
+            pl.approve_user_name,
+            pl.approve_user_id,
+            pl.approve_status,
+            pl.first_qty,
+            pl.second_qty
+        FROM product_detail pd
+        INNER JOIN product_logistics pl ON pl.sku_id = pd."id" AND pl.is_deleted = FALSE
+        WHERE pl.id = #{id} AND pd.is_deleted = FALSE
+        ORDER BY pd.id desc
+    </select>
+
 </mapper>

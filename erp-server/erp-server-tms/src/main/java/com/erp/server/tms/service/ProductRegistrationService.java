@@ -1,11 +1,13 @@
 package com.erp.server.tms.service;
+
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.dto.ProductRegistrationDTO;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.tms.dto.ProductRegistrationDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -61,4 +63,12 @@ public interface ProductRegistrationService extends SuperService<ProductRegistra
     void export(ProductRegistrationDTO.PagingParamDTO dto, HttpServletResponse response);
 
     ApiResult<?> pullAllProduct(String declareSupplierId);
+    /**
+     * @description: 根据skuId查询
+     * @author Will
+     * @date: 2024/3/21 16:42
+     * @param skuId
+     * @return List<ProductRegistrationEntity>
+     */
+    List<ProductRegistrationEntity> listBySkuId(String skuId);
 }

@@ -1,14 +1,14 @@
 package com.erp.model.tms.dto;
 
-import java.math.BigDecimal;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+
 import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -111,20 +111,6 @@ public class TmsLogisticsBillCostDetailDTO implements Serializable {
         private String mainId;
 
         /**
-        * 费用编码
-        */
-        @NotBlank(message = "费用编码不能为空")
-        @Size(max = 32,message = "费用编码最大长度不能超过32位")
-        private String costCode;
-
-        /**
-        * 费用名称
-        */
-        @NotBlank(message = "费用名称不能为空")
-        @Size(max = 100,message = "费用名称最大长度不能超过100位")
-        private String costName;
-
-        /**
         * 费用值
         */
         @NotNull(message = "费用值不能为空")
@@ -152,7 +138,11 @@ public class TmsLogisticsBillCostDetailDTO implements Serializable {
         @Size(max = 19,message = "费用设置id最大长度不能超过19位")
         private String cfgCostId;
 
-
+        /**
+         * 类型（estimated预估、actual实际）
+         */
+        @NotBlank(message = "类型不能为空")
+        private String type;
     }
 
 

@@ -38,6 +38,14 @@ public interface ProductLogisticsMapper extends BaseMapper<ProductLogisticsEntit
      * @return List<SelectDTO>
      */
     List<LogisticsProductDTO.SelectDTO> selectSku();
+    /**
+     * @description: 关联查询
+     * @author Will
+     * @date: 2024/3/21 17:01
+     * @param id
+     * @return ProductLogisticsEntity
+     */
+    ProductLogisticsEntity getEntityById(@Param("id")String id);
 }
 
 

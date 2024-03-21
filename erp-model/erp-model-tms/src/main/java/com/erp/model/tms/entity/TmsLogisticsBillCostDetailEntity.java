@@ -1,14 +1,14 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -31,16 +31,6 @@ public class TmsLogisticsBillCostDetailEntity extends BaseEntity<TmsLogisticsBil
     @TableField("main_id")
     private String mainId;
     /**
-    * 费用编码
-    */
-    @TableField("cost_code")
-    private String costCode;
-    /**
-    * 费用名称
-    */
-    @TableField("cost_name")
-    private String costName;
-    /**
     * 费用值
     */
     @TableField("cost_value")
@@ -60,6 +50,12 @@ public class TmsLogisticsBillCostDetailEntity extends BaseEntity<TmsLogisticsBil
     */
     @TableField("cfg_cost_id")
     private String cfgCostId;
+
+    /**
+     * 类型（estimated预估、actual实际）
+     */
+    @TableField("type")
+    private String type;
 
 
     public static final String MAIN_ID = "main_id";

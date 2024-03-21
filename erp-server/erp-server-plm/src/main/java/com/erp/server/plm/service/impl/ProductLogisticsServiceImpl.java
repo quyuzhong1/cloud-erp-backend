@@ -115,6 +115,11 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
     public List<LogisticsProductDTO.SelectDTO> selectSku() {
         return baseMapper.selectSku();
     }
+
+    @Override
+    public ProductLogisticsEntity getEntityById(String id) {
+        return baseMapper.getEntityById(id);
+    }
 }
 
 

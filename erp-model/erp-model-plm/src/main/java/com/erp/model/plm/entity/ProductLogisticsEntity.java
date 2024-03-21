@@ -253,6 +253,8 @@ public class ProductLogisticsEntity extends BaseEntity implements Serializable {
     @TableField("second_qty")
     private Integer secondQty;
 
+    @TableField(exist = false)
+    private String skuNo;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

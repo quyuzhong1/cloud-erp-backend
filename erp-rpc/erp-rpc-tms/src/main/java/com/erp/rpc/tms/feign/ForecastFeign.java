@@ -3,6 +3,7 @@ package com.erp.rpc.tms.feign;
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.tms.dto.ProductRegistrationDTO;
 import com.erp.model.tms.dto.SettingForecastDTO;
+import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.SettingForecastEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
@@ -61,4 +62,14 @@ public interface ForecastFeign {
 
     @GetMapping("/feign/settingForecast/getSettingForecastByLogisticsSupplierId")
     SettingForecastEntity getSettingForecastByLogisticsSupplierId(@RequestParam("logisticsSupplierId") String logisticsSupplierId);
+
+    /**
+     * @description: 根据skuId查询备案
+     * @author Will
+     * @date: 2024/3/21 16:37
+     * @param skuId
+     * @return List<ProductRegistrationEntity>
+     */
+    @GetMapping("/feign/productRegistration/listBySkuId")
+    List<ProductRegistrationEntity> listBySkuId(@RequestParam("skuId")String skuId);
 }

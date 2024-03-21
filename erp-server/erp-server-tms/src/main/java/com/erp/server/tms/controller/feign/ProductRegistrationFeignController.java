@@ -4,13 +4,11 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.ProductRegistrationDTO;
 import com.erp.model.tms.dto.SettingForecastDTO;
+import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.server.tms.service.ProductRegistrationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -56,5 +54,19 @@ public class ProductRegistrationFeignController {
     public List<BatchResultDTO> add(@RequestBody @Validated ProductRegistrationDTO.AddDTO dto) {
         List<BatchResultDTO> add = productRegistrationService.add(dto);
         return add;
+    }
+
+    /**
+     * 根据skuId查询
+     * @author Will
+     * @date: 2024/3/21 16:43
+     * @param skuId
+     * @return List<ProductRegistrationEntity>
+     */
+    @GetMapping("/listBySkuId")
+    public List<ProductRegistrationEntity>  listBySkuId(@RequestParam("skuId")String skuId) {
+        List<ProductRegistrationEntity> list = productRegistrationService.listBySkuId(skuId);
+        return list;
+
     }
 }

@@ -46,6 +46,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.ProductRegistrationDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
+import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -576,7 +577,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         revokeDTO.setBusinessKey(SourceTypeEnum.PRODUCT_LOGISTICS.getCode());
         revokeDTO.setUserId(commonService.getUserInfo().getUid());
         workflowFeign.revokeProcess(revokeDTO);
-        return BatchResultDTO.success(entity.getId(), entity.getCustomsCode(), OperationTypeEnum.CANCEL_PROCESS);
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
     @Override
@@ -597,20 +598,25 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         // 调用流程审核
         approveProcess(entity, dto);
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
-        return BatchResultDTO.success(entity.getId(), entity.getCustomsCode(), OperationTypeEnum.approveStatus(approveStatus));
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO disApprove(String id) {
-        ProductLogisticsEntity entity = productLogisticsService.getById(id);
+        ProductLogisticsEntity entity = productLogisticsService.getEntityById(id);
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到物流产品数据");
+        }
+        //校验下推是否备案
+        List<ProductRegistrationEntity> productRegistrationList = forecastFeign.listBySkuId(entity.getSkuId());
+        if (CollectionUtils.isNotEmpty(productRegistrationList)) {
+            throw new ServiceException(StrUtil.format("已下推备案信息不支持反审核",entity.getSkuNo()));
         }
         // 更新审核信息
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
-        return BatchResultDTO.success(entity.getId(), entity.getCustomsCode(), OperationTypeEnum.DISAPPROVE);
+        return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.DISAPPROVE);
     }
 
     @Override

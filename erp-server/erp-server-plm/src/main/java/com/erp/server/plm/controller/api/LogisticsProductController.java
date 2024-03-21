@@ -139,13 +139,13 @@ public class LogisticsProductController extends BaseController {
                 submit = logisticsProductService.submit(id,Boolean.TRUE);
             }catch (Exception e){
                 log.error("物流产品 提交审核失败",e);
-                ProductLogisticsEntity entity = productLogisticsService.getById(id);
+                ProductLogisticsEntity entity = productLogisticsService.getEntityById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, id, "物流产品不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getId(), entity.getCustomsCode(), e.getMessage());
+                submit = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
             }
             resultDTOS.add(submit);
         }
@@ -169,13 +169,13 @@ public class LogisticsProductController extends BaseController {
                 cancelResult = logisticsProductService.cancelProcess(id);
             }catch (Exception e){
                 log.error("物流产品撤回流程失败",e);
-                ProductLogisticsEntity entity = productLogisticsService.getById(id);
+                ProductLogisticsEntity entity = productLogisticsService.getEntityById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     cancelResult = BatchResultDTO.fail(id, id, "物流产品不存在, 撤回流程失败");
                     resultDTOS.add(cancelResult);
                     continue;
                 }
-                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCustomsCode(), e.getMessage());
+                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
             }
             resultDTOS.add(cancelResult);
         }
@@ -200,13 +200,13 @@ public class LogisticsProductController extends BaseController {
                 approveResult = logisticsProductService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
             }catch (Exception e){
                 log.error("物流产品审核失败",e);
-                ProductLogisticsEntity entity = productLogisticsService.getById(id);
+                ProductLogisticsEntity entity = productLogisticsService.getEntityById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     approveResult = BatchResultDTO.fail(id, id, "物流产品不存在, 审核失败");
                     resultDTOS.add(approveResult);
                     continue;
                 }
-                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCustomsCode(), e.getMessage());
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
             }
             resultDTOS.add(approveResult);
         }
@@ -221,7 +221,7 @@ public class LogisticsProductController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/disApprove")
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "委外发料单反审核")
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "物流产品反审核")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -229,14 +229,14 @@ public class LogisticsProductController extends BaseController {
             try {
                 disApproveResult = logisticsProductService.disApprove(id);
             }catch (Exception e){
-                log.error("委外发料单反审核失败",e);
-                ProductLogisticsEntity entity = productLogisticsService.getById(id);
+                log.error("物流产品反审核失败",e);
+                ProductLogisticsEntity entity = productLogisticsService.getEntityById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    disApproveResult = BatchResultDTO.fail(id, id, "委外发料单不存在, 反审核失败");
+                    disApproveResult = BatchResultDTO.fail(id, id, "物流产品不存在, 反审核失败");
                     resultDTOS.add(disApproveResult);
                     continue;
                 }
-                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getCustomsCode(), e.getMessage());
+                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
             }
             resultDTOS.add(disApproveResult);
         }
