@@ -1188,6 +1188,18 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.idList !=null and params.idList.size>0">
+            AND pl.id IN
+            <foreach collection="params.idList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
+            AND pl.approve_status IN
+            <foreach collection="params.approveStatusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         <!--品名-->
         <if test="params.productName!=null and params.productName!=''">
             AND pd.name ILIKE concat('%',#{params.productName}::text,'%')
@@ -1635,7 +1647,8 @@
                   left join product_sale ps on pd.id = ps.sku_id and ps.is_deleted = FALSE
                   LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
                   LEFT JOIN product_cost pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
-                  LEFT JOIN product_pack ppk ON ppk.sku_id = pd."id" AND ppk.is_deleted = FALSE
+                  LEFT JOIN product_pack ppk ON ppk.
+                      sku_id = pd."id" AND ppk.is_deleted = FALSE
         WHERE
             ${params.sqlMap.default}
            and pi.is_deleted = FALSE AND pd.is_deleted = FALSE
