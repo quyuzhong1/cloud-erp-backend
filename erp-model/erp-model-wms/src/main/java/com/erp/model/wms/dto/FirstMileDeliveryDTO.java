@@ -1003,4 +1003,75 @@ public class FirstMileDeliveryDTO implements Serializable {
          */
         private List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDTOList;
     }
+
+    /**
+     * 物流详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewLogisticDTO {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 主表id
+         */
+        private String mainId;
+
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+
+        /**
+         * 物流方式:/wms/common/enumDropDown?type=LogisticsMethod
+         * 描述：airfreight:空运, express:快递, oceanFreightBulk:海运散装
+         * , oceanFreightFCL:海运整箱, railwayTransportationBulk:铁运散装
+         * , railwayTransportationFCL:铁运整箱
+         */
+        private String logisticsMethod;
+
+        /**
+         * 物流方式名称
+         */
+        private String logisticsMethodName;
+
+        /**
+         * 物流渠道
+         */
+        private String logisticsChannel;
+
+        /**
+         * 物流渠道名称
+         */
+        private String logisticsChannelName;
+
+        /**
+         * 发货时间
+         */
+        private LocalDateTime deliveryTime;
+
+        /**
+         * 备注
+         */
+        private String logisticsRemark;
+
+        /**
+         * 物流运单号
+         */
+        private List<String> trackingNoList;
+
+        /**
+         * 发货地址
+         */
+        private String deliveryFromAddress;
+
+        /**
+         * 收货地址
+         */
+        private String receiveToAddress;
+    }
 }

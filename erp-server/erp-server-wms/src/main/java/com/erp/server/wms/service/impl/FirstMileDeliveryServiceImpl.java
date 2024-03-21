@@ -25,7 +25,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -901,14 +904,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
      * @param tmsFirstMileLogisticEntities
      */
     private void viewLogistic(FirstMileDeliveryDTO.ViewDTO data, List<LogisticsBillEntity> tmsFirstMileLogisticEntities) {
-        FirstMileDeliveryLogisticsDTO.ViewDTO logisticsViewDTO = new FirstMileDeliveryLogisticsDTO.ViewDTO();
+        FirstMileDeliveryDTO.ViewLogisticDTO logisticsViewDTO = new FirstMileDeliveryDTO.ViewLogisticDTO();
         if (CollectionUtil.isNotEmpty(tmsFirstMileLogisticEntities)) {
             LogisticsBillEntity tmsFirstMileLogisticEntity = tmsFirstMileLogisticEntities.get(0);
             //渠道
-            LogisticsChannelDTO.BaseDTO channelInfo = logisticsFeign.getChannelInfoById(tmsFirstMileLogisticEntity.getChannelId());
-            if (ObjectUtil.isNotEmpty(channelInfo)) {
-                logisticsViewDTO.setLogisticsChannel(channelInfo.getId());
-                logisticsViewDTO.setLogisticsChannelName(channelInfo.getName());
+            if (StringUtils.isNotBlank(tmsFirstMileLogisticEntity.getChannelId())) {
+                LogisticsChannelDTO.BaseDTO channelInfo = logisticsFeign.getChannelInfoById(tmsFirstMileLogisticEntity.getChannelId());
+                if (ObjectUtil.isNotEmpty(channelInfo)) {
+                    logisticsViewDTO.setLogisticsChannel(channelInfo.getId());
+                    logisticsViewDTO.setLogisticsChannelName(channelInfo.getName());
+                }
             }
             //物流方式
             logisticsViewDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(tmsFirstMileLogisticEntity.getShippingMethod()));
