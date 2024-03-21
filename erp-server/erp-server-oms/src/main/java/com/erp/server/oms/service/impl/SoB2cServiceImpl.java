@@ -4844,18 +4844,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_95084);
         }
         ProductDetailEntity skuEntity = skuList.get(0);
-        //平台sku
 
         //根据平台sku查询映射信息
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
         listingInfoParamDTO.setPlatformSkuNoList(Collections.singletonList(detailEntity.getPlatformSkuNo()));
+        // 速卖通同店铺存在相同SkuNo需要根据平台产ID/SPU查询
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(soB2cEntity.getDictPlatform())){
+            listingInfoParamDTO.setPlatformSpuNoList(Collections.singletonList(detailEntity.getPlatformSpuNo()));
+        }
         listingInfoParamDTO.setPlatformSpuNoList(Collections.singletonList(detailEntity.getPlatformSpuNo()));
         listingInfoParamDTO.setPlatform(soB2cEntity.getDictPlatform());
         listingInfoParamDTO.setShopIdList(Collections.singletonList(soB2cEntity.getShopId()));
         List<SkuMappingDTO.MappingSkuViewDTO> skuDTOS = skuMappingService.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
         List<SkuMappingDTO.MappingSkuViewDTO> collect = skuDTOS.stream()
                 .filter(req -> req.getPlatformSkuNo().equals(detailEntity.getPlatformSkuNo())
-                        && req.getPlatformSpuNo().equals(detailEntity.getPlatformSpuNo())
                         && StringUtils.isNotBlank(req.getProductSkuNo()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(collect)) {
