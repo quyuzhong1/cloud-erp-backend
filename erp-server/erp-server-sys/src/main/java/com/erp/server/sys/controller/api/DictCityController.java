@@ -66,7 +66,7 @@ public class DictCityController extends BaseController {
      *
      * @return
      */
-    @PostMapping("/provinceList")
+    @GetMapping("/provinceList")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> provinceList() {
         List<DictCityEntity> provinceList = dictCityService.listProvince();
         List<BaseDropDownDTO.CommonDTO> result = provinceList.stream().filter(d -> StringUtils.isNotBlank(d.getKingdeeCode()))
