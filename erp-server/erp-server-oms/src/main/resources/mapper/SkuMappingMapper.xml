@@ -255,7 +255,7 @@
         FROM sku_mapping sm
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id
-        WHERE sm.is_deleted=FALSE AND sm.is_expire = FALSE AND li.is_deleted=FALSE
+        WHERE sm.is_deleted=FALSE AND sm.is_expire = FALSE AND li.is_deleted=FALSE AND li.platform_status != 'Incomplete'
         <if test="params.type!=null and params.type!=''">
             AND sm.type=#{params.type}
         </if>
