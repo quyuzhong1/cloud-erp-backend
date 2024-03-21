@@ -55,5 +55,27 @@
         </where>
     </select>
 
+    <!-- 导出查询 -->
+    <select id="listExportExcel" resultType="com.erp.model.tms.dto.TmsWarehouseMappingDTO$ListDTO">
+        select
+        <include refid="Base_Column_List" />
+        from tms_warehouse_mapping twm
+        <where>
+            ${params.sqlMap.default}
+            and twm.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            twm.id desc
+        </where>
+    </select>
+
 
 </mapper>
