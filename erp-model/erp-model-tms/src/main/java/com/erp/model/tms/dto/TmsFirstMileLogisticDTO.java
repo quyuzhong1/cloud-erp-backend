@@ -79,16 +79,6 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String chargeId;
 
         /**
-         * 预计时效
-         */
-        private String estimatedTime;
-
-        /**
-         * 计费方式名称
-         */
-        private String billingMethodName;
-
-        /**
          * 物流状态名称
          */
         private String logisticsStatusName;
@@ -102,37 +92,6 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * 实际时效
          */
         private String actualTime;
-
-        /**
-         * 运输方式
-         */
-        private String shippingMethod;
-
-        /**
-         * 运输方式名称
-         */
-        private String shippingMethodName;
-
-        /**
-         * 渠道id
-         */
-        private String logisticsChannelId;
-
-        /**
-         * 渠道名称
-         */
-        private String logisticsChannelName;
-
-        /**
-         * 物流商id
-         */
-        private String logisticsSupplierId;
-
-        /**
-         * 物流商名称
-         */
-        private String logisticsSupplierName;
-
 
         /**
          * 发货仓库名称
@@ -181,6 +140,11 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * 发货单id
          */
         private String outstockId;
+
+        /**
+         * 渠道id
+         */
+        private String logisticsChannelId;
     }
     /**
      * 历史轨迹
@@ -834,28 +798,35 @@ public class TmsFirstMileLogisticDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PackingDTO {
+
+        private String id;
         /**
          * 箱号
          */
         private String boxNo;
 
         /**
-         * 装箱SKU
-         */
-        private String sku;
-
-        /**
          * 箱子包装尺寸
          */
-        private String size;
+        private String boxSize;
         /**
          * 箱子包装重量
          */
-        private String weight;
+        private String packageWeight;
         /**
-         * 箱子体积重量
+         * 装箱SKU
+         * 例：（sku*qty+sku*qty+...）
          */
-        private String volumeWeight;
+        private String boxDesc;
+
+        /**
+         * 长宽高相乘结果
+         */
+        private BigDecimal multiplySize;
+        /**
+         * 体积重
+         */
+        private BigDecimal volumeWeight;
     }
 
     /**
@@ -929,6 +900,7 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         /**
         * 运输方式
         */
+        @NotBlank(message = "运输方式不能为空")
         private String shippingMethod;
 
         /**
@@ -993,6 +965,11 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * 费用信息
          */
         private List<LogisticFee> logisticFeeList;
+
+        /**
+         * 开船时间
+         */
+        private LocalDateTime shipTime;
     }
 
     /**

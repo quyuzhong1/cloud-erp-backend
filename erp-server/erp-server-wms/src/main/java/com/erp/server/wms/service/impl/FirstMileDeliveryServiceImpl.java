@@ -36,6 +36,8 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.srm.entity.DeliveryOrderEntity;
+import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.*;
@@ -1495,7 +1497,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         listPackingDTO.setBoxQty(boxQty);
 
         //箱子明细信息
-        List<WmsCartonDetailDTO.ListPackingDetailDTO> detailList = baseMapper.listPackingDetail(id);
+        List<WmsCartonDetailDTO.ListPackingDetailDTO> detailList = baseMapper.listPackingDetail(Arrays.asList(id));
         listPackingDTO.setDetailList(detailList);
         return listPackingDTO;
     }
@@ -1760,6 +1762,39 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     .update();
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<FirstMileDeliveryDTO.GenerateLogisticDTO> getGenerateLogisticDTO(FirstMileDeliveryDTO.GenerateLogisticReqDTO dto) {
+        List<FirstMileDeliveryDTO.GenerateLogisticDTO> result = baseMapper.getGenerateLogisticDTO(dto);
+        if(CollectionUtils.isEmpty(result)){
+            return new ArrayList<>();
+        }
+        List<String> ids = result.stream().map(FirstMileDeliveryDTO.GenerateLogisticDTO::getOutstockId).collect(Collectors.toList());
+        //箱子明细信息
+        List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDetailList = baseMapper.listPackingDetail(ids);
+        Map<String,List<WmsCartonDetailDTO.ListPackingDetailDTO>> packingDetailMap = packingDetailList.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId));
+        //设置箱子明细信息
+        result.forEach(v->{
+            List<WmsCartonDetailDTO.ListPackingDetailDTO> list = packingDetailMap.get(v.getOutstockId());
+            v.setPackingDTOList(list);
+        });
+        return result;
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean updateStatus(FirstMileDeliveryDTO.UpdateStatusDTO dto) {
+        if(StringUtils.isBlank(dto.getDeclareStatus()) && StringUtils.isBlank(dto.getLogisticsStatus())){
+            return false;
+        }
+        return this.lambdaUpdate()
+                .eq(FirstMileDeliveryEntity :: getId,dto.getId())
+                .set(StringUtils.isNotBlank(dto.getLogisticsStatus()),FirstMileDeliveryEntity::getLogisticsStatus, dto.getLogisticsStatus())
+                .set(StringUtils.isNotBlank(dto.getDeclareStatus()),FirstMileDeliveryEntity::getDeclareStatus,dto.getDeclareStatus())
+                .update();
+
     }
 }
 

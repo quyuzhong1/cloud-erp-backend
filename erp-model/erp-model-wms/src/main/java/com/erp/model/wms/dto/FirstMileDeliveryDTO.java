@@ -29,6 +29,26 @@ import java.util.Map;
 public class FirstMileDeliveryDTO implements Serializable {
 
 
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateStatusDTO {
+        @NotBlank(message = "id不能为空")
+        private String id;
+        /**
+         * 物流单状态
+         */
+        private String logisticsStatus;
+
+        /**
+         * 报关单状态
+         */
+        private String declareStatus;
+    }
+
      /**
      * 状态统计
      */
@@ -872,5 +892,115 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 接口：/wms/dict/list?key=fmDeliveryBillType
          */
         private List<String> billTypes;
+    }
+
+    /**
+     * 生成物流单传的DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateLogisticReqDTO {
+
+        /**
+         * 装箱状态
+         */
+        private String packingStatus;
+
+        /**
+         * 物流单状态
+         */
+        private String logisticsStatus;
+
+        /**
+         * 发货单id
+         */
+        private String id;
+    }
+    /**
+     * 生成物流单传的DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateLogisticDTO {
+
+        /**
+         * 来源id（海外仓，FBA）
+         */
+        private String sourceId;
+
+        /**
+         * 来源编号（海外仓，FBA）
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型（海外仓，FBA）
+         */
+        private String sourceType;
+
+        /**
+         * 发货单id
+         */
+        private String outstockId;
+
+        /**
+         * 发货单单号
+         */
+        private String outstockCode;
+
+        /**
+         * 店铺Id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
+         * 店铺负责人
+         */
+        private String chargeId;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
+         * 发货仓库名称
+         */
+        private String fromWarehouseName;
+
+        /**
+         * 发货国家
+         */
+        private String fromCountryName;
+
+        /**
+         * 发货详细地址
+         */
+        private String fromAddress;
+
+        /**
+         * 目的仓库名称
+         */
+        private String toWarehouseName;
+
+        /**
+         * 目的国家
+         */
+        private String toCountryName;
+
+        /**
+         * 目的详细地址
+         */
+        private String toAddress;
+
+        /**
+         * 装箱信息
+         */
+        private List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDTOList;
     }
 }

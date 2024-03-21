@@ -403,6 +403,11 @@ public class LogisticsBillCostDTO implements Serializable {
     public static class CommonDTO {
 
         /**
+         * 对账状态
+         */
+        private String reconciliationStatus;
+
+        /**
         * 物流单id
         */
         @NotBlank(message = "物流单id不能为空")
@@ -446,6 +451,23 @@ public class LogisticsBillCostDTO implements Serializable {
          * 物流渠道id
          */
         private String channelId;
+
+
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+
+        /**
+         * 实际体积重(物流商)
+         */
+        private BigDecimal volumeWeightLogistics;
+
+        /**
+         * 实重(物流商)
+         */
+        private BigDecimal weightLogistics;
+
     }
     /**
      * 修改导入数据
