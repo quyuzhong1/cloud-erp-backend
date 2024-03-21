@@ -2,6 +2,7 @@ package com.erp.server.sys.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -18,6 +19,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.server.sys.query.DictParentBaseQueryHandler;
 import com.erp.server.sys.service.DictCityService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +29,7 @@ import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  *地址管理-省份城市管理
@@ -56,6 +59,20 @@ public class DictCityController extends BaseController {
     public ApiResult<PagingVO<DictCityDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<DictCityDTO.ProvincePagingParamDTO> dto) {
         PagingVO<DictCityDTO.PagingViewDTO> pagingVO = dictCityService.provincePaging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 省份下拉
+     *
+     * @return
+     */
+    @PostMapping("/provinceList")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> provinceList() {
+        List<DictCityEntity> provinceList = dictCityService.listProvince();
+        List<BaseDropDownDTO.CommonDTO> result = provinceList.stream().filter(d -> StringUtils.isNotBlank(d.getKingdeeCode()))
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getId(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
     }
 
     /**

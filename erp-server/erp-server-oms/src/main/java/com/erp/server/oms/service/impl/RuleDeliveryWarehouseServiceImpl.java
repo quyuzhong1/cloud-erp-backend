@@ -209,7 +209,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         List<String> ruleIdList = ruleDeliveryWarehouselList.stream().map(RuleDeliveryWarehouseEntity::getId).collect(Collectors.toList());
         List<Map<String, Object>> mapList = (List<Map<String, Object>>) map.get("detailList");
         //deliveryWarehouseId
-        //要匹配仓库id 是空的 如果有就不用匹配了返回成功
+        //这个表示有仓库id了就不用匹配了 返回成功
         mapList = mapList.stream().filter(m -> m.get("deliveryWarehouseId") == null ||
                         StringUtils.isBlank(m.getOrDefault("deliveryWarehouseId", "").toString())).
                 collect(Collectors.toList());

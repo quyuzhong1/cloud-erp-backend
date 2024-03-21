@@ -375,8 +375,8 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         if(Objects.isNull(entity)){
             throw new ServiceException("国家不存在");
         }
-        result.setId(entity.getId());
-        result.setNameCn(entity.getNameCn());
+        result.setCode(entity.getId());
+        result.setName(entity.getNameCn());
         result.setParentRegionId(entity.getRegionCode());
         return result;
     }

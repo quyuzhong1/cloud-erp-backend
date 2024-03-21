@@ -67,12 +67,18 @@ public class DictCountryDTO implements Serializable {
     public static class ViewDTO{
 
         /**
-         * id 也是国家二字码
+         * 国家名
          */
-        private String id;
+        private String name;
 
-        private String nameCn;
+        /**
+         * code 就国家二字码
+         */
+        private String code;
 
+        /**
+         * 区域
+         */
         private String parentRegionId;
 
     }

@@ -129,4 +129,6 @@ public interface DictCityService extends SuperService<DictCityEntity> {
      * @param response
      */
     void cityExport(DictCityDTO.ProvincePagingParamDTO dto, HttpServletResponse response);
+
+    List<DictCityEntity> listProvince();
 }

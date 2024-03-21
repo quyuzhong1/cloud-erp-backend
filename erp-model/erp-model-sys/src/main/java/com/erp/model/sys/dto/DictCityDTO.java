@@ -34,7 +34,7 @@ public class DictCityDTO implements Serializable {
          * 国家id 来源 http://172.16.100.11:3002/project/36/interface/api/13390
          */
         @NotBlank(message = "国家不能为空")
-        private String country;
+        private String parentId;
 
         /**
          * 省份名称
@@ -57,10 +57,10 @@ public class DictCityDTO implements Serializable {
     @NoArgsConstructor
     public static class AddCityDTO {
         /**
-         * 省id 来源
+         * 省id 来源 http://172.16.100.11:3002/project/36/interface/api/31307
          */
         @NotBlank(message = "省不能为空")
-        private String provinceId;
+        private String parentId;
 
         /**
          * 城市名称
@@ -89,10 +89,10 @@ public class DictCityDTO implements Serializable {
         private String id;
 
         /**
-         * 省id 来源
+         * 省id 来源 http://172.16.100.11:3002/project/36/interface/api/31307
          */
         @NotBlank(message = "省不能为空")
-        private String provinceId;
+        private String parentId;
 
         /**
          * 城市名
@@ -114,6 +114,11 @@ public class DictCityDTO implements Serializable {
          * 名称
          */
         private String name;
+
+        /**
+         * code
+         */
+        private String code;
 
 
 
@@ -146,7 +151,7 @@ public class DictCityDTO implements Serializable {
          * 国家id 来源 http://172.16.100.11:3002/project/36/interface/api/13390
          */
         @NotBlank(message = "国家不能为空")
-        private String country;
+        private String parentId;
 
         /**
          * 省份名称

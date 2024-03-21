@@ -139,7 +139,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         addEntity.setName(dto.getName());
         addEntity.setCode(code);
         addEntity.setType(province);
-        addEntity.setCountryCode(dto.getCountry());
+        addEntity.setCountryCode(dto.getParentId());
         addEntity.setParentId("0");
         addEntity.setLevel(1);
         handleData(addEntity);
@@ -188,7 +188,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
           throw new ServiceException("省份不存在");
         }
         entity.setName(dto.getName());
-        entity.setCountryCode(dto.getCountry());
+        entity.setCountryCode(dto.getParentId());
         handleData(entity);
         Boolean updateResult = this.updateById(entity);
         if (updateResult) {
@@ -230,6 +230,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         viewDTO.setId(id);
         viewDTO.setName(entity.getName());
         viewDTO.setParentId(entity.getCountryCode());
+        viewDTO.setCode(entity.getKingdeeCode());
         DictCountryEntity country = dictCountryService.getById(entity.getCountryCode());
         if(Objects.nonNull(country)){
             viewDTO.setParentName(country.getNameCn());
@@ -255,7 +256,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
     public Boolean addCity(DictCityDTO.AddCityDTO dto) {
         DictCityEntity addEntity = new DictCityEntity();
         //省id
-        String provinceId = dto.getProvinceId();
+        String provinceId = dto.getParentId();
         DictCityEntity province = this.getById(provinceId);
         if (Objects.isNull(province)) {
             throw new ServiceException("上级省不存在");
@@ -354,6 +355,13 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
+    }
+
+    @Override
+    public List<DictCityEntity> listProvince() {
+        return this.lambdaQuery().eq(DictCityEntity::getType, province).
+                eq(DictCityEntity::getParentId,"0")
+                .list();
     }
 
     public void handleData(DictCityEntity entity) {
