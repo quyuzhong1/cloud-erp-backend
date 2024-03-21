@@ -251,7 +251,12 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
             orderDTO.setPlatformOrderStatus("Acknowledged");
             //沃尔玛：已确认 = OMS：待发货
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+            //如果是平台仓，状态审核通过
+            if ("WFSFulfilled".equals(shipNodeType) || "3PLFulfilled".equals(shipNodeType)) {
+                orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+            } else {
+                orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+            }
             orderDTO.setInvalidStatus(false);
         } else if (CollectionUtils.isNotEmpty(cancelled)) {
             orderDTO.setPlatformOrderStatus("Cancelled");
