@@ -11,23 +11,24 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.query.SoOutstockQueryHandler;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -478,5 +479,89 @@ public class SoOutstockController extends BaseController {
 
 
         return success();
+    }
+
+
+    /**
+     * 装箱
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:21
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/packingSave")
+    @LogAction(value = LogActionEnum.INSERT, desc = "头程发货单装箱保存")
+    public ApiResult packingSave(@RequestBody @Validated WmsCartonDTO.WmsCartonAdd dto) {
+        Boolean flag = soOutstockService.packingSave(dto);
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 装箱详情
+     * @Author Luo_WG
+     * @Date 2023/11/28 17:44
+     * @param id
+     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
+     **/
+    @GetMapping("/packingView")
+    public ApiResult<WmsCartonDTO.WmsCartonView> packingView(@RequestParam("id") String id) {
+        WmsCartonDTO.WmsCartonView wmsCartonView = soOutstockService.packingView(id);
+        return success(wmsCartonView);
+    }
+
+    /**
+     * 装箱清单
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:21
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/listPacking")
+    public ApiResult<WmsCartonDTO.ListPackingDTO> listPacking(@RequestParam("id") String id) {
+        WmsCartonDTO.ListPackingDTO result = soOutstockService.listPacking(id);
+        return success(result);
+    }
+
+    /**
+     * 导出装箱清单Excel
+     * @author Luo_WG
+     * @date 2023-10-30
+     * @param dto
+     * @param response
+     */
+    @PostMapping("/exportPacking")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:fbaDelivery:exportPacking",
+            tableAlias = "fd"
+    )
+    @LogAction(value = LogActionEnum.EXPORT, desc = "销售出库单导出装箱清单Excel")
+    @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
+    public ApiResult exportPacking(@RequestBody @Validated SoOutstockDTO.ExportDTO dto, HttpServletResponse response) {
+        soOutstockService.exportPacking(dto, response);
+        return success();
+    }
+
+    /**
+     * 下载装箱模板
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载装箱模板数据")
+    @GetMapping("/downloadPackingTemplate")
+    public ApiResult downloadPackingTemplate(HttpServletResponse response) {
+        soOutstockService.downloadPackingTemplate(response);
+        return success();
+    }
+
+
+    /**
+     * 导入装箱数据
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入装箱模板数据")
+    @PostMapping("/importPacking")
+    public ApiResult importPacking(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = soOutstockService.importFile(excelFile, response);
+        return result == true ? success() : failure();
     }
 }

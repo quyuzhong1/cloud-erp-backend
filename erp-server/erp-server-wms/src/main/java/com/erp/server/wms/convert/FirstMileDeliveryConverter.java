@@ -6,14 +6,12 @@ import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryLogisticsEntity;
-import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
@@ -49,6 +47,6 @@ public interface FirstMileDeliveryConverter {
             @Mapping(target = "skuNo", source = "sku"),
             @Mapping(target = "packQty", source = "singleBoxQuantity"),
     })
-    FirstMileCartonDetailDTO.AddDTO importToPackingSku(PackingExcelDTO data);
-    List<FirstMileCartonDetailDTO.AddDTO> importToPackingSku(List<PackingExcelDTO> data);
+    WmsCartonDetailDTO.AddDTO importToPackingSku(PackingExcelDTO data);
+    List<WmsCartonDetailDTO.AddDTO> importToPackingSku(List<PackingExcelDTO> data);
 }

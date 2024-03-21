@@ -18,7 +18,7 @@ import javax.validation.constraints.Size;
 */
 @Data
 @NoArgsConstructor
-public class FirstMileCartonDetailDTO implements Serializable {
+public class WmsCartonDetailDTO implements Serializable {
 
     /**
     * 详情

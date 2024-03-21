@@ -80,4 +80,22 @@
             </foreach>
         </if>
     </select>
+
+    <!--根据主表id分组sku查询发货及待装箱数-->
+    <select id="listGroupSkuByMainId" resultType="com.erp.model.wms.dto.SoOutstockDTO$GroupSkuDTO">
+        SELECT
+        so.id,
+        sod.sku_id,
+        sod.sku_no,
+        SUM(fdd.actual_qty) AS deliveryQty
+        FROM so_outstock so
+        INNER JOIN so_outstock_detail sod ON so.id = sod.main_id AND sod.is_deleted = FALSE
+        WHERE so.is_deleted = FALSE
+        <if test="mainId != null and mainId != ''">
+            AND sod.main_id = #{mainId}
+        </if>
+        GROUP BY so.id,
+        sod.sku_id,
+        sod.sku_no
+    </select>
 </mapper>

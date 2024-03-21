@@ -175,14 +175,14 @@
         ORDER BY fd.code DESC
     </select>
 
-    <select id="listPackingDetail" resultType="com.erp.model.wms.dto.FirstMileCartonDetailDTO$ListPackingDetailDTO">
+    <select id="listPackingDetail" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
         SELECT
             fmcb.box_no,
             concat(box_length, '*', fmc.box_width, '*', fmc.box_height) AS boxSize,
             fmc.package_weight,
             fmcb.box_desc
         FROM first_mile_delivery fmd
-        INNER JOIN first_mile_carton fmc ON fmc.main_id = fmd.id AND fmc.is_deleted = FALSE
+        INNER JOIN first_mile_carton fmc ON fmc.source_id = fmd.id AND fmc.is_deleted = FALSE
         INNER JOIN first_mile_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
         WHERE fmd.is_deleted = FALSE
         AND fmd.id = #{id}
@@ -190,7 +190,7 @@
     </select>
 
     <!--导出装箱清单Excel-->
-    <select id="exportPacking" resultType="com.erp.model.wms.dto.FirstMileCartonDTO$ExportPackingDTO">
+    <select id="exportPacking" resultType="com.erp.model.wms.dto.WmsCartonDTO$ExportPackingDTO">
         SELECT
         fmd.id,
         fmd.packing_status,
@@ -200,99 +200,15 @@
         fmc.package_weight,
         fmcb.box_desc
         FROM first_mile_delivery fmd
-        LEFT JOIN first_mile_carton fmc ON fmc.main_id = fmd.id AND fmc.is_deleted = FALSE
+        LEFT JOIN first_mile_carton fmc ON fmc.source_id = fmd.id AND fmc.is_deleted = FALSE
         LEFT JOIN first_mile_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
-        WHERE fmd.is_deleted = FALSE
-        <choose>
-            <when test="params.ids!=null and params.ids.size>0 ">
-                AND fmd.id IN
-                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
-            </when>
-            <otherwise>
-                <!--状态-->
-                <if test="params.tabFlag != null and params.tabFlag != ''">
-                    AND fmd.approve_status = #{params.tabFlag}
-                </if>
-                <!--单据编号-->
-                <if test="params.code != null and params.code != ''">
-                    AND fmd.code ILIKE concat('%',#{params.code}::text,'%')
-                </if>
-                <!--来源单号-->
-                <if test="params.sourceCode != null and params.sourceCode != ''">
-                    AND fmd.source_code ILIKE concat('%',#{params.sourceCode}::text,'%')
-                </if>
-                <!--备货类型-->
-                <if test="params.demandTypeList != null and params.demandTypeList.size > 0">
-                    AND fmd.demand_type in
-                    <foreach collection="params.demandTypeList" item="demandType" open="(" close=")" separator=",">
-                        #{demandType}
-                    </foreach>
-                </if>
-                <!--店铺id-->
-                <if test="params.shopIdList != null and params.shopIdList.size > 0">
-                    AND fmd.shop_id in
-                    <foreach collection="params.shopIdList" item="shopId" open="(" close=")" separator=",">
-                        #{shopId}
-                    </foreach>
-                </if>
-                <!--国家二字码-->
-                <if test="params.countryIdList != null and params.countryIdList.size > 0">
-                    AND fmd.country_id in
-                    <foreach collection="params.countryIdList" item="countryId" open="(" close=")" separator=",">
-                        #{countryId}
-                    </foreach>
-                </if>
-                <!--发货仓-->
-                <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
-                    AND fmd.delivery_warehouse_id in
-                    <foreach collection="params.deliveryWarehouseIdList" item="deliveryWarehouseId" open="(" close=")" separator=",">
-                        #{deliveryWarehouseId}
-                    </foreach>
-                </if>
-                <!--目的仓-->
-                <if test="params.destWarehouseIdList != null and params.destWarehouseIdList.size > 0">
-                    AND fmd.dest_warehouse_id in
-                    <foreach collection="params.destWarehouseIdList" item="destWarehouseId" open="(" close=")" separator=",">
-                        #{destWarehouseId}
-                    </foreach>
-                </if>
-                <!--审核状态-->
-                <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                    AND fmd.approve_status in
-                    <foreach collection="params.approveStatusList" item="approveStatus" open="(" close=")" separator=",">
-                        #{approveStatus}
-                    </foreach>
-                </if>
-
-                <!--审核时间-->
-                <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
-                    AND fmd.approve_time >= #{params.approveTimeList[0]} and
-                    (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1
-                    DAY' ) > fmd.approve_time
-                </if>
-                <!--创建时间-->
-                <if test="params.createTimeList !=null and params.createTimeList.size>0">
-                    AND fmd.create_time >= #{params.createTimeList[0]} and
-                    (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
-                    DAY' ) > fmd.create_time
-                </if>
-                <!--装箱状态-->
-                <if test="params.packingStatus != null and params.packingStatus != ''">
-                    AND fmd.delivery_status = #{params.packingStatus}
-                </if>
-                <!--是否下推入库单-->
-                <if test="params.isGenerateOverseasInbound != null">
-                    <if test="params.isGenerateOverseasInbound == true">
-                        AND EXISTS (SELECT id FROM overseas_warehouse_inbound owi WHERE owi.source_id = fmd.id AND owi.is_deleted = FALSE)
-                    </if>
-                    <if test="params.isGenerateOverseasInbound == false ">
-                        AND NOT EXISTS (SELECT id FROM overseas_warehouse_inbound owi WHERE owi.source_id = fmd.id AND owi.is_deleted = FALSE)
-                    </if>
-                </if>
-            </otherwise>
-        </choose>
+        WHERE
+        ${params.sqlMap.default}
+        and fmd.is_deleted = FALSE
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         ORDER BY fmd.code,
         CAST(fmcb.box_no AS INTEGER)
     </select>

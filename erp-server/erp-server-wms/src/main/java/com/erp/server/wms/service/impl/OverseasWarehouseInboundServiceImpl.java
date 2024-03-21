@@ -108,7 +108,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @Resource
     private DictBasicService dictBasicService;
     @Resource
-    private FirstMileCartonDetailService firstMileCartonDetailService;
+    private WmsCartonDetailService wmsCartonDetailService;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
@@ -240,7 +240,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
      * 构建请求参数
      */
     private ThirdWarehouseCreateInboundReq entityToCreateInboundBill(OverseasWarehouseInboundEntity mainEntity,
-                                                                     List<FirstMileCartonDTO.PackingItemDTO> itemDTOList,
+                                                                     List<WmsCartonDTO.PackingItemDTO> itemDTOList,
                                                                      Map<String, List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView>> currentSkuMap,
                                                                      Map<SettingEnum, String> shipperInfo,
                                                                      String verifyCode,
@@ -265,7 +265,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         // 装箱信息item
         List<ThirdWarehouseCreateInboundReq.Item> itemList = new LinkedList<>();
-        for (FirstMileCartonDTO.PackingItemDTO itemDTO : itemDTOList) {
+        for (WmsCartonDTO.PackingItemDTO itemDTO : itemDTOList) {
             List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> viewList = currentSkuMap.get(itemDTO.getSkuId());
             SkuMappingDTO.ListStockSkuNoByProductSkuIdView view = viewList.stream().findFirst().orElse(null);
             if (null == view) {
@@ -1002,7 +1002,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                                                                      String verityCode
     ) {
         // 查询包装信息
-        List<FirstMileCartonDTO.PackingItemDTO> packingQtyDTOS = firstMileCartonDetailService.boxInfoByMainId(mainEntity.getSourceId());
+        List<WmsCartonDTO.PackingItemDTO> packingQtyDTOS = wmsCartonDetailService.boxInfoBySourceId(mainEntity.getSourceId());
         if (CollectionUtils.isEmpty(packingQtyDTOS)) {
             String format = StrUtil.format("【{}】发货单：未找到包装信息", mainEntity.getSourceCode());
             throw new ServiceException(format);

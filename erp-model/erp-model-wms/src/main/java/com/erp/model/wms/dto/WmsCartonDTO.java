@@ -1,13 +1,15 @@
 package com.erp.model.wms.dto;
 
-import java.math.BigDecimal;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.util.List;
+
 import javax.validation.Valid;
-import javax.validation.constraints.*;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * <p>
@@ -19,7 +21,7 @@ import javax.validation.constraints.*;
 */
 @Data
 @NoArgsConstructor
-public class FirstMileCartonDTO implements Serializable {
+public class WmsCartonDTO implements Serializable {
 
     /**
     * 详情
@@ -71,7 +73,7 @@ public class FirstMileCartonDTO implements Serializable {
         /**
          * 详情
          */
-        private List<FirstMileCartonDetailDTO.ViewDTO> detailList;
+        private List<WmsCartonDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -89,7 +91,7 @@ public class FirstMileCartonDTO implements Serializable {
          * 详情
          */
         @Valid
-        private List<FirstMileCartonDetailDTO.AddDTO> detailList;
+        private List<WmsCartonDetailDTO.AddDTO> detailList;
     }
 
 
@@ -156,7 +158,7 @@ public class FirstMileCartonDTO implements Serializable {
         /**
          * 详情
          */
-        private List<FirstMileCartonDetailDTO.ListPackingDetailDTO> detailList;
+        private List<WmsCartonDetailDTO.ListPackingDetailDTO> detailList;
     }
 
 
@@ -204,9 +206,9 @@ public class FirstMileCartonDTO implements Serializable {
     @Data
     public static class PackingQtyDTO {
         /**
-         * 发货单id
+         * 来源id
          */
-        private String mainId;
+        private String sourceId;
 
         /**
          * 箱子id
@@ -246,14 +248,37 @@ public class FirstMileCartonDTO implements Serializable {
     }
 
     /**
+     * 装箱
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WmsCartonAdd {
+        /**
+         * 单据id
+         */
+        private String id;
+
+        /**
+         * 单据单号
+         */
+        private String code;
+
+        /**
+         * 装箱信息
+         */
+        @Valid
+        private List<WmsCartonDTO.AddDTO> wmsCartonList;
+    }
+
+    /**
      * 装箱详情清单(以箱号和SKU号维度)
      */
     @Data
     public static class PackingItemDTO {
         /**
-         * 发货单id
+         * 来源Id
          */
-        private String mainId;
+        private String sourceId;
 
         /**
          * 箱子id
@@ -285,5 +310,82 @@ public class FirstMileCartonDTO implements Serializable {
          */
         private String platformSkuNo;
 
+    }
+
+    /**
+     * 装箱信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PackDateDTO {
+        /**
+         * 来源id
+         */
+        private String id;
+        /**
+         * 箱子id
+         */
+        private String cartonId;
+        /**
+         * 产品id
+         */
+        private String skuId;
+
+        /**
+         * 产品编号
+         */
+        private String skuNo;
+
+        /**
+         * 产品产品名称
+         */
+        private String productName;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 待装箱数量
+         */
+        private Integer waitPackQty;
+
+        /**
+         * 装箱数量
+         */
+        private Integer packQty;
+
+        /**
+         * 箱规编号
+         */
+        private Integer boxSpecNo;
+
+        /**
+         * 箱数
+         */
+        private Integer boxQty;
+    }
+
+    /**
+     * 装箱详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WmsCartonView {
+        /**
+         * 单据id
+         */
+        private String id;
+
+        /**
+         * 单据单号
+         */
+        private String code;
+
+        /**
+         * 装箱信息
+         */
+        private List<WmsCartonDTO.ViewDTO> firstMileCartonList;
     }
 }

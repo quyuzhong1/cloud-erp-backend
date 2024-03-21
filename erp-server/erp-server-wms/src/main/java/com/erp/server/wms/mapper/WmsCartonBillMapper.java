@@ -1,5 +1,5 @@
 package com.erp.server.wms.mapper;
-import com.erp.model.wms.entity.FirstMileCartonBillEntity;
+import com.erp.model.wms.entity.WmsCartonBillEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -14,6 +14,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2023-11-16
  */
 @Mapper
-public interface FirstMileCartonBillMapper extends BaseMapper<FirstMileCartonBillEntity> {
+public interface WmsCartonBillMapper extends BaseMapper<WmsCartonBillEntity> {
 
 }

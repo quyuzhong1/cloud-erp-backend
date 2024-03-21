@@ -254,6 +254,14 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     private String thirdCode;
 
 
+    /**
+     * 装箱状态 notPacking：未装箱，packing：已装箱
+     * 枚举：PackingStatusEnum
+     */
+    @TableField("packing_status")
+    private String packingStatus;
+
+
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;
 

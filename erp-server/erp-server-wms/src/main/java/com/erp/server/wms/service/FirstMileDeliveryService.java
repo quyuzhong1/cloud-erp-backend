@@ -2,8 +2,8 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.FirstMileCartonDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -243,7 +243,7 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @param dto
      * @return java.lang.Boolean
      **/
-    Boolean packingSave(FirstMileDeliveryDTO.FirstMileCartonAdd dto);
+    Boolean packingSave(WmsCartonDTO.WmsCartonAdd dto);
 
     /**
      * 装箱详情
@@ -252,7 +252,7 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @param id
      * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
      **/
-    FirstMileDeliveryDTO.FirstMileCartonView packingView(String id);
+    WmsCartonDTO.WmsCartonView packingView(String id);
 
     /**
      * 装箱清单
@@ -261,7 +261,7 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @param id
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ListPackingDTO>
      **/
-    FirstMileCartonDTO.ListPackingDTO listPacking(String id);
+    WmsCartonDTO.ListPackingDTO listPacking(String id);
 
     /**
      * 导出装箱清单Excel

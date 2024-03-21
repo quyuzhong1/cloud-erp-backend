@@ -1,13 +1,13 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -21,8 +21,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("first_mile_carton_detail")
-public class FirstMileCartonDetailEntity extends BaseEntity<FirstMileCartonDetailEntity> {
+@TableName("wms_carton_detail")
+public class WmsCartonDetailEntity extends BaseEntity<WmsCartonDetailEntity> {
 
     /**
     * first_mile_carton表id
@@ -49,6 +49,16 @@ public class FirstMileCartonDetailEntity extends BaseEntity<FirstMileCartonDetai
     */
     @TableField("main_id")
     private String mainId;
+    /**
+    * 来源类型
+    */
+    @TableField("source_type")
+    private String sourceType;
+    /**
+    * 来源id
+    */
+    @TableField("source_id")
+    private String sourceId;
 
     public static final String CARTON_ID = "carton_id";
 

@@ -9,11 +9,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -69,87 +67,6 @@ public class FirstMileDeliveryDTO implements Serializable {
           * sqlMap 默认key default
           */
          private Map<String, String> sqlMap;
-
-         /**
-         * tab：/wms/common/enumDropDown?type=ApproveStatusEnum
-         * 描述：waitSubmit:待提交, approveIng:审核中, reject:审核不通过, approve:已审核
-         */
-         private String  tabFlag;
-         /**
-         * 审核时间
-         */
-         private List<LocalDate> approveTimeList;
-         /**
-         * 单据编号
-         */
-         private String code;
-         /**
-         * sku编号
-         */
-         private List<String> skuNoList;
-         /**
-         * 来源单号
-         */
-         private String sourceCode;
-         /**
-          * 备货类型:/wms/common/enumDropDown?type=FbaDemandType
-          * 描述：demandPlatformWarehouse:备货平台仓  demandOverseasWarehouse:备货海外仓
-          */
-         private List<String> demandTypeList;
-         /**
-         * 店铺id
-         */
-         private List<String> shopIdList;
-         /**
-         * 国家二字码
-         */
-         private List<String> countryIdList;
-         /**
-         * 发货仓id
-         */
-         private List<String> deliveryWarehouseIdList;
-         /**
-         * 目的仓id
-         */
-         private List<String> destWarehouseIdList;
-         /**
-         * 审核状态
-         */
-         private List<String> approveStatusList;
-         /**
-         * 物流方式
-         */
-         private List<String> logisticsMethodList;
-         /**
-         * 是否组合品
-         */
-         private Boolean isCombination;
-         /**
-         * 平台sku
-         */
-         private String platformSpuNo;
-         /**
-         * fnSku
-         */
-         private String fnSku;
-         /**
-         * 卖家sku
-         */
-         private String platformSkuNo;
-         /**
-         * 创建时间
-         */
-         private List<LocalDate> createTimeList;
-         /**
-          * 装箱状态：/wms/common/enumDropDown?type=PackingStatus
-          * notPacking：未装箱
-          * packing：已装箱
-          */
-         private String packingStatus;
-         /**
-          * 是否下推入库单
-          */
-         private Boolean isGenerateOverseasInbound;
      }
 
     /**
@@ -911,51 +828,6 @@ public class FirstMileDeliveryDTO implements Serializable {
     }
 
     /**
-     * 装箱
-     */
-    @Data
-    @NoArgsConstructor
-    public static class FirstMileCartonAdd {
-        /**
-         * 发货单id
-         */
-        private String id;
-
-        /**
-         * 发货单号
-         */
-        private String code;
-
-        /**
-         * 装箱信息
-         */
-        @Valid
-        private List<FirstMileCartonDTO.AddDTO> firstMileCartonList;
-    }
-
-    /**
-     * 装箱详情
-     */
-    @Data
-    @NoArgsConstructor
-    public static class FirstMileCartonView {
-        /**
-         * 发货单id
-         */
-        private String id;
-
-        /**
-         * 发货单号
-         */
-        private String code;
-
-        /**
-         * 装箱信息
-         */
-        private List<FirstMileCartonDTO.ViewDTO> firstMileCartonList;
-    }
-
-    /**
      * 分组汇总sku
      */
     @Data
@@ -998,62 +870,6 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 装箱数量
          */
         private Integer packQty;
-    }
-
-
-    /**
-     * 装箱信息
-     */
-    @Data
-    @NoArgsConstructor
-    public static class PackDateDTO {
-        /**
-         * 发货单id
-         */
-        private String id;
-        /**
-         * 箱子id
-         */
-        private String cartonId;
-        /**
-         * 产品id
-         */
-        private String skuId;
-
-        /**
-         * 产品编号
-         */
-        private String skuNo;
-
-        /**
-         * 产品产品名称
-         */
-        private String productName;
-
-        /**
-         * 发货数量
-         */
-        private Integer deliveryQty;
-
-        /**
-         * 待装箱数量
-         */
-        private Integer waitPackQty;
-
-        /**
-         * 装箱数量
-         */
-        private Integer packQty;
-
-        /**
-         * 箱规编号
-         */
-        private Integer boxSpecNo;
-
-        /**
-         * 箱数
-         */
-        private Integer boxQty;
     }
 
     /**

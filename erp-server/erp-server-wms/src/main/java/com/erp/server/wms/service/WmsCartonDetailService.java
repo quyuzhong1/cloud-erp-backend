@@ -1,9 +1,7 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.dto.FirstMileCartonDTO;
-import com.erp.model.wms.entity.FirstMileCartonDetailEntity;
+import com.erp.model.wms.dto.WmsCartonDTO;
+import com.erp.model.wms.entity.WmsCartonDetailEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.FirstMileCartonDetailDTO;
 
 import java.util.List;
 
@@ -15,16 +13,17 @@ import java.util.List;
  * @author Luo_WG
  * @since 2023-11-16
  */
-public interface FirstMileCartonDetailService extends SuperService<FirstMileCartonDetailEntity> {
+public interface WmsCartonDetailService extends SuperService<WmsCartonDetailEntity> {
 
     /**
      * 新增
      * @Author Luo_WG
      * @Date 2023/11/29 10:39
      * @param dto
-     * @param cartonId
+     * @param cartonId 规格表id
+     * @param sourceId 来源id
      **/
-    void add(FirstMileCartonDTO.AddDTO dto, String cartonId, String mainId);
+    void add(WmsCartonDTO.AddDTO dto, String cartonId, String sourceId);
 
     /**
      * 根据装箱id查询箱子产品信息
@@ -33,7 +32,7 @@ public interface FirstMileCartonDetailService extends SuperService<FirstMileCart
      * @param cartonIds
      * @return java.util.List<com.erp.model.wms.entity.FirstMileCartonDetailEntity>
      **/
-    List<FirstMileCartonDetailEntity> listByCartonIds(List<String> cartonIds);
+    List<WmsCartonDetailEntity> listByCartonIds(List<String> cartonIds);
 
     /**
      * 根据发货单id查询箱子产品信息
@@ -42,7 +41,7 @@ public interface FirstMileCartonDetailService extends SuperService<FirstMileCart
      * @param mainIds
      * @return java.util.List<com.erp.model.wms.entity.FirstMileCartonDetailEntity>
      **/
-    List<FirstMileCartonDetailEntity> listByMainIds(List<String> mainIds);
+    List<WmsCartonDetailEntity> listByMainIds(List<String> mainIds);
 
     /**
      * 根据箱规id删除箱子产品信息
@@ -60,7 +59,7 @@ public interface FirstMileCartonDetailService extends SuperService<FirstMileCart
      * @param mainIds
      * @return java.lang.Boolean
      **/
-    Boolean deleteByMainIds(List<String> mainIds);
+    Boolean deleteBySourceIds(List<String> mainIds);
 
 
     /**
@@ -68,5 +67,5 @@ public interface FirstMileCartonDetailService extends SuperService<FirstMileCart
      * @param mainId
      * @return
      */
-    List<FirstMileCartonDTO.PackingItemDTO> boxInfoByMainId(String mainId);
+    List<WmsCartonDTO.PackingItemDTO> boxInfoBySourceId(String mainId);
 }

@@ -7,9 +7,11 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -383,4 +385,53 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     Boolean generateB2cSoOutstockByCode(String soB2cCode);
 
     List<SoOutstockEntity> listByAdvanceQuery(AdvanceQueryContainer container);
+
+
+    /**
+     * 装箱
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:52
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean packingSave(WmsCartonDTO.WmsCartonAdd dto);
+
+    /**
+     * 装箱详情
+     * @Author Luo_WG
+     * @Date 2023/11/28 17:44
+     * @param id
+     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
+     **/
+    WmsCartonDTO.WmsCartonView packingView(String id);
+
+    /**
+     * 装箱清单
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:52
+     * @param id
+     * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ListPackingDTO>
+     **/
+    WmsCartonDTO.ListPackingDTO listPacking(String id);
+
+    /**
+     * 导出装箱清单Excel
+     * @param dto
+     * @param response
+     */
+    void exportPacking(SoOutstockDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 下载装箱模板
+     * @param response
+     */
+    void downloadPackingTemplate(HttpServletResponse response);
+
+    /**
+     * 导入装箱数据
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 }

@@ -1,5 +1,5 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.FirstMileCartonBillEntity;
+import com.erp.model.wms.entity.WmsCartonBillEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.FirstMileCartonBillDTO;
@@ -14,7 +14,7 @@ import java.util.List;
  * @author Luo_WG
  * @since 2023-11-16
  */
-public interface FirstMileCartonBillService extends SuperService<FirstMileCartonBillEntity> {
+public interface WmsCartonBillService extends SuperService<WmsCartonBillEntity> {
 
     /**
     * 新增
@@ -49,7 +49,7 @@ public interface FirstMileCartonBillService extends SuperService<FirstMileCarton
      * @param mainIds
      * @return java.util.List<com.erp.model.wms.entity.FirstMileCartonBillEntity>
      **/
-    List<FirstMileCartonBillEntity> listByMainIds(List<String> mainIds);
+    List<WmsCartonBillEntity> listByMainIds(List<String> mainIds);
 
 
 }

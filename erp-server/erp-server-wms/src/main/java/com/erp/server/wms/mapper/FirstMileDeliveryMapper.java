@@ -1,7 +1,7 @@
 package com.erp.server.wms.mapper;
-import com.erp.model.wms.dto.FirstMileCartonDTO;
-import com.erp.model.wms.dto.FirstMileCartonDetailDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.WmsCartonDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -80,7 +80,7 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
      * @param id
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDetailDTO.ListPackingDetailDTO>
      **/
-    List<FirstMileCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("id") String id);
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("id") String id);
 
     /**
      * 导出装箱清单Excel
@@ -89,6 +89,6 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
      * @param params
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ExportPackingDTO>
      **/
-    List<FirstMileCartonDTO.ExportPackingDTO> exportPacking(@Param("params") FirstMileDeliveryDTO.ExportDTO params);
+    List<WmsCartonDTO.ExportPackingDTO> exportPacking(@Param("params") FirstMileDeliveryDTO.ExportDTO params);
 
 }

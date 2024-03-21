@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.wms.mapper.FirstMileCartonDetailMapper">
+<mapper namespace="com.erp.server.wms.mapper.WmsCartonDetailMapper">
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.FirstMileCartonDetailEntity">
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.WmsCartonDetailEntity">
        <result column="id" property="id" />
        <result column="create_time" property="createTime" />
        <result column="update_time" property="updateTime" />
@@ -18,23 +18,9 @@
        <result column="pack_qty" property="packQty" />
     </resultMap>
 
-    <!-- 通用查询结果列 -->
-    <sql id="Base_Column_List">
-        id,
-        create_time,
-        update_time,
-        create_user_name,
-        create_user_id,
-        update_user_name,
-        update_user_id,
-        version,
-        is_deleted,
-        carton_id, sku_id, sku_no, pack_qty
-    </sql>
-
-    <select id="boxInfoByMainId" resultType="com.erp.model.wms.dto.FirstMileCartonDTO$PackingItemDTO">
+    <select id="boxInfoBySourceId" resultType="com.erp.model.wms.dto.WmsCartonDTO$PackingItemDTO">
         SELECT
-            fmcd.main_id,
+            fmcd.source_Id,
             fmcd.carton_id,
             fmcd.sku_id,
             fmcd.sku_no,
@@ -45,6 +31,6 @@
             INNER JOIN first_mile_carton_bill fmcb ON fmcd.carton_id = fmcb.carton_id
         WHERE
             fmcd.is_deleted = FALSE AND fmcb.is_deleted = FALSE
-          and fmcd.main_id = #{mainId};
+          and fmcd.source_Id = #{sourceId};
     </select>
 </mapper>

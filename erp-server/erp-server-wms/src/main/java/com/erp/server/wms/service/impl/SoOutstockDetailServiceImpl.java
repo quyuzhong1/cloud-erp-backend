@@ -17,8 +17,7 @@ import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.wms.dto.SoOutstockDetailDTO;
-import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
@@ -82,6 +81,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
     @Resource
     private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
+
+    @Resource
+    private WmsCartonService wmsCartonService;
 
 
     @Override
@@ -805,6 +807,30 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             return Collections.EMPTY_LIST;
         }
         List<SoOutstockDetailEntity> list = baseMapper.listBySoDetailIds(soDetailIdList);
+        return list;
+    }
+
+    @Override
+    public List<SoOutstockDTO.GroupSkuDTO> listGroupSkuByMainId(String mainId) {
+        List<SoOutstockDTO.GroupSkuDTO> list = baseMapper.listGroupSkuByMainId(mainId);
+
+        //查询产品信息
+        List<String> skuIdList = list.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
+        //查询已装箱数
+        List<WmsCartonDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonService.listPackingQtyByMainId(mainId, null);
+        for (SoOutstockDTO.GroupSkuDTO groupSkuDTO : list) {
+            //待装箱数量=发货数量-已装箱数量
+            int usePackQty = packingQtyDTOS.stream()
+                    .filter(req -> req.getSkuId().equals(groupSkuDTO.getId())
+                            && req.getSkuId().equals(groupSkuDTO.getSkuId()))
+                    .mapToInt(req -> req.getUsePackQty()).sum();
+            groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - usePackQty);
+            groupSkuDTO.setPackQty(usePackQty);
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(groupSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
+            groupSkuDTO.setProductName(skuVO.getSkuName());
+        }
         return list;
     }
 }

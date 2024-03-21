@@ -1,12 +1,11 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
@@ -1499,5 +1498,50 @@ public class SoOutstockDTO implements Serializable {
          */
         private List<SoOutstockDetailDTO.AddDTO> detailList;
 
+    }
+
+    /**
+     * 分组汇总sku
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GroupSkuDTO {
+        /**
+         * 发货单id
+         */
+        private String id;
+        /**
+         * 箱子id
+         */
+        private String cartonId;
+        /**
+         * 产品id
+         */
+        private String skuId;
+
+        /**
+         * 产品编号
+         */
+        private String skuNo;
+
+        /**
+         * 产品产品名称
+         */
+        private String productName;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 待装箱数量
+         */
+        private Integer waitPackQty;
+
+        /**
+         * 装箱数量
+         */
+        private Integer packQty;
     }
 }
