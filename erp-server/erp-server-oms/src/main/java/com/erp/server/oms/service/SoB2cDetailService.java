@@ -109,7 +109,7 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @param isExpire 是否过期（查询所有=传空）
      * @return
      */
-    Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(List<String> platformSkuList, String dictPlatform, String shopId, LocalDateTime platformOrderCreateTime, Boolean isExpire);
+    Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(List<String> platformSkuList, List<String> platformSpuList, String dictPlatform, String shopId, LocalDateTime platformOrderCreateTime, Boolean isExpire);
 
     /**
      * 消费处理明细

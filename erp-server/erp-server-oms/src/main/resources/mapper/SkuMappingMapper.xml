@@ -633,6 +633,14 @@
                 #{platformSkuNo}
             </foreach>
         </if>
+        <!--平台sku no 列表-->
+        <if test="params.platformSpuNoList !=null and params.platformSpuNoList.size>0">
+            AND li.platform_spu_no IN
+            <foreach collection="params.platformSpuNoList" item="platformSpuNo" open="(" separator="," close=")">
+                #{platformSpuNo}
+            </foreach>
+        </if>
+
         <!--sku no 列表-->
         <if test="params.skuNoList !=null and params.skuNoList.size>0">
             AND sm.product_sku_no IN

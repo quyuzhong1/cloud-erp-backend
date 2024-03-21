@@ -5030,7 +5030,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .map(SoB2cDetailEntity::getPlatformSkuNo)
                 .distinct()
                 .collect(Collectors.toList());
-        Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap = soB2cDetailService.mapListingByPlatformSkuNo(platformSkuList, entity.getDictPlatform(), entity.getShopId(), null, null);
+        Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap = soB2cDetailService.mapListingByPlatformSkuNo(platformSkuList, Collections.emptyList(), entity.getDictPlatform(), entity.getShopId(), null, null);
 
         for (SoB2cDetailEntity detailItem : detailList) {
             String skuId = detailItem.getSkuId();
@@ -6104,12 +6104,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         skuMappingCheck(entity, detailList);
 
         List<String> platformSkuList = detailList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).collect(Collectors.toList());
+        // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
+        List<String> platformSpuList = new LinkedList<>();
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(entity.getDictPlatform())){
+            platformSpuList = detailList.stream()
+                    .map(SoB2cDetailEntity::getPlatformSpuNo)
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
         //根据平台sku查询Listing信息
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatform(entity.getDictPlatform());
         paramDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(platformSkuList);
+        paramDTO.setPlatformSpuNoList(platformSpuList);
         paramDTO.setMatchResult(true);
         paramDTO.setLastExpireDate(entity.getPlatformOrderCreateTime());
 

@@ -192,8 +192,20 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         List<String> platformSkuList = dto.getDetails()
                 .stream()
                 .map(PlatformOrderDetailDTO::getPlatformSkuNo)
-                .distinct().collect(Collectors.toList());
-        Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap = soB2cDetailService.mapListingByPlatformSkuNo(platformSkuList, dto.getDictPlatform(), dto.getShopId(), dto.getPlatformOrderCreateTime(), false);
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
+        List<String> platformSpuList = new LinkedList<>();
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())){
+            platformSpuList = dto.getDetails()
+                    .stream()
+                    .map(PlatformOrderDetailDTO::getPlatformSpuNo)
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+
+        Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap = soB2cDetailService.mapListingByPlatformSkuNo(platformSkuList, platformSpuList, dto.getDictPlatform(), dto.getShopId(), dto.getPlatformOrderCreateTime(), false);
 
         // 查询当前店铺信息
         ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
