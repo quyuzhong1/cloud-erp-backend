@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -134,7 +133,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto) {
+    public Boolean skuMapping(FbaShipmentDTO.SkuMappingParamDTO dto) {
         SkuMappingEntity skuMapping = skuMappingService.getById(dto.getId());
         if (ObjectUtil.isEmpty(skuMapping)) {
             throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
@@ -165,8 +164,9 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
         skuMappingEntity.setProductName(skuVO.getSkuName());
         skuMappingEntity.setListingId(listingInfoEntity.getId());
-        skuMappingEntity.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
-        skuMappingEntity.setPlatformName(PlatformDictEnum.AMAZON.getName());
+        skuMappingEntity.setDictPlatform(dto.getPlatform());
+        PlatformDictEnum platformDictEnum = PlatformDictEnum.checkAndGetByCode(dto.getPlatform());
+        skuMappingEntity.setPlatformName(platformDictEnum.getDesc());
 
         //生效时间
         skuMappingEntity.setEffectiveTime(now);

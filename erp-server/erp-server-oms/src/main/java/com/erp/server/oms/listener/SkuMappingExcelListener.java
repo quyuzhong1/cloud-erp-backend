@@ -165,7 +165,8 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         paramDTO.setShopIdList(Collections.singletonList(shop.getId()));
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(Collections.singletonList(skuMappingImportExcelDTO.getPlatformSkuNo()));
-        paramDTO.setIsExpire(false);
+//        paramDTO.setIsExpire(false);
+        // 所有包含历史映射关系
         List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
         String listingId = "";
 
@@ -178,24 +179,39 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             return;
         }
 
-        // 已存在
-//        if (CollectionUtils.isNotEmpty(listDto) && isApiPlatform){
-//        if (CollectionUtils.isNotEmpty(listDto)){
-//            ListingInfoWithSkuMappingDTO currentSkuMapping = listDto.get(0);
-//            if( currentSkuMapping.getMatchResult()){
-//                errorMsgList.add("该店铺平台sku已存在匹配关系");
-//                skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-//                errorList.add(skuMappingImportExcelDTO);
-//                return;
-//            }
-//        }
+        ListingInfoWithSkuMappingDTO mappingDto = listDto.stream().filter(e -> !e.getIsExpire()).findFirst().orElseThrow(null);
+        if (null == mappingDto){
+            errorMsgList.add("平台sku信息不存在");
+            skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(skuMappingImportExcelDTO);
+            return;
+        }
 
-        // 设置当前listingId
-        if (CollectionUtils.isNotEmpty(listDto)){
-            listingId = listDto.get(0).getListingId();
+        // 已存在
+        if (isApiPlatform){
+            if( mappingDto.getMatchResult()){
+                errorMsgList.add("该店铺平台sku已存在匹配关系");
+                skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(skuMappingImportExcelDTO);
+                return;
+            }
         }
 
         String skuNo = skuMappingImportExcelDTO.getProductSkuNo();
+
+        // 校验不允许重复历史
+        long historyCount = listDto.stream().filter(e -> e.getProductSkuNo().equals(skuNo)).count();
+        if (0 < historyCount){
+            errorMsgList.add(StrUtil.format("当前映射关系在【{}】已存在过，无法修改", skuNo));
+            skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(skuMappingImportExcelDTO);
+            return;
+        }
+
+        // 设置当前listingId
+        listingId = mappingDto.getListingId();
+
+
         SkuVO sku = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
         if (Objects.isNull(sku)) {
             errorMsgList.add("产品sku不存在");
@@ -219,7 +235,6 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream()
                 .filter(l -> l.getId().equalsIgnoreCase(finalListingId1))
                 .findFirst().orElse(null);
-
 
 //        if (Objects.nonNull(listingInfoEntity)) {
 //            listingId = listingInfoEntity.getId();

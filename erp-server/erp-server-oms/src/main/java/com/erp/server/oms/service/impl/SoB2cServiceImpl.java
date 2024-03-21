@@ -99,8 +99,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -113,8 +111,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static cn.hutool.json.XMLTokener.entity;
 
 /**
  * <p>
@@ -4874,7 +4870,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //更新明细
         soB2cDetailService.updateById(detailEntity);
 
-        FbaShipmentDTO.skuMappingParamDTO updateDTO = new FbaShipmentDTO.skuMappingParamDTO();
+        FbaShipmentDTO.SkuMappingParamDTO updateDTO = new FbaShipmentDTO.SkuMappingParamDTO();
         //映射sku
         updateDTO.setSkuNo(detailEntity.getSkuNo());
         updateDTO.setMsku(detailEntity.getPlatformSkuNo());
