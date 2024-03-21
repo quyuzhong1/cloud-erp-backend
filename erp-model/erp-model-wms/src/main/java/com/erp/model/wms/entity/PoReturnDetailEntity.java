@@ -123,6 +123,10 @@ public class PoReturnDetailEntity extends BaseEntity<PoReturnDetailEntity> {
     @TableField(exist = false)
     private LocalDate billDate;
 
+    @TableField(exist = false)
+    private String sourceType;
+
+
     @Override
     public Serializable pkVal() {
         return null;

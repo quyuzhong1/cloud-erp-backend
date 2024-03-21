@@ -56,6 +56,7 @@ import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
+import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
@@ -1338,6 +1339,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //退货补货数量
             Integer replenishQty = purchaseReturnOrderDetailList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId())
                             && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+                            && !ReturnOrderSourceEnum.QC.getCode().equals(req.getSourceType())
                             && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode()))
                     .map(PoReturnDetailEntity::getReplenishQty)
                     .reduce(MathUtil.ZERO, Integer::sum);
