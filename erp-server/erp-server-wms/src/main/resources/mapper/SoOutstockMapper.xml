@@ -56,7 +56,8 @@
         sod.exchange_rate as exchangeRate,
         sod.so_detail_id as soDetailId,
         sod.source_detail_id AS sourceDetailId,
-        sod.warehouse_location AS warehouseLocation
+        sod.warehouse_location AS warehouseLocation,
+        so.packing_status
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod
         ON so.id=sod.main_id AND sod.is_deleted=FALSE

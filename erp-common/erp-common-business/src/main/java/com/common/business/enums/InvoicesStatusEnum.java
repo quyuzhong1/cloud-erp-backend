@@ -5,22 +5,17 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author Lambda
- * @Classname OrderTypeEnum
- * @Description TODO
- * @Date 2023-11-23 19:18
- * @Created by yl
  */
-public enum OrderTypeEnum implements EnumMessage {
-    B2B("B2B", "B2B订单"),
-    B2C("B2C", "B2C订单"),
-    FIRST_MILE("firstMile", "头程物流单"),
+public enum InvoicesStatusEnum implements EnumMessage {
+    NOT_SENT("notSent", "未发送"),
+    SENT("sent", "已发送"),
     ;
 
     private String code;
 
     private String name;
 
-    OrderTypeEnum(String code, String name) {
+    InvoicesStatusEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -40,7 +35,7 @@ public enum OrderTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (OrderTypeEnum item : OrderTypeEnum.values()) {
+        for (InvoicesStatusEnum item : InvoicesStatusEnum.values()) {
             if (code.equals(item.getCode())) {
                 return item.getName();
             }

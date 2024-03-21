@@ -1275,6 +1275,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setCurrencySymbol(item.getCurrencySymbol());
             item.setAllAmountLocalCurrency(item.getAllAmountLocalCurrency());
 
+            //装箱状态
+            item.setPackingStatusName(PackingStatusEnum.getName(item.getPackingStatus()));
 
         }
     }

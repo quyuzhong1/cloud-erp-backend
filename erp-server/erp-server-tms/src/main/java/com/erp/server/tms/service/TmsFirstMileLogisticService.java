@@ -81,7 +81,7 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
 
     TmsFirstMileLogisticDTO.HistoryTrackDTO getHistoryTrack(String id);
 
-    TmsFirstMileLogisticDTO.DeliveryDTO getCanGenerateDeliveryOrder(TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO dto);
+    List<TmsFirstMileLogisticDTO.DeliveryDTO> getCanGenerateDeliveryOrder(TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO dto);
 
     Boolean updateRemark(TmsFirstMileLogisticDTO.UpdateRemarkDTO dto);
 }

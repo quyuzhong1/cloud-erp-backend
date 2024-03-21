@@ -22,14 +22,21 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.TmsCfgSailingEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
+import com.erp.model.tms.enums.TmsCfgSailingDateTypeEnum;
 import com.erp.server.tms.mapper.TmsCfgSailingMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -136,7 +143,64 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
         return list;
     }
 
+    @Override
+    public LocalDateTime calculateShipTime(String logisticsChannelId, LocalDateTime orderTime) {
+        if(StringUtils.isBlank(logisticsChannelId) || orderTime == null){
+            return null;
+        }
+        List<TmsCfgSailingEntity> list = getByLogisticsChannelIdList(Arrays.asList(logisticsChannelId));
+        if(CollectionUtil.isEmpty(list)) {
+            return null;
+        }
+        TmsCfgSailingEntity entity = list.get(0);
+        //生效时间大于下单时间，开船时间为空
+        if(entity.getEffectiveDate().atStartOfDay().isAfter(orderTime)) {
+            return null;
+        }
+        return calculateShipTime(entity.getEffectiveDate().atStartOfDay(), entity.getDateValue(), entity.getDateType(), entity.getStartDate(), entity.getStartTime(), orderTime);
+    }
 
+    /**
+     * 获取目标时间下一个开船日
+     * @return
+     */
+    private  LocalDateTime calculateShipTime(LocalDateTime effectiveTime,Integer sailingInterval, String dateType, Integer startDate, LocalTime startTime, LocalDateTime orderTime) {
+        LocalDateTime nextTargetDay;
+        if(dateType.equals(TmsCfgSailingDateTypeEnum.WEEK.getCode())){
+            //判断有效日期的周几与开船周几，如果小于， 则开船日期等于本周的开船日期，如果等于，则开船日期为当天 + 开船时间 如果大于，则下一个开船日期等于本周的开船日期+开船间隔
+            // 获取当前时间是星期几
+            DayOfWeek dayOfWeek = effectiveTime.getDayOfWeek();
+            // 获取星期几的数值表示，1 表示星期一，7 表示星期日
+            int dayOfWeekValue = dayOfWeek.getValue();
+            if(dayOfWeekValue < startDate){
+                nextTargetDay = effectiveTime.with(TemporalAdjusters.nextOrSame(DayOfWeek.of(startDate)));
+            }else {
+                nextTargetDay = effectiveTime.with(TemporalAdjusters.previousOrSame(DayOfWeek.of(startDate))).plusWeeks(sailingInterval);
+            }
+            //第一次传入的话返回起始日期的开船日，否则需要加上时间间隔
+            nextTargetDay = nextTargetDay.with(startTime);
+            if(nextTargetDay.isAfter(orderTime)){
+                return nextTargetDay;
+            }else{
+                return this.calculateShipTime(nextTargetDay.plusWeeks(sailingInterval),sailingInterval,dateType,startDate,startTime,orderTime);
+            }
+        }else if (dateType.equals(TmsCfgSailingDateTypeEnum.MONTH.getCode())){
+            //逻辑与上面相似
+            int dayOfMonth = effectiveTime.getDayOfMonth();
+            if (dayOfMonth < startDate) {
+                nextTargetDay = effectiveTime.withDayOfMonth(startDate);
+            } else {
+                nextTargetDay = effectiveTime.plusMonths(sailingInterval).withDayOfMonth(startDate);
+            }
+            nextTargetDay = nextTargetDay.with(startTime);
+            if (nextTargetDay.isAfter(orderTime)) {
+                return nextTargetDay;
+            } else {
+                return this.calculateShipTime(nextTargetDay.plusMonths(sailingInterval), sailingInterval, dateType, startDate, startTime, orderTime);
+            }
+        }
+        return null;
+    }
     /**
     * 新增修改处理数据
     */
@@ -201,4 +265,6 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
        }
 
     }
+
+
 }

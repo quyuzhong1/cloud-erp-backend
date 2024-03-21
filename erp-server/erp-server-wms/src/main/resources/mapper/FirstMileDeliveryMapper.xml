@@ -177,15 +177,22 @@
 
     <select id="listPackingDetail" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
         SELECT
+            fmd.id,
             fmcb.box_no,
             concat(box_length, '*', fmc.box_width, '*', fmc.box_height) AS boxSize,
+            box_length*box_width*box_height as multiplySize,
             fmc.package_weight,
             fmcb.box_desc
         FROM first_mile_delivery fmd
         INNER JOIN first_mile_carton fmc ON fmc.source_id = fmd.id AND fmc.is_deleted = FALSE
         INNER JOIN first_mile_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
         WHERE fmd.is_deleted = FALSE
-        AND fmd.id = #{id}
+        <if test="ids != null and ids.size > 0">
+            AND fmd.id IN
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
         ORDER BY CAST(fmcb.box_no AS INTEGER)
     </select>
 
@@ -211,5 +218,35 @@
         </if>
         ORDER BY fmd.code,
         CAST(fmcb.box_no AS INTEGER)
+    </select>
+    <select id="getGenerateLogisticDTO"
+            resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$GenerateLogisticDTO">
+        select
+            fmd.source_id as sourceId,
+            fmd.source_code as sourceCode,
+            fmd.source_type as sourceType,
+            fmd.id as outstockId,
+            fmd.code as outstockCode,
+            fmd.shop_id as shopId,
+            fmd.shop_name as shopName,
+            fmd.approve_time as approveTime,
+            fmd.delivery_warehouse_name as fromWarehouseName,
+            fw.address as fromAddress,
+            fmd.dest_warehouse_name as toWarehouseName,
+            fmd.country_name as toCountryName,
+            tw.address as toAddress
+        from first_mile_delivery fmd
+                 left join warehouse fw on fmd.delivery_warehouse_id = fw.id and fw.is_deleted =false
+                 left join warehouse tw on fmd.dest_warehouse_id = tw.id and tw.is_deleted = false
+        where fmd.is_deleted = false
+        <if test="params.packingStatus != null and params.packingStatus != ''">
+            AND fmd.packing_status = #{params.packingStatus}
+        </if>
+        <if test="params.logisticsStatus != null and params.logisticsStatus != ''">
+            AND fmd.logistics_status = #{params.logisticsStatus}
+        </if>
+        <if test="params.id != null and params.id != ''">
+            AND fmd.id = #{params.id}
+        </if>
     </select>
 </mapper>

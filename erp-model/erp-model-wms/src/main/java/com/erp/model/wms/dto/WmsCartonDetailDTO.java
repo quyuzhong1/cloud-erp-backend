@@ -2,11 +2,9 @@ package com.erp.model.wms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -74,10 +72,7 @@ public class WmsCartonDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-        /**
-         * 主键id
-         */
-//        private String id;
+
     }
 
     @Data
@@ -111,6 +106,7 @@ public class WmsCartonDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListPackingDetailDTO {
+        private String id;
         /**
          * 箱号
          */
@@ -128,6 +124,8 @@ public class WmsCartonDetailDTO implements Serializable {
          * 例：（sku*qty+sku*qty+...）
          */
         private String boxDesc;
+
+        private BigDecimal multiplySize;
     }
 
 }

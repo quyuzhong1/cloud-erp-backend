@@ -5,7 +5,6 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import com.erp.model.wms.entity.FirstMileDeliveryLogisticsEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -27,9 +26,8 @@ public interface FirstMileDeliveryConverter {
             @Mapping(target = "sourceCode", source = "entity.code"),
             @Mapping(target = "toWarehouseId", source = "entity.destWarehouseId"),
             @Mapping(target = "toWarehouseName", source = "entity.destWarehouseName"),
-            @Mapping(target = "logisticsMethod", source = "logisticsEntity.logisticsMethod"),
     })
-    OverseasWarehouseInboundDTO.ViewDTO fmdToOverseasWarehouseInboundView(FirstMileDeliveryEntity entity, FirstMileDeliveryLogisticsEntity logisticsEntity);
+    OverseasWarehouseInboundDTO.ViewDTO fmdToOverseasWarehouseInboundView(FirstMileDeliveryEntity entity);
 
     @Mappings({
             @Mapping(target = "id", ignore = true),

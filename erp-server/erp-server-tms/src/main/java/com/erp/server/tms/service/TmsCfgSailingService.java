@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsCfgSailingDTO;
 import com.erp.model.tms.entity.TmsCfgSailingEntity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -72,4 +73,9 @@ public interface TmsCfgSailingService extends SuperService<TmsCfgSailingEntity> 
      * @return List<TmsCfgSailingEntity>
      */
     List<TmsCfgSailingEntity>  getByLogisticsChannelIdList (List<String> logisticsChannelIdList);
+
+    /**
+     * 通过渠道id和下单时间计算出开船时间
+     */
+    LocalDateTime calculateShipTime(String logisticsChannelId, LocalDateTime orderTime);
 }
