@@ -1,7 +1,6 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -10,6 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -43,10 +43,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -110,32 +108,6 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
             throw new ServiceException("保存失败");
         }
         return Boolean.TRUE;
-    }
-
-    /**
-     * @description: 数据校验
-     * @author Will
-     * @date: 2024/3/21 14:38
-     * @param tmsWarehouseMappingEntity
-     */
-    private void checkData (TmsWarehouseMappingEntity tmsWarehouseMappingEntity) {
-        TmsWarehouseMappingEntity old = getByLogisticsWarehouseCode(tmsWarehouseMappingEntity.getLogisticsWarehouseCode());
-        if (ObjectUtil.isNotEmpty(old) && !StrUtil.equals(tmsWarehouseMappingEntity.getId(),old.getId())) {
-            throw new ServiceException(ApiError.ERROR_WAREHOUSE_MAPPING_EXIST,tmsWarehouseMappingEntity.getLogisticsWarehouseCode());
-        }
-    }
-
-    /**
-     * @description: 根据物流仓库编码查询
-     * @author Will
-     * @date: 2024/3/21 14:40
-     * @param logisticsWarehouseCode
-     * @return TmsWarehouseMappingEntity
-     */
-    private TmsWarehouseMappingEntity getByLogisticsWarehouseCode (String logisticsWarehouseCode) {
-       return lambdaQuery().eq(TmsWarehouseMappingEntity::getLogisticsWarehouseCode,logisticsWarehouseCode)
-                .last("limit 1")
-                .one();
     }
 
     @Override
@@ -250,8 +222,30 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
+        //仓库信息
+        List<String> warehouseNameList = successList.stream().map(TmsWarehouseMappingExcelDTO::getErpWarehouseName).distinct().collect(Collectors.toList());
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByNameList(warehouseNameList);
+        //根据编码查询
+        List<String> logisticsWarehouseCodeList = successList.stream().map(TmsWarehouseMappingExcelDTO::getLogisticsWarehouseCode).distinct().collect(Collectors.toList());
+        List<TmsWarehouseMappingEntity> tmsWarehouseMappingList = this.listByLogisticsWarehouseCodeList(logisticsWarehouseCodeList);
 
+        for (TmsWarehouseMappingExcelDTO excelDTO : successList) {
+            List<String> errorMsgList = new ArrayList<>();
+            //仓库是否存在
+            String warehouseId = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getName(), excelDTO.getErpWarehouseName())
+                            && ApproveStatusEnum.APPROVE.equals(obj.getApproveStatusEnum()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+            if (StrUtil.isBlank(warehouseId)) {
+                errorMsgList.add("未找到有效仓库名称");
+            }
+            //导入数据是否存在重复
+            long count = successList.stream().filter(obj -> StrUtil.equals(excelDTO.getLogisticsWarehouseCode(), obj.getLogisticsWarehouseCode())).count();
+            if (count > 1) {
+                errorMsgList.add("不能导入重复仓库代码（物流商）");
+            }
+            //导入的数据是否存在
 
+        }
     }
 
     /**
@@ -265,4 +259,33 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
         tmsWarehouseMappingEntity.setErpWarehouseName(warehouseList.get(0).getName());
     }
 
+
+    /**
+     * @description: 数据校验
+     * @author Will
+     * @date: 2024/3/21 14:38
+     * @param tmsWarehouseMappingEntity
+     */
+    private void checkData (TmsWarehouseMappingEntity tmsWarehouseMappingEntity) {
+        //查询是否存在相同编码数据
+        List<TmsWarehouseMappingEntity> oldList = listByLogisticsWarehouseCodeList(Arrays.asList(tmsWarehouseMappingEntity.getLogisticsWarehouseCode()));
+        if (CollectionUtils.isNotEmpty(oldList) && !StrUtil.equals(tmsWarehouseMappingEntity.getId(),oldList.get(0).getId())) {
+            throw new ServiceException(ApiError.ERROR_WAREHOUSE_MAPPING_EXIST,tmsWarehouseMappingEntity.getLogisticsWarehouseCode());
+        }
+    }
+
+    /**
+     * @description: 根据物流仓库编码查询
+     * @author Will
+     * @date: 2024/3/21 14:40
+     * @param logisticsWarehouseCodeList
+     * @return TmsWarehouseMappingEntity
+     */
+    private List<TmsWarehouseMappingEntity> listByLogisticsWarehouseCodeList (List<String> logisticsWarehouseCodeList) {
+        if (CollectionUtils.isEmpty(logisticsWarehouseCodeList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(TmsWarehouseMappingEntity::getLogisticsWarehouseCode,logisticsWarehouseCodeList)
+                .list();
+    }
 }
