@@ -574,7 +574,7 @@ public class FirstMileDeliveryController extends BaseController {
 
 
     /**
-     * 生成状态更新
+     * 生成状态更新为无需生成
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "生成状态更新")
     @PostMapping("/generateStatusUpdate")

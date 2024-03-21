@@ -293,7 +293,7 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 
     /**
-     * 生成状态修改
+     * 生成状态更新为无需生成
      * @param dto
      * @return
      */
