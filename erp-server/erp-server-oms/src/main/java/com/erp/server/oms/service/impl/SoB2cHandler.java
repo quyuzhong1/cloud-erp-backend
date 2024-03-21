@@ -38,7 +38,7 @@ public class SoB2cHandler extends AbstractSparrowAnnotationBeanMap<PlatformSoB2c
      * 规则处理
      */
     public static Boolean handleRule(SoB2cEntity mainEntity) {
-        ISoB2cHandleService service = PAY_MAP.get(PlatformDictEnum.getByCode(mainEntity.getPlatformCode()));
+        ISoB2cHandleService service = PAY_MAP.get(PlatformDictEnum.getByCode(mainEntity.getDictPlatform()));
         return service.handleRule(mainEntity);
     }
 
@@ -46,7 +46,7 @@ public class SoB2cHandler extends AbstractSparrowAnnotationBeanMap<PlatformSoB2c
      * 处理生成销售出库单
      */
     public static Boolean handleSoOutStock(PlatformOrderDTO dto, SoB2cDTO.PullOrderResultDTO resultDTO, SoB2cEntity mainEntity){
-        ISoB2cHandleService service = PAY_MAP.get(PlatformDictEnum.getByCode(mainEntity.getPlatformCode()));
+        ISoB2cHandleService service = PAY_MAP.get(PlatformDictEnum.getByCode(mainEntity.getDictPlatform()));
         return service.handleSoOutStock(dto, resultDTO, mainEntity);
     }
 
