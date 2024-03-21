@@ -706,8 +706,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 poReturnEntity.setConfirmStatus(confirmStatus);
                 poReturnEntity.setConfirmDate(confirmStatus.equals(PoReturnConfirmStatusEnum.WAIT_CONFIRM.getStatus()) ? null :LocalDate.now());
             }
-            //采购明细id
-            List<String> podIds = poReturnDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
+            //退货补货退货id集合
+            List<String> poReturnIdList = poReturnEntityList.stream().filter(obj -> StrUtil.equals(obj.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode()))
+                    .map(PoReturnEntity::getId).collect(Collectors.toList());
+            List<String> podIds = poReturnDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getPurchaseOrderDetailId()) && poReturnIdList.contains(obj.getMainId()))
+                    .map(obj -> obj.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(podIds)) {
                 updateArrivalState(podIds);
             }
@@ -859,8 +862,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
             }
         }
-        //采购明细id
-        List<String> podIds = poReturnDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
+        //退货补货退货id集合
+        List<String> poReturnIdList = poReturnEntityList.stream().filter(obj -> StrUtil.equals(obj.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode()))
+                .map(PoReturnEntity::getId).collect(Collectors.toList());
+        List<String> podIds = poReturnDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getPurchaseOrderDetailId()) && poReturnIdList.contains(obj.getMainId()))
+                .map(obj -> obj.getPurchaseOrderDetailId())
+                .distinct().collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(podIds)) {
             updateArrivalState(podIds);
         }
