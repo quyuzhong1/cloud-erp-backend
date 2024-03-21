@@ -50,7 +50,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void add(WmsCartonDTO.AddDTO addDTO, String cartonId, String sourceId) {
+    public void add(WmsCartonDTO.AddDTO addDTO, String cartonId, String sourceId, String sourceType) {
         //校验必填
         for (WmsCartonDetailDTO.AddDTO detail : addDTO.getDetailList()) {
             if (StringUtils.isBlank(detail.getSkuId()) || StringUtils.isBlank(detail.getSkuNo())) {
@@ -66,7 +66,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
 
         List<WmsCartonDetailEntity> detailEntityList = BeanMapper.copyList(addDTO.getDetailList(), WmsCartonDetailEntity.class);
         // 数据处理
-        handleData(detailEntityList, cartonId, sourceId);
+        handleData(detailEntityList, cartonId, sourceId, sourceType);
 
         log.info("开始新增发货单箱子信息单");
         boolean save = super.saveOrUpdateBatch(detailEntityList);
@@ -86,11 +86,11 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
     }
 
     @Override
-    public List<WmsCartonDetailEntity> listByMainIds(List<String> mainIds) {
-        if (CollectionUtils.isEmpty(mainIds)) {
+    public List<WmsCartonDetailEntity> listBySourceIds(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(WmsCartonDetailEntity::getMainId, mainIds).list();
+        return lambdaQuery().in(WmsCartonDetailEntity::getSourceId, sourceIds).list();
     }
 
     @Override
@@ -117,10 +117,11 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<WmsCartonDetailEntity> detailEntityList, String cartonId, String mainId) {
+    private void handleData(List<WmsCartonDetailEntity> detailEntityList, String cartonId, String sourceId, String sourceType) {
         for (WmsCartonDetailEntity wmsCartonDetailEntity : detailEntityList) {
             wmsCartonDetailEntity.setCartonId(cartonId);
-            wmsCartonDetailEntity.setMainId(mainId);
+            wmsCartonDetailEntity.setSourceId(sourceId);
+            wmsCartonDetailEntity.setSourceType(sourceType);
         }
     }
 
@@ -134,7 +135,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
      * @return void
      **/
     private void firstMileCartonBillSave(Integer boxQty, List<WmsCartonDetailEntity> detailEntityList, String cartonId, String sourceId) {
-        List<WmsCartonBillEntity> firstMileCartonBillEntities = wmsCartonBillService.listByMainIds(Arrays.asList(sourceId));
+        List<WmsCartonBillEntity> firstMileCartonBillEntities = wmsCartonBillService.listBySourceIds(Arrays.asList(sourceId));
         Integer maxBoxNo = 0;
         if (CollectionUtils.isNotEmpty(firstMileCartonBillEntities)) {
             maxBoxNo = firstMileCartonBillEntities.stream().max(Comparator.comparingInt(req -> Integer.valueOf(req.getBoxNo()))).map(req -> Integer.valueOf(req.getBoxNo())).get();

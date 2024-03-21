@@ -22,8 +22,9 @@ public interface WmsCartonDetailService extends SuperService<WmsCartonDetailEnti
      * @param dto
      * @param cartonId 规格表id
      * @param sourceId 来源id
+     * @param sourceType 来源id
      **/
-    void add(WmsCartonDTO.AddDTO dto, String cartonId, String sourceId);
+    void add(WmsCartonDTO.AddDTO dto, String cartonId, String sourceId, String sourceType);
 
     /**
      * 根据装箱id查询箱子产品信息
@@ -41,7 +42,7 @@ public interface WmsCartonDetailService extends SuperService<WmsCartonDetailEnti
      * @param mainIds
      * @return java.util.List<com.erp.model.wms.entity.FirstMileCartonDetailEntity>
      **/
-    List<WmsCartonDetailEntity> listByMainIds(List<String> mainIds);
+    List<WmsCartonDetailEntity> listBySourceIds(List<String> mainIds);
 
     /**
      * 根据箱规id删除箱子产品信息

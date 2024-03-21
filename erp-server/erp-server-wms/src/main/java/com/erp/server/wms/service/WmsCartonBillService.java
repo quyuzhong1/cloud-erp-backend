@@ -37,19 +37,19 @@ public interface WmsCartonBillService extends SuperService<WmsCartonBillEntity> 
      * 根据发货单id删除箱子明细
      * @Author Luo_WG
      * @Date 2023/11/28 16:31
-     * @param mainIds
+     * @param sourceIds
      * @return java.lang.Boolean
      **/
-    Boolean deleteByMainIds(List<String> mainIds);
+    Boolean deleteBySourceIds(List<String> sourceIds);
 
     /**
      * 根据发货单id查询箱子明细
      * @Author Luo_WG
      * @Date 2023/11/29 11:17
-     * @param mainIds
+     * @param sourceIds
      * @return java.util.List<com.erp.model.wms.entity.FirstMileCartonBillEntity>
      **/
-    List<WmsCartonBillEntity> listByMainIds(List<String> mainIds);
+    List<WmsCartonBillEntity> listBySourceIds(List<String> sourceIds);
 
 
 }

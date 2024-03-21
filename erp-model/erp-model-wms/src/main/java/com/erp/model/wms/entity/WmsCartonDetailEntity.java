@@ -45,11 +45,6 @@ public class WmsCartonDetailEntity extends BaseEntity<WmsCartonDetailEntity> {
     @TableField("pack_qty")
     private Integer packQty;
     /**
-    * 发货单id
-    */
-    @TableField("main_id")
-    private String mainId;
-    /**
     * 来源类型
     */
     @TableField("source_type")

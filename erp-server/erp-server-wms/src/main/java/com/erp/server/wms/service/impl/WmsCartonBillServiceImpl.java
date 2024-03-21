@@ -64,19 +64,19 @@ public class WmsCartonBillServiceImpl extends SuperServiceImpl<WmsCartonBillMapp
     }
 
     @Override
-    public Boolean deleteByMainIds(List<String> mainIds) {
+    public Boolean deleteBySourceIds(List<String> mainIds) {
         if (CollectionUtils.isEmpty(mainIds)) {
             return Boolean.TRUE;
         }
-        return lambdaUpdate().in(WmsCartonBillEntity::getMainId, mainIds).remove();
+        return lambdaUpdate().in(WmsCartonBillEntity::getSourceId, mainIds).remove();
     }
 
     @Override
-    public List<WmsCartonBillEntity> listByMainIds(List<String> mainIds) {
-        if (CollectionUtils.isEmpty(mainIds)) {
+    public List<WmsCartonBillEntity> listBySourceIds(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(WmsCartonBillEntity::getMainId, mainIds).list();
+        return lambdaQuery().in(WmsCartonBillEntity::getSourceId, sourceIds).list();
     }
 
     /**

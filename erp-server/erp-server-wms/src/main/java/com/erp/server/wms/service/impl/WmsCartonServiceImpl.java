@@ -67,7 +67,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<FirstMileCartonMapper
             throw new ServiceException("发货单箱规信息保存失败");
         }
         //新增详情信息
-        wmsCartonDetailService.add(addDTO, wmsCartonEntity.getId(), sourceId);
+        wmsCartonDetailService.add(addDTO, wmsCartonEntity.getId(), sourceId, sourceType);
     }
 
     @Override
@@ -163,7 +163,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<FirstMileCartonMapper
         List<WmsCartonEntity> firstMileCartonEntities = this.listBySourceIds(Arrays.asList(id));
         if (CollectionUtils.isNotEmpty(firstMileCartonEntities)) {
             //删除箱子明细信息
-            wmsCartonBillService.deleteByMainIds(Arrays.asList(id));
+            wmsCartonBillService.deleteBySourceIds(Arrays.asList(id));
             //删除原箱包装信息
             wmsCartonDetailService.deleteBySourceIds(Arrays.asList(id));
             //删除原箱信息

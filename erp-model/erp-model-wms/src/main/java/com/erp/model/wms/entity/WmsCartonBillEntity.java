@@ -40,10 +40,10 @@ public class WmsCartonBillEntity extends BaseEntity<WmsCartonBillEntity> {
     @TableField("box_desc")
     private String boxDesc;
     /**
-     * 发货单id
+     * 来源id
      */
-    @TableField("main_id")
-    private String mainId;
+    @TableField("source_id")
+    private String sourceId;
 
     public static final String CARTON_ID = "carton_id";
 
