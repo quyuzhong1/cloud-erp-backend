@@ -468,11 +468,6 @@ public class FirstMileDeliveryDTO implements Serializable {
         private List<String> attachUrlList;
 
         /**
-         * 物流信息
-         */
-        private FirstMileDeliveryLogisticsDTO.ViewDTO logisticsView;
-
-        /**
          * 产品信息
          */
         private List<FirstMileDeliveryDetailDTO.ViewDTO> detailList;
@@ -494,11 +489,6 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 附件url集合
          */
         private List<String> attachUrlList;
-
-        /**
-         * 物流信息
-         */
-        private FirstMileDeliveryLogisticsDTO.AddDTO logisticsView;
 
         /**
          * 产品信息
@@ -529,11 +519,6 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 附件url集合
          */
         private List<String> attachUrlList;
-
-        /**
-         * 物流信息
-         */
-        private FirstMileDeliveryLogisticsDTO.UpdateDTO logisticsView;
 
         /**
          * 产品信息

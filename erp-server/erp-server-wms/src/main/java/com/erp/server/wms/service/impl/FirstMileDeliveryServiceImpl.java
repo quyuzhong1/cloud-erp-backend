@@ -101,8 +101,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Autowired
     private WarehouseService warehouseService;
     @Autowired
-    private FirstMileDeliveryLogisticsService firstMileDeliveryLogisticsService;
-    @Autowired
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
     @Autowired
     private PlmTaskFeign plmTaskFeign;
@@ -176,11 +174,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "发货单" , firstMileDeliveryEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), firstMileDeliveryEntity.getId(), "新增操作");
 
-        //新增物流信息
-        addDTO.getLogisticsView().setMainId(firstMileDeliveryEntity.getId());
-        addDTO.getLogisticsView().setDeliveryCode(code);
-        firstMileDeliveryLogisticsService.add(addDTO.getLogisticsView());
-
         //新增详情信息
         firstMileDeliveryDetailService.add(addDTO, firstMileDeliveryEntity.getId());
         return new BaseResultDTO.AddDTO(firstMileDeliveryEntity.getId(), code);
@@ -213,10 +206,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         TableName tableName = detailEntityClass.getDeclaredAnnotation(TableName.class);
         String type = tableName.value();
         wmsAttachmentService.batchSaveNotDel(updateDTO.getAttachUrlList(), updateDTO.getAttachNameList(), type, updateDTO.getId());
-
-        //修改物流信息
-        updateDTO.getLogisticsView().setMainId(firstMileDeliveryEntity.getId());
-        firstMileDeliveryLogisticsService.update(updateDTO.getLogisticsView());
 
         //修改明细数据
         firstMileDeliveryDetailService.update(updateDTO, firstMileDeliveryEntity.getId());
@@ -619,8 +608,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1043);
         }
-        // 删除物流信息
-        firstMileDeliveryLogisticsService.removeByMainIds(Arrays.asList(id));
         // 删除明细数据
         firstMileDeliveryDetailService.removeByMainIds(Arrays.asList(id));
         // 删除主单数据
@@ -1577,10 +1564,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         String dictPlatform = null == providerEntity ? "" : providerEntity.getCode();
 
         //物流信息
-        FirstMileDeliveryLogisticsEntity logisticsEntity = firstMileDeliveryLogisticsService.listByMainId(id);
-        OverseasWarehouseInboundDTO.ViewDTO viewDTO = FirstMileDeliveryConverter.INSTANCE.fmdToOverseasWarehouseInboundView(entity, logisticsEntity);
+        OverseasWarehouseInboundDTO.ViewDTO viewDTO = FirstMileDeliveryConverter.INSTANCE.fmdToOverseasWarehouseInboundView(entity);
         viewDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
-        viewDTO.setTrackingNo(StringUtils.join(logisticsEntity.getTrackingNoList(), ","));
         viewDTO.setInstockStatus(OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode());
         viewDTO.setInstockStatusName(OverseasInstockStatusEnum.TO_BE_SHIPPED.getName());
 
