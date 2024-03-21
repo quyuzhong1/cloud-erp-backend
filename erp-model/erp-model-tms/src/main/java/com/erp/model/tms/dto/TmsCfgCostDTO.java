@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -81,6 +82,11 @@ public class TmsCfgCostDTO implements Serializable {
         private String  costName;
 
         /**
+         * 是否默认
+         */
+        private Boolean isDefault;
+
+        /**
          * 创建人名称【可排序】
          */
         private String  createUserName;
@@ -129,7 +135,10 @@ public class TmsCfgCostDTO implements Serializable {
         */
         private String costName;
 
-
+        /**
+         * 是否默认，true是，false否
+         */
+        private Boolean isDefault;
     }
 
     /**
@@ -182,7 +191,11 @@ public class TmsCfgCostDTO implements Serializable {
         @Size(max = 64,message = "费用名称最大长度不能超过64位")
         private String costName;
 
-
+        /**
+         * 是否默认，true是，false否
+         */
+        @NotNull(message = "默认值不能为空")
+        private Boolean isDefault;
     }
 
 

@@ -1193,6 +1193,10 @@ public enum ApiError implements Serializable {
     ERROR_CHANNEL_QUOTE(94029,"该渠道已被引用,无法删除"),
     ERROR_LOGISTICS_BILL_COST_RECONCILIATION_STATUS(94030,"已确认和已作废不支持自发货费用单状态变更"),
     ERROR_CFG_SAILING_EXIST(94031,"已存在渠道【{}】的截单开船数据"),
+    ERROR_CFG_COST(94032,"费用名称【{}】已存在"),
+
+
+
     /**
      * SRM 错误
      * 从96000 开始

@@ -30,7 +30,8 @@
         is_deleted as isDeleted,
         dict_cost_attribution as dictCostAttribution,
         dict_cost_category as dictCostCategory ,
-        cost_name as costName
+        cost_name as costName,
+        is_default as isDefault
     </sql>
 
     <!-- 分页查询 -->

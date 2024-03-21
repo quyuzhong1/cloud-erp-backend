@@ -1,13 +1,13 @@
 package com.erp.model.tms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -29,16 +29,24 @@ public class TmsCfgCostEntity extends BaseEntity<TmsCfgCostEntity> {
     */
     @TableField("dict_cost_attribution")
     private String dictCostAttribution;
+
     /**
     * 费用分类（字典dictCostCategory）
     */
     @TableField("dict_cost_category")
     private String dictCostCategory;
+
     /**
     * 费用名称
     */
     @TableField("cost_name")
     private String costName;
+
+    /**
+     * 是否默认
+     */
+    @TableField("is_default")
+    private Boolean isDefault;
 
 
     public static final String DICT_COST_ATTRIBUTION = "dict_cost_attribution";
