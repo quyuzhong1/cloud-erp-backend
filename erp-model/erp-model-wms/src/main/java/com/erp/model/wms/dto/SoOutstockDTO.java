@@ -5,7 +5,6 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
@@ -358,6 +357,16 @@ public class SoOutstockDTO implements Serializable {
          * 币种符号
          */
         private String currencySymbol;
+
+        /**
+         * 装箱状态
+         */
+        private String packingStatus;
+
+        /**
+         * 装箱状态中文
+         */
+        private String packingStatusName;
     }
 
     /**·

@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -17,6 +18,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.tms.dto.TmsWarehouseMappingDTO;
 import com.erp.model.tms.dto.excel.TmsWarehouseMappingExcelDTO;
@@ -197,12 +199,10 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
 
     @Override
     public Boolean exportExcel(TmsWarehouseMappingDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<TmsWarehouseMappingDTO.ListDTO> resultList = null; //this.baseMapper.listExportExcel(dto);
+        List<TmsWarehouseMappingDTO.ListDTO> resultList = this.baseMapper.listExportExcel(dto);
         if (CollectionUtils.isEmpty(resultList)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
-        //数据赋值处理
-        //handleDataPaging(resultList);
         String name = "仓库匹配列表";
         StringBuffer sb = new StringBuffer();
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
@@ -218,6 +218,13 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
         return Boolean.TRUE;
     }
 
+    /**
+     * @description: 导入成功数据
+     * @author Will
+     * @date: 2024/3/21 19:01
+     * @param successList
+     * @param errorList
+     */
     private void handleImportSuccessList (List<TmsWarehouseMappingExcelDTO> successList,List<TmsWarehouseMappingExcelDTO> errorList) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
@@ -228,8 +235,10 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
         //根据编码查询
         List<String> logisticsWarehouseCodeList = successList.stream().map(TmsWarehouseMappingExcelDTO::getLogisticsWarehouseCode).distinct().collect(Collectors.toList());
         List<TmsWarehouseMappingEntity> tmsWarehouseMappingList = this.listByLogisticsWarehouseCodeList(logisticsWarehouseCodeList);
+        List<TmsWarehouseMappingEntity> resultList = new ArrayList<>();
 
         for (TmsWarehouseMappingExcelDTO excelDTO : successList) {
+            TmsWarehouseMappingEntity addEntity = new TmsWarehouseMappingEntity();
             List<String> errorMsgList = new ArrayList<>();
             //仓库是否存在
             String warehouseId = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getName(), excelDTO.getErpWarehouseName())
@@ -243,9 +252,27 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
             if (count > 1) {
                 errorMsgList.add("不能导入重复仓库代码（物流商）");
             }
+            //存在错误信息则
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                continue;
+            }
+            addEntity.setErpWarehouseId(warehouseId);
+            addEntity.setErpWarehouseName(excelDTO.getErpWarehouseName());
+            addEntity.setLogisticsWarehouseCode(excelDTO.getLogisticsWarehouseCode());
             //导入的数据是否存在
-
+            TmsWarehouseMappingEntity old = tmsWarehouseMappingList.stream().filter(obj -> StrUtil.equals(obj.getLogisticsWarehouseCode(), excelDTO.getLogisticsWarehouseCode()))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(old)) {
+                addEntity.setId(old.getId());
+            }
+            resultList.add(addEntity);
         }
+        if (CollectionUtils.isEmpty(resultList)) {
+           return;
+        }
+        this.saveOrUpdateBatch(resultList);
     }
 
     /**

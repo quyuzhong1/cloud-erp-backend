@@ -82,10 +82,6 @@ public class WmsCartonDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-        /**
-         * 主键id
-         */
-//        private String id;
 
         /**
          * 详情

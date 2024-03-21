@@ -25,7 +25,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -103,8 +106,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Autowired
     private WarehouseService warehouseService;
     @Autowired
-    private FirstMileDeliveryLogisticsService firstMileDeliveryLogisticsService;
-    @Autowired
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
     @Autowired
     private PlmTaskFeign plmTaskFeign;
@@ -178,11 +179,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "发货单" , firstMileDeliveryEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), firstMileDeliveryEntity.getId(), "新增操作");
 
-        //新增物流信息
-        addDTO.getLogisticsView().setMainId(firstMileDeliveryEntity.getId());
-        addDTO.getLogisticsView().setDeliveryCode(code);
-        firstMileDeliveryLogisticsService.add(addDTO.getLogisticsView());
-
         //新增详情信息
         firstMileDeliveryDetailService.add(addDTO, firstMileDeliveryEntity.getId());
         return new BaseResultDTO.AddDTO(firstMileDeliveryEntity.getId(), code);
@@ -215,10 +211,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         TableName tableName = detailEntityClass.getDeclaredAnnotation(TableName.class);
         String type = tableName.value();
         wmsAttachmentService.batchSaveNotDel(updateDTO.getAttachUrlList(), updateDTO.getAttachNameList(), type, updateDTO.getId());
-
-        //修改物流信息
-        updateDTO.getLogisticsView().setMainId(firstMileDeliveryEntity.getId());
-        firstMileDeliveryLogisticsService.update(updateDTO.getLogisticsView());
 
         //修改明细数据
         firstMileDeliveryDetailService.update(updateDTO, firstMileDeliveryEntity.getId());
@@ -621,8 +613,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1043);
         }
-        // 删除物流信息
-        firstMileDeliveryLogisticsService.removeByMainIds(Arrays.asList(id));
         // 删除明细数据
         firstMileDeliveryDetailService.removeByMainIds(Arrays.asList(id));
         // 删除主单数据
@@ -914,14 +904,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
      * @param tmsFirstMileLogisticEntities
      */
     private void viewLogistic(FirstMileDeliveryDTO.ViewDTO data, List<LogisticsBillEntity> tmsFirstMileLogisticEntities) {
-        FirstMileDeliveryLogisticsDTO.ViewDTO logisticsViewDTO = new FirstMileDeliveryLogisticsDTO.ViewDTO();
+        FirstMileDeliveryDTO.ViewLogisticDTO logisticsViewDTO = new FirstMileDeliveryDTO.ViewLogisticDTO();
         if (CollectionUtil.isNotEmpty(tmsFirstMileLogisticEntities)) {
             LogisticsBillEntity tmsFirstMileLogisticEntity = tmsFirstMileLogisticEntities.get(0);
             //渠道
-            LogisticsChannelDTO.BaseDTO channelInfo = logisticsFeign.getChannelInfoById(tmsFirstMileLogisticEntity.getChannelId());
-            if (ObjectUtil.isNotEmpty(channelInfo)) {
-                logisticsViewDTO.setLogisticsChannel(channelInfo.getId());
-                logisticsViewDTO.setLogisticsChannelName(channelInfo.getName());
+            if (StringUtils.isNotBlank(tmsFirstMileLogisticEntity.getChannelId())) {
+                LogisticsChannelDTO.BaseDTO channelInfo = logisticsFeign.getChannelInfoById(tmsFirstMileLogisticEntity.getChannelId());
+                if (ObjectUtil.isNotEmpty(channelInfo)) {
+                    logisticsViewDTO.setLogisticsChannel(channelInfo.getId());
+                    logisticsViewDTO.setLogisticsChannelName(channelInfo.getName());
+                }
             }
             //物流方式
             logisticsViewDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(tmsFirstMileLogisticEntity.getShippingMethod()));
@@ -1579,10 +1571,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         String dictPlatform = null == providerEntity ? "" : providerEntity.getCode();
 
         //物流信息
-        FirstMileDeliveryLogisticsEntity logisticsEntity = firstMileDeliveryLogisticsService.listByMainId(id);
-        OverseasWarehouseInboundDTO.ViewDTO viewDTO = FirstMileDeliveryConverter.INSTANCE.fmdToOverseasWarehouseInboundView(entity, logisticsEntity);
+        OverseasWarehouseInboundDTO.ViewDTO viewDTO = FirstMileDeliveryConverter.INSTANCE.fmdToOverseasWarehouseInboundView(entity);
         viewDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
-        viewDTO.setTrackingNo(StringUtils.join(logisticsEntity.getTrackingNoList(), ","));
         viewDTO.setInstockStatus(OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode());
         viewDTO.setInstockStatusName(OverseasInstockStatusEnum.TO_BE_SHIPPED.getName());
 

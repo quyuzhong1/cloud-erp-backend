@@ -159,6 +159,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(!wmsFirstMileDeliveryFeign.updateStatus(updateDeliveryDto)){
             throw new ServiceException("发货单更新物流状态失败");
         }
+
         return new BaseResultDTO.AddDTO(tmsFirstMileLogisticEntity.getId(), tmsFirstMileLogisticEntity.getOutstockCode());
     }
 

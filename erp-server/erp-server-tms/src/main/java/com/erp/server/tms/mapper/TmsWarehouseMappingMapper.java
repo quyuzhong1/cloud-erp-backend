@@ -8,6 +8,8 @@ import com.erp.model.tms.entity.TmsWarehouseMappingEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -28,4 +30,12 @@ public interface TmsWarehouseMappingMapper extends BaseMapper<TmsWarehouseMappin
      * @return IPage<ListDTO>
      */
     IPage<TmsWarehouseMappingDTO.ListDTO> paging(Page query,@Param("params") TmsWarehouseMappingDTO.PagingParamDTO params);
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2024/3/21 19:09
+     * @param params
+     * @return List<ListDTO>
+     */
+    List<TmsWarehouseMappingDTO.ListDTO> listExportExcel(@Param("params") TmsWarehouseMappingDTO.PagingParamDTO params);
 }
