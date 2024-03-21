@@ -77,10 +77,9 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
      * 根据发货单id查询装箱清单
      * @Author Luo_WG
      * @Date 2023/11/28 17:15
-     * @param id
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDetailDTO.ListPackingDetailDTO>
      **/
-    List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("id") String id);
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("ids") List<String> ids);
 
     /**
      * 导出装箱清单Excel
@@ -91,4 +90,5 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
      **/
     List<WmsCartonDTO.ExportPackingDTO> exportPacking(@Param("params") FirstMileDeliveryDTO.ExportDTO params);
 
+    List<FirstMileDeliveryDTO.GenerateLogisticDTO> getGenerateLogisticDTO(@Param("params") FirstMileDeliveryDTO.GenerateLogisticReqDTO dto);
 }

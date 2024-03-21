@@ -298,4 +298,8 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return
      */
     Boolean generateStatusUpdate(FirstMileDeliveryDTO.GenerateStatusUpdateDTO dto);
+
+    List<FirstMileDeliveryDTO.GenerateLogisticDTO> getGenerateLogisticDTO(FirstMileDeliveryDTO.GenerateLogisticReqDTO dto);
+
+    Boolean updateStatus(FirstMileDeliveryDTO.UpdateStatusDTO dto);
 }

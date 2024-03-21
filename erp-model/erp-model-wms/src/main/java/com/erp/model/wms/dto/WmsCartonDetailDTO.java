@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -111,6 +112,7 @@ public class WmsCartonDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListPackingDetailDTO {
+        private String id;
         /**
          * 箱号
          */
@@ -128,6 +130,8 @@ public class WmsCartonDetailDTO implements Serializable {
          * 例：（sku*qty+sku*qty+...）
          */
         private String boxDesc;
+
+        private BigDecimal multiplySize;
     }
 
 }

@@ -241,7 +241,7 @@ public class TmsFirstMileLogisticController extends BaseController {
      * 查询符合生成条件的发货单
      */
     @PostMapping("/getCanGenerateDeliveryOrder")
-    public ApiResult<TmsFirstMileLogisticDTO.DeliveryDTO> getCanGenerateDeliveryOrder(@RequestBody TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO dto) {
+    public ApiResult<List<TmsFirstMileLogisticDTO.DeliveryDTO>> getCanGenerateDeliveryOrder(@RequestBody TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO dto) {
         return success(tmsFirstMileLogisticService.getCanGenerateDeliveryOrder(dto));
     }
 }
