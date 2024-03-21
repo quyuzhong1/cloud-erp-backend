@@ -16,7 +16,7 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     AMAZON("Amazon", "Amazon", "亚马逊", "100","Y","N"),
     SHOPIFY("Shopify", "Shopify", "Shopify", "004","Y","N"),
     WALMART("Walmart", "Walmart", "沃尔玛", "018","Y","N"),
-    MERCADO("mercadolibre", "美客多", "美客多", "","Y","N"),
+    MERCADOLIBRE("mercadolibre", "美客多", "美客多", "","Y","N"),
     //物流平台
     DSF("DSF", "递四方", "递四方(新)", "","Y","Y"),
     SF_EXPRESS("EXPRESS", "顺丰-丰桥", "顺丰国内物流", "","Y","N"),

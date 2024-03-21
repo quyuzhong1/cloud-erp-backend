@@ -847,7 +847,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             }
             //如果是保宏或者是美客多
             if (logisticsPlatform.equals(LogisticsPlatformEnum.BAO_HONG.getCode())
-                    || logisticsPlatform.equals(LogisticsPlatformEnum.MERCADO.getCode())) {
+                    || logisticsPlatform.equals(LogisticsPlatformEnum.MERCADOLIBRE.getCode())) {
                 if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                     getLabelVO.setDeliveryNo(soB2cEntity.getShippingOrderNo());
                 }
@@ -909,7 +909,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
             //如果是美客户多且是中转发货需要调美客多接口再打一张平台标签
             String labelUrl = "";
-            if (logisticsPlatform.equals(LogisticsPlatformEnum.MERCADO.getCode()) && B2cDeliveryLogisticTypeEnum.TRANSIT_SHIPMENT.getCode().equals(dto.getLogisticType())) {
+            if (logisticsPlatform.equals(LogisticsPlatformEnum.MERCADOLIBRE.getCode()) && B2cDeliveryLogisticTypeEnum.TRANSIT_SHIPMENT.getCode().equals(dto.getLogisticType())) {
                 try {
                     JSONObject jsonObject = JSONObject.parseObject(soB2cEntity.getExtendData());
                     String shipmentId = String.valueOf(jsonObject.get("shipmentId"));
