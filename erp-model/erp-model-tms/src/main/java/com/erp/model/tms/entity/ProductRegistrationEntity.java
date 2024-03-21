@@ -2,10 +2,13 @@ package com.erp.model.tms.entity;
 
 import java.math.BigDecimal;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.common.business.config.JsonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -24,7 +27,7 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("product_registration")
+@TableName(value = "product_registration", autoResultMap = true)
 public class ProductRegistrationEntity extends BaseEntity<ProductRegistrationEntity> {
 
     /**
@@ -205,6 +208,12 @@ public class ProductRegistrationEntity extends BaseEntity<ProductRegistrationEnt
      */
     @TableField(value = "declare_currency_symbol")
     private String declareCurrencySymbol;
+
+    /**
+     * 推送信息
+     */
+    @TableField(value = "push_info", typeHandler = JsonTypeHandler.class)
+    private Map<String, Object> pushInfo;
 
     public static final String SKU_ID = "sku_id";
 

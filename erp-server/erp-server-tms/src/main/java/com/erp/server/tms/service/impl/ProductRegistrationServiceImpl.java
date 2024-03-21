@@ -5,6 +5,8 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
@@ -134,6 +136,9 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                     addEntity.setLatestTime(LocalDateTime.now());
                     addEntity.setDeclareSupplierId(transferLogisticsAuthEntity.getMainId());
                     addEntity.setDeclareSupplierName(transferLogisticsAuthEntity.getName());
+                    //设置推送信息
+                    Map<String, Object> pushMap = BeanUtil.beanToMap(productDTO);
+                    addEntity.setPushInfo(pushMap);
                     addList.add(addEntity);
                 }else{
                     //失败返回原因
@@ -146,7 +151,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
         }
 
         if(CollectionUtils.isNotEmpty(addList)){
-            service.saveBatch(addList);
+            this.save(addList.get(0));
         }
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】sku为【%s】", commonService.getUserInfo().getUserName(), "产品备案信息");
@@ -217,9 +222,9 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
         view.setDeclarePlatformName(old.getDeclareSupplierName());
         view.setStatusName(EnumMessage.getNameByCode(ProductRegistrationEnum.StatusEnum.class,view.getStatus()));
 
-        List<LogisticsProductDTO.ProductDTO> productDTOList = logisticsProductFeign.listBySkuIdList(Arrays.asList(old.getSkuId()));
-        LogisticsProductDTO.ProductDTO productDTO = productDTOList.stream().findFirst().orElse(new LogisticsProductDTO.ProductDTO());
-        view.setDetailList(ProductRegistrationEnum.DetailDescEnum.convertToViewList(productDTO,old));
+        JSONObject jsonObject = new JSONObject(old.getPushInfo());
+        LogisticsProductDTO.ProductDTO ruleDTO = JSONObject.parseObject(jsonObject.toJSONString(),new TypeReference< LogisticsProductDTO.ProductDTO>() {}.getType());
+        view.setDetailList(ProductRegistrationEnum.DetailDescEnum.convertToViewList(ruleDTO,old));
         return view;
     }
 

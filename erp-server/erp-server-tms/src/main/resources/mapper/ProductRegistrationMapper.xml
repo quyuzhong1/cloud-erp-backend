@@ -42,6 +42,7 @@
        <result column="is_parts" property="isParts" />
        <result column="battery_note" property="batteryNote" />
        <result column="url" property="url" />
+        <result column="push_info" property="pushInfo" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler" />
     </resultMap>
 
     <select id="tabList" resultType="com.erp.model.tms.dto.ProductRegistrationDTO$TabListDTO">
