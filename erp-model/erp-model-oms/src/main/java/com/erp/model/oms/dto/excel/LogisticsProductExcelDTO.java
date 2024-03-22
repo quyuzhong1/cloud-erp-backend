@@ -125,6 +125,6 @@ public class LogisticsProductExcelDTO {
 
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "错误信息", index = 16)
+    @ExcelProperty(value = "错误信息", index = 18)
     private String errorMsg;
 }
