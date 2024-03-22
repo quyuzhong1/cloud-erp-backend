@@ -52,6 +52,44 @@ public class TmsFirstMileLogisticDTO implements Serializable {
 
     }
     /**
+     * 渠道信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsDTO {
+
+        /**
+         * 渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 计费方式
+         */
+        private String billingMethod;
+
+        /**
+         * 计费方式名称
+         */
+        private String billingMethodName;
+
+        /**
+         * 预计时效
+         */
+        private String estimatedTime;
+
+        /**
+         * 预计时效单位
+         */
+        private String estimatedTimeUnit;
+
+        /**
+         * 装箱信息
+         */
+        private List<PackingDTO> packingDTOList;
+
+    }
+    /**
      * 发货单信息
      */
     @Data

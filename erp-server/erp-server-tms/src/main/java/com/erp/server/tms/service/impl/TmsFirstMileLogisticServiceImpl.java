@@ -10,6 +10,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -20,9 +21,11 @@ import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
+import com.erp.model.tms.enums.ShippingBillingMethodEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.enums.PackingStatusEnum;
@@ -90,6 +93,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Resource
     private TmsCfgSailingService sailingService;
+
+    @Resource
+    private LogisticsChannelService logisticsChannelService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -348,6 +354,45 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     @Override
     public Boolean updateRemark(TmsFirstMileLogisticDTO.UpdateRemarkDTO dto) {
         return null;
+    }
+
+    @Override
+    public TmsFirstMileLogisticDTO.LogisticsDTO getLogisticsAndShipping(TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO dto) {
+        TmsFirstMileLogisticDTO.LogisticsDTO result = new TmsFirstMileLogisticDTO.LogisticsDTO();
+        if(StringUtils.isBlank(dto.getLogisticsChannelId())){
+            return result;
+        }
+        LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(dto.getLogisticsChannelId());
+        if(Objects.isNull(logisticsChannelEntity)){
+            throw new ServiceException("渠道为空");
+        }
+        result.setLogisticsChannelId(dto.getLogisticsChannelId());
+        result.setEstimatedTime(logisticsChannelEntity.getEffectiveTime());
+        result.setEstimatedTimeUnit(logisticsChannelEntity.getEffectiveTimeUnit());
+        ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(result.getLogisticsChannelId());
+        if(Objects.nonNull(shippingTemplateEntity)){
+            result.setBillingMethod(shippingTemplateEntity.getBillingMethod());
+            result.setBillingMethodName(EnumMessage.getNameByCode(ShippingBillingMethodEnum.class,shippingTemplateEntity.getBillingMethod()));
+        }
+        if(StringUtils.isNotBlank(dto.getOutstockId()) && Objects.nonNull(shippingTemplateEntity) && shippingTemplateEntity.getVolumeSetting() > 0){
+            FirstMileDeliveryDTO.GenerateLogisticReqDTO reqDto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
+            reqDto.setId(dto.getOutstockId());
+            reqDto.setPackingStatus(PackingStatusEnum.PACKING.getCode());
+            reqDto.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.WAIT.code);
+            List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(reqDto);
+            List<TmsFirstMileLogisticDTO.DeliveryDTO> deliveryDTOList = BeanUtil.copyToList(generateLogisticDTO,TmsFirstMileLogisticDTO.DeliveryDTO.class);
+            //渠道为空设置体积重
+            if(CollectionUtils.isNotEmpty(deliveryDTOList)){
+                TmsFirstMileLogisticDTO.DeliveryDTO deliveryDTO = deliveryDTOList.get(0);
+                if (CollectionUtil.isNotEmpty(deliveryDTO.getPackingDTOList())) {
+                    deliveryDTO.getPackingDTOList().forEach(v -> {
+                        v.setVolumeWeight(v.getMultiplySize().divide(BigDecimal.valueOf(shippingTemplateEntity.getVolumeSetting()), 4, RoundingMode.HALF_UP));
+                    });
+                    result.setPackingDTOList(deliveryDTO.getPackingDTOList());
+                }
+            }
+        }
+        return result;
     }
 
 

@@ -208,5 +208,4 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
 
     LogisticsChannelDTO.LogisticsChannelConstraintDTO getLogisticsChannelConstraint(String channelId, String country);
 
-    LogisticsChannelDTO.LogisticsShippingDTO getLogisticsAndShipping(String logisticsChannelId);
 }
