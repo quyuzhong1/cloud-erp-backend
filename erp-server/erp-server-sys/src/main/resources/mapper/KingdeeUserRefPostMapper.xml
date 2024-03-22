@@ -54,7 +54,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        su.uid desc
+        su.create_time desc
     </select>
     <select id="getKingdeeUserPost" resultType="com.erp.model.sys.dto.KingdeePostDTO$UserKingdeePostInfoDTO">
          SELECT
@@ -98,7 +98,7 @@
             ${params.permissionSql}
         </if>
         ORDER BY
-        kup.id desc
+        kup.create_time desc
     </select>
 
 

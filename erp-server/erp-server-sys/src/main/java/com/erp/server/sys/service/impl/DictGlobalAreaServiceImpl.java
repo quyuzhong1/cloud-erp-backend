@@ -20,6 +20,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.dto.KingdeeDTO;
+import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
@@ -281,18 +282,36 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
     public Boolean addGlobalArea(DictGlobalAreaDTO.AddDTO dto) {
         DictGlobalAreaEntity entity = new DictGlobalAreaEntity();
         String regionName = dto.getRegionName();
-        String code = dto.getCode();
+        String code = dto.getKingdeeCode();
         entity.setRegionName(regionName);
         entity.setId(code);
         entity.setSubregionName(regionName);
         entity.setRegionCode(code);
         entity.setKingdeeCode(code);
+        handleData(entity);
         Boolean addResult = this.saveOrUpdate(entity);
         if(addResult){
             syncKingdeeGlobalAreaService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
 
         return addResult;
+    }
+
+    private void handleData(DictGlobalAreaEntity entity) {
+        String id = entity.getId();
+        String kingdeeCode = entity.getKingdeeCode();
+        String name = entity.getRegionName();
+        int codeCount = this.lambdaQuery().ne(StringUtils.isNotBlank(id), DictGlobalAreaEntity::getId, id).
+                eq(DictGlobalAreaEntity::getKingdeeCode, kingdeeCode).count();
+        if (codeCount > 0) {
+            throw new ServiceException("区域金蝶编码已存在");
+        }
+        int nameCount = this.lambdaQuery().ne(StringUtils.isNotBlank(id), DictGlobalAreaEntity::getId, id).
+                eq(DictGlobalAreaEntity::getRegionName, name).count();
+        if (nameCount > 0) {
+            throw new ServiceException("区域名已存在");
+        }
+
     }
 
     @Override

@@ -52,7 +52,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        dc.index desc
+        dc.create_time desc
     </select>
     <!--城市分页-->
     <select id="cityPaging" resultType="com.erp.model.sys.dto.DictCityDTO$PagingViewDTO">
@@ -81,7 +81,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        dc.index desc
+        dc.create_time desc
     </select>
 
     <select id="provinceExport" resultType="com.erp.model.sys.dto.DictCityDTO$PagingViewDTO">
@@ -110,7 +110,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        dc.index desc
+        dc.create_time desc
     </select>
 
 
@@ -140,6 +140,6 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        dc.index desc
+        dc.create_time desc
     </select>
 </mapper>

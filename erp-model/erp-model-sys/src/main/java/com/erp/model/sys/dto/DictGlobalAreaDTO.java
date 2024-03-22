@@ -118,11 +118,12 @@ public class DictGlobalAreaDTO implements Serializable {
         @NotBlank(message = "区域名不能为空")
         private String regionName;
 
+
         /**
-         * 区域code
+         * 金蝶code
          */
-        @NotBlank(message = "区域code不能为空")
-        private String code;
+        @NotBlank(message = "金蝶code不能为空")
+        private String kingdeeCode;
 
 
 

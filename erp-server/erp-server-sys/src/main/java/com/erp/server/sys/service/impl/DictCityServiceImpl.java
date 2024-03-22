@@ -299,6 +299,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         viewDTO.setName(entity.getName());
         viewDTO.setParentId(provinceId);
         viewDTO.setParentName(province.getName());
+        viewDTO.setCode(entity.getKingdeeCode());
         return viewDTO;
     }
 
