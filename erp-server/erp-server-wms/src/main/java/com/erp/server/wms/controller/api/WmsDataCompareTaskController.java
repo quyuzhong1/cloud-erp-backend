@@ -9,11 +9,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -21,6 +19,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO.SetNextViewDTO;
 import com.erp.server.wms.service.WmsDataCompareTaskService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +48,7 @@ public class WmsDataCompareTaskController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "数据对比-导入数据-下一步")
-    public ApiResult<WmsDataCompareTaskDTO.ViewDTO> add(@RequestBody @Validated WmsDataCompareTaskDTO.AddDTO dto) {
+    public ApiResult<WmsDataCompareTaskDTO.AddViewDTO> add(@RequestBody @Validated WmsDataCompareTaskDTO.AddDTO dto) {
         return success(wmsDataCompareTaskService.add(dto));
     }
 
@@ -75,33 +74,28 @@ public class WmsDataCompareTaskController extends BaseController {
       */
      @PostMapping("/setNext")
      @LogAction(value = LogActionEnum.SUBMIT, desc = "数据对比-对比设置-下一步")
-     public ApiResult<?> setNext(@RequestBody @Validated WmsDataCompareTaskDTO.SetNextDTO dto) {
-    	 ApiResult<?> setNext = wmsDataCompareTaskService.setNext(dto);
-    	 if(setNext.isSuccess()) {
-    		return success();
-    	 }else {
-    		return failure(setNext.getCode(), setNext.getMsg(), null);
-    	 }
+     public ApiResult<SetNextViewDTO> setNext(@RequestBody @Validated WmsDataCompareTaskDTO.SetNextDTO dto) {
+    	 return success(wmsDataCompareTaskService.setNext(dto));
      }
     
-    /**
-    * 修改
-    * @author shukai
-    * @date:  2024-03-20
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "数据对比任务修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "wms:wmsDataCompareTask:update",
-        serviceClass = WmsDataCompareTaskService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated WmsDataCompareTaskDTO.UpdateDTO dto) {
-        wmsDataCompareTaskService.update(dto);
-        return success();
-    }
+//    /**
+//    * 修改
+//    * @author shukai
+//    * @date:  2024-03-20
+//    * @param dto
+//    * @return ApiResult
+//    */
+//    @PostMapping("/update")
+//    @LogAction(value = LogActionEnum.UPDATE, desc = "数据对比任务修改")
+//        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//        tableField = "create_user_id",
+//        menuCode = "wms:wmsDataCompareTask:update",
+//        serviceClass = WmsDataCompareTaskService.class,
+//        keyIdName = "id")
+//    public ApiResult<?> update(@RequestBody @Validated WmsDataCompareTaskDTO.UpdateDTO dto) {
+//        wmsDataCompareTaskService.update(dto);
+//        return success();
+//    }
 
     
     /**

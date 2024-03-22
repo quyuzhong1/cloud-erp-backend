@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,7 +23,6 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -32,6 +32,7 @@ import com.erp.model.wms.dto.WmsDataComparePlanDTO;
 import com.erp.model.wms.dto.WmsDataComparePlanDTO.ImportDataMappingDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO.SetNextDTO;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO.SetNextViewDTO;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.WmsDataCompareImportEntity;
 import com.erp.model.wms.entity.WmsDataCompareTaskEntity;
@@ -87,7 +88,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public WmsDataCompareTaskDTO.ViewDTO add(WmsDataCompareTaskDTO.AddDTO addDTO) {
+    public WmsDataCompareTaskDTO.AddViewDTO add(WmsDataCompareTaskDTO.AddDTO addDTO) {
         WmsDataCompareTaskEntity wmsDataCompareTaskEntity = new WmsDataCompareTaskEntity();
         BeanMapperUtils.copy(addDTO, wmsDataCompareTaskEntity);
         
@@ -145,9 +146,10 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
         });
         wmsDataCompareImportService.saveBatch(wmsDataCompareImportEntityList);
         
-        WmsDataCompareTaskDTO.ViewDTO viewDTO = new WmsDataCompareTaskDTO.ViewDTO();
+        WmsDataCompareTaskDTO.AddViewDTO viewDTO = new WmsDataCompareTaskDTO.AddViewDTO();
         BeanMapperUtils.copy(wmsDataCompareTaskEntity, viewDTO);
         viewDTO.setImportDataFields(headFieldLists.get(0));
+        viewDTO.setImportFileUrls(excelFiles);
         return viewDTO;
     }
 
@@ -206,24 +208,22 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 
 	@Transactional(rollbackFor = Exception.class)
 	@Override
-	public ApiResult<?> setNext(SetNextDTO dto) {
-		ApiResult apiResult = ApiResult.success();
+	public SetNextViewDTO setNext(SetNextDTO dto) {
+		SetNextViewDTO setNextViewDTO = new SetNextViewDTO();
 		String importDataMapping = dto.getImportDataMapping();
 		List<ImportDataMappingDTO> importDataMappingDTOList = null;
 		try {
 			importDataMappingDTOList = JSON.parseArray(importDataMapping , WmsDataComparePlanDTO.ImportDataMappingDTO.class);
 		} catch (Exception e) {
-			apiResult.setCode(1);
-			apiResult.setMsg("导入数据字段映射json串格式错误");
-			return apiResult;
+			setNextViewDTO.setErrMessageList(Collections.singletonList("导入数据字段映射json串格式错误"));
+			return setNextViewDTO;
 		}
 		
 		importDataMappingDTOList = importDataMappingDTOList.stream().filter(i -> i.getPkFlag() != null && i.getPkFlag()).collect(Collectors.toList());
 		if(CollUtil.isNotEmpty(importDataMappingDTOList)) {
 			if(importDataMappingDTOList.stream().anyMatch(i -> StringUtils.isBlank(i.getImportField()) || StringUtils.isBlank(i.getImportField()))) {
-				apiResult.setCode(1);
-				apiResult.setMsg("唯一键已设置，但系统数据字段或导入数据字段属性未设置映射");
-				return apiResult;
+				setNextViewDTO.setErrMessageList(Collections.singletonList("唯一键已设置，但系统数据字段或导入数据字段属性未设置映射"));
+				return setNextViewDTO;
 			}
 			String id = dto.getId();
 			List<WmsDataCompareImportEntity> wmsDataCompareImportEntityList = wmsDataCompareImportService.list(Wrappers.<WmsDataCompareImportEntity>lambdaQuery()
@@ -258,11 +258,11 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				}
 				excelPkIndexList.sort((e1 , e2) -> e1.compareTo(e2));
 				
-				Map<String , Map<Integer, String>> pkValueDataMaps = new HashMap<>();
+				Set<String> pkValueSet = new HashSet<>(); 
 				Map<String, Integer> pkValueSameCountMaps = new HashMap<>();
 				for(Map<Integer, String> data : allDatas) {
 					String pkValue = WmsDataCompareUtils.getPkValue(data, excelPkIndexList);
-					if(pkValueDataMaps.containsKey(pkValue)) {
+					if(pkValueSet.contains(pkValue)) {
 						Integer sameCount = pkValueSameCountMaps.get(pkValue);
 						if(sameCount == null) {
 							pkValueSameCountMaps.put(pkValue, 1);
@@ -270,26 +270,28 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 							pkValueSameCountMaps.put(pkValue, sameCount + 1);
 						}
 					}else {
-						pkValueDataMaps.put(pkValue, data);
+						pkValueSet.add(pkValue);
 					}
 				}
 				
-				//数据已赋值到pkValueDataMaps，清空内存空间
-				allDatas = new ArrayList<>();
-				
 				if(pkValueSameCountMaps.size() > 0) {
-					apiResult.setCode(1);
-					StringBuffer sb = new StringBuffer();
+					List<String> errMessageList = new ArrayList<>();
 					for(Map.Entry<String, Integer> pkValueSameCountMap : pkValueSameCountMaps.entrySet()) {
+						StringBuffer sb = new StringBuffer();
 						sb.append("唯一键值[");
 						sb.append(pkValueSameCountMap.getKey());
 						sb.append("]，重复[");
 						sb.append(pkValueSameCountMap.getValue());
 						sb.append("]行");
+						errMessageList.add(sb.toString());
 					}
-					apiResult.setMsg(sb.toString());
-					return apiResult;
+					setNextViewDTO.setErrMessageList(errMessageList);
+					return setNextViewDTO;
 				}
+				
+				setNextViewDTO.setFlag(true);
+				setNextViewDTO.setCode(wmsDataCompareTaskEntity.getCode());
+				setNextViewDTO.setName(wmsDataCompareTaskEntity.getName());
 				
 				List<DictBasicEntity> dictBasicEntityList = dictBasicService.list(Wrappers.<DictBasicEntity>lambdaQuery().eq(DictBasicEntity::getType, "dataCompare" + billType));
 				if(CollUtil.isNotEmpty(dictBasicEntityList)) {
@@ -297,18 +299,15 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					this.update(Wrappers.<WmsDataCompareTaskEntity>lambdaUpdate().eq(WmsDataCompareTaskEntity::getId, id)
 							.set(WmsDataCompareTaskEntity::getImportDataMapping, importDataMapping));
 				}else {
-					apiResult.setCode(1);
-					apiResult.setMsg("对比单据对比属性未配置，请联系实施人员");
+					setNextViewDTO.setErrMessageList(Collections.singletonList("对比单据对比属性未配置，请联系实施人员"));
 				}
 			}else {
-				apiResult.setCode(1);
-				apiResult.setMsg("未查询到上传文件，请重新导入数据");
+				setNextViewDTO.setErrMessageList(Collections.singletonList("未查询到上传文件，请重新导入数据"));
 			}
 		}else {
-			apiResult.setCode(1);
-			apiResult.setMsg("唯一键设置至少开启一个才能创建任务");
+			setNextViewDTO.setErrMessageList(Collections.singletonList("唯一键设置至少开启一个才能创建任务"));
 		}
 		
-		return apiResult;
+		return setNextViewDTO;
 	}
 }

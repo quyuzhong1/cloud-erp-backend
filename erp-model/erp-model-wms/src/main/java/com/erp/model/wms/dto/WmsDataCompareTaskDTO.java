@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +16,8 @@ import javax.validation.constraints.Size;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 
@@ -59,11 +62,20 @@ public class WmsDataCompareTaskDTO implements Serializable {
         * 单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收
         */
         private String billType;
+        
+        /**
+         * 对比单据类型名称：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收
+         */
+        private String billTypeName;
 
         /**
         * 任务状态：init=初始，doing=进行中，finish=已完成，error=异常
         */
         private String status;
+        /**
+         * 任务状态名称：init=初始，doing=进行中，finish=已完成，error=异常
+         */
+        private String statusName;
 
         /**
         * 子任务状态：wait_parse=待解析，wait_compare=待比对，wait_upload=待上传，finish=已完成，error=异常
@@ -129,6 +141,16 @@ public class WmsDataCompareTaskDTO implements Serializable {
          * 导入数据字段
          */
         private List<String> importDataFields;
+        
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     /**
@@ -136,7 +158,30 @@ public class WmsDataCompareTaskDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
+    public static class AddDTO {
+    	/**
+         * 任务名称
+         */
+         @NotBlank(message = "任务名称不能为空")
+         @Size(max = 255,message = "任务名称最大长度不能超过255位")
+         private String name;
+         
+         /**
+          * 单据类型： 枚举获取文档地址：http://172.16.100.11:3002/project/92/interface/api/9259 type=WmsDataCompareTaskBillType
+          */
+          @NotBlank(message = "单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收不能为空")
+          @Size(max = 50,message = "单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收最大长度不能超过50位")
+          private String billType;
+          
+          /**
+           * 系统数据范围条件json串，字段名称对应属性如下(默认数据类型为字符串)：
+           * 销售出库单：销售平台=dictPlatform，店铺=shopName，出库日期=billDateList(时间类型数组)，仓库=warehouseName，示例{'dictPlatform' : 'Amazon' , 'billDateList' : ['2024-01-22' , '2024-03-22']}
+           *FBA货件签收：店铺=shopName，出库日期=receiveDateList(时间类型数组)，示例{'shopName' : '美10加拿大' , 'receiveDateList' : ['2024-01-22' , '2024-03-22']}
+           *第三方仓货件签收：出库日期=receiveDateList(时间类型数组)，目的仓库=toWarehouseName，示例{'receiveDateList' : ['2024-01-22' , '2024-03-22'] , 'toWarehouseName' : '艾姆勒-在途仓' }
+           */
+           @NotBlank(message = "系统数据范围条件json串不能为空")
+           private String systemDataCondition;
+         
     	/**
     	 * 导入文件
          */
@@ -144,6 +189,45 @@ public class WmsDataCompareTaskDTO implements Serializable {
         private List<String> excelFiles;
     }
 
+    /**
+     * 详情
+     */
+     @Data
+     @NoArgsConstructor
+     public static class AddViewDTO {
+
+         /**
+         * 主键id
+         */
+         private String  id;
+
+         /**
+          * 系统数据总行数
+          */
+          private Integer systemDataCount;
+
+          /**
+          * 导入数据总行数
+          */
+          private Integer importDataCount;
+          
+          /**
+           * 导入数据下载地址
+           */
+          private List<String> importFileUrls;
+          
+          /**
+           * 导入数据字段
+           */
+          private List<String> importDataFields;
+          
+          /**
+           * 单据类型：保存映射模板使用
+           */
+           private String billType;
+
+     }
+    
     /**
     * 修改
     */
@@ -160,17 +244,51 @@ public class WmsDataCompareTaskDTO implements Serializable {
     }
     
     /**
-     * 新增
+     * 下一步
      */
      @Data
      @NoArgsConstructor
-     public static class SetNextDTO extends CommonDTO {
+     public static class SetNextDTO {
     	 /**
           * 主键id
           */
           @NotBlank(message = "主键id不能为空")
           private String id;
+          
+          /**
+           * 导入数据字段映射json串
+           * 系统数据字段=systemField，导入数据字段=importField，唯一键标识=pkFlag（布尔数据类型true或false），示例：[{'systemField' : 'soCode' , 'importField' : '销售单号', 'systemField' : true} , {'systemField' : 'dictPlatform' , 'importField' : '销售平台', 'systemField' : false} ]
+           * 系统数据字段名称显示及systemField提交值获取方式取dict配置，code是systemField提交值，name名称显示。 http://172.16.100.11:3002/project/92/interface/api/13147 入参type:销售出库单=datacompare_soOutstock,FBA货件签收=datacompare_fbaShipment,第三方仓货件签收=datacompare_overseasInbound
+           */
+           @NotBlank(message = "导入数据字段映射json串不能为空")
+           private String importDataMapping;
      }
+     
+     /**
+      * 下一步
+      */
+      @Data
+      @NoArgsConstructor
+      public static class SetNextViewDTO {
+    	  /**
+    	 * 校验是否成功，true为成功，false为失败
+    	 */
+    	private Boolean flag = false;
+    	  /**
+           * 任务编号
+           */
+           private String code;
+
+           /**
+           * 任务名称
+           */
+           private String name;
+           
+           /**
+            * 错误信息列表
+            */
+            private List<String> errMessageList;
+      }
 
     @Data
     @NoArgsConstructor
@@ -421,9 +539,9 @@ public class WmsDataCompareTaskDTO implements Serializable {
      	 private Integer receiveQty;
      	 
      	 /**
-     	  * 数量
+     	  * 签收日期
      	  */
-     	@ExcelProperty(value = "数量", index = 5)
+     	@ExcelProperty(value = "签收日期", index = 5)
      	 private String receiveDate;
      	 
      	/**

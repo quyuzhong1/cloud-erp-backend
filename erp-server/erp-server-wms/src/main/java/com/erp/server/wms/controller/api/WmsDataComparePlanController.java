@@ -76,7 +76,7 @@ public class WmsDataComparePlanController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/get")
-     public ApiResult<List<WmsDataComparePlanDTO.ViewDTO>> get(@RequestBody @Validated WmsDataComparePlanDTO.CommonDTO dto) {
+     public ApiResult<List<WmsDataComparePlanDTO.ViewDTO>> get(@RequestBody @Validated WmsDataComparePlanDTO.GetDTO dto) {
          return success(wmsDataComparePlanService.get(dto));
      }
 

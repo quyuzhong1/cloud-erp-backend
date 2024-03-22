@@ -1,10 +1,11 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.WmsDataCompareTaskEntity;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.service.SuperService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO.SetNextDTO;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO.SetNextViewDTO;
+import com.erp.model.wms.entity.WmsDataCompareTaskEntity;
 
 /**
  * <p>
@@ -23,11 +24,11 @@ public interface WmsDataCompareTaskService extends SuperService<WmsDataCompareTa
     * @param dto
     * @return
     */
-	WmsDataCompareTaskDTO.ViewDTO add(WmsDataCompareTaskDTO.AddDTO dto);
+	WmsDataCompareTaskDTO.AddViewDTO add(WmsDataCompareTaskDTO.AddDTO dto);
 	
 	String downloadSystemData(BaseIdDTO dto);
 	
-	ApiResult<?> setNext(SetNextDTO dto);
+	SetNextViewDTO setNext(SetNextDTO dto);
 
     /**
     * 修改

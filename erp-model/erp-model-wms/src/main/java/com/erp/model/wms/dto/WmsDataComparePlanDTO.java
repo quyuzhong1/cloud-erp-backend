@@ -77,6 +77,20 @@ public class WmsDataComparePlanDTO implements Serializable {
         private String id;
 
     }
+    
+    /**
+     * 新增
+     */
+     @Data
+     @NoArgsConstructor
+     public static class GetDTO {
+    	 /**
+          * 单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收
+          */
+          @NotBlank(message = "单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收不能为空")
+          @Size(max = 50,message = "单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收最大长度不能超过50位")
+          private String billType;
+     }
 
     @Data
     @NoArgsConstructor
@@ -97,8 +111,10 @@ public class WmsDataComparePlanDTO implements Serializable {
         private String billType;
 
         /**
-        * 导入数据字段映射json串
-        */
+         * 导入数据字段映射json串
+         * 系统数据字段=systemField，导入数据字段=importField，唯一键标识=pkFlag（布尔数据类型true或false），示例：[{'systemField' : 'soCode' , 'importField' : '销售单号', 'systemField' : true} , {'systemField' : 'dictPlatform' , 'importField' : '销售平台', 'systemField' : false} ]
+         * 系统数据字段名称显示及systemField提交值获取方式取dict配置，code是systemField提交值，name名称显示。 http://172.16.100.11:3002/project/92/interface/api/13147 入参type:销售出库单=datacompare_soOutstock,FBA货件签收=datacompare_fbaShipment,第三方仓货件签收=datacompare_overseasInbound
+         */
         @NotBlank(message = "导入数据字段映射json串不能为空")
         private String importDataMapping;
 

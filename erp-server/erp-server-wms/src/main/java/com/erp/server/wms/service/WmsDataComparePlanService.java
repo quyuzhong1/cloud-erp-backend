@@ -35,5 +35,5 @@ public interface WmsDataComparePlanService extends SuperService<WmsDataComparePl
     */
     Boolean update(WmsDataComparePlanDTO.UpdateDTO dto);
 
-    List<WmsDataComparePlanDTO.ViewDTO> get(WmsDataComparePlanDTO.CommonDTO dto);
+    List<WmsDataComparePlanDTO.ViewDTO> get(WmsDataComparePlanDTO.GetDTO dto);
 }

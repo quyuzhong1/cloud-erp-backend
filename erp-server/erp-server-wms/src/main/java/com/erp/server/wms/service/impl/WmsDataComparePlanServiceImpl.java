@@ -16,7 +16,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.WmsDataComparePlanDTO;
-import com.erp.model.wms.dto.WmsDataComparePlanDTO.CommonDTO;
+import com.erp.model.wms.dto.WmsDataComparePlanDTO.GetDTO;
 import com.erp.model.wms.dto.WmsDataComparePlanDTO.ViewDTO;
 import com.erp.model.wms.entity.WmsDataComparePlanEntity;
 import com.erp.server.wms.mapper.WmsDataComparePlanMapper;
@@ -104,7 +104,7 @@ public class WmsDataComparePlanServiceImpl extends SuperServiceImpl<WmsDataCompa
     }
 
 	@Override
-	public List<ViewDTO> get(CommonDTO dto) {
+	public List<ViewDTO> get(GetDTO dto) {
 		String billType = dto.getBillType();
 		if(StringUtils.isBlank(billType)) {
 			throw new ServiceException("单据类型不能为空");
