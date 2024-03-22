@@ -1247,7 +1247,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             if((receiveQty > MathUtil.ZERO && MathUtil.compareTo(MathUtil.add(purchaseQty,returnQty),receiveQty) == MathUtil.ZERO)
                     || (inStockQty > MathUtil.ZERO && MathUtil.compareTo(MathUtil.add(purchaseQty,returnQty),inStockQty)  == MathUtil.ZERO)) {
                 //已完成
-                executionStatus = ExecutionStatusEnum.DELIVERY.getCode();
+                executionStatus = ExecutionStatusEnum.FINISH.getCode();
             }
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = new PurchaseOrderDetailEntity();
             purchaseOrderDetailEntity.setId(orderDetailEntity.getId());
