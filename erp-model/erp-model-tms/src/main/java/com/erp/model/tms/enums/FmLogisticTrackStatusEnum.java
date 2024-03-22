@@ -6,26 +6,19 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * 物流运输状态
+ * 头程物流运输状态
  * @author Lambda
  * @Classname LogisticTrackStatusEnum
  * @Description TODO
  * @Date 2023-11-15 17:38
  * @Created by yl
  */
-public enum LogisticTrackStatusEnum implements EnumMessage {
+public enum FmLogisticTrackStatusEnum implements EnumMessage {
     WAIT_ORDER("waitOrder","待下单","waitOrder","待下单"),
     ORDERED("ordered","已下单","ordered","已下单"),
-    NOT_FIND("notFind","查询不到","notFind","查询不到"),
-    WAIT_COLLECT("waitCollect","等待揽收","trackIng","运输途中"),
     TRACK_ING("trackIng","运输途中","trackIng","运输途中"),
-    ARRIVE_WAIT_TAKE("arriveWaitTake","到达待取","trackIng","运输途中"),
-    DELIVERY_ING("deliveryIng","派送途中","trackIng","运输途中"),
-    DELIVERY_FAIL("deliveryFail","投递失败","trackIng","运输途中"),
-    SIGN("sign","成功签收","received","已签收"),
-    MAYBE_EXCEPTION("maybeException","可能异常","trackException","运输异常"),
-    TRANSPORT_LONG("transportLong","运输过久","trackException","运输异常"),
-
+    ARRIVED("arrived","已到港","arrived","已到港"),
+    SIGN("sign","已签收","sign","已签收"),
     ;
 
 
@@ -51,7 +44,7 @@ public enum LogisticTrackStatusEnum implements EnumMessage {
     private String groupName;
 
 
-    LogisticTrackStatusEnum(String code, String name,String group,String groupName){
+    FmLogisticTrackStatusEnum(String code, String name, String group, String groupName){
         this.code = code;
         this.name = name;
         this.group = group;
@@ -79,7 +72,7 @@ public enum LogisticTrackStatusEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (LogisticTrackStatusEnum item : LogisticTrackStatusEnum.values()) {
+        for (FmLogisticTrackStatusEnum item : FmLogisticTrackStatusEnum.values()) {
             if (code.equals(item.getCode())) {
                 return item.getName();
             }
@@ -91,7 +84,7 @@ public enum LogisticTrackStatusEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (LogisticTrackStatusEnum item : LogisticTrackStatusEnum.values()) {
+        for (FmLogisticTrackStatusEnum item : FmLogisticTrackStatusEnum.values()) {
             if (code.equals(item.getCode())) {
                 return item.getName();
             }

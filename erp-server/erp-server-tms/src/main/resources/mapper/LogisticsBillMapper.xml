@@ -443,6 +443,7 @@
         lbc.weight_unit as weightUnit,
         (select sum(lbcd.cost_value) from tms_logistics_bill_cost_detail lbcd where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'estimated') as estimatedFee,
         lbc.currency as  currency,
+               lb.ship_time as shipTime,
         lb.order_time as orderTime,
         lbd.sign_time as  signTime,
         lb.remark,

@@ -26,10 +26,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -130,10 +127,11 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
             return new ArrayList<>();
         }
         List<TmsLogisticsBillCostDetailDTO.CostCompareDTO> costCompareDTOList = baseMapper.getCostCompareListById(id);
-        if(CollectionUtils.isEmpty(costCompareDTOList)){
-            return new ArrayList<>();
-        }
-
+        costCompareDTOList.forEach(v->{
+            if(Objects.nonNull(v.getActualCost()) && Objects.nonNull(v.getEstimatedCost())){
+                v.setCostDiff(v.getEstimatedCost().subtract(v.getActualCost()));
+            }
+        });
         return costCompareDTOList;
     }
 

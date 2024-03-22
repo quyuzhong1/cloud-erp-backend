@@ -44,6 +44,11 @@ public class TmsLogisticsBillCostDetailDTO implements Serializable {
         private String cfgCostId;
 
         /**
+         * 费用编码
+         */
+        private String costCode;
+
+        /**
          * 费用名称
          */
         private String costName;
