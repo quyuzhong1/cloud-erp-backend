@@ -415,7 +415,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(params.getTabFlag())) {
             approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
             //需要审核的业务ids
-            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
+            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PRODUCT_LOGISTICS.getCode());
             if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(businessIds)) {
                 return Boolean.FALSE;
             }
