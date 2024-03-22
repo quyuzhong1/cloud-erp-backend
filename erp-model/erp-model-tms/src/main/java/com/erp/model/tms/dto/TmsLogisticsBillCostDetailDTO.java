@@ -161,7 +161,6 @@ public class TmsLogisticsBillCostDetailDTO implements Serializable {
         /**
          * 类型（estimated预估、actual实际）
          */
-        @NotBlank(message = "类型不能为空")
         private String type;
     }
 

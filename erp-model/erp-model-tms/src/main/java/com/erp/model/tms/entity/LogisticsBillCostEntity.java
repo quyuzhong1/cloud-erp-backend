@@ -92,12 +92,6 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     private String remark;
 
     /**
-     * 汇率
-     */
-    @TableField("exchange_rate")
-    private BigDecimal exchangeRate;
-
-    /**
      * 实际体积重(物流商)
      */
     @TableField("volume_weight_logistics")

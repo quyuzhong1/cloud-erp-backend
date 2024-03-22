@@ -60,7 +60,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -131,16 +130,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             addDTO.setLogisticsOrderTime(LocalDateTime.now());
         }
         LocalDateTime shipTime = sailingService.calculateShipTime(addDTO.getLogisticsChannelId(),LocalDateTime.now());
-        //查询汇率
-        BigDecimal rate;
-        if(addDTO.getCurrency().equals(CurrencyEnum.CNY.getCurrencyCode())){
-            rate = BigDecimal.ONE;
-        }else{
-            rate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), addDTO.getCurrency());
-            if(rate == null){
-                throw new ServiceException("汇率为空，请维护汇率后再提交");
-            }
-        }
 
         //新增物流单
         LogisticsBillEntity tmsFirstMileLogisticEntity = FmLogisticsConverter.INSTANCE.addLogisticsBill(generateLogisticDTO,addDTO);
