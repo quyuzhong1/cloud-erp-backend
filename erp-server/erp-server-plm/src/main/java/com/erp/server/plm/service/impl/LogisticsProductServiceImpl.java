@@ -671,7 +671,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 .set(ProductLogisticsEntity::getApproveUserId, "")
                 .set(ProductLogisticsEntity::getApproveUserName, "")
                 .set(ProductLogisticsEntity::getApproveTime, null)
-                .update(new ProductLogisticsEntity());
+                .update();
     }
 
 
@@ -688,7 +688,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 .set(ProductLogisticsEntity::getApproveUserName, userInfo.getUserName())
                 .set(ProductLogisticsEntity::getApproveStatus, approveStatus)
                 .set(ProductLogisticsEntity::getApproveTime, LocalDateTime.now())
-                .update(new ProductLogisticsEntity());
+                .update();
     }
     /**
      * @description: 启动流程
