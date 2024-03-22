@@ -11,6 +11,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
@@ -632,4 +633,16 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     List<SkuSimpleVO> searchSkuWithCombination(String searchKeyword);
 
     List<SkuVO> getSkuInfoAdvanceQuery(AdvanceQueryContainer advanceQueryContainer);
+
+    /**
+     * 导入产品信息
+     * @Author Luo_WG
+     * @Date 2024/3/22 10:35
+     * @param excelFile
+     * @param importType
+     * @param response
+     * @return java.lang.Boolean
+     **/
+    Boolean importProductFile(MultipartFile excelFile, Integer importType, HttpServletResponse response);
+
 }
