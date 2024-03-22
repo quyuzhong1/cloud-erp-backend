@@ -169,6 +169,8 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
                 .setShopId(sourceEntity.getShopId())
                 // 亚马逊关联的库存SKU
                 .setPlatformFnSku(sourceEntity.getPlatformFnSku())
+                // 平台状态
+                .setPlatformStatus(sourceEntity.getStatus())
                 ;
 
         // 平台

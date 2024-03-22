@@ -72,7 +72,10 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
 
         // 订单日期
         if (Objects.nonNull(instant)){
-            orderDTO.setBillDate(LocalDateTime.ofInstant(instant, zone).toLocalDate());
+            LocalDateTime platformCreateTime = LocalDateTime.ofInstant(instant, zone);
+            orderDTO.setBillDate(platformCreateTime.toLocalDate());
+            // 平台订单创建时间
+            orderDTO.setPlatformOrderCreateTime(platformCreateTime);
         }
         // 平台订单号
         orderDTO.setPlatformCode(orderDetail.getOrdersn());

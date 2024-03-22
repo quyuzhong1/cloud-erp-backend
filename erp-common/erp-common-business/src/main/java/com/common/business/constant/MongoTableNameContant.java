@@ -165,6 +165,11 @@ public interface MongoTableNameContant {
     String THIRD_SYSTEM_AMAZON_PRODUCT = "third_system_Amazon_product";
 
     /**
+     * 亚马逊销售出库表
+     */
+    String THIRD_SYSTEM_AMAZON_SO_OUT_STOCK = "third_system_Amazon_so_out_stock";
+
+    /**
      * 亚马逊报表表
      */
     String THIRD_SYSTEM_AMAZON_REPORT = "third_system_Amazon_report";
@@ -199,6 +204,12 @@ public interface MongoTableNameContant {
      * 亚马逊物流预留库存报告
      */
     String REPORT_AMAZON_RESERVED = "report_amazon_reserved";
+
+
+    /**
+     * 亚马逊物流销售报告
+     */
+    String REPORT_AMAZON_FULFILLED_SHIPMENTS = "report_amazon_fulfilled_shipments";
 
     // Shopify数据库表名
     /**

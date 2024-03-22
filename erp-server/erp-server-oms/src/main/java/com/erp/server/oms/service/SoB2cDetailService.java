@@ -11,6 +11,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -101,8 +102,14 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      *
      * @Author Jim
      * @since 2023-11-28
-     **/
-    Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(List<String> platformSkuList, String dictPlatform, String shopId);
+     * @param platformSkuList 平台SKU列表
+     * @param dictPlatform 平台代码
+     * @param shopId 店铺ID
+     * @param platformOrderCreateTime 生效日期（查询所有=传空）
+     * @param isExpire 是否过期（查询所有=传空）
+     * @return
+     */
+    Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(List<String> platformSkuList, List<String> platformSpuList, String dictPlatform, String shopId, LocalDateTime platformOrderCreateTime, Boolean isExpire);
 
     /**
      * 消费处理明细
@@ -149,4 +156,12 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @return java.lang.Boolean
      **/
     Boolean updateWarehouseByMapping(WarehouseMappingDTO.MappingViewDTO viewDTO);
+
+    /**
+     * 检查和获取映射关系
+     *
+     * @Author Jim
+     * @since 2023-11-28
+     **/
+    ListingInfoWithSkuMappingDTO checkAndMappingDTO(List<ListingInfoWithSkuMappingDTO> mappingDTOList, String platformSpuNo);
 }

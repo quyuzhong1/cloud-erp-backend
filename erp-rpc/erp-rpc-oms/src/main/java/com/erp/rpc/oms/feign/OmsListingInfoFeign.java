@@ -1,7 +1,5 @@
 package com.erp.rpc.oms.feign;
 
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -33,7 +31,7 @@ public interface OmsListingInfoFeign {
      * @return java.lang.Boolean
      **/
     @PostMapping("feign/listing/skuMapping")
-    Boolean skuMapping(@RequestBody @Validated FbaShipmentDTO.skuMappingParamDTO dto);
+    Boolean skuMapping(@RequestBody @Validated FbaShipmentDTO.SkuMappingParamDTO dto);
 
 
 }

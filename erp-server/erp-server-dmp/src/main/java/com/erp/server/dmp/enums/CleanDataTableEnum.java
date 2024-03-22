@@ -3,6 +3,7 @@ package com.erp.server.dmp.enums;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressListingDTO;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressOrderDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFbaShipmentDTO;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.sdk.oms.mercado.dto.MercadoListingDTO;
@@ -46,6 +47,7 @@ public enum CleanDataTableEnum {
     //美客多
     MERCADO_ORDER("mercadolibre", "third_system_mercadolibre_order","third_system", "order","美客多订单数据", MercadoOrderDTO.class),
     MERCADO_PRODUCT("mercadolibre", "third_system_mercadolibre_product","third_system", "product","美客多产品数据", MercadoListingDTO.class),
+//    AMAZON_SO_OUT_STOCK("Amazon", "third_system_Amazon_so_out_stock","third_system", "so_out_stock","Amazon物流销售出库", PlatformAmazonFulfilledShipmentsDTO.class),
 
 
     //track123
