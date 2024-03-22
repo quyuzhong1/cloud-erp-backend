@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -12,19 +13,22 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
-import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.model.workflow.entity.ProcessTaskCcEntity;
+import com.erp.model.workflow.enums.CcStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -42,6 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -82,6 +87,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
     @Resource
     private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
+
+    @Resource
+    private WarehouseService warehouseService;
 
 
     @Override
@@ -625,6 +633,117 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
                 }
             }
+        }
+    }
+
+    @Override
+    public List<SoOutstockDetailDTO.AddDTO> checkAndGenerateDetail(SoOutstockDTO.GenerateB2cDTO dto) {
+        boolean notExistMapping = dto.getDetailList()
+                .stream()
+                .anyMatch(e -> CollectionUtils.isEmpty(e.getHistorySkuMappingList()));
+        if (notExistMapping){
+            throw new ServiceException("找不到历史映射关系:单号=" + dto.getSourceCode());
+        }
+        // 生成库存检查参数
+        List<String> skuIdList = new LinkedList<>();
+        List<String> warehouseLocationList = new LinkedList<>();
+        List<String> orgIdList = Collections.singletonList(dto.getWarehouseOrgId());
+        List<String> warehouseIdList = Collections.singletonList(dto.getWarehouseId());
+        for (SoOutstockDetailDTO.AddDTO addDTO : dto.getDetailList()) {
+            List<String> skuIds = addDTO.getHistorySkuMappingList()
+                    .stream()
+                    .map(SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO::getProductSkuId)
+                    .distinct()
+                    .collect(Collectors.toList());
+            skuIdList.addAll(skuIds);
+            warehouseLocationList.add(addDTO.getWarehouseLocation());
+        }
+
+        InventoryDTO.ParamDTO param = new InventoryDTO.ParamDTO();
+        param.setOrgIdList(orgIdList);
+        param.setSkuIdList(skuIdList);
+        param.setWarehouseIdList(warehouseIdList);
+        param.setWarehouseLocationList(warehouseLocationList);
+        // 当前库存
+        List<InventoryEntity> inventoryEntityList = inventoryService.listInventoryByParam(param);
+        // Map<仓库ID_库存组织_skuId_仓位, 当前库存数量>
+        Map<String, Integer> inventoryQtyMap = inventoryEntityList
+                .stream()
+                .collect(Collectors.toMap(e -> StrUtil.format("{}_{}_{}_{}", e.getWarehouseId(), e.getOrgId(), e.getSkuId(), e.getWarehouseLocation()), InventoryEntity::getQty));
+        ConcurrentHashMap<String, Integer> currentInventoryQtyMap = new ConcurrentHashMap<>(inventoryQtyMap);
+        // 查询仓库是否开启负库存
+        WarehouseDTO.UpdateDTO warehouseDTO = warehouseService.detailWithCache(dto.getWarehouseId());
+        if (null == warehouseDTO){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST_WAREHOUSE);
+        }
+        Boolean allowNegativeInventory = warehouseDTO.getAllowNegativeInventory();
+
+        // 重新生成的明细
+        List<SoOutstockDetailDTO.AddDTO> resultAddDTOList = new LinkedList<>();
+        // 根据所有映射关系和当前库存生成
+        for (SoOutstockDetailDTO.AddDTO addDTO : dto.getDetailList()) {
+            // 当前明细总数量
+            Integer currentAllActualQty = addDTO.getActualQty();
+            // 当前生成的明细信息
+            List<SoOutstockDetailDTO.AddDTO> currentAddDTOList = new LinkedList<>();
+            // 当前历史映射数量
+            int currentSize = addDTO.getHistorySkuMappingList().size();
+            // 当前历史映射
+            LinkedList<SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO> currentMappingList = addDTO.getHistorySkuMappingList();
+            for (int idx = 0; idx < currentSize; idx++) {
+                SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO currentSkuMappingDTO = currentMappingList.get(idx);
+                // 当前库存key
+                String currentInventoryQtyKey = StrUtil.format("{}_{}_{}_{}", dto.getWarehouseId(), dto.getWarehouseOrgId(), currentSkuMappingDTO.getProductSkuId(), addDTO.getWarehouseLocation());
+                // 当前库存数量
+                Integer currentQty = currentInventoryQtyMap.getOrDefault(currentInventoryQtyKey, 0);
+
+                if (currentQty >= currentAllActualQty) {
+                    // 库存满足
+                    SoOutstockDetailDTO.AddDTO currentAddDTO = new SoOutstockDetailDTO.AddDTO(currentSkuMappingDTO, addDTO, currentAllActualQty);
+                    currentAddDTOList.add(currentAddDTO);
+                    // 更新当前库存扣减
+                    int resultQty = currentQty - currentAllActualQty;
+                    currentInventoryQtyMap.put(currentInventoryQtyKey, resultQty);
+                    break;
+                } else {
+                    // 库存不足
+                    if (idx == currentSize - 1) {
+                        // 当前元素是列表中的最后一个元素
+                        if (allowNegativeInventory){
+                            // 允许负库存扣减
+                            SoOutstockDetailDTO.AddDTO currentAddDTO = new SoOutstockDetailDTO.AddDTO(currentSkuMappingDTO, addDTO, currentAllActualQty);
+                            currentAddDTOList.add(currentAddDTO);
+                            break;
+                        } else {
+                            // 库存不足
+                            throw new ServiceException(ApiError.SKU_MAPPING_INVENTORY_INSUFFICIENT, currentSkuMappingDTO.getProductSkuNo());
+                        }
+                    } else {
+                        // 非最后元素扣减
+                        if ( 0 < currentQty){
+                            // 扣除当前剩余库存
+                            currentAllActualQty = currentAllActualQty - currentQty;
+                            SoOutstockDetailDTO.AddDTO currentAddDTO = new SoOutstockDetailDTO.AddDTO(currentSkuMappingDTO, addDTO, currentQty);
+                            currentAddDTOList.add(currentAddDTO);
+                        }
+                        // 库存小于等于0跳过扣除
+                    }
+                }
+            }
+            resultAddDTOList.addAll(currentAddDTOList);
+        }
+        return resultAddDTOList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateDetailRemark(String soOutStockId, String remark, boolean updateErrorThrow) {
+        boolean update = lambdaUpdate()
+                .eq(SoOutstockDetailEntity::getMainId, soOutStockId)
+                .set(SoOutstockDetailEntity::getRemark, remark)
+                .update();
+        if (!update && updateErrorThrow){
+            throw new ServiceException("批量更新明细备注失败");
         }
     }
 

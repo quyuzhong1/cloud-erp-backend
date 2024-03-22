@@ -139,7 +139,6 @@ public class BusinessServiceImpl {
         if(CollectionUtil.isEmpty(sourceData)){
             return Collections.EMPTY_LIST;
         }
-        List<T> insertList = new ArrayList<>();
         List<R> pushToMqList = new ArrayList<>();
         Class<T> tClass = (Class<T>) sourceData.get(0).getClass();
         List<String> uniqueIds = new ArrayList<>();
@@ -149,40 +148,8 @@ public class BusinessServiceImpl {
             tableName = platformApiEnum.getMongoTableName();
         }
         String tag = StrUtil.format("{}_{}", category, business) + "_tag";
-        for (T item : sourceData) {
-//            OrderMongoDTO orderMongoDTO =  OrderMongoDTO.getUniqId(item.getUniqueId());
-            UniqueDto uniqueDto = UniqueDto.getUniqId(item.getUniqueId());
-            List<T> mongoData = mongoService.findMongoData(uniqueDto, 0, 0, tableName, tClass);
-            item.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
-            item.setDownloadTime(LocalDateTime.now().toString());
-            if(CollectionUtil.isEmpty(mongoData)){
-                insertList.add((T) item);
-                uniqueIds.add(item.getUniqueId());
-                continue;
-            }
-            T mongoDatum = mongoData.get(0);
-            // 比较数据是否相同
-            if (mongoDatum.toString().equals(item.toString())) {
-                continue;
-            }
-            // 更新
-            Map<String, Object> updateFieldMap = item.getUpdateFieldMap();
-            MapUtil mapUtil;
-            if (CollectionUtil.isEmpty(updateFieldMap)){
-                // 无指定字段更新所有
-                mapUtil = JSONObject.parseObject(JSONObject.toJSONString(item), MapUtil.class);
-            } else {
-                // 根据指定字段更新
-                mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
-                mapUtil.putAll(updateFieldMap);
-            }
-            OmsMongoDTO updateDto = new OmsMongoDTO(mongoDatum.getUniqueId());
-            mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
-            uniqueIds.add(item.getUniqueId());
-        }
-        if(CollectionUtil.isNotEmpty(insertList)){
-            mongoService.saveMongoDataMult(insertList, tableName);
-        }
+        // 保存或更新到mongo
+        handleSaveOrUpdateMongo(sourceData, tableName, tClass, uniqueIds);
         // 不发送MQ
         if (!isSendMq){
             return pushToMqList;
@@ -221,6 +188,44 @@ public class BusinessServiceImpl {
         }).collect(Collectors.toList());
 
         return pushToMqList;
+    }
+
+    public  <T extends CleanBaseDTO> void handleSaveOrUpdateMongo(List<T> sourceData, String tableName, Class<T> tClass, List<String> uniqueIds) {
+        List<T> insertList = new ArrayList<>();
+        for (T item : sourceData) {
+//            OrderMongoDTO orderMongoDTO =  OrderMongoDTO.getUniqId(item.getUniqueId());
+            UniqueDto uniqueDto = UniqueDto.getUniqId(item.getUniqueId());
+            List<T> mongoData = mongoService.findMongoData(uniqueDto, 0, 0, tableName, tClass);
+            item.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
+            item.setDownloadTime(LocalDateTime.now().toString());
+            if(CollectionUtil.isEmpty(mongoData)){
+                insertList.add((T) item);
+                uniqueIds.add(item.getUniqueId());
+                continue;
+            }
+            T mongoDatum = mongoData.get(0);
+            // 比较数据是否相同
+            if (mongoDatum.toString().equals(item.toString())) {
+                continue;
+            }
+            // 更新
+            Map<String, Object> updateFieldMap = item.getUpdateFieldMap();
+            MapUtil mapUtil;
+            if (CollectionUtil.isEmpty(updateFieldMap)){
+                // 无指定字段更新所有
+                mapUtil = JSONObject.parseObject(JSONObject.toJSONString(item), MapUtil.class);
+            } else {
+                // 根据指定字段更新
+                mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
+                mapUtil.putAll(updateFieldMap);
+            }
+            OmsMongoDTO updateDto = new OmsMongoDTO(mongoDatum.getUniqueId());
+            mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
+            uniqueIds.add(item.getUniqueId());
+        }
+        if(CollectionUtil.isNotEmpty(insertList)){
+            mongoService.saveMongoDataMult(insertList, tableName);
+        }
     }
 
     /**

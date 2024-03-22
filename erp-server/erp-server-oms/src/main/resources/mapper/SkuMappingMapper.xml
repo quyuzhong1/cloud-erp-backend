@@ -539,6 +539,13 @@
                 #{platformSkuNo}
             </foreach>
         </if>
+        <!--平台sku no 列表-->
+        <if test="params.platformSpuNoList !=null and params.platformSpuNoList.size>0">
+            AND li.platform_spu_no IN
+            <foreach collection="params.platformSpuNoList" item="platformSpuNo" open="(" separator="," close=")">
+                #{platformSpuNo}
+            </foreach>
+        </if>
         <!--平台-->
         <if test="params.platform != null and params.platform != ''">
             AND li.platform = #{params.platform}
@@ -611,9 +618,14 @@
         li.platform_spu_name,
         li.platform_fn_sku
         FROM sku_mapping sm
-        INNER JOIN listing_info li
-        ON sm.listing_id=li.id AND li.is_deleted=FALSE AND sm.is_expire=FALSE
+        LEFT JOIN listing_info li
+        ON sm.listing_id=li.id AND li.is_deleted=FALSE
         WHERE sm.is_deleted=FALSE
+        <!--is_expire 是否过期-->
+        <if test="params.isExpire != null">
+            AND sm.is_expire = #{params.isExpire}
+        </if>
+
         <!--平台sku no 列表-->
         <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
             AND li.platform_sku_no IN
@@ -621,6 +633,14 @@
                 #{platformSkuNo}
             </foreach>
         </if>
+        <!--平台sku no 列表-->
+        <if test="params.platformSpuNoList !=null and params.platformSpuNoList.size>0">
+            AND li.platform_spu_no IN
+            <foreach collection="params.platformSpuNoList" item="platformSpuNo" open="(" separator="," close=")">
+                #{platformSpuNo}
+            </foreach>
+        </if>
+
         <!--sku no 列表-->
         <if test="params.skuNoList !=null and params.skuNoList.size>0">
             AND sm.product_sku_no IN
@@ -693,6 +713,7 @@
         inner join listing_info li on sm.listing_id = li.id
         where sm.is_deleted = false
         and li.is_deleted = false
+        and sm.is_expire = false
         <if test="erpSkuIdList !=null and erpSkuIdList.size>0">
             AND sm.product_sku_id IN
             <foreach collection="erpSkuIdList" item="item" open="(" separator="," close=")">
@@ -717,6 +738,24 @@
                  inner join listing_info li on sm.listing_id = li.id
         where
             ${params.sqlMap.default}
-        and sm.is_deleted = false and li.is_deleted = false
+        and sm.is_deleted = false and li.is_deleted = false and sm.is_expire = false
+    </select>
+
+    <select id="findHistory" resultMap="BaseResultMap">
+        select  id,
+            create_user_id,
+            create_user_name,
+            create_time,
+            update_user_id,
+            update_user_name,
+            update_time,
+            version,
+            is_deleted,
+            shop_id, platform_name, product_sku_id, product_sku_no, effective_time, expire_time, is_expire, dict_platform, product_name, listing_id, type, warehouse_id, warehouse_name, has_mapping_all, rule_id
+        from sku_mapping
+        where id != #{id}
+        and listing_id = #{listingId}
+        and shop_id = #{shopId}
+        and product_sku_id = #{productSkuId}
     </select>
 </mapper>

@@ -84,7 +84,7 @@
                  LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id AND pm.is_deleted = false
                  LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code AND wm.is_deleted = false
                  LEFT JOIN process_definition pd on pd.id = pm.process_definition_id and pd.is_deleted = false
-        where ptm.task_status = 'approveIng'  and ptm.is_deleted = false
+        where ptm.is_deleted = false
           <if test="null != param.processName and param.processName != ''">
               and pd.process_name ilike concat('%', #{param.processName}::text,'%')
           </if>
@@ -97,6 +97,10 @@
           <if test="null != param.processVersion">
               and pm.process_version = #{param.processVersion}
           </if>
+          <if test="null == param.processStatus or param.processStatus.size() == 0">
+              and ptm.task_status = 'approveIng'
+          </if>
+
           <if test="null != param.processStatus and param.processStatus.size() > 0">
           and pm.process_status in
             <foreach collection="param.processStatus" item="processStatus" open="(" separator="," close=")">

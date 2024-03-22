@@ -44,4 +44,9 @@ public interface SoB2cErrorMapper extends BaseMapper<SoB2cErrorEntity> {
      * @return
      */
     Boolean batchDeleteB2cError(@Param("params")SoB2cErrorDTO.BatchDeleteDTO batchDeleteDTO);
+
+    /**
+     * 删除异常订单明细
+     */
+    Boolean deleteB2cErrorByDetailId(@Param("params") SoB2cErrorDTO.DeleteDetailDTO dto);
 }

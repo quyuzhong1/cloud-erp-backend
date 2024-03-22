@@ -227,5 +227,5 @@ public class PlatformOrderDTO extends UniqueDto {
     /**
      * 订单创建日期
      */
-    private LocalDateTime orderCreateTime;
+    private LocalDateTime platformOrderCreateTime;
 }

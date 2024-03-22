@@ -11,9 +11,12 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
+import com.common.core.entity.BaseEntity;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
@@ -22,10 +25,10 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.query.SoOutstockQueryHandler;
+import com.erp.server.wms.service.impl.PlatformRetryHandler;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,7 +37,10 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 销售出库-销售出库单
@@ -281,46 +287,23 @@ public class SoOutstockController extends BaseController {
      */
     @PostMapping("afreshGenerateB2cOutstock")
     public ApiResult<Void> afreshGenerateB2cOutstock(@RequestBody BaseIdsDTO.IdsDTO dto) {
-        String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
-        //已发货
-        String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+
         List<SoB2cEntity> soB2cList = soB2cFeign.listWarehouseIsEmpty(dto.getIds());
+        Map<String, SoB2cEntity> mainMap = soB2cFeign.listByIds(dto.getIds())
+                .stream()
+                .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
         for (String id : dto.getIds()) {
             try {
-                SoB2cEntity soB2c = soB2cList.stream().filter(s ->
-                                s.getId().equals(id)&&
-                                        shipped.equals(s.getBillStatus())&&
-                                        s.hasPlatformWarehouseOrder()
-                        ).findFirst().orElse(null);
-                /**
-                 * 表示有仓库为空且是已发货并且是平台仓订单
-                 * 那么就要去找店铺的仓库 然后匹配上仓库
-                 * [排除速卖通订单]
-                 */
-                if (Objects.nonNull(soB2c) && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getDictPlatform())) {
-                    soB2cFeign.updateWarehouseByShopId(soB2c.getId(), soB2c.getShopId());
+                SoB2cEntity currentEntity = mainMap.get(id);
+                if (null == currentEntity){
+                    throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
                 }
-
-                //速卖通是否重试成功表示
-                Boolean flag = Boolean.TRUE;
-
-                //速卖通异常订单重新生成需要查询速卖通平台发货单获取仓库
-                if (Objects.nonNull(soB2c) && PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getDictPlatform())) {
-                    flag = soB2cFeign.updateAliExpressOrderWarehouse(soB2c.getId(), soB2c.getShopId());
-                }
-
-                Boolean result = soOutstockService.generateB2cSoOutstock(id);
-                if (result && flag) {
-                    SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-                    deleteDTO.setMainId(id);
-                    deleteDTO.setType(type);
-                    soB2cFeign.deleteError(deleteDTO);
-                }
+                PlatformRetryHandler.retrySoOutStock(currentEntity, soB2cList);
             } catch (Exception e) {
                 String message = e.getMessage();
                 log.error("重新创建或者修改B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", id, id, message);
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                addError.setType(type);
+                addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
                 addError.setMainId(id);
                 addError.setMessage(message);
                 addError.setParamJson(id);

@@ -31,7 +31,7 @@
         main_id, type, param_json, message, return_json
     </sql>
     <delete id="deleteB2cError">
-        DELETE FROM so_b2c_error WHERE main_id=#{params.mainId} and  type = #{params.type}
+        DELETE FROM so_b2c_error WHERE main_id=#{params.mainId} and  type = #{params.type} and detail_id = ''
     </delete>
     <delete id="deleteByCodeAndType">
         DELETE FROM so_b2c_error
@@ -47,5 +47,11 @@
         </foreach>
     </delete>
 
-
+    <delete id="deleteB2cErrorByDetailId">
+        DELETE FROM so_b2c_error WHERE main_id=#{params.mainId} and  type = #{params.type}
+        and detail_id in
+        <foreach collection="params.detailIdList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </delete>
 </mapper>

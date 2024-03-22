@@ -63,6 +63,7 @@ public class AmzReportFbaInventoryPlanningHandler extends AmzReportBusinessHandl
             paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
             paramDTO.setShopIdList(Collections.singletonList(taskEntity.getShopId()));
             paramDTO.setMatchResult(true);
+            paramDTO.setIsExpire(false);
             listingInfoMap = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO)
                     .stream()
                     .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getPlatformSkuNo, Function.identity()));

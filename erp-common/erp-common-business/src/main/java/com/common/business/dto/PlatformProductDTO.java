@@ -100,4 +100,9 @@ public class PlatformProductDTO extends UniqueDto {
      * 亚马逊关联的SKU
      */
     private String platformFnSku;
+
+    /**
+     * 平台的Listing状态
+     */
+    private String platformStatus;
 }
