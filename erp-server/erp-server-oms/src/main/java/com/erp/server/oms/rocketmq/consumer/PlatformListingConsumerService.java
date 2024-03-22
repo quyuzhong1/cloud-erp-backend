@@ -109,7 +109,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
                 paramDTO.setPlatformSkuNoList(Collections.singletonList(dto.getPlatformSkuNo()));
                 // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
-                if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())){
+                if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform()) ||
+                        PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getPlatform())){
                     paramDTO.setPlatformSpuNoList(Collections.singletonList(dto.getPlatformProductNo()));
                 }
                 paramDTO.setIsExpire(false);
