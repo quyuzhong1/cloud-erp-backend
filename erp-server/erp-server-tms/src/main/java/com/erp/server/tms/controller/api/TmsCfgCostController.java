@@ -69,12 +69,6 @@ public class TmsCfgCostController extends BaseController {
      * @return ApiResult<ViewDTO>
      */
     @PostMapping("/listDropDown")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:tmsCfgCost:paging",
-            serviceClass = TmsCfgCostService.class,
-            keyIdName = "tcc")
-    @LogViewService
     public ApiResult<List<TmsCfgCostDTO.DropDownDTO>> listDropDown(@RequestBody @Validated TmsCfgCostDTO.DropDownParamDTO dto) {
         return success(tmsCfgCostService.listDropDown(dto));
     }
