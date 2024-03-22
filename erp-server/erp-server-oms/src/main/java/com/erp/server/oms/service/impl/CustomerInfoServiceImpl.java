@@ -678,7 +678,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 contactEntities.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
             }*/
             //批量保存销售员信息
-            customerSellerService.batchSellerHistory(list,LocalDate.now());
+            customerSellerService.batchSellerHistory(list, LocalDate.now());
 
         }
         return Boolean.TRUE;
@@ -1053,7 +1053,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:oms:listCustomerByProperty",keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:oms:listCustomerByProperty", keyGenerator = "myKeyGenerator")
     public List<CustomerInfoVO> listCustomerByProperty() {
         return baseMapper.listCustomerByProperty();
     }
@@ -1408,6 +1408,37 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         return this.lambdaQuery().eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE).
                 in(CustomerInfoEntity::getName, customerNameList).list();
+    }
+
+    @Override
+    public List<CustomerInfoEntity> listByName(String name) {
+        if (StringUtils.isBlank(name)) {
+            return this.list();
+        }
+        return this.lambdaQuery().like(CustomerInfoEntity::getName, name).
+                orderByAsc(CustomerInfoEntity::getDisabled).list();
+    }
+
+    @Override
+    public List<CustomerDTO.ReceiveInfoDTO> listReceiveByName(String name) {
+        List<CustomerInfoEntity> customerList = this.listByName(name);
+        List<CustomerDTO.ReceiveInfoDTO> resultList = new ArrayList<>(customerList.size());
+        List<CustomerAddressEntity> addressList = customerAddressService.listByCustomerName(name);
+        for (CustomerInfoEntity item : customerList) {
+            CustomerDTO.ReceiveInfoDTO info = new CustomerDTO.ReceiveInfoDTO();
+            info.setName(item.getName());
+            info.setId(item.getId());
+            info.setCode(item.getCode());
+            info.setDisabled(item.getDisabled());
+            CustomerAddressEntity address = addressList.stream().filter(a -> a.getMainId().equals(item.getId())).findFirst().orElse(null);
+            if (Objects.nonNull(address)) {
+                info.setReceiverName(address.getPerson());
+                info.setTelNumber(address.getTelNumber());
+                info.setReceiveAddress(address.getAddress());
+            }
+            resultList.add(info);
+        }
+        return resultList;
     }
 
     @Override

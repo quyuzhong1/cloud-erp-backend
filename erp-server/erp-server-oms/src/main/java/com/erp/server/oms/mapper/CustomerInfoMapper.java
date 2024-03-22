@@ -59,4 +59,6 @@ public interface CustomerInfoMapper extends BaseMapper<CustomerInfoEntity> {
      * @return
      */
     List<CustomerInfoVO> listCustomerByProperty();
+
+
 }
