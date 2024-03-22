@@ -3,6 +3,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -76,4 +77,6 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
     List<LogisticsBillDTO.BaseDTO> listLogisticsBillByTransportNos(@Param("transportNoList") List<String> transportNoList);
 
     List<String> listSoOutIdByQuery(@Param("params") AdvanceQueryContainer advanceQueryContainer);
+
+    IPage<TmsFirstMileLogisticDTO.PagingVO> firstMilePaging(Page query, @Param("params") TmsFirstMileLogisticDTO.PagingParamDTO params);
 }

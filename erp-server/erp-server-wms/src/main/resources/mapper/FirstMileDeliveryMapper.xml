@@ -234,7 +234,8 @@
             fw.address as fromAddress,
             fmd.dest_warehouse_name as toWarehouseName,
             fmd.country_name as toCountryName,
-            tw.address as toAddress
+            tw.address as toAddress,
+            fmd.remark
         from first_mile_delivery fmd
                  left join warehouse fw on fmd.delivery_warehouse_id = fw.id and fw.is_deleted =false
                  left join warehouse tw on fmd.dest_warehouse_id = tw.id and tw.is_deleted = false
@@ -245,8 +246,11 @@
         <if test="params.logisticsStatus != null and params.logisticsStatus != ''">
             AND fmd.logistics_status = #{params.logisticsStatus}
         </if>
-        <if test="params.id != null and params.id != ''">
-            AND fmd.id = #{params.id}
+        <if test="params.ids != null and params.ids.size > 0">
+            AND fmd.id IN
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
         </if>
     </select>
 </mapper>

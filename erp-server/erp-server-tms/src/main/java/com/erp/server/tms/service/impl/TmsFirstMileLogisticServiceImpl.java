@@ -5,9 +5,13 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.InvoicesStatusEnum;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
@@ -17,17 +21,17 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.enums.FmDeliveryLogisticsStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.LogisticsBillCostDTO;
-import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
-import com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShippingBillingMethodEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
+import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
@@ -50,10 +54,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -97,6 +100,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     @Resource
     private LogisticsChannelService logisticsChannelService;
 
+    @Resource
+    private LogisticsBillDetailService logisticsBillDetailService;
+
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -125,6 +134,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
         //新增物流单
         LogisticsBillEntity tmsFirstMileLogisticEntity = FmLogisticsConverter.INSTANCE.addLogisticsBill(generateLogisticDTO,addDTO);
+        if(StringUtils.isBlank(tmsFirstMileLogisticEntity.getRemark())){
+            tmsFirstMileLogisticEntity.setRemark(generateLogisticDTO.getRemark());
+        }
         tmsFirstMileLogisticEntity.setShipTime(shipTime);
         log.info("开始新增头程物流单");
         boolean save = super.save(tmsFirstMileLogisticEntity);
@@ -135,9 +147,18 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "头程物流单" , tmsFirstMileLogisticEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL.getCode(), tmsFirstMileLogisticEntity.getId(), "新增操作");
 
-        //新增物流费用单
+        //新增物流单明细
         LogisticsBillCostDTO.AddDTO costAddDTO = this.packCostAddDTO(generateLogisticDTO,addDTO,tmsFirstMileLogisticEntity,rate);
         BaseResultDTO.AddDTO costDTO = logisticsBillCostService.add(costAddDTO);
+
+        //新增物流费用单
+        List<LogisticsBillDetailDTO.AddDTO> detailAddList = new ArrayList<>();
+        LogisticsBillDetailDTO.AddDTO detailAddDto = new LogisticsBillDetailDTO.AddDTO();
+        detailAddDto.setMainId(tmsFirstMileLogisticEntity.getId());
+        detailAddDto.setTrackNo(tmsFirstMileLogisticEntity.getCounterNo());
+        detailAddDto.setTrackStatus(LogisticTrackStatusEnum.ORDERED.getCode());
+        detailAddList.add(detailAddDto);
+        logisticsBillDetailService.add(tmsFirstMileLogisticEntity,detailAddList);
 
         //新增物流费用单明细
         List<TmsFirstMileLogisticDTO.LogisticFee> logisticFeeList = addDTO.getLogisticFeeList();
@@ -204,7 +225,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     private FirstMileDeliveryDTO.GenerateLogisticDTO getGenerateLogisticDTO(String outstockId){
         FirstMileDeliveryDTO.GenerateLogisticReqDTO dto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
-        dto.setId(outstockId);
+        dto.setIds(Arrays.asList(outstockId));
         dto.setPackingStatus(PackingStatusEnum.PACKING.getCode());
         dto.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.WAIT.code);
         List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(dto);
@@ -255,7 +276,81 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     public PagingVO<TmsFirstMileLogisticDTO.PagingVO> paging(PagingDTO<TmsFirstMileLogisticDTO.PagingParamDTO> dto) {
-        return null;
+        TmsFirstMileLogisticDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        params.setOrderType(OrderTypeEnum.FIRST_MILE.getCode());
+        IPage<TmsFirstMileLogisticDTO.PagingVO> pageData = baseMapper.firstMilePaging(query, params);
+        List<TmsFirstMileLogisticDTO.PagingVO> list = pageData.getRecords();
+        fillPagingDb(list);
+        return new PagingVO<>(pageData);
+    }
+
+    private void fillPagingDb(List<TmsFirstMileLogisticDTO.PagingVO> list) {
+        if(CollectionUtils.isEmpty(list)){
+            return;
+        }
+        List<String> channelIdList = list.stream().map(TmsFirstMileLogisticDTO.PagingVO::getLogisticsChannelId).collect(Collectors.toList());
+        List<LogisticsChannelEntity> logisticsChannelEntityList = logisticsChannelService.listByIds(channelIdList);
+
+        List<String> logisticsSupplierIdList = list.stream().map(TmsFirstMileLogisticDTO.PagingVO::getLogisticsSupplierId).collect(Collectors.toList());
+        List<LogisticsSupplierEntity> logisticsSupplierEntityList = logisticsSupplierService.listByIds(logisticsSupplierIdList);
+
+        List<String> outstockIdList = list.stream().map(TmsFirstMileLogisticDTO.PagingVO::getOutstockId).collect(Collectors.toList());
+
+        FirstMileDeliveryDTO.GenerateLogisticReqDTO dto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
+        dto.setIds(outstockIdList);
+        List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTOList = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(dto);
+
+        for (TmsFirstMileLogisticDTO.PagingVO pagingVO : list) {
+            //处理枚举值
+            pagingVO.setLogisticsStatusName(EnumMessage.getNameByCode(LogisticTrackStatusEnum.class,pagingVO.getLogisticsStatus()));
+            pagingVO.setInvoicesStatusName(EnumMessage.getNameByCode(InvoicesStatusEnum.class,pagingVO.getInvoicesStatus()));
+            pagingVO.setReconciliationStatusName(EnumMessage.getNameByCode(ReconciliationStatusEnum.class,pagingVO.getReconciliationStatus()));
+            pagingVO.setShippingMethodName(EnumMessage.getNameByCode(LogisticsMethodEnum.class,pagingVO.getShippingMethod()));
+
+            //处理渠道，供应商
+            LogisticsChannelEntity logisticsChannelEntity = logisticsChannelEntityList.stream().filter(v->v.getId().equals(pagingVO.getLogisticsChannelId())).findFirst().orElse(new LogisticsChannelEntity());
+            pagingVO.setLogisticsChannelName(logisticsChannelEntity.getName());
+
+            LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntityList.stream().filter(v->v.getId().equals(pagingVO.getLogisticsSupplierId())).findFirst().orElse(new LogisticsSupplierEntity());
+            pagingVO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+
+            //处理发货单相关信息
+            FirstMileDeliveryDTO.GenerateLogisticDTO deliveryDto = generateLogisticDTOList.stream().filter(v->v.getOutstockId().equals(pagingVO.getOutstockId())).findFirst().orElse(null);
+            if(Objects.nonNull(deliveryDto)){
+                pagingVO.setFromWarehouseName(deliveryDto.getFromWarehouseName());
+                pagingVO.setToWarehouseName(deliveryDto.getToWarehouseName());
+                pagingVO.setCurrencySymbol(CurrencyEnum.getSymbolByCode(pagingVO.getCurrency()));
+                pagingVO.setToAddress(deliveryDto.getToAddress());
+                pagingVO.setBoxCount(CollectionUtils.isNotEmpty(deliveryDto.getPackingDTOList())?deliveryDto.getPackingDTOList().size():0);
+            }
+
+            //处理实际时效和预警
+            int days = pagingVO.getActualHour() / 24; // 计算天数部分
+            int remainingHours = pagingVO.getActualHour() % 24; // 计算剩余小时数部分
+            String actualDesc = (days !=0 ? days+ "天":"") + remainingHours + "小时";
+            pagingVO.setActualDesc(actualDesc);
+            if(StringUtils.isNotBlank(logisticsChannelEntity.getEffectiveTime()) && StringUtils.isNotBlank(logisticsChannelEntity.getEffectiveTimeUnit())){
+                //0为默认值，不处理
+                if(logisticsChannelEntity.getEffectiveTime().equals("0")){
+                    continue;
+                }
+                //判断是否是数字，不是数字忽略
+                String regex = "\\d*[1-9]+\\d*";
+                Pattern pattern = Pattern.compile(regex);
+                if(!pattern.matcher(logisticsChannelEntity.getEffectiveTime()).matches()){
+                    continue;
+                }
+                int estimatedDay = Integer.parseInt(logisticsChannelEntity.getEffectiveTime());
+                pagingVO.setEstimatedDay(estimatedDay);
+                //现在单位只有天
+                pagingVO.setEstimatedTimeUnit("天");
+                pagingVO.setEstimatedTimeDesc(pagingVO.getEstimatedDay() + pagingVO.getEstimatedTimeUnit());
+                //设置预警
+                pagingVO.setWarnHour(estimatedDay*24 - pagingVO.getActualHour());
+            }
+        }
     }
 
     @Override
@@ -326,7 +421,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     @Override
     public List<TmsFirstMileLogisticDTO.DeliveryDTO> getCanGenerateDeliveryOrder(TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO dto) {
         FirstMileDeliveryDTO.GenerateLogisticReqDTO reqDto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
-        reqDto.setId(dto.getOutstockId());
+        reqDto.setIds(Arrays.asList(dto.getOutstockId()));
         reqDto.setPackingStatus(PackingStatusEnum.PACKING.getCode());
         reqDto.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.WAIT.code);
         List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(reqDto);
@@ -376,7 +471,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         }
         if(StringUtils.isNotBlank(dto.getOutstockId()) && Objects.nonNull(shippingTemplateEntity) && shippingTemplateEntity.getVolumeSetting() > 0){
             FirstMileDeliveryDTO.GenerateLogisticReqDTO reqDto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
-            reqDto.setId(dto.getOutstockId());
+            reqDto.setIds(Arrays.asList(dto.getOutstockId()));
             reqDto.setPackingStatus(PackingStatusEnum.PACKING.getCode());
             reqDto.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.WAIT.code);
             List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(reqDto);

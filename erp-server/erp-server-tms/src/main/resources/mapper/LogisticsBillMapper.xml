@@ -376,4 +376,46 @@
             ${params.sqlMap.default}
         and  lbd.is_deleted = false
     </select>
+    <select id="firstMilePaging" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$PagingVO">
+        SELECT lb.id,
+               lb.outstock_id as outstockId,
+               lb.transport_no as transportNo,
+               lb.counter_no as counterNo,
+               lb.source_code as businessCode,
+               lb.outstock_code as outstockCode,
+               lbd.track_status as logisticsStatus,
+               (select lt.content from logistics_track lt where lt.track_no = lbd.track_no and lt.is_deleted = false order by lt.update_time desc limit 1) as logisticsTrack,
+               lb.invoices_status as invoicesStatus,
+               lbc.reconciliation_status as reconciliationStatus,
+               lb.shipping_method as shippingMethod,
+               lb.channel_id as logisticsChannelId,
+               lb.logistics_supplier_id as logisticsSupplierId,
+               lb.shop_name as shopName,
+               lb.to_country as country,
+               lbc.actual_weight as weight,
+               lbc.volume_weight as volumeWeight,
+               lbc.weight_unit as weightUnit,
+               (select sum(lbcd.cost_value) from tms_logistics_bill_cost_detail lbcd where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'estimated') as estimatedFee,
+               (select sum(lbcd.cost_value) from tms_logistics_bill_cost_detail lbcd where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'actual') as actualFee,
+               lbc.currency as  currency,
+               lb.order_time as orderTime,
+               lbd.sign_time as  signTime,
+               lb.remark,
+                case when lb.ship_time is not  null then FLOOR(EXTRACT(EPOCH FROM (now()-lb.ship_time))/3600)
+                else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour
+        from
+            logistics_bill lb
+                inner join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id
+                inner join logistics_bill_detail lbd on lbd.main_id = lb.id
+        where
+            ${params.sqlMap.default}
+          and lb.order_type = #{params.orderType}
+          and lb.is_deleted =false
+          and lbc.is_deleted = false
+          and lbd.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+    </select>
 </mapper>

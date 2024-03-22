@@ -174,4 +174,14 @@ public enum CurrencyEnum {
         }
         return null;
     }
+
+    public static String getSymbolByCode(String currencyCode) {
+        CurrencyEnum[] values = values();
+        for (CurrencyEnum value : values) {
+            if (value.currencyCode.equals(currencyCode)) {
+                return value.currencySymbol;
+            }
+        }
+        return null;
+    }
 }

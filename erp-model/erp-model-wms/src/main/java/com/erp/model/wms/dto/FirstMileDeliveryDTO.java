@@ -912,9 +912,9 @@ public class FirstMileDeliveryDTO implements Serializable {
         private String logisticsStatus;
 
         /**
-         * 发货单id
+         * 发货单ids
          */
-        private String id;
+        private List<String> ids;
     }
     /**
      * 生成物流单传的DTO
@@ -997,6 +997,12 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 目的详细地址
          */
         private String toAddress;
+
+
+        /**
+         * 备注
+         */
+        private String remark;
 
         /**
          * 装箱信息

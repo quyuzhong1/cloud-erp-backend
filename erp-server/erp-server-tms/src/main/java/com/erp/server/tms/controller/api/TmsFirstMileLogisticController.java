@@ -1,6 +1,7 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -54,6 +55,7 @@ public class TmsFirstMileLogisticController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<TmsFirstMileLogisticDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<TmsFirstMileLogisticDTO.PagingParamDTO> dto) {
         PagingVO<TmsFirstMileLogisticDTO.PagingVO> pagingVO = tmsFirstMileLogisticService.paging(dto);
         return success(pagingVO);

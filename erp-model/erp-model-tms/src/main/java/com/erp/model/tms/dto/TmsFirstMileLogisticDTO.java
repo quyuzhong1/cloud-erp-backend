@@ -1,6 +1,7 @@
 package com.erp.model.tms.dto;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -444,9 +445,14 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String businessCode;
 
         /**
-         * 来源单号
+         * 来源id(发货id)
          */
-        private String sourceCode;
+        private String outstockId;
+
+        /**
+         * 来源单号(发货单号)
+         */
+        private String outstockCode;
 
         /**
          * 物流状态
@@ -502,19 +508,19 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String logisticsChannelName;
 
         /**
-         * 发货仓库id
+         * 物流商id
          */
-        private String fromWarehouseId;
+        private String logisticsSupplierId;
+
+        /**
+         * 物流商名称
+         */
+        private String logisticsSupplierName;
 
         /**
          * 发货仓库名称
          */
         private String fromWarehouseName;
-
-        /**
-         * 目的仓库id
-         */
-        private String toWarehouseId;
 
         /**
          * 目的仓库名称
@@ -552,9 +558,14 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private BigDecimal estimatedFee;
 
         /**
-         * 体积重
+         * 实际费用
          */
         private BigDecimal actualFee;
+
+        /**
+         * 币种
+         */
+        private String currency;
 
         /**
          * 币种符号
@@ -572,19 +583,34 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private LocalDateTime signTime;
 
         /**
-         * 预计时效
+         * 预计时效(天)
          */
-        private String estimatedTime;
+        private Integer estimatedDay;
 
         /**
-         * 实际时效
+         * 预计时效描述
          */
-        private String actualTime;
+        private String estimatedTimeDesc;
 
         /**
-         * 预警天数
+         * 预计时效单位
          */
-        private Integer warnDay;
+        private String estimatedTimeUnit;
+
+        /**
+         * 实际时效(描述)
+         */
+        private String actualDesc;
+
+        /**
+         * 实际时效（小时数）
+         */
+        private Integer actualHour;
+
+        /**
+         * 预警小时数
+         */
+        private Integer warnHour;
 
         /**
          * 备注
@@ -599,7 +625,7 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         /**
          * 总箱数
          */
-        private String boxCount;
+        private Integer boxCount;
     }
     /**
      * tab
@@ -638,6 +664,8 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+
+        private String orderType;
     }
 
 
