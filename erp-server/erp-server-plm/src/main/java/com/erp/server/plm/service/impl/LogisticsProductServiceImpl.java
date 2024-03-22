@@ -565,7 +565,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             throw new ServiceException("未找到物流产品数据");
         }
         // 只有审核中的单据允许撤销
-        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
 
@@ -607,6 +607,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         ProductLogisticsEntity entity = productLogisticsService.getEntityById(id);
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到物流产品数据");
+        }
+        // 已审核支持反审核
+        if (!Objects.equals(ApproveStatusEnum.APPROVE, entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98014);
         }
         //校验下推是否备案
         List<ProductRegistrationEntity> productRegistrationList = forecastFeign.listBySkuId(entity.getSkuId());
@@ -793,7 +797,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     logistics.setDestCurrencySymbol(usd.getCurrencySymbol());
                     logistics.setDestCurrency(usd.getCurrencyCode());
                 }
-
+                logistics.setFirstQty(StrUtil.isBlank(item.getFirstQtyStr()) ? null : Integer.valueOf(item.getFirstQtyStr()));
+                logistics.setSecondQty(StrUtil.isBlank(item.getSecondQtyStr()) ? null : Integer.valueOf(item.getSecondQtyStr()));
 
                 List<String> errorMsgList = new ArrayList<>();
                 if (StringUtils.isBlank(skuId)) {

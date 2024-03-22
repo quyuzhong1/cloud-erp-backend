@@ -1200,6 +1200,12 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.logisticsApproveStatusList !=null and params.logisticsApproveStatusList.size>0">
+            AND pl.approve_status IN
+            <foreach collection="params.logisticsApproveStatusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         <!--品名-->
         <if test="params.productName!=null and params.productName!=''">
             AND pd.name ILIKE concat('%',#{params.productName}::text,'%')
@@ -1394,6 +1400,18 @@
                 <if test="params.productPropertyIdList!=null and params.productPropertyIdList.size>0">
                     AND pi.property_id IN
                     <foreach collection="params.productPropertyIdList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
+                    AND pl.approve_status IN
+                    <foreach collection="params.approveStatusList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.logisticsApproveStatusList !=null and params.logisticsApproveStatusList.size>0">
+                    AND pl.approve_status IN
+                    <foreach collection="params.logisticsApproveStatusList" item="item" open="(" separator="," close=")">
                         #{item}
                     </foreach>
                 </if>

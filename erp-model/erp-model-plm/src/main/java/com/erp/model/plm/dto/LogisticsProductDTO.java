@@ -320,9 +320,14 @@ public class LogisticsProductDTO {
         private List<String> idList;
 
         /**
-         * 审核状态集合
+         * 审核状态集合（无需传值）
          */
         private List<String> approveStatusList;
+
+        /**
+         * 备案审核状态集合
+         */
+        private List<String> logisticsApproveStatusList;
 
         /**
          * 分类id
