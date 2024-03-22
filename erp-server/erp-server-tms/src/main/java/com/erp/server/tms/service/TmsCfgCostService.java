@@ -70,4 +70,9 @@ public interface TmsCfgCostService extends SuperService<TmsCfgCostEntity> {
      * @return List<DropDownDTO>
      */
     List<TmsCfgCostDTO.DropDownDTO> listDropDown(TmsCfgCostDTO.DropDownParamDTO dto);
+
+    /**
+     * 根据归属和分类查询
+     */
+    List<TmsCfgCostEntity> listCostAttributionAndCategory(String dictCostAttribution ,String dictCostCategory);
 }

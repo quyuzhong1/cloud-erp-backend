@@ -19,14 +19,20 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.FmDeliveryLogisticsStatusEnum;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.*;
-import com.erp.model.tms.entity.*;
+import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailDTO;
+import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
+import com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO;
+import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.LogisticsSupplierEntity;
+import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
+import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShippingBillingMethodEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
@@ -151,11 +157,23 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "头程物流单" , tmsFirstMileLogisticEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL.getCode(), tmsFirstMileLogisticEntity.getId(), "新增操作");
 
-        //新增物流单明细
-        LogisticsBillCostDTO.AddDTO costAddDTO = this.packCostAddDTO(generateLogisticDTO,addDTO,tmsFirstMileLogisticEntity);
-        BaseResultDTO.AddDTO costDTO = logisticsBillCostService.add(costAddDTO);
-
         //新增物流费用单
+        LogisticsBillCostDTO.AddDTO costAddDTO = this.packCostAddDTO(generateLogisticDTO,addDTO,tmsFirstMileLogisticEntity);
+
+        //物流费用单明细
+        List<TmsFirstMileLogisticDTO.LogisticFee> logisticFeeList = addDTO.getLogisticFeeList();
+        List<TmsLogisticsBillCostDetailDTO.AddDTO> costDetailList = new ArrayList<>();
+        for (TmsFirstMileLogisticDTO.LogisticFee logisticFee : logisticFeeList) {
+            TmsLogisticsBillCostDetailDTO.AddDTO dto = new TmsLogisticsBillCostDetailDTO.AddDTO();
+            dto.setCostValue(logisticFee.getEstimatedFee());
+            dto.setCfgCostId(logisticFee.getCfgCostId());
+            dto.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+            costDetailList.add(dto);
+        }
+        costAddDTO.setCostDetailList(costDetailList);
+        logisticsBillCostService.add(costAddDTO);
+
+        //新增物流单
         List<LogisticsBillDetailDTO.AddDTO> detailAddList = new ArrayList<>();
         LogisticsBillDetailDTO.AddDTO detailAddDto = new LogisticsBillDetailDTO.AddDTO();
         detailAddDto.setMainId(tmsFirstMileLogisticEntity.getId());
@@ -163,19 +181,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         detailAddDto.setTrackStatus(LogisticTrackStatusEnum.ORDERED.getCode());
         detailAddList.add(detailAddDto);
         logisticsBillDetailService.add(tmsFirstMileLogisticEntity,detailAddList);
-
-        //新增物流费用单明细
-        List<TmsFirstMileLogisticDTO.LogisticFee> logisticFeeList = addDTO.getLogisticFeeList();
-        for (TmsFirstMileLogisticDTO.LogisticFee logisticFee : logisticFeeList) {
-            TmsLogisticsBillCostDetailDTO.AddDTO dto = new TmsLogisticsBillCostDetailDTO.AddDTO();
-            dto.setCurrency(addDTO.getCurrency());
-            dto.setExchangeRate(rate);
-            dto.setCostValue(logisticFee.getEstimatedFee());
-            dto.setCfgCostId(logisticFee.getCfgCostId());
-            dto.setMainId(costDTO.getId());
-            dto.setType("estimated");
-            logisticsBillCostDetailService.add(dto);
-        }
 
         //设置附件信息
         Class<LogisticsBillEntity> credentialClass = LogisticsBillEntity.class;

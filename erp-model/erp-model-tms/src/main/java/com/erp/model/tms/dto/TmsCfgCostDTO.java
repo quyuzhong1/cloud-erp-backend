@@ -203,7 +203,7 @@ public class TmsCfgCostDTO implements Serializable {
     public static class DropDownParamDTO {
 
         /**
-         * 费用归属
+         * 费用归属,firstMile头程、selfDeliver自发货、declare报关,/tms/drop/down/dict/list?key=dictCostAttribution
          */
         private String dictCostAttribution;
     }

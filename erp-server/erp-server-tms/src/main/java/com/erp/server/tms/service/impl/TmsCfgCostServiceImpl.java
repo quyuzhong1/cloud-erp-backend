@@ -140,6 +140,21 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
     }
 
     /**
+     * @description: 根据费用归属和分类查询
+     * @author Will
+     * @date: 2024/3/21 9:44
+     * @param dictCostAttribution
+     * @return TmsCfgCostEntity
+     */
+    @Override
+    public List<TmsCfgCostEntity> listCostAttributionAndCategory(String dictCostAttribution ,String dictCostCategory) {
+        return lambdaQuery().eq(TmsCfgCostEntity::getDictCostAttribution, dictCostAttribution)
+                .eq(TmsCfgCostEntity::getDictCostCategory, dictCostCategory)
+                .orderByDesc(TmsCfgCostEntity::getIsDefault)
+                .list();
+    }
+
+    /**
      * 新增修改数据校验
      */
     private void checkData(TmsCfgCostEntity tmsCfgCostEntity) {
@@ -196,7 +211,7 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
             return;
         }
         //查询已存在数据
-        List<TmsCfgCostEntity> oldList = listCostAttributionAndCategory(tmsCfgCostEntity);
+        List<TmsCfgCostEntity> oldList = listCostAttributionAndCategory(tmsCfgCostEntity.getDictCostAttribution(),tmsCfgCostEntity.getDictCostCategory());
         List<TmsCfgCostEntity> tmsCfgCostEntityList = oldList.stream().filter(obj -> !StrUtil.equals(tmsCfgCostEntity.getId(), obj.getId()) && obj.getIsDefault())
                 .collect(Collectors.toList());
         if (CollectionUtil.isEmpty(tmsCfgCostEntityList)) {
@@ -204,19 +219,6 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
         }
         tmsCfgCostEntityList.forEach(obj -> obj.setIsDefault(Boolean.FALSE));
         this.updateBatchById(tmsCfgCostEntityList);
-    }
-
-    /**
-     * @description: 根据费用归属和分类查询
-     * @author Will
-     * @date: 2024/3/21 9:44
-     * @param tmsCfgCostEntity
-     * @return TmsCfgCostEntity
-     */
-    private List<TmsCfgCostEntity> listCostAttributionAndCategory(TmsCfgCostEntity tmsCfgCostEntity) {
-        return lambdaQuery().eq(TmsCfgCostEntity::getDictCostAttribution, tmsCfgCostEntity.getDictCostAttribution())
-                .eq(TmsCfgCostEntity::getDictCostCategory, tmsCfgCostEntity.getDictCostCategory())
-                .list();
     }
 
     /**

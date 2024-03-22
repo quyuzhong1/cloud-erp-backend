@@ -1,16 +1,14 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
-
-import cn.hutool.core.annotation.Alias;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -76,28 +74,10 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     private String weightUnit;
 
     /**
-    * 预估运费
-    */
-    @TableField("estimated_shipping_cost")
-    private BigDecimal estimatedShippingCost ;
-
-    /**
     * 计费重（物流商）
     */
     @TableField("billing_weight_logistics")
     private BigDecimal billingWeightLogistics;
-
-    /**
-    * 实际运费（物流商）
-    */
-    @TableField("actual_shipping_cost")
-    private BigDecimal actualShippingCost;
-
-    /**
-    * 运费差异
-    */
-    @TableField("diff_shipping_cost")
-    private BigDecimal diffShippingCost;
 
     /**
     * 币别

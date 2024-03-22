@@ -136,7 +136,6 @@ public class TmsLogisticsBillCostDetailDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
@@ -146,31 +145,11 @@ public class TmsLogisticsBillCostDetailDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 主表id
-        */
-        @NotBlank(message = "主表id不能为空")
-        private String mainId;
-
-        /**
         * 费用值
         */
         @NotNull(message = "费用值不能为空")
         @Digits(integer = 12, fraction = 4, message = "费用值整数位不能超过12位，小数位不能超过4位")
         private BigDecimal costValue;
-
-        /**
-        * 币别
-        */
-        @NotBlank(message = "币别不能为空")
-        @Size(max = 32,message = "币别最大长度不能超过32位")
-        private String currency;
-
-        /**
-        * 汇率
-        */
-        @NotNull(message = "汇率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "汇率整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal exchangeRate;
 
         /**
         * 费用设置id

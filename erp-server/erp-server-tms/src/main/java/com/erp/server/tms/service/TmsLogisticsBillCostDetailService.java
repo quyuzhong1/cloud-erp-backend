@@ -1,8 +1,8 @@
 package com.erp.server.tms.service;
-import com.erp.model.tms.entity.TmsLogisticsBillCostDetailEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+
 import com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO;
+import com.erp.model.tms.entity.TmsLogisticsBillCostDetailEntity;
 
 import java.util.List;
 
@@ -17,22 +17,26 @@ import java.util.List;
 public interface TmsLogisticsBillCostDetailService extends SuperService<TmsLogisticsBillCostDetailEntity> {
 
     /**
-    * 新增
-    * @author will
-    * @date: 2024-03-20
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(TmsLogisticsBillCostDetailDTO.AddDTO dto);
+     * @description: 批量新增
+     * @author Will
+     * @date: 2024/3/22 14:41
+     * @param costDetailList
+     * @param mainId
+     * @return Boolean
+     */
+    Boolean batchAdd(List<TmsLogisticsBillCostDetailDTO.AddDTO> costDetailList, String mainId);
+
 
     /**
-    * 修改
-    * @author will
-    * @date: 2024-03-20
-    * @param dto
-    * @return
-    */
-    Boolean update(TmsLogisticsBillCostDetailDTO.UpdateDTO dto);
+     * @description: 批量更新
+     * @author Will
+     * @date: 2024/3/22 14:41
+     * @param costDetailList
+     * @param mainId
+     * @return Boolean
+     */
+    Boolean batchUpdate(List<TmsLogisticsBillCostDetailDTO.UpdateDTO> costDetailList, String mainId);
+
 
     /**
      * 查询预估与实际比对列表

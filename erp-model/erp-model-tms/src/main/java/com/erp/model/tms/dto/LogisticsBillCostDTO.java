@@ -1,20 +1,17 @@
 package com.erp.model.tms.dto;
 
-import java.math.BigDecimal;
-
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
 
 /**
  * <p>
@@ -380,12 +377,6 @@ public class LogisticsBillCostDTO implements Serializable {
         private BigDecimal billingWeightLogistics;
 
         /**
-         * 实际运费（物流商）
-         */
-        @Digits(integer = 12, fraction = 4, message = "实际运费（物流商）整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal actualShippingCost;
-
-        /**
          * 备注
          */
         @Size(max = 255,message = "备注最大长度不能超过255位")
@@ -395,6 +386,11 @@ public class LogisticsBillCostDTO implements Serializable {
          * 币别
          */
         private String currency;
+
+        /**
+         * 费用明细
+         */
+        private List<TmsLogisticsBillCostDetailDTO.UpdateDTO>  costDetailList;
 
     }
 
@@ -425,12 +421,6 @@ public class LogisticsBillCostDTO implements Serializable {
         private BigDecimal volumeWeight;
 
         /**
-        * 预估运费
-        */
-        @Digits(integer = 12, fraction = 4, message = "预估运费整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal estimatedShippingCost ;
-
-        /**
         * 币别
         */
         @NotBlank(message = "币别不能为空")
@@ -452,7 +442,6 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private String channelId;
 
-
         /**
          * 汇率
          */
@@ -467,6 +456,12 @@ public class LogisticsBillCostDTO implements Serializable {
          * 实重(物流商)
          */
         private BigDecimal weightLogistics;
+
+        /**
+         * 费用明细
+         */
+        @NotEmpty(message = "费用明细不能为空")
+        private List<TmsLogisticsBillCostDetailDTO.AddDTO>  costDetailList;
 
     }
     /**
@@ -487,14 +482,14 @@ public class LogisticsBillCostDTO implements Serializable {
         private BigDecimal billingWeightLogistics;
 
         /**
-         * 实际运费[物流商]
-         */
-        private BigDecimal actualShippingCost;
-
-        /**
          * 币种
          */
         private String currency;
+
+        /**
+         * 费用明细
+         */
+        private List<TmsLogisticsBillCostDetailDTO.AddDTO>  costDetailList;
     }
 
 

@@ -1,28 +1,36 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.tms.entity.TmsLogisticsBillCostDetailEntity;
-import com.erp.server.tms.mapper.TmsLogisticsBillCostDetailMapper;
-import com.erp.server.tms.service.TmsLogisticsBillCostDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO;
+import com.erp.model.tms.entity.LogisticsBillCostEntity;
+import com.erp.model.tms.entity.TmsLogisticsBillCostDetailEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.server.tms.mapper.TmsLogisticsBillCostDetailMapper;
+import com.erp.server.tms.service.LogisticsBillCostService;
+import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.TmsLogisticsBillCostDetailService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.stereotype.Service;
 
-import javax.xml.ws.RequestWrapper;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -37,60 +45,83 @@ import javax.xml.ws.RequestWrapper;
 public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsLogisticsBillCostDetailMapper, TmsLogisticsBillCostDetailEntity> implements TmsLogisticsBillCostDetailService {
     @Autowired
     private OperateLogService operateLogService;
+
     @Autowired
-    private CommonService commonService;
+    private DmpTaskFeign dmpTaskFeign;
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
+    @Autowired
+    private LogisticsBillCostService logisticsBillCostService;
+
     @Override
-    public BaseResultDTO.AddDTO add(TmsLogisticsBillCostDetailDTO.AddDTO addDTO) {
-        TmsLogisticsBillCostDetailEntity tmsLogisticsBillCostDetailEntity = new TmsLogisticsBillCostDetailEntity();
-        BeanMapperUtils.copy(addDTO, tmsLogisticsBillCostDetailEntity);
-
+    public Boolean batchAdd(List<TmsLogisticsBillCostDetailDTO.AddDTO> costDetailList, String mainId) {
+        List<TmsLogisticsBillCostDetailEntity> list = BeanMapperUtils.copyList(TmsLogisticsBillCostDetailEntity.class, costDetailList);
         // 数据处理
-        handleData(tmsLogisticsBillCostDetailEntity);
-
+        handleData(list,mainId);
         log.info("开始新增自发货费用明细");
-        boolean save = super.save(tmsLogisticsBillCostDetailEntity);
-        if(!save) {
+
+        boolean saveBatch = super.saveBatch(list);
+        if(!saveBatch) {
             throw new ServiceException("自发货费用明细保存失败");
         }
+        return saveBatch;
+    }
 
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "自发货费用明细" , tmsLogisticsBillCostDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, tmsLogisticsBillCostDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+    @Override
+    public Boolean batchUpdate(List<TmsLogisticsBillCostDetailDTO.UpdateDTO> costDetailList, String mainId) {
+        List<TmsLogisticsBillCostDetailEntity> list = BeanMapperUtils.copyList(TmsLogisticsBillCostDetailEntity.class, costDetailList);
 
-        return new BaseResultDTO.AddDTO(tmsLogisticsBillCostDetailEntity.getId(), tmsLogisticsBillCostDetailEntity.getId());
+        List<TmsLogisticsBillCostDetailEntity> oldList = this.listByMainIdList(Arrays.asList(mainId));
+
+        List<String> deleteIds = getDeleteIds(list, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<TmsLogisticsBillCostDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getCfgCostId())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个费用【%s】", ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), pairList, "编辑操作");
+            this.removeByIds(deleteIds);
+        }
+        // 数据处理
+        handleData(list,mainId);
+        log.info("开始更新自发货费用明细");
+
+        boolean saveBatch = super.saveOrUpdateBatch(list);
+        if(!saveBatch) {
+            throw new ServiceException("自发货费用明细保存失败");
+        }
+        return saveBatch;
     }
 
     /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(TmsLogisticsBillCostDetailDTO.UpdateDTO updateDTO) {
-        TmsLogisticsBillCostDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用明细"));
-        TmsLogisticsBillCostDetailEntity tmsLogisticsBillCostDetailEntity =  BeanMapperUtils.map(TmsLogisticsBillCostDetailEntity.class, updateDTO);
+     * @description: 查询需要删除的id
+     * @author Will
+     * @date: 2024/3/22 14:51
+     * @param newList
+     * @param oldList
+     * @return List<String>
+     */
+    private List<String> getDeleteIds(List<TmsLogisticsBillCostDetailEntity> newList, List<TmsLogisticsBillCostDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(TmsLogisticsBillCostDetailEntity::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(TmsLogisticsBillCostDetailEntity
+                ::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
 
-        // 数据处理
-        handleData(tmsLogisticsBillCostDetailEntity);
-        log.info("编辑 开始修改自发货费用明细数据，id：【{}】", old.getId());
-        boolean save = super.updateById(tmsLogisticsBillCostDetailEntity);
-        if(!save) {
-            throw new ServiceException("自发货费用明细保存失败");
+
+    /**
+     * @description: 根据主表id查询
+     * @author Will
+     * @date: 2024/3/22 14:50
+     * @param mainIdList
+     * @return List<TmsLogisticsBillCostDetailEntity>
+     */
+    private List<TmsLogisticsBillCostDetailEntity> listByMainIdList(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Collections.EMPTY_LIST;
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录自发货费用明细日志数据，id：【{}】", tmsLogisticsBillCostDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), tmsLogisticsBillCostDetailEntity.getId(), "自发货费用明细");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, tmsLogisticsBillCostDetailEntity, null, tmsLogisticsBillCostDetailEntity.getId(), msg);
-        return Boolean.TRUE;
+        return lambdaQuery().in(TmsLogisticsBillCostDetailEntity::getMainId, mainIdList)
+                .list();
     }
 
     @Override
@@ -110,7 +141,31 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
     /**
     * 新增修改处理数据
     */
-    private void handleData(TmsLogisticsBillCostDetailEntity tmsLogisticsBillCostDetailEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(List<TmsLogisticsBillCostDetailEntity> list,String mainId) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //查询主表数据
+        LogisticsBillCostEntity mainEntity = logisticsBillCostService.getById(mainId);
+        if (ObjectUtil.isEmpty(mainEntity)) {
+            throw new ServiceException("自发货费用不存在");
+        }
+        //查询汇率
+        BigDecimal rate;
+        if(StrUtil.equals(CurrencyEnum.CNY.getCurrencyCode(),mainEntity.getCurrency())){
+            rate = BigDecimal.ONE;
+        }else{
+            rate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), mainEntity.getCurrency());
+            if(ObjectUtil.isEmpty(rate)){
+                throw new ServiceException("汇率为空，请维护汇率后再提交");
+            }
+        }
+        for (TmsLogisticsBillCostDetailEntity entity : list) {
+            entity.setMainId(mainId);
+            //汇率
+            entity.setExchangeRate(rate);
+            //币别
+            entity.setCurrency(mainEntity.getCurrency());
+        }
     }
 }

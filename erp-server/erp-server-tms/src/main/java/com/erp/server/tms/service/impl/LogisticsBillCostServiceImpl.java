@@ -81,7 +81,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private SysUserFeign sysUserFeign;
 
     @Autowired
-    private LogisticsChannelService logisticsChannelService;
+    private TmsLogisticsBillCostDetailService tmsLogisticsBillCostDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -101,6 +101,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(!save) {
             throw new ServiceException("自发货费用保存失败");
         }
+        //添加费用明细
+        tmsLogisticsBillCostDetailService.batchAdd(addDTO.getCostDetailList(),logisticsBillCostEntity.getId());
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "自发货费用" , logisticsBillCostEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), logisticsBillCostEntity.getId(), "新增操作");
@@ -118,7 +121,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         //赋值
         LogisticsBillCostEntity logisticsBillCostEntity =  BeanMapperUtils.map(LogisticsBillCostEntity.class, old);
         logisticsBillCostEntity.setBillingWeightLogistics(updateDTO.getBillingWeightLogistics());
-        logisticsBillCostEntity.setActualShippingCost(updateDTO.getActualShippingCost());
         logisticsBillCostEntity.setRemark(updateDTO.getRemark());
         logisticsBillCostEntity.setCurrency(StrUtil.isBlank(old.getCurrency()) ? updateDTO.getCurrency() : old.getCurrency());
 
@@ -137,6 +139,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(!save) {
             throw new ServiceException("自发货费用保存失败");
         }
+        //更新费用明细
+        tmsLogisticsBillCostDetailService.batchUpdate(updateDTO.getCostDetailList(),logisticsBillCostEntity.getId());
+
         // 记录主单操作日志
         log.info("编辑 开始记录自发货费用日志数据，id：【{}】", logisticsBillCostEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsBillCostEntity.getId(), "自发货费用");
@@ -313,10 +318,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     */
     private void handleData(LogisticsBillCostEntity entity) {
 
-        //运费差异
-        BigDecimal diffShippingCost = MathUtil.subtract(entity.getActualShippingCost(), entity.getEstimatedShippingCost());
-        entity.setDiffShippingCost(diffShippingCost);
-
         //计费重
         BigDecimal billingWeight = MathUtil.compareTo(entity.getActualWeight(),entity.getVolumeWeight()) > MathUtil.ZERO
                 ? entity.getActualWeight() : entity.getVolumeWeight();
@@ -395,7 +396,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
             updateDataDTO.setId(logisticsBillCostEntity.getId());
             updateDataDTO.setBillingWeightLogistics(new BigDecimal(excelDTO.getBillingWeightLogistics()));
-            updateDataDTO.setActualShippingCost(new BigDecimal(excelDTO.getActualShippingCost()));
             updateDataDTO.setCurrency(StrUtil.isBlank(excelDTO.getCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : excelDTO.getCurrency());
             this.update(updateDataDTO);
         }

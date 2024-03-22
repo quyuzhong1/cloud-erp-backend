@@ -115,6 +115,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Autowired
     private LogisticsPrintTypeService logisticsPrintTypeService;
 
+    @Autowired
+    private TmsCfgCostService tmsCfgCostService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(LogisticsBillDTO.AddDTO addDTO) {
@@ -763,7 +766,16 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
                 ShippingCalculationDTO.ViewDTO viewDTO = shippingCalculationService.calculationFinalShippingCost(shippingTemplateEntity, shippingTemplateRule, logisticsChannelEntity, weight,
                         length, width, height);
-                addDTO.setEstimatedShippingCost(viewDTO.getTotalShippingCost());
+
+                List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listCostAttributionAndCategory(DictCostAttributionEnum.SELF_DELIVER.getCode(), DictCostCategoryEnum.SHIPPING_COST.getCode());
+                if (CollectionUtils.isEmpty(tmsCfgCostList)) {
+                    throw new ServiceException("未找到自发货物流费用配置");
+                }
+                TmsLogisticsBillCostDetailDTO.AddDTO costDetailAddDTO = new TmsLogisticsBillCostDetailDTO.AddDTO();
+                costDetailAddDTO.setCfgCostId(tmsCfgCostList.get(0).getId());
+                costDetailAddDTO.setCostValue(viewDTO.getTotalShippingCost());
+                costDetailAddDTO.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+                addDTO.setCostDetailList(Arrays.asList(costDetailAddDTO));
             }
         }
         addDTO.setCurrency(ObjectUtil.isNotEmpty(shippingTemplateEntity) ? shippingTemplateEntity.getCurrency() : "");
