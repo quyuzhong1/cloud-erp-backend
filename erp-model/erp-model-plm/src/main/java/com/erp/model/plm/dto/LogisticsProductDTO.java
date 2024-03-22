@@ -325,7 +325,7 @@ public class LogisticsProductDTO {
         private List<String> approveStatusList;
 
         /**
-         * 备案审核状态集合
+         * 备案审核状态集合,/api/scm/drop/down/approveStatus/list
          */
         private List<String> logisticsApproveStatusList;
 

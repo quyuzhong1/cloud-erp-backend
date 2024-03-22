@@ -565,7 +565,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             throw new ServiceException("未找到物流产品数据");
         }
         // 只有审核中的单据允许撤销
-        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
 
