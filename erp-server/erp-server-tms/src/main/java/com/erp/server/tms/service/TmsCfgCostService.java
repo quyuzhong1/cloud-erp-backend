@@ -66,8 +66,8 @@ public interface TmsCfgCostService extends SuperService<TmsCfgCostEntity> {
      * @description: 费用配置下拉
      * @author Will
      * @date: 2024/3/22 15:54
-     * @param dictCostAttribution
+     * @param dto
      * @return List<DropDownDTO>
      */
-    List<TmsCfgCostDTO.DropDownDTO> listDropDown(String dictCostAttribution);
+    List<TmsCfgCostDTO.DropDownDTO> listDropDown(TmsCfgCostDTO.DropDownParamDTO dto);
 }

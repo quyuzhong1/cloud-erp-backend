@@ -130,8 +130,8 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
     }
 
     @Override
-    public List<TmsCfgCostDTO.DropDownDTO> listDropDown(String dictCostAttribution) {
-        List<TmsCfgCostEntity> list = lambdaQuery().eq(StrUtil.isNotBlank(dictCostAttribution), TmsCfgCostEntity::getDictCostAttribution, dictCostAttribution)
+    public List<TmsCfgCostDTO.DropDownDTO> listDropDown(TmsCfgCostDTO.DropDownParamDTO dto) {
+        List<TmsCfgCostEntity> list = lambdaQuery().eq(StrUtil.isNotBlank(dto.getDictCostAttribution()), TmsCfgCostEntity::getDictCostAttribution, dto.getDictCostAttribution())
                 .list();
         if (CollectionUtil.isEmpty(list)) {
             return Collections.EMPTY_LIST;

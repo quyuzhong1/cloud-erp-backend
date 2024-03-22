@@ -220,7 +220,7 @@ public class TmsCfgCostDTO implements Serializable {
         /**
          * 名称
          */
-        private String name;
+        private String costName;
 
         /**
          * 是否默认

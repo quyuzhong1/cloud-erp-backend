@@ -65,7 +65,7 @@ public class TmsCfgCostController extends BaseController {
     /**
      * 费用名称下拉
      * @date: 2024/3/22 15:52
-     * @param dictCostAttribution
+     * @param dto
      * @return ApiResult<ViewDTO>
      */
     @PostMapping("/listDropDown")
@@ -75,8 +75,8 @@ public class TmsCfgCostController extends BaseController {
             serviceClass = TmsCfgCostService.class,
             keyIdName = "tcc")
     @LogViewService
-    public ApiResult<List<TmsCfgCostDTO.DropDownDTO>> listDropDown(@RequestParam("dictCostAttribution") String dictCostAttribution) {
-        return success(tmsCfgCostService.listDropDown(dictCostAttribution));
+    public ApiResult<List<TmsCfgCostDTO.DropDownDTO>> listDropDown(@RequestBody @Validated TmsCfgCostDTO.DropDownParamDTO dto) {
+        return success(tmsCfgCostService.listDropDown(dto));
     }
 
 
