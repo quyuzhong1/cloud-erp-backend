@@ -23,6 +23,10 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.FmDeliveryLogisticsStatusEnum;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.*;
+import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
+import com.erp.model.tms.enums.FmTimeLineEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
@@ -115,6 +119,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     @Resource
     private ShopInfoFeign shopInfoFeign;
 
+    @Resource
+    private LogisticsTrackService logisticsTrackService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -167,7 +174,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         LogisticsBillDetailDTO.AddDTO detailAddDto = new LogisticsBillDetailDTO.AddDTO();
         detailAddDto.setMainId(tmsFirstMileLogisticEntity.getId());
         detailAddDto.setTrackNo(tmsFirstMileLogisticEntity.getCounterNo());
-        detailAddDto.setTrackStatus(LogisticTrackStatusEnum.ORDERED.getCode());
+        detailAddDto.setTrackStatus(FmLogisticTrackStatusEnum.ORDERED.getCode());
         detailAddList.add(detailAddDto);
         logisticsBillDetailService.add(tmsFirstMileLogisticEntity,detailAddList);
 
@@ -301,7 +308,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
         for (TmsFirstMileLogisticDTO.PagingVO pagingVO : list) {
             //处理枚举值
-            pagingVO.setLogisticsStatusName(EnumMessage.getNameByCode(LogisticTrackStatusEnum.class,pagingVO.getLogisticsStatus()));
+            pagingVO.setLogisticsStatusName(EnumMessage.getNameByCode(FmLogisticTrackStatusEnum.class,pagingVO.getLogisticsStatus()));
             pagingVO.setInvoicesStatusName(EnumMessage.getNameByCode(InvoicesStatusEnum.class,pagingVO.getInvoicesStatus()));
             pagingVO.setReconciliationStatusName(EnumMessage.getNameByCode(ReconciliationStatusEnum.class,pagingVO.getReconciliationStatus()));
             pagingVO.setShippingMethodName(EnumMessage.getNameByCode(LogisticsMethodEnum.class,pagingVO.getShippingMethod()));
@@ -359,7 +366,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
         }
         //处理枚举值
-        dto.setLogisticsStatusName(EnumMessage.getNameByCode(LogisticTrackStatusEnum.class,dto.getLogisticsStatus()));
+        dto.setLogisticsStatusName(EnumMessage.getNameByCode(FmLogisticTrackStatusEnum.class,dto.getLogisticsStatus()));
         dto.setShippingMethodName(EnumMessage.getNameByCode(LogisticsMethodEnum.class,dto.getShippingMethod()));
         dto.setCurrencySymbol(CurrencyEnum.getSymbolByCode(dto.getCurrency()));
 
@@ -414,10 +421,22 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
         }
         //处理费用信息
-
+        LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostService.getByLogisticsBillId(dto.getId());
+        if(Objects.nonNull(logisticsBillCostEntity)){
+            List<TmsLogisticsBillCostDetailDTO.CostCompareDTO> costCompareDTOList = logisticsBillCostDetailService.getCostCompareListById(logisticsBillCostEntity.getLogisticsBillId());
+            dto.setFeeViewList( BeanUtil.copyToList(costCompareDTOList,TmsFirstMileLogisticDTO.FeeViewDTO.class));
+        }
         //处理时间线
+        TmsFirstMileLogisticDTO.TimeInfoDTO timeInfoDTO = new TmsFirstMileLogisticDTO.TimeInfoDTO();
+        timeInfoDTO.setApproveTime(CollectionUtils.isNotEmpty(generateLogisticDTO)?generateLogisticDTO.get(0).getApproveTime():null);
+        timeInfoDTO.setLogisticOrderTime(dto.getOrderTime());
+        timeInfoDTO.setShipTime(dto.getShipTime());
+        timeInfoDTO.setSignTime(dto.getSignTime());
+        LogisticsTrackDTO.ViewDTO viewDTO = logisticsTrackService.listByTrackNo(dto.getCounterNo());
+        timeInfoDTO.setTrackingTime(viewDTO.getList().stream().filter(v->v.getStatus().equals(FmLogisticTrackStatusEnum.TRACK_ING.getCode())).findFirst().orElse(new LogisticsTrackDTO.ListDTO()).getTrackTime());
+        timeInfoDTO.setArrivedTime(viewDTO.getList().stream().filter(v->v.getStatus().equals(FmLogisticTrackStatusEnum.ARRIVED.getCode())).findFirst().orElse(new LogisticsTrackDTO.ListDTO()).getTrackTime());
+        dto.setTimeLineList(FmTimeLineEnum.convertToViewList(timeInfoDTO));
 
-        //TODO:后面有对账单设置实际费用
     }
 
     @Override
@@ -510,7 +529,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
         }
         result.forEach(v->{
-            v.setLogisticsStatusName(LogisticTrackStatusEnum.WAIT_ORDER.getName());
+            v.setLogisticsStatusName(FmLogisticTrackStatusEnum.WAIT_ORDER.getName());
             v.setFromCountryName("中国");
         });
         return result;

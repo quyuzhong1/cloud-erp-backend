@@ -184,8 +184,8 @@
             fmc.package_weight,
             fmcb.box_desc
         FROM first_mile_delivery fmd
-        INNER JOIN first_mile_carton fmc ON fmc.source_id = fmd.id AND fmc.is_deleted = FALSE
-        INNER JOIN first_mile_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
+        INNER JOIN wms_carton fmc ON fmc.source_id = fmd.id AND fmc.is_deleted = FALSE
+        INNER JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
         WHERE fmd.is_deleted = FALSE
         <if test="ids != null and ids.size > 0">
             AND fmd.id IN

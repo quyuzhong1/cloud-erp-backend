@@ -22,6 +22,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.CustomerB2cAddressEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.tms.dto.DictBasicDTO;
@@ -297,6 +298,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
         entity.setReconciliationStatus(ReconciliationStatusEnum.INVALID.getCode());
         return this.updateById(entity);
+    }
+
+    @Override
+    public LogisticsBillCostEntity getByLogisticsBillId(String Id) {
+        return lambdaQuery().eq(LogisticsBillCostEntity::getLogisticsBillId, Id).last("LIMIT 1").one();
     }
 
     /**

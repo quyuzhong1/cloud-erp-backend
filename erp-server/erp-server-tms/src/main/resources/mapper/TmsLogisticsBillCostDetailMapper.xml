@@ -36,13 +36,17 @@
     </sql>
     <select id="getCostCompareListById"
             resultType="com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO$CostCompareDTO">
-        SELECT cfg_cost_id,
-               MAX(CASE WHEN type = 'estimated' then cost_value end ) as estimatedCost,
-               MAX(CASE WHEN type = 'actual' then cost_value end ) as actualCost
-        from tms_logistics_bill_cost_detail
-        where main_id = #{id}
-        and is_deleted = false
-        group by cfg_cost_id
+
+        SELECT lbc.cfg_cost_id,
+               MAX(CASE WHEN lbc.type = 'estimated' then lbc.cost_value end ) as estimatedCost,
+               MAX(CASE WHEN lbc.type = 'actual' then lbc.cost_value end ) as actualCost,
+               cc.dict_cost_category as costCode,
+               cc.cost_name as costName
+        from tms_logistics_bill_cost_detail lbc
+                 inner join tms_cfg_cost cc on cc.id = lbc.cfg_cost_id and cc.is_deleted =false
+        where lbc.main_id = #{id}
+          and lbc.is_deleted = false
+        group by lbc.cfg_cost_id,	 cc.dict_cost_category,cc.cost_name
     </select>
 
 

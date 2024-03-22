@@ -683,6 +683,43 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String orderType;
     }
 
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TimeInfoDTO {
+
+        /**
+         * 发货审核时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
+         * 物流下单时间
+         */
+        private LocalDateTime logisticOrderTime;
+
+        /**
+         * 开船时间
+         */
+        private LocalDateTime shipTime;
+
+        /**
+         * 运输时间
+         */
+        private LocalDateTime trackingTime;
+
+        /**
+         * 到达时间
+         */
+        private LocalDateTime arrivedTime;
+
+        /**
+         * 签收时间
+         */
+        private LocalDateTime signTime;
+    }
 
     /**
     * 详情
@@ -775,6 +812,21 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * 运输方式名称
          */
         private String shippingMethodName;
+
+        /**
+         * 下单时间
+         */
+        private LocalDateTime orderTime;
+
+        /**
+         * 开船时间
+         */
+        private LocalDateTime shipTime;
+
+        /**
+         * 签收时间
+         */
+        private LocalDateTime signTime;
 
         /**
          * 渠道id
