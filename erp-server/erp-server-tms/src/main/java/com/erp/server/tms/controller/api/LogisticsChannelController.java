@@ -216,11 +216,4 @@ public class LogisticsChannelController extends BaseController {
         return success(logisticsChannelService.listByLogisticsSupplierId(logisticsSupplierId));
     }
 
-    /**
-     * 根据物流商id 获取渠道和计费方式
-     */
-    @GetMapping("getLogisticsAndShipping")
-    public ApiResult<LogisticsChannelDTO.LogisticsShippingDTO> getLogisticsAndShipping(@RequestParam(value = "logisticsChannelId") String  logisticsChannelId){
-        return success(logisticsChannelService.getLogisticsAndShipping(logisticsChannelId));
-    }
 }

@@ -8,6 +8,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.server.tms.service.TmsFirstMileLogisticService;
 import lombok.extern.slf4j.Slf4j;
@@ -243,5 +244,13 @@ public class TmsFirstMileLogisticController extends BaseController {
     @PostMapping("/getCanGenerateDeliveryOrder")
     public ApiResult<List<TmsFirstMileLogisticDTO.DeliveryDTO>> getCanGenerateDeliveryOrder(@RequestBody TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO dto) {
         return success(tmsFirstMileLogisticService.getCanGenerateDeliveryOrder(dto));
+    }
+
+    /**
+     * 选择渠道后返回对应数据
+     */
+    @PostMapping("getLogisticsAndShipping")
+    public ApiResult<TmsFirstMileLogisticDTO.LogisticsDTO> getLogisticsAndShipping(@RequestBody TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO dto){
+        return success(tmsFirstMileLogisticService.getLogisticsAndShipping(dto));
     }
 }
