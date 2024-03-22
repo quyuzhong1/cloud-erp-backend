@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto.excel;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.core.anno.FieldValid;
@@ -73,6 +74,9 @@ public class SkuMappingWarehouseImportExcelDTO {
     @ColumnWidth(100)
     @ExcelProperty(value = "错误数据", index = 6)
     private String errorMsg;
+
+    @ExcelIgnore
+    private String warehouseId;
 
 
     public Boolean convertHasMappingAllStr() {
