@@ -250,7 +250,6 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     public List<UserInfoDTO.BusinessOperationUserDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
         List<UserInfoDTO.BusinessOperationUserDTO> resultList = new ArrayList<>(10);
         List<UserInfoDTO.BusinessOperationUserDTO> dbList = baseMapper.listInfo(dto);
-
         String userId = commonService.getUserInfo().getUid();
         UserInfoDTO.BusinessOperationUserDTO findUser = dbList.stream().filter(d -> d.getUserId().equals(userId)).findFirst().orElse(null);
         if (findUser != null) {
@@ -278,7 +277,6 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     @Override
     public List<KingdeeOperatorRefPostDTO.OperatorDTO> listOperatorByUserIdList(List<String> userIdList) {
         List<KingdeeOperatorRefPostDTO.OperatorDTO> resultList =baseMapper.listOperatorByUserIdList(userIdList);
-
         return resultList;
     }
 }
