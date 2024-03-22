@@ -1092,12 +1092,19 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //已入库数量
             Integer hasStockInQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(stockInDetailList)) {
-                hasStockInQty = stockInDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                hasStockInQty = stockInDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId()))
+                        .map(PoInstockDetailEntity::getStockInQty)
+                        .reduce(MathUtil.ZERO, Integer::sum);
             }
             //已退货补货数量
             Integer hasReturnQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(returnOrderDetailList)) {
-                hasReturnQty = returnOrderDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+                hasReturnQty = returnOrderDetailList.stream()
+                        .filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())
+                                && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())
+                                && !ReturnOrderSourceEnum.QC.getCode().equals(obj.getSourceType())
+                                && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode()))
+                        .map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
             //未入库数量
