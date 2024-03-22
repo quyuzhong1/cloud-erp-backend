@@ -19,13 +19,13 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.OmsAttachmentDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.FmDeliveryLogisticsStatusEnum;
+import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
-import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.tms.entity.LogisticsSupplierEntity;
-import com.erp.model.tms.entity.ShippingTemplateEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShippingBillingMethodEnum;
@@ -34,6 +34,7 @@ import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.convert.FmLogisticsConverter;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
@@ -106,6 +107,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     @Resource
     private LogisticsSupplierService logisticsSupplierService;
 
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -148,7 +152,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL.getCode(), tmsFirstMileLogisticEntity.getId(), "新增操作");
 
         //新增物流单明细
-        LogisticsBillCostDTO.AddDTO costAddDTO = this.packCostAddDTO(generateLogisticDTO,addDTO,tmsFirstMileLogisticEntity,rate);
+        LogisticsBillCostDTO.AddDTO costAddDTO = this.packCostAddDTO(generateLogisticDTO,addDTO,tmsFirstMileLogisticEntity);
         BaseResultDTO.AddDTO costDTO = logisticsBillCostService.add(costAddDTO);
 
         //新增物流费用单
@@ -190,7 +194,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         return new BaseResultDTO.AddDTO(tmsFirstMileLogisticEntity.getId(), tmsFirstMileLogisticEntity.getOutstockCode());
     }
 
-    private LogisticsBillCostDTO.AddDTO packCostAddDTO(FirstMileDeliveryDTO.GenerateLogisticDTO generateLogisticDTO, TmsFirstMileLogisticDTO.AddDTO addDTO,LogisticsBillEntity tmsFirstMileLogisticEntity,BigDecimal rate) {
+    private LogisticsBillCostDTO.AddDTO packCostAddDTO(FirstMileDeliveryDTO.GenerateLogisticDTO generateLogisticDTO, TmsFirstMileLogisticDTO.AddDTO addDTO,LogisticsBillEntity tmsFirstMileLogisticEntity) {
         //装箱信息
         List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDTOList = generateLogisticDTO.getPackingDTOList();
         LogisticsBillCostDTO.AddDTO costAddDTO = new LogisticsBillCostDTO.AddDTO();
@@ -219,7 +223,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         costAddDTO.setChannelId(addDTO.getLogisticsChannelId());
         costAddDTO.setVolumeWeightLogistics(addDTO.getActualVolumeWeight());
         costAddDTO.setWeightLogistics(addDTO.getActualWeight());
-        costAddDTO.setExchangeRate(rate);
         return costAddDTO;
     }
 
@@ -353,6 +356,76 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         }
     }
 
+    private void fillViewDb(TmsFirstMileLogisticDTO.ViewDTO dto) {
+        //设置店铺负责人
+        if(StringUtils.isNotBlank(dto.getShopId())){
+            ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(dto.getShopId());
+            if(Objects.nonNull(shopInfoEntity)){
+                dto.setChargeName(shopInfoEntity.getChargeName());
+            }
+        }
+        //处理枚举值
+        dto.setLogisticsStatusName(EnumMessage.getNameByCode(LogisticTrackStatusEnum.class,dto.getLogisticsStatus()));
+        dto.setShippingMethodName(EnumMessage.getNameByCode(LogisticsMethodEnum.class,dto.getShippingMethod()));
+        dto.setCurrencySymbol(CurrencyEnum.getSymbolByCode(dto.getCurrency()));
+
+        //处理渠道相关
+        TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO canGenerateDeliveryDTO = new TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO();
+        canGenerateDeliveryDTO.setLogisticsChannelId(dto.getLogisticsChannelId());
+        TmsFirstMileLogisticDTO.LogisticsDTO logisticsDTO = this.getLogisticsAndShipping(canGenerateDeliveryDTO);
+        dto.setBillingMethodName(logisticsDTO.getBillingMethodName());
+        dto.setEstimatedDay(logisticsDTO.getEstimatedDay());
+        dto.setEstimatedTimeUnit(logisticsDTO.getEstimatedTimeUnit());
+        dto.setEstimatedTimeDesc(logisticsDTO.getEstimatedTimeDesc());
+        dto.setLogisticsChannelName(logisticsDTO.getLogisticsChannelName());
+
+        //处理实际时效
+        int days = dto.getActualHour() / 24; // 计算天数部分
+        int remainingHours = dto.getActualHour() % 24; // 计算剩余小时数部分
+        String actualDesc = (days !=0 ? days+ "天":"") + remainingHours + "小时";
+        dto.setActualDesc(actualDesc);
+
+        //设置物流商信息
+        LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(dto.getLogisticsSupplierId());
+        if(Objects.nonNull(logisticsSupplierEntity)){
+            dto.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+        }
+
+        //设置附件信息
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(dto.getId());
+        List<String> attachmentUrlList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+        List<String> attachmentNameList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+        dto.setAttachmentUrlList(attachmentUrlList);
+        dto.setAttachmentNameList(attachmentNameList);
+
+        //处理发货单数据
+        FirstMileDeliveryDTO.GenerateLogisticReqDTO reqDto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
+        reqDto.setIds(Arrays.asList(dto.getOutstockId()));
+        List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(reqDto);
+        List<TmsFirstMileLogisticDTO.DeliveryDTO> deliveryDTOList = BeanUtil.copyToList(generateLogisticDTO,TmsFirstMileLogisticDTO.DeliveryDTO.class);
+        if(CollectionUtils.isNotEmpty(deliveryDTOList)){
+            TmsFirstMileLogisticDTO.DeliveryDTO deliveryDTO = deliveryDTOList.get(0);
+            dto.setFromWarehouseName(deliveryDTO.getFromWarehouseName());
+            dto.setFromCountryName("中国");
+            dto.setFromAddress(deliveryDTO.getFromAddress());
+            dto.setToWarehouseName(deliveryDTO.getToWarehouseName());
+            dto.setToAddress(deliveryDTO.getToAddress());
+            if(CollectionUtils.isNotEmpty(deliveryDTO.getPackingDTOList())){
+                if(logisticsDTO.getVolumeSetting() != null && logisticsDTO.getVolumeSetting() > 0){
+                    deliveryDTO.getPackingDTOList().forEach(v -> {
+                        v.setVolumeWeight(v.getMultiplySize().divide(BigDecimal.valueOf(logisticsDTO.getVolumeSetting()), 4, RoundingMode.HALF_UP));
+                    });
+                }
+                dto.setPackingDTOList(deliveryDTO.getPackingDTOList());
+            }
+        }
+        //处理费用信息
+
+        //处理时间线
+
+        //TODO:后面有对账单设置实际费用
+    }
+
     @Override
     public TmsFirstMileLogisticDTO.StatisticsVO statistics() {
         return null;
@@ -360,9 +433,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     public TmsFirstMileLogisticDTO.ViewDTO view(String id) {
-        return null;
+        LogisticsBillEntity old = super.getById(id);
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "物流单"));
+        TmsFirstMileLogisticDTO.ViewDTO dto = baseMapper.firstMileView(id);
+        this.fillViewDb(dto);
+        return dto;
     }
-
     @Override
     public List<BatchResultDTO> updateLogisticsStatus(TmsFirstMileLogisticDTO.UpdateLogisticsStatusDTO dto) {
         return null;
@@ -461,22 +537,34 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(Objects.isNull(logisticsChannelEntity)){
             throw new ServiceException("渠道为空");
         }
+        result.setLogisticsChannelName(logisticsChannelEntity.getName());
         result.setLogisticsChannelId(dto.getLogisticsChannelId());
-        result.setEstimatedTime(logisticsChannelEntity.getEffectiveTime());
-        result.setEstimatedTimeUnit(logisticsChannelEntity.getEffectiveTimeUnit());
+        //0为默认值，不处理
+        if(!logisticsChannelEntity.getEffectiveTime().equals("0")){
+            //判断是否是数字，不是数字忽略
+            String regex = "\\d*[1-9]+\\d*";
+            Pattern pattern = Pattern.compile(regex);
+            if(pattern.matcher(logisticsChannelEntity.getEffectiveTime()).matches()){
+                int estimatedDay = Integer.parseInt(logisticsChannelEntity.getEffectiveTime());
+                result.setEstimatedDay(estimatedDay);
+                //现在单位只有天
+                result.setEstimatedTimeUnit("天");
+                result.setEstimatedTimeDesc(result.getEstimatedDay() + result.getEstimatedTimeUnit());
+            }
+        }
+
         ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(result.getLogisticsChannelId());
         if(Objects.nonNull(shippingTemplateEntity)){
             result.setBillingMethod(shippingTemplateEntity.getBillingMethod());
             result.setBillingMethodName(EnumMessage.getNameByCode(ShippingBillingMethodEnum.class,shippingTemplateEntity.getBillingMethod()));
+            result.setVolumeSetting(shippingTemplateEntity.getVolumeSetting());
         }
         if(StringUtils.isNotBlank(dto.getOutstockId()) && Objects.nonNull(shippingTemplateEntity) && shippingTemplateEntity.getVolumeSetting() > 0){
             FirstMileDeliveryDTO.GenerateLogisticReqDTO reqDto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
             reqDto.setIds(Arrays.asList(dto.getOutstockId()));
-            reqDto.setPackingStatus(PackingStatusEnum.PACKING.getCode());
-            reqDto.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.WAIT.code);
             List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(reqDto);
             List<TmsFirstMileLogisticDTO.DeliveryDTO> deliveryDTOList = BeanUtil.copyToList(generateLogisticDTO,TmsFirstMileLogisticDTO.DeliveryDTO.class);
-            //渠道为空设置体积重
+            //设置体积重
             if(CollectionUtils.isNotEmpty(deliveryDTOList)){
                 TmsFirstMileLogisticDTO.DeliveryDTO deliveryDTO = deliveryDTOList.get(0);
                 if (CollectionUtil.isNotEmpty(deliveryDTO.getPackingDTOList())) {

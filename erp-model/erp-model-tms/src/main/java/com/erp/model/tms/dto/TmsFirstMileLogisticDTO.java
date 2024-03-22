@@ -65,6 +65,11 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String logisticsChannelId;
 
         /**
+         * 渠道名称
+         */
+        private String logisticsChannelName;
+
+        /**
          * 计费方式
          */
         private String billingMethod;
@@ -75,9 +80,19 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String billingMethodName;
 
         /**
-         * 预计时效
+         * 预计时效(天)
          */
-        private String estimatedTime;
+        private Integer estimatedDay;
+
+        /**
+         * 预计时效描述
+         */
+        private String estimatedTimeDesc;
+
+        /**
+         * 材积设置
+         */
+        private Integer volumeSetting;
 
         /**
          * 预计时效单位
@@ -692,6 +707,11 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String outstockCode;
 
         /**
+         * 店铺Id
+         */
+        private String shopId;
+
+        /**
          * 店铺名称
          */
         private String shopName;
@@ -699,17 +719,17 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         /**
          * 店铺负责人
          */
-        private String chargeId;
-
-        /**
-         * 预计时效
-         */
-        private String estimatedTime;
+        private String chargeName;
 
         /**
          * 计费方式名称
          */
         private String billingMethodName;
+
+        /**
+         * 物流状态名称
+         */
+        private String logisticsStatus;
 
         /**
          * 物流状态名称
@@ -722,9 +742,29 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String logisticsTrack;
 
         /**
-         * 实际时效
+         * 预计时效(天)
          */
-        private String actualTime;
+        private Integer estimatedDay;
+
+        /**
+         * 预计时效描述
+         */
+        private String estimatedTimeDesc;
+
+        /**
+         * 预计时效单位
+         */
+        private String estimatedTimeUnit;
+
+        /**
+         * 实际时效(描述)
+         */
+        private String actualDesc;
+
+        /**
+         * 实际时效（小时数）
+         */
+        private Integer actualHour;
 
         /**
          * 运输方式
@@ -824,7 +864,7 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         /**
          * 预估合计费用
          */
-        private BigDecimal totalEstimatedFee;
+        private BigDecimal estimatedFee;
 
         /**
         * 实际重量
@@ -847,9 +887,9 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String currency;
 
         /**
-        * 汇率表id
-        */
-        private String exchangeRateId;
+         * 币种符号
+         */
+        private String currencySymbol;
 
         /**
         * 汇率
@@ -1068,17 +1108,17 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         /**
          * 预估费用
          */
-        private BigDecimal estimatedFee;
+        private BigDecimal estimatedCost;
 
         /**
          * 实际费用
          */
-        private BigDecimal actualFee;
+        private BigDecimal actualCost;
 
         /**
          * 差异
          */
-        private BigDecimal feeDifference;
+        private BigDecimal costDiff;
 
     }
 }

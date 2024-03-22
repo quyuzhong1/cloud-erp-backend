@@ -59,4 +59,5 @@ public interface FmLogisticsConverter {
             @Mapping(target = "shipTime", source = "addDTO.shipTime"),
     })
     LogisticsBillEntity addLogisticsBill(FirstMileDeliveryDTO.GenerateLogisticDTO deliveryDTO, TmsFirstMileLogisticDTO.AddDTO addDTO);
+
 }

@@ -79,4 +79,6 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
     List<String> listSoOutIdByQuery(@Param("params") AdvanceQueryContainer advanceQueryContainer);
 
     IPage<TmsFirstMileLogisticDTO.PagingVO> firstMilePaging(Page query, @Param("params") TmsFirstMileLogisticDTO.PagingParamDTO params);
+
+    TmsFirstMileLogisticDTO.ViewDTO firstMileView(@Param("id") String id);
 }

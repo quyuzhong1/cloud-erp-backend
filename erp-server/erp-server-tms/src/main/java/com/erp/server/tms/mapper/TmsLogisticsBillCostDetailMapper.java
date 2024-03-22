@@ -1,8 +1,11 @@
 package com.erp.server.tms.mapper;
+import com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO;
 import com.erp.model.tms.entity.TmsLogisticsBillCostDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +19,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface TmsLogisticsBillCostDetailMapper extends BaseMapper<TmsLogisticsBillCostDetailEntity> {
 
+    List<TmsLogisticsBillCostDetailDTO.CostCompareDTO> getCostCompareListById(String id);
 }

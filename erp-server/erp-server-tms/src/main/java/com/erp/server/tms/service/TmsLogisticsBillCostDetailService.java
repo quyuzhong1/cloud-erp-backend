@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 自发货费用明细 服务类
@@ -32,5 +34,9 @@ public interface TmsLogisticsBillCostDetailService extends SuperService<TmsLogis
     */
     Boolean update(TmsLogisticsBillCostDetailDTO.UpdateDTO dto);
 
-
+    /**
+     * 查询预估与实际比对列表
+     * @return
+     */
+    List<TmsLogisticsBillCostDetailDTO.CostCompareDTO> getCostCompareListById(String id);
 }

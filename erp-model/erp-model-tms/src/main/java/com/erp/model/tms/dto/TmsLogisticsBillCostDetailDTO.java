@@ -25,6 +25,47 @@ public class TmsLogisticsBillCostDetailDTO implements Serializable {
 
 
 
+
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CostCompareDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 系统配置id
+         */
+        private String cfgCostId;
+
+        /**
+         * 费用名称
+         */
+        private String costName;
+
+        /**
+         * 预估费用
+         */
+        private BigDecimal estimatedCost;
+
+        /**
+         * 实际费用
+         */
+        private BigDecimal actualCost;
+
+        /**
+         * 差异
+         */
+        private BigDecimal costDiff;
+
+    }
+
+
     /**
     * 详情
     */

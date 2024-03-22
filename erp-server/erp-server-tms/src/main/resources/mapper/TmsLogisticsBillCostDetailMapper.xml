@@ -34,6 +34,16 @@
         is_deleted,
         main_id, cost_code, cost_name, cost_value, currency, exchange_rate, cfg_cost_id
     </sql>
+    <select id="getCostCompareListById"
+            resultType="com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO$CostCompareDTO">
+        SELECT cfg_cost_id,
+               MAX(CASE WHEN type = 'estimated' then cost_value end ) as estimatedCost,
+               MAX(CASE WHEN type = 'actual' then cost_value end ) as actualCost
+        from tms_logistics_bill_cost_detail
+        where main_id = #{id}
+        and is_deleted = false
+        group by cfg_cost_id
+    </select>
 
 
 </mapper>

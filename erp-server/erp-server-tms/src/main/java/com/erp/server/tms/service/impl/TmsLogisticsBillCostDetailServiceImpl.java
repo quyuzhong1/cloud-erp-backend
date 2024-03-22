@@ -10,6 +10,8 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,9 @@ import com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.xml.ws.RequestWrapper;
+
 /**
  * <p>
  * 自发货费用明细 服务实现类
@@ -34,6 +39,7 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -85,6 +91,19 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, tmsLogisticsBillCostDetailEntity, null, tmsLogisticsBillCostDetailEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<TmsLogisticsBillCostDetailDTO.CostCompareDTO> getCostCompareListById(String id) {
+        if(StringUtils.isBlank(id)){
+            return new ArrayList<>();
+        }
+        List<TmsLogisticsBillCostDetailDTO.CostCompareDTO> costCompareDTOList = baseMapper.getCostCompareListById(id);
+        if(CollectionUtils.isEmpty(costCompareDTOList)){
+            return new ArrayList<>();
+        }
+
+        return costCompareDTOList;
     }
 
 
