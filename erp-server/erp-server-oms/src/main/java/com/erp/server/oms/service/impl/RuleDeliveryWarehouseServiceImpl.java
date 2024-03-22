@@ -300,7 +300,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         for (Map<String, Object> item : mapList) {
             String skuId = item.get("skuId") != null ? item.get("skuId").toString() : "";
             //数量
-            Integer qty = item.get("skuQty") != null ? Integer.valueOf(item.get("skuId").toString()) : 0;
+            Integer qty = item.get("skuQty") != null ? Integer.valueOf(item.get("skuQty").toString()) : 0;
             //可用库存
             Integer useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(skuId)
                             && obj.getWarehouseId().equals(warehouseId)
