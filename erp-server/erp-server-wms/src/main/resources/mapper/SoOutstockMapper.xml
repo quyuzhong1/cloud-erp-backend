@@ -298,4 +298,28 @@
     <select id="listByAdvanceQuery" resultType="com.erp.model.wms.entity.SoOutstockEntity">
 
     </select>
+    
+    <select id="getDataCompareByCondition" resultType="com.erp.model.wms.dto.WmsDataCompareTaskDTO$SoOutstockDTO">
+		        SELECT g.id,T.so_code,
+			T.warehouse_name,
+			G.sku_no,
+			G.actual_qty,
+			TO_CHAR(T.bill_date, 'YYYY-MM-DD') bill_date
+		FROM
+			so_outstock
+			T LEFT JOIN so_outstock_detail G ON T.ID = G.main_id 
+		WHERE
+			T.approve_status = 'approve' 
+			AND T.is_deleted = 'f' and G.is_deleted = 'f'
+			<if test="params.billDateList !=null and params.billDateList.size>0">
+            AND t.bill_date >= #{params.billDateList[0]} and
+            (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > t.bill_date
+        	</if>
+        	<if test="params.warehouseName!=null and params.warehouseName!=''">
+            AND t.warehouse_name = #{params.warehouseName}
+        	</if>
+
+    </select>
+    
 </mapper>

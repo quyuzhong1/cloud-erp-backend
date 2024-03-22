@@ -4,9 +4,19 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+
+import org.springframework.web.multipart.MultipartFile;
+
+import com.alibaba.excel.annotation.ExcelProperty;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 
 /**
  * <p>
@@ -115,7 +125,10 @@ public class WmsDataCompareTaskDTO implements Serializable {
         */
         private String resultReportUrl;
 
-
+        /**
+         * 导入数据字段
+         */
+        private List<String> importDataFields;
     }
 
     /**
@@ -124,8 +137,11 @@ public class WmsDataCompareTaskDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
-
+    	/**
+    	 * 导入文件
+         */
+    	@NotNull(message = "导入文件不能为空")
+        private List<String> excelFiles;
     }
 
     /**
@@ -142,6 +158,19 @@ public class WmsDataCompareTaskDTO implements Serializable {
         private String id;
 
     }
+    
+    /**
+     * 新增
+     */
+     @Data
+     @NoArgsConstructor
+     public static class SetNextDTO extends CommonDTO {
+    	 /**
+          * 主键id
+          */
+          @NotBlank(message = "主键id不能为空")
+          private String id;
+     }
 
     @Data
     @NoArgsConstructor
@@ -245,5 +274,235 @@ public class WmsDataCompareTaskDTO implements Serializable {
 
     }
 
+    public static class DataCompareDTO{
+    	
+    }
+    
+    /**
+     * 销售出库单系统比对字段
+     */
+     @Data
+     @NoArgsConstructor
+     public static class SoOutstockDTO extends DataCompareDTO{
+    	 /**
+          * 销售出库单id
+          */
+    	 private String id;
+    	 /**
+          * 销售单号
+          */
+    	 @ExcelProperty(value = "销售单号", index = 0)
+    	 private String soCode;
+    	 
+    	 /**
+          * 平台
+          */
+    	 @ExcelProperty(value = "平台", index = 1)
+    	 private String dictPlatform;
+    	 
+    	 /**
+    	  * 店铺
+    	  */
+    	 @ExcelProperty(value = "店铺", index = 2)
+    	 private String shopName;
+    	 
+    	 /**
+    	  * 系统SKU
+    	  */
+    	 @ExcelProperty(value = "系统SKU", index = 3)
+    	 private String skuNo;
+    	 
+    	 /**
+    	  * 平台SKU
+    	  */
+    	 @ExcelProperty(value = "平台SKU", index = 4)
+    	 private String platformSkuNo;
+    	 
+    	 /**
+    	  * 仓库
+    	  */
+    	 @ExcelProperty(value = "仓库", index = 5)
+    	 private String warehouseName;
+    	 
+    	 /**
+    	  * 数量
+    	  */
+    	 @ExcelProperty(value = "数量", index = 6)
+    	 private Integer actualQty;
+    	 
+    	 /**
+    	  * 出库日期
+    	  */
+    	 @ExcelProperty(value = "出库日期", index = 7)
+    	 private String billDate;
+    	 
+    	 /**
+    	 * 出库日期查询条件
+    	 */
+    	private List<LocalDate> billDateList;
+    	
+    	/**
+    	 *  销售单号查询条件
+    	 */
+    	private List<String> soCodeList;
+     }
+     
+     /**
+      * 销售出库单系统比对字段
+      */
+      @Data
+      @NoArgsConstructor
+      public static class SoB2cDTO {
+     	 /**
+           * 销售单号
+           */
+     	 private String code;
+     	 
+     	 /**
+           * 平台
+           */
+     	 private String dictPlatform;
+     	 
+     	 /**
+     	  * 店铺
+     	  */
+     	 private String shopName;
+     	 
+     	 /**
+     	  * 系统SKU
+     	  */
+     	 private String skuNo;
+     	 
+     	 /**
+     	  * 平台SKU
+     	  */
+     	 private String platformSkuNo;
+     	 
+      }
 
+     /**
+      * FBA货件签收系统比对字段
+      */
+      @Data
+      @NoArgsConstructor
+      public static class FbaShipmentDTO  extends DataCompareDTO{
+    	  /**
+           * 销售出库单id
+           */
+     	 private String id;
+     	 /**
+           * 货件单号
+           */
+     	@ExcelProperty(value = "货件单号", index = 0)
+     	 private String code;
+     	 
+     	 /**
+     	  * 店铺
+     	  */
+     	@ExcelProperty(value = "店铺", index = 1)
+     	 private String shopName;
+     	 
+     	 /**
+     	  * 系统SKU
+     	  */
+     	@ExcelProperty(value = "系统SKU", index = 2)
+     	 private String skuNo;
+     	 
+     	 /**
+     	  * 平台SKU
+     	  */
+     	@ExcelProperty(value = "平台SKU", index = 3)
+     	 private String msku;
+     	 
+     	 /**
+     	  * 数量
+     	  */
+     	@ExcelProperty(value = "数量", index = 4)
+     	 private Integer receiveQty;
+     	 
+     	 /**
+     	  * 数量
+     	  */
+     	@ExcelProperty(value = "数量", index = 5)
+     	 private String receiveDate;
+     	 
+     	/**
+     	  * 签收日期查询条件
+     	  */
+     	 private List<LocalDate> receiveDateList;
+     	 
+      }
+
+      /**
+       * FBA货件签收系统比对字段
+       */
+       @Data
+       @NoArgsConstructor
+       public static class OverseasInboundDTO extends DataCompareDTO{
+    	   /**
+            * 销售出库单id
+            */
+      	 private String id;
+      	 /**
+          * 第三方仓入库单号
+         */
+      	@ExcelProperty(value = "第三方仓入库单号", index = 0)
+      	 private String sourceCode;
+      	 
+      	 /**
+      	  * 系统SKU
+      	  */
+      	@ExcelProperty(value = "系统SKU", index = 1)
+      	 private String skuNo;
+      	 
+      	 /**
+      	  * 第三方仓SKU
+      	  */
+      	@ExcelProperty(value = "第三方仓SKU", index = 2)
+      	 private String platformSkuNo;
+      	 
+      	 /**
+      	  * 仓库
+      	  */
+      	@ExcelProperty(value = "仓库", index = 3)
+      	 private String toWarehouseName;
+      	 
+      	 /**
+      	  * 数量
+      	  */
+      	@ExcelProperty(value = "数量", index = 4)
+      	 private Integer receiveQty;
+      	 
+      	 /**
+      	  * 出库日期
+      	  */
+      	@ExcelProperty(value = "出库日期", index = 5)
+      	 private String receiveTime;
+      	 
+      	/**
+      	  * 出库日期查询条件
+      	  */
+      	private List<LocalDate> receiveTimeList;
+      	 
+       }
+       
+       /**·
+        * 分页参数
+        */
+       @Data
+       @NoArgsConstructor
+       public static class PagingParamDTO extends SortDTO {
+
+           /**
+            * 页面高级查询
+            */
+           private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+           /**
+            * sqlMap 默认key default
+            */
+           private Map<String,String> sqlMap;
+
+
+       }
 }

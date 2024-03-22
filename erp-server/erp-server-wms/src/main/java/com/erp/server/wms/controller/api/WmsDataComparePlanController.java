@@ -3,6 +3,9 @@ package com.erp.server.wms.controller.api;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.List;
+
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -11,8 +14,6 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
 import com.erp.server.wms.service.WmsDataComparePlanService;
 import com.common.core.controller.vo.ApiResult;
@@ -67,6 +68,16 @@ public class WmsDataComparePlanController extends BaseController {
         return success();
     }
 
-
+    /**
+     *查询对比映射方案
+     * @author shukai
+     * @date:  2024-03-21
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/get")
+     public ApiResult<List<WmsDataComparePlanDTO.ViewDTO>> get(@RequestBody @Validated WmsDataComparePlanDTO.CommonDTO dto) {
+         return success(wmsDataComparePlanService.get(dto));
+     }
 
 }

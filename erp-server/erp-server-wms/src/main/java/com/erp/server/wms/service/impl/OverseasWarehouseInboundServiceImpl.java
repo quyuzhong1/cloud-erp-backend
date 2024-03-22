@@ -25,6 +25,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.plm.vo.SkuVO;
@@ -32,6 +33,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.ImlDictCityEntity;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO.OverseasInboundDTO;
 import com.erp.model.wms.dto.excel.ExportOverseasWarehouseInboundExcelDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
@@ -72,7 +74,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<OverseasWarehouseInboundMapper, OverseasWarehouseInboundEntity> implements OverseasWarehouseInboundService {
+public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<OverseasWarehouseInboundMapper, OverseasWarehouseInboundEntity> implements OverseasWarehouseInboundService,WmsDataCompareDbService<OverseasInboundDTO> {
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -1212,5 +1214,23 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             }
         }
     }
+
+    @Override
+	public List<OverseasInboundDTO> getDataCompareByCondition(OverseasInboundDTO params) {
+		if(CollUtil.isEmpty(params.getReceiveTimeList()) && StringUtils.isNotBlank(params.getReceiveTime())) {
+			String[] receiveTimes = params.getReceiveTime().split(",");
+			if(receiveTimes.length > 1) {
+				List<LocalDate> receiveTimeList = new ArrayList<>(receiveTimes.length);
+				for(String billDate : receiveTimes) {
+					receiveTimeList.add(LocalDateUtil.parseStrToLocalDate(billDate));
+				}
+				params.setReceiveTimeList(receiveTimeList);
+			}
+		}
+		if(CollUtil.isEmpty(params.getReceiveTimeList())) {
+			throw new ServiceException("第三方仓货件签收的系统数据范围【签收日期】不能为空");
+		}
+		return baseMapper.getDataCompareByCondition(params);
+	}
 
 }

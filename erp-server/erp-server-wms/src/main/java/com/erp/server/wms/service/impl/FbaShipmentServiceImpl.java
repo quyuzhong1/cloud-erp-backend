@@ -25,6 +25,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
@@ -80,7 +81,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, FbaShipmentEntity> implements FbaShipmentService {
+public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, FbaShipmentEntity> implements FbaShipmentService,WmsDataCompareDbService<com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO> {
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
@@ -1810,4 +1811,23 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         return null;
     }
+
+	@Override
+	public List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO> getDataCompareByCondition(
+			com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO params) {
+		if(CollUtil.isEmpty(params.getReceiveDateList()) && StringUtils.isNotBlank(params.getReceiveDate())) {
+			String[] receiveDates = params.getReceiveDate().split(",");
+			if(receiveDates.length > 1) {
+				List<LocalDate> receiveDateList = new ArrayList<>(receiveDates.length);
+				for(String billDate : receiveDates) {
+					receiveDateList.add(LocalDateUtil.parseStrToLocalDate(billDate));
+				}
+				params.setReceiveDateList(receiveDateList);
+			}
+		}
+		if(CollUtil.isEmpty(params.getReceiveDateList())) {
+			throw new ServiceException("FBA货件签收的系统数据范围【签收日期】不能为空");
+		}
+		return baseMapper.getDataCompareByCondition(params);
+	}
 }

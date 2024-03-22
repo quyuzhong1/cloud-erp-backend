@@ -7,6 +7,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -383,4 +384,5 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     Boolean generateB2cSoOutstockByCode(String soB2cCode);
 
     List<SoOutstockEntity> listByAdvanceQuery(AdvanceQueryContainer container);
+    
 }

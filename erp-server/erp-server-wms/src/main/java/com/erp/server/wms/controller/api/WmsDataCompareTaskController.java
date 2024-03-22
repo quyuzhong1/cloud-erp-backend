@@ -1,24 +1,29 @@
 package com.erp.server.wms.controller.api;
 
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
+
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.WmsDataCompareTaskService;
-import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
+import com.erp.server.wms.service.WmsDataCompareTaskService;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 数据对比任务
@@ -36,18 +41,49 @@ public class WmsDataCompareTaskController extends BaseController {
     private WmsDataCompareTaskService wmsDataCompareTaskService;
 
     /**
-    * 新增
+    *数据对比-导入数据-下一步
     * @author shukai
     * @date:  2024-03-20
     * @param dto
     * @return ApiResult<String>
     */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "数据对比任务新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated WmsDataCompareTaskDTO.AddDTO dto) {
+    @LogAction(value = LogActionEnum.INSERT, desc = "数据对比-导入数据-下一步")
+    public ApiResult<WmsDataCompareTaskDTO.ViewDTO> add(@RequestBody @Validated WmsDataCompareTaskDTO.AddDTO dto) {
         return success(wmsDataCompareTaskService.add(dto));
     }
 
+    /**
+     * 数据对比-下载系统数据
+     * @author shukai
+     * @date:  2024-03-20
+     * @param dto
+     * @return ApiResult<String>
+     */
+     @PostMapping("/downloadSystemData")
+     @LogAction(value = LogActionEnum.EXPORT, desc = "数据对比-下载系统数据")
+     public ApiResult<String> downloadSystemData(@RequestBody @Validated BaseIdDTO dto) {
+         return success(wmsDataCompareTaskService.downloadSystemData(dto));
+     }
+     
+     /**
+      * 数据对比-对比设置-下一步
+      * @author shukai
+      * @date:  2024-03-20
+      * @param dto
+      * @return ApiResult<String>
+      */
+     @PostMapping("/setNext")
+     @LogAction(value = LogActionEnum.SUBMIT, desc = "数据对比-对比设置-下一步")
+     public ApiResult<?> setNext(@RequestBody @Validated WmsDataCompareTaskDTO.SetNextDTO dto) {
+    	 ApiResult<?> setNext = wmsDataCompareTaskService.setNext(dto);
+    	 if(setNext.isSuccess()) {
+    		return success();
+    	 }else {
+    		return failure(setNext.getCode(), setNext.getMsg(), null);
+    	 }
+     }
+    
     /**
     * 修改
     * @author shukai
@@ -67,6 +103,17 @@ public class WmsDataCompareTaskController extends BaseController {
         return success();
     }
 
-
+    
+    /**
+     * 对比报告-高级查询
+     * @param dto
+     * @return
+     */
+    @PostMapping("/paging")
+    @WebAdvanceQuery()
+    public ApiResult<PagingVO<WmsDataCompareTaskDTO.ViewDTO>> paging(@RequestBody @Validated PagingDTO<WmsDataCompareTaskDTO.PagingParamDTO> dto) {
+        PagingVO<WmsDataCompareTaskDTO.ViewDTO> pagingVO = null;
+        return success(pagingVO);
+    }
 
 }

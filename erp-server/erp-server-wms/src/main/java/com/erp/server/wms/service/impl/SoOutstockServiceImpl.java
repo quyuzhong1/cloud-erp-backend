@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -26,6 +27,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
@@ -100,7 +102,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, SoOutstockEntity> implements SoOutstockService {
+public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, SoOutstockEntity> implements SoOutstockService,WmsDataCompareDbService<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> {
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -2250,4 +2252,66 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
     }
+
+	@Override
+	public List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> getDataCompareByCondition(
+			com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params) {
+		if(StringUtils.isBlank(params.getDictPlatform())) {
+			throw new ServiceException("销售出库单的系统数据范围【销售平台】不能为空");
+		}
+		
+		if(CollUtil.isEmpty(params.getBillDateList()) && StringUtils.isNotBlank(params.getBillDate())) {
+			String[] billDates = params.getBillDate().split(",");
+			if(billDates.length > 1) {
+				List<LocalDate> billDateList = new ArrayList<>(billDates.length);
+				for(String billDate : billDates) {
+					billDateList.add(LocalDateUtil.parseStrToLocalDate(billDate));
+				}
+				params.setBillDateList(billDateList);
+			}
+		}
+		if(CollUtil.isEmpty(params.getBillDateList())) {
+			throw new ServiceException("销售出库单的系统数据范围【出库日期】不能为空");
+		}
+		
+		List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> soOutstockDTOList = baseMapper.getDataCompareByCondition(params);
+		if(CollUtil.isEmpty(soOutstockDTOList)) {
+			return soOutstockDTOList;
+		}
+		
+		List<String> soCodeList = soOutstockDTOList.stream().filter(s -> StringUtils.isNotBlank(s.getSoCode()))
+				.map(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO::getSoCode).distinct().collect(Collectors.toList());
+		if(CollUtil.isEmpty(soCodeList)) {
+			return soOutstockDTOList;
+		}
+		
+		params.setSoCodeList(soCodeList);
+		
+		List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO> soB2cDTOList = soB2cFeign.getDataCompareByCondition(params);
+		
+		if(CollUtil.isNotEmpty(soB2cDTOList)) {
+			Map<String, List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO>> b2cCodeDTOMaps = soB2cDTOList.stream()
+					.collect(Collectors.groupingBy(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO::getCode));
+			soOutstockDTOList.forEach(soOutstockDTO -> {
+				String soCode = soOutstockDTO.getSoCode();
+				if(StringUtils.isNotBlank(soCode)) {
+					List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO> soCodeDTOList = b2cCodeDTOMaps.get(soCode);
+					if(CollUtil.isNotEmpty(soCodeDTOList)) {
+						soOutstockDTO.setDictPlatform(soCodeDTOList.stream().filter(s -> StringUtils.isNotBlank(s.getDictPlatform()))
+								.map(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO::getDictPlatform).findAny().orElse(null));
+						soOutstockDTO.setShopName(soCodeDTOList.stream().filter(s -> StringUtils.isNotBlank(s.getShopName()))
+								.map(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO::getShopName).findAny().orElse(null));
+						String skuNo = soOutstockDTO.getSkuNo();
+						if(StringUtils.isNotBlank(skuNo)) {
+							soOutstockDTO.setPlatformSkuNo(soCodeDTOList.stream().filter(s -> StringUtils.isNotBlank(s.getSkuNo()) 
+									&& StringUtils.isNotBlank(s.getPlatformSkuNo()) && skuNo.equals(s.getSkuNo()))
+								.map(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO::getPlatformSkuNo).findAny().orElse(null));
+						}
+					}
+				}
+			});
+		}
+		
+		return soOutstockDTOList;
+	}
 }

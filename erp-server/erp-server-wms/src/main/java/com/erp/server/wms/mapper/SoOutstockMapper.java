@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -74,4 +75,11 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
     SoOutstockDTO.PagingTotalDTO getTotalByQuery(@Param("params") SoOutstockDTO.PagingParamDTO params);
 
     List<SoOutstockEntity> listByAdvanceQuery(@Param("params") AdvanceQueryContainer container);
+    
+    /**
+     * 根据条件获取数据对比系统数据
+     * @param params
+     * @return
+     */
+    List<WmsDataCompareTaskDTO.SoOutstockDTO> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.SoOutstockDTO params);
 }

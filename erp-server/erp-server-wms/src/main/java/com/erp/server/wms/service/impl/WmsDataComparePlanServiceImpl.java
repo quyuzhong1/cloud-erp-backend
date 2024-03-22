@@ -1,24 +1,32 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.wms.dto.WmsDataComparePlanDTO;
+import com.erp.model.wms.dto.WmsDataComparePlanDTO.CommonDTO;
+import com.erp.model.wms.dto.WmsDataComparePlanDTO.ViewDTO;
 import com.erp.model.wms.entity.WmsDataComparePlanEntity;
 import com.erp.server.wms.mapper.WmsDataComparePlanMapper;
-import com.erp.server.wms.service.WmsDataComparePlanService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.WmsDataComparePlanService;
+
+import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.WmsDataComparePlanDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 /**
  * <p>
  * 数据对比映射方案 服务实现类
@@ -94,4 +102,14 @@ public class WmsDataComparePlanServiceImpl extends SuperServiceImpl<WmsDataCompa
     private void handleData(WmsDataComparePlanEntity wmsDataComparePlanEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+	@Override
+	public List<ViewDTO> get(CommonDTO dto) {
+		String billType = dto.getBillType();
+		if(StringUtils.isBlank(billType)) {
+			throw new ServiceException("单据类型不能为空");
+		}
+		List<WmsDataComparePlanEntity> list = this.list(Wrappers.<WmsDataComparePlanEntity>lambdaQuery().eq(WmsDataComparePlanEntity::getBillType, billType));
+		return BeanMapperUtils.copyList(ViewDTO.class, list);
+	}
 }

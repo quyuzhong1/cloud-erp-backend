@@ -11,6 +11,8 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -399,4 +401,14 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/batchUpdateLogistics")
     Boolean batchUpdateLogistics(@RequestBody List<SoB2cLogisticsEntity> list);
+    
+    /**
+     * 修改速卖通订单仓库
+     * @Author Luo_WG
+     * @Date 2024/2/1 10:44
+     * @param soId
+     * @return void
+     **/
+    @PostMapping("/feign/soB2c/getDataCompareByCondition")
+    List<WmsDataCompareTaskDTO.SoB2cDTO> getDataCompareByCondition(@RequestBody WmsDataCompareTaskDTO.SoOutstockDTO soOutstockDTO);
 }

@@ -104,6 +104,25 @@ public class WmsDataComparePlanDTO implements Serializable {
 
 
     }
+    /**
+     * 导入数据字段映射json串对应实体
+     */
+     @Data
+     @NoArgsConstructor
+     public static class ImportDataMappingDTO  {
 
+    	 /**
+    	 * 系统数据字段
+    	 */
+    	private String systemField;
+    	 /**
+    	 * 导入数据字段
+    	 */
+    	private String importField;
+    	 /**
+    	 * 唯一键标识，true或false
+    	 */
+    	private Boolean pkFlag;
+     }
 
 }

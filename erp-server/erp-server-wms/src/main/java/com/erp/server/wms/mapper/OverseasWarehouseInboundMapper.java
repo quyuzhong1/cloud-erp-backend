@@ -3,6 +3,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PermissionsDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -46,4 +47,11 @@ public interface OverseasWarehouseInboundMapper extends BaseMapper<OverseasWareh
      * @return java.util.List<com.erp.model.wms.dto.OverseasWarehouseInboundDTO.CountDTO>
      **/
     List<OverseasWarehouseInboundDTO.CountDTO> tabList(PermissionsDTO dto);
+    
+    /**
+     * 根据条件获取数据对比系统数据
+     * @param params
+     * @return
+     */
+    List<WmsDataCompareTaskDTO.OverseasInboundDTO> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.OverseasInboundDTO params);
 }

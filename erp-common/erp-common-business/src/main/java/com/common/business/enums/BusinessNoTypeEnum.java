@@ -69,6 +69,7 @@ public enum BusinessNoTypeEnum {
 
     CODE_ZZBG(56, "zzbg","中转报关","ZZBG"),
     CODE_ZB(57, "zb","组包预报","ZB"),
+    CODE_SJDB(57, "sjdb","数据对比","SJDB"),
     ;
 
 

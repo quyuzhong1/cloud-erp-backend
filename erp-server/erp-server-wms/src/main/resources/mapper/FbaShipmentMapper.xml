@@ -124,4 +124,28 @@
             ${params.permissionSql}
         </if>
     </select>
+    
+    <select id="getDataCompareByCondition" resultType="com.erp.model.wms.dto.WmsDataCompareTaskDTO$FbaShipmentDTO">
+		 SELECT g.id,T.code,
+			T.shop_name,
+			G.sku_no,
+			G.msku,
+			G.receive_qty,
+			TO_CHAR(G.receive_date , 'YYYY-MM-DD') receive_date
+		FROM
+			fba_shipment
+			T LEFT JOIN fba_shipment_detail G ON T.ID = G.main_id 
+		WHERE
+			T.is_deleted = 'f' 
+			AND G.is_deleted = 'f' 
+			<if test="params.receiveDateList !=null and params.receiveDateList.size>0">
+            AND g.receive_date >= #{params.receiveDateList[0]} and
+            (#{params.receiveDateList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > g.receive_date
+        	</if>
+        	<if test="params.shopName!=null and params.shopName!=''">
+            AND t.shop_name = #{params.shopName}
+        	</if>
+
+    </select>
 </mapper>

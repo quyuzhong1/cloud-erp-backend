@@ -1,6 +1,9 @@
 package com.erp.server.wms.service;
 import com.erp.model.wms.entity.WmsDataComparePlanEntity;
 import com.common.business.service.SuperService;
+
+import java.util.List;
+
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.WmsDataComparePlanDTO;
 
@@ -32,5 +35,5 @@ public interface WmsDataComparePlanService extends SuperService<WmsDataComparePl
     */
     Boolean update(WmsDataComparePlanDTO.UpdateDTO dto);
 
-
+    List<WmsDataComparePlanDTO.ViewDTO> get(WmsDataComparePlanDTO.CommonDTO dto);
 }

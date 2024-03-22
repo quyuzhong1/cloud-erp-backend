@@ -1,21 +1,25 @@
 package com.erp.server.wms.service;
-import cn.hutool.core.lang.Tuple;
-import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
-import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
-import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import com.erp.model.wms.entity.FbaShipmentEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.FbaShipmentDTO;
-
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+
+import javax.servlet.http.HttpServletResponse;
+
+import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.entity.FbaShipmentEntity;
+import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+
+import cn.hutool.core.lang.Tuple;
 
 /**
  * <p>
@@ -234,4 +238,5 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      *
      */
     LocalDate getStopGenReceivedDate(FbaShipmentEntity fbaShipmentEntity);
+
 }

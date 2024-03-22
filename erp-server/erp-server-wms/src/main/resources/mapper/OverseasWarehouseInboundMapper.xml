@@ -166,4 +166,26 @@
         FROM overseas_warehouse_inbound
         GROUP BY instock_status
     </select>
+    
+    <select id="getDataCompareByCondition" resultType="com.erp.model.wms.dto.WmsDataCompareTaskDTO$OverseasInboundDTO">
+		SELECT g.id,T.source_code,
+			G.sku_no,
+			G.platform_sku_no,
+			T.to_warehouse_name,
+			G.receive_qty,
+			TO_CHAR( G.receive_time, 'YYYY-MM-DD' ) receive_time 
+		FROM
+			overseas_warehouse_inbound
+			T LEFT JOIN overseas_warehouse_inbound_detail G ON T.is_deleted = 'f' 
+			AND G.is_deleted = 'f' 
+			<if test="params.receiveTimeList !=null and params.receiveTimeList.size>0">
+            AND g.receive_time >= #{params.receiveTimeList[0]} and
+            (#{params.receiveTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > g.receive_time
+        	</if>
+        	<if test="params.toWarehouseName!=null and params.toWarehouseName!=''">
+            AND t.to_warehouse_name = #{params.toWarehouseName}
+        	</if>
+
+    </select>
 </mapper>
