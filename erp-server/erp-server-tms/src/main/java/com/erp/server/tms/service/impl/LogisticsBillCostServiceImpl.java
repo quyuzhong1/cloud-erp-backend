@@ -125,6 +125,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         logisticsBillCostEntity.setRemark(updateDTO.getRemark());
         logisticsBillCostEntity.setCurrency(StrUtil.isBlank(old.getCurrency()) ? updateDTO.getCurrency() : old.getCurrency());
 
+        Optional.ofNullable(updateDTO.getActualWeight()).ifPresent(logisticsBillCostEntity::setActualWeight);
+        Optional.ofNullable(updateDTO.getVolumeWeight()).ifPresent(logisticsBillCostEntity::setVolumeWeight);
+        Optional.ofNullable(updateDTO.getVolumeWeightLogistics()).ifPresent(logisticsBillCostEntity::setVolumeWeightLogistics);
+        Optional.ofNullable(updateDTO.getWeightLogistics()).ifPresent(logisticsBillCostEntity::setWeightLogistics);
         //物流单
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(logisticsBillCostEntity.getLogisticsBillId());
         if (ObjectUtil.isEmpty(logisticsBillEntity)) {
@@ -132,7 +136,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
         logisticsBillCostEntity.setTransportNo(logisticsBillEntity.getTransportNo());
         logisticsBillCostEntity.setChannelId(logisticsBillEntity.getChannelId());
-
         // 数据处理
         handleData(logisticsBillCostEntity);
         log.info("编辑 开始修改自发货费用数据，id：【{}】", old.getId());

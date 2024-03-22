@@ -37,7 +37,10 @@
     <select id="getCostCompareListById"
             resultType="com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO$CostCompareDTO">
 
-        SELECT lbc.cfg_cost_id,
+        SELECT
+            lbc.cfg_cost_id,
+            MAX ( CASE WHEN lbc.TYPE = 'estimated' THEN lbc.id END ) AS id,
+            MAX(CASE WHEN type = 'estimated' then main_id end ) as mainId,
                MAX(CASE WHEN lbc.type = 'estimated' then lbc.cost_value end ) as estimatedCost,
                MAX(CASE WHEN lbc.type = 'actual' then lbc.cost_value end ) as actualCost,
                cc.dict_cost_category as costCode,

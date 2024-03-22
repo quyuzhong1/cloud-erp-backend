@@ -420,6 +420,7 @@
     </select>
     <select id="firstMileView" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$ViewDTO">
         SELECT lb.id,
+               lbd.id as  detailId,
         lb.outstock_id as outstockId,
         lb.transport_no as transportNo,
         lb.outstock_code as outstockCode,

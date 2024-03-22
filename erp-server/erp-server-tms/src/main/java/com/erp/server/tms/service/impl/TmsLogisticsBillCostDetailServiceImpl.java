@@ -82,6 +82,9 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
         handleData(list,mainId);
         log.info("开始更新自发货费用明细");
 
+        if(CollectionUtils.isEmpty(list)){
+            return true;
+        }
         boolean saveBatch = super.saveOrUpdateBatch(list);
         if(!saveBatch) {
             throw new ServiceException("自发货费用明细保存失败");

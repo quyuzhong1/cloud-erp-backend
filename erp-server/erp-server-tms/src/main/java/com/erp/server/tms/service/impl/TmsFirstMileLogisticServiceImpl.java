@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -64,6 +65,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -132,12 +134,10 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(generateLogisticDTO == null){
             throw new ServiceException("发货单不存在或者未装箱或已生成物流单");
         }
-
         if(Objects.isNull(addDTO.getLogisticsOrderTime())){
             addDTO.setLogisticsOrderTime(LocalDateTime.now());
         }
         LocalDateTime shipTime = sailingService.calculateShipTime(addDTO.getLogisticsChannelId(),LocalDateTime.now());
-
         //新增物流单
         LogisticsBillEntity tmsFirstMileLogisticEntity = FmLogisticsConverter.INSTANCE.addLogisticsBill(generateLogisticDTO,addDTO);
         if(StringUtils.isBlank(tmsFirstMileLogisticEntity.getRemark())){
@@ -169,7 +169,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         costAddDTO.setCostDetailList(costDetailList);
         logisticsBillCostService.add(costAddDTO);
 
-        //新增物流单
+        //新增物流单明细
         List<LogisticsBillDetailDTO.AddDTO> detailAddList = new ArrayList<>();
         LogisticsBillDetailDTO.AddDTO detailAddDto = new LogisticsBillDetailDTO.AddDTO();
         detailAddDto.setMainId(tmsFirstMileLogisticEntity.getId());
@@ -195,7 +195,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         return new BaseResultDTO.AddDTO(tmsFirstMileLogisticEntity.getId(), tmsFirstMileLogisticEntity.getOutstockCode());
     }
 
-    private LogisticsBillCostDTO.AddDTO packCostAddDTO(FirstMileDeliveryDTO.GenerateLogisticDTO generateLogisticDTO, TmsFirstMileLogisticDTO.AddDTO addDTO,LogisticsBillEntity tmsFirstMileLogisticEntity) {
+    private LogisticsBillCostDTO.AddDTO packCostAddDTO(FirstMileDeliveryDTO.GenerateLogisticDTO generateLogisticDTO, TmsFirstMileLogisticDTO.CommonDTO addDTO,LogisticsBillEntity tmsFirstMileLogisticEntity) {
         //装箱信息
         List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDTOList = generateLogisticDTO.getPackingDTOList();
         LogisticsBillCostDTO.AddDTO costAddDTO = new LogisticsBillCostDTO.AddDTO();
@@ -227,6 +227,35 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         return costAddDTO;
     }
 
+    private LogisticsBillCostDTO.UpdateDTO packCostUpdateDTO(FirstMileDeliveryDTO.GenerateLogisticDTO generateLogisticDTO, TmsFirstMileLogisticDTO.CommonDTO updateDTO,LogisticsBillCostEntity oldEntity) {
+        //装箱信息
+        List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDTOList = generateLogisticDTO.getPackingDTOList();
+        LogisticsBillCostDTO.UpdateDTO costUpdateDTO = new LogisticsBillCostDTO.UpdateDTO();
+        if(CollectionUtils.isNotEmpty(packingDTOList)){
+            //预估实重
+            BigDecimal actualWeight = packingDTOList.stream()
+                    .map(WmsCartonDetailDTO.ListPackingDetailDTO::getPackageWeight)
+                    .map(BigDecimal::new)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            costUpdateDTO.setActualWeight(actualWeight);
+            //设置预估体积重 = 长宽高/材积
+            ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(updateDTO.getLogisticsChannelId());
+            if(Objects.nonNull(shippingTemplateEntity) && shippingTemplateEntity.getVolumeSetting() > 0){
+                BigDecimal totalSize = packingDTOList.stream()
+                        .map(WmsCartonDetailDTO.ListPackingDetailDTO::getMultiplySize)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                costUpdateDTO.setActualWeight(actualWeight);
+                costUpdateDTO.setVolumeWeight(totalSize.divide(BigDecimal.valueOf(shippingTemplateEntity.getVolumeSetting()),4, RoundingMode.HALF_UP));
+            }
+        }
+        costUpdateDTO.setCurrency(updateDTO.getCurrency());
+        costUpdateDTO.setRemark(updateDTO.getRemark());
+        costUpdateDTO.setVolumeWeightLogistics(updateDTO.getActualVolumeWeight());
+        costUpdateDTO.setWeightLogistics(updateDTO.getActualWeight());
+        costUpdateDTO.setId(oldEntity.getId());
+        return costUpdateDTO;
+    }
+
     private FirstMileDeliveryDTO.GenerateLogisticDTO getGenerateLogisticDTO(String outstockId){
         FirstMileDeliveryDTO.GenerateLogisticReqDTO dto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
         dto.setIds(Arrays.asList(outstockId));
@@ -243,26 +272,80 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     * 修改
     */
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(TmsFirstMileLogisticDTO.UpdateDTO updateDTO) {
         LogisticsBillEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "头程物流单"));
-        LogisticsBillEntity tmsFirstMileLogisticEntity =  BeanMapperUtils.map(LogisticsBillEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(tmsFirstMileLogisticEntity);
-        log.info("编辑 开始修改头程物流单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(tmsFirstMileLogisticEntity);
+        String oldCounterNo = old.getCounterNo();
+        String oldOutstockId = old.getOutstockId();
+        //更新物流单
+        String outstockId = updateDTO.getOutstockId();
+        FirstMileDeliveryDTO.GenerateLogisticDTO generateLogisticDTO = new FirstMileDeliveryDTO.GenerateLogisticDTO();
+        if(!outstockId.equals(old.getOutstockId())){
+            generateLogisticDTO = this.getGenerateLogisticDTO(outstockId);
+            if(generateLogisticDTO == null){
+                throw new ServiceException("发货单不存在或者未装箱或已生成物流单");
+            }
+        }
+        LogisticsBillEntity updateFirstMileLogisticEntity = FmLogisticsConverter.INSTANCE.addLogisticsBill(generateLogisticDTO,updateDTO);
+        BeanUtil.copyProperties(updateFirstMileLogisticEntity,old, CopyOptions.create().setIgnoreNullValue(true));
+        boolean save = super.updateById(old);
         if(!save) {
             throw new ServiceException("头程物流单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
-        // 记录主单操作日志
-            log.info("编辑 开始记录头程物流单日志数据，id：【{}】", tmsFirstMileLogisticEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), tmsFirstMileLogisticEntity.getId(), "头程物流单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, tmsFirstMileLogisticEntity, null, tmsFirstMileLogisticEntity.getId(), msg);
+        //更新物流单明细
+        if(!updateDTO.getCounterNo().equals(oldCounterNo)){
+            //删除旧的，新增新的
+            logisticsBillDetailService.removeByMainIds(Collections.singletonList(old.getId()));
+            List<LogisticsBillDetailDTO.AddDTO> detailAddList = new ArrayList<>();
+            LogisticsBillDetailDTO.AddDTO detailAddDto = new LogisticsBillDetailDTO.AddDTO();
+            detailAddDto.setMainId(old.getId());
+            detailAddDto.setTrackNo(updateDTO.getCounterNo());
+            detailAddDto.setTrackStatus(FmLogisticTrackStatusEnum.ORDERED.getCode());
+            detailAddList.add(detailAddDto);
+            logisticsBillDetailService.add(old,detailAddList);
+        }
+
+        //更新物流单费用及明细
+        LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostService.getByLogisticsBillId(old.getId());
+        Optional.ofNullable(logisticsBillCostEntity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "头程物流费用单"));
+        LogisticsBillCostDTO.UpdateDTO updateCostDTO = this.packCostUpdateDTO(generateLogisticDTO,updateDTO,logisticsBillCostEntity);
+        List<TmsFirstMileLogisticDTO.LogisticFee> logisticFeeList = CollectionUtil.isEmpty(updateDTO.getLogisticFeeList())?new ArrayList<>():updateDTO.getLogisticFeeList();
+        List<TmsLogisticsBillCostDetailDTO.UpdateDTO> costDetailList = new ArrayList<>();
+        for (TmsFirstMileLogisticDTO.LogisticFee logisticFee : logisticFeeList) {
+            TmsLogisticsBillCostDetailDTO.UpdateDTO dto = new TmsLogisticsBillCostDetailDTO.UpdateDTO();
+            dto.setCostValue(logisticFee.getEstimatedFee());
+            dto.setCfgCostId(logisticFee.getCfgCostId());
+            dto.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+            costDetailList.add(dto);
+        }
+        updateCostDTO.setCostDetailList(costDetailList);
+        logisticsBillCostService.update(updateCostDTO);
+
+        //更新发货单物流状态
+        if(!oldOutstockId.equals(updateDTO.getOutstockId())){
+            FirstMileDeliveryDTO.UpdateStatusDTO updateOldDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
+            updateOldDTO.setId(oldOutstockId);
+            updateOldDTO.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.WAIT.code);
+            if(!wmsFirstMileDeliveryFeign.updateStatus(updateOldDTO)){
+                throw new ServiceException("发货单更新物流状态失败");
+            }
+
+            FirstMileDeliveryDTO.UpdateStatusDTO updateNewDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
+            updateNewDTO.setId(updateDTO.getOutstockId());
+            updateNewDTO.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.FINISH.code);
+            if(!wmsFirstMileDeliveryFeign.updateStatus(updateNewDTO)){
+                throw new ServiceException("发货单更新物流状态失败");
+            }
+        }
+        //设置附件信息
+        Class<LogisticsBillEntity> credentialClass = LogisticsBillEntity.class;
+        TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+        String type = tableName.value();
+        attachmentService.batchSave(updateDTO.getAttachmentUrlList(), updateDTO.getAttachmentNameList(), type, old.getId());
+
         return Boolean.TRUE;
     }
 
@@ -423,7 +506,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         //处理费用信息
         LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostService.getByLogisticsBillId(dto.getId());
         if(Objects.nonNull(logisticsBillCostEntity)){
-            List<TmsLogisticsBillCostDetailDTO.CostCompareDTO> costCompareDTOList = logisticsBillCostDetailService.getCostCompareListById(logisticsBillCostEntity.getLogisticsBillId());
+            List<TmsLogisticsBillCostDetailDTO.CostCompareDTO> costCompareDTOList = logisticsBillCostDetailService.getCostCompareListById(logisticsBillCostEntity.getId());
             dto.setFeeViewList( BeanUtil.copyToList(costCompareDTOList,TmsFirstMileLogisticDTO.FeeViewDTO.class));
         }
         //处理时间线
@@ -591,11 +674,4 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         return result;
     }
 
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(LogisticsBillEntity tmsFirstMileLogisticEntity) {
-    // TODO 验证数据 & 数据赋值
-    }
 }

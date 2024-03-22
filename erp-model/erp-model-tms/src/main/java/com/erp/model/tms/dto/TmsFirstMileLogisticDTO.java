@@ -732,6 +732,10 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         * 主键id
         */
         private String id;
+        /**
+         * 明细id
+         */
+        private String detailId;
 
         /**
          * 发货单id
@@ -1028,6 +1032,10 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 主键id
+         */
+        private String detailId;
     }
 
     @Data

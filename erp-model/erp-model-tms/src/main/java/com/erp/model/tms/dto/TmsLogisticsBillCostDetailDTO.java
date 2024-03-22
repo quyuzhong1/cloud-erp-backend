@@ -34,9 +34,14 @@ public class TmsLogisticsBillCostDetailDTO implements Serializable {
     public static class CostCompareDTO {
 
         /**
-         * 主键id
+         * 预估的主键id
          */
         private String id;
+
+        /**
+         * 预估的主表id
+         */
+        private String mainId;
 
         /**
          * 系统配置id

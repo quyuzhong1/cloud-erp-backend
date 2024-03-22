@@ -392,6 +392,26 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private List<TmsLogisticsBillCostDetailDTO.UpdateDTO>  costDetailList;
 
+        /**
+         * 实重
+         */
+        private BigDecimal actualWeight;
+
+        /**
+         * 体积重
+         */
+        private BigDecimal volumeWeight;
+
+        /**
+         * 实际体积重(物流商)
+         */
+        private BigDecimal volumeWeightLogistics;
+
+        /**
+         * 实重(物流商)
+         */
+        private BigDecimal weightLogistics;
+
     }
 
     @Data
