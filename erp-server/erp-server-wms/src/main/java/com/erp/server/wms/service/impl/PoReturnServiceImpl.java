@@ -1203,10 +1203,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         List<PurchaseOrderDetailEntity> list = new ArrayList<>();
         for (PurchaseOrderDetailEntity orderDetailEntity : purchaseOrderDetailEntities) {
-            //退货补货退货数量
+            //库存退货的退货补货数量
             Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(orderDetailEntity.getId()) 
                             && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
                             && !ReturnOrderSourceEnum.QC.getCode().equals(obj.getSourceType())
+                            && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode()))
+                    .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            //整个退货补货数量
+            Integer allReturnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(orderDetailEntity.getId())
+                            && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
                             && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode()))
                     .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             //收货数量
@@ -1228,8 +1233,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
              * 3、退货单审核、反审
              * 执行状态变更逻辑：
              * 收货单数量并且入库单数量为0，则更新为已确认
-             * (收货单数量>0或入库单数量>0) 并且(采购数量+退货补货数量>收货数量并且入库单数量>0并且采购数量+退货补货数量>入库数量)，则更新为送货中
-             * (收货单数量>0并且采购数量+退货补货数量=收货数量)或(入库单数量>0并且采购数量+退货补货数量=入库数量)，则更新为已完成
+             * (收货单数量>0或入库单数量>0) 并且(采购数量+退货补货数量>收货数量并且入库单数量>0并且采购数量+库存退货的退货补货数量>入库数量)，则更新为送货中
+             * (收货单数量>0并且采购数量+退货补货数量=收货数量)或(入库单数量>0并且采购数量+库存退货的退货补货数量=入库数量)，则更新为已完成
              */
 
             //订单执行状态
@@ -1240,12 +1245,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                executionStatus = ExecutionStatusEnum.CONFIRM.getCode();
             }
             if((receiveQty > MathUtil.ZERO || inStockQty > MathUtil.ZERO)
-                    && MathUtil.add(purchaseQty,returnQty) > receiveQty
+                    && MathUtil.add(purchaseQty,allReturnQty) > receiveQty
                     && MathUtil.add(purchaseQty,returnQty) > inStockQty ) {
                 //送货中
                 executionStatus = ExecutionStatusEnum.DELIVERY.getCode();
             }
-            if((receiveQty > MathUtil.ZERO && MathUtil.compareTo(MathUtil.add(purchaseQty,returnQty),receiveQty) == MathUtil.ZERO)
+            if((receiveQty > MathUtil.ZERO && MathUtil.compareTo(MathUtil.add(purchaseQty,allReturnQty),receiveQty) == MathUtil.ZERO)
                     || (inStockQty > MathUtil.ZERO && MathUtil.compareTo(MathUtil.add(purchaseQty,returnQty),inStockQty)  == MathUtil.ZERO)) {
                 //已完成
                 executionStatus = ExecutionStatusEnum.FINISH.getCode();
