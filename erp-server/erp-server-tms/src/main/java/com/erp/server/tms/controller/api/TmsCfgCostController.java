@@ -63,6 +63,24 @@ public class TmsCfgCostController extends BaseController {
     }
 
     /**
+     * 费用名称下拉
+     * @date: 2024/3/22 15:52
+     * @param dictCostAttribution
+     * @return ApiResult<ViewDTO>
+     */
+    @PostMapping("/listDropDown")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsCfgCost:paging",
+            serviceClass = TmsCfgCostService.class,
+            keyIdName = "tcc")
+    @LogViewService
+    public ApiResult<List<TmsCfgCostDTO.DropDownDTO>> listDropDown(@RequestParam("dictCostAttribution") String dictCostAttribution) {
+        return success(tmsCfgCostService.listDropDown(dictCostAttribution));
+    }
+
+
+    /**
     * 新增
     * @author will
     * @date:  2024-03-15

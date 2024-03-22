@@ -8,6 +8,8 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsCfgCostDTO;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
 
+import java.util.List;
+
 /**
  * <p>
  * 费用管理配置表 服务类
@@ -60,4 +62,12 @@ public interface TmsCfgCostService extends SuperService<TmsCfgCostEntity> {
      * @return BatchResultDTO
      */
     BatchResultDTO delete(String id);
+    /**
+     * @description: 费用配置下拉
+     * @author Will
+     * @date: 2024/3/22 15:54
+     * @param dictCostAttribution
+     * @return List<DropDownDTO>
+     */
+    List<TmsCfgCostDTO.DropDownDTO> listDropDown(String dictCostAttribution);
 }

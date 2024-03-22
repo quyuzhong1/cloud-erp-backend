@@ -198,5 +198,33 @@ public class TmsCfgCostDTO implements Serializable {
         private Boolean isDefault;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class DropDownParamDTO {
 
+        /**
+         * 费用归属
+         */
+        private String dictCostAttribution;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DropDownDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 是否默认
+         */
+        private Boolean isDefault;
+    }
 }

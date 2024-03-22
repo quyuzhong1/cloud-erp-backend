@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -126,6 +127,16 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
         log.info("删除 开始删除费用管理数据，id：【{}】", id);
         this.removeById(id);
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
+    }
+
+    @Override
+    public List<TmsCfgCostDTO.DropDownDTO> listDropDown(String dictCostAttribution) {
+        List<TmsCfgCostEntity> list = lambdaQuery().eq(StrUtil.isNotBlank(dictCostAttribution), TmsCfgCostEntity::getDictCostAttribution, dictCostAttribution)
+                .list();
+        if (CollectionUtil.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        return BeanMapperUtils.copyList(TmsCfgCostDTO.DropDownDTO.class,list);
     }
 
     /**
