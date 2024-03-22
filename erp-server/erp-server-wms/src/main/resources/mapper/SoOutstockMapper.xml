@@ -308,9 +308,9 @@
         fmc.package_weight,
         fmcb.box_desc
         FROM so_outstock so
-        INNER JOIN first_mile_carton fmc ON fmc.source_id = so.id AND fmc.is_deleted = FALSE
-        INNER JOIN first_mile_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
-        WHERE fmd.is_deleted = FALSE
+        INNER JOIN wms_carton fmc ON fmc.source_id = so.id AND fmc.is_deleted = FALSE
+        INNER JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
+        WHERE so.is_deleted = FALSE
         AND so.id = #{id}
         ORDER BY CAST(fmcb.box_no AS INTEGER)
     </select>
@@ -326,8 +326,8 @@
         fmc.package_weight,
         fmcb.box_desc
         FROM so_outstock so
-        LEFT JOIN first_mile_carton fmc ON fmc.source_id = so.id AND fmc.is_deleted = FALSE
-        LEFT JOIN first_mile_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
+        LEFT JOIN wms_carton fmc ON fmc.source_id = so.id AND fmc.is_deleted = FALSE
+        LEFT JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
         AND so.is_deleted = FALSE

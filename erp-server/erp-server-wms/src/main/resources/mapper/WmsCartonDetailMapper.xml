@@ -27,8 +27,8 @@
             fmcb.box_no,
             fmcd.pack_qty
         FROM
-            first_mile_carton_detail fmcd
-            INNER JOIN first_mile_carton_bill fmcb ON fmcd.carton_id = fmcb.carton_id
+            wms_carton_detail fmcd
+            INNER JOIN wms_carton_bill fmcb ON fmcd.carton_id = fmcb.carton_id
         WHERE
             fmcd.is_deleted = FALSE AND fmcb.is_deleted = FALSE
           and fmcd.source_Id = #{sourceId};

@@ -207,8 +207,8 @@
         fmc.package_weight,
         fmcb.box_desc
         FROM first_mile_delivery fmd
-        LEFT JOIN first_mile_carton fmc ON fmc.source_id = fmd.id AND fmc.is_deleted = FALSE
-        LEFT JOIN first_mile_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
+        LEFT JOIN wms_carton fmc ON fmc.source_id = fmd.id AND fmc.is_deleted = FALSE
+        LEFT JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
         and fmd.is_deleted = FALSE
