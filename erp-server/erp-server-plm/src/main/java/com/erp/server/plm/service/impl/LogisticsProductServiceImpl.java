@@ -639,11 +639,15 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         if (CollectionUtils.isEmpty(productLogisticsList)) {
             throw new ServiceException("未找到物流产品信息");
         }
-        String customsCode = productLogisticsList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.equals(obj.getApproveStatus())).map(obj -> obj.getCustomsCode()).collect(Collectors.joining(","));
-        if (StrUtil.isNotBlank(customsCode)) {
-            throw new ServiceException(StrUtil.format("物流产品信息海关编码【{}】备案未审核完成，不支持推送备案",customsCode));
-        }
         List<String> skuIdList = productLogisticsList.stream().map(ProductLogisticsEntity::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = productDetailService.listByIds(skuIdList);
+
+        String skuNos = productLogisticsList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.equals(obj.getApproveStatus()))
+                .map(obj -> productDetailEntityList.stream().filter(e-> StrUtil.equals(obj.getSkuId(),e.getId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSkuNo())).orElse(""))
+                .collect(Collectors.joining(","));
+        if (StrUtil.isNotBlank(skuNos)) {
+            throw new ServiceException(StrUtil.format("物流产品信息SKU【{}】备案未审核完成，不支持推送备案",skuNos));
+        }
         ProductRegistrationDTO.AddDTO addDTO = new ProductRegistrationDTO.AddDTO();
         addDTO.setDeclareSupplierId(dto.getDeclareSupplierId());
         addDTO.setSkuIds(skuIdList);
