@@ -1049,6 +1049,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
         shopInfoEntity.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
         shopInfoEntity.setDictPlatform(PlatformDictEnum.SHOPEE.getCode());
+        shopInfoEntity.setAuthTime(LocalDateTime.now());
         //店铺
         this.saveOrUpdate(shopInfoEntity);
         shopId = shopInfoEntity.getId();

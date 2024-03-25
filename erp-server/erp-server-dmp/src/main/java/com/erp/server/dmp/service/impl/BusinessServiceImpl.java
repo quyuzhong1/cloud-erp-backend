@@ -34,10 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -124,7 +121,7 @@ public class BusinessServiceImpl {
         String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
         Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
         OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsCleanDateStr(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
-        Class tClass = CleanDataTableEnum.getByName(tableName).getTClass();
+        Class tClass = Objects.requireNonNull(CleanDataTableEnum.getByName(tableName)).getTClass();
         List<T> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, tableName, tClass);
         if (CollectionUtil.isEmpty(mongoData)) {
             return Collections.EMPTY_LIST;

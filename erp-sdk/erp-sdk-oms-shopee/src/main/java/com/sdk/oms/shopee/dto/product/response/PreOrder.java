@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.product.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -14,8 +14,8 @@ import java.io.Serializable;
  */
 @Data
 public class PreOrder implements Serializable {
-    @JSONField(name = "is_pre_order")
+    @Alias( "is_pre_order")
     private boolean isPreOrder;
-    @JSONField(name = "days_to_ship")
+    @Alias( "days_to_ship")
     private Long daysToShip;
 }

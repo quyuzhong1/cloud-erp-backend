@@ -1,7 +1,8 @@
 package com.sdk.oms.shopee.utils;
 
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson2.JSONArray;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.oms.shopee.dto.base.ShopeeAuth;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
@@ -103,7 +104,7 @@ public class ShopeeApiUtils {
         try {
             String bodyStr = OkHttpUtils.doGet(baseUrl, paramMap, headers);
             log.info("bodyStr：{}", bodyStr);
-            resultMap = JSONObject.parseObject(bodyStr, ShopResponse.class);
+            resultMap = JSONUtil.toBean(bodyStr, ShopResponse.class);
         } catch (Exception e) {
             log.error(e.getMessage());
         }
@@ -127,7 +128,7 @@ public class ShopeeApiUtils {
         try {
             String bodyStr = OkHttpUtils.doGet(baseUrl, paramMap, headers);
             log.info("bodyStr：{}", bodyStr);
-            resultMap = JSONObject.parseObject(bodyStr, MerchantResponse.class);
+            resultMap = JSONUtil.toBean(bodyStr, MerchantResponse.class);
         } catch (Exception e) {
             log.error(e.getMessage());
         }
@@ -150,7 +151,7 @@ public class ShopeeApiUtils {
         try {
             String bodyStr = OkHttpUtils.doGet(baseUrl, paramMap, headers);
             log.info("bodyStr：{}", bodyStr);
-            resultMap = JSONObject.parseObject(bodyStr, ShopeeResponse.class);
+            resultMap = JSONUtil.toBean(bodyStr, ShopeeResponse.class);
         } catch (Exception e) {
             log.error(e.getMessage());
         }
@@ -172,7 +173,7 @@ public class ShopeeApiUtils {
         log.info("baseUrl：{}", baseUrl);
         String bodyStr = OkHttpUtils.doPostJson(url, params, headers);
         log.info("bodyStr：{}", bodyStr);
-        ShopeeAuth resultMap = JSONObject.parseObject(bodyStr, ShopeeAuth.class);
+        ShopeeAuth resultMap = JSONUtil.toBean(bodyStr, ShopeeAuth.class);
         return resultMap;
     }
 
@@ -193,7 +194,7 @@ public class ShopeeApiUtils {
         try {
             String bodyStr = OkHttpUtils.doPostJson(url, params, headers);
             log.info("bodyStr：{}", bodyStr);
-            resultMap = JSONObject.parseObject(bodyStr, ShopeeResponse.class);
+            resultMap = JSONUtil.toBean(bodyStr, ShopeeResponse.class);
         } catch (Exception e) {
             log.error("请求异常：{}", e.getMessage());
         }
@@ -217,7 +218,7 @@ public class ShopeeApiUtils {
         try {
             String bodyStr = OkHttpUtils.doPostJson(url, params, headers);
             log.info("bodyStr：{}", bodyStr);
-            resultMap = JSONObject.parseObject(bodyStr, ShopeeTokenAuth.class);
+            resultMap = JSONUtil.toBean(bodyStr, ShopeeTokenAuth.class);
         } catch (Exception e) {
             log.error("请求异常：{}", e.getMessage());
         }
@@ -251,7 +252,7 @@ public class ShopeeApiUtils {
         jsonArray.add("1236");
         jsonObject.put("merchant_id_list", jsonArray);
 
-        ShopeeAuth resultMap = JSONObject.parseObject(jsonObject.toJSONString(jsonObject), ShopeeAuth.class);
-        System.out.println(resultMap);
+        ShopeeAuth resultMap = JSONUtil.toBean(jsonObject, ShopeeAuth.class);
+        System.out.println(JSONUtil.toJsonStr(resultMap));
     }
 }

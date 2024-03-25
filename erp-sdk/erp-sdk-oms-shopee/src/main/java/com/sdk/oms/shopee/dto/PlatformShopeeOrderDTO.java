@@ -4,6 +4,8 @@ import com.common.business.dto.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.core.anno.Panno;
+import com.common.core.enums.PannoEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
@@ -43,6 +45,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
 
     private OrderDetail orderDetail;
 
+    @Panno(findType = PannoEnum.EQ,field = "shopId")
     private String shopId;
 
     public PlatformShopeeOrderDTO(OrderDetail orderDetail, JobTaskDTO dto) {
