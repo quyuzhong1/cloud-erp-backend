@@ -739,11 +739,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
 
     @Override
-    public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-
-    }
-
-    @Override
     public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
         return null;
     }

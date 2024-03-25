@@ -69,8 +69,6 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
 
     List<BatchResultDTO> generateReconciliation(TmsFirstMileLogisticDTO.GenerateReconciliationDTO dto);
 
-    void exportTemplate(HttpServletRequest request, HttpServletResponse response);
-
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 
     void export(TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response);
