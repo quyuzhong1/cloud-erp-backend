@@ -96,14 +96,15 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Override
     public void handleAll(PlatformOrderDTO dto) {
         // 已有出库详情/不保存订单
-        Boolean hasDeliveryDetail = Boolean.FALSE;
-        if (StringUtils.isNotEmpty(dto.getPlatformCode()) && StringUtils.isNotEmpty(dto.getDictPlatform())){
-            hasDeliveryDetail = dmpMongoDbFeign.checkHasDeliveryDetail(dto.getPlatformCode(), dto.getDictPlatform());
-        }
-        if (hasDeliveryDetail){
-            log.warn("已存在对应销售出库单不新增：单号={}", dto.getPlatformCode());
-            return;
-        }
+        // 2024-03-25允许所有来源订单处理
+//        Boolean hasDeliveryDetail = Boolean.FALSE;
+//        if (StringUtils.isNotEmpty(dto.getPlatformCode()) && StringUtils.isNotEmpty(dto.getDictPlatform())){
+//            hasDeliveryDetail = dmpMongoDbFeign.checkHasDeliveryDetail(dto.getPlatformCode(), dto.getDictPlatform());
+//        }
+//        if (hasDeliveryDetail){
+//            log.warn("已存在对应销售出库单不新增：单号={}", dto.getPlatformCode());
+//            return;
+//        }
         // 亚马逊, 跳过MFN时，地址为空的订单
         if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform()) && this.checkHasMfnOrderAndNoAddress(dto) ) {
             log.warn("亚马逊卖家自发货订单无地址暂不新增：单号={}", dto.getPlatformCode());
