@@ -58,6 +58,7 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -177,6 +178,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private StocktakingProfitLossService stocktakingProfitLossService;
 
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -2272,6 +2275,21 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 		}
 		if(CollUtil.isEmpty(params.getBillDateList())) {
 			throw new ServiceException("销售出库单的系统数据范围【出库日期】不能为空");
+		}
+		
+		String shopId = params.getShopId();
+		if(StringUtils.isNotBlank(shopId)) {
+			ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
+			if(shopInfoEntity != null) {
+				params.setShopName(shopInfoEntity.getName());
+			}
+		}
+		String warehouseId = params.getWarehouseId();
+		if(StringUtils.isNotBlank(warehouseId)) {
+			WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
+			if(warehouseEntity != null) {
+				params.setWarehouseName(warehouseEntity.getName());
+			}
 		}
 		
 		List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> soOutstockDTOList = baseMapper.getDataCompareByCondition(params);

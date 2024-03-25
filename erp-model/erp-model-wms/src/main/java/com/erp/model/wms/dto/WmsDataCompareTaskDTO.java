@@ -175,9 +175,9 @@ public class WmsDataCompareTaskDTO implements Serializable {
           
           /**
            * 系统数据范围条件json串，字段名称对应属性如下(默认数据类型为字符串)：
-           * 销售出库单：销售平台=dictPlatform，店铺=shopName，出库日期=billDateList(时间类型数组)，仓库=warehouseName，示例{'dictPlatform' : 'Amazon' , 'billDateList' : ['2024-01-22' , '2024-03-22']}
-           *FBA货件签收：店铺=shopName，出库日期=receiveDateList(时间类型数组)，示例{'shopName' : '美10加拿大' , 'receiveDateList' : ['2024-01-22' , '2024-03-22']}
-           *第三方仓货件签收：出库日期=receiveDateList(时间类型数组)，目的仓库=toWarehouseName，示例{'receiveDateList' : ['2024-01-22' , '2024-03-22'] , 'toWarehouseName' : '艾姆勒-在途仓' }
+           * 销售出库单：销售平台=dictPlatform，店铺=shopId，出库日期=billDateList(时间类型数组)，仓库=warehouseId，示例{'dictPlatform' : 'Amazon' , 'billDateList' : ['2024-01-22' , '2024-03-22']}
+           *FBA货件签收：店铺=shopId，出库日期=receiveDateList(时间类型数组)，示例{'shopId' : '1647810847827268690' , 'receiveDateList' : ['2024-01-22' , '2024-03-22']}
+           *第三方仓货件签收：出库日期=receiveTimeList(时间类型数组)，目的仓库=toWarehouseId，示例{'receiveDateList' : ['2024-01-22' , '2024-03-22'] , 'toWarehouseId' : '1647810847827268690' }
            */
            @NotBlank(message = "系统数据范围条件json串不能为空")
            private String systemDataCondition;
@@ -186,7 +186,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
     	 * 导入文件
          */
     	@NotNull(message = "导入文件不能为空")
-        private List<String> excelFiles;
+        private List<@NotBlank(message = "对比数据导入文件为空")String> excelFiles;
     }
 
     /**
@@ -456,6 +456,16 @@ public class WmsDataCompareTaskDTO implements Serializable {
     	 private String billDate;
     	 
     	 /**
+    	 * 店铺id查询条件
+    	 */
+    	private String shopId;
+    	
+    	/**
+    	 * 仓库id查询条件
+    	 */
+    	private String warehouseId;
+    	 
+    	 /**
     	 * 出库日期查询条件
     	 */
     	private List<LocalDate> billDateList;
@@ -534,6 +544,11 @@ public class WmsDataCompareTaskDTO implements Serializable {
      	  */
      	@ExcelProperty(value = "数量", index = 4)
      	 private String receiveQty;
+     	
+     	/**
+    	 * 店铺id查询条件
+    	 */
+    	private String shopId;
      	 
      	 /**
      	  * 签收日期
@@ -591,9 +606,14 @@ public class WmsDataCompareTaskDTO implements Serializable {
       	 private String receiveTime;
       	 
       	/**
+     	  * 仓库id查询条件
+     	  */
+     	 private String toWarehouseId;
+      	
+      	/**
       	  * 出库日期查询条件
       	  */
-      	private List<LocalDate> receiveTimeList;
+      	private List<LocalDate> receiveDateList;
       	 
        }
        

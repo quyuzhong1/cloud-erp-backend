@@ -1,23 +1,27 @@
 package com.erp.server.wms.utils;
 
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.util.CellRangeAddress;
 
 import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.metadata.Cell;
 import com.alibaba.excel.metadata.Head;
 import com.alibaba.excel.write.merge.AbstractMergeStrategy;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.wms.dto.WmsDataComparePlanDTO.ImportDataMappingDTO;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO.DataCompareDTO;
 import com.erp.server.wms.listener.WmsDataCompareExcelListener;
 
 import cn.hutool.core.collection.CollUtil;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class WmsDataCompareUtils {
 	@Data
 	public static class WmsDataCompareExcelDto{
@@ -33,7 +37,19 @@ public class WmsDataCompareUtils {
 		Integer importDataCount = 0;
         for(String excelFile : excelFiles) {
         	WmsDataCompareExcelListener totalRowsExcelListener = new WmsDataCompareExcelListener();
-        	EasyExcel.read(FastDFSClientUtil.getInputStream(excelFile), Map.class, totalRowsExcelListener).sheet().doRead();
+        	InputStream inputStream = null;
+        	try {
+				inputStream = FastDFSClientUtil.getInputStream(excelFile);
+			} catch (Exception e) {
+				log.error("获取文件失败" , e);
+				throw new ServiceException("获取文件失败");
+			}
+        	try {
+				EasyExcel.read(inputStream, DataCompareDTO.class, totalRowsExcelListener).sheet().doRead();
+			} catch (Exception e) {
+				log.error("读取excel失败" , e);
+				throw new ServiceException("读取excel失败");
+			}
         	
         	if(CollUtil.isNotEmpty(totalRowsExcelListener.getHeadFieldList())) {
         		dto.getHeadFieldLists().add(totalRowsExcelListener.getHeadFieldList());
@@ -91,18 +107,18 @@ public class WmsDataCompareUtils {
 			}
 		}
 		importDataMappingDTOList.sort((i1 , i2) -> {
-			if(i1.getImportField() == null) {
+			if(i1.getHeadIndex() == null) {
 				return -1;
 			}
-			if(i2.getImportField() == null) {
+			if(i2.getHeadIndex() == null) {
 				return 1;
 			}
-			return i1.getImportField().compareTo(i2.getImportField());
+			return i1.getHeadIndex().compareTo(i2.getHeadIndex());
 		});
 	}
 	
 	// 自定义合并策略
-    static class MergeStrategy extends AbstractMergeStrategy {
+   public static class MergeStrategy extends AbstractMergeStrategy {
         private int headerSize;
 
         public MergeStrategy(int headerSize) {
@@ -112,10 +128,11 @@ public class WmsDataCompareUtils {
 		@Override
 		protected void merge(org.apache.poi.ss.usermodel.Sheet sheet, org.apache.poi.ss.usermodel.Cell cell, Head head,
 				Integer relativeRowIndex) {
-			if (cell.getRowIndex() < headerSize - 1) {
+			if (cell.getRowIndex() == 0) {
                 // 合并第一行单元格
                 sheet.addMergedRegion(new CellRangeAddress(0, 0, cell.getColumnIndex(), cell.getColumnIndex() + 1));
             }
 		}
     }
+   
 }

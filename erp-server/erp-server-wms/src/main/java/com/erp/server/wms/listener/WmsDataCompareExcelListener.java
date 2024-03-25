@@ -5,8 +5,9 @@ import java.util.Map;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO.DataCompareDTO;
 
-public class WmsDataCompareExcelListener extends AnalysisEventListener<Map<Integer, String>> {
+public class WmsDataCompareExcelListener extends AnalysisEventListener<DataCompareDTO> {
 
     private int totalRows = 0;
     
@@ -24,14 +25,8 @@ public class WmsDataCompareExcelListener extends AnalysisEventListener<Map<Integ
     }
     
     @Override
-    public void invoke(Map<Integer, String> data, AnalysisContext context) {
-    	if(data != null && data.size() > 0) {
-    		List<String> d = new ArrayList<>();
-    		for(int i = 0; i < data.size(); i++) {
-    			d.add(data.get(i));
-    		}
-    		datas.add(d);
-    	}
+    public void invoke(DataCompareDTO obj, AnalysisContext context) {
+    	datas.add(new ArrayList<>());
     }
 
     @Override

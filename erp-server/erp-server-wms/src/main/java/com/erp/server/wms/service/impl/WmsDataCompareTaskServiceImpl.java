@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import java.io.File;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +31,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.merge.OnceAbsoluteMergeStrategy;
+import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -53,6 +56,7 @@ import com.erp.model.wms.dto.WmsDataCompareTaskDTO.PagingParamDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO.SetNextDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO.SetNextViewDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO.ViewDTO;
+import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.WmsDataCompareImportEntity;
 import com.erp.model.wms.entity.WmsDataCompareTaskEntity;
 import com.erp.model.wms.entity.WmsDataCompareTempEntity;
@@ -265,9 +269,8 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 			return setNextViewDTO;
 		}
 		
-		importDataMappingDTOList = importDataMappingDTOList.stream().filter(i -> i.getPkFlag() != null && i.getPkFlag()).collect(Collectors.toList());
 		if(CollUtil.isNotEmpty(importDataMappingDTOList)) {
-			if(importDataMappingDTOList.stream().anyMatch(i -> StringUtils.isBlank(i.getImportField()) || StringUtils.isBlank(i.getImportField()))) {
+			if(importDataMappingDTOList.stream().anyMatch(i -> i.getPkFlag() != null && i.getPkFlag() && (StringUtils.isBlank(i.getImportField()) || StringUtils.isBlank(i.getImportField())))) {
 				setNextViewDTO.setErrMessageList(Collections.singletonList("唯一键已设置，但系统数据字段或导入数据字段属性未设置映射"));
 				return setNextViewDTO;
 			}
@@ -295,6 +298,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				}
 				
 				WmsDataCompareUtils.compareExcelIndexList(importDataMappingDTOList, headFieldList);
+				importDataMapping = JSON.toJSONString(importDataMappingDTOList);
 				
 				Set<String> pkValueSet = new HashSet<>(); 
 				Map<String, Integer> pkValueSameCountMaps = new HashMap<>();
@@ -390,20 +394,12 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		}finally {
 			redisTemplate.delete(redisKey);
 		}
-//		List<DictBasicEntity> dictBasicEntityList = dictBasicService.list(Wrappers.<DictBasicEntity>lambdaQuery().eq(DictBasicEntity::getType, "datacompare" + billType));
-//		if(CollUtil.isNotEmpty(dictBasicEntityList)) {
-//			
-//			
-//		}else {
-//			setNextViewDTO.setErrMessageList(Collections.singletonList("对比单据对比属性未配置，请联系实施人员"));
-//		}
 	}
 	
 	private void parseExcelData(String id ,List<String> headFieldList, Map<String, List<List<String>>> allDatasMap) throws Exception {
 		WmsDataCompareTaskEntity wmsDataCompareTaskEntity = getById(id);
 		if(WmsDataCompareTaskSubStatusEnum.WAIT_PARSE.getCode().equals(wmsDataCompareTaskEntity.getSubStatus())) {
-			List<ImportDataMappingDTO> importDataMappingDTOList = JSON.parseArray(wmsDataCompareTaskEntity.getSystemDataCondition() , WmsDataComparePlanDTO.ImportDataMappingDTO.class);
-			WmsDataCompareUtils.compareExcelIndexList(importDataMappingDTOList, headFieldList);
+			List<ImportDataMappingDTO> importDataMappingDTOList = JSON.parseArray(wmsDataCompareTaskEntity.getImportDataMapping() , WmsDataComparePlanDTO.ImportDataMappingDTO.class);
 			
 			WmsDataCompareBillService<?> wmsDataCompareBillService = wmsDataCompareHandlerFactory.get(wmsDataCompareTaskEntity.getBillType());
 			for(Map.Entry<String, List<List<String>>> allDatas : allDatasMap.entrySet()) {
@@ -467,11 +463,14 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		if(WmsDataCompareTaskSubStatusEnum.WAIT_COMPARE.getCode().equals(wmsDataCompareTaskEntity.getSubStatus())) {
 			WmsDataCompareBillService<?> wmsDataCompareBillService = wmsDataCompareHandlerFactory.get(wmsDataCompareTaskEntity.getBillType());
 			List<?> dataCompareByConditionList = wmsDataCompareBillService.getDataCompareByCondition(wmsDataCompareTaskEntity.getSystemDataCondition());
+			Integer resultSameCount = wmsDataCompareTaskEntity.getResultSameCount();
+			Integer resultExceedCount = wmsDataCompareTaskEntity.getResultExceedCount();
+			Integer resultMissCount = wmsDataCompareTaskEntity.getResultMissCount();
+			Integer resultDiffCount = wmsDataCompareTaskEntity.getResultDiffCount();
 			if(CollUtil.isNotEmpty(dataCompareByConditionList)) {
-				List<ImportDataMappingDTO> importDataMappingDTOList = JSON.parseArray(wmsDataCompareTaskEntity.getSystemDataCondition() , WmsDataComparePlanDTO.ImportDataMappingDTO.class);
+				List<ImportDataMappingDTO> importDataMappingDTOList = JSON.parseArray(wmsDataCompareTaskEntity.getImportDataMapping() , WmsDataComparePlanDTO.ImportDataMappingDTO.class);
 				List<ImportDataMappingDTO> pkImportDataMappingDTOList = importDataMappingDTOList.stream().filter(i -> i.getPkFlag() != null && i.getPkFlag()).collect(Collectors.toList());
 				importDataMappingDTOList = importDataMappingDTOList.stream().filter(i -> i.getPkFlag() == null || !i.getPkFlag()).collect(Collectors.toList());
-				WmsDataCompareUtils.compareExcelIndexList(importDataMappingDTOList, new ArrayList<>());
 				List<String> pkFieldValueList = new ArrayList<>();
 				Map<String, List<Object>> pkFieldValueSystemDataMaps = new HashMap<>();
 				dataCompareByConditionList.forEach(d -> {
@@ -502,7 +501,9 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				dataCompareByConditionList = new ArrayList<>();
 				
 				Map<String, WmsDataCompareTempEntity> pkFieldValueImportDataMaps = wmsDataCompareTempService.list(Wrappers.<WmsDataCompareTempEntity>lambdaQuery()
-						.eq(WmsDataCompareTempEntity::getTaskId, id).in(WmsDataCompareTempEntity::getPkFieldValue, pkFieldValueList))
+						.eq(WmsDataCompareTempEntity::getTaskId, id)
+						.eq(WmsDataCompareTempEntity::getMainDataType, WmsDataCompareTempMainDataTypeEnum.IMPORT.getCode())
+						.in(WmsDataCompareTempEntity::getPkFieldValue, pkFieldValueList))
 						.stream().collect(Collectors.toMap(WmsDataCompareTempEntity::getPkFieldValue, w -> w));
 				List<WmsDataCompareTempEntity> insertOrUpdateTempEntity = new ArrayList<>();
 				for(Map.Entry<String, List<Object>> pkFieldValueSystemDataMap : pkFieldValueSystemDataMaps.entrySet()) {
@@ -540,10 +541,13 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 								diffImportDataMappingDTO.add(importDataMappingDTO);
 							}
 						}
-						wmsDataCompareTempEntity.setCompareResult(WmsDataCompareTempCompareResultEnum.SAME.getCode());
 						if(CollUtil.isNotEmpty(diffImportDataMappingDTO)) {
 							wmsDataCompareTempEntity.setCompareResult(WmsDataCompareTempCompareResultEnum.DIFF.getCode());
+							resultDiffCount = resultDiffCount + 1;
 							wmsDataCompareTempEntity.setDiffFields(JSON.toJSONString(diffImportDataMappingDTO));
+						}else {
+							wmsDataCompareTempEntity.setCompareResult(WmsDataCompareTempCompareResultEnum.SAME.getCode());
+							resultSameCount = resultSameCount + 1;
 						}
 						wmsDataCompareTempEntity.setCompareStatus(WmsDataCompareTempCompareStatusEnum.FINISH.getCode());
 					}
@@ -555,6 +559,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 						wmsDataCompareTempEntity.setCompareStatus(WmsDataCompareTempCompareStatusEnum.FINISH.getCode());
 						wmsDataCompareTempEntity.setPkFieldValue(pkFieldValue);
 						wmsDataCompareTempEntity.setCompareResult(WmsDataCompareTempCompareResultEnum.EXCEED.getCode());
+						resultExceedCount = resultExceedCount + 1;
 						wmsDataCompareTempEntity.setSystemDataJson(JSON.toJSONString(systemData));
 						wmsDataCompareTempEntity.setSystemDataId(((DataCompareDTO)systemData).getId());
 						insertOrUpdateTempEntity.add(wmsDataCompareTempEntity);
@@ -563,13 +568,20 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				wmsDataCompareTempService.saveOrUpdateBatch(insertOrUpdateTempEntity);
 			}
 			
+			resultMissCount = resultMissCount + wmsDataCompareTempService.lambdaQuery().eq(WmsDataCompareTempEntity::getTaskId, id)
+					.eq(WmsDataCompareTempEntity::getCompareStatus, WmsDataCompareTempCompareStatusEnum.WAIT.getCode()).count();
 			wmsDataCompareTempService.lambdaUpdate().eq(WmsDataCompareTempEntity::getTaskId, id)
 													.eq(WmsDataCompareTempEntity::getCompareStatus, WmsDataCompareTempCompareStatusEnum.WAIT.getCode())
 													.set(WmsDataCompareTempEntity::getCompareResult, WmsDataCompareTempCompareResultEnum.MISS.getCode())
 													.set(WmsDataCompareTempEntity::getCompareStatus, WmsDataCompareTempCompareStatusEnum.FINISH.getCode())
 													.update();
-			wmsDataCompareTaskService.lambdaUpdate().eq(WmsDataCompareTaskEntity::getId, id)
+			lambdaUpdate().eq(WmsDataCompareTaskEntity::getId, id)
+													.eq(WmsDataCompareTaskEntity::getSubStatus, WmsDataCompareTaskSubStatusEnum.WAIT_COMPARE.getCode())
 													.set(WmsDataCompareTaskEntity::getSubStatus, WmsDataCompareTaskSubStatusEnum.WAIT_UPLOAD.getCode())
+													.set(WmsDataCompareTaskEntity::getResultSameCount , resultSameCount)
+													.set(WmsDataCompareTaskEntity::getResultExceedCount, resultExceedCount)
+													.set(WmsDataCompareTaskEntity::getResultMissCount, resultMissCount)
+													.set(WmsDataCompareTaskEntity::getResultDiffCount, resultDiffCount)
 													.update();
 		}
 	}
@@ -577,12 +589,79 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 	public void dealUploadResultExcel(String id) {
 		WmsDataCompareTaskEntity wmsDataCompareTaskEntity = getById(id);
 		if(WmsDataCompareTaskSubStatusEnum.WAIT_UPLOAD.getCode().equals(wmsDataCompareTaskEntity.getSubStatus())) {
-			List<WmsDataCompareTempEntity> wmsDataCompareTempEntityList = wmsDataCompareTempService.lambdaQuery().eq(WmsDataCompareTempEntity::getTaskId, id)
-												   .in(WmsDataCompareTempEntity::getCompareResult, Arrays.asList(WmsDataCompareTempCompareResultEnum.EXCEED.getCode() 
-														   , WmsDataCompareTempCompareResultEnum.MISS.getCode() , WmsDataCompareTempCompareResultEnum.DIFF.getCode()))
-												   .list();
-			ExcelWriter excelWriter = EasyExcel.write("对比结果.xlsx").build();
-			List<String> firstHead = Arrays.asList("系统数据" , "导入数据");
+			String resultReportUrl = wmsDataCompareTaskEntity.getResultReportUrl();
+			if(StringUtils.isBlank(resultReportUrl)) {
+				List<WmsDataCompareTempEntity> wmsDataCompareTempEntityList = wmsDataCompareTempService.lambdaQuery().eq(WmsDataCompareTempEntity::getTaskId, id)
+						   .in(WmsDataCompareTempEntity::getCompareResult, Arrays.asList(WmsDataCompareTempCompareResultEnum.EXCEED.getCode() 
+								   , WmsDataCompareTempCompareResultEnum.MISS.getCode() , WmsDataCompareTempCompareResultEnum.DIFF.getCode()))
+						   .list();
+				if(CollUtil.isNotEmpty(wmsDataCompareTempEntityList)) {
+					List<ImportDataMappingDTO> importDataMappingDTOList = JSON.parseArray(wmsDataCompareTaskEntity.getImportDataMapping() , WmsDataComparePlanDTO.ImportDataMappingDTO.class);
+					String billType = wmsDataCompareTaskEntity.getBillType();
+					Map<String, String> valueNameMaps = dictBasicService.list(Wrappers.<DictBasicEntity>lambdaQuery()
+							.eq(DictBasicEntity::getType, "datacompare_" + billType))
+							.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
+					if(valueNameMaps.isEmpty()) {
+						throw new ServiceException("对比单据对比属性未配置，请联系实施人员");
+					}
+					
+					String fileName = "对比结果.xlsx";
+					ExcelWriter excelWriter = EasyExcel.write(fileName).build();
+				    List<List<String>> headList = new ArrayList<>();
+				    List<String> firstHead = new ArrayList<>();
+				    List<String> secordHead = new ArrayList<>();
+				    boolean firstFlag = true;
+				    for(ImportDataMappingDTO importDataMappingDTO : importDataMappingDTOList) {
+				    	if(firstFlag) {
+				    		firstHead.add("系统数据");
+				    		firstFlag = false;
+				    	}else {
+				    		firstHead.add("");
+				    	}
+				    	secordHead.add(valueNameMaps.get(importDataMappingDTO.getSystemField()));
+				    }
+				    firstFlag = true;
+				    for(ImportDataMappingDTO importDataMappingDTO : importDataMappingDTOList) {
+				    	if(firstFlag) {
+				    		firstHead.add("导入数据");
+				    		firstFlag = false;
+				    	}else {
+				    		firstHead.add("");
+				    	}
+				    	secordHead.add(importDataMappingDTO.getImportField());
+				    }
+				    
+				    headList.add(firstHead);
+					headList.add(secordHead);
+					
+					int size = importDataMappingDTOList.size();
+					WriteSheet writeSheet = EasyExcel.writerSheet().registerWriteHandler(new OnceAbsoluteMergeStrategy(0, size - 1, size, size + size)).build();
+				    excelWriter.write(headList, writeSheet);
+				    
+				    for(WmsDataCompareTempEntity wmsDataCompareTempEntity : wmsDataCompareTempEntityList) {
+				    	String systemDataJson = "";
+				    	systemDataJson = wmsDataCompareTempEntity.getSystemDataJson();
+				    	String importDataJson = "";
+				    	importDataJson = wmsDataCompareTempEntity.getImportDataJson();
+				    	for(ImportDataMappingDTO importDataMappingDTO : importDataMappingDTOList) {
+					    	
+					    }
+			    	}
+				    
+				    excelWriter.finish();
+				    
+				    File file = new File(fileName);
+					resultReportUrl = FastDFSClientUtil.uploadFile(file, fileName);
+					file.delete();
+				}
+			}
+				lambdaUpdate().eq(WmsDataCompareTaskEntity::getId, id)
+				.eq(WmsDataCompareTaskEntity::getSubStatus, WmsDataCompareTaskSubStatusEnum.WAIT_UPLOAD.getCode())
+				.set(WmsDataCompareTaskEntity::getSubStatus, WmsDataCompareTaskSubStatusEnum.FINISH.getCode())
+				.set(WmsDataCompareTaskEntity::getStatus, WmsDataCompareTaskStatusEnum.FINISH.getCode())
+				.set(WmsDataCompareTaskEntity::getResultReportUrl, resultReportUrl)
+				.update();
+				
 		}
 	}
 	

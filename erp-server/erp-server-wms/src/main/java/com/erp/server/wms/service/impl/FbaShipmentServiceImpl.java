@@ -1828,6 +1828,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 		if(CollUtil.isEmpty(params.getReceiveDateList())) {
 			throw new ServiceException("FBA货件签收的系统数据范围【签收日期】不能为空");
 		}
+		String shopId = params.getShopId();
+		if(StringUtils.isNotBlank(shopId)) {
+			ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
+			if(shopInfo != null) {
+				params.setShopName(shopInfo.getName());
+			}
+		}
 		return baseMapper.getDataCompareByCondition(params);
 	}
 }

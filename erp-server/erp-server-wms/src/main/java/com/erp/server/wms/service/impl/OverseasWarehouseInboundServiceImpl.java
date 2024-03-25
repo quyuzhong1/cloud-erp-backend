@@ -1217,18 +1217,25 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
     @Override
 	public List<OverseasInboundDTO> getDataCompareByCondition(OverseasInboundDTO params) {
-		if(CollUtil.isEmpty(params.getReceiveTimeList()) && StringUtils.isNotBlank(params.getReceiveTime())) {
+		if(CollUtil.isEmpty(params.getReceiveDateList()) && StringUtils.isNotBlank(params.getReceiveTime())) {
 			String[] receiveTimes = params.getReceiveTime().split(",");
 			if(receiveTimes.length > 1) {
 				List<LocalDate> receiveTimeList = new ArrayList<>(receiveTimes.length);
 				for(String billDate : receiveTimes) {
 					receiveTimeList.add(LocalDateUtil.parseStrToLocalDate(billDate));
 				}
-				params.setReceiveTimeList(receiveTimeList);
+				params.setReceiveDateList(receiveTimeList);
 			}
 		}
-		if(CollUtil.isEmpty(params.getReceiveTimeList())) {
+		if(CollUtil.isEmpty(params.getReceiveDateList())) {
 			throw new ServiceException("第三方仓货件签收的系统数据范围【签收日期】不能为空");
+		}
+		String toWarehouseId = params.getToWarehouseId();
+		if(StringUtils.isNotBlank(toWarehouseId)) {
+			WarehouseEntity warehouseEntity = warehouseService.getById(toWarehouseId);
+			if(warehouseEntity != null) {
+				params.setToWarehouseName(warehouseEntity.getName());
+			}
 		}
 		return baseMapper.getDataCompareByCondition(params);
 	}
