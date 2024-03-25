@@ -15,6 +15,7 @@ import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -26,6 +27,7 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.sdk.oms.amz.spapi.model.reports.CreateReportScheduleSpecification;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.sdk.oms.amz.spapi.model.reports.ReportDocument;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiExceptionUtils;
@@ -47,6 +49,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -162,21 +165,37 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
             }
         }
         // 是否是增量报告(取上一次执行任务的时间)
-        if (!reportTypeConfig.getIsFullUpdate() && null != taskEntity) {
-            if (!AmzReportTaskStatusEnum.FINISH.getCode().equalsIgnoreCase(taskEntity.getStatus())) {
-                // 上次任务未完成
-                log.info("[创建【亚马逊报告】亚马逊-ERP] 当前线程任务结束, 增量报告：存在上一次未完成任务: group={}, shopId={}, reportType={}", groupId, reportSchedule.getShopId(), reportSchedule.getReportType());
-                XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 当前线程任务结束, 增量报告：存在上一次未完成任务:：group={}, shopId={}, reportType={}",
-                        groupId, reportSchedule.getShopId(), reportSchedule.getReportType());
-                return;
+        if (!reportTypeConfig.getIsFullUpdate()) {
+            // 间隔时间枚举
+            CreateReportScheduleSpecification.PeriodEnum periodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getPeriod());
+            if (null != taskEntity){
+                if (!AmzReportTaskStatusEnum.FINISH.getCode().equalsIgnoreCase(taskEntity.getStatus())) {
+                    // 上次任务未完成
+                    log.info("[创建【亚马逊报告】亚马逊-ERP] 当前线程任务结束, 增量报告：存在上一次未完成任务: group={}, shopId={}, reportType={}", groupId, reportSchedule.getShopId(), reportSchedule.getReportType());
+                    XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 当前线程任务结束, 增量报告：存在上一次未完成任务:：group={}, shopId={}, reportType={}",
+                            groupId, reportSchedule.getShopId(), reportSchedule.getReportType());
+                    return;
+                }
+                // 查询对应报告
+                AmzReportInfoEntity amzReportInfo = amzReportInfoService.getByReportId(taskEntity.getReportId(), Report.ProcessingStatusEnum.DONE.getValue());
+                if (null == amzReportInfo) {
+                    throw new ServiceException("未找到报告信息, reportId=" + taskEntity.getReportId());
+                }
+                // 解析开始时间
+                reqDataStartTime = amzReportInfo.getDataEndTime();
+                // utc 数据结束时间
+                OffsetDateTime formatUtcEndTime = periodEnum.plusPeriod(OffsetDateTime.parse(reqDataStartTime));
+                reqDataEndTime = formatUtcEndTime.toString();
+            } else {
+                // 增量报告首次执行
+                OffsetDateTime utcStartTime = reportSchedule.getFirstNextReportCreationTime().atOffset(ZoneOffset.of("+8")).withOffsetSameInstant(ZoneOffset.UTC);
+                // utc 数据开始时间
+                OffsetDateTime formatUtcStartTime = periodEnum.formatTime(utcStartTime);
+                reqDataStartTime = formatUtcStartTime.toString();
+                // utc 数据结束时间
+                OffsetDateTime formatUtcEndTime = periodEnum.plusPeriod(formatUtcStartTime);
+                reqDataEndTime = formatUtcEndTime.toString();
             }
-            // 查询对应报告
-            AmzReportInfoEntity amzReportInfo = amzReportInfoService.getByReportId(taskEntity.getReportId(), Report.ProcessingStatusEnum.DONE.getValue());
-            if (null == amzReportInfo) {
-                throw new ServiceException("未找到报告信息, reportId=" + taskEntity.getReportId());
-            }
-            // 解析时间
-            reqDataStartTime = amzReportInfo.getDataEndTime();
         }
 
         // 创建报告待请求记录

@@ -78,7 +78,7 @@ public class FbaShipmentController extends BaseController {
      **/
     @PostMapping("/skuMapping")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "sku映射：detailId={detailId}， 平台sku={msku} 映射 erpSku={skuNo}")
-    public ApiResult skuMapping(@RequestBody @Validated FbaShipmentDTO.skuMappingParamDTO dto) {
+    public ApiResult skuMapping(@RequestBody @Validated FbaShipmentDTO.SkuMappingParamDTO dto) {
         Boolean flag = fbaShipmentService.skuMapping(dto);
         return flag ? success() : failure();
     }

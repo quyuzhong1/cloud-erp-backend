@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
@@ -399,7 +398,7 @@ public class FbaShipmentDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class skuMappingParamDTO {
+    public static class SkuMappingParamDTO {
 
         private String id;
         /**

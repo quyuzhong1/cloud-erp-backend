@@ -97,4 +97,6 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
     List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(@Param("erpSkuIdList") List<String> erpSkuIdList,@Param("provideCode") String provideCode,@Param("warehouseId") String warehouseId);
 
     List<ListingAdvanceQueryDTO> advanceQuerySku(@Param("params") AdvanceQueryContainer advanceQueryContainer);
+
+    SkuMappingEntity findHistory(@Param("id")String id, @Param("listingId")String listingId, @Param("shopId")String shopId, @Param("productSkuId")String productSkuId);
 }

@@ -59,6 +59,17 @@ public class SoB2cErrorFeignController extends BaseController {
     }
 
     /**
+     * 删除明细异常信息
+     * @param dto
+     * @return
+     */
+    @PostMapping("/deleteDetail")
+    public Boolean deleteDetail(@RequestBody SoB2cErrorDTO.DeleteDetailDTO dto) {
+        return soB2cErrorService.deleteDetail(dto);
+    }
+
+
+    /**
      * 批量删除异常信息
      *
      * @param batchDeleteDTO

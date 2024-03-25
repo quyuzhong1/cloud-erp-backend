@@ -144,6 +144,11 @@ public class SoB2cErrorDTO implements Serializable {
         @NotBlank(message = "返回的json 字符串不能为空")
         private String returnJson;
 
+        /**
+         * 订单详情id
+         */
+        private String detailId;
+
 
     }
     @Data
@@ -200,6 +205,27 @@ public class SoB2cErrorDTO implements Serializable {
         private String type;
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class DeleteDetailDTO{
+        /**
+         * 订单id
+         */
+        @NotNull(message = "订单id不能为空")
+        private String mainId;
+        /**
+         * 异常类型
+         */
+        @NotNull(message = "异常类型不能为空")
+        private String type;
+        /**
+         * 订单明细id
+         */
+        @NotNull(message = "明细ID不能为空")
+        private List<String> detailIdList;
+    }
+
 
     @Data
     @NoArgsConstructor
