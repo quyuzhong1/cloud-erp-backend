@@ -1,7 +1,10 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -13,24 +16,28 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.StateEnumValue;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MathUtil;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.excel.PurchaseEndReceiveImportExcelDTO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.wms.dto.OtherOutstockCustomerDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.dto.OtherOutstockDetailDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.excel.OtherOutStockImportExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
@@ -44,7 +51,9 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.wms.convert.OtherOutStockConverter;
 import com.erp.server.wms.kingdee.SyncKingdeeOtherOutstockService;
+import com.erp.server.wms.listener.OtherOutStockExcelListener;
 import com.erp.server.wms.mapper.OtherOutstockMapper;
 import com.erp.server.wms.query.OtherOutstockQueryHandler;
 import com.erp.server.wms.service.*;
@@ -61,12 +70,19 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Array;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -797,7 +813,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "classpath:excel/？？？.xlsx";
+        String path = "classpath:excel/otherOutstockTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -820,6 +836,187 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        return null;
+        OtherOutStockExcelListener excelListenerUtil = new OtherOutStockExcelListener();
+
+        try {
+            EasyExcel.read(excelFile.getInputStream(), OtherOutStockImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<OtherOutStockImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        //导入数据处理
+        List<OtherOutStockImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<OtherOutStockImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        //处理校验导入成功数据
+        handleImportOutStockFile(successList, errorList);
+
+        if (errorList.isEmpty()) {
+            return Boolean.TRUE;
+        }
+        String excelPath = "excel/OtherOutStockError.xlsx";
+        String name = "OtherOutStockError";
+        try {
+            new ExcelPrintUtils().patchExport(errorList,
+                    response,
+                    StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
+                    excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_95125);
+        }
+        return Boolean.FALSE;
+
     }
+
+    public void handleImportOutStockFile (List<OtherOutStockImportExcelDTO> successList,List<OtherOutStockImportExcelDTO> errorList) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+        List<String> skuNoList = successList.stream().map(OtherOutStockImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        // 库存类型Map
+        Map<String, OutstockTypeEnum> outStockTypeMap = Arrays.stream(OutstockTypeEnum.values())
+                .collect(Collectors.toMap(OutstockTypeEnum::getName, Function.identity()));
+
+        // 库存方向Map
+        Map<String, InventoryDirectionEnum> inventoryDirectionMap = Arrays.stream(InventoryDirectionEnum.values())
+                .collect(Collectors.toMap(InventoryDirectionEnum::getName, Function.identity()));
+
+        // 发货仓库
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listApproveWarehouse();
+        Map<String, WarehouseDTO.ListDTO> warehouseMap = warehouseList
+                .stream()
+                .collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, Function.identity()));
+
+        // 仓位
+        List<String> warehouseIds = warehouseList.stream().map(WarehouseDTO.ListDTO::getId).collect(Collectors.toList());
+        Map<String, List<WarehouseLocationEntity>> warehousrLocationMap = warehouseLocationService.listByWarehouseIds(warehouseIds)
+                .stream()
+                .collect(Collectors.groupingBy(WarehouseLocationEntity::getWarehouseId));
+
+        // 领料人
+        Map<String, SysUserDeptDTO> userMap = sysUserFeign.getUserDeptList()
+                .stream()
+                .collect(Collectors.toMap(SysUserDeptDTO::getUserName, Function.identity()));
+
+        // 领料部门
+        Map<String, SysDepartmentDTO> deptMap = sysUserFeign.getDeptList()
+                .stream()
+                .collect(Collectors.toMap(SysDepartmentDTO::getName, Function.identity()));
+
+        // 客户名称 TODO
+
+
+        // 领料组织
+        Map<String, BaseIdDTO> orgMap = sysUserFeign.listAccountingCompany()
+                .stream()
+                .collect(Collectors.toMap(BaseIdDTO::getName, Function.identity()));
+
+        //sku Map
+        Map<String, SkuVO> existSkuMap = plmTaskFeign.listBySkuNoList(skuNoList)
+                .stream()
+                .collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity()));
+
+
+        // 校验和处理
+        for (OtherOutStockImportExcelDTO importExcelDTO : successList) {
+            // 库存类型Map
+            OutstockTypeEnum outstockTypeEnum = outStockTypeMap.get(importExcelDTO.getType());
+
+            Integer actualQty = Integer.valueOf(importExcelDTO.getActualQtyStr());
+
+            LocalDate billDate = StringUtils.isBlank(importExcelDTO.getBillDateStr()) ? LocalDate.now() : LocalDate.parse(importExcelDTO.getBillDateStr(), DateTimeFormatter.ofPattern("yyyy/M/d"));
+
+            // 库存方向Map
+            InventoryDirectionEnum inventoryDirectionEnum = inventoryDirectionMap.get(importExcelDTO.getInventoryDirection());
+
+            // 发货仓库
+            WarehouseDTO.ListDTO warehouseDTO = warehouseMap.get(importExcelDTO.getWarehouseName());
+            if (null == warehouseDTO){
+                importExcelDTO.setErrorMsg(StrUtil.format("【{}】仓库不存在", importExcelDTO.getWarehouseName()));
+                errorList.add(importExcelDTO);
+                continue;
+            }
+            String currentWarehouseId = warehouseDTO.getId();
+            WarehouseLocationEntity locationEntity = null;
+            if (StringUtils.isNotBlank(importExcelDTO.getWarehouseLocation())){
+                List<WarehouseLocationEntity> locationList = warehousrLocationMap.get(currentWarehouseId);
+                if (CollectionUtils.isEmpty(locationList)){
+                    importExcelDTO.setErrorMsg(StrUtil.format("【{}】仓位不存在", importExcelDTO.getWarehouseLocation()));
+                    errorList.add(importExcelDTO);
+                    continue;
+                }
+                locationEntity = locationList.stream().filter(e -> e.getName().equalsIgnoreCase(importExcelDTO.getWarehouseLocation())).findFirst().orElse(null);
+                if (null == locationEntity){
+                    importExcelDTO.setErrorMsg(StrUtil.format("【{}】仓位不存在", importExcelDTO.getWarehouseLocation()));
+                    errorList.add(importExcelDTO);
+                    continue;
+                }
+            }
+
+            // 领料人
+            SysUserDeptDTO userDeptDTO = userMap.get(importExcelDTO.getReceiverName());
+            if (null == userDeptDTO){
+                importExcelDTO.setErrorMsg(StrUtil.format("【{}】领料人不存在", importExcelDTO.getReceiverName()));
+                errorList.add(importExcelDTO);
+                continue;
+            }
+
+            // 部领料门
+            SysDepartmentDTO departmentDTO = deptMap.get(importExcelDTO.getDeptName());
+            if (null == departmentDTO){
+                importExcelDTO.setErrorMsg(StrUtil.format("【{}】领料部门不存在", importExcelDTO.getDeptName()));
+                errorList.add(importExcelDTO);
+                continue;
+            }
+
+            // 领料组织
+            BaseIdDTO orgDTO = orgMap.get(importExcelDTO.getReceiveOrgName());
+            if(null == orgDTO){
+                importExcelDTO.setErrorMsg(StrUtil.format("【{}】领料组织不存在", importExcelDTO.getReceiveOrgName()));
+                errorList.add(importExcelDTO);
+                continue;
+            }
+
+            SkuVO skuVO = existSkuMap.get(importExcelDTO.getSkuNo());
+            if (null == skuVO){
+                importExcelDTO.setErrorMsg(StrUtil.format("SKU【{}】不存在", importExcelDTO.getSkuNo()));
+                errorList.add(importExcelDTO);
+                continue;
+            }
+
+            try {
+                // 组合DTO
+                OtherOutstockDetailDTO.AddDTO detailDTO = OtherOutStockConverter.INSTANCE.combineDetailDTO(importExcelDTO, skuVO, locationEntity, actualQty);
+
+                OtherOutstockDTO.AddDTO addDTO = OtherOutStockConverter.INSTANCE.combineAddDTO(
+                        importExcelDTO,
+                        outstockTypeEnum,
+                        billDate,
+                        inventoryDirectionEnum,
+                        warehouseDTO,
+                        locationEntity,
+                        userDeptDTO,
+                        departmentDTO,
+                        orgDTO,
+                        Collections.singletonList(detailDTO)
+                );
+                String idStr = this.add(addDTO);
+                if (StringUtils.isBlank(idStr)){
+                    throw new ServiceException("保存处理失败");
+                }
+            } catch (Exception e) {
+                importExcelDTO.setErrorMsg(StrUtil.format("处理异常【{}】", ExceptionUtil.stacktraceToOneLineString(e, 255)));
+                errorList.add(importExcelDTO);
+            }
+        }
+    }
+
 }

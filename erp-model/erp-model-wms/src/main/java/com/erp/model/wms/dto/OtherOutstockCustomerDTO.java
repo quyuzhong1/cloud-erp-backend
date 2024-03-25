@@ -56,6 +56,10 @@ public class OtherOutstockCustomerDTO implements Serializable {
          */
         @Size(max = 50,message = "联系电话不能大于50字符")
         private String telNumber;
+
+        public AddDTO(String name) {
+            this.name = name;
+        }
     }
 
     @Data
