@@ -243,6 +243,9 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 	@Override
 	public String downloadSystemData(BaseIdDTO dto) {
 		WmsDataCompareTaskEntity wmsDataCompareTaskEntity = this.getById(dto.getId());
+		if(wmsDataCompareTaskEntity == null) {
+			throw new ServiceException("任务id不存在");
+        }
 		String billType = wmsDataCompareTaskEntity.getBillType();
 		String systemDataCondition = wmsDataCompareTaskEntity.getSystemDataCondition();
 		

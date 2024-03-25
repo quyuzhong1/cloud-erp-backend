@@ -605,7 +605,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
        public static class PagingParamDTO extends SortDTO {
 
            /**
-            * 页面高级查询
+            * 页面高级查询，表别名 t
             */
            private List<AdvanceQueryDTO> advanceQueryDTOList;
 
