@@ -197,7 +197,7 @@ public class TmsFirstMileLogisticController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载头程物流单模板")
     public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "excel/fmLogistics.xlsx";
-        String excelName = "头程物流单导入模板.xlsx";
+        String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
             InputStream inputStream = resourceLoader.getResource(path).getInputStream();
