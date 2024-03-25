@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.InvoicesStatusEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -19,32 +20,18 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.FmDeliveryLogisticsStatusEnum;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
-import com.erp.model.tms.enums.FmTimeLineEnum;
-import com.erp.model.tms.dto.LogisticsBillCostDTO;
-import com.erp.model.tms.dto.LogisticsBillDetailDTO;
-import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
-import com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO;
-import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.tms.entity.LogisticsSupplierEntity;
-import com.erp.model.tms.entity.ShippingTemplateEntity;
-import com.erp.model.tms.enums.LogisticTrackStatusEnum;
-import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
-import com.erp.model.tms.enums.ReconciliationStatusEnum;
-import com.erp.model.tms.enums.ShippingBillingMethodEnum;
+import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.PackingStatusEnum;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.convert.FmLogisticsConverter;
@@ -65,7 +52,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -171,7 +157,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         LogisticsBillDetailDTO.AddDTO detailAddDto = new LogisticsBillDetailDTO.AddDTO();
         detailAddDto.setMainId(tmsFirstMileLogisticEntity.getId());
         detailAddDto.setTrackNo(tmsFirstMileLogisticEntity.getCounterNo());
-        detailAddDto.setTrackStatus(FmLogisticTrackStatusEnum.ORDERED.getCode());
+        detailAddDto.setTrackStatus(FmLogisticTrackStatusEnum.WAIT_ORDER.getCode());
         detailAddList.add(detailAddDto);
         logisticsBillDetailService.add(tmsFirstMileLogisticEntity,detailAddList);
 
@@ -300,7 +286,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             LogisticsBillDetailDTO.AddDTO detailAddDto = new LogisticsBillDetailDTO.AddDTO();
             detailAddDto.setMainId(old.getId());
             detailAddDto.setTrackNo(updateDTO.getCounterNo());
-            detailAddDto.setTrackStatus(FmLogisticTrackStatusEnum.ORDERED.getCode());
+            detailAddDto.setTrackStatus(FmLogisticTrackStatusEnum.WAIT_ORDER.getCode());
             detailAddList.add(detailAddDto);
             logisticsBillDetailService.add(old,detailAddList);
         }
@@ -531,7 +517,46 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     public TmsFirstMileLogisticDTO.StatisticsVO statistics() {
-        return null;
+        TmsFirstMileLogisticDTO.StatisticsVO statisticsResult = new TmsFirstMileLogisticDTO.StatisticsVO();
+        //发货统计
+        TmsFirstMileLogisticDTO.StatisticsVO.DeliveryStatistics deliveryStatistics = new TmsFirstMileLogisticDTO.StatisticsVO.DeliveryStatistics();
+        FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq = new FirstMileDeliveryDTO.StatisticsReq();
+        deliveryStaticsReq.setStatus(ApproveStatusEnum.APPROVE.getStatus());
+        deliveryStaticsReq.setBeginDate(DateUtil.getStartOfMonth(-1));
+        deliveryStaticsReq.setEndDate(DateUtil.getEndOfMonth(0));
+        List<FirstMileDeliveryDTO.LogisticStatisticsDTO> deliveryLogisticDTOList = wmsFirstMileDeliveryFeign.logisticStatistics(deliveryStaticsReq);
+        deliveryStatistics.setLastMonthDelivery(!deliveryLogisticDTOList.isEmpty() ?deliveryLogisticDTOList.get(0).getCount():0);
+        deliveryStatistics.setThisMonthDelivery(deliveryLogisticDTOList.size()>1?deliveryLogisticDTOList.get(1).getCount():0);
+        TmsFirstMileLogisticDTO.LogisticStatisticsReq logisticStatisticsReq = TmsFirstMileLogisticDTO.LogisticStatisticsReq.builder()
+                .beginOrderTime(DateUtil.getStartOfMonth(-1))
+                .endOrderTime(DateUtil.getEndOfMonth(0))
+                .logisticStatusList(FmLogisticTrackStatusEnum.getStatusNotWaitOrder())
+                .orderType(OrderTypeEnum.FIRST_MILE.getCode())
+                .build();
+        List<TmsFirstMileLogisticDTO.LogisticStatisticsDTO> logisticStatisticsDTOList = baseMapper.statistics(logisticStatisticsReq);
+        deliveryStatistics.setLastMonthOrder(!logisticStatisticsDTOList.isEmpty() ?logisticStatisticsDTOList.get(0).getCount():0);
+        deliveryStatistics.setThisMonthOrder(logisticStatisticsDTOList.size()>1?logisticStatisticsDTOList.get(1).getCount():0);
+        statisticsResult.setDeliveryStatistics(deliveryStatistics);
+        //对账统计
+        TmsFirstMileLogisticDTO.StatisticsVO.ReconciliationStatistics reconciliationStatistics = baseMapper.reconciliationStatistics(OrderTypeEnum.FIRST_MILE.getCode());
+        statisticsResult.setReconciliationStatistics(reconciliationStatistics);
+        //超期统计
+        List<TmsFirstMileLogisticDTO.OverdueDTO> overdueList = baseMapper.overdueStatistics(OrderTypeEnum.FIRST_MILE.getCode());
+        overdueList.forEach(v->{
+            //判断是否是数字，不是数字忽略
+            String regex = "\\d*[1-9]+\\d*";
+            Pattern pattern = Pattern.compile(regex);
+            if(!pattern.matcher(v.getEffectiveTime()).matches()){
+                return;
+            }
+            int estimatedDay = Integer.parseInt(v.getEffectiveTime());
+            v.setRemainingTime(estimatedDay*24 - v.getActualHour());
+        });
+        TmsFirstMileLogisticDTO.StatisticsVO.OverdueStatistics overdueStatistics = new TmsFirstMileLogisticDTO.StatisticsVO.OverdueStatistics();
+        overdueStatistics.setAlmostOverdue((int) overdueList.stream().filter(v -> Objects.nonNull(v.getRemainingTime()) && v.getRemainingTime() >= 0 && v.getRemainingTime() <=72 ).count());
+        overdueStatistics.setExpired((int) overdueList.stream().filter(v -> Objects.nonNull(v.getRemainingTime()) && v.getRemainingTime() < 0).count());
+        statisticsResult.setOverdueStatistics(overdueStatistics);
+        return statisticsResult;
     }
 
     @Override

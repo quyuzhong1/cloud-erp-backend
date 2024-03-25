@@ -4,6 +4,7 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
+import jnr.ffi.annotations.In;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -27,6 +28,45 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 public class FirstMileDeliveryDTO implements Serializable {
+
+    /**
+     * 统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class StatisticsReq {
+
+        private LocalDateTime beginDate;
+
+        private LocalDateTime endDate;
+
+        private String status;
+    }
+
+    /**
+     * 统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LogisticStatisticsDTO {
+
+        /**
+         * 年份
+         */
+        private Integer year;
+
+        /**
+         * 月份
+         */
+        private Integer month;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
 
 
     /**

@@ -37,4 +37,13 @@ public class WmsFirstMileDeliveryController {
         return firstMileDeliveryService.updateStatus(dto);
     }
 
+    /**
+     * 统计
+     * @param dto
+     * @return
+     */
+    @PostMapping("/logisticStatistics")
+    public List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(@RequestBody FirstMileDeliveryDTO.StatisticsReq dto){
+        return firstMileDeliveryService.logisticStatistics(dto);
+    }
 }

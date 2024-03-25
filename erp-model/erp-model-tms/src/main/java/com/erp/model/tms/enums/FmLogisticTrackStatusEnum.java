@@ -3,7 +3,12 @@ package com.erp.model.tms.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 头程物流运输状态
@@ -36,11 +41,13 @@ public enum FmLogisticTrackStatusEnum implements EnumMessage {
     /**
      * 组别
      */
+    @Getter
     private String group;
 
     /**
      * 组别
      */
+    @Getter
     private String groupName;
 
 
@@ -61,36 +68,7 @@ public enum FmLogisticTrackStatusEnum implements EnumMessage {
     }
 
 
-    public String getGroup() {
-        return this.group;
+    public static List<String> getStatusNotWaitOrder(){
+        return Arrays.stream(FmLogisticTrackStatusEnum.values()).filter(e -> !e.equals(WAIT_ORDER)).map(FmLogisticTrackStatusEnum::getCode).collect(Collectors.toList());
     }
-
-    public String getGroupName() {
-        return this.groupName;
-    }
-    public static String getName(String code) {
-        if (StringUtils.isBlank(code)) {
-            return "";
-        }
-        for (FmLogisticTrackStatusEnum item : FmLogisticTrackStatusEnum.values()) {
-            if (code.equals(item.getCode())) {
-                return item.getName();
-            }
-        }
-        return "";
-    }
-
-    public static String getGroupName(String code) {
-        if (StringUtils.isBlank(code)) {
-            return "";
-        }
-        for (FmLogisticTrackStatusEnum item : FmLogisticTrackStatusEnum.values()) {
-            if (code.equals(item.getCode())) {
-                return item.getName();
-            }
-        }
-        return "";
-    }
-
-
 }

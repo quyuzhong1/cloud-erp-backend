@@ -519,4 +519,32 @@ public class DateUtil {
         Matcher matcher = pattern.matcher(input);
         return matcher.matches();
     }
+
+    public static LocalDateTime getStartOfMonth(int monthsToAdd) {
+        LocalDateTime startOfMonth;
+
+        if (monthsToAdd == 0) {
+            startOfMonth = YearMonth.now().atDay(1).atStartOfDay();
+        } else if (monthsToAdd < 0) {
+            startOfMonth = YearMonth.now().minusMonths(Math.abs(monthsToAdd)).atDay(1).atStartOfDay();
+        } else {
+            startOfMonth = YearMonth.now().plusMonths(monthsToAdd).atDay(1).atStartOfDay();
+        }
+
+        return startOfMonth;
+    }
+
+    public static LocalDateTime getEndOfMonth(int monthsToAdd) {
+        LocalDateTime endOfMonth;
+
+        if (monthsToAdd == 0) {
+            endOfMonth = YearMonth.now().atEndOfMonth().atTime(23, 59, 59);
+        } else if (monthsToAdd < 0) {
+            endOfMonth = YearMonth.now().minusMonths(Math.abs(monthsToAdd)).atEndOfMonth().atTime(23, 59, 59);
+        } else {
+            endOfMonth = YearMonth.now().plusMonths(monthsToAdd).atEndOfMonth().atTime(23, 59, 59);
+        }
+
+        return endOfMonth;
+    }
 }

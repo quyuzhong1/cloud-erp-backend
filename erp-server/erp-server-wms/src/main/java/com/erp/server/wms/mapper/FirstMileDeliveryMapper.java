@@ -91,4 +91,6 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
     List<WmsCartonDTO.ExportPackingDTO> exportPacking(@Param("params") FirstMileDeliveryDTO.ExportDTO params);
 
     List<FirstMileDeliveryDTO.GenerateLogisticDTO> getGenerateLogisticDTO(@Param("params") FirstMileDeliveryDTO.GenerateLogisticReqDTO dto);
+
+    List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(FirstMileDeliveryDTO.StatisticsReq dto);
 }

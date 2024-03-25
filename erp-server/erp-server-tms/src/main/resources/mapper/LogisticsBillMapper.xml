@@ -468,4 +468,55 @@
           and lb.order_type = #{orderType}
         group by lbd.track_status
     </select>
+    <select id="statistics" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$LogisticStatisticsDTO">
+        SELECT  EXTRACT(year FROM lb.order_time),  EXTRACT(month FROM lb.order_time) as month,
+        count(1)
+        FROM logistics_bill lb
+        inner join logistics_bill_detail lbd on lb.id = lbd.main_id
+        where lb.is_deleted = false and lbd.is_deleted = false
+        and lb.order_type = #{orderType}
+        <if test="logisticStatusList != null and logisticStatusList.size() > 0 ">
+            and  lbd.track_status in
+            <foreach collection="logisticStatusList" item="status" open="(" separator="," close=")">
+                #{status}
+            </foreach>
+        </if>
+        <if test="beginOrderTime != null">
+            and lb.order_time >= #{beginOrderTime}
+        </if>
+        <if test="endOrderTime != null ">
+            and lb.order_time <![CDATA[<=]]>  #{endOrderTime}
+        </if>
+        group by EXTRACT(month FROM lb.order_time), EXTRACT(year FROM lb.order_time)
+        order by  EXTRACT(year FROM lb.order_time), EXTRACT(month FROM lb.order_time)
+    </select>
+    <select id="reconciliationStatistics"
+            resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$StatisticsVO$ReconciliationStatistics">
+        SELECT
+            COUNT(CASE WHEN reconciliation_status = 'toBeGenerated' THEN 1 END) AS toBeCreate,
+            COUNT(CASE WHEN reconciliation_status = 'toBeConfirm' THEN 1 END) AS toBeConfirm,
+            COUNT(CASE WHEN reconciliation_status = 'confirmed' THEN 1 END) AS confirm,
+            COUNT(CASE WHEN reconciliation_status = 'Reconciled' THEN 1 END) AS reconciliation
+        FROM (
+                 SELECT lbc.reconciliation_status
+                 FROM logistics_bill lb
+                          INNER JOIN logistics_bill_cost lbc ON lb.id = lbc.logistics_bill_id
+                 WHERE lb.is_deleted = false AND lbc.is_deleted = false
+                 and lb.order_type = #{orderType}
+             ) AS subquery
+    </select>
+    <select id="overdueStatistics" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$OverdueDTO">
+        SELECT
+            case when lb.ship_time is not  null then FLOOR(EXTRACT(EPOCH FROM (now()-lb.ship_time))/3600)
+                 else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour,
+            lc.effective_time as effectiveTime,
+            lb.shop_id as shopId
+        from logistics_bill lb
+                 inner join logistics_channel lc on lb.channel_id = lc.id
+        where lb.is_deleted =false
+          and lc.is_deleted = false
+          and lb.order_time is not null
+          and lc.effective_time != '0'
+          and lb.order_type = #{orderType}
+    </select>
 </mapper>

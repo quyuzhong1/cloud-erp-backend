@@ -253,4 +253,22 @@
             </foreach>
         </if>
     </select>
+    <select id="logisticStatistics"
+            resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$LogisticStatisticsDTO">
+        SELECT  EXTRACT(year FROM approve_time),  EXTRACT(month FROM approve_time) as month,
+                count(1)
+        from first_mile_delivery
+        where is_deleted = false
+        <if test="status != null and status != ''">
+            and  approve_status = #{status}
+        </if>
+        <if test="beginDate != null">
+            and approve_time >= #{beginDate}
+        </if>
+        <if test="endDate != null ">
+            and approve_time <![CDATA[<=]]>  #{endDate}
+        </if>
+        group by EXTRACT(month FROM approve_time), EXTRACT(year FROM approve_time)
+        order by  EXTRACT(year FROM approve_time), EXTRACT(month FROM approve_time)
+    </select>
 </mapper>

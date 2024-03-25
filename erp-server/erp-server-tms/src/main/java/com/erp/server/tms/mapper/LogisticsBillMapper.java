@@ -83,4 +83,10 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
     TmsFirstMileLogisticDTO.ViewDTO firstMileView(@Param("id") String id);
 
     List<TmsFirstMileLogisticDTO.TabListDTO> firstMileTabList(String orderType);
+
+    List<TmsFirstMileLogisticDTO.LogisticStatisticsDTO> statistics(TmsFirstMileLogisticDTO.LogisticStatisticsReq logisticStatisticsReq);
+
+    TmsFirstMileLogisticDTO.StatisticsVO.ReconciliationStatistics reconciliationStatistics(String orderType);
+
+    List<TmsFirstMileLogisticDTO.OverdueDTO> overdueStatistics(String code);
 }

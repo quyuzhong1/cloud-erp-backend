@@ -1801,5 +1801,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 .update();
 
     }
+
+    @Override
+    public List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(FirstMileDeliveryDTO.StatisticsReq dto) {
+        return baseMapper.logisticStatistics(dto);
+    }
 }
 

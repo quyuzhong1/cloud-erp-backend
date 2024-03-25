@@ -8,10 +8,9 @@ import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
+import net.sf.cglib.core.Local;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -336,6 +335,61 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          */
         private String logisticsTrack;
     }
+
+    /**
+     * 统计入参
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class LogisticStatisticsReq {
+
+        /**
+         * 订单类型
+         */
+        private String orderType;
+
+        /**
+         * 物流状态
+         */
+        private List<String> logisticStatusList;
+
+        /**
+         * 起始下单时间
+         */
+        private LocalDateTime beginOrderTime;
+
+        /**
+         * 结束下单时间
+         */
+        private LocalDateTime endOrderTime;
+    }
+
+    /**
+     * 统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LogisticStatisticsDTO {
+
+        /**
+         * 年份
+         */
+        private Integer year;
+
+        /**
+         * 月份
+         */
+        private Integer month;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
+
     /**
      * 列表统计返回结果
      */
@@ -431,6 +485,34 @@ public class TmsFirstMileLogisticDTO implements Serializable {
              */
             private Integer expired;
         }
+    }
+
+    /**
+     * 超期统计
+     */
+    @Data
+    @NoArgsConstructor
+    public static class OverdueDTO {
+
+        /**
+         * 实际时效（单位：小时）
+         */
+        private Integer actualHour;
+
+        /**
+         * 预估时效（单位：天）
+         */
+        private String effectiveTime;
+
+        /**
+         * 剩余时间（小时）
+         */
+        private Integer remainingTime;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
     }
 
     /**

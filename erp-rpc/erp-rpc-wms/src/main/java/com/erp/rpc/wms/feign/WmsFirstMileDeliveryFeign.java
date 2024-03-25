@@ -22,4 +22,11 @@ public interface WmsFirstMileDeliveryFeign {
      */
     @PostMapping("/feign/firstMileDelivery/updateStatus")
     Boolean updateStatus(@RequestBody FirstMileDeliveryDTO.UpdateStatusDTO dto);
+
+
+    /**
+     * 查询已装箱并且未生成物流单的发货单
+     */
+    @PostMapping("/feign/firstMileDelivery/logisticStatistics")
+    List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(@RequestBody FirstMileDeliveryDTO.StatisticsReq dto);
 }
