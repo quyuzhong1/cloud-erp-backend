@@ -68,7 +68,8 @@
             pr.customs_code as customsCode,
             pr.declare_element as declareElement,
             pr.latest_time as  latestTime,
-            pr.declare_supplier_name as declareSupplierName
+            pr.declare_supplier_name as declareSupplierName,
+            pr.failure_reason as failureReason
         from product_registration pr
         where
             ${params.sqlMap.default}

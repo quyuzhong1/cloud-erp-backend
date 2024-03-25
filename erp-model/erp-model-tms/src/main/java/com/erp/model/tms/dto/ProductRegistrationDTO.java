@@ -240,6 +240,12 @@ public class ProductRegistrationDTO implements Serializable {
         @ColumnWidth(20)
         private LocalDateTime latestTime;
 
+        /**
+         * 备案不通过原因
+         */
+        @ExcelProperty(value = "备案不通过原因")
+        @ColumnWidth(30)
+        private String failureReason;
     }
 
     /**

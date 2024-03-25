@@ -366,15 +366,16 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
         List<String> skuNoList = pullDataList.stream().map(ProductRegistrationEntity::getSkuNo).collect(Collectors.toList());
         //查询现在已存在的
         List<ProductRegistrationEntity> existEntityList = this.listBySkuNoListAndPlatform(skuNoList,declareSupplierId);
-        Set<String> existSkuNoSet =  existEntityList.stream().map(ProductRegistrationEntity::getSkuNo).collect(Collectors.toSet());
-        List<String> addSkuNoList = pullDataList.stream().map(ProductRegistrationEntity::getSkuNo).filter(skuNo -> !existSkuNoSet.contains(skuNo)).collect(Collectors.toList());
-        List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(addSkuNoList);
+        List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(skuNoList);
         List<ProductRegistrationEntity> addList = new ArrayList<>();
         List<ProductRegistrationEntity> updateList = new ArrayList<>();
         for (ProductRegistrationEntity entity : pullDataList) {
             ProductRegistrationEntity existEntity = existEntityList.stream().filter(v -> v.getSkuNo().equals(entity.getSkuNo())).findFirst().orElse(null);
+            SkuVO skuVO = skuVOS.stream().filter(v->v.getSkuNo().equals(entity.getSkuNo())).findFirst().orElse(null);
+            if(Objects.isNull(skuVO)){
+                continue;
+            }
             if(Objects.isNull(existEntity)){
-                SkuVO skuVO = skuVOS.stream().filter(v->v.getSkuNo().equals(entity.getSkuNo())).findFirst().orElse(new SkuVO());
                 entity.setSkuId(skuVO.getSkuId());
                 entity.setLatestTime(LocalDateTime.now());
                 entity.setDeclareCurrencySymbol(skuVO.getDeclareCurrencySymbol());
@@ -384,7 +385,6 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                 entity.setDeclareElement(skuVO.getDeclareElement());
                 addList.add(entity);
             }else{
-                SkuVO skuVO = skuVOS.stream().filter(v->v.getSkuNo().equals(entity.getSkuNo())).findFirst().orElse(new SkuVO());
                 existEntity.setDeclareCurrencySymbol(skuVO.getDeclareCurrencySymbol());
                 existEntity.setDeclareElement(skuVO.getDeclareElement());
                 BeanUtil.copyProperties(entity,existEntity, CopyOptions.create().setIgnoreNullValue(true));
