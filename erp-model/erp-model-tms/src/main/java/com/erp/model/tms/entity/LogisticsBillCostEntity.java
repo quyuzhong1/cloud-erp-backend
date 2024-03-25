@@ -44,10 +44,22 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     private String logisticsBillId;
 
     /**
+     * 物流单明细id
+     */
+    @TableField("logistics_bill_detail_id")
+    private String logisticsBillDetailId;
+
+    /**
      * 运输单号
      */
     @TableField("transport_no")
     private String transportNo;
+
+    /**
+     * 跟踪单号
+     */
+    @TableField("track_no")
+    private String trackNo;
 
     /**
     * 实重

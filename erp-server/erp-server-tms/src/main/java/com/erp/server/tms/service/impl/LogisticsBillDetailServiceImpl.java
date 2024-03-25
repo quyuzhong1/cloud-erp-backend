@@ -6,33 +6,32 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsAuthDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.server.tms.mapper.LogisticsBillDetailMapper;
 import com.erp.server.tms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 /**
  * <p>
@@ -56,10 +55,15 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     @Autowired
     private LogisticsBillService logisticsBillService;
 
+    @Autowired
+    private LogisticsBillCostService logisticsBillCostService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(LogisticsBillEntity billEntity, List<LogisticsBillDetailDTO.AddDTO> detailList) {
-        if (CollectionUtils.isNotEmpty(detailList)) {
+            if (CollectionUtils.isEmpty(detailList)) {
+                return Boolean.FALSE;
+            }
             String mainId = billEntity.getId();
             String channelId = billEntity.getChannelId();
             LogisticsAuthDTO.ViewDTO view = logisticsAuthService.getViewByChannelId(channelId);
@@ -69,8 +73,9 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
                 l.setLogisticsAuthId(view.getId());
             });
             //批量新增
-            return this.saveBatch(list);
-        }
+            this.saveBatch(list);
+            //新增物流费用单
+            logisticsBillService.addLogisticsBillCost(billEntity,list);
         return Boolean.TRUE;
     }
 
@@ -90,6 +95,8 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getTrackNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("删除了一个运输单【%s】", ModuleTypeEnum.LOGISTICS_BILL.getCode(), pairList, "编辑操作");
             this.removeByIds(deleteIds);
+            //删除费用
+            logisticsBillCostService.deleteByLogisticsBillDetailIdList(deleteIds);
         }
 
         List<LogisticsBillDetailEntity> list = BeanMapper.copyList(detailList, LogisticsBillDetailEntity.class);
@@ -107,8 +114,17 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean removeByMainIds(List<String> mainIds) {
-        return lambdaUpdate().in(LogisticsBillDetailEntity::getMainId, mainIds).remove();
+        List<LogisticsBillDetailEntity> list = listByMainIds(mainIds);
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.TRUE;
+        }
+        //删除物流费用明细
+        List<String> detailIdList = list.stream().map(LogisticsBillDetailEntity::getId).collect(Collectors.toList());
+        logisticsBillCostService.deleteByLogisticsBillDetailIdList(detailIdList);
+        //删除物流明细
+        return  this.removeByIds(detailIdList);
     }
 
 

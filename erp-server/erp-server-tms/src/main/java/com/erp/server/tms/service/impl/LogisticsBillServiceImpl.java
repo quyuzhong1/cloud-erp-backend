@@ -132,8 +132,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
         logisticsBillDetailService.add(logisticsBillEntity, addDTO.getDetailList());
 
-        //新增物流费用单
-        addLogisticsBillCost(logisticsBillEntity, addDTO.getCurrency());
+
         return save;
     }
 
@@ -207,8 +206,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 this.saveOrUpdate(saveEntity);
             } else {
                 this.save(saveEntity);
-                //新增物流费用单
-                addLogisticsBillCost(saveEntity, addDTO.getCurrency());
             }
 
             logisticsBillDetailService.removeByMainIds(Arrays.asList(saveEntity.getId()));
@@ -222,6 +219,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 detailEntityList.add(saveDetailEntity);
             }
             logisticsBillDetailService.saveOrUpdateBatch(detailEntityList);
+            //新增物流费用单
+            addLogisticsBillCost(saveEntity,detailEntityList);
         }
         return Boolean.TRUE;
     }
@@ -703,7 +702,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      * @author Will
      * @date: 2023/11/20 12:27
      */
-    public void addLogisticsBillCost(LogisticsBillEntity logisticsBillEntity, String currency) {
+    @Override
+    public void addLogisticsBillCost(LogisticsBillEntity logisticsBillEntity,List<LogisticsBillDetailEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
         LogisticsBillCostDTO.AddDTO addDTO = new LogisticsBillCostDTO.AddDTO();
         //渠道关联模板
         ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(logisticsBillEntity.getChannelId());
@@ -782,7 +785,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
         addDTO.setTransportNo(logisticsBillEntity.getTransportNo());
         addDTO.setChannelId(logisticsBillEntity.getChannelId());
-        logisticsBillCostService.add(addDTO);
+
+        for (LogisticsBillDetailEntity detailEntity : list) {
+            addDTO.setLogisticsBillDetailId(detailEntity.getId());
+            addDTO.setTrackNo(detailEntity.getTrackNo());
+            logisticsBillCostService.add(addDTO);
+        }
     }
 
     public static void main(String[] args) {

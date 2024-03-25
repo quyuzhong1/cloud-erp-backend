@@ -60,4 +60,11 @@ public interface TmsLogisticsBillCostDetailService extends SuperService<TmsLogis
      * @return List<CostViewDTO>
      */
     List<TmsLogisticsBillCostDetailDTO.CostViewDTO> listCostByMainIdList(List<String> mainIdList);
+    /**
+     * @description: 根据主表id集合查询
+     * @author Will
+     * @date: 2024/3/25 14:16
+     * @param mainIdList
+     */
+    void deleteByMainIdList(List<String> mainIdList);
 }

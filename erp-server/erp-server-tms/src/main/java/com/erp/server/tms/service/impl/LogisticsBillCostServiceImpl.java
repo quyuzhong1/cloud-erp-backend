@@ -326,6 +326,23 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return data;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteByLogisticsBillDetailIdList(List<String> logisticsBillDetailIdList) {
+        if (CollectionUtils.isEmpty(logisticsBillDetailIdList)) {
+            return;
+        }
+        List<LogisticsBillCostEntity> logisticsBillCostList = this.listByLogisticsBillDetailIdList(logisticsBillDetailIdList);
+        if (CollectionUtils.isEmpty(logisticsBillCostList)) {
+            return;
+        }
+        //删除费用明细
+        List<String> idList = logisticsBillCostList.stream().map(LogisticsBillCostEntity::getId).distinct().collect(Collectors.toList());
+        tmsLogisticsBillCostDetailService.deleteByMainIdList(idList);
+        //删除费用
+        this.removeByIds(idList);
+    }
+
     /**
      * @description: 根据物流单id集合查询
      * @author Will
@@ -338,6 +355,20 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             return Collections.EMPTY_LIST;
         }
        return this.lambdaQuery().in(LogisticsBillCostEntity::getLogisticsBillId,logisticsBillIdList).list();
+    }
+
+    /**
+     * @description: 根据物流单明细id集合查询
+     * @author Will
+     * @date: 2024/3/25 14:23
+     * @param logisticsBillDetailIdList
+     * @return List<LogisticsBillCostEntity>
+     */
+    private List<LogisticsBillCostEntity> listByLogisticsBillDetailIdList (List<String> logisticsBillDetailIdList) {
+        if (CollectionUtils.isEmpty(logisticsBillDetailIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return this.lambdaQuery().in(LogisticsBillCostEntity::getLogisticsBillDetailId,logisticsBillDetailIdList).list();
     }
 
     /**
