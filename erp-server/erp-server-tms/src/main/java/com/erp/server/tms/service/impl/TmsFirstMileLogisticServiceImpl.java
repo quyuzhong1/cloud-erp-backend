@@ -760,7 +760,56 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     public List<BatchResultDTO> delete(List<String> ids) {
-        return null;
+        List<LogisticsBillEntity> logisticsBillEntityList = listByIds(ids);
+        if(CollectionUtils.isEmpty(logisticsBillEntityList)){
+            throw new ServiceException("物流单为空");
+        }
+        List<String> mainIdList = logisticsBillEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        List<LogisticsBillDetailEntity> detailList = logisticsBillDetailService.listByMainIds(mainIdList);
+        List<LogisticsBillCostEntity> costList = logisticsBillCostService.listByLogisticsBillIdList(mainIdList);
+        List<TmsLogisticsBillCostDetailEntity> costDetailList = logisticsBillCostDetailService.listByMainIdList(costList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        List<String> mainIds = new ArrayList<>();
+        List<String> detailIds = new ArrayList<>();
+        List<String> costIds = new ArrayList<>();
+        List<String> costDetailIds = new ArrayList<>();
+
+        for(LogisticsBillEntity logisticsBillEntity : logisticsBillEntityList){
+            LogisticsBillDetailEntity detailEntity = detailList.stream().filter(v->v.getMainId().equals(logisticsBillEntity.getId())).findFirst().orElse(null);
+            if(Objects.nonNull(detailEntity) && !detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.WAIT_ORDER.getCode())){
+                resultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getCounterNo(),"只有待下单可以删除"));
+                continue;
+            }
+            mainIds.add(logisticsBillEntity.getId());
+            if(Objects.nonNull(detailEntity)){
+                detailIds.add(detailEntity.getId());
+            }
+            List<LogisticsBillCostEntity> costEntityList = costList.stream().filter(v->v.getLogisticsBillId().equals(logisticsBillEntity.getId())).collect(Collectors.toList());
+            List<String> costIdList = costEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(costIdList)){
+                costIds.addAll(costIdList);
+                List<TmsLogisticsBillCostDetailEntity> costDetailEntityList = costDetailList.stream().filter(v->costIdList.contains(v.getMainId())).collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(costDetailEntityList)){
+                    costDetailIds.addAll(costDetailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+                }
+            }
+        }
+        if(CollectionUtils.isNotEmpty(mainIds)){
+            this.removeByIds(mainIds);
+        }
+
+        if(CollectionUtils.isNotEmpty(detailIds)){
+            logisticsBillDetailService.removeByIds(detailIds);
+        }
+
+        if(CollectionUtils.isNotEmpty(costIds)){
+            logisticsBillCostService.removeByIds(costIds);
+        }
+
+        if(CollectionUtils.isNotEmpty(costDetailIds)){
+            logisticsBillCostDetailService.removeByIds(costDetailIds);
+        }
+        return resultDTOList;
     }
 
     @Override
