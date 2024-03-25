@@ -2,8 +2,11 @@ package com.common.business.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -114,6 +117,13 @@ public enum PlatformDictEnum implements EnumMessage {
             }
         }
         return null;
+    }
+
+    public static PlatformDictEnum checkAndGetByCode(String platform) {
+        return Arrays.stream(values())
+                .filter(e-> e.getCode().equalsIgnoreCase(platform))
+                .findFirst()
+                .orElseThrow(() -> new ServiceException(ApiError.ERROR_92053));
     }
 
     /**

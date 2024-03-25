@@ -96,16 +96,11 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return Boolean
      */
     Boolean cancelProcess(List<String> ids);
+
     /**
-     * @description: 结束交货
-     * @author Will
-     * @date: 2023/3/16 11:35
-     * @param ids
-     * @param remark
-     * @param isValid
-     * @return Boolean
+     * 根据ids查询
      */
-    Boolean finishDelivery(List<String> ids, String remark,Boolean isValid);
+    List<PurchaseOrderEntity> getList(List<String> ids);
 
     /**
      * @description: 导出采购合同PDF

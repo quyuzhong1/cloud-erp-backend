@@ -64,6 +64,7 @@ public class AmzReportReservedInventoryHandler extends AmzReportBusinessHandler 
             paramDTO.setShopIdList(Collections.singletonList(taskEntity.getShopId()));
             paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
             paramDTO.setMatchResult(true);
+            paramDTO.setIsExpire(false);
             listingInfoMap = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO)
                     .stream()
                     .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getPlatformSkuNo, Function.identity()));

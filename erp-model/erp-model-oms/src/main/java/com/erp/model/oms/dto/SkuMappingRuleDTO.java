@@ -1,6 +1,8 @@
 package com.erp.model.oms.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,6 +15,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -45,6 +48,11 @@ public class SkuMappingRuleDTO implements Serializable {
         private Integer priority;
 
         /**
+         * 规则名称
+         */
+        private String ruleName;
+
+        /**
          * 规则类型
          */
         private String ruleType;
@@ -70,6 +78,24 @@ public class SkuMappingRuleDTO implements Serializable {
         private LocalDateTime updateTime;
     }
 
+    /**
+     * 详情DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ParamsDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
     /**
      * 详情DTO
      */
@@ -140,6 +166,17 @@ public class SkuMappingRuleDTO implements Serializable {
          * 结束符 url: common/enumDropDown?type=SkuMappingSymbolic
          */
         private String endSymbol;
+
+        /**
+         * 起始符有效位置 url: common/enumDropDown?type=SkuMappingSymbolicSide
+         */
+        private String validStartingSymbolPosition;
+
+        /**
+         * 结束符有效位置 url: common/enumDropDown?type=SkuMappingSymbolicSide
+         */
+        private String validEndSymbolPosition;
+
     }
     /**
      * 扩展规则条件
@@ -151,12 +188,12 @@ public class SkuMappingRuleDTO implements Serializable {
         /**
          * 替换前字符
          */
-        private String beforeReplacingCharacters;
+        private String beforeReplacingCharacters = "";
 
         /**
          * 替换后字符
          */
-        private String afterReplacingCharacters;
+        private String afterReplacingCharacters = "";
     }
 
     /**
@@ -238,6 +275,11 @@ public class SkuMappingRuleDTO implements Serializable {
         private String ruleType;
 
         /**
+         * 规则名称
+         */
+        private String ruleName;
+
+        /**
          * 规则正则
          */
         @JsonIgnore
@@ -269,15 +311,6 @@ public class SkuMappingRuleDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class RuleDTO  {
-        /**
-         * 起始符有效位置 url: common/enumDropDown?type=SkuMappingSymbolicSide
-         */
-        private String validStartingSymbolPosition;
-
-        /**
-         * 结束符有效位置 url: common/enumDropDown?type=SkuMappingSymbolicSide
-         */
-        private String validEndSymbolPosition;
 
         /**
          * 规则详情

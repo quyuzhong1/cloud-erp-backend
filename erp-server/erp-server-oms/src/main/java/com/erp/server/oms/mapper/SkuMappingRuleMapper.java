@@ -1,8 +1,12 @@
 package com.erp.server.oms.mapper;
-import com.erp.model.oms.entity.SkuMappingRuleEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.oms.dto.SkuMappingRuleDTO;
+import com.erp.model.oms.entity.SkuMappingRuleEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -16,4 +20,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface SkuMappingRuleMapper extends BaseMapper<SkuMappingRuleEntity> {
 
+    IPage<SkuMappingRuleDTO.ListDTO> paging(Page query,@Param("params") SkuMappingRuleDTO.ParamsDTO params);
 }

@@ -1740,6 +1740,11 @@ public class SoB2cDTO implements Serializable {
          * 订单仓库名称
          */
         private String warehouseName;
+
+        /**
+         * 是否是系统新增的订单
+         */
+        private boolean isNewInsertOrder = false;
     }
 
     /**

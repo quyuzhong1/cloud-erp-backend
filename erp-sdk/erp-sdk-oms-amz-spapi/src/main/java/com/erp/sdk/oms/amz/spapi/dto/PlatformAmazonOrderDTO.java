@@ -115,6 +115,9 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         // 订单日期
         LocalDateTime purchaseLocalDateTime = sourceOrder.convertPurchaseLocalDateTime();
         orderDTO.setBillDate(purchaseLocalDateTime.toLocalDate());
+        // 平台订单创建时间
+        orderDTO.setPlatformOrderCreateTime(purchaseLocalDateTime);
+
         // 平台订单号
         orderDTO.setPlatformCode(sourceOrder.getAmazonOrderId());
         // 销售平台

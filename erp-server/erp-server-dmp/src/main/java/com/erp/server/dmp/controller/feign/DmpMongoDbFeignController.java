@@ -2,14 +2,20 @@ package com.erp.server.dmp.controller.feign;
 
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.MongoTableNameContant;
+import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
+import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.oms.dto.OmsMongoDTO;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.erp.server.dmp.enums.CleanDataTableEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
+import com.erp.server.dmp.service.AmzBusinessHandleService;
+import com.erp.server.dmp.service.impl.BusinessServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -37,6 +43,8 @@ public class DmpMongoDbFeignController {
     private MongoService mongoService;
     @Resource
     private MongoTemplate mongoTemplate;
+    @Resource
+    private AmzBusinessHandleService amzBusinessHandleService;
 
     /**
      * 拉取货件
@@ -82,4 +90,18 @@ public class DmpMongoDbFeignController {
 
     }
 
+    /**
+     * 查询mongodb是否有销售出库单
+     *
+     * @Author Jim
+     * @since 2024-02-14
+     **/
+    @PostMapping("/checkSoOutStock")
+    public Boolean checkSoOutStock(@RequestBody PlatformOrderDTO resultDTO){
+        if (StringUtils.isBlank(resultDTO.getPlatformCode()) || StringUtils.isBlank(resultDTO.getShopId())){
+            return false;
+        }
+        DmpPullSoOutStockDTO dto = new DmpPullSoOutStockDTO(resultDTO.getShopId(), resultDTO.getPlatformCode());
+        return amzBusinessHandleService.checkAndSendSoOutStock(dto);
+    }
 }

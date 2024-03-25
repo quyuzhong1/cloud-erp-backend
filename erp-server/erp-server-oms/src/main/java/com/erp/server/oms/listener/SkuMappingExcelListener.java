@@ -1,5 +1,6 @@
 package com.erp.server.oms.listener;
 
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -16,9 +17,13 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.ListingInfoService;
+import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SkuMappingService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -84,12 +89,21 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
      * 更新的listing
      */
     private List<ListingInfoEntity> updateListingInfoList = new ArrayList<>(10);
+    private final OperateLogService operateLogService;
 
+    private final CommonService commonService;
+
+    private final List<String> removeIds = new ArrayList<>();
+    private final List<Pair<String, String>> addLogPairList = new ArrayList<>();
+
+    private final List<Pair<String, String>> updateLogPairList = new ArrayList<>();
     public SkuMappingExcelListener(SkuMappingService skuMappingService, List<SkuVO> skuList,
                                    List<ShopInfoEntity> shopList, List<SkuMappingEntity> skuMappingList,
                                    List<DictBasicDTO.ViewDTO> dictBasicList,
                                    List<ListingInfoEntity> listingInfoEntityList,
-                                   ListingInfoService listingInfoService) {
+                                   ListingInfoService listingInfoService,
+                                   OperateLogService operateLogService,
+                                   CommonService commonService) {
         this.skuMappingService = skuMappingService;
         this.skuList = skuList;
         this.shopList = shopList;
@@ -97,6 +111,8 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         this.dictBasicList = dictBasicList;
         this.listingInfoEntityList = listingInfoEntityList;
         this.listingInfoService = listingInfoService;
+        this.operateLogService = operateLogService;
+        this.commonService = commonService;
 
     }
 
@@ -149,6 +165,8 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         paramDTO.setShopIdList(Collections.singletonList(shop.getId()));
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(Collections.singletonList(skuMappingImportExcelDTO.getPlatformSkuNo()));
+//        paramDTO.setIsExpire(false);
+        // 所有包含历史映射关系
         List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
         String listingId = "";
 
@@ -161,11 +179,17 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             return;
         }
 
+        ListingInfoWithSkuMappingDTO mappingDto = listDto.stream().filter(e -> !e.getIsExpire()).findFirst().orElseThrow(null);
+        if (null == mappingDto){
+            errorMsgList.add("平台sku信息不存在");
+            skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(skuMappingImportExcelDTO);
+            return;
+        }
+
         // 已存在
-//        if (CollectionUtils.isNotEmpty(listDto) && isApiPlatform){
-        if (CollectionUtils.isNotEmpty(listDto)){
-            ListingInfoWithSkuMappingDTO currentSkuMapping = listDto.get(0);
-            if( currentSkuMapping.getMatchResult()){
+        if (isApiPlatform){
+            if( mappingDto.getMatchResult()){
                 errorMsgList.add("该店铺平台sku已存在匹配关系");
                 skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(skuMappingImportExcelDTO);
@@ -173,12 +197,21 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             }
         }
 
-        // 设置当前listingId
-        if (CollectionUtils.isNotEmpty(listDto)){
-            listingId = listDto.get(0).getListingId();
+        String skuNo = skuMappingImportExcelDTO.getProductSkuNo();
+
+        // 校验不允许重复历史
+        long historyCount = listDto.stream().filter(e -> e.getProductSkuNo().equals(skuNo)).count();
+        if (0 < historyCount){
+            errorMsgList.add(StrUtil.format("当前映射关系在【{}】已存在过，无法修改", skuNo));
+            skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(skuMappingImportExcelDTO);
+            return;
         }
 
-        String skuNo = skuMappingImportExcelDTO.getProductSkuNo();
+        // 设置当前listingId
+        listingId = mappingDto.getListingId();
+
+
         SkuVO sku = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
         if (Objects.isNull(sku)) {
             errorMsgList.add("产品sku不存在");
@@ -203,7 +236,6 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
                 .filter(l -> l.getId().equalsIgnoreCase(finalListingId1))
                 .findFirst().orElse(null);
 
-
 //        if (Objects.nonNull(listingInfoEntity)) {
 //            listingId = listingInfoEntity.getId();
 //            if (listingInfoEntity.getMatchResult()){
@@ -224,13 +256,34 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         ).collect(Collectors.toList());
 
         if (CollectionUtils.isNotEmpty(excelList)) {
-//            errorMsgList.add("相同平台sku只能对应一个平台sku");
             // 修改对应关系
             SkuMappingEntity skuMappingEntity = excelList.stream().findFirst().orElse(null);
             if (null != skuMappingEntity){
-                skuMappingEntity.setProductSkuId(sku.getSkuId());
-                skuMappingEntity.setProductSkuNo(sku.getSkuNo());
+                //删除原来的，再新增一条，与编辑逻辑保持一致
+                skuMappingEntity.setExpireTime(LocalDateTime.now());
+                skuMappingEntity.setIsExpire(Boolean.TRUE);
+                skuMappingEntity.setIsDeleted(true);
+                removeIds.add(skuMappingEntity.getId());
+
+                SkuMappingEntity addSkuMapping = new SkuMappingEntity();
+                addSkuMapping.setShopId(skuMappingEntity.getShopId());
+                addSkuMapping.setType(RuleTypeEnum.PLATFORM);
+                addSkuMapping.setProductSkuId(sku.getSkuId());
+                addSkuMapping.setProductSkuNo(sku.getSkuNo());
+                addSkuMapping.setListingId(listingId);
+                addSkuMapping.setDictPlatform(platform.getValue());
+                addSkuMapping.setPlatformName(platformName);
+                //生效时间
+                addSkuMapping.setEffectiveTime(LocalDateTime.now());
+                addSkuMapping.setExpireTime(LocalDateTime.now().plusYears(MathUtil.NUMBER_100));
+
                 updateSkuMappingList.add(skuMappingEntity);
+                addSkuMappingList.add(addSkuMapping);
+                List<String> contentList = operateLogService.getContentByObj(skuMappingEntity,addSkuMapping,"");
+                for(String content:contentList){
+                    Pair<String, String> pair = new Pair<>(addSkuMapping.getListingId(),content);
+                    updateLogPairList.add(pair);
+                }
                 listingInfoEntity.setMatchResult(true);
                 updateListingInfoList.add(listingInfoEntity);
                 return;
@@ -279,19 +332,18 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         add.setEffectiveTime(now);
         add.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
         addSkuMappingList.add(add);
+        Pair<String, String> pair = new Pair<>(listingId,listingId);
+        addLogPairList.add(pair);
     }
 
 
     //所有执行玩后 在执行
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-        if (CollectionUtils.isNotEmpty(addSkuMappingList)) {
-            skuMappingService.saveBatch(addSkuMappingList);
-        }
-
         if (CollectionUtils.isNotEmpty(addListingInfoEntityList)) {
             listingInfoService.saveBatch(addListingInfoEntityList);
         }
+
         if (CollectionUtils.isNotEmpty(updateSkuMappingList)){
             if (!skuMappingService.updateBatchById(updateSkuMappingList)){
                 throw new ServiceException("映射关系更新异常");
@@ -301,6 +353,19 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             if (!listingInfoService.updateBatchById(updateListingInfoList)){
                 throw new ServiceException("Listing更新异常");
             }
+        }
+        if (CollectionUtils.isNotEmpty(addSkuMappingList)) {
+            skuMappingService.saveBatch(addSkuMappingList);
+        }
+
+        if(CollectionUtils.isNotEmpty(removeIds)){
+            skuMappingService.removeByIds(removeIds);
+        }
+        if (CollectionUtils.isNotEmpty(addLogPairList)) {
+            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】新增了sku映射表",commonService.getUserInfo().getUserName())+"id为【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), addLogPairList,"新增操作");
+        }
+        if (CollectionUtils.isNotEmpty(updateLogPairList)) {
+            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】编辑sku映射表",commonService.getUserInfo().getUserName())+"，【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), updateLogPairList,"编辑操作");
         }
     }
 

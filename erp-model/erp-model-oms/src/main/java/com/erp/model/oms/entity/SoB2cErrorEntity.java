@@ -100,6 +100,11 @@ public class SoB2cErrorEntity implements Serializable{
     */
     @TableField(value="return_json")
     private Object returnJson;
+    /**
+     * 销售订单明细id
+     */
+    @TableField("detail_id")
+    private String detailId;
 
 
     public static final String MAIN_ID = "main_id";

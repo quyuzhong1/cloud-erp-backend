@@ -439,12 +439,11 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 throw new ServiceException(ApiError.ERROR_98016);
             }
             addDTO.setType(PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode());
-            addDTO.setPurchaseUserId(entity.getApproveUserId());
             addDTO.setPurchaseOrgId(value.get(0).getPurchaseOrgId());
             addDTO.setPurchaseDate(LocalDate.now());
             addDTO.setDeliveryWarehouseId(value.get(0).getDestWarehouseId());
             addDTO.setPurchaseUserId(value.get(0).getPurchaseUserId());
-
+            addDTO.setIsFirstMassProduct(entity.getIsFirstMassProduct());
             //付款条件
             String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(value.get(0).getSupplierId()) && StringUtils.isNotBlank(obj.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPaymentCondition())).orElse("");
 

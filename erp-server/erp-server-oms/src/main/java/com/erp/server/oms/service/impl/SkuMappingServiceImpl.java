@@ -23,12 +23,13 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
-import com.erp.model.bi.dto.BiTargetNewProductSettingDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
-import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -169,14 +170,14 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (!typeList.contains(type)) {
             throw new ServiceException("导入类型有误");
         }
-        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
-        List<SkuMappingEntity> skuMappingList = this.listEffectiveList();
-        List<ListingInfoEntity> list = listingInfoService.list();
         if (platform.equals(type)) {
+            List<SkuMappingEntity> skuMappingList = this.listEffectiveList();
+            List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+            List<ListingInfoEntity> list = listingInfoService.list();
             String key = DictBasicTypeEnum.SALES_PLATFORM.getType();
             List<DictBasicDTO.ViewDTO> dictBasicList = dictBasicService.getByKey(key);
             List<ShopInfoEntity> shopInfoList = shopInfoService.list();
-            SkuMappingExcelListener excelListenerUtil = new SkuMappingExcelListener(this, skuList, shopInfoList, skuMappingList, dictBasicList, list, listingInfoService);
+            SkuMappingExcelListener excelListenerUtil = new SkuMappingExcelListener(this, skuList, shopInfoList, skuMappingList, dictBasicList, list, listingInfoService,operateLogService,commonService);
             try {
                 EasyExcel.read(excelFile.getInputStream(), SkuMappingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             } catch (Exception e) {
@@ -202,7 +203,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             if (CollectionUtils.isNotEmpty(overseasWarehouseList)) {
                 overseasWarehouseMap = overseasWarehouseList.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getId, Function.identity()));
             }
-            SkuMappingWarehouseExcelListener excelListenerUtil = new SkuMappingWarehouseExcelListener(this, skuList, skuMappingList, warehouseList, overseasWarehouseMap, list, listingInfoService);
+            SkuMappingWarehouseExcelListener excelListenerUtil = new SkuMappingWarehouseExcelListener( warehouseList, overseasWarehouseMap);
             try {
                 EasyExcel.read(excelFile.getInputStream(), SkuMappingWarehouseImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             } catch (Exception e) {
@@ -362,6 +363,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
         checkExist(id, listing.getId(), dto.getShopId());
 
+        checkHistory(id, listing.getId(), dto.getShopId(), dto.getProductSkuId());
+
         // 平台sku校验
         if (PlatformDictEnum.hasConnectionPlatform().contains(platformSkuNo)) {
             // 已对接api的平台
@@ -387,13 +390,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         LocalDateTime now = LocalDateTime.now();
         skuMaping.setExpireTime(now);
         skuMaping.setIsExpire(Boolean.TRUE);
-        skuMaping.setIsDeleted(true);
+//        skuMaping.setIsDeleted(true);
         if (!this.updateById(skuMaping)) {
             throw new ServiceException("[SkuMapping] 历史映射修改失败");
         }
-        if (!this.removeById(skuMaping.getId())) {
-            throw new ServiceException("[SkuMapping] 原数据删除失败");
-        }
+//        if (!this.removeById(skuMaping.getId())) {
+//            throw new ServiceException("[SkuMapping] 原数据删除失败");
+//        }
         SkuMappingEntity addSkuMaping = new SkuMappingEntity();
         addSkuMaping.setShopId(dto.getShopId());
         addSkuMaping.setDictPlatform(skuMaping.getDictPlatform());
@@ -413,9 +416,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", commonService.getUserInfo().getUserName(), "sku映射表", addSkuMaping.getId());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMaping.getId(), "新增操作");
-        operateLogService.addModuleOperateLogByObj(skuMaping, addSkuMaping, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMaping.getId(), StrUtil.format("用户【{}】编辑sku映射表",commonService.getUserInfo().getUserName()));
+//        String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", commonService.getUserInfo().getUserName(), "sku映射表", addSkuMaping.getId());
+//        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMaping.getId(), "新增操作");
+        operateLogService.addModuleOperateLogByObj(skuMaping, addSkuMaping, ModuleTypeEnum.LISTING_INFO.getCode(), addSkuMaping.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",commonService.getUserInfo().getUserName()));
         return addSkuMaping.getId();
     }
 
@@ -509,6 +512,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuMappingEntity.setEffectiveTime(now);
         skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
         if (this.save(skuMappingEntity)) {
+            // 操作日志
+            String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", commonService.getUserInfo().getUserName(), "sku映射表", skuMappingEntity.getId());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingId, "新增操作");
             return skuMappingEntity.getId();
         }
         return "";
@@ -609,7 +615,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         LocalDateTime now = LocalDateTime.now();
         skuMapping.setExpireTime(now);
         skuMapping.setIsExpire(Boolean.TRUE);
-        skuMapping.setIsDeleted(true);
+//        skuMapping.setIsDeleted(true);
         boolean updateResult = this.updateById(skuMapping);
         if (!updateResult) {
             throw new ServiceException("更新失败");
@@ -636,9 +642,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException("[SkuMapping] 数据新增失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", commonService.getUserInfo().getUserName(), "sku映射表", addSkuMapping.getId());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMapping.getId(), "新增操作");
-        operateLogService.addModuleOperateLogByObj(skuMapping, addSkuMapping, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMapping.getId(), "编辑sku映射表");
+//        String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", commonService.getUserInfo().getUserName(), "sku映射表", addSkuMapping.getId());
+//        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMapping.getId(), "新增操作");
+        operateLogService.addModuleOperateLogByObj(skuMapping, addSkuMapping, ModuleTypeEnum.LISTING_INFO.getCode(), addSkuMapping.getListingId(), "编辑sku映射表");
         return addSkuMapping.getId();
 
     }
@@ -895,6 +901,15 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     }
 
+    @Override
+    public void checkHistory(String id, String listingId, String shopId, String productSkuId) {
+        SkuMappingEntity oldEntity = this.baseMapper.findHistory(id, listingId, shopId, productSkuId);
+        if(null == oldEntity){
+            return;
+        }
+        throw new ServiceException(ApiError.SKU_MAPPING_NOT_ALLOW_HISTORY, oldEntity.getExpireTime().toString());
+    }
+
     /**
      * 填充数据
      *
@@ -951,6 +966,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public List<SkuMappingEntity> listByListingIds(List<String> listingIds) {
+        if(CollectionUtils.isEmpty(listingIds)){
+            return new ArrayList<>();
+        }
         return lambdaQuery()
                 .in(SkuMappingEntity::getListingId, listingIds)
                 .eq(SkuMappingEntity::getIsExpire, false)
@@ -983,7 +1001,18 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public List<ListingInfoWithSkuMappingDTO> findListDto(ListingInfoParamDTO dto) {
+
+        // 指定过期时间匹配小于或等于过期时间
         List<ListingInfoWithSkuMappingDTO> list = baseMapper.listByParams(dto);
+        Map<String, List<ListingInfoWithSkuMappingDTO>> groupMap = list.stream().collect(Collectors.groupingBy(ListingInfoWithSkuMappingDTO::getListingId));
+        // 过滤取指定过期时间匹配小于或等于过期时间/空=最新匹配
+        if (null != dto.getLastExpireDate()){
+            list = groupMap.values()
+                    .stream()
+                    .map(listingInfoWithSkuMappingDTOS -> ListingInfoWithSkuMappingDTO.getActiveOne(listingInfoWithSkuMappingDTOS, dto.getLastExpireDate()))
+                    .collect(Collectors.toList());
+        }
+
         if (CollectionUtils.isEmpty(list) || RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType())){
             return list;
         }
@@ -1134,11 +1163,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     @Override
-    public List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(List<String> erpSkuIdList,String provideCode) {
-        if(CollectionUtils.isEmpty(erpSkuIdList) && StringUtils.isBlank(provideCode)){
+    public List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(List<String> erpSkuIdList,String provideCode,String warehouseId) {
+        if(CollectionUtils.isEmpty(erpSkuIdList) && StringUtils.isBlank(provideCode) && StringUtils.isBlank(warehouseId) ){
             return new ArrayList<>();
         }
-        return baseMapper.listByErpSkuIdAndType(erpSkuIdList,provideCode);
+        return baseMapper.listByErpSkuIdAndType(erpSkuIdList,provideCode, warehouseId);
     }
 
     @Override

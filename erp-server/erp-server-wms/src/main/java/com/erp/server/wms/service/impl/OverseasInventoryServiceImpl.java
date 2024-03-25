@@ -153,6 +153,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatformSkuNoList(plaformSkuNoList);
         paramDTO.setMatchResult(true);
+        paramDTO.setIsExpire(false);
         List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
 
         // 属性赋值
@@ -267,6 +268,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         paramDTO.setPlatformSkuNoList(notMappingEntityList.stream().map(OverseasInventoryEntity::getPlatformSku).distinct().collect(Collectors.toList()));
         paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
         paramDTO.setMatchResult(true);
+        paramDTO.setIsExpire(false);
 
         // 查询ListingInfo和skuMapping的关系
         List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);

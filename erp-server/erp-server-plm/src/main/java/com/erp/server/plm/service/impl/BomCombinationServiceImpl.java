@@ -486,7 +486,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         //审核
         ProductDetailOperateDTO dto = new ProductDetailOperateDTO();
         dto.setId(id);
-        Boolean approve = productDetailService.approvalPass(dto);
+        Boolean approve = productDetailService.approvalPass(dto,Boolean.FALSE);
         if (!approve) {
             throw new ServiceException(ApiError.ERROR_94006);
         }

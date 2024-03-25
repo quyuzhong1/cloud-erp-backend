@@ -17,7 +17,6 @@ import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.SkuMappingRuleDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
@@ -109,6 +108,11 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 paramDTO.setShopIdList(Collections.singletonList(dto.getShopId()));
                 paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
                 paramDTO.setPlatformSkuNoList(Collections.singletonList(dto.getPlatformSkuNo()));
+                // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
+                if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())){
+                    paramDTO.setPlatformSpuNoList(Collections.singletonList(dto.getPlatformProductNo()));
+                }
+                paramDTO.setIsExpire(false);
                 List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
 
                 if (!CollectionUtils.isEmpty(listDto)) {
@@ -133,6 +137,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 if (!skuMappingService.save(skuMappingEntity)) {
                     throw new ServiceException("【listing消费】SkuMapping保存失败");
                 }
+                String msg = StrUtil.format("拉取第三方产品新增【{}】，平台sku为【{}】", "平台sku表",entity.getPlatformSkuNo());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), entity.getId(), "新增操作");
             } else {
                 // 是否修改
                 if (!oldEntity.toString().equals(entity.toString())) {

@@ -3,6 +3,7 @@ package com.erp.rpc.dmp.feign;
 
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
+import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.dmp.dto.DmpSyncReportScheduleDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,5 +38,12 @@ public interface DmpAmazonFeign {
     @PostMapping("/amazon/shop")
     AmazonShopInfoDTO getShopAuth(@RequestBody String shopId);
 
-
+    /**
+     * 重推销售出库单
+     *
+     * @Author Jim
+     * @since 2024-03-12
+     **/
+    @PostMapping("/amazon/checkAndSendSoOutStock")
+    Boolean checkAndSendSoOutStock(@RequestBody DmpPullSoOutStockDTO dto);
 }

@@ -2,15 +2,17 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.dto.base.BaseDropDownDTO;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -25,12 +27,10 @@ import com.erp.model.oms.enums.SkuMappingRuleEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.oms.constant.OmsConstant;
 import com.erp.server.oms.convert.SkuMappingConverter;
 import com.erp.server.oms.convert.SkuMappingRuleConverter;
 import com.erp.server.oms.mapper.SkuMappingRuleMapper;
 import com.erp.server.oms.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -39,8 +39,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Field;
-import java.lang.reflect.Type;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -73,13 +71,9 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SkuMappingRuleDTO.AddDTO addDTO) {
-        SkuMappingRuleEntity existEntity = this.getByRuleType(addDTO.getRuleType());
-        if(Objects.nonNull(existEntity)){
-            throw new ServiceException("相同规则类型只能新建一个");
-        }
         SkuMappingRuleEntity skuMappingRuleEntity = new SkuMappingRuleEntity();
         BeanMapperUtils.copy(addDTO, skuMappingRuleEntity);
-        handleSamePriority(skuMappingRuleEntity);
+//        handleSamePriority(skuMappingRuleEntity);
         // 数据处理
         handleData(addDTO,skuMappingRuleEntity);
 
@@ -108,7 +102,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
             throw new ServiceException("不能更改规则类型");
         }
         SkuMappingRuleEntity skuMappingRuleEntity =  BeanMapperUtils.map(SkuMappingRuleEntity.class, updateDTO);
-        handleSamePriority(skuMappingRuleEntity);
+//        handleSamePriority(skuMappingRuleEntity);
         // 数据处理
         handleData(updateDTO,skuMappingRuleEntity);
         log.info("编辑 开始修改sku对照表匹配规则数据，id：【{}】", old.getId());
@@ -127,8 +121,8 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
     }
 
     @Override
-    public List<SkuMappingRuleEntity> listOrderByPriority() {
-        return lambdaQuery().orderByAsc(SkuMappingRuleEntity::getPriority).list();
+    public List<SkuMappingRuleEntity> listOrderByPriorityAndUpdateTime() {
+        return lambdaQuery().orderByAsc(SkuMappingRuleEntity::getPriority).orderByDesc(SkuMappingRuleEntity::getUpdateTime).list();
     }
 
     @Override
@@ -169,8 +163,6 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         SkuMappingRuleDTO.LogDTO logDTO =  SkuMappingRuleConverter.INSTANCE.entityToLogDTO(entity);
         JSONObject jsonObject = new JSONObject(entity.getRuleContent());
         SkuMappingRuleDTO.RuleDTO ruleDTO = JSONObject.parseObject(jsonObject.toJSONString(),new TypeReference<SkuMappingRuleDTO.RuleDTO>() {}.getType());
-        logDTO.setValidStartingSymbolPosition(ruleDTO.getValidStartingSymbolPosition());
-        logDTO.setValidEndSymbolPosition(ruleDTO.getValidEndSymbolPosition());
         logDTO.setRuleContentList(ruleDTO.getRuleContentList());
         Map<String,Object> extendRuleMap = entity.getExtendRuleContent();
         if(MapUtils.isNotEmpty(extendRuleMap)){
@@ -208,9 +200,15 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         if(CollectionUtils.isEmpty(regexList)){
             list.add(result);
         }
+        // 记录循环次数
+        int count = 1;
         for(String regex : regexList){
-            String regexResult = skuMappingRuleEnum.getHandleRegexMethod().apply(ruleTestDTO.getRuleType(),regex,result);
-            list.add(regexResult);
+            result = skuMappingRuleEnum.getHandleRegexMethod().apply(ruleTestDTO.getRuleType(),regex,result);
+            // 判断是否需要添加结果到列表
+            if (!skuMappingRuleEnum.equals(SkuMappingRuleEnum.IGNORE_PREFIXES_AND_SUFFIXES) || count % 2 == 0) {
+                list.add(result);
+            }
+            count++;
         }
         return list;
     }
@@ -250,49 +248,49 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         }
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    public void handleSamePriority(SkuMappingRuleEntity skuMappingRuleEntity){
-        List<SkuMappingRuleEntity> skuMappingRuleEntityList = this.listOrderByPriority();
-        Collections.reverse(skuMappingRuleEntityList);
-        SkuMappingRuleEntity old = skuMappingRuleEntityList.stream().filter(v->v.getId().equals(skuMappingRuleEntity.getId())).findFirst().orElse(null);
-        // 优先级已全部创建完，不允许新增
-        if(skuMappingRuleEntityList.size() == OmsConstant.SKU_MAPPING_RULE_SIZE && Objects.isNull(old)){
-            throw new ServiceException("规则已满，不允许新增");
-        }
-        SkuMappingRuleEntity originalEntity = skuMappingRuleEntityList.stream().filter(v->v.getPriority().equals(skuMappingRuleEntity.getPriority())).findFirst().orElse(null);
-        //优先级有冲突
-        if(Objects.nonNull(originalEntity)){
-            if(Objects.nonNull(old)){
-                originalEntity.setPriority(old.getPriority());
-                this.updateById(originalEntity);
-            }else{
-                //判断低优先级能不能往下顺延，不能的话抛错
-                List<SkuMappingRuleEntity> lowList = skuMappingRuleEntityList.stream().filter(v->v.getPriority()>=skuMappingRuleEntity.getPriority()).collect(Collectors.toList());
-                if(lowList.size()>=OmsConstant.SKU_MAPPING_RULE_SIZE - skuMappingRuleEntity.getPriority()+1){
-                    throw new ServiceException("低优先级规则不能往下顺延，请调整优先级");
-                }
-                List<SkuMappingRuleEntity> updateList = new ArrayList<>();
-                for(int i = 0 ;i < lowList.size();i++){
-                    SkuMappingRuleEntity nowEntity = lowList.get(i);
-                    if(OmsConstant.SKU_MAPPING_RULE_SIZE.equals(nowEntity.getPriority())){
-                        continue;
-                    }
-                    SkuMappingRuleEntity previousEntity = i == 0 ?null:lowList.get(i-1);
-                    SkuMappingRuleEntity nextEntity = i +1 >= lowList.size() ?null:lowList.get(i+1);
-                    //下个优先级与当前优先级相邻
-                    if(Objects.isNull(previousEntity) || nowEntity.getPriority() +1 != previousEntity.getPriority()){
-                        //上个优先级与当前优先级不相邻，则不需要修改
-                        if(Objects.nonNull(nextEntity) && nextEntity.getPriority() != nowEntity.getPriority()-1){
-                            continue;
-                        }
-                        nowEntity.setPriority(nowEntity.getPriority()+1);
-                        updateList.add(nowEntity);
-                    }
-                }
-                this.updateBatchById(updateList);
-            }
-        }
-    }
+//    @Transactional(rollbackFor = Exception.class)
+//    public void handleSamePriority(SkuMappingRuleEntity skuMappingRuleEntity){
+//        List<SkuMappingRuleEntity> skuMappingRuleEntityList = this.listOrderByPriorityAndUpdateTime();
+//        Collections.reverse(skuMappingRuleEntityList);
+//        SkuMappingRuleEntity old = skuMappingRuleEntityList.stream().filter(v->v.getId().equals(skuMappingRuleEntity.getId())).findFirst().orElse(null);
+//        // 优先级已全部创建完，不允许新增
+//        if(skuMappingRuleEntityList.size() == OmsConstant.SKU_MAPPING_RULE_SIZE && Objects.isNull(old)){
+//            throw new ServiceException("规则已满，不允许新增");
+//        }
+//        SkuMappingRuleEntity originalEntity = skuMappingRuleEntityList.stream().filter(v->v.getPriority().equals(skuMappingRuleEntity.getPriority())).findFirst().orElse(null);
+//        //优先级有冲突
+//        if(Objects.nonNull(originalEntity)){
+//            if(Objects.nonNull(old)){
+//                originalEntity.setPriority(old.getPriority());
+//                this.updateById(originalEntity);
+//            }else{
+//                //判断低优先级能不能往下顺延，不能的话抛错
+//                List<SkuMappingRuleEntity> lowList = skuMappingRuleEntityList.stream().filter(v->v.getPriority()>=skuMappingRuleEntity.getPriority()).collect(Collectors.toList());
+//                if(lowList.size()>=OmsConstant.SKU_MAPPING_RULE_SIZE - skuMappingRuleEntity.getPriority()+1){
+//                    throw new ServiceException("低优先级规则不能往下顺延，请调整优先级");
+//                }
+//                List<SkuMappingRuleEntity> updateList = new ArrayList<>();
+//                for(int i = 0 ;i < lowList.size();i++){
+//                    SkuMappingRuleEntity nowEntity = lowList.get(i);
+//                    if(OmsConstant.SKU_MAPPING_RULE_SIZE.equals(nowEntity.getPriority())){
+//                        continue;
+//                    }
+//                    SkuMappingRuleEntity previousEntity = i == 0 ?null:lowList.get(i-1);
+//                    SkuMappingRuleEntity nextEntity = i +1 >= lowList.size() ?null:lowList.get(i+1);
+//                    //下个优先级与当前优先级相邻
+//                    if(Objects.isNull(previousEntity) || nowEntity.getPriority() +1 != previousEntity.getPriority()){
+//                        //上个优先级与当前优先级不相邻，则不需要修改
+//                        if(Objects.nonNull(nextEntity) && nextEntity.getPriority() != nowEntity.getPriority()-1){
+//                            continue;
+//                        }
+//                        nowEntity.setPriority(nowEntity.getPriority()+1);
+//                        updateList.add(nowEntity);
+//                    }
+//                }
+//                this.updateBatchById(updateList);
+//            }
+//        }
+//    }
 
     /**
      * 处理sku映射
@@ -303,6 +301,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         //查询未匹配的SKU
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setMatchResult(false);
+        paramDTO.setIsExpire(false);
         // 查询ListingInfo和skuMapping的关系
         List<ListingInfoWithSkuMappingDTO> noMatchList = skuMappingService.findListDto(paramDTO);
         if(CollectionUtils.isEmpty(noMatchList)){
@@ -314,7 +313,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
             return;
         }
         Map<String,SkuVO> skuVOMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuNo,skuVO -> skuVO));
-        List<SkuMappingRuleEntity> skuMappingRuleEntityList = this.listOrderByPriority();
+        List<SkuMappingRuleEntity> skuMappingRuleEntityList = this.listOrderByPriorityAndUpdateTime();
         //过滤掉已禁用
         skuMappingRuleEntityList = skuMappingRuleEntityList.stream().filter(skuMappingRuleEntity -> !skuMappingRuleEntity.getDisabled()).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(skuMappingRuleEntityList)){
@@ -326,7 +325,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         for(ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO : noMatchList){
             String platformSkuNo = listingInfoWithSkuMappingDTO.getPlatformSkuNo();
             ruleLoop : for(SkuMappingRuleEntity skuMappingRuleEntity : skuMappingRuleEntityList){
-                String afterExtendHandlePlatformSkuNo = platformSkuNo;
+                String handlePlatformSkuNo = platformSkuNo;
                 //先执行扩展规则
                 //处理扩展规则
                 if(StringUtils.isNotBlank(skuMappingRuleEntity.getExtendRuleType())){
@@ -338,7 +337,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                     String entityExtendRuleRegex = skuMappingRuleEntity.getExtendRuleRegex();
                     String[] extendRegexList = entityExtendRuleRegex.split(", ");
                     for(String extendRegex : extendRegexList){
-                        afterExtendHandlePlatformSkuNo = skuMappingExtendRuleEnum.getHandleRegexMethod().apply(extendRegex,afterExtendHandlePlatformSkuNo);
+                        handlePlatformSkuNo = skuMappingExtendRuleEnum.getHandleRegexMethod().apply(extendRegex,handlePlatformSkuNo);
                     }
                 }
                 //获取枚举
@@ -349,9 +348,9 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                 String ruleRegexArrStr = skuMappingRuleEntity.getRuleRegex();
                 String[] ruleRegexList = ruleRegexArrStr.split(", ");
                 for(String ruleRegex : ruleRegexList){
-                    String afterHandlePlatformSkuNo = skuMappingRuleEnum.getHandleRegexMethod().apply(skuMappingRuleEntity.getRuleType(),ruleRegex,afterExtendHandlePlatformSkuNo);
-                    if(skuVOMap.containsKey(afterHandlePlatformSkuNo)){
-                        SkuVO skuVO = skuVOMap.get(afterHandlePlatformSkuNo);
+                    handlePlatformSkuNo = skuMappingRuleEnum.getHandleRegexMethod().apply(skuMappingRuleEntity.getRuleType(),ruleRegex,handlePlatformSkuNo);
+                    if(skuVOMap.containsKey(handlePlatformSkuNo)){
+                        SkuVO skuVO = skuVOMap.get(handlePlatformSkuNo);
                         SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
                         skuMappingEntity.setId(listingInfoWithSkuMappingDTO.getTableId());
                         skuMappingEntity.setRuleId(skuMappingRuleEntity.getId());
@@ -379,12 +378,22 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                 oldLogEntity.setProductSkuId(listingInfoWithSkuMappingDTO.getProductSkuId());
                 oldLogEntity.setProductSkuNo(listingInfoWithSkuMappingDTO.getProductSkuNo());
                 oldLogEntity.setProductName(listingInfoWithSkuMappingDTO.getProductName());
-                operateLogService.addModuleOperateLogByObj(oldLogEntity, skuMappingEntitity, ModuleTypeEnum.SKU_MAPPING.getCode(), oldLogEntity.getId(), "自动匹配sku对照表");
+                operateLogService.addModuleOperateLogByObj(oldLogEntity, skuMappingEntitity, ModuleTypeEnum.SKU_MAPPING.getCode(),skuMappingEntitity.getListingId() , "自动匹配sku对照表");
             }
         }
         if(CollectionUtils.isNotEmpty(updateListingList)){
             listingInfoService.updateBatchById(updateListingList,2000);
         }
+    }
+
+    @Override
+    public PagingVO<SkuMappingRuleDTO.ListDTO> paging(PagingDTO<SkuMappingRuleDTO.ParamsDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<SkuMappingRuleDTO.ListDTO> pageData = baseMapper.paging(query, dto.getParams());
+        pageData.getRecords().forEach(v->{
+            v.setRuleTypeName(EnumMessage.getNameByCode(SkuMappingRuleEnum.class,v.getRuleType()));
+        });
+        return new PagingVO(pageData);
     }
 
     public SkuMappingRuleEntity getByRuleType(String ruleType) {

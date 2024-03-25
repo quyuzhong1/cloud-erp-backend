@@ -1,6 +1,7 @@
 package com.erp.rpc.dmp.feign;
 
 
+import com.common.business.dto.PlatformOrderDTO;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,4 +36,13 @@ public interface DmpMongoDbFeign {
      **/
     @GetMapping("/checkHasDeliveryDetail")
     Boolean checkHasDeliveryDetail(@RequestParam(value = "platformCode") String platformCode, @RequestParam(value = "platform") String platform);
+
+    /**
+     * 查询mongodb是否有销售出库单
+     *
+     * @Author Jim
+     * @since 2024-02-14
+     **/
+    @PostMapping("/checkSoOutStock")
+    Boolean checkSoOutStock(@RequestBody PlatformOrderDTO resultDTO);
 }
