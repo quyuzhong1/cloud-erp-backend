@@ -1,6 +1,6 @@
 package com.erp.server.tms.service;
-import com.common.business.service.SuperService;
 
+import com.common.business.service.SuperService;
 import com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO;
 import com.erp.model.tms.entity.TmsLogisticsBillCostDetailEntity;
 
@@ -43,4 +43,21 @@ public interface TmsLogisticsBillCostDetailService extends SuperService<TmsLogis
      * @return
      */
     List<TmsLogisticsBillCostDetailDTO.CostCompareDTO> getCostCompareListById(String id);
+
+    /**
+     * @description: 根据主表id集合查询
+     * @author Will
+     * @date: 2024/3/25 11:49
+     * @param mainIdList
+     * @return List<TmsLogisticsBillCostDetailEntity>
+     */
+    List<TmsLogisticsBillCostDetailEntity> listByMainIdList(List<String> mainIdList);
+    /**
+     * @description: 查询费用
+     * @author Will
+     * @date: 2024/3/25 9:17
+     * @param mainIdList
+     * @return List<CostViewDTO>
+     */
+    List<TmsLogisticsBillCostDetailDTO.CostViewDTO> listCostByMainIdList(List<String> mainIdList);
 }

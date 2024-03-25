@@ -75,4 +75,12 @@ public interface TmsCfgCostService extends SuperService<TmsCfgCostEntity> {
      * 根据归属和分类查询
      */
     List<TmsCfgCostEntity> listCostAttributionAndCategory(String dictCostAttribution ,String dictCostCategory);
+    /**
+     * @description: 根据费用名称集合查询
+     * @author Will
+     * @date: 2024/3/25 11:20
+     * @param costNameList
+     * @return List<TmsCfgCostEntity>
+     */
+    List<TmsCfgCostEntity> listByCostNameList(List<String> costNameList);
 }

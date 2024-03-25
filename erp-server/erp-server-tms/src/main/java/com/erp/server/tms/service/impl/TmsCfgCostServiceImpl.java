@@ -154,6 +154,15 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
                 .list();
     }
 
+    @Override
+    public List<TmsCfgCostEntity> listByCostNameList(List<String> costNameList) {
+        if (CollectionUtil.isEmpty(costNameList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(TmsCfgCostEntity::getCostName,costNameList)
+                .list();
+    }
+
     /**
      * 新增修改数据校验
      */

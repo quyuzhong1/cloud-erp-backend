@@ -2,32 +2,28 @@ package com.erp.server.tms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.ShippingTemplateDTO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
-import com.erp.model.tms.entity.ShippingTemplateEntity;
-import com.erp.server.tms.service.ShippingTemplateService;
+import com.erp.server.tms.service.LogisticsBillCostService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.LogisticsBillCostService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -95,6 +91,24 @@ public class LogisticsBillCostController extends BaseController {
     public ApiResult update(@RequestBody @Validated LogisticsBillCostDTO.UpdateDTO dto) {
         logisticsBillCostService.update(dto);
         return success();
+    }
+
+    /**
+     *查询详情
+     * @author Will
+     * @date: 2024/3/25 11:45
+     * @param id
+     * @return ApiResult<ViewDTO>
+     */
+    @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsBillCost:view",
+            serviceClass = LogisticsBillCostService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult<LogisticsBillCostDTO.ViewDTO> view(@RequestParam("id") String id) {
+        return success(logisticsBillCostService.view(id));
     }
 
     /**
