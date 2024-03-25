@@ -116,7 +116,8 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
      * @param mainIdList
      * @return List<TmsLogisticsBillCostDetailEntity>
      */
-    private List<TmsLogisticsBillCostDetailEntity> listByMainIdList(List<String> mainIdList) {
+    @Override
+    public List<TmsLogisticsBillCostDetailEntity> listByMainIdList(List<String> mainIdList) {
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.EMPTY_LIST;
         }
@@ -138,6 +139,14 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
         return costCompareDTOList;
     }
 
+    @Override
+    public List<TmsLogisticsBillCostDetailDTO.CostViewDTO> listCostByMainIdList(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listCostByMainIdList(mainIdList);
+    }
+
 
     /**
     * 新增修改处理数据
@@ -146,6 +155,7 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+
         //查询主表数据
         LogisticsBillCostEntity mainEntity = logisticsBillCostService.getById(mainId);
         if (ObjectUtil.isEmpty(mainEntity)) {
@@ -162,6 +172,7 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
             }
         }
         for (TmsLogisticsBillCostDetailEntity entity : list) {
+
             entity.setMainId(mainId);
             //汇率
             entity.setExchangeRate(rate);

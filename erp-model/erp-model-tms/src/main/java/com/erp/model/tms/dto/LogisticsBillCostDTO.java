@@ -187,7 +187,17 @@ public class LogisticsBillCostDTO implements Serializable {
         private BigDecimal actualShippingCost;
 
         /**
-         * 运费
+         * 实际报关费
+         */
+        private BigDecimal actualDeclareCost;
+
+        /**
+         * 实际其他费
+         */
+        private BigDecimal actualOtherCost;
+
+        /**
+         * 运费差异
          */
         private BigDecimal diffShippingCost;
 
@@ -346,7 +356,10 @@ public class LogisticsBillCostDTO implements Serializable {
         */
         private String remark;
 
-
+        /**
+         * 费用明细
+         */
+        private List<TmsLogisticsBillCostDetailDTO.ViewDTO>  costDetailList;
     }
 
     /**

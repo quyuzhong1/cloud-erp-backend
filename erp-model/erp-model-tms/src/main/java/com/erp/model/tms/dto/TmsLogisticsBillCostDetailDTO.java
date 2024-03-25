@@ -175,4 +175,51 @@ public class TmsLogisticsBillCostDetailDTO implements Serializable {
     }
 
 
+    /**
+     * 费用信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CostViewDTO {
+
+        /**
+         * 主表id
+         */
+        private String id;
+
+        /**
+         * 主表id
+         */
+        private String mainId;
+
+        /**
+         * 费用归属（字典dictCostAttribution）
+         */
+        private String dictCostAttribution;
+
+        /**
+         * 费用分类（字典dictCostCategory）
+         */
+        private String dictCostCategory;
+
+        /**
+         * 费用名称
+         */
+        private String costName;
+
+        /**
+         * 费用值
+         */
+        private BigDecimal costValue;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 类型
+         */
+        private String type;
+    }
 }

@@ -52,5 +52,23 @@
         group by lbc.cfg_cost_id,	 cc.dict_cost_category,cc.cost_name
     </select>
 
+    <select id="listCostByMainIdList"
+            resultType="com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO$CostViewDTO">
+        select
+                lbc.id,
+                lbc.main_id,
+                cc.dict_cost_attribution,
+                cc.dict_cost_category,
+                cc.cost_name,
+                lbc.cost_value,
+                lbc.currency
+        from tms_logistics_bill_cost_detail lbc
+        inner join tms_cfg_cost cc on cc.id = lbc.cfg_cost_id and cc.is_deleted =false
+        where  lbc.is_deleted = false and lbc.main_id in
+        <foreach collection="mainIdList" separator="," item="item" open="(" close=")" >
+            #{item}
+        </foreach>
+    </select>
+
 
 </mapper>
