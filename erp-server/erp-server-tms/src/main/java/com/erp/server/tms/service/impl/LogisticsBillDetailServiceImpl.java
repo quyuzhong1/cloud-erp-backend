@@ -193,6 +193,11 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
                 billDetailList.add(detailEntity);
             }
             this.saveBatch(billDetailList);
+            for (LogisticsBillDetailEntity entity : billDetailList) {
+                LogisticsBillEntity logisticsBillEntity = billList.stream().filter(obj -> StrUtil.equals(entity.getMainId(), obj.getId())).findFirst().orElse(null);
+                //新增物流费用单
+                logisticsBillService.addLogisticsBillCost(logisticsBillEntity,Arrays.asList(entity));
+            }
         }
         return Boolean.FALSE;
     }

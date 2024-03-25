@@ -28,10 +28,7 @@ import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
-import com.erp.model.tms.entity.LogisticsBillCostEntity;
-import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.tms.entity.TmsCfgCostEntity;
-import com.erp.model.tms.entity.TmsLogisticsBillCostDetailEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.listener.LogisticsBillCostExcelListener;
@@ -88,6 +85,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Autowired
     private TmsCfgCostService tmsCfgCostService;
 
+    @Autowired
+    private LogisticsBillDetailService logisticsBillDetailService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -128,7 +128,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         LogisticsBillCostEntity logisticsBillCostEntity =  BeanMapperUtils.map(LogisticsBillCostEntity.class, old);
         logisticsBillCostEntity.setBillingWeightLogistics(updateDTO.getBillingWeightLogistics());
         logisticsBillCostEntity.setRemark(updateDTO.getRemark());
-        logisticsBillCostEntity.setCurrency(StrUtil.isBlank(old.getCurrency()) ? updateDTO.getCurrency() : old.getCurrency());
+        logisticsBillCostEntity.setCurrency(updateDTO.getCurrency());
 
         Optional.ofNullable(updateDTO.getActualWeight()).ifPresent(logisticsBillCostEntity::setActualWeight);
         Optional.ofNullable(updateDTO.getVolumeWeight()).ifPresent(logisticsBillCostEntity::setVolumeWeight);
@@ -463,28 +463,28 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         List<String> outstockCodeList = successList.stream().map(LogisticsBillCostExcelDTO::getOutstockCode).collect(Collectors.toList());
         List<LogisticsBillEntity> logisticsBillList = logisticsBillService.listByOutstockCodeList(outstockCodeList);
 
+        //物流单明细
+        List<String> logisticsBillIdList = logisticsBillList.stream().map(LogisticsBillEntity::getId).collect(Collectors.toList());
+        List<LogisticsBillDetailEntity> logisticsBillDetailList = logisticsBillDetailService.listByMainIds(logisticsBillIdList);
+
         //物流单费用
-        List<String> ligisticsBillIdList = logisticsBillList.stream().map(LogisticsBillEntity::getId).collect(Collectors.toList());
-        List<LogisticsBillCostEntity> logisticsBillCostList = this.listByLogisticsBillIdList(ligisticsBillIdList);
+        List<LogisticsBillCostEntity> logisticsBillCostList = this.listByLogisticsBillIdList(logisticsBillIdList);
 
         //费用配置
         List<String> costNameList = successList.stream().map(LogisticsBillCostExcelDTO::getCostName).distinct().collect(Collectors.toList());
         List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listByCostNameList(costNameList);
 
-        Map<String, List<LogisticsBillCostExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getOutstockCode().concat(obj.getTransportNo()).concat(obj.getCostName())));
+        Map<String, List<LogisticsBillCostExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getOutstockCode().concat(obj.getTrackNo()).concat(obj.getCostName())));
 
 
         for ( Map.Entry<String, List<LogisticsBillCostExcelDTO>> entry : map.entrySet()) {
             List<LogisticsBillCostExcelDTO> value = entry.getValue();
             LogisticsBillCostExcelDTO billCostExcelDTO = value.get(0);
-            //物流单
-            LogisticsBillEntity logisticsBillEntity = logisticsBillList.stream().filter(obj -> obj.getOutstockCode().equals(billCostExcelDTO.getOutstockCode()) && StrUtil.equals(obj.getTransportNo(),billCostExcelDTO.getTransportNo())).findFirst().orElse(null);
-            LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> obj.getLogisticsBillId().equals(logisticsBillEntity.getId())).findFirst().orElse(null);
 
             List<TmsLogisticsBillCostDetailDTO.UpdateDTO> updateDetailList = new ArrayList<>();
             for (LogisticsBillCostExcelDTO excelDTO : value) {
                 //数据验证
-                List<String> errorMsgList = checkImportData(excelDTO,logisticsBillList,logisticsBillCostList);
+                List<String> errorMsgList = checkImportData(excelDTO,logisticsBillList,logisticsBillCostList,logisticsBillDetailList);
                 if (value.size() > MathUtil.ONE) {
                     errorMsgList.add("费用名称不能重复录入");
                 }
@@ -511,6 +511,17 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 return;
             }
 
+            //物流单
+            LogisticsBillEntity logisticsBillEntity = logisticsBillList.stream().filter(obj -> obj.getOutstockCode().equals(billCostExcelDTO.getOutstockCode())).findFirst().orElse(null);
+            //物流费用单
+            LogisticsBillDetailEntity logisticsBillDetailEntity = logisticsBillDetailList.stream().filter(obj -> obj.getMainId().equals(logisticsBillEntity.getId())
+                    && StrUtil.equals(obj.getTrackNo(),billCostExcelDTO.getTrackNo()))
+                    .findFirst().orElse(null);
+            //物流费用单
+            LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> obj.getLogisticsBillId().equals(logisticsBillEntity.getId())
+                    && StrUtil.equals(obj.getLogisticsBillDetailId(),logisticsBillDetailEntity.getId()))
+                    .findFirst().orElse(null);
+
             //数据赋值
             LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
             updateDataDTO.setId(logisticsBillCostEntity.getId());
@@ -531,13 +542,18 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * @return List<String>
      */
     private List<String> checkImportData (LogisticsBillCostExcelDTO excelDTO,List<LogisticsBillEntity> logisticsBillList
-            ,List<LogisticsBillCostEntity> logisticsBillCostList) {
+            ,List<LogisticsBillCostEntity> logisticsBillCostList,List<LogisticsBillDetailEntity> logisticsBillDetailList ) {
         List<String> errorMsgList = new ArrayList<>();
         LogisticsBillEntity logisticsBillEntity = logisticsBillList.stream().filter(obj -> obj.getOutstockCode().equals(excelDTO.getOutstockCode())
-                && StrUtil.equals(obj.getTransportNo(),excelDTO.getTransportNo())).findFirst().orElse(null);
+                ).findFirst().orElse(null);
         if (ObjectUtil.isEmpty(logisticsBillEntity)) {
-            errorMsgList.add("未找到出库单和运输单号对应物流单");
+            errorMsgList.add("未找到出库单对应物流单");
         } else {
+            //物流单明细
+            LogisticsBillDetailEntity detailEntity = logisticsBillDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), logisticsBillEntity.getId()) && StrUtil.equals(excelDTO.getTrackNo(), obj.getTrackNo())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(detailEntity)) {
+                errorMsgList.add("未找到出库单和物流跟踪单号对应的物流单明细");
+            }
             //物流费用单
             LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> obj.getLogisticsBillId().equals(logisticsBillEntity.getId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(logisticsBillCostEntity)) {
