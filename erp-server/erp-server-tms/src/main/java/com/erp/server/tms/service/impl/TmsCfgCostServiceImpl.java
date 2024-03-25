@@ -97,6 +97,8 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
         if(!save) {
             throw new ServiceException("费用管理配置单保存失败");
         }
+        //更新其他相同归属和分类的默认状态
+        updateDefault(tmsCfgCostEntity);
         return Boolean.TRUE;
     }
 
