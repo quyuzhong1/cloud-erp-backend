@@ -351,4 +351,9 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return
      */
     List<CustomerDTO.ReceiveInfoDTO> listReceiveByName(String name);
+
+    /**
+     * 根据客户名称list获取客户详情list
+     */
+    List<CustomerDTO.ReceiveInfoDTO> listDTOByNameList(List<String> customerNameList);
 }

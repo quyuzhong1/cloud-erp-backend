@@ -1,10 +1,13 @@
 package com.erp.server.wms.convert;
 
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
+import com.erp.model.wms.dto.OtherOutstockCustomerDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.dto.OtherOutstockDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -50,13 +53,14 @@ public interface OtherOutStockConverter {
             @Mapping(target = "billDate", source = "billDate"),
             @Mapping(target = "inventoryDirection", source = "inventoryDirectionEnum.code"),
             @Mapping(target = "warehouseKeeperId", constant = ""),
-            @Mapping(target = "receiverId", source = "userDeptDTO.uid"),
+            @Mapping(target = "receiverId", expression = "java(null == userDTO ? \"\" : userDTO.getUserId())"),
             @Mapping(target = "warehouseId", source = "warehouseDTO.id"),
-            @Mapping(target = "receiveOrgId", source = "userDeptDTO.deptId"),
+            @Mapping(target = "receiveOrgId", source = "orgDTO.id"),
             @Mapping(target = "type", source = "outstockTypeEnum.code"),
             @Mapping(target = "typeName", source = "outstockTypeEnum.name"),
             @Mapping(target = "deptId", source = "departmentDTO.id"),
             @Mapping(target = "processApplyCode", source = "importExcelDTO.processApplyCode"),
+            @Mapping(target = "otherOutstockCustomer", source = "addCustomerDTO"),
             @Mapping(target = "detailList", source = "detailList"),
     })
     OtherOutstockDTO.AddDTO combineAddDTO(OtherOutStockImportExcelDTO importExcelDTO,
@@ -65,8 +69,20 @@ public interface OtherOutStockConverter {
                                           InventoryDirectionEnum inventoryDirectionEnum,
                                           WarehouseDTO.ListDTO warehouseDTO,
                                           WarehouseLocationEntity locationEntity,
-                                          SysUserDeptDTO userDeptDTO,
+                                          FindUserDTO userDTO,
                                           SysDepartmentDTO departmentDTO,
                                           BaseIdDTO orgDTO,
+                                          OtherOutstockCustomerDTO.AddDTO addCustomerDTO,
                                           List<OtherOutstockDetailDTO.AddDTO> detailList);
+
+
+    @Mappings({
+            @Mapping(target = "customerId", source = "id"),
+            @Mapping(target = "customerCode", source = "code"),
+            @Mapping(target = "name", source = "name"),
+            @Mapping(target = "receiveAddress", source = "receiveAddress"),
+            @Mapping(target = "receiverName", source = "receiverName"),
+            @Mapping(target = "telNumber", source = "telNumber"),
+    })
+    OtherOutstockCustomerDTO.AddDTO convertAddDTO(CustomerDTO.ReceiveInfoDTO customerDTO);
 }

@@ -16,16 +16,14 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.StateEnumValue;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
-import com.erp.model.scm.dto.excel.PurchaseEndReceiveImportExcelDTO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
@@ -48,6 +46,7 @@ import com.erp.model.wms.enums.OutstockTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -70,14 +69,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Array;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -133,6 +127,9 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
     @Resource
     private OtherOutstockQueryHandler otherOutstockQueryHandler;
+
+    @Resource
+    private CustomerFeign customerFeign;
 
     @Override
     public PagingVO<OtherOutstockDTO.ListDTO> paging(PagingDTO<OtherOutstockDTO.SearchParamDTO> pagingDTO) {
@@ -902,17 +899,39 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 .collect(Collectors.groupingBy(WarehouseLocationEntity::getWarehouseId));
 
         // 领料人
-        Map<String, SysUserDeptDTO> userMap = sysUserFeign.getUserDeptList()
-                .stream()
-                .collect(Collectors.toMap(SysUserDeptDTO::getUserName, Function.identity()));
+        List<String> userNameList = successList.stream()
+                .map(OtherOutStockImportExcelDTO::getReceiverName)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, List<FindUserDTO>> userMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(userNameList)){
+            userMap = sysUserFeign.listUserByUserNames(userNameList, UserTypeEnum.ERP.code)
+                    .stream()
+                    .collect(Collectors.groupingBy(FindUserDTO::getUserName));
+        }
 
         // 领料部门
-        Map<String, SysDepartmentDTO> deptMap = sysUserFeign.getDeptList()
-                .stream()
-                .collect(Collectors.toMap(SysDepartmentDTO::getName, Function.identity()));
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        Map<String, List<SysDepartmentDTO>> deptMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(deptList)){
+             deptMap = deptList
+                    .stream()
+                    .collect(Collectors.groupingBy(SysDepartmentDTO::getName));
+        }
 
-        // 客户名称 TODO
-
+        // 客户名称
+        List<String> customerNameList = successList.stream()
+                .map(OtherOutStockImportExcelDTO::getCustomerName)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, CustomerDTO.ReceiveInfoDTO> customMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(customerNameList)){
+            customMap = customerFeign.listDTOByNameList(customerNameList)
+                    .stream()
+                    .collect(Collectors.toMap(CustomerDTO.ReceiveInfoDTO::getName, Function.identity()));
+        }
 
         // 领料组织
         Map<String, BaseIdDTO> orgMap = sysUserFeign.listAccountingCompany()
@@ -962,15 +981,24 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             }
 
             // 领料人
-            SysUserDeptDTO userDeptDTO = userMap.get(importExcelDTO.getReceiverName());
-            if (null == userDeptDTO){
-                importExcelDTO.setErrorMsg(StrUtil.format("【{}】领料人不存在", importExcelDTO.getReceiverName()));
-                errorList.add(importExcelDTO);
-                continue;
+            FindUserDTO userDTO = null;
+            if (StringUtils.isNotBlank(importExcelDTO.getReceiverName())){
+                List<FindUserDTO> userDTOList = userMap.get(importExcelDTO.getReceiverName());
+                if (CollectionUtils.isEmpty(userDTOList)){
+                    importExcelDTO.setErrorMsg(StrUtil.format("【{}】领料人不存在", importExcelDTO.getReceiverName()));
+                    errorList.add(importExcelDTO);
+                    continue;
+                } else {
+                    userDTO = userDTOList.stream().filter(e-> !e.getDisabled()).findFirst().orElse(null);
+                }
             }
 
             // 部领料门
-            SysDepartmentDTO departmentDTO = deptMap.get(importExcelDTO.getDeptName());
+            SysDepartmentDTO departmentDTO = null;
+            List<SysDepartmentDTO> currrentDeptList = deptMap.get(importExcelDTO.getDeptName());
+            if (!CollectionUtils.isEmpty(currrentDeptList)){
+                departmentDTO = currrentDeptList.stream().findFirst().orElse(null);
+            }
             if (null == departmentDTO){
                 importExcelDTO.setErrorMsg(StrUtil.format("【{}】领料部门不存在", importExcelDTO.getDeptName()));
                 errorList.add(importExcelDTO);
@@ -985,11 +1013,25 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 continue;
             }
 
+            // 产品SKU
             SkuVO skuVO = existSkuMap.get(importExcelDTO.getSkuNo());
             if (null == skuVO){
                 importExcelDTO.setErrorMsg(StrUtil.format("SKU【{}】不存在", importExcelDTO.getSkuNo()));
                 errorList.add(importExcelDTO);
                 continue;
+            }
+
+            // 客户名称
+            OtherOutstockCustomerDTO.AddDTO addCustomerDTO = null;
+            if (StringUtils.isNotBlank(importExcelDTO.getCustomerName())){
+                CustomerDTO.ReceiveInfoDTO customerDTO = customMap.get(importExcelDTO.getCustomerName());
+                if (null == customerDTO){
+                    importExcelDTO.setErrorMsg(StrUtil.format("客户【{}】不存在", importExcelDTO.getCustomerName()));
+                    errorList.add(importExcelDTO);
+                    continue;
+                } else {
+                    addCustomerDTO = OtherOutStockConverter.INSTANCE.convertAddDTO(customerDTO);
+                }
             }
 
             try {
@@ -1003,9 +1045,10 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                         inventoryDirectionEnum,
                         warehouseDTO,
                         locationEntity,
-                        userDeptDTO,
+                        userDTO,
                         departmentDTO,
                         orgDTO,
+                        addCustomerDTO,
                         Collections.singletonList(detailDTO)
                 );
                 String idStr = this.add(addDTO);

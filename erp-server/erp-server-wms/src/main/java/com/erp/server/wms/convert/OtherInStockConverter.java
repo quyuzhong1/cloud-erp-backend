@@ -50,7 +50,8 @@ public interface OtherInStockConverter {
             @Mapping(target = "billDate", source = "billDate"),
             @Mapping(target = "inventoryDirection", source = "inventoryDirectionEnum.code"),
             @Mapping(target = "warehouseKeeperId", constant = ""),
-            @Mapping(target = "receiverId", source = "userDeptDTO.uid"),
+            // 入库单无领料人
+            @Mapping(target = "receiverId", constant = ""),
             @Mapping(target = "warehouseId", source = "warehouseDTO.id"),
             @Mapping(target = "type", source = "inStockTypeEnum.code"),
             @Mapping(target = "typeName", source = "inStockTypeEnum.name"),

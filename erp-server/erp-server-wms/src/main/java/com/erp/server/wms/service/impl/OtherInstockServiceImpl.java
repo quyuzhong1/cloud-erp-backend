@@ -869,23 +869,10 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 .stream()
                 .collect(Collectors.groupingBy(WarehouseLocationEntity::getWarehouseId));
 
-        // 领料人
-        Map<String, SysUserDeptDTO> userMap = sysUserFeign.getUserDeptList()
-                .stream()
-                .collect(Collectors.toMap(SysUserDeptDTO::getUserName, Function.identity()));
-
         // 领料部门
-        Map<String, SysDepartmentDTO> deptMap = sysUserFeign.getDeptList()
+        Map<String, List<SysDepartmentDTO>> deptMap = sysUserFeign.getDeptList()
                 .stream()
-                .collect(Collectors.toMap(SysDepartmentDTO::getName, Function.identity()));
-
-        // 客户名称 TODO
-
-
-        // 领料组织
-        Map<String, BaseIdDTO> orgMap = sysUserFeign.listAccountingCompany()
-                .stream()
-                .collect(Collectors.toMap(BaseIdDTO::getName, Function.identity()));
+                .collect(Collectors.groupingBy(SysDepartmentDTO::getName));
 
         //sku Map
         Map<String, SkuVO> existSkuMap = plmTaskFeign.listBySkuNoList(skuNoList)
@@ -929,18 +916,15 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 }
             }
 
-            // 领料人
-            SysUserDeptDTO userDeptDTO = userMap.get(importExcelDTO.getReceiverName());
-            if (null == userDeptDTO){
-                importExcelDTO.setErrorMsg(StrUtil.format("【{}】领料人不存在", importExcelDTO.getReceiverName()));
-                errorList.add(importExcelDTO);
-                continue;
-            }
 
-            // 部领料门
-            SysDepartmentDTO departmentDTO = deptMap.get(importExcelDTO.getDeptName());
+            // 部门
+            SysDepartmentDTO departmentDTO = null;
+            List<SysDepartmentDTO> currrentDeptList = deptMap.get(importExcelDTO.getDeptName());
+            if (!CollectionUtils.isEmpty(currrentDeptList)){
+                departmentDTO = currrentDeptList.stream().findFirst().orElse(null);
+            }
             if (null == departmentDTO){
-                importExcelDTO.setErrorMsg(StrUtil.format("【{}】领料部门不存在", importExcelDTO.getDeptName()));
+                importExcelDTO.setErrorMsg(StrUtil.format("部门【{}】不存在", importExcelDTO.getDeptName()));
                 errorList.add(importExcelDTO);
                 continue;
             }
