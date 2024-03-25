@@ -2,20 +2,18 @@ package com.erp.server.wms.utils;
 
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.util.CellRangeAddress;
 
-import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.metadata.Head;
 import com.alibaba.excel.write.merge.AbstractMergeStrategy;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.wms.dto.WmsDataComparePlanDTO.ImportDataMappingDTO;
-import com.erp.model.wms.dto.WmsDataCompareTaskDTO.DataCompareDTO;
-import com.erp.server.wms.listener.WmsDataCompareExcelListener;
 
 import cn.hutool.core.collection.CollUtil;
 import lombok.Data;
@@ -27,6 +25,7 @@ public class WmsDataCompareUtils {
 	public static class WmsDataCompareExcelDto{
 		public Integer importDataCount = 0;
 		public List<List<String>> headFieldLists = new ArrayList<>();
+		public List<List<String>> datas = new ArrayList<>();
 	}
 	
 	public static WmsDataCompareExcelDto getWmsDataCompareExcelDto(List<String> excelFiles) {
@@ -36,7 +35,6 @@ public class WmsDataCompareUtils {
 		}
 		Integer importDataCount = 0;
         for(String excelFile : excelFiles) {
-        	WmsDataCompareExcelListener totalRowsExcelListener = new WmsDataCompareExcelListener();
         	InputStream inputStream = null;
         	try {
 				inputStream = FastDFSClientUtil.getInputStream(excelFile);
@@ -44,19 +42,31 @@ public class WmsDataCompareUtils {
 				log.error("获取文件失败" , e);
 				throw new ServiceException("获取文件失败");
 			}
+        	List<Map<String, String>> makeDataInputStream = null;
         	try {
-				EasyExcel.read(inputStream, DataCompareDTO.class, totalRowsExcelListener).sheet().doRead();
+        		makeDataInputStream = ExcelPrintUtils.makeDataInputStream(inputStream);
 			} catch (Exception e) {
 				log.error("读取excel失败" , e);
 				throw new ServiceException("读取excel失败");
 			}
         	
-        	if(CollUtil.isNotEmpty(totalRowsExcelListener.getHeadFieldList())) {
-        		dto.getHeadFieldLists().add(totalRowsExcelListener.getHeadFieldList());
-        	}
-        	
-        	if(totalRowsExcelListener.getTotalRows() > 0) {
-        		importDataCount = importDataCount + totalRowsExcelListener.getTotalRows() - 1; 
+        	if(CollUtil.isNotEmpty(makeDataInputStream)) {
+        		Map<String, String> map = makeDataInputStream.get(0);
+        		List<String> headFields = new ArrayList<>();
+        		for(Map.Entry<String, String> m : map.entrySet()) {
+        			headFields.add(m.getKey());
+        		}
+        		dto.getHeadFieldLists().add(headFields);
+        		
+        		importDataCount = importDataCount + makeDataInputStream.size();
+        		
+        		for(Map<String, String> makeData : makeDataInputStream) {
+        			List<String> data = new ArrayList<>();
+        			for(Map.Entry<String, String> m : makeData.entrySet()) {
+        				data.add(m.getValue());
+        			}
+        			dto.getDatas().add(data);
+        		}
         	}
         }
         dto.setImportDataCount(importDataCount);

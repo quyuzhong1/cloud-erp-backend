@@ -94,4 +94,9 @@ public class WmsDataCompareTempServiceImpl extends SuperServiceImpl<WmsDataCompa
     private void handleData(WmsDataCompareTempEntity wmsDataCompareTempEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+	@Override
+	public void deleteData(String taskId) {
+		baseMapper.deleteData(taskId);
+	}
 }

@@ -68,14 +68,10 @@ import com.erp.model.wms.enums.WmsDataCompareTempCompareResultEnum;
 import com.erp.model.wms.enums.WmsDataCompareTempCompareStatusEnum;
 import com.erp.model.wms.enums.WmsDataCompareTempMainDataTypeEnum;
 import com.erp.server.wms.config.WmsDataCompareHandlerFactory;
-import com.erp.server.wms.listener.WmsDataCompareExcelListener;
 import com.erp.server.wms.mapper.WmsDataCompareTaskMapper;
 import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.DictBasicService;
-import com.erp.server.wms.service.FbaShipmentService;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.OverseasWarehouseInboundService;
-import com.erp.server.wms.service.SoOutstockService;
 import com.erp.server.wms.service.WmsDataCompareBillService;
 import com.erp.server.wms.service.WmsDataCompareImportService;
 import com.erp.server.wms.service.WmsDataCompareTaskService;
@@ -109,12 +105,6 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private WmsDataCompareImportService wmsDataCompareImportService;
-    @Autowired
-    private SoOutstockService soOutstockService;
-    @Autowired
-    private FbaShipmentService fbaShipmentService;
-    @Autowired
-    private OverseasWarehouseInboundService overseasWarehouseInboundService;
     @Autowired
     private WmsDataCompareHandlerFactory wmsDataCompareHandlerFactory;
     @Autowired
@@ -285,16 +275,16 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				Map<String, List<List<String>>> allDatasMap = new HashMap<>();
 				
 				for(WmsDataCompareImportEntity wmsDataCompareImportEntity : wmsDataCompareImportEntityList) {
-					WmsDataCompareExcelListener wmsDataCompareExcelListener = new WmsDataCompareExcelListener();
-					EasyExcel.read(FastDFSClientUtil.getInputStream(wmsDataCompareImportEntity.getFileUrl()), wmsDataCompareExcelListener).sheet().doRead();
-					List<String> currHeadFieldList = wmsDataCompareExcelListener.getHeadFieldList();
-					if(CollUtil.isEmpty(currHeadFieldList)) {
+					WmsDataCompareExcelDto wmsDataCompareExcelDto = WmsDataCompareUtils.getWmsDataCompareExcelDto(Arrays.asList(wmsDataCompareImportEntity.getFileUrl()));
+					List<List<String>> headFieldLists = wmsDataCompareExcelDto.getHeadFieldLists();
+					if(CollUtil.isEmpty(headFieldLists)) {
 						continue;
 					}
-					if(CollUtil.isNotEmpty(wmsDataCompareExcelListener.getDatas())) {
-						allDatasMap.put(wmsDataCompareImportEntity.getId(), wmsDataCompareExcelListener.getDatas());
+					List<List<String>> datas = wmsDataCompareExcelDto.getDatas();
+					if(CollUtil.isNotEmpty(datas)) {
+						allDatasMap.put(wmsDataCompareImportEntity.getId(), datas);
 					}
-					headFieldList = currHeadFieldList;
+					headFieldList = headFieldLists.get(0);
 				}
 				
 				WmsDataCompareUtils.compareExcelIndexList(importDataMappingDTOList, headFieldList);
@@ -638,14 +628,21 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					WriteSheet writeSheet = EasyExcel.writerSheet().registerWriteHandler(new OnceAbsoluteMergeStrategy(0, size - 1, size, size + size)).build();
 				    excelWriter.write(headList, writeSheet);
 				    
+				    WmsDataCompareBillService<?> wmsDataCompareBillService = wmsDataCompareHandlerFactory.get(billType);
 				    for(WmsDataCompareTempEntity wmsDataCompareTempEntity : wmsDataCompareTempEntityList) {
+				    	String compareResult = wmsDataCompareTempEntity.getCompareResult();
 				    	String systemDataJson = "";
-				    	systemDataJson = wmsDataCompareTempEntity.getSystemDataJson();
+				    	if(WmsDataCompareTempCompareResultEnum.EXCEED.getCode().equals(compareResult) || WmsDataCompareTempCompareResultEnum.DIFF.getCode().equals(compareResult) ) {
+				    		systemDataJson = wmsDataCompareTempEntity.getSystemDataJson();
+				    	}
 				    	String importDataJson = "";
-				    	importDataJson = wmsDataCompareTempEntity.getImportDataJson();
-				    	for(ImportDataMappingDTO importDataMappingDTO : importDataMappingDTOList) {
-					    	
-					    }
+				    	if(WmsDataCompareTempCompareResultEnum.DIFF.getCode().equals(compareResult) || WmsDataCompareTempCompareResultEnum.DIFF.getCode().equals(compareResult) ) {
+				    		importDataJson = wmsDataCompareTempEntity.getImportDataJson();
+				    	}
+				    	
+				    	List<String> writeDatas = getWriteDatas(wmsDataCompareBillService, importDataMappingDTOList, systemDataJson);
+				    	writeDatas.addAll(getWriteDatas(wmsDataCompareBillService, importDataMappingDTOList, importDataJson));
+						excelWriter.write(writeDatas, writeSheet);
 			    	}
 				    
 				    excelWriter.finish();
@@ -655,14 +652,43 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					file.delete();
 				}
 			}
-				lambdaUpdate().eq(WmsDataCompareTaskEntity::getId, id)
-				.eq(WmsDataCompareTaskEntity::getSubStatus, WmsDataCompareTaskSubStatusEnum.WAIT_UPLOAD.getCode())
-				.set(WmsDataCompareTaskEntity::getSubStatus, WmsDataCompareTaskSubStatusEnum.FINISH.getCode())
-				.set(WmsDataCompareTaskEntity::getStatus, WmsDataCompareTaskStatusEnum.FINISH.getCode())
-				.set(WmsDataCompareTaskEntity::getResultReportUrl, resultReportUrl)
-				.update();
-				
+				wmsDataCompareTaskService.dealFinishData(id , resultReportUrl);
 		}
+	}
+	
+	@Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
+	@Override
+	public void dealFinishData(String id , String resultReportUrl) {
+		lambdaUpdate().eq(WmsDataCompareTaskEntity::getId, id)
+		.eq(WmsDataCompareTaskEntity::getSubStatus, WmsDataCompareTaskSubStatusEnum.WAIT_UPLOAD.getCode())
+		.set(WmsDataCompareTaskEntity::getSubStatus, WmsDataCompareTaskSubStatusEnum.FINISH.getCode())
+		.set(WmsDataCompareTaskEntity::getStatus, WmsDataCompareTaskStatusEnum.FINISH.getCode())
+		.set(WmsDataCompareTaskEntity::getResultReportUrl, resultReportUrl)
+		.update();
+		wmsDataCompareTempService.remove(Wrappers.<WmsDataCompareTempEntity>lambdaQuery().eq(WmsDataCompareTempEntity::getTaskId, id));
+	}
+	
+	private List<String> getWriteDatas(WmsDataCompareBillService<?> wmsDataCompareBillService , List<ImportDataMappingDTO> importDataMappingDTOList , String dtoJson){
+		List<String> writeDatas = new ArrayList<>();
+    	for(ImportDataMappingDTO importDataMappingDTO : importDataMappingDTOList) {
+    		if(StringUtils.isNotBlank(dtoJson)) {
+    			DataCompareDTO compareDTO = wmsDataCompareBillService.getCompareDTO(dtoJson);
+    			try {
+    				Method method = compareDTO.getClass().getMethod("get" + StringUtils.capitalize(importDataMappingDTO.getSystemField()));
+    				Object invoke = method.invoke(compareDTO);
+    				if(invoke != null) {
+    					writeDatas.add(invoke.toString());
+    				}else {
+    					writeDatas.add("");
+    				}
+    			}catch (Exception e) {
+    				throw new ServiceException(compareDTO.getClass().getName() + "调用get反射方法失败");
+				}
+    		}else {
+    			writeDatas.add("");
+    		}
+	    }
+    	return writeDatas;
 	}
 	
 	@Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)

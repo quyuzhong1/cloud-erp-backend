@@ -51,4 +51,6 @@ public interface WmsDataCompareTaskService extends SuperService<WmsDataCompareTa
     PagingVO<WmsDataCompareTaskDTO.ViewDTO> paging(PagingDTO<WmsDataCompareTaskDTO.PagingParamDTO> dto);
     
     void saveTempTable(String importId , List<WmsDataCompareTempEntity> wmsDataCompareTempEntityList , Integer currParseOffset , boolean isLast);
+    
+    void dealFinishData(String id , String resultReportUrl);
 }

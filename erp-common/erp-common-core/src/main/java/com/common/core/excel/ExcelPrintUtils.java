@@ -1001,6 +1001,27 @@ public class ExcelPrintUtils {
 		}
 		return dataList;
 	}
+	
+	public static List<Map<String,String>> makeDataInputStream(InputStream inputStream){
+		byte[] stream = new byte[0];
+		try {
+			stream = IoUtils.toByteArray(inputStream);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if(stream == null || stream.length == 0){
+			return null;
+		}
+		List<Map<String,String>> dataList = parseExcelToData(stream, 1);//从动态获取全部列和数据体，默认从第一行开始解析数据
+		try {
+			if(inputStream != null){
+				inputStream.close();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return dataList;
+	}
 
 
 }

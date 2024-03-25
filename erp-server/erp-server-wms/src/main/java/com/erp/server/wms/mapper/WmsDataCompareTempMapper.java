@@ -3,6 +3,7 @@ import com.erp.model.wms.entity.WmsDataCompareTempEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -15,5 +16,5 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface WmsDataCompareTempMapper extends BaseMapper<WmsDataCompareTempEntity> {
-
+	void deleteData(@Param("taskId")String taskId);
 }

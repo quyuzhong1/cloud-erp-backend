@@ -32,5 +32,5 @@ public interface WmsDataCompareTempService extends SuperService<WmsDataCompareTe
     */
     Boolean update(WmsDataCompareTempDTO.UpdateDTO dto);
 
-
+    void deleteData(String taskId);
 }
