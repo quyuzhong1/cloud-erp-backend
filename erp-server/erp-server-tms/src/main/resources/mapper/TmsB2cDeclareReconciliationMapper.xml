@@ -40,20 +40,68 @@
         update_time,
         version,
         is_deleted,
-        code, approve_status, approve_user_id, approve_user_name, reconciliation_date, submit_date, approve_date, start_date, end_date, logistics_supplier_id, logistics_supplier_name, currency, exchange_rate, total_cost, reason
+        code,
+        approve_status,
+        approve_user_id,
+        approve_user_name,
+        reconciliation_date,
+        submit_date,
+        approve_date,
+        start_date,
+        end_date,
+        logistics_supplier_id,
+        logistics_supplier_name,
+        currency, exchange_rate,
+        total_cost,
+        reason
     </sql>
 
+    <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO$ListDTO">
+        select
+               <include refid="Base_Column_List" />
+        from tms_b2c_declare_reconciliation tbdr
+        <where>
+            ${params.sqlMap.default}
+            and tbdr.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            tbdr.id desc
+        </where>
 
     </select>
 
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select approve_status, count(id) from tms_b2c_declare_reconciliation where is_deleted = false group by approve_status
-    </select>
-
+    <!-- 导出查询 -->
     <select id="listExport" resultType="com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO$ListDTO">
-
+        select
+            <include refid="Base_Column_List" />
+        from tms_b2c_declare_reconciliation tbdr
+        <where>
+        ${params.sqlMap.default}
+        and tbdr.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        tbdr.id desc
+        </where>
     </select>
+
+    <!-- tab列表 -->
     <select id="tabList" resultType="com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO$TabListDTO">
         SELECT
         approve_status AS tabFlag,

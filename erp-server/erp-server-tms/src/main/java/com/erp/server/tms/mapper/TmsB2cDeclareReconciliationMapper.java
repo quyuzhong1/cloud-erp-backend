@@ -1,14 +1,12 @@
 package com.erp.server.tms.mapper;
-import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
-import org.apache.ibatis.annotations.Mapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.apache.ibatis.annotations.Param;
-
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
-import com.common.business.dto.base.ApproveStatusQtyDTO;
+import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -30,13 +28,6 @@ public interface TmsB2cDeclareReconciliationMapper extends BaseMapper<TmsB2cDecl
     * @return
     */
     IPage<TmsB2cDeclareReconciliationDTO.ListDTO> paging(Page query, @Param("params") TmsB2cDeclareReconciliationDTO.PagingParamDTO params);
-
-    /**
-    * 状态数量
-    * @param params
-    * @return
-    */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") TmsB2cDeclareReconciliationDTO.PagingParamDTO params);
 
     /**
     * 导出Excel查询

@@ -23,7 +23,14 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
 
+    /**
+     * 列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
 
+    }
 
 
     /**
@@ -379,6 +386,14 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
 
 
     }
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO {
 
+        /**
+         * 对账单id
+         */
+        private String id;
+    }
 
 }

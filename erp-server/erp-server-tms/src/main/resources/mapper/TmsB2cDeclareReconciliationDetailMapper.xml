@@ -55,4 +55,20 @@
     </sql>
 
 
+    <!-- 导出查询 -->
+    <select id="listExport" resultType="com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+        from tms_b2c_declare_reconciliation_detail tbdrd
+        <where>
+        ${params.sqlMap.default}
+        and tbdrd.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        tbdrd.id desc
+        </where>
+    </select>
+
 </mapper>

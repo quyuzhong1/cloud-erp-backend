@@ -18,14 +18,14 @@ public class TmsWarehouseMappingExcelDTO implements Serializable {
     /**
      * 仓库代码（物流商）
      */
-    @ExcelProperty(value = "*仓库代码（物流商）")
+    @ExcelProperty(value = "*仓库代码（物流商）", index = 0)
     @FieldValid(fieldName = "仓库代码（物流商）",isNotBlank = true,maxLength = 200)
     private String  logisticsWarehouseCode;
 
     /**
      * 仓库名称（数大臣）
      */
-    @ExcelProperty(value = "*仓库名称（数大臣）")
+    @ExcelProperty(value = "*仓库名称（数大臣）", index = 1)
     @FieldValid(fieldName = "仓库名称（数大臣）",isNotBlank = true)
     private String  erpWarehouseName;
 

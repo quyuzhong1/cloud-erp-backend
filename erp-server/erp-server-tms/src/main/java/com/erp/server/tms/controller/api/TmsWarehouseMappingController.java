@@ -193,6 +193,7 @@ public class TmsWarehouseMappingController extends BaseController {
             menuCode = "tms:tmsWarehouseMapping:paging",
             tableAlias = "twm"
     )
+    @WebAdvanceQuery(handler = TmsCfgSailingQueryHandler.class)
     public ApiResult exportExcel(@RequestBody TmsWarehouseMappingDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean flag = tmsWarehouseMappingService.exportExcel(dto, response);
         return flag == true ? success() : failure();
