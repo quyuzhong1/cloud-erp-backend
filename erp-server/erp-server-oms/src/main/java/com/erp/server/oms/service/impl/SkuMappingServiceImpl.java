@@ -476,7 +476,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException(ApiError.ERROR_DUPLICATE_MAPPING_SKU_ID, oldSkuMappingEntity.getProductSkuNo(), oldSkuMappingEntity.getWarehouseName());
         }
         String warehouseProductName = dto.getWarehouseProductName();
-        ListingInfoEntity existEntity = listingInfoService.getByPlatformSkuNo(warehouseSkuNo,"");
+        ListingInfoEntity existEntity = listingInfoService.getByPlatformSkuNo("",warehouseSkuNo);
         String listingId;
         if(null == existEntity){
             listingId = listingInfoService.addWarehouseSku(warehouseSkuNo, warehouseProductName);
@@ -1134,13 +1134,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteAll(String id, ListingInfoEntity listingInfoEntity) {
+        SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
+        skuMappingEntity.setId(id);
+        skuMappingEntity.setIsExpire(true);
+        this.updateById(skuMappingEntity);
         if (!this.removeById(id)) {
             throw new ServiceException("删除映射失败,请重试");
-        }
-        if (null != listingInfoEntity) {
-            if (!listingInfoService.removeById(listingInfoEntity.getId())) {
-                throw new ServiceException("删除映射Listing失败,请重试");
-            }
         }
     }
 
