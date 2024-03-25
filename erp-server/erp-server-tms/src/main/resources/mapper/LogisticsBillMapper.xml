@@ -459,4 +459,13 @@
         and lbc.is_deleted = false
         and lbd.is_deleted = false
     </select>
+    <select id="firstMileTabList" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$TabListDTO">
+        SELECT lbd.track_status as tabFlag,
+               count(1)   as count
+        FROM logistics_bill lb
+                 inner join logistics_bill_detail lbd on lb.id = lbd.main_id
+        where lb.is_deleted = false and lbd.is_deleted = false
+          and lb.order_type = #{orderType}
+        group by lbd.track_status
+    </select>
 </mapper>

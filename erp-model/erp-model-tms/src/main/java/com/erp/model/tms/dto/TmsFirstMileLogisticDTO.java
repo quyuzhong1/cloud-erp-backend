@@ -661,7 +661,7 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         /**
          * 数量
          */
-        private Integer count;
+        private Integer count = 0;
     }
 
     /**

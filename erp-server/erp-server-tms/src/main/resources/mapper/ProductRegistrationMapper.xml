@@ -50,7 +50,7 @@
         FROM (SELECT case when status = 'registered' then 'registered' else 'notRegister' end as tabFlag,
                      case when status = 'registered' then '已备案' else '未备案' end          as tabFlagName,
                      count(1)                                                                 as num
-              FROM "product_registration"
+              FROM "product_registration" where is_deleted = false
               group by status) a
         GROUP BY tabFlag, tabFlagName
     </select>

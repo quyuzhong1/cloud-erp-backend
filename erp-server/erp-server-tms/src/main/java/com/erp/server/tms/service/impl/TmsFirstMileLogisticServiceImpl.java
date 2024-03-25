@@ -98,9 +98,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     private ShippingTemplateService shippingTemplateService;
 
     @Resource
-    private DmpTaskFeign dmpTaskFeign;
-
-    @Resource
     private TmsLogisticsBillCostDetailService logisticsBillCostDetailService;
 
     @Resource
@@ -358,7 +355,17 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
     @Override
     public List<TmsFirstMileLogisticDTO.TabListDTO> tabList() {
-        return null;
+        List<TmsFirstMileLogisticDTO.TabListDTO> tabList = baseMapper.firstMileTabList(OrderTypeEnum.FIRST_MILE.getCode());
+        List<TmsFirstMileLogisticDTO.TabListDTO> result = new ArrayList<>();
+        for(FmLogisticTrackStatusEnum logisticTrackStatusEnum : FmLogisticTrackStatusEnum.values()){
+            TmsFirstMileLogisticDTO.TabListDTO tabListDTO = new TmsFirstMileLogisticDTO.TabListDTO();
+            tabListDTO.setTabFlag(logisticTrackStatusEnum.getCode());
+            tabListDTO.setTabFlagName(logisticTrackStatusEnum.getName());
+            TmsFirstMileLogisticDTO.TabListDTO queryResult = tabList.stream().filter(v->v.getTabFlag().equals(tabListDTO.getTabFlag())).findFirst().orElse(new TmsFirstMileLogisticDTO.TabListDTO());
+            tabListDTO.setCount(queryResult.getCount());
+            result.add(tabListDTO);
+        }
+        return result;
     }
 
     @Override
