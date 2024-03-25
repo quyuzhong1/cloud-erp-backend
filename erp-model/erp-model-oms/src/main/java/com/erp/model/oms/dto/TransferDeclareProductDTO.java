@@ -49,6 +49,7 @@ public class TransferDeclareProductDTO implements Serializable {
      * 产品sku编号
      */
     private String skuNo;
+    private String skuId;
 
     /**
      * 中文报关名称
@@ -69,4 +70,16 @@ public class TransferDeclareProductDTO implements Serializable {
      * 申报币种
      */
     private String currency;
+    /**
+     *报关申报价币种符号
+     */
+    private String declareCurrencySymbol;
+    /**
+     * 重量 g
+     */
+    private Integer weight;
+    /**
+     * 是否含电
+     */
+    private Boolean isElectric;
 }
