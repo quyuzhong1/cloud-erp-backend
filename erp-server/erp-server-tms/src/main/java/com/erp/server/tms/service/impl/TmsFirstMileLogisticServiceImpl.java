@@ -798,7 +798,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     public Boolean updateRemark(TmsFirstMileLogisticDTO.UpdateRemarkDTO dto) {
-        return null;
+        return lambdaUpdate().eq(LogisticsBillEntity::getId,dto.getId()).set(LogisticsBillEntity::getRemark,dto.getRemark()).update();
     }
 
     @Override

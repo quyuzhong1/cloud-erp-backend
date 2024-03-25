@@ -231,7 +231,7 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String track;
     }
     /**
-     * 更新渠道
+     * 下推对账单
      */
     @Data
     @NoArgsConstructor
@@ -249,16 +249,10 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String reconciliationId;
 
         /**
-         * 开始时间
+         * 周期
          */
-        @NotNull(message = "开始时间不能为空")
-        private LocalDate beginDate;
-
-        /**
-         * 结束时间
-         */
-        @NotNull(message = "结束时间不能为空")
-        private LocalDate endDate;
+        @NotNull(message = "周期不能为空")
+        private List<LocalDate> dateList;
     }
 
     /**
