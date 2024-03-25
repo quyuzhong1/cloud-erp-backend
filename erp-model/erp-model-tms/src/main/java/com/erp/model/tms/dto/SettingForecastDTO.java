@@ -146,6 +146,11 @@ public class SettingForecastDTO implements Serializable {
          */
         private String declarePlatformName;
 
+        /**
+         * 中转报关物流商id
+         */
+        private String transferLogisticsSupplierId;
+
 
         /**
          * 渠道名称
@@ -178,18 +183,18 @@ public class SettingForecastDTO implements Serializable {
     @NoArgsConstructor
     public static class CheckRegistrationDTO{
         /**
-         * 报关平台
+         * 报关物流商
          */
-        @NotBlank(message = "报关平台不能为空")
-        private String declarePlatform;
+        @NotBlank(message = "报关物流商")
+        private String transferLogisticsSupplierId;
 
 
         /**
-         * sku no
+         * sku id
          */
         @NotNull(message = "SKU不能为空")
         @Size(min = 1,message = "至少需要一个SKU")
-        private List<String> skuNoList;
+        private List<String> skuIdList;
     }
 
 
@@ -211,6 +216,11 @@ public class SettingForecastDTO implements Serializable {
          * 报关平台名
          */
         private String declarePlatformName;
+
+        /**
+         * 中转报关物流商id
+         */
+        private String transferLogisticsSupplierId;
 
 
 

@@ -32,14 +32,14 @@ public class ProductRegistrationFeignController {
 
 
     /**
-     * 判断是否备案
-     * 返回未备案的sku
+     * 获取产品备案信息
+     *
      * @param dto
      * @return
      */
-    @PostMapping("/listNotRegistrationByParam")
-    public List<String>  listNotRegistrationByParam(@RequestBody SettingForecastDTO.CheckRegistrationDTO dto) {
-        List<String> list = productRegistrationService.listNotRegistrationByParam(dto);
+    @PostMapping("/listRegistrationByParam")
+    public List<ProductRegistrationEntity>  listRegistrationByParam(@RequestBody ProductRegistrationDTO.QueryDTO dto) {
+        List<ProductRegistrationEntity> list = productRegistrationService.listRegistrationByParam(dto);
         return list;
 
     }

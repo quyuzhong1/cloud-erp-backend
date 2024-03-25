@@ -38,8 +38,8 @@ public interface ForecastFeign {
      * @param dto
      * @return
      */
-    @PostMapping("/feign/productRegistration/listNotRegistrationByParam")
-    List<String> listNotRegistrationByParam(@RequestBody SettingForecastDTO.CheckRegistrationDTO dto);
+    @PostMapping("/feign/productRegistration/listRegistrationByParam")
+    List<ProductRegistrationEntity> listRegistrationByParam(@RequestBody ProductRegistrationDTO.QueryDTO dto);
 
     /**
      * 新增备案信息

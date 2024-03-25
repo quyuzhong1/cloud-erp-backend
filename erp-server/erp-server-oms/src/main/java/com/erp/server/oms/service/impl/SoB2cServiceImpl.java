@@ -57,6 +57,8 @@ import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.ProductRegistrationEntity;
+import com.erp.model.tms.enums.ProductRegistrationEnum;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -517,7 +519,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         List<TransferDeclareProductDTO> transferDeclareProductDTOS = new ArrayList<>();
         List<String> skuIds = soB2cDetailEntities.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
-//        List<BomChildrenSkuDTO> skuDTOS = plmTaskFeign.listBomBySkuIds(skuIds);
         //子sku列表
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
         //合并 子sku和父级sku获取 全量sku明细
@@ -551,6 +552,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         transferDeclareProductDTOS.add(TransferDeclareProductDTO.builder()
                                 .soId(soB2cDetailEntity.getMainId())
                                 .soCode(soCode)
+                                .skuId(bomChildrenSkuDTO.getSkuId())
                                 .skuNo(bomChildrenSkuDTO.getSkuNo())
                                 .soDetailId(soB2cDetailEntity.getId())
                                 .qty(soB2cDetailEntity.getQty() * bomChildrenSkuDTO.getQuantity())
@@ -565,6 +567,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 transferDeclareProductDTOS.add(TransferDeclareProductDTO.builder()
                         .soId(soB2cDetailEntity.getMainId())
                         .soCode(soCode)
+                        .skuId(soB2cDetailEntity.getSkuId())
                         .skuNo(soB2cDetailEntity.getSkuNo())
                         .soDetailId(soB2cDetailEntity.getId())
                         .qty(soB2cDetailEntity.getQty())
@@ -660,15 +663,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * 返回 不在备案产品的sku no list
      * 如果有 说明未备案
      *
-     * @param skuNoList
+     * @param skuIdList
+     * @param transferLogisticsSupplierId 中转报关商id
      */
-    private List<String> listNotSkuRegistration(List<String> skuNoList, String declarePlatform) {
-        if (CollectionUtils.isNotEmpty(skuNoList)) {
-            SettingForecastDTO.CheckRegistrationDTO checkRegistration = new SettingForecastDTO.CheckRegistrationDTO();
-            checkRegistration.setSkuNoList(skuNoList);
-            checkRegistration.setDeclarePlatform(declarePlatform);
-            List<String> notSkuRegistrationList = forecastFeign.listNotRegistrationByParam(checkRegistration);
-            return notSkuRegistrationList;
+    private List<String> listNotSkuRegistration(List<String> skuIdList, String transferLogisticsSupplierId) {
+        if (CollectionUtils.isNotEmpty(skuIdList)) {
+            ProductRegistrationDTO.QueryDTO queryRegistration = new ProductRegistrationDTO.QueryDTO();
+            queryRegistration.setSkuIdList(skuIdList);
+            queryRegistration.setTransferLogisticsSupplierId(transferLogisticsSupplierId);
+            String registered = ProductRegistrationEnum.StatusEnum.REGISTERED.getCode();
+            queryRegistration.setStatus(registered);
+            List<ProductRegistrationEntity> registrationList = forecastFeign.listRegistrationByParam(queryRegistration);
+
+            return null;
         }
         return Collections.emptyList();
     }
@@ -5622,20 +5629,27 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cLogisticsEntity soB2cLogistics = soB2cLogisticsService.getByMainId(id);
             logisticsChannelId = Objects.nonNull(soB2cLogistics) ? soB2cLogistics.getLogisticsChannelId() : "";
         }
+        //这个是获取到那些产品需要检查是否备案
         List<TransferDeclareProductDTO> productList = this.getTransferDeclareProductBySoInfo(id);
         //渠道名称
         String logisticsChannelName = "";
 
         //不在备案列表的skuNo
         List<String> notRegistrationSkuNoList = new ArrayList<>();
+
+        //不在备案列表的skuId
+        List<String> notRegistrationSkuIdList = new ArrayList<>();
         /**
          * 获取到对应的skuNo List  TODO 等接口
          */
         String packageStatus = PackageStatusEnum.NOT.getCode();
         String transferStatus = TransferStatusEnum.NOT.getCode();
-        List<String> skuNoList = productList.stream().map(TransferDeclareProductDTO::getSkuNo).distinct().collect(Collectors.toList());
+        //需要检查的skuid
+        List<String> skuIdList = productList.stream().map(TransferDeclareProductDTO::getSkuId).distinct().collect(Collectors.toList());
         String declarePlatform = "";
         String declarePlatformName = "";
+        //中转报关商的id
+        String transferLogisticsSupplierId="";
         if (StringUtils.isNotBlank(logisticsChannelId)) {
             SettingForecastDTO.FindSettingForecastDTO findSettingForecast = new SettingForecastDTO.FindSettingForecastDTO();
             findSettingForecast.setOrderTime(soB2cEntity.getCreateTime());
@@ -5648,13 +5662,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //中转状态
                 transferStatus = forecastStatus.getTransferStatus();
                 packageStatus = forecastStatus.getPackageStatus();
+                transferLogisticsSupplierId = forecastStatus.getTransferLogisticsSupplierId();
                 //表示要中转
                 if (!TransferStatusEnum.NOT.getCode().equals(transferStatus)) {
                     //检查是否备案
-                    notRegistrationSkuNoList = listNotSkuRegistration(skuNoList, forecastStatus.getDeclarePlatform());
+                    notRegistrationSkuIdList=listNotSkuRegistration(skuIdList, forecastStatus.getTransferLogisticsSupplierId());
                 }
             }
         }
+        resultDTO.setTransferLogisticsSupplierId(transferLogisticsSupplierId);
         resultDTO.setDeclarePlatform(declarePlatform);
         resultDTO.setDeclarePlatformName(declarePlatformName);
         resultDTO.setLogisticsChannelName(logisticsChannelName);

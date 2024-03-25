@@ -40,11 +40,11 @@ public interface ProductRegistrationService extends SuperService<ProductRegistra
     List<ProductRegistrationEntity> listBySkuNoListAndPlatform(List<String> skuNoList,String platform);
 
     /**
-     * 根据平台和 报关商获取备案产品 判断是否备案
-     * @param dto
+     * 根据参数获取信息
+     * @param
      * @return
      */
-    List<String> listNotRegistrationByParam(SettingForecastDTO.CheckRegistrationDTO dto);
+    List<ProductRegistrationEntity> listRegistrationByParam(ProductRegistrationDTO.QueryDTO dto);
 
     List<ProductRegistrationDTO.TabListDTO> tabList();
 

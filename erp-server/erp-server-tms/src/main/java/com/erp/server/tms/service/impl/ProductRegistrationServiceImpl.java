@@ -183,18 +183,15 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
      * @return
      */
     @Override
-    public List<String> listNotRegistrationByParam(SettingForecastDTO.CheckRegistrationDTO dto) {
-        String declarePlatform = dto.getDeclarePlatform();
-        String registered = ProductRegistrationEnum.StatusEnum.REGISTERED.getCode();
-        List<String> skuNoList = dto.getSkuNoList();
+    public List<ProductRegistrationEntity> listRegistrationByParam(ProductRegistrationDTO.QueryDTO dto) {
+        String transferLogisticsSupplierId = dto.getTransferLogisticsSupplierId();
+        List<String> skuIdList = dto.getSkuIdList();
         List<ProductRegistrationEntity> dbList=this.lambdaQuery().
-                eq(ProductRegistrationEntity::getDeclarePlatform,declarePlatform).
-                eq(ProductRegistrationEntity::getStatus,registered).
-                in(ProductRegistrationEntity::getSkuNo,skuNoList).list();
-        //这个是查询到的
-        List<String> dbSkuNoList = dbList.stream().map(ProductRegistrationEntity::getSkuNo).collect(Collectors.toList());
+                eq(StringUtils.isNotBlank(transferLogisticsSupplierId), ProductRegistrationEntity::getDeclareSupplierId,transferLogisticsSupplierId).
+                eq(ProductRegistrationEntity::getStatus,dto.getStatus()).
+                in(ProductRegistrationEntity::getSkuId,skuIdList).list();
 
-        return skuNoList.stream().filter(s->!dbSkuNoList.contains(s)).collect(Collectors.toList());
+        return dbList;
     }
 
     @Override

@@ -45,6 +45,12 @@ public class TransferDeclareProductDTO implements Serializable {
      * 数量
      */
     private Integer qty;
+
+    /**
+     * 产品skuId
+     */
+    private String skuId;
+
     /**
      * 产品sku编号
      */
