@@ -1,5 +1,6 @@
 package com.erp.model.tms.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 
@@ -77,7 +78,7 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     /**
     * 下单时间
     */
-    @TableField("order_time")
+    @TableField(value = "order_time", updateStrategy = FieldStrategy.IGNORED)
     private LocalDateTime orderTime;
     /**
     * 发货时间

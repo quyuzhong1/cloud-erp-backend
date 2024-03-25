@@ -327,7 +327,6 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         /**
          * 状态时间
          */
-        @NotNull(message = "状态时间不能为空")
         private LocalDateTime time;
 
         /**

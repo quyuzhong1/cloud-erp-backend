@@ -20,6 +20,7 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.FmDeliveryLogisticsStatusEnum;
@@ -41,6 +42,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -117,9 +119,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(generateLogisticDTO == null){
             throw new ServiceException("发货单不存在或者未装箱或已生成物流单");
         }
-        if(Objects.isNull(addDTO.getLogisticsOrderTime())){
-            addDTO.setLogisticsOrderTime(LocalDateTime.now());
-        }
+//        if(Objects.isNull(addDTO.getLogisticsOrderTime())){
+//            addDTO.setLogisticsOrderTime(LocalDateTime.now());
+//        }
         LocalDateTime shipTime = sailingService.calculateShipTime(addDTO.getLogisticsChannelId(),LocalDateTime.now());
         //新增物流单
         LogisticsBillEntity tmsFirstMileLogisticEntity = FmLogisticsConverter.INSTANCE.addLogisticsBill(generateLogisticDTO,addDTO);
@@ -568,8 +570,66 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         return dto;
     }
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> updateLogisticsStatus(TmsFirstMileLogisticDTO.UpdateLogisticsStatusDTO dto) {
-        return null;
+        List<LogisticsBillEntity> logisticsBillEntityList = listByIds(dto.getIds());
+        if(CollectionUtils.isEmpty(logisticsBillEntityList)){
+            throw new ServiceException("物流单为空");
+        }
+        FmLogisticTrackStatusEnum statusEnum = EnumMessage.getByCode(FmLogisticTrackStatusEnum.class,(dto.getLogisticsStatus()));
+        if(statusEnum == null){
+            throw new ServiceException("物流状态为空");
+        }
+        if(statusEnum != FmLogisticTrackStatusEnum.WAIT_ORDER && Objects.isNull(dto.getTime())){
+            throw new ServiceException("时间不能为空");
+        }
+        List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
+        List<LogisticsBillDetailEntity> allDetailList = logisticsBillDetailService.listByMainIds(dto.getIds());
+        List<LogisticsBillDetailEntity> updateDetailList = new ArrayList<>();
+        List<LogisticsTrackEntity> addTrackList = new ArrayList<>();
+        List<LogisticsBillEntity> updateBillList = new ArrayList<>();
+        for(LogisticsBillEntity logisticsBillEntity : logisticsBillEntityList){
+            List<LogisticsBillDetailEntity> detailEntityList = allDetailList.stream().filter(v->v.getMainId().equals(logisticsBillEntity.getId())).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(detailEntityList)){
+                batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"明细为空"));
+                continue;
+            }
+            detailEntityList.forEach(v->{
+                v.setTrackStatus(dto.getLogisticsStatus());
+            });
+            updateDetailList.addAll(detailEntityList);
+
+            if(statusEnum != FmLogisticTrackStatusEnum.WAIT_ORDER){
+                LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
+                logisticsTrackEntity.setStatus(dto.getLogisticsStatus());
+                logisticsTrackEntity.setTrackNo(logisticsBillEntity.getCounterNo());
+                logisticsTrackEntity.setTrackTime(dto.getTime());
+                logisticsTrackEntity.setContent(dto.getLogisticsTrack());
+                addTrackList.add(logisticsTrackEntity);
+            }
+            if(statusEnum == FmLogisticTrackStatusEnum.ORDERED){
+                logisticsBillEntity.setOrderTime(dto.getTime());
+                updateBillList.add(logisticsBillEntity);
+            }
+
+            if(statusEnum == FmLogisticTrackStatusEnum.WAIT_ORDER){
+                logisticsBillEntity.setOrderTime(null);
+                updateBillList.add(logisticsBillEntity);
+            }
+        }
+        if(CollectionUtils.isNotEmpty(updateDetailList)){
+            logisticsBillDetailService.updateBatchById(updateDetailList);
+        }
+        if(CollectionUtils.isNotEmpty(addTrackList)){
+            logisticsTrackService.saveBatch(addTrackList);
+        }
+        if(CollectionUtils.isNotEmpty(updateBillList)){
+            this.updateBatchById(updateBillList);
+        }
+        List<Pair<String, String>> addPairList = logisticsBillEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getId())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】变更状态为【{}】",commonService.getUserInfo().getUserName(),statusEnum.getName()), ModuleTypeEnum.LOGISTICS_BILL.getCode(), addPairList, "编辑操作");
+
+        return batchResultDTOList;
     }
 
     @Override
