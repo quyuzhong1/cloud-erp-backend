@@ -86,10 +86,10 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
     public Boolean add(DictCountryDTO.AddDTO dto) {
         DictCountryEntity entity = new DictCountryEntity();
         entity.setNameCn(dto.getName());
-        entity.setId(dto.getCode());
         entity.setRegionCode(dto.getParentRegionId());
         entity.setKingdeeCode(dto.getCode());
         handleData(entity);
+        entity.setId(dto.getCode());
         Boolean addResult = this.save(entity);
         if (addResult) {
             syncKingdeeCountryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());

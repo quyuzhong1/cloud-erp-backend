@@ -284,12 +284,12 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
         String regionName = dto.getRegionName();
         String code = dto.getKingdeeCode();
         entity.setRegionName(regionName);
-        entity.setId(code);
         entity.setSubregionName(regionName);
         entity.setRegionCode(code);
         entity.setKingdeeCode(code);
         handleData(entity);
-        Boolean addResult = this.saveOrUpdate(entity);
+        entity.setId(code);
+        Boolean addResult = this.save(entity);
         if(addResult){
             syncKingdeeGlobalAreaService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
@@ -299,8 +299,8 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
 
     private void handleData(DictGlobalAreaEntity entity) {
         String id = entity.getId();
-        String kingdeeCode = entity.getKingdeeCode();
-        String name = entity.getRegionName();
+        String kingdeeCode = entity.getKingdeeCode().trim();
+        String name = entity.getRegionName().trim();
         int codeCount = this.lambdaQuery().ne(StringUtils.isNotBlank(id), DictGlobalAreaEntity::getId, id).
                 eq(DictGlobalAreaEntity::getKingdeeCode, kingdeeCode).count();
         if (codeCount > 0) {
@@ -311,7 +311,8 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
         if (nameCount > 0) {
             throw new ServiceException("区域名已存在");
         }
-
+        entity.setKingdeeCode(kingdeeCode);
+        entity.setRegionName(name);
     }
 
     @Override
