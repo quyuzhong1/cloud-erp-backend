@@ -627,14 +627,38 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             this.updateBatchById(updateBillList);
         }
         List<Pair<String, String>> addPairList = logisticsBillEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getId())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】变更状态为【{}】",commonService.getUserInfo().getUserName(),statusEnum.getName()), ModuleTypeEnum.LOGISTICS_BILL.getCode(), addPairList, "编辑操作");
+        operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】变更物流状态为【{}】",commonService.getUserInfo().getUserName(),statusEnum.getName()), ModuleTypeEnum.LOGISTICS_BILL.getCode(), addPairList, "编辑操作");
 
         return batchResultDTOList;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> updateInvoicesStatus(TmsFirstMileLogisticDTO.UpdateInvoicesStatusDTO dto) {
-        return null;
+        List<LogisticsBillEntity> logisticsBillEntityList = listByIds(dto.getIds());
+        if(CollectionUtils.isEmpty(logisticsBillEntityList)){
+            throw new ServiceException("物流单为空");
+        }
+        InvoicesStatusEnum statusEnum = EnumMessage.getByCode(InvoicesStatusEnum.class,(dto.getInvoicesStatus()));
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        List<LogisticsBillEntity> updateList = new ArrayList<>();
+        if(statusEnum == null){
+            throw new ServiceException("状态不存在");
+        }
+        for(LogisticsBillEntity entity : logisticsBillEntityList){
+            if(entity.getInvoicesStatus() != null && entity.getInvoicesStatus().equals(statusEnum.getCode())){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(),entity.getCounterNo(),StrUtil.format("状态为【{}】，不可重新更新",statusEnum.getName())));
+                continue;
+            }
+            entity.setInvoicesStatus(statusEnum.getCode());
+            updateList.add(entity);
+        }
+        if(CollectionUtils.isNotEmpty(updateList)){
+            this.updateBatchById(updateList);
+            List<Pair<String, String>> addPairList = updateList.stream().map(obj -> new Pair<>(obj.getId(), obj.getId())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】变更发票状态为【{}】",commonService.getUserInfo().getUserName(),statusEnum.getName()), ModuleTypeEnum.LOGISTICS_BILL.getCode(), addPairList, "编辑操作");
+        }
+        return resultDTOList;
     }
 
     @Override
