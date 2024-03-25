@@ -201,8 +201,8 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
                     .flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             listDTO.setDictCostAttributionName(dictCostAttributionName);
             //费用分类
-            String dictCostCategoryName = basicList.stream().filter(obj -> StrUtil.equals(obj.getType(), DictBasicEnum.DICT_COST_ATTRIBUTION.getType())
-                            && StrUtil.equals(obj.getCode(), listDTO.getDictCostAttribution())).findFirst()
+            String dictCostCategoryName = basicList.stream().filter(obj -> StrUtil.equals(obj.getType(), DictBasicEnum.DICT_COST_CATEGORY.getType())
+                            && StrUtil.equals(obj.getCode(), listDTO.getDictCostCategory())).findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             listDTO.setDictCostCategoryName(dictCostCategoryName);
         }

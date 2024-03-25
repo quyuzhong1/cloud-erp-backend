@@ -142,7 +142,7 @@ public class LogisticsBillCostDTO implements Serializable {
         private String  transportNo;
 
         /**
-         * 物流单号
+         * 物流跟踪单号
          */
         private String  trackNo;
 
