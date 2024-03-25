@@ -1968,7 +1968,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approvalPass(ProductDetailOperateDTO dto) {
+    public Boolean approvalPass(ProductDetailOperateDTO dto,Boolean isCheck) {
         ProductDetailEntity entity = this.getById(dto.getId());
 
         //验证是否设置审核人
@@ -1980,9 +1980,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
-
-        //校验字段是否必填
-        checkApproveField(Arrays.asList(entity));
+        if (isCheck) {
+            //校验字段是否必填
+            checkApproveField(Arrays.asList(entity));
+        }
 
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         String userName = loginUser.getUserName();

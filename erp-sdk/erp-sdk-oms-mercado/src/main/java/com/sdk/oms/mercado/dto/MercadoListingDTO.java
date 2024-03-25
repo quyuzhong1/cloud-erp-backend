@@ -48,6 +48,9 @@ public class MercadoListingDTO extends CleanBaseDTO {
      * 根据PlatformWalmartListingDTO 转换 DTO
      */
     private static PlatformProductDTO initPlatformProductDTO(MercadoListingDTO dto) {
+        if (dto.getUniqueId().equals("CBT1886113867")) {
+            System.out.println(dto.getUniqueId());
+        }
         BodyBean bodyBean = dto.getBodyBean();
         PlatformProductDTO resultDto = new PlatformProductDTO();
         AttributesBean attributesBean = bodyBean.getAttributes().stream().filter(req -> "SELLER_SKU".equalsIgnoreCase(req.getFid())).findFirst().orElse(null);

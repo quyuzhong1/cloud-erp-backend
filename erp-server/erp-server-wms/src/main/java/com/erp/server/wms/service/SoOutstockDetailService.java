@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 
@@ -135,4 +136,17 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @return 
      */
     void checkB2cOrderQty(String warehouseId, String soId, String sourceId, String sourceType, List<SoOutstockDetailDTO.UpdateDTO> checkList);
+
+    /**
+     * 根据历史映射关系和库存情况重新生成销售出库单明细
+     *
+     * @author Jim
+     * @date 2024-03-19
+     */
+    List<SoOutstockDetailDTO.AddDTO> checkAndGenerateDetail(SoOutstockDTO.GenerateB2cDTO dto);
+
+    /**
+     * 批量更新备注
+     */
+    void updateDetailRemark(String soOutStockId, String remark, boolean updateErrorThrow);
 }

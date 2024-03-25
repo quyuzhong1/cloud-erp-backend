@@ -177,8 +177,14 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     /**
      * 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
      */
-    @TableField("abnormal_type")
+    @TableField
     private String abnormalType;
+
+    /**
+     * 平台订单创建时间
+     */
+    @TableField("platform_order_create_time")
+    private LocalDateTime platformOrderCreateTime;
 
     /**
      * 是否不需要合并

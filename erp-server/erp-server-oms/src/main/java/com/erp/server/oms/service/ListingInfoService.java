@@ -3,9 +3,6 @@ package com.erp.server.oms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoDTO;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.entity.SkuMappingEntity;
@@ -41,6 +38,7 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
      * @return com.erp.model.oms.entity.ListingInfoEntity
      */
     ListingInfoEntity getByPlatformSkuNo(String platform,String platformSkuNo);
+    List<ListingInfoEntity> listByParam(String type,String platform,List<String> skuNoList);
     /**
      * 根据类型获取到对应数据
      * @author yl
@@ -58,7 +56,7 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
      * @param dto
      * @return java.lang.Boolean
      **/
-    Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto);
+    Boolean skuMapping(FbaShipmentDTO.SkuMappingParamDTO dto);
 
     /**
      * 新增映射skuNo
@@ -82,5 +80,5 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
 
     Boolean warehouseSkuMapping(ListingInfoDTO.WarehouseSkuMappingParamDTO dto);
 
-    void saveBatchImport(List<ListingInfoEntity> addListingInfoEntityList, List<SkuMappingEntity> updateSkuMappingList, List<ListingInfoEntity> updateListingInfoList, List<SkuMappingEntity> addSkuMappingList, List<String> removeIds, List<Pair<String, String>> addLogPairList, List<Pair<String, String>> updateLogPairList);
+    void saveBatchImport(List<ListingInfoEntity> addListingInfoEntityList, List<SkuMappingEntity> updateSkuMappingList, List<ListingInfoEntity> updateListingInfoList, List<SkuMappingEntity> addSkuMappingList,List<Pair<String, String>> addLogPairList, List<Pair<String, String>> updateLogPairList);
 }

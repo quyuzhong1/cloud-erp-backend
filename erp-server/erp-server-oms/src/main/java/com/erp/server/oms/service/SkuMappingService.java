@@ -167,6 +167,7 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      **/
     List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIds(List<String> productSkuIdList);
 
+
     /**
      * 根据listingId查询sku映射表
      * @Author Luo_WG
@@ -228,4 +229,9 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(List<String> erpSkuIdList,String provideCode,String warehouseId);
 
     List<ListingAdvanceQueryDTO> advanceQuerySku(AdvanceQueryContainer advanceQueryContainer);
+
+    /**
+     * 检查历史映射关系
+     */
+    void checkHistory(String id, String listingId, String shopId, String productSkuId);
 }

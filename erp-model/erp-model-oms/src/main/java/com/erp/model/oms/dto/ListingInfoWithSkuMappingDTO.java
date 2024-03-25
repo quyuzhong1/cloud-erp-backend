@@ -1,13 +1,13 @@
 package com.erp.model.oms.dto;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
-import java.math.BigDecimal;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Data
 @NoArgsConstructor
@@ -159,6 +159,33 @@ public class ListingInfoWithSkuMappingDTO {
      *
      */
     private Map<String, String> extendMap = new HashMap<>();
+
+    /**
+     * 过滤取指定过期时间匹配小于或等于过期时间/空=最新匹配
+     */
+    public static ListingInfoWithSkuMappingDTO getActiveOne(@NotNull List<ListingInfoWithSkuMappingDTO> dtoList,
+                                                            @NotNull LocalDateTime lastExpireDate) {
+        if (1 == dtoList.size()){
+            return dtoList.get(0);
+        }
+        if (null == lastExpireDate){
+            // 无指定日期提供最新映射关系
+           return dtoList.stream()
+                   .filter(e-> !e.getIsExpire())
+                   .max(Comparator.comparing(ListingInfoWithSkuMappingDTO::getExpireTime))
+                   .orElse(null);
+        }
+
+        Optional<ListingInfoWithSkuMappingDTO> optional = dtoList.stream()
+                // 指定时间=生效时间 或 生效时间 < 指定时间 < 结束时间
+                .filter(dto -> lastExpireDate.isEqual(dto.getEffectiveTime()) || (lastExpireDate.isAfter(dto.getEffectiveTime()) && lastExpireDate.isBefore(dto.getExpireTime())))
+                .max(Comparator.comparing(ListingInfoWithSkuMappingDTO::getExpireTime));
+
+        return optional.orElseGet(() -> dtoList
+                .stream()
+                .max(Comparator.comparing(ListingInfoWithSkuMappingDTO::getExpireTime))
+                .orElse(null));
+    }
 
     public String checkAndGetProductSkuId() {
         if (StringUtils.isNotBlank(this.productSkuId)){

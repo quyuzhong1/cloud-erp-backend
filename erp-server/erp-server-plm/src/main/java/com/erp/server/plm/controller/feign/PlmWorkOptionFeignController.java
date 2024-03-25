@@ -1,8 +1,5 @@
 package com.erp.server.plm.controller.feign;
 
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.model.plm.dto.ProductDetailOperateDTO;
 import com.erp.model.plm.dto.TaskOperateDTO;
@@ -73,7 +70,7 @@ public class PlmWorkOptionFeignController {
      */
     @PostMapping("/productDetailApprovalPass")
     public Boolean productDetailApprovalPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
-        Boolean result = productDetailService.approvalPass(dto);
+        Boolean result = productDetailService.approvalPass(dto,Boolean.TRUE);
         return result;
     }
 

@@ -141,6 +141,7 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
                 paramDTO.setWarehouseIdList(warehouseIds);
                 paramDTO.setPlatformSkuNoList(Collections.singletonList(entity.getPlatformSku()));
                 paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
+                paramDTO.setIsExpire(false);
                 // 查询ListingInfo和skuMapping的关系
                 List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
                 if(CollectionUtils.isNotEmpty(listingedInfoWithSkuMappingList)){

@@ -163,4 +163,14 @@ public interface B2cOrderConverter {
     })
     SoB2cDeliveryInterceptDetailDTO.AddDTO convertInterceptDetail(SoB2cDetailEntity detailEntity);
     List<SoB2cDeliveryInterceptDetailDTO.AddDTO> convertInterceptDetail(List<SoB2cDetailEntity> detailList);
+
+
+    @Mappings({
+    })
+    List<SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO> skuMappingDTOListToGenDTOList(List<ListingInfoWithSkuMappingDTO> list);
+
+
+    @Mappings({
+    })
+    SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO skuMappingDTOToGenDTO(ListingInfoWithSkuMappingDTO sourceDTO);
 }

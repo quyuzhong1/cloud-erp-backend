@@ -1,5 +1,6 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.UpdateStateDTO;
@@ -127,6 +128,16 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2cError/delete")
     void deleteError(@RequestBody SoB2cErrorDTO.DeleteDTO deleteDTO);
+
+
+    /**
+     * 根据订单ID和明细ID删除
+     *
+     * @date 2024-03-07
+     * @author Jim
+     */
+    @PostMapping("/feign/soB2cError/deleteDetail")
+    void deleteDetailError(@RequestBody SoB2cErrorDTO.DeleteDetailDTO deleteDTO);
 
     /**
      * 批量删除异常信息
@@ -399,4 +410,23 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/batchUpdateLogistics")
     Boolean batchUpdateLogistics(@RequestBody List<SoB2cLogisticsEntity> list);
+
+    /**
+     * 根据平台单号和平台查询B2C销售订单
+     *
+     * @date 2024-03-07
+     * @author Jim
+     */
+    @GetMapping("/feign/soB2c/getByPlatformCode")
+    List<SoB2cEntity>  getByPlatformCode(@RequestParam("platformCodeList") List<String> platformCodeList,
+                                         @RequestParam("dictPlatform") String dictPlatform,
+                                         @RequestParam("shopId") String shopId
+    );
+
+    @PostMapping("/feign/soB2c/updateById")
+    Boolean updateById(@RequestBody SoB2cEntity soB2cEntity);
+
+
+    @PostMapping("/feign/soB2c/checkAndFillBySoOutStock")
+    Boolean checkAndFillBySoOutStock(@RequestBody PlatformSoOutStockDTO dto);
 }

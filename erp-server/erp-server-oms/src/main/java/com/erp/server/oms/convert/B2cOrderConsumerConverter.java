@@ -98,6 +98,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "labelJson", source = "dto.labelJson"),
             @Mapping(target = "extendData", source = "dto.extendData"),
             @Mapping(target = "shopId",source = "dto.shopId"),
+            @Mapping(target = "platformOrderCreateTime",source = "dto.platformOrderCreateTime"),
             // 历史实体
             @Mapping(target = "exchangeRate", source = "oldEntity.exchangeRate"),
             @Mapping(target = "code", source = "oldEntity.code"),

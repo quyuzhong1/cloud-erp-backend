@@ -1452,8 +1452,15 @@ public class Order {
             return "waitDistribution";
         }
         if (OrderStatusEnum.UNSHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
-            // 待配货
-            return "waitDistribution";
+            if (FulfillmentChannelEnum.AFN.equals(this.fulfillmentChannel)){
+                // 平台仓订单
+                // 待发货
+                return "waitShipped";
+            } else {
+                // 自发货订单
+                // 待配货
+                return "waitDistribution";
+            }
         }
         if (OrderStatusEnum.PARTIALLYSHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
             // 待发货

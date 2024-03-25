@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -110,6 +109,14 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 one();
     }
 
+    @Override
+    public List<ListingInfoEntity> listByParam(String type, String platform, List<String> skuNoList) {
+        return lambdaQuery().eq(ListingInfoEntity::getType, type).
+                eq(ListingInfoEntity::getPlatform, platform).
+                in(ListingInfoEntity::getPlatformSkuNo, skuNoList)
+                .list();
+    }
+
 
     /**
      * 根据类型获取到对应数据
@@ -126,7 +133,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto) {
+    public Boolean skuMapping(FbaShipmentDTO.SkuMappingParamDTO dto) {
         SkuMappingEntity skuMapping = skuMappingService.getById(dto.getId());
         if (ObjectUtil.isEmpty(skuMapping)) {
             throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
@@ -142,7 +149,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         }
         LocalDateTime now = LocalDateTime.now();
         skuMapping.setExpireTime(now);
-        skuMapping.setIsDeleted(true);
+//        skuMapping.setIsDeleted(true);
         skuMapping.setIsExpire(Boolean.TRUE);
         if (!skuMappingService.updateById(skuMapping)) {
             throw new ServiceException("[SkuMapping] 历史映射修改失败");
@@ -157,14 +164,17 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
         skuMappingEntity.setProductName(skuVO.getSkuName());
         skuMappingEntity.setListingId(listingInfoEntity.getId());
-        skuMappingEntity.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
-        skuMappingEntity.setPlatformName(PlatformDictEnum.AMAZON.getName());
+        skuMappingEntity.setDictPlatform(dto.getPlatform());
+        PlatformDictEnum platformDictEnum = PlatformDictEnum.checkAndGetByCode(dto.getPlatform());
+        skuMappingEntity.setPlatformName(platformDictEnum.getDesc());
 
         //生效时间
         skuMappingEntity.setEffectiveTime(now);
         skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
         skuMappingService.save(skuMappingEntity);
 
+        // 记录日志
+        operateLogService.addModuleOperateLogByObj(skuMapping, skuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntity.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",commonService.getUserInfo().getUserName()));
         return lambdaUpdate()
                 .set(ListingInfoEntity::getMatchResult, Boolean.TRUE)
                 .eq(ListingInfoEntity::getId, listingInfoEntity.getId())
@@ -273,6 +283,8 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
         skuMappingService.save(skuMappingEntity);
 
+        operateLogService.addModuleOperateLogByObj(skuMapping, skuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMapping.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",commonService.getUserInfo().getUserName()));
+
         return lambdaUpdate()
                 .set(ListingInfoEntity::getMatchResult, Boolean.TRUE)
                 .eq(ListingInfoEntity::getId, listingInfoEntity.getId())
@@ -281,7 +293,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void saveBatchImport(List<ListingInfoEntity> addListingInfoEntityList, List<SkuMappingEntity> updateSkuMappingList, List<ListingInfoEntity> updateListingInfoList, List<SkuMappingEntity> addSkuMappingList, List<String> removeIds, List<Pair<String, String>> addLogPairList, List<Pair<String, String>> updateLogPairList) {
+    public void saveBatchImport(List<ListingInfoEntity> addListingInfoEntityList, List<SkuMappingEntity> updateSkuMappingList, List<ListingInfoEntity> updateListingInfoList, List<SkuMappingEntity> addSkuMappingList, List<Pair<String, String>> addLogPairList, List<Pair<String, String>> updateLogPairList) {
         if (CollectionUtils.isNotEmpty(addListingInfoEntityList)) {
             service.saveBatch(addListingInfoEntityList);
         }
@@ -298,10 +310,6 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         }
         if (CollectionUtils.isNotEmpty(addSkuMappingList)) {
             skuMappingService.saveBatch(addSkuMappingList);
-        }
-
-        if(CollectionUtils.isNotEmpty(removeIds)){
-            skuMappingService.removeByIds(removeIds);
         }
         if (CollectionUtils.isNotEmpty(addLogPairList)) {
             operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】新增了sku映射表",commonService.getUserInfo().getUserName())+"id为【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), addLogPairList,"新增操作");
