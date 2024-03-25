@@ -476,7 +476,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException(ApiError.ERROR_DUPLICATE_MAPPING_SKU_ID, oldSkuMappingEntity.getProductSkuNo(), oldSkuMappingEntity.getWarehouseName());
         }
         String warehouseProductName = dto.getWarehouseProductName();
-        String listingId = listingInfoService.addWarehouseSku(warehouseSkuNo, warehouseProductName);
+        ListingInfoEntity existEntity = listingInfoService.getByPlatformSkuNo(warehouseSkuNo,"");
+        String listingId;
+        if(null == existEntity){
+            listingId = listingInfoService.addWarehouseSku(warehouseSkuNo, warehouseProductName);
+        }else{
+            listingId = existEntity.getId();
+        }
         if (StringUtils.isBlank(listingId)) {
             throw new ServiceException(warehouseSkuNo + "未找到");
         }
