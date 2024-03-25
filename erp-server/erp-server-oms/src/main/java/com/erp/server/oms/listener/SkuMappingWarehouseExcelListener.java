@@ -255,6 +255,9 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                         v.setIsExpire(Boolean.TRUE);
                     });
                     updateSkuMappingList.addAll(existSkuMappingList);
+                }else{
+                    Pair<String, String> pair = new Pair<>(listingId,listingId);
+                    addLogPairList.add(pair);
                 }
 
                 //封装新增skuMapping
