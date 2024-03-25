@@ -910,20 +910,20 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 batchResultDTOList.add(BatchResultDTO.fail(soOutstock.getId(),soOutstock.getCode(),"未生成物流单，无法更新跟踪号"));
                 continue;
             }
-            LogisticsBillDetailEntity logisticsBillDetailEntity = logisticsBillDetailEntityList.stream().filter(v->batchUpdateTrackNoDTO.getTrackNoList().contains(v.getTrackNo())).findFirst().orElse(null);
-            if(Objects.nonNull(logisticsBillDetailEntity)){
-                LogisticsBillEntity existEntity = this.getById(logisticsBillDetailEntity.getMainId());
-                //如果跟踪单号已存在判断如果是新增则报错
-                if(isAdd || !logisticsBillDetailEntity.getMainId().equals(logisticsBillEntity.getId())){
-                    String msg = StrUtil.format("跟踪号【{}】已关联销售出库单【{}】，不允许重复关联", logisticsBillDetailEntity.getTrackNo(),existEntity.getOutstockCode());
-                    batchResultDTOList.add(BatchResultDTO.fail(soOutstock.getId(),soOutstock.getCode(),msg));
-                    //不过是更新则返回，避免将原有的删除
-                    if(!isAdd){
-                        return batchResultDTOList;
-                    }
-                    continue;
-                }
-            }
+//            LogisticsBillDetailEntity logisticsBillDetailEntity = logisticsBillDetailEntityList.stream().filter(v->batchUpdateTrackNoDTO.getTrackNoList().contains(v.getTrackNo())).findFirst().orElse(null);
+//            if(Objects.nonNull(logisticsBillDetailEntity)){
+//                LogisticsBillEntity existEntity = this.getById(logisticsBillDetailEntity.getMainId());
+//                //如果跟踪单号已存在判断如果是新增则报错
+//                if(isAdd || !logisticsBillDetailEntity.getMainId().equals(logisticsBillEntity.getId())){
+//                    String msg = StrUtil.format("跟踪号【{}】已关联销售出库单【{}】，不允许重复关联", logisticsBillDetailEntity.getTrackNo(),existEntity.getOutstockCode());
+//                    batchResultDTOList.add(BatchResultDTO.fail(soOutstock.getId(),soOutstock.getCode(),msg));
+//                    //不过是更新则返回，避免将原有的删除
+//                    if(!isAdd){
+//                        return batchResultDTOList;
+//                    }
+//                    continue;
+//                }
+//            }
             if(StringUtils.isNotBlank(batchUpdateTrackNoDTO.getLogisticsChannelId())){
                 logisticsBillEntity.setChannelId(batchUpdateTrackNoDTO.getLogisticsChannelId());
                 updateEntityList.add(logisticsBillEntity);
