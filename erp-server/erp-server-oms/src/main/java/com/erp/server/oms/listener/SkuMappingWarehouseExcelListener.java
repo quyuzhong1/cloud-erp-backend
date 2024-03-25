@@ -248,12 +248,15 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
             }else{
                 //将原来的skuMapping设置过期，再新增
                 listingId = listingInfoEntity.getId();
-                List<SkuMappingEntity> existSkuMappingList = skuMappingEntityList.stream().filter(v->v.getListingId().equals(listingId)).collect(Collectors.toList());
-                existSkuMappingList.forEach(v->{
-                    v.setExpireTime(LocalDateTime.now());
-                    v.setIsExpire(Boolean.TRUE);
-                });
-                updateSkuMappingList.addAll(existSkuMappingList);
+                List<SkuMappingEntity> existSkuMappingList = skuMappingEntityList.stream().filter(v->v.getListingId().equals(listingId) && v.getWarehouseId().equals(dto.getWarehouseId())).collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(existSkuMappingList)){
+                    existSkuMappingList.forEach(v->{
+                        v.setExpireTime(LocalDateTime.now());
+                        v.setIsExpire(Boolean.TRUE);
+                    });
+                    updateSkuMappingList.addAll(existSkuMappingList);
+                }
+
                 //封装新增skuMapping
                 SkuMappingEntity addSkuMapping = new SkuMappingEntity();
                 addSkuMapping.setWarehouseId(dto.getWarehouseId());
@@ -277,6 +280,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                         updateLogPairList.add(pair);
                     }
                 }
+
                 listingInfoEntity.setMatchResult(true);
                 updateListingInfoList.add(listingInfoEntity);
             }
