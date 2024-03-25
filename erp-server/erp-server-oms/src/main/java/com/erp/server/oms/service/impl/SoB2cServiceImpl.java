@@ -659,14 +659,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
-     * 检查产品是否备案
-     * 返回 不在备案产品的sku no list
-     * 如果有 说明未备案
-     *
+     * 获取到产品备案信息
      * @param skuIdList
      * @param transferLogisticsSupplierId 中转报关商id
      */
-    private List<String> listNotSkuRegistration(List<String> skuIdList, String transferLogisticsSupplierId) {
+    private List<ProductRegistrationEntity> listSkuRegistration(List<String> skuIdList, String transferLogisticsSupplierId) {
         if (CollectionUtils.isNotEmpty(skuIdList)) {
             ProductRegistrationDTO.QueryDTO queryRegistration = new ProductRegistrationDTO.QueryDTO();
             queryRegistration.setSkuIdList(skuIdList);
@@ -674,8 +671,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String registered = ProductRegistrationEnum.StatusEnum.REGISTERED.getCode();
             queryRegistration.setStatus(registered);
             List<ProductRegistrationEntity> registrationList = forecastFeign.listRegistrationByParam(queryRegistration);
-
-            return null;
+            return registrationList;
         }
         return Collections.emptyList();
     }
@@ -1074,20 +1070,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Boolean isCover = dto.getIsCover();
         String logisticsChannelId = dto.getLogisticsChannelId();
         SettingForecastDTO.CheckRegistrationResultDTO resultDTO = getCheckRegistrationResult(id, logisticsChannelId);
-        String packageStatus = resultDTO.getPackageStatus();
-        String transferStatus = resultDTO.getTransferStatus();
-        entity.setPackageStatus(packageStatus);
-        entity.setTransferStatus(transferStatus);
-        //未备案的sku
-        List<String> notRegistrationSkuNoList = resultDTO.getNotRegistrationSkuNoList();
-        Boolean isRegistration = CollectionUtils.isEmpty(notRegistrationSkuNoList);
-        //表示未备案
-        if (!isRegistration) {
-            String skuStr = notRegistrationSkuNoList.stream().collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.NOT_UPDATE_CHANNEL_BY_NOT_REGISTRATION, skuStr, resultDTO.getDeclarePlatformName(), resultDTO.getLogisticsChannelName());
-        }
-        updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration);
-
+        //处理报关结果
+        handleRegistrationResult(id,resultDTO);
         //选择了渠道则更新
         if (StrUtil.isNotBlank(logisticsChannelId)) {
             if (Boolean.TRUE.equals(isCover)) {
@@ -1168,6 +1152,50 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String msg = "B2C销售订单配货,物流方式【{}】,仓库【{}】";
         operateLogService.addModuleOperateLog(StrUtil.format(msg, soB2cLogisticsEntity.getName(), updateDTO.getName()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "手动配货");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动配货");
+    }
+
+    /**
+     * 处理报关结果
+     * @param resultDTO
+     * @param soId
+     */
+    public void handleRegistrationResult(String  soId, SettingForecastDTO.CheckRegistrationResultDTO resultDTO) {
+
+        String packageStatus = resultDTO.getPackageStatus();
+        String transferStatus = resultDTO.getTransferStatus();
+        //报关物流商id
+        String transferLogisticsSupplierId = resultDTO.getTransferLogisticsSupplierId();
+        //未备案的sku
+        List<String> notRegistrationSkuNoList = resultDTO.getNotRegistrationSkuNoList();
+        //未备案的sku id
+        List<String> notRegistrationSkuIdList = resultDTO.getNotRegistrationSkuIdList();
+        //这个是 物流产品信息
+        List<LogisticsProductDTO.ProductDTO> logisticsProductList = logisticsProductFeign.listBySkuIdList(notRegistrationSkuIdList);
+        //已审核
+        String approve = ApproveStatusEnum.APPROVE.getCode();
+        //已经审核的sku
+        List<String> approveSkuIdList=logisticsProductList.stream().filter(l->approve.equals(l.getApproveStatus())).
+                map(LogisticsProductDTO.ProductDTO::getSkuId).collect(Collectors.toList());
+        //备案审核状态-已审核-自动匹配推送备案
+        if (CollectionUtils.isNotEmpty(approveSkuIdList) && StringUtils.isNotBlank(transferLogisticsSupplierId)) {
+            ProductRegistrationDTO.AddDTO addRegistration =new ProductRegistrationDTO.AddDTO();
+            try {
+                List<BatchResultDTO> addResultList = forecastFeign.add(addRegistration);
+            } catch (Exception e) {
+
+            }
+
+        }
+
+
+        Boolean isRegistration = CollectionUtils.isEmpty(notRegistrationSkuNoList);
+        //表示未备案
+        if (!isRegistration) {
+            String skuStr = notRegistrationSkuNoList.stream().collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.NOT_UPDATE_CHANNEL_BY_NOT_REGISTRATION, skuStr, resultDTO.getDeclarePlatformName(), resultDTO.getLogisticsChannelName());
+        }
+        updatePackageAndTransferStatus(soId, packageStatus, transferStatus, isRegistration);
+
     }
 
     @Override
@@ -5562,17 +5590,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public void checkProductRegistrationAndUpdate(String id, String logisticsChannelId) {
         SettingForecastDTO.CheckRegistrationResultDTO resultDTO = getCheckRegistrationResult(id, logisticsChannelId);
-        String packageStatus = resultDTO.getPackageStatus();
-        String transferStatus = resultDTO.getTransferStatus();
-        //未备案的sku
-        List<String> notRegistrationSkuNoList = resultDTO.getNotRegistrationSkuNoList();
-        Boolean isRegistration = CollectionUtils.isEmpty(notRegistrationSkuNoList);
-        updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration);
-        //表示未备案
-        if (!isRegistration) {
-            String skuStr = notRegistrationSkuNoList.stream().collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.NOT_PRODUCT_REGISTRATION, skuStr, resultDTO.getDeclarePlatformName());
-        }
+        handleRegistrationResult(id,resultDTO);
     }
 
     /**
@@ -5640,12 +5658,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //不在备案列表的skuId
         List<String> notRegistrationSkuIdList = new ArrayList<>();
         /**
-         * 获取到对应的skuNo List  TODO 等接口
+         * 获取到对应的skuNo List
          */
         String packageStatus = PackageStatusEnum.NOT.getCode();
         String transferStatus = TransferStatusEnum.NOT.getCode();
         //需要检查的skuid
         List<String> skuIdList = productList.stream().map(TransferDeclareProductDTO::getSkuId).distinct().collect(Collectors.toList());
+        //需要检查的skuno
+        List<String> skuNoList = productList.stream().map(TransferDeclareProductDTO::getSkuNo).distinct().collect(Collectors.toList());
+
         String declarePlatform = "";
         String declarePlatformName = "";
         //中转报关商的id
@@ -5665,8 +5686,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 transferLogisticsSupplierId = forecastStatus.getTransferLogisticsSupplierId();
                 //表示要中转
                 if (!TransferStatusEnum.NOT.getCode().equals(transferStatus)) {
-                    //检查是否备案
-                    notRegistrationSkuIdList=listNotSkuRegistration(skuIdList, forecastStatus.getTransferLogisticsSupplierId());
+                    //产品备案信息
+                    List<ProductRegistrationEntity> registrationSkuList = listSkuRegistration(skuIdList, forecastStatus.getTransferLogisticsSupplierId());
+                    //备案产品
+                    List<String> registrationSkuNoList = registrationSkuList.stream().map(ProductRegistrationEntity::getSkuNo).collect(Collectors.toList());
+                    notRegistrationSkuNoList = skuNoList.stream().filter(s -> !registrationSkuNoList.contains(s)).collect(Collectors.toList());
+
+                    //备案产品
+                    List<String> registrationSkuIdList = registrationSkuList.stream().map(ProductRegistrationEntity::getSkuId).collect(Collectors.toList());
+                    notRegistrationSkuIdList = skuIdList.stream().filter(s -> !registrationSkuIdList.contains(s)).collect(Collectors.toList());
                 }
             }
         }
@@ -5675,6 +5703,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         resultDTO.setDeclarePlatformName(declarePlatformName);
         resultDTO.setLogisticsChannelName(logisticsChannelName);
         resultDTO.setNotRegistrationSkuNoList(notRegistrationSkuNoList);
+        resultDTO.setNotRegistrationSkuIdList(notRegistrationSkuIdList);
         resultDTO.setPackageStatus(packageStatus);
         resultDTO.setTransferStatus(transferStatus);
         return resultDTO;

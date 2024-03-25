@@ -225,9 +225,15 @@ public class SettingForecastDTO implements Serializable {
 
 
         /**
-         * sku no
+         * 未备案 sku no
          */
         private List<String> notRegistrationSkuNoList;
+
+
+        /**
+         * 未备案的sku id
+         */
+        private List<String> notRegistrationSkuIdList;
 
         /**
          * 组包状态
