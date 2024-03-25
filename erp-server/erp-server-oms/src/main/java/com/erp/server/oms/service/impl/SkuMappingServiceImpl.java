@@ -583,6 +583,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (Objects.isNull(skuMapping)) {
             throw new ServiceException(ApiError.ERROR_92051);
         }
+
         String productSkuId = dto.getProductSkuId();
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(productSkuId));
         if (CollectionUtils.isEmpty(skuVOList)) {
@@ -616,6 +617,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         if (StringUtils.isBlank(listingId)) {
             throw new ServiceException(warehouseSkuNo + "未找到");
+        }
+
+        SkuMappingEntity existEntity = this.getWarehouseMapping(listingId,dto.getWarehouseId(),dto.getProductSkuId(),RuleTypeEnum.WAREHOUSE);
+        if(Objects.nonNull(existEntity)){
+            throw new ServiceException("该仓库下已存在该sku");
         }
         //更改原有的
         LocalDateTime now = LocalDateTime.now();
@@ -655,6 +661,16 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     }
 
+    private SkuMappingEntity getWarehouseMapping(String listingId,String warehouseId ,String skuId,RuleTypeEnum ruleTypeEnum){
+        return lambdaQuery()
+                .eq(SkuMappingEntity::getListingId, listingId)
+                .eq(SkuMappingEntity::getWarehouseId, warehouseId)
+                .eq(SkuMappingEntity::getType, ruleTypeEnum)
+                .eq(SkuMappingEntity::getProductSkuId, skuId)
+                .eq(SkuMappingEntity::getIsExpire, false)
+                .last(" LIMIT 1")
+                .one();
+    }
 
     @Override
     public List<SkuMappingDTO.ListSkuDTO> listBySkuNoList(List<SkuMappingDTO.ListSkuParamDTO> dataList) {
