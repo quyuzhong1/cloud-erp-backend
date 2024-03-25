@@ -17,7 +17,6 @@ public enum WmsDataCompareTaskSubStatusEnum implements EnumMessage {
 	WAIT_COMPARE("wait_compare", "待比对"),
 	WAIT_UPLOAD("wait_upload", "待上传"),
 	FINISH("finish", "已完成"),
-	ERROR("error", "异常"),
     ;
     /**
      * 类型

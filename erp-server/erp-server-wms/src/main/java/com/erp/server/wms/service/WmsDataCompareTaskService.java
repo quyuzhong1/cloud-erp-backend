@@ -1,11 +1,15 @@
 package com.erp.server.wms.service;
+import java.util.List;
+
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
-import com.common.core.controller.vo.ApiResult;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO.SetNextDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO.SetNextViewDTO;
 import com.erp.model.wms.entity.WmsDataCompareTaskEntity;
+import com.erp.model.wms.entity.WmsDataCompareTempEntity;
 
 /**
  * <p>
@@ -39,5 +43,12 @@ public interface WmsDataCompareTaskService extends SuperService<WmsDataCompareTa
     */
     Boolean update(WmsDataCompareTaskDTO.UpdateDTO dto);
 
-
+    /**
+     * 高级查询分页查询
+     * @param dto
+     * @return
+     */
+    PagingVO<WmsDataCompareTaskDTO.ViewDTO> paging(PagingDTO<WmsDataCompareTaskDTO.PagingParamDTO> dto);
+    
+    void saveTempTable(String importId , List<WmsDataCompareTempEntity> wmsDataCompareTempEntityList , Integer currParseOffset , boolean isLast);
 }

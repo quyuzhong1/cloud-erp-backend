@@ -12,7 +12,7 @@ public class WmsDataCompareExcelListener extends AnalysisEventListener<Map<Integ
     
     private List<String> headFieldList;
     
-    private List<Map<Integer, String>> datas = new ArrayList<>();
+    private List<List<String>> datas = new ArrayList<>();
 
     @Override
     public void invokeHeadMap(Map<Integer, String> headMap, AnalysisContext context) {
@@ -25,7 +25,13 @@ public class WmsDataCompareExcelListener extends AnalysisEventListener<Map<Integ
     
     @Override
     public void invoke(Map<Integer, String> data, AnalysisContext context) {
-    	datas.add(data);
+    	if(data != null && data.size() > 0) {
+    		List<String> d = new ArrayList<>();
+    		for(int i = 0; i < data.size(); i++) {
+    			d.add(data.get(i));
+    		}
+    		datas.add(d);
+    	}
     }
 
     @Override
@@ -41,8 +47,8 @@ public class WmsDataCompareExcelListener extends AnalysisEventListener<Map<Integ
 		return headFieldList;
 	}
 
-	public List<Map<Integer, String>> getDatas() {
+	public List<List<String>> getDatas() {
 		return datas;
 	}
-	
+
 }

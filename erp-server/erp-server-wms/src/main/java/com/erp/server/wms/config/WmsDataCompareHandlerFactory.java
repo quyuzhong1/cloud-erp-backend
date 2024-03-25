@@ -16,7 +16,7 @@ import com.erp.server.wms.service.WmsDataCompareBillService;
 
 @Component
 public class WmsDataCompareHandlerFactory {
-	private Map<String, WmsDataCompareBillService> wmsDataCompareBillHandlerMap = new HashMap<>();
+	private Map<String, WmsDataCompareBillService<?>> wmsDataCompareBillHandlerMap = new HashMap<>();
 	
 	@Autowired
 	private WmsDataCompareSoHandler wmsDataCompareSoHandler;
@@ -29,12 +29,17 @@ public class WmsDataCompareHandlerFactory {
 	
 	@PostConstruct
     public void init() {
-		wmsDataCompareBillHandlerMap.put(WmsDataCompareTaskBillTypeEnum.SOOUTSTOCK.getCode(), wmsDataCompareSoHandler);
-		wmsDataCompareBillHandlerMap.put(WmsDataCompareTaskBillTypeEnum.FBASHIPMENT.getCode(), wmsDataCompareFbaHandler);
-		wmsDataCompareBillHandlerMap.put(WmsDataCompareTaskBillTypeEnum.OVERSEASINBOUND.getCode(), wmsDataCompareOverHandler);
+		putHandler(WmsDataCompareTaskBillTypeEnum.SOOUTSTOCK.getCode(), wmsDataCompareSoHandler);
+		putHandler(WmsDataCompareTaskBillTypeEnum.FBASHIPMENT.getCode(), wmsDataCompareFbaHandler);
+		putHandler(WmsDataCompareTaskBillTypeEnum.OVERSEASINBOUND.getCode(), wmsDataCompareOverHandler);
 	}
 	
-	public WmsDataCompareBillService get(String billType) {
+	public WmsDataCompareBillService<?> get(String billType) {
         return wmsDataCompareBillHandlerMap.get(billType);
     }
+	
+	public void putHandler(String billType , WmsDataCompareBillService<?> wmsDataCompareBillService) {
+		wmsDataCompareBillHandlerMap.put(billType, wmsDataCompareBillService);
+		wmsDataCompareBillService.setBillType(billType);
+	}
 }

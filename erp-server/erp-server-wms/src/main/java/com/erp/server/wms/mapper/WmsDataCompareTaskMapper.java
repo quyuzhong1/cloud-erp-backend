@@ -1,8 +1,12 @@
 package com.erp.server.wms.mapper;
-import com.erp.model.wms.entity.WmsDataCompareTaskEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
+import com.erp.model.wms.entity.WmsDataCompareTaskEntity;
 
 
 /**
@@ -15,5 +19,5 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface WmsDataCompareTaskMapper extends BaseMapper<WmsDataCompareTaskEntity> {
-
+	IPage<WmsDataCompareTaskDTO.ViewDTO> paging(Page query, @Param("params") WmsDataCompareTaskDTO.PagingParamDTO params);
 }

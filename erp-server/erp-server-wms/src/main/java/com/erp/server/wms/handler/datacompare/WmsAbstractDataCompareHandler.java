@@ -1,14 +1,14 @@
 package com.erp.server.wms.handler.datacompare;
 
 import java.io.File;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.toolkit.ReflectionKit;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO.DataCompareDTO;
@@ -21,11 +21,18 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public abstract class WmsAbstractDataCompareHandler<T extends DataCompareDTO> implements WmsDataCompareBillService{
+public abstract class WmsAbstractDataCompareHandler<M extends WmsDataCompareDbService<T> , T extends DataCompareDTO> implements WmsDataCompareBillService<T>{
+	
+	private volatile M wmsDataCompareDbService;
+	
+	protected Class<T> entityClass = currentModelClass();
+	
+	private String billType;
 	
 	@Override
 	public List<T> getDataCompareByCondition(String systemDataCondition){
-		return getWmsDataCompareDbService().getDataCompareByCondition(getDto(systemDataCondition));
+		currentDbService();
+		return wmsDataCompareDbService.getDataCompareByCondition(JSON.parseObject(systemDataCondition, entityClass));
 	}
 	
 	@Override
@@ -42,34 +49,42 @@ public abstract class WmsAbstractDataCompareHandler<T extends DataCompareDTO> im
 	public String uploadSystemDataByCondition(String systemDataCondition) {
 		String url = "";
 		File file = null;
-    	String fileName = getWmsDataCompareTaskBillTypeEnum().getName() + "系统数据.xlsx";
-        file = ExcelUtil.exportFile(fileName, "系统数据", this.getDataCompareByCondition(systemDataCondition) , getDto(systemDataCondition).getClass());
+    	String fileName = WmsDataCompareTaskBillTypeEnum.getName(billType) + "系统数据.xlsx";
+        file = ExcelUtil.exportFile(fileName, "系统数据", this.getDataCompareByCondition(systemDataCondition) , entityClass);
         if (file != null && !file.isDirectory()) {
             url = FastDFSClientUtil.uploadFile(file, fileName);
         }
         return url;
 	}
 	
-	private T getDto(String systemDataCondition) {
-		String className = "";
-        Type type = this.getClass().getGenericSuperclass();
-        ParameterizedType parameterizedType = (ParameterizedType) type;
-        for (Type t : parameterizedType.getActualTypeArguments()) {
-            className = t.getTypeName();
-            if (StringUtils.isNotEmpty(className)) {
-                break;
-            }
-        }
-		try {
-			Class<T> dataClass = (Class<T>) Class.forName(className);
-			return JSON.parseObject(systemDataCondition, dataClass);
-		} catch (ClassNotFoundException e) {
-			log.error("数据对比抽象类获取实例失败");
+	@Override
+	public T getCompareDTO(String dtoJson) {
+		if(StringUtils.isBlank(dtoJson)) {
+			try {
+				return entityClass.newInstance();
+			}catch (Exception e) {
+
+			}
+		}else {
+			return JSON.parseObject(dtoJson, entityClass);
 		}
 		return null;
 	}
 	
-	abstract WmsDataCompareDbService<T> getWmsDataCompareDbService();
+	protected void currentDbService() {
+		if(wmsDataCompareDbService == null) {
+			synchronized (this) {
+				wmsDataCompareDbService = (M)ApplicationContextUtils.getBean((Class<T>) ReflectionKit.getSuperClassGenericType(getClass(), 0));
+			}
+		}
+    }
 	
-	abstract WmsDataCompareTaskBillTypeEnum getWmsDataCompareTaskBillTypeEnum();
+	protected Class<T> currentModelClass() {
+        return (Class<T>) ReflectionKit.getSuperClassGenericType(getClass(), 1);
+    }
+
+	public void setBillType(String billType) {
+		this.billType = billType;
+	}
+	
 }

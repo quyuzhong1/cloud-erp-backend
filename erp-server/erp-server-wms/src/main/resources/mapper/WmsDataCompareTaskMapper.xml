@@ -44,5 +44,26 @@
         code, name, bill_type, status, sub_status, error_message, error_count, system_data_condition, system_data_count, import_data_count, import_data_mapping, result_same_count, result_exceed_count, result_miss_count, result_diff_count, result_report_url
     </sql>
 
-
+	<select id="paging" resultType="com.erp.model.wms.dto.WmsDataCompareTaskDTO$ViewDTO">
+        SELECT
+        id,
+        create_time,
+        create_user_name,
+        code, name, bill_type, status, sub_status, error_message, error_count, system_data_condition, 
+        system_data_count, import_data_count, import_data_mapping, result_same_count, result_exceed_count, result_miss_count, result_diff_count, result_report_url
+        WHERE
+        ${params.sqlMap.default}
+        and  so.is_deleted=FALSE
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            so.create_time DESC
+    </select>
 </mapper>

@@ -5,9 +5,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.poi.ss.util.CellRangeAddress;
 
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.metadata.Cell;
+import com.alibaba.excel.metadata.Head;
+import com.alibaba.excel.write.merge.AbstractMergeStrategy;
 import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.wms.dto.WmsDataComparePlanDTO.ImportDataMappingDTO;
 import com.erp.server.wms.listener.WmsDataCompareExcelListener;
 
 import cn.hutool.core.collection.CollUtil;
@@ -74,20 +79,43 @@ public class WmsDataCompareUtils {
 	    return true;
 	}
 	
-	public static String getPkValue(Map<Integer, String> data , List<Integer> excelPkIndexList) {
-		StringBuffer sb = new StringBuffer();
-		boolean firstFlag = true;
-		for(Integer excelPkIndex : excelPkIndexList) {
-			if(firstFlag) {
-				firstFlag = false;
-			}else {
-				sb.append("-");
-			}
-			String d = data.get(excelPkIndex);
-			if(StringUtils.isNotBlank(d)) {
-				sb.append(d);
+	public static void compareExcelIndexList(List<ImportDataMappingDTO> importDataMappingDTOList , List<String> headFieldList){
+		importDataMappingDTOList.removeIf(i -> StringUtils.isBlank(i.getSystemField()) || StringUtils.isBlank(i.getImportField()));
+		for(int i = 0; i < headFieldList.size() ; i++) {
+			String headField = headFieldList.get(i);
+			for(ImportDataMappingDTO importDataMappingDTO : importDataMappingDTOList) {
+				if(StringUtils.isNotBlank(importDataMappingDTO.getImportField()) && importDataMappingDTO.getImportField().equals(headField)) {
+					importDataMappingDTO.setHeadIndex(i);
+					break;
+				}
 			}
 		}
-		return sb.toString();
-	} 
+		importDataMappingDTOList.sort((i1 , i2) -> {
+			if(i1.getImportField() == null) {
+				return -1;
+			}
+			if(i2.getImportField() == null) {
+				return 1;
+			}
+			return i1.getImportField().compareTo(i2.getImportField());
+		});
+	}
+	
+	// 自定义合并策略
+    static class MergeStrategy extends AbstractMergeStrategy {
+        private int headerSize;
+
+        public MergeStrategy(int headerSize) {
+            this.headerSize = headerSize;
+        }
+
+		@Override
+		protected void merge(org.apache.poi.ss.usermodel.Sheet sheet, org.apache.poi.ss.usermodel.Cell cell, Head head,
+				Integer relativeRowIndex) {
+			if (cell.getRowIndex() < headerSize - 1) {
+                // 合并第一行单元格
+                sheet.addMergedRegion(new CellRangeAddress(0, 0, cell.getColumnIndex(), cell.getColumnIndex() + 1));
+            }
+		}
+    }
 }

@@ -44,8 +44,7 @@ public class WmsDataCompareImportEntity extends BaseEntity<WmsDataCompareImportE
     */
     @TableField("curr_parse_offset")
     private Integer currParseOffset;
-
-
+    
     public static final String TASK_ID = "task_id";
 
     public static final String FILE_URL = "file_url";

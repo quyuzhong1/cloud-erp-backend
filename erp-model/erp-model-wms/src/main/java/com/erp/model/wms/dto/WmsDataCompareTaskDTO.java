@@ -392,8 +392,13 @@ public class WmsDataCompareTaskDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
     public static class DataCompareDTO{
-    	
+    	/**
+         * 数据库数据id
+         */
+    	private String id;
     }
     
     /**
@@ -402,10 +407,6 @@ public class WmsDataCompareTaskDTO implements Serializable {
      @Data
      @NoArgsConstructor
      public static class SoOutstockDTO extends DataCompareDTO{
-    	 /**
-          * 销售出库单id
-          */
-    	 private String id;
     	 /**
           * 销售单号
           */
@@ -446,7 +447,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
     	  * 数量
     	  */
     	 @ExcelProperty(value = "数量", index = 6)
-    	 private Integer actualQty;
+    	 private String actualQty;
     	 
     	 /**
     	  * 出库日期
@@ -504,10 +505,6 @@ public class WmsDataCompareTaskDTO implements Serializable {
       @Data
       @NoArgsConstructor
       public static class FbaShipmentDTO  extends DataCompareDTO{
-    	  /**
-           * 销售出库单id
-           */
-     	 private String id;
      	 /**
            * 货件单号
            */
@@ -536,7 +533,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
      	  * 数量
      	  */
      	@ExcelProperty(value = "数量", index = 4)
-     	 private Integer receiveQty;
+     	 private String receiveQty;
      	 
      	 /**
      	  * 签收日期
@@ -557,10 +554,6 @@ public class WmsDataCompareTaskDTO implements Serializable {
        @Data
        @NoArgsConstructor
        public static class OverseasInboundDTO extends DataCompareDTO{
-    	   /**
-            * 销售出库单id
-            */
-      	 private String id;
       	 /**
           * 第三方仓入库单号
          */
@@ -589,7 +582,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
       	  * 数量
       	  */
       	@ExcelProperty(value = "数量", index = 4)
-      	 private Integer receiveQty;
+      	 private String receiveQty;
       	 
       	 /**
       	  * 出库日期
