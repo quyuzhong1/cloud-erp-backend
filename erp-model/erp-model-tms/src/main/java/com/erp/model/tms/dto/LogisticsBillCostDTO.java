@@ -297,6 +297,11 @@ public class LogisticsBillCostDTO implements Serializable {
         private String  id;
 
         /**
+         * 物流单号
+         */
+        private String transportNo;
+
+        /**
         * 对账状态（字典reconciliationStatus）
         */
         private String reconciliationStatus;
@@ -315,6 +320,11 @@ public class LogisticsBillCostDTO implements Serializable {
         * 实重
         */
         private BigDecimal actualWeight;
+
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
 
         /**
         * 体积重
@@ -444,6 +454,13 @@ public class LogisticsBillCostDTO implements Serializable {
         private String logisticsBillId;
 
         /**
+         * 物流单明细id
+         */
+        @NotBlank(message = "物流单明细id不能为空")
+        @Size(max = 19,message = "物流单明细id最大长度不能超过19位")
+        private String logisticsBillDetailId;
+
+        /**
         * 实重
         */
         private BigDecimal actualWeight;
@@ -470,6 +487,12 @@ public class LogisticsBillCostDTO implements Serializable {
          * 运输单号
          */
         private String transportNo;
+
+        /**
+         * 跟踪单号
+         */
+        private String trackNo;
+
         /**
          * 物流渠道id
          */

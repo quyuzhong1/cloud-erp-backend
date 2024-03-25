@@ -52,6 +52,9 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
 
     @Override
     public Boolean batchAdd(List<TmsLogisticsBillCostDetailDTO.AddDTO> costDetailList, String mainId) {
+        if (CollectionUtils.isEmpty(costDetailList)) {
+            return Boolean.TRUE;
+        }
         List<TmsLogisticsBillCostDetailEntity> list = BeanMapperUtils.copyList(TmsLogisticsBillCostDetailEntity.class, costDetailList);
         // 数据处理
         handleData(list,mainId);
@@ -66,6 +69,9 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
 
     @Override
     public Boolean batchUpdate(List<TmsLogisticsBillCostDetailDTO.UpdateDTO> costDetailList, String mainId) {
+        if (CollectionUtils.isEmpty(costDetailList)) {
+            return Boolean.TRUE;
+        }
         List<TmsLogisticsBillCostDetailEntity> list = BeanMapperUtils.copyList(TmsLogisticsBillCostDetailEntity.class, costDetailList);
 
         List<TmsLogisticsBillCostDetailEntity> oldList = this.listByMainIdList(Arrays.asList(mainId));
@@ -145,6 +151,14 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
             return Collections.EMPTY_LIST;
         }
         return baseMapper.listCostByMainIdList(mainIdList);
+    }
+
+    @Override
+    public void deleteByMainIdList(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return;
+        }
+        lambdaUpdate().in(TmsLogisticsBillCostDetailEntity::getMainId,mainIdList).remove();
     }
 
 

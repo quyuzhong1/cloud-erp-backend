@@ -1,15 +1,18 @@
 package com.erp.server.tms.service;
+
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -183,4 +186,11 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
     Map<String, List<String>> mapTrackNoAndSoOutId(List<String> ids);
 
     List<String> listSoOutIdByQuery(AdvanceQueryContainer advanceQueryContainer);
+    /**
+     * @description: 生成自发货物流费用
+     * @author Will
+     * @date: 2024/3/25 12:33
+     * @param logisticsBillEntity
+     */
+    void addLogisticsBillCost(LogisticsBillEntity logisticsBillEntity,List<LogisticsBillDetailEntity> list);
 }

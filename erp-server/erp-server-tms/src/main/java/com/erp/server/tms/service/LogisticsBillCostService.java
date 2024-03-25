@@ -102,4 +102,12 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @return ViewDTO 
      */
     LogisticsBillCostDTO.ViewDTO view(String id);
+    /**
+     * @description: 根据物流单Id集合删除
+     * @author Will
+     * @date: 2024/3/25 14:11
+     * @param logisticsBillDetailIdList
+
+     */
+    void deleteByLogisticsBillDetailIdList(List<String> logisticsBillDetailIdList);
 }
