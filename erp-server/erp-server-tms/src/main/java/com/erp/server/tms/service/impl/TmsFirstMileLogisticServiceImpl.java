@@ -17,6 +17,7 @@ import com.common.business.enums.OrderTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -667,8 +668,69 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> updateChannel(TmsFirstMileLogisticDTO.UpdateChannelDTO dto) {
-        return null;
+        List<LogisticsBillEntity> logisticsBillEntityList = listByIds(dto.getIds());
+        if(CollectionUtils.isEmpty(logisticsBillEntityList)){
+            throw new ServiceException("物流单为空");
+        }
+        LogisticsMethodEnum logisticsMethodEnum =  LogisticsMethodEnum.getByCode(dto.getShippingMethod());
+        if(logisticsMethodEnum == null){
+            throw new ServiceException("运输方式为空");
+        }
+        LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(dto.getLogisticsSupplierId());
+        if(Objects.isNull(supplierEntity)){
+            throw new ServiceException("物流供应商为空");
+        }
+        LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(dto.getLogisticsChannelId());
+        if(Objects.isNull(logisticsChannelEntity)){
+            throw new ServiceException("物流渠道为空");
+        }
+        if(!logisticsChannelEntity.getMainId().equals(supplierEntity.getId())){
+            throw new ServiceException("物流渠道与物流供应商不匹配");
+        }
+        List<String> mainIdList = logisticsBillEntityList.stream().map(LogisticsBillEntity::getId).collect(Collectors.toList());
+        List<String> outstockIdList = logisticsBillEntityList.stream().map(LogisticsBillEntity::getOutstockId).collect(Collectors.toList());
+        List<LogisticsBillCostEntity> costList = logisticsBillCostService.listByLogisticsBillIdList(mainIdList);
+        List<LogisticsBillDetailEntity> detailList = logisticsBillDetailService.listByMainIds(mainIdList);
+        FirstMileDeliveryDTO.GenerateLogisticReqDTO deliveryDto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
+        deliveryDto.setIds(outstockIdList);
+        List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTOList = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(deliveryDto);
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        List<LogisticsBillEntity> updateList = new ArrayList<>();
+        List<LogisticsBillCostEntity> updateCostList = new ArrayList<>();
+        ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(dto.getLogisticsChannelId());
+        for(LogisticsBillEntity logisticsBillEntity : logisticsBillEntityList){
+            LogisticsBillDetailEntity detailEntity = detailList.stream().filter(v->v.getMainId().equals(logisticsBillEntity.getId())).findFirst().orElse(null);
+            if(Objects.nonNull(detailEntity) && !(detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.WAIT_ORDER.getCode()) || detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.ORDERED.getCode()))){
+                resultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getCounterNo(),"只有待下单和已下单状态支持更改物流信息"));
+            }
+            logisticsBillEntity.setShippingMethod(dto.getShippingMethod());
+            logisticsBillEntity.setChannelId(dto.getLogisticsChannelId());
+            logisticsBillEntity.setLogisticsSupplierId(dto.getLogisticsSupplierId());
+            updateList.add(logisticsBillEntity);
+            //更新体积重
+            FirstMileDeliveryDTO.GenerateLogisticDTO deliveryLogisticDto = generateLogisticDTOList.stream().filter(v->v.getOutstockId().equals(logisticsBillEntity.getOutstockId())).findFirst().orElse(null);
+            if(Objects.nonNull(deliveryLogisticDto) && CollectionUtils.isNotEmpty(deliveryLogisticDto.getPackingDTOList()) && Objects.nonNull(shippingTemplateEntity)
+                    && shippingTemplateEntity.getVolumeSetting()!= null && shippingTemplateEntity.getVolumeSetting() > 0){
+                LogisticsBillCostEntity logisticsBillCostEntity = costList.stream().filter(v->v.getLogisticsBillId().equals(logisticsBillEntity.getId())).findFirst().orElse(null);
+                if(Objects.nonNull(logisticsBillCostEntity)){
+                    BigDecimal totalSize = deliveryLogisticDto.getPackingDTOList().stream()
+                            .map(WmsCartonDetailDTO.ListPackingDetailDTO::getMultiplySize)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    logisticsBillCostEntity.setVolumeWeight(totalSize.divide(BigDecimal.valueOf(shippingTemplateEntity.getVolumeSetting()),4, RoundingMode.HALF_UP));
+                    updateCostList.add(logisticsBillCostEntity);
+                }
+            }
+        }
+
+        if(CollectionUtils.isNotEmpty(updateList)){
+            this.updateBatchById(updateList);
+        }
+        if(CollectionUtils.isNotEmpty(updateCostList)){
+            logisticsBillCostService.updateBatchById(updateCostList);
+        }
+        return resultDTOList;
     }
 
     @Override

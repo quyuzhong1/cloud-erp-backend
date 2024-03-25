@@ -110,4 +110,6 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
 
      */
     void deleteByLogisticsBillDetailIdList(List<String> logisticsBillDetailIdList);
+
+    List<LogisticsBillCostEntity> listByLogisticsBillIdList(List<String> mainIdList);
 }

@@ -350,7 +350,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * @param logisticsBillIdList
      * @return List<LogisticsBillCostEntity>
      */
-    private List<LogisticsBillCostEntity> listByLogisticsBillIdList (List<String> logisticsBillIdList) {
+    @Override
+    public List<LogisticsBillCostEntity> listByLogisticsBillIdList (List<String> logisticsBillIdList) {
         if (CollectionUtils.isEmpty(logisticsBillIdList)) {
             return Collections.EMPTY_LIST;
         }

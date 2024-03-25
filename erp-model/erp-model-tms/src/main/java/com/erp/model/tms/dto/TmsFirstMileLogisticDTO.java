@@ -277,11 +277,19 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         /**
          * 物流渠道id
          */
+        @NotNull(message = "物流渠道id不能为空")
         private String logisticsChannelId;
+
+        /**
+         * 物流商id
+         */
+        @NotNull(message = "物流商id不能为空")
+        private String logisticsSupplierId;
 
         /**
          * 运输方式
          */
+        @NotNull(message = "运输方式不能为空")
         private String shippingMethod;
     }
 
