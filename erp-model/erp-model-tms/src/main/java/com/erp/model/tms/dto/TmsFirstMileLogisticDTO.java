@@ -77,6 +77,16 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String billingMethod;
 
         /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种
+         */
+        private String currencyName;
+
+        /**
          * 计费方式名称
          */
         private String billingMethodName;
@@ -133,6 +143,16 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * 店铺负责人
          */
         private String chargeId;
+
+        /**
+         * 店铺Id
+         */
+        private String shopId;
+
+        /**
+         * 店铺负责人
+         */
+        private String chargeName;
 
         /**
          * 物流状态名称

@@ -34,6 +34,7 @@ import com.erp.model.oms.dto.excel.KingdeeBankAccountExcelDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.FmDeliveryLogisticsStatusEnum;
 import com.erp.model.scm.dto.AttachmentDTO;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.FmLogisticsBillCostExcelDTO;
@@ -45,6 +46,7 @@ import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.convert.FmLogisticsConverter;
 import com.erp.server.tms.listener.FmLogisticsBillCostExcelListener;
@@ -122,6 +124,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Resource
     private LogisticsTrackService logisticsTrackService;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -963,7 +968,14 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 }
             }
         }
+
+        List<String> shopIdList = result.stream().map(TmsFirstMileLogisticDTO.DeliveryDTO::getShopId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIdList);
         result.forEach(v->{
+            ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(s->s.getId().equals(v.getShopId())).findFirst().orElse(null);
+            if(Objects.nonNull(shopInfoEntity)){
+                v.setChargeName(shopInfoEntity.getChargeName());
+            }
             v.setLogisticsStatusName(FmLogisticTrackStatusEnum.WAIT_ORDER.getName());
             v.setFromCountryName("中国");
         });
@@ -985,6 +997,16 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(Objects.isNull(logisticsChannelEntity)){
             throw new ServiceException("渠道为空");
         }
+        LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(logisticsChannelEntity.getMainId());
+        if(Objects.isNull(logisticsSupplierEntity)){
+            throw new ServiceException("物流供应商为空");
+        }
+        SupplierEntity supplier = scmTaskFeign.getSupplierById(logisticsSupplierEntity.getSupplierId());
+        if(Objects.isNull(supplier)){
+            throw new ServiceException("物流供应商为空");
+        }
+        result.setCurrency(supplier.getPayCurrency());
+        result.setCurrencyName(Objects.isNull(CurrencyEnum.getByCode(supplier.getPayCurrency()))?"":CurrencyEnum.getByCode(supplier.getPayCurrency()).getCurrencyName());
         result.setLogisticsChannelName(logisticsChannelEntity.getName());
         result.setLogisticsChannelId(dto.getLogisticsChannelId());
         //0为默认值，不处理
