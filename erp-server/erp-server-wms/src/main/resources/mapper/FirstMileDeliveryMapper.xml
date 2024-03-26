@@ -234,6 +234,7 @@
             fw.address as fromAddress,
             fmd.dest_warehouse_name as toWarehouseName,
             fmd.country_name as toCountryName,
+            fmd.country_id as toCountry,
             tw.address as toAddress,
             fmd.remark
         from first_mile_delivery fmd

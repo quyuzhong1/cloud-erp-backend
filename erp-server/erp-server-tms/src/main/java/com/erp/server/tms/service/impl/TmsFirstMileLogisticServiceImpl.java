@@ -18,6 +18,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.InvoicesStatusEnum;
 import com.common.business.enums.OrderTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ExportUtil;
 import com.common.business.vo.PagingVO;
@@ -543,7 +544,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostService.getByLogisticsBillId(dto.getId());
         if(Objects.nonNull(logisticsBillCostEntity)){
             List<TmsLogisticsBillCostDetailDTO.CostCompareDTO> costCompareDTOList = logisticsBillCostDetailService.getCostCompareListById(logisticsBillCostEntity.getId());
-            dto.setFeeViewList( BeanUtil.copyToList(costCompareDTOList,TmsFirstMileLogisticDTO.FeeViewDTO.class));
+            dto.setLogisticFeeList( BeanUtil.copyToList(costCompareDTOList,TmsFirstMileLogisticDTO.FeeViewDTO.class));
         }
         //处理时间线
         TmsFirstMileLogisticDTO.TimeInfoDTO timeInfoDTO = new TmsFirstMileLogisticDTO.TimeInfoDTO();
@@ -1064,6 +1065,45 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(CollectionUtils.isNotEmpty(updateCostDetailList)){
             logisticsBillCostDetailService.updateBatchById(updateCostDetailList);
         }
+    }
+
+    @Override
+    public BigDecimal calculateShippingCost(TmsFirstMileLogisticDTO.CalculateShippingCostDTO dto) {
+        ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(dto.getChannelId());
+        if(Objects.isNull(shippingTemplateEntity)){
+            throw new ServiceException("运费模板为空");
+        }
+        FirstMileDeliveryDTO.GenerateLogisticReqDTO deliveryDto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
+        deliveryDto.setIds(Arrays.asList(dto.getOutstockId()));
+        List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(deliveryDto);
+        if(CollectionUtils.isEmpty(generateLogisticDTO)){
+            throw new ServiceException("未获取发货单信息");
+        }
+        FirstMileDeliveryDTO.GenerateLogisticDTO logisticDTO = generateLogisticDTO.get(0);
+        List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDetailDTOList = logisticDTO.getPackingDTOList();
+        if(CollectionUtils.isEmpty(packingDetailDTOList)){
+            throw new ServiceException("发货单装箱信息为空，无法计算");
+        }
+        if(logisticDTO.getSourceType().equals(SourceTypeEnum.FBA_SHIPMENT.getCode()) && !ShippingTemplateTypeEnum.ENUM_WAREHOUSE.getCode().equals(shippingTemplateEntity.getType())){
+            throw new ServiceException("FBA发货单不支持非仓库类型模板计算");
+        }
+        if(logisticDTO.getSourceType().equals(SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode()) && !ShippingTemplateTypeEnum.ENUM_COUNTRY.getCode().equals(shippingTemplateEntity.getType())){
+            throw new ServiceException("海外仓发货单不支持非国家类型模板计算");
+        }
+        BigDecimal totalWeight = packingDetailDTOList.stream()
+                .map(WmsCartonDetailDTO.ListPackingDetailDTO::getPackageWeight)
+                .map(BigDecimal::new)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if(totalWeight.compareTo(BigDecimal.ZERO) == 0){
+            return BigDecimal.ZERO;
+        }
+        ShippingTemplateDTO.TrialCalculationParamDTO trialCalculationParamDTO = new ShippingTemplateDTO.TrialCalculationParamDTO();
+        trialCalculationParamDTO.setId(shippingTemplateEntity.getId());
+        trialCalculationParamDTO.setFromCountry("CN");
+        trialCalculationParamDTO.setWeight(totalWeight);
+        trialCalculationParamDTO.setToWarehouseName(logisticDTO.getToWarehouseName());
+        trialCalculationParamDTO.setToCountry(logisticDTO.getToCountry());
+        return shippingTemplateService.trialCalculation(trialCalculationParamDTO);
     }
 
 }

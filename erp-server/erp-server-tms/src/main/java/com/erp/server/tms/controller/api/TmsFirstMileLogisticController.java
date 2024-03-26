@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -280,5 +281,14 @@ public class TmsFirstMileLogisticController extends BaseController {
     @PostMapping("getLogisticsAndShipping")
     public ApiResult<TmsFirstMileLogisticDTO.LogisticsDTO> getLogisticsAndShipping(@RequestBody TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO dto){
         return success(tmsFirstMileLogisticService.getLogisticsAndShipping(dto));
+    }
+
+
+    /**
+     * 计算运费
+     */
+    @PostMapping("calculateShippingCost")
+    public ApiResult<BigDecimal> calculateShippingCost(@RequestBody @Valid TmsFirstMileLogisticDTO.CalculateShippingCostDTO dto){
+        return success(tmsFirstMileLogisticService.calculateShippingCost(dto));
     }
 }

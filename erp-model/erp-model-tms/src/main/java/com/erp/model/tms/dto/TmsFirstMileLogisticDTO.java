@@ -191,6 +191,19 @@ public class TmsFirstMileLogisticDTO implements Serializable {
     }
 
     /**
+     * 计算运费
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CalculateShippingCostDTO {
+
+        @NotNull(message = "渠道不能为空")
+        private String channelId;
+
+        @NotNull(message = "发货单不能为空")
+        private String outstockId;
+    }
+    /**
      * 获取可以生成的发货单
      */
     @Data
@@ -1126,7 +1139,7 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         /**
          * 费用信息
          */
-        private List<TmsFirstMileLogisticDTO.FeeViewDTO> feeViewList;
+        private List<TmsFirstMileLogisticDTO.FeeViewDTO> logisticFeeList;
 
         /**
          * 预估合计费用

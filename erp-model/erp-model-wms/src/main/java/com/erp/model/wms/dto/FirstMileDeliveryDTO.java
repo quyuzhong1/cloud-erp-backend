@@ -1032,6 +1032,11 @@ public class FirstMileDeliveryDTO implements Serializable {
         /**
          * 目的国家
          */
+        private String toCountry;
+
+        /**
+         * 目的国家
+         */
         private String toCountryName;
 
         /**
