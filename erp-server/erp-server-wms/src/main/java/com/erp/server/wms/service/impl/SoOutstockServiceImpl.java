@@ -2511,11 +2511,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //删除原装箱信息
         wmsCartonService.deleteCarton(dto.getId());
 
-        //新增装箱信息
-        for (WmsCartonDTO.AddDTO addDTO : dto.getWmsCartonList()) {
+        if (CollectionUtils.isNotEmpty(dto.getWmsCartonList())) {
             //新增装箱信息
-            wmsCartonService.add(addDTO, dto.getId(), SourceTypeEnum.SO_OUTSTOCK.getCode());
+            for (WmsCartonDTO.AddDTO addDTO : dto.getWmsCartonList()) {
+                //新增装箱信息
+                wmsCartonService.add(addDTO, dto.getId(), SourceTypeEnum.SO_OUTSTOCK.getCode());
+            }
         }
+
         //根据主表id分组sku查询发货及待装箱数
         List<WmsCartonDTO.PackDateDTO> packDateDTOS = wmsCartonService.listPackDateBySourceId(dto.getId());
 

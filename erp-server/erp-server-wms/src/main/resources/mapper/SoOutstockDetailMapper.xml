@@ -87,7 +87,7 @@
         so.id,
         sod.sku_id,
         sod.sku_no,
-        SUM(fdd.actual_qty) AS deliveryQty
+        SUM(sod.actual_qty) AS deliveryQty
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id = sod.main_id AND sod.is_deleted = FALSE
         WHERE so.is_deleted = FALSE
