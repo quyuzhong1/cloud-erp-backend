@@ -282,11 +282,14 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					WmsDataCompareExcelDto wmsDataCompareExcelDto = WmsDataCompareUtils.getWmsDataCompareExcelDto(Arrays.asList(wmsDataCompareImportEntity.getFileUrl()));
 					List<List<String>> headFieldLists = wmsDataCompareExcelDto.getHeadFieldLists();
 					if(CollUtil.isEmpty(headFieldLists)) {
+						wmsDataCompareImportEntity.setParseStatus(WmsDataCompareImportParseStatusEnum.FINISH.getCode());
 						continue;
 					}
 					List<List<String>> datas = wmsDataCompareExcelDto.getDatas();
 					if(CollUtil.isNotEmpty(datas)) {
 						allDatasMap.put(wmsDataCompareImportEntity.getId(), datas);
+					}else {
+						wmsDataCompareImportEntity.setParseStatus(WmsDataCompareImportParseStatusEnum.FINISH.getCode());
 					}
 					headFieldList = headFieldLists.get(0);
 				}
@@ -406,6 +409,23 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 	private void parseExcelData(String id , Map<String, List<List<String>>> allDatasMap) throws Exception {
 		WmsDataCompareTaskEntity wmsDataCompareTaskEntity = getById(id);
 		if(WmsDataCompareTaskSubStatusEnum.WAIT_PARSE.getCode().equals(wmsDataCompareTaskEntity.getSubStatus())) {
+			if(allDatasMap == null) {
+				allDatasMap = new HashMap<>();
+				List<WmsDataCompareImportEntity> wmsDataCompareImportEntityList = wmsDataCompareImportService
+						.lambdaQuery().eq(WmsDataCompareImportEntity::getTaskId, id)
+						.eq(WmsDataCompareImportEntity::getParseStatus, WmsDataCompareImportParseStatusEnum.WAIT.getCode()).list();
+				for(WmsDataCompareImportEntity wmsDataCompareImportEntity : wmsDataCompareImportEntityList) {
+					WmsDataCompareExcelDto wmsDataCompareExcelDto = WmsDataCompareUtils.getWmsDataCompareExcelDto(Arrays.asList(wmsDataCompareImportEntity.getFileUrl()));
+					List<List<String>> headFieldLists = wmsDataCompareExcelDto.getHeadFieldLists();
+					if(CollUtil.isEmpty(headFieldLists)) {
+						continue;
+					}
+					List<List<String>> datas = wmsDataCompareExcelDto.getDatas();
+					if(CollUtil.isNotEmpty(datas)) {
+						allDatasMap.put(wmsDataCompareImportEntity.getId(), datas);
+					}
+				}
+			}
 			List<ImportDataMappingDTO> importDataMappingDTOList = JSON.parseArray(wmsDataCompareTaskEntity.getImportDataMapping() , WmsDataComparePlanDTO.ImportDataMappingDTO.class);
 			
 			WmsDataCompareBillService<?> wmsDataCompareBillService = wmsDataCompareHandlerFactory.get(wmsDataCompareTaskEntity.getBillType());
