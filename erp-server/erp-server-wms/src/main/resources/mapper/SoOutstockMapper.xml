@@ -319,7 +319,9 @@
         	<if test="params.warehouseName!=null and params.warehouseName!=''">
             AND t.warehouse_name = #{params.warehouseName}
         	</if>
-
+			<if test="params.id!=null and params.id!=''">
+            and not exists (select id from wms_data_compare_temp where system_data_id = g.id and task_id = #{params.id})
+        	</if>
     </select>
     
 </mapper>

@@ -6,7 +6,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.alibaba.excel.metadata.Head;
 import com.alibaba.excel.write.merge.AbstractMergeStrategy;
@@ -138,10 +144,37 @@ public class WmsDataCompareUtils {
 		@Override
 		protected void merge(org.apache.poi.ss.usermodel.Sheet sheet, org.apache.poi.ss.usermodel.Cell cell, Head head,
 				Integer relativeRowIndex) {
-			if (cell.getRowIndex() == 0) {
-                // 合并第一行单元格
-                sheet.addMergedRegion(new CellRangeAddress(0, 0, cell.getColumnIndex(), cell.getColumnIndex() + 1));
+			Workbook workbook = sheet.getWorkbook();
+			cell.setCellStyle(createBorderCellStyle(workbook));
+			if (cell.getRowIndex() == 0 && cell.getColumnIndex() == 0) {
+                sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, headerSize - 1));
+                cell.setCellStyle(createCellStyle(workbook));
             }
+			if (cell.getRowIndex() == 0 && cell.getColumnIndex() == headerSize) {
+                sheet.addMergedRegion(new CellRangeAddress(0, 0, headerSize, headerSize*2 - 1));
+                cell.setCellStyle(createCellStyle(workbook));
+            }
+		}
+		
+		private static CellStyle createCellStyle(Workbook workbook) {
+	        CellStyle cellStyle = workbook.createCellStyle();
+
+	        // 设置对齐方式
+	        cellStyle.setAlignment(HorizontalAlignment.CENTER);
+	        cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+	        return cellStyle;
+	    }
+		private static CellStyle createBorderCellStyle(Workbook workbook) {
+			CellStyle cellStyle = workbook.createCellStyle();
+			
+			// 设置边框样式
+			cellStyle.setBorderBottom(BorderStyle.THIN);
+			cellStyle.setBorderTop(BorderStyle.THIN);
+			cellStyle.setBorderLeft(BorderStyle.THIN);
+			cellStyle.setBorderRight(BorderStyle.THIN);
+			
+			return cellStyle;
 		}
     }
    

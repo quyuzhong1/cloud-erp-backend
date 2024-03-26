@@ -11,7 +11,7 @@ import com.erp.model.wms.dto.WmsDataCompareTaskDTO.DataCompareDTO;
  */
 public interface WmsDataCompareBillService<T extends DataCompareDTO> {
 
-	List<T> getDataCompareByCondition(String systemDataCondition);
+	List<T> getDataCompareByCondition(String systemDataCondition , String taskId);
 	
 	Integer getSystemDataCount(String systemDataCondition);
 	

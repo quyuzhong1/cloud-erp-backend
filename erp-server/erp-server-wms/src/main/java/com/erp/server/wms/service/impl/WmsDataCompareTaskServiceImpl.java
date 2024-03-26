@@ -31,7 +31,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
-import com.alibaba.excel.write.merge.OnceAbsoluteMergeStrategy;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -77,12 +76,14 @@ import com.erp.server.wms.service.WmsDataCompareImportService;
 import com.erp.server.wms.service.WmsDataCompareTaskService;
 import com.erp.server.wms.service.WmsDataCompareTempService;
 import com.erp.server.wms.utils.WmsDataCompareUtils;
+import com.erp.server.wms.utils.WmsDataCompareUtils.MergeStrategy;
 import com.erp.server.wms.utils.WmsDataCompareUtils.WmsDataCompareExcelDto;
 import com.google.common.collect.Lists;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -232,7 +233,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
     		throw new ServiceException("系统数据范围不能为空");
     	}
     	
-    	wmsDataCompareTaskEntity.setStatus(WmsDataCompareTaskStatusEnum.INIT.getCode());
+    	wmsDataCompareTaskEntity.setStatus("init");
     }
 
 	@Override
@@ -336,6 +337,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				setNextViewDTO.setName(wmsDataCompareTaskEntity.getName());
 				
 				this.update(Wrappers.<WmsDataCompareTaskEntity>lambdaUpdate().eq(WmsDataCompareTaskEntity::getId, id)
+						.in(WmsDataCompareTaskEntity::getSubStatus, Arrays.asList("" , WmsDataCompareTaskSubStatusEnum.WAIT_PARSE.getCode()))
 						.set(WmsDataCompareTaskEntity::getImportDataMapping, importDataMapping)
 						.set(WmsDataCompareTaskEntity::getStatus, WmsDataCompareTaskStatusEnum.DOING.getCode())
 						.set(WmsDataCompareTaskEntity::getSubStatus, WmsDataCompareTaskSubStatusEnum.WAIT_PARSE.getCode()));
@@ -454,7 +456,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		WmsDataCompareTaskEntity wmsDataCompareTaskEntity = getById(id);
 		if(WmsDataCompareTaskSubStatusEnum.WAIT_COMPARE.getCode().equals(wmsDataCompareTaskEntity.getSubStatus())) {
 			WmsDataCompareBillService<?> wmsDataCompareBillService = wmsDataCompareHandlerFactory.get(wmsDataCompareTaskEntity.getBillType());
-			List<?> dataCompareByConditionList = wmsDataCompareBillService.getDataCompareByCondition(wmsDataCompareTaskEntity.getSystemDataCondition());
+			List<?> dataCompareByConditionList = wmsDataCompareBillService.getDataCompareByCondition(wmsDataCompareTaskEntity.getSystemDataCondition() , id);
 			Integer resultSameCount = wmsDataCompareTaskEntity.getResultSameCount();
 			Integer resultExceedCount = wmsDataCompareTaskEntity.getResultExceedCount();
 			Integer resultMissCount = wmsDataCompareTaskEntity.getResultMissCount();
@@ -487,6 +489,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 						datas = new ArrayList<>();
 						datas.add(d);
 					}
+					pkFieldValueSystemDataMaps.put(pkFieldValue, datas);
 				});
 				
 				//数据已放入pkFieldValueSystemDataMaps，置空释放内存
@@ -544,6 +547,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 							wmsDataCompareTempEntity.setCompareResult(WmsDataCompareTempCompareResultEnum.SAME.getCode());
 							resultSameCount = resultSameCount + 1;
 						}
+						wmsDataCompareTempEntity.setSystemDataId(((DataCompareDTO)systemDataDto).getId());
 						wmsDataCompareTempEntity.setCompareStatus(WmsDataCompareTempCompareStatusEnum.FINISH.getCode());
 					}
 					
@@ -600,7 +604,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 						throw new ServiceException("对比单据对比属性未配置，请联系实施人员");
 					}
 					
-					String fileName = "对比结果.xlsx";
+					String fileName = System.getProperty("java.io.tmpdir") + "对比结果"+ UUID.fastUUID().toString() +".xlsx";
 					ExcelWriter excelWriter = EasyExcel.write(fileName).build();
 				    List<List<String>> headList = new ArrayList<>();
 				    List<String> firstHead = new ArrayList<>();
@@ -629,10 +633,6 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				    headList.add(firstHead);
 					headList.add(secordHead);
 					
-					int size = importDataMappingDTOList.size();
-					WriteSheet writeSheet = EasyExcel.writerSheet().registerWriteHandler(new OnceAbsoluteMergeStrategy(0, size - 1, size, size + size)).build();
-				    excelWriter.write(headList, writeSheet);
-				    
 				    WmsDataCompareBillService<?> wmsDataCompareBillService = wmsDataCompareHandlerFactory.get(billType);
 				    for(WmsDataCompareTempEntity wmsDataCompareTempEntity : wmsDataCompareTempEntityList) {
 				    	String compareResult = wmsDataCompareTempEntity.getCompareResult();
@@ -641,25 +641,27 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				    		systemDataJson = wmsDataCompareTempEntity.getSystemDataJson();
 				    	}
 				    	String importDataJson = "";
-				    	if(WmsDataCompareTempCompareResultEnum.DIFF.getCode().equals(compareResult) || WmsDataCompareTempCompareResultEnum.DIFF.getCode().equals(compareResult) ) {
+				    	if(WmsDataCompareTempCompareResultEnum.MISS.getCode().equals(compareResult) || WmsDataCompareTempCompareResultEnum.DIFF.getCode().equals(compareResult) ) {
 				    		importDataJson = wmsDataCompareTempEntity.getImportDataJson();
 				    	}
 				    	
 				    	List<String> writeDatas = getWriteDatas(wmsDataCompareBillService, importDataMappingDTOList, systemDataJson);
 				    	writeDatas.addAll(getWriteDatas(wmsDataCompareBillService, importDataMappingDTOList, importDataJson));
-						excelWriter.write(writeDatas, writeSheet);
+				    	headList.add(writeDatas);
 			    	}
 				    
+				    int size = importDataMappingDTOList.size();
+					WriteSheet writeSheet = EasyExcel.writerSheet().registerWriteHandler(new MergeStrategy(size)).build();
+					excelWriter.write(headList, writeSheet);
 				    excelWriter.finish();
 				    
-				    File file = new File(fileName);
-					resultReportUrl = FastDFSClientUtil.uploadFile(file, fileName);
-					file.delete();
+					resultReportUrl = FastDFSClientUtil.uploadFile(new File(fileName), fileName);
 				}
 			}
 				wmsDataCompareTaskService.dealFinishData(id , resultReportUrl);
 		}
 	}
+	
 	
 	@Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
 	@Override

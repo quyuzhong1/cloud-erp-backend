@@ -38,6 +38,6 @@
     </sql>
 
 	<delete id="deleteData">
-		delete from wms_data_compare_temp where task_id = ${taskId}
+		delete from wms_data_compare_temp where task_id = #{taskId}
 	</delete>
 </mapper>

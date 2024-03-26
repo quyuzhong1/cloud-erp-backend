@@ -30,14 +30,16 @@ public abstract class WmsAbstractDataCompareHandler<M extends WmsDataCompareDbSe
 	private String billType;
 	
 	@Override
-	public List<T> getDataCompareByCondition(String systemDataCondition){
+	public List<T> getDataCompareByCondition(String systemDataCondition , String taskId){
 		currentDbService();
-		return wmsDataCompareDbService.getDataCompareByCondition(JSON.parseObject(systemDataCondition, entityClass));
+		T dataCompareDTO = JSON.parseObject(systemDataCondition, entityClass);
+		dataCompareDTO.setId(taskId);
+		return wmsDataCompareDbService.getDataCompareByCondition(dataCompareDTO);
 	}
 	
 	@Override
 	public Integer getSystemDataCount(String systemDataCondition) {
-		List<T> billSystemDatas = this.getDataCompareByCondition(systemDataCondition);
+		List<T> billSystemDatas = this.getDataCompareByCondition(systemDataCondition , null);
 		if(CollUtil.isEmpty(billSystemDatas)) {
 			return 0;
 		}else {
@@ -50,7 +52,7 @@ public abstract class WmsAbstractDataCompareHandler<M extends WmsDataCompareDbSe
 		String url = "";
 		File file = null;
     	String fileName = WmsDataCompareTaskBillTypeEnum.getName(billType) + "系统数据.xlsx";
-        file = ExcelUtil.exportFile(fileName, "系统数据", this.getDataCompareByCondition(systemDataCondition) , entityClass);
+        file = ExcelUtil.exportFile(fileName, "系统数据", this.getDataCompareByCondition(systemDataCondition , null) , entityClass);
         if (file != null && !file.isDirectory()) {
             url = FastDFSClientUtil.uploadFile(file, fileName);
         }

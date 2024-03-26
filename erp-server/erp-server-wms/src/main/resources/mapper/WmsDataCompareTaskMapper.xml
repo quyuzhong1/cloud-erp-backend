@@ -54,7 +54,7 @@
         from wms_data_compare_task t
         WHERE
         ${params.sqlMap.default}
-        and  t.is_deleted=FALSE
+        and  t.is_deleted=FALSE and t.status != 'init'
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}

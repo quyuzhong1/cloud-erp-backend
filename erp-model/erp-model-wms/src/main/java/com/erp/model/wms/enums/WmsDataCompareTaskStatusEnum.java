@@ -13,7 +13,7 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2024-03-20 17:21:53
  */
 public enum WmsDataCompareTaskStatusEnum implements EnumMessage {
-	INIT("init", "初始"),
+//	INIT("init", "初始"),
 	DOING("doing", "进行中"),
 	FINISH("finish", "已完成"),
 	ERROR("error", "异常"),
