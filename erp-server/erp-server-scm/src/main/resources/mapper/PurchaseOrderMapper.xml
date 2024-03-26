@@ -525,6 +525,7 @@
             po.create_user_name as createUserName,
             po.create_time as createTime,
             pod.is_end_receive as isEndReceive,
+            pod.end_receive_time as endReceiveTime,
             so.code as subContractCode,
             case when pod.plan_delivery_date is not null then date_part('day', pod.plan_delivery_date::timestamp - CURRENT_DATE::timestamp) else null end AS deliveryCycle,
             po.source_id as sourceId,
@@ -602,6 +603,7 @@
             po.create_user_name as createUserName,
             po.create_time as createTime,
             pod.is_end_receive as isEndReceive,
+            pod.end_receive_time as endReceiveTime,
             so.code as subContractCode,
             po.source_id as sourceId,
             po.source_type as sourceType
