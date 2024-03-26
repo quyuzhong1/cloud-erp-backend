@@ -1,6 +1,7 @@
 package com.erp.server.tms.service;
 
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -24,10 +25,10 @@ public interface TmsB2cDeclareReconciliationDetailService extends SuperService<T
     * 新增
     * @author will
     * @date: 2024-03-19
-    * @param dto
+    * @param detailList
     * @return
     */
-    BaseResultDTO.AddDTO add(TmsB2cDeclareReconciliationDetailDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(List<TmsB2cDeclareReconciliationDetailDTO.AddDTO> detailList);
 
     /**
     * 修改
@@ -68,8 +69,17 @@ public interface TmsB2cDeclareReconciliationDetailService extends SuperService<T
      * @description: 更新确认状态
      * @author Will
      * @date: 2024/3/26 14:28
-     * @param dto
+     * @param id
+     * @param status
      * @return AddDTO
      */
-    BaseResultDTO.AddDTO updateStatus(TmsB2cDeclareReconciliationDetailDTO.UpdateStatusDTO dto);
+    BatchResultDTO updateStatus(String id, String status);
+    /**
+     * @description: 清除
+     * @author Will
+     * @date: 2024/3/26 15:08
+     * @param id
+     * @return Boolean
+     */
+    Boolean cleanDetailMainId(String id);
 }

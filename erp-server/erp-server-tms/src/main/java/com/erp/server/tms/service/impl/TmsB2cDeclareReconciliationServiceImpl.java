@@ -118,7 +118,9 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         if(!save) {
             throw new ServiceException("b2c报关对账单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+
+        //明细更新
+        tmsB2cDeclareReconciliationDetailService.update(updateDTO.getDetailList(),tmsB2cDeclareReconciliationEntity.getId());
 
         // 记录主单操作日志
         log.info("编辑 开始记录b2c报关对账单日志数据，单号：【{}】", tmsB2cDeclareReconciliationEntity.getCode());
@@ -255,8 +257,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         LoginUser userInfo = commonService.getUserInfo();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        approveDTO.setBusinessKey(SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -308,11 +309,14 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
 
         // 删除主单数据
         log.info("删除 开始删除b2c报关对账单主单数据，id：【{}】", id);
         super.removeById(id);
+
+        //清除明细主表id
+        tmsB2cDeclareReconciliationDetailService.cleanDetailMainId(id);
+
         // 删除日志数据
         log.info("删除 开始删除b2c报关对账单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "b2c报关对账单");
