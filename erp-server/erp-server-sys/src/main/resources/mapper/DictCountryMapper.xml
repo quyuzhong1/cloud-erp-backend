@@ -59,7 +59,7 @@
         dc.update_user_name AS updateUserName
         FROM  dict_country dc
         LEFT JOIN dict_global_area dga
-        ON dc.region_code = dga.id
+        ON dc.region_code = dga.id AND dga.is_deleted = FALSE
         WHERE dc.is_deleted = FALSE
         AND
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
@@ -87,7 +87,7 @@
         dc.update_user_name AS updateUserName
         FROM  dict_country dc
         LEFT JOIN dict_global_area dga
-        ON dc.region_code = dga.id
+        ON dc.region_code = dga.id AND dga.is_deleted = FALSE
         WHERE dc.is_deleted = FALSE
         AND
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
