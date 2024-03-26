@@ -301,6 +301,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         //查询未匹配的SKU
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setMatchResult(false);
+        paramDTO.setIsExpire(false);
         // 查询ListingInfo和skuMapping的关系
         List<ListingInfoWithSkuMappingDTO> noMatchList = skuMappingService.findListDto(paramDTO);
         if(CollectionUtils.isEmpty(noMatchList)){
@@ -377,7 +378,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                 oldLogEntity.setProductSkuId(listingInfoWithSkuMappingDTO.getProductSkuId());
                 oldLogEntity.setProductSkuNo(listingInfoWithSkuMappingDTO.getProductSkuNo());
                 oldLogEntity.setProductName(listingInfoWithSkuMappingDTO.getProductName());
-                operateLogService.addModuleOperateLogByObj(oldLogEntity, skuMappingEntitity, ModuleTypeEnum.SKU_MAPPING.getCode(), oldLogEntity.getId(), "自动匹配sku对照表");
+                operateLogService.addModuleOperateLogByObj(oldLogEntity, skuMappingEntitity, ModuleTypeEnum.SKU_MAPPING.getCode(),skuMappingEntitity.getListingId() , "自动匹配sku对照表");
             }
         }
         if(CollectionUtils.isNotEmpty(updateListingList)){

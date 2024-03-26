@@ -51,7 +51,7 @@ public class ListingInfoController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/skuMapping")
-    public ApiResult skuMapping(@RequestBody @Validated FbaShipmentDTO.skuMappingParamDTO dto) {
+    public ApiResult skuMapping(@RequestBody @Validated FbaShipmentDTO.SkuMappingParamDTO dto) {
         Boolean flag = listingInfoService.skuMapping(dto);
         return flag ? success() : failure();
     }

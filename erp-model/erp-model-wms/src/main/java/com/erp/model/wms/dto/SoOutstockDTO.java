@@ -4,6 +4,7 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,6 +14,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -1407,6 +1409,11 @@ public class SoOutstockDTO implements Serializable {
         private String warehouseOrgId;
 
         /**
+         * 库存组织名称
+         */
+        private String warehouseOrgName;
+
+        /**
          * 承运商
          */
         private String carrierId;
@@ -1489,8 +1496,6 @@ public class SoOutstockDTO implements Serializable {
          */
         private String salesDeptId;
 
-
-
         /**
          * 销售员
          */
@@ -1501,12 +1506,64 @@ public class SoOutstockDTO implements Serializable {
          */
         private String country;
 
+        /**
+         * 单据日期
+         * 空=当前系统日期
+         */
+        private LocalDate billDate;
+
+        /**
+         * 是否是平台仓订单
+         */
+        private boolean hasPlatformWarehouseOrder = false;
 
         /**
          * 明细
          */
-        private List<SoOutstockDetailDTO.AddDTO> detailList;
+        private LinkedList<SoOutstockDetailDTO.AddDTO> detailList;
 
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class InventoryParamDTO {
+
+        /**
+         * 仓库组织id
+         */
+        private String orgId;
+
+        /**
+         * 仓库组织名称
+         */
+        private String orgName;
+
+        /**
+         * 收货仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 收货仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
     }
 
     /**

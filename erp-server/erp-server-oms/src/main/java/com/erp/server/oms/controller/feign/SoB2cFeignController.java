@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.feign;
 
 
+import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.UpdateStateDTO;
@@ -530,5 +531,35 @@ public class SoB2cFeignController extends BaseController {
         } else {
             return true;
         }
+    }
+
+    /**
+     * 根据平台单号和平台查询B2C销售订单
+     *
+     * @date 2024-03-07
+     * @author Jim
+     */
+    @GetMapping("/getByPlatformCode")
+    public List<SoB2cEntity> getByPlatformCode(@RequestParam("platformCodeList") List<String> platformCodeList,
+                                               @RequestParam("dictPlatform") String dictPlatform,
+                                               @RequestParam("shopId") String shopId
+    ){
+        return soB2cService.getByPlatformCodeList(platformCodeList, dictPlatform, shopId);
+    }
+
+    /**
+     * 根据平台单号和平台查询B2C销售订单
+     *
+     * @date 2024-03-07
+     * @author Jim
+     */
+    @PostMapping("/updateById")
+    public Boolean updateById(@RequestBody SoB2cEntity soB2cEntity) {
+        return soB2cService.updateById(soB2cEntity);
+    }
+
+    @PostMapping("/checkAndFillBySoOutStock")
+    public Boolean checkAndFillBySoOutStock(@RequestBody PlatformSoOutStockDTO dto){
+        return soB2cService.checkAndFillBySoOutStock(dto);
     }
 }

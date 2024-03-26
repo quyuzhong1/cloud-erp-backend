@@ -1,6 +1,7 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.*;
@@ -809,4 +810,29 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return String
      */
     String checkSkuInventory(SoB2cDTO.AddDTO dto, List<SoB2cDetailDTO.AddDTO> detailList);
+
+    /**
+     * 根据平台单号和平台查询B2C销售订单
+     *
+     * @date 2024-03-07
+     * @author Jim
+     */
+    List<SoB2cEntity> getByPlatformCodeList(List<String> platformCodeList, String dictPlatform, String shopId);
+
+    /**
+     * 根据销售出库单信息检查和补充
+     *
+     * @date 2024-03-07
+     * @author Jim
+     */
+    Boolean checkAndFillBySoOutStock(PlatformSoOutStockDTO dto);
+
+
+    /**
+     * 批量更新B2C订单映射关系
+     *
+     * @date 2024-03-19
+     * @author Jim
+     */
+    BatchResultDTO skuMappingBatch(String soId);
 }

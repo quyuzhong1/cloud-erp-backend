@@ -1,15 +1,18 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -375,6 +378,28 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      **/
     Boolean generateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO);
 
+
+    Boolean handleCreateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto);
+
+
+    /**
+     * 检查关账或已有盘盈盘亏单据，并记录明细备注
+     */
+    Boolean checkClosedAndUpdateRemark(SoOutstockDTO.GenerateB2cDTO dto, String soOutStockId);
+
+    /**
+     * 审核并提交
+     */
+    void submitAndApprove(String id);
+
+    /**
+     * 保存与（提交, 审核）事务分开
+     */
+    Boolean handleCreateB2cSoOutstockWithoutTx(SoOutstockDTO.GenerateB2cDTO dto);
+
+
+    String addB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto);
+
     /**
      * 生成B2C销售出库单
      * @author yl
@@ -385,6 +410,22 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     Boolean generateB2cSoOutstockByCode(String soB2cCode);
 
     List<SoOutstockEntity> listByAdvanceQuery(AdvanceQueryContainer container);
+
+    /**
+     * 检查和生成销售出库单
+     *
+     * @author Jim
+     * @date 2024-03-07
+     */
+    Boolean checkAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity);
+
+    /**
+     * 默认重推销售出库单逻辑
+     *
+     * @author Jim
+     * @date 2024-03-07
+     */
+    Boolean defaultHandleRetry(String soB2cId, List<SoB2cEntity> instantList);
 
 
     /**

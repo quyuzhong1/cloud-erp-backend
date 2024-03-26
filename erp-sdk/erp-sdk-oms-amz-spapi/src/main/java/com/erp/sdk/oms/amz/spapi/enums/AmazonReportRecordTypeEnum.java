@@ -3,14 +3,8 @@ package com.erp.sdk.oms.amz.spapi.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.core.exception.ServiceException;
-import com.erp.sdk.oms.amz.spapi.csv.ReportFbaInventoryPlanningCsvEntity;
-import com.erp.sdk.oms.amz.spapi.csv.ReportFbaMyiAllInventoryCsvEntity;
-import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
-import com.erp.sdk.oms.amz.spapi.csv.ReportReservedCsvEntity;
-import com.erp.sdk.oms.amz.spapi.dto.ReportFbaInventoryPlanningMongoDTO;
-import com.erp.sdk.oms.amz.spapi.dto.ReportFbaMyiAllInventoryMongoDTO;
-import com.erp.sdk.oms.amz.spapi.dto.ReportListingMongoDTO;
-import com.erp.sdk.oms.amz.spapi.dto.ReportReservedMongoDTO;
+import com.erp.sdk.oms.amz.spapi.csv.*;
+import com.erp.sdk.oms.amz.spapi.dto.*;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -52,6 +46,7 @@ public enum AmazonReportRecordTypeEnum {
     GET_FBA_INVENTORY_PLANNING_DATA("GET_FBA_INVENTORY_PLANNING_DATA", "亚马逊物流管理库存状况报告",  MongoTableNameContant.REPORT_AMAZON_FBA_INVENTORY_PLANNING, ReportFbaInventoryPlanningCsvEntity.class, ReportFbaInventoryPlanningMongoDTO.class,"amzReportFbaInventoryPlanningHandler"),
     GET_LEDGER_DETAIL_VIEW_DATA("GET_LEDGER_DETAIL_VIEW_DATA", "亚马逊物流库存账本详情报告",  null, null, null,"amzReportLedgerDetailViewHandler"),
 
+    GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL","亚马逊物流销售报告", MongoTableNameContant.REPORT_AMAZON_FULFILLED_SHIPMENTS, ReportFulfilledShipmentsCsvEntity.class, null,"amzReportFulfilledShipmentsHandler")
     ;
 
     /**

@@ -97,6 +97,9 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
 
         // 订单日期
         orderDTO.setBillDate(sourceOrder.getCreatedAt().toLocalDate());
+        // 平台订单创建时间
+        orderDTO.setPlatformOrderCreateTime(sourceOrder.getCreatedAt());
+
         // 平台订单号
         orderDTO.setPlatformCode(sourceOrder.getOrderId());
         // 销售平台

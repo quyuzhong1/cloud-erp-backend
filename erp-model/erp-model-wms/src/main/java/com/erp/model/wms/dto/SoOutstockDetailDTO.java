@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jnr.ffi.annotations.In;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +11,7 @@ import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -339,6 +341,92 @@ public class SoOutstockDetailDTO implements Serializable {
         private String soDetailId;
 
 
+        /**
+         * 所有历史映射关系
+         */
+        private LinkedList<ListingInfoWithSkuMappingGenDTO> historySkuMappingList;
+
+        public AddDTO(ListingInfoWithSkuMappingGenDTO currentSkuMappingDTO, AddDTO addDTO, Integer currentQty) {
+            this.skuId = currentSkuMappingDTO.getProductSkuId();
+            this.skuNo = currentSkuMappingDTO.getPlatformSkuNo();
+            this.planQty = currentQty;
+            this.actualQty = currentQty;
+            this.warehouseLocation = addDTO.getWarehouseLocation();
+            this.attachNameList = addDTO.getAttachNameList();
+            this.attachUrlList = addDTO.getAttachUrlList();
+            this.remark = addDTO.getRemark();
+            this.sourceDetailId = addDTO.getSourceDetailId();
+            this.soDetailId = addDTO.getSoDetailId();
+            this.historySkuMappingList = addDTO.getHistorySkuMappingList();
+        }
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ListingInfoWithSkuMappingGenDTO {
+
+        /**
+         * skuMapping的ID
+         */
+        private String tableId;
+
+        /**
+         * 店铺表id
+         */
+        private String shopId;
+
+        /**
+         * 平台字典值
+         */
+        private String dictPlatform;
+
+        /**
+         * 产品sku id
+         */
+        private String productSkuId;
+
+        /**
+         * 产品sku no
+         */
+        private String productSkuNo;
+
+        /**
+         * 生效时间
+         */
+        private LocalDateTime effectiveTime;
+
+        /**
+         * 失效时间
+         */
+        private LocalDateTime expireTime;
+
+        /**
+         * 是否失效
+         * true 失效
+         * false 未失效
+         */
+        private Boolean isExpire;
+
+        /**
+         * listing_id
+         */
+        private String listingId;
+
+        /**
+         * 平台sku no
+         */
+        private String platformSkuNo;
+
+        /**
+         * 平台产品(spu) no或id
+         */
+        private String platformSpuNo;
+
+        /**
+         * 匹配结果吧true 已匹配 false 未匹配
+         */
+        private Boolean matchResult;
     }
 
     @Data

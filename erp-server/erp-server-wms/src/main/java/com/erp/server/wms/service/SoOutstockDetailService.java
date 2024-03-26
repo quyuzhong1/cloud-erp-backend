@@ -138,6 +138,19 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
     void checkB2cOrderQty(String warehouseId, String soId, String sourceId, String sourceType, List<SoOutstockDetailDTO.UpdateDTO> checkList);
 
     /**
+     * 根据历史映射关系和库存情况重新生成销售出库单明细
+     *
+     * @author Jim
+     * @date 2024-03-19
+     */
+    List<SoOutstockDetailDTO.AddDTO> checkAndGenerateDetail(SoOutstockDTO.GenerateB2cDTO dto);
+
+    /**
+     * 批量更新备注
+     */
+    void updateDetailRemark(String soOutStockId, String remark, boolean updateErrorThrow);
+
+    /**
      * 根据主表id分组sku查询发货单所有产品发货及待装箱数
      * @Author Luo_WG
      * @Date 2023/11/28 18:41

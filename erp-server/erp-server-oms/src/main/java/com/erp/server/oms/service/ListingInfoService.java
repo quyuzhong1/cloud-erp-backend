@@ -3,9 +3,6 @@ package com.erp.server.oms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoDTO;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.entity.SkuMappingEntity;
@@ -59,7 +56,7 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
      * @param dto
      * @return java.lang.Boolean
      **/
-    Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto);
+    Boolean skuMapping(FbaShipmentDTO.SkuMappingParamDTO dto);
 
     /**
      * 新增映射skuNo

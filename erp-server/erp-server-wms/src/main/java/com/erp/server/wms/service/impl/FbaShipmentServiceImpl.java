@@ -140,7 +140,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto) {
+    public Boolean skuMapping(FbaShipmentDTO.SkuMappingParamDTO dto) {
         FbaShipmentDetailEntity detailEntity = fbaShipmentDetailService.getById(dto.getDetailId());
         if (ObjectUtil.isEmpty(detailEntity)) {
             throw new ServiceException(ApiError.FBA_SHIPMENT_DETAIL_NOT_EXIST);

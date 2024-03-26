@@ -259,11 +259,11 @@ public class SoInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新销售订单明细备注:ids={ids},备注={remark}")
     @PostMapping("/updateDetailRemark")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id,seller_id",
-            menuCode = "oms:so:update",
-            serviceClass = SoInfoService.class,
-            keyIdName = "ids")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id,seller_id",
+//            menuCode = "oms:so:update",
+//            serviceClass = SoInfoService.class,
+//            keyIdName = "ids")
     public ApiResult updateDetailRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         Boolean flag = soInfoService.updateDetailRemark(dto);
         return flag == true ? success() : failure();
@@ -279,11 +279,11 @@ public class SoInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新销售订单备注:ids={ids},备注={remark}")
     @PostMapping("/updateRemark")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id,seller_id",
-            menuCode = "oms:so:update",
-            serviceClass = SoInfoService.class,
-            keyIdName = "ids")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id,seller_id",
+//            menuCode = "oms:so:update",
+//            serviceClass = SoInfoService.class,
+//            keyIdName = "ids")
     public ApiResult updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         Boolean flag = soInfoService.updateRemark(dto);
         return flag == true ? success() : failure();

@@ -99,6 +99,12 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
     @TableField("platform_fn_sku")
     private String platformFnSku;
 
+    /**
+     * 平台的Listing状态
+     */
+    @TableField("platform_status")
+    private String platformStatus;
+
 
     public static final String SKU_NO = "sku_no";
 

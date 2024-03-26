@@ -2,8 +2,6 @@ package com.erp.server.oms.controller.feign;
 
 
 import com.common.core.controller.BaseController;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.server.oms.service.ListingInfoService;
@@ -54,7 +52,7 @@ public class ListingInfoFeignController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/skuMapping")
-    public Boolean skuMapping(@RequestBody @Validated FbaShipmentDTO.skuMappingParamDTO dto) {
+    public Boolean skuMapping(@RequestBody @Validated FbaShipmentDTO.SkuMappingParamDTO dto) {
         return listingInfoService.skuMapping(dto);
     }
 
