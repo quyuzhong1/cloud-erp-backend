@@ -498,9 +498,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     }
 
     private List<LogisticsProductDTO.ProductDTO> buildTransferDeclareProduct(LogisticsBillDTO.GenerateBillDTO dto, List<LogisticsProductDTO.ProductDTO> skuInfoList, BigDecimal minCustomsAmount, BigDecimal maxCustomsAmount, Boolean isAliExpress){
-        List<LogisticsProductDTO.ProductDTO> ordersSkuList = new ArrayList<>(skuInfoList.size());
+        List<LogisticsProductDTO.ProductDTO> ordersSkuList = null;
         if (Objects.nonNull(isAliExpress) && isAliExpress){
             //速卖通不做sku拆分
+            ordersSkuList = new ArrayList<>(skuInfoList.size());
             for (LogisticsBillDTO.SkuDTO item : dto.getSkuList()){
                 String skuId = item.getSkuId();
                 LogisticsProductDTO.ProductDTO productDTO = skuInfoList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
@@ -527,11 +528,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     String sourceDetailId = item.getSourceDetailId();
                     productDTO.setChildOrderId(sourceDetailId);
                     productDTO.setSkuNo(item.getSkuNo());
+                    productDTO.setSkuId(skuId);
                     ordersSkuList.add(productDTO);
                 }
             }
         }else {
             List<com.erp.model.oms.dto.TransferDeclareProductDTO> transferDeclareProductBySoIds = soB2cFeign.getTransferDeclareProductBySoIds(Collections.singletonList(dto.getOrderId()));
+            ordersSkuList = new ArrayList<>(transferDeclareProductBySoIds.size());
             for (com.erp.model.oms.dto.TransferDeclareProductDTO transferDeclareProductDTO : transferDeclareProductBySoIds) {
                 if (Objects.nonNull(transferDeclareProductDTO)) {
                     LogisticsProductDTO.ProductDTO productDTO = TransferDeclareConverter.INSTANCE.omsProductToTmsProduct(transferDeclareProductDTO);
