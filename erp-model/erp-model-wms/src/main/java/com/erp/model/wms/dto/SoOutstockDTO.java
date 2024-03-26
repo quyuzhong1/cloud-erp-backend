@@ -1506,11 +1506,7 @@ public class SoOutstockDTO implements Serializable {
          */
         private String country;
 
-        /**
-         * 单据日期
-         * 空=当前系统日期
-         */
-        private LocalDate billDate;
+
 
         /**
          * 是否是平台仓订单

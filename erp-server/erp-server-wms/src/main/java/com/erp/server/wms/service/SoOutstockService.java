@@ -475,4 +475,14 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return
      */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 据主表id分组查询发货单已包装发货及待装箱数
+     * @description
+     * @param id
+     * @return
+     * @date 2024-03-26 14:10
+     * @author Lambda
+     */
+    List<WmsCartonDTO.GroupSkuDTO> listGroupSkuById(String id);
 }

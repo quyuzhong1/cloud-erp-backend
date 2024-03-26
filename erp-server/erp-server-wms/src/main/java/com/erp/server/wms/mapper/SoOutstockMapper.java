@@ -92,4 +92,6 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
      * @return
      */
     List<WmsCartonDTO.ExportPackingDTO> exportPacking(@Param("params") SoOutstockDTO.ExportDTO dto);
+
+    List<WmsCartonDTO.GroupSkuDTO> listGroupSkuByMainId(@Param("mainId") String id);
 }

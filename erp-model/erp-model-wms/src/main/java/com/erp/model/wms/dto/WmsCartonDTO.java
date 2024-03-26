@@ -384,4 +384,48 @@ public class WmsCartonDTO implements Serializable {
          */
         private List<WmsCartonDTO.ViewDTO> firstMileCartonList;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class GroupSkuDTO{
+
+        /**
+         * 销售出库单id
+         */
+        private String id;
+        /**
+         * 箱子id
+         */
+        private String cartonId;
+        /**
+         * 产品id
+         */
+        private String skuId;
+
+        /**
+         * 产品编号
+         */
+        private String skuNo;
+
+        /**
+         * 产品产品名称
+         */
+        private String productName;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 待装箱数量
+         */
+        private Integer waitPackQty;
+
+        /**
+         * 装箱数量
+         */
+        private Integer packQty;
+
+    }
 }

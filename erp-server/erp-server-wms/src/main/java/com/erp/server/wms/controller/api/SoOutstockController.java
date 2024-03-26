@@ -22,6 +22,7 @@ import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
@@ -548,5 +549,19 @@ public class SoOutstockController extends BaseController {
     public ApiResult importPacking(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = soOutstockService.importFile(excelFile, response);
         return result == true ? success() : failure();
+    }
+
+    /**
+     *
+     * 快粘贴查询sku
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:21
+     * @param id 销售出库单Id
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/listGroupSkuById")
+    public ApiResult<List<WmsCartonDTO.GroupSkuDTO>> listGroupSkuById(@RequestParam("id") String id) {
+        List<WmsCartonDTO.GroupSkuDTO> result = soOutstockService.listGroupSkuById(id);
+        return success(result);
     }
 }
