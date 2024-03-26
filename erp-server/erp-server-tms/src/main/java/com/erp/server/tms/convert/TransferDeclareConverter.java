@@ -1,5 +1,7 @@
 package com.erp.server.tms.convert;
 
+import com.erp.model.oms.dto.TransferDeclareProductDTO;
+import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.entity.TransferDeclareProductEntity;
 import org.mapstruct.Mapper;
@@ -24,4 +26,15 @@ public interface TransferDeclareConverter {
     TransferLogisticsCreateOrderReq.ProductDetail declareProductEntityToCreateOrderReq(TransferDeclareProductEntity declareProductEntity);
     List<TransferLogisticsCreateOrderReq.ProductDetail> declareProductEntityToCreateOrderReq(List<TransferDeclareProductEntity> declareProductEntity);
 
+    @Mappings({
+            @Mapping(target = "price", source = "declarePrice"),
+            @Mapping(target = "declarePrice", source = "declarePrice"),
+            @Mapping(target = "quantity", source = "qty"),
+            @Mapping(target = "declareCurrency", source = "currency"),
+            @Mapping(target = "amount", ignore = true),
+            @Mapping(target = "childOrderId", ignore = true),
+            @Mapping(target = "destCurrencySymbol", source = "currencySymbol"),
+            @Mapping(target = "destDeclarePrice", ignore = true)
+    })
+    LogisticsProductDTO.ProductDTO omsProductToTmsProduct(TransferDeclareProductDTO transferDeclareProductDTO);
 }

@@ -39,6 +39,7 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.server.tms.constant.TmsConstant;
 import com.erp.server.tms.convert.LogisticsBillConverter;
+import com.erp.server.tms.convert.TransferDeclareConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
 import com.erp.server.tms.service.*;
@@ -410,17 +411,17 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
 
         ParceInfoVO parceInfo = LogisticsBillConverter.INSTANCE.convertParceInfo(packageDTO);
-        Boolean hasBattery = skuInfoList.stream().filter(s -> s.getIsElectric()).count() > 0;
+        Boolean hasBattery = ordersSkuList.stream().anyMatch(LogisticsProductDTO.ProductDTO::getIsElectric);
         //是否带电
         parceInfo.setHasBattery(hasBattery);
-        Integer totalQuantity = skuInfoList.stream().mapToInt(LogisticsProductDTO.ProductDTO::getQuantity).sum();
+        Integer totalQuantity = ordersSkuList.stream().filter(e -> Objects.nonNull(e.getQuantity())).mapToInt(LogisticsProductDTO.ProductDTO::getQuantity).sum();
         parceInfo.setTotalQuantity(totalQuantity);
 
         //申报总价
-        BigDecimal totalPrice = skuInfoList.stream().filter(s -> Objects.nonNull(s.getDeclarePrice())).map(LogisticsProductDTO.ProductDTO::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        BigDecimal totalPrice = ordersSkuList.stream().filter(s -> Objects.nonNull(s.getDeclarePrice())).map(LogisticsProductDTO.ProductDTO::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         parceInfo.setTotalPrice(totalPrice);
         //总重量
-        Integer totalWeight = skuInfoList.stream().filter(s -> Objects.nonNull(s.getWeight())).mapToInt(LogisticsProductDTO.ProductDTO::getWeight).sum();
+        Integer totalWeight = ordersSkuList.stream().filter(s -> Objects.nonNull(s.getWeight())).mapToInt(LogisticsProductDTO.ProductDTO::getWeight).sum();
         parceInfo.setTotalWeight(totalWeight);
 
         //根据销售平台和渠道code 获取到原生的渠道
@@ -512,11 +513,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     //目的国申报价
                     BigDecimal destDeclarePrice = productDTO.getDestDeclarePrice();
                     //表示最大的报关价还小于 目的过申报价
-                    if (maxCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && maxCustomsAmount.compareTo(destDeclarePrice) < 0) {
+                    if (Objects.nonNull(destDeclarePrice) && maxCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && maxCustomsAmount.compareTo(destDeclarePrice) < 0) {
                         productDTO.setDestDeclarePrice(maxCustomsAmount);
                     }
                     //表示最小的报关价还小于 目的过申报价
-                    if (minCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && destDeclarePrice.compareTo(minCustomsAmount) < 0) {
+                    if (Objects.nonNull(destDeclarePrice) && minCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && destDeclarePrice.compareTo(minCustomsAmount) < 0) {
                         productDTO.setDestDeclarePrice(minCustomsAmount);
                     }
 
@@ -532,31 +533,20 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }else {
             List<com.erp.model.oms.dto.TransferDeclareProductDTO> transferDeclareProductBySoIds = soB2cFeign.getTransferDeclareProductBySoIds(Collections.singletonList(dto.getOrderId()));
             for (com.erp.model.oms.dto.TransferDeclareProductDTO transferDeclareProductDTO : transferDeclareProductBySoIds) {
-                LogisticsProductDTO.ProductDTO productDTO = new LogisticsProductDTO.ProductDTO();
                 if (Objects.nonNull(transferDeclareProductDTO)) {
+                    LogisticsProductDTO.ProductDTO productDTO = TransferDeclareConverter.INSTANCE.omsProductToTmsProduct(transferDeclareProductDTO);
                     Integer qty = transferDeclareProductDTO.getQty();
                     BigDecimal price = transferDeclareProductDTO.getDeclarePrice();
-                    productDTO.setQuantity(qty);
-                    productDTO.setPrice(price);
                     productDTO.setAmount(MathUtil.multiply(price, qty));
-                    productDTO.setDeclareChineseName(transferDeclareProductDTO.getDeclareChineseName());
-                    productDTO.setDeclareEnglishName(transferDeclareProductDTO.getDeclareEnglishName());
-                    productDTO.setDeclareCurrency(transferDeclareProductDTO.getCurrency());
                     //目的国申报价
-                    BigDecimal destDeclarePrice = productDTO.getDestDeclarePrice();
                     //表示最大的报关价还小于 目的过申报价
-                    if (maxCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && maxCustomsAmount.compareTo(destDeclarePrice) < 0) {
+                    if (Objects.nonNull(price) && maxCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && maxCustomsAmount.compareTo(price) < 0) {
                         productDTO.setDestDeclarePrice(maxCustomsAmount);
                     }
                     //表示最小的报关价还小于 目的过申报价
-                    if (minCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && destDeclarePrice.compareTo(minCustomsAmount) < 0) {
+                    if (Objects.nonNull(price) && minCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && price.compareTo(minCustomsAmount) < 0) {
                         productDTO.setDestDeclarePrice(minCustomsAmount);
                     }
-                    productDTO.setSkuNo(transferDeclareProductDTO.getSkuNo());
-                    productDTO.setSkuId(transferDeclareProductDTO.getSkuId());
-                    productDTO.setWeight(transferDeclareProductDTO.getWeight());
-                    productDTO.setDeclareCurrencySymbol(transferDeclareProductDTO.getDeclareCurrencySymbol());
-                    productDTO.setIsElectric(transferDeclareProductDTO.getIsElectric());
                     ordersSkuList.add(productDTO);
                 }
             }
