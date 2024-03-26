@@ -14,24 +14,18 @@ import com.common.business.enums.SyncOperateEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.KingdeeDepartmentDTO;
-import com.erp.model.sys.entity.KingdeeDepartmentEntity;
-import com.erp.model.sys.entity.KingdeePostEntity;
-import com.erp.model.sys.entity.SysAccountingCompanyEntity;
-import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.sys.mapper.KingdeePostMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeePostService;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeService;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysDeptService;
-import com.erp.server.sys.service.KingdeeDepartmentService;
-import com.erp.server.sys.service.KingdeePostService;
+import com.erp.server.sys.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.sys.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
-import com.erp.server.sys.service.SysAccountingCompanyService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.checker.units.qual.K;
@@ -68,6 +62,9 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
 
     @Autowired
     private KingdeeDepartmentService kingdeeDepartmentService;
+
+    @Autowired
+    private SysPostService sysPostService;
 
     @Autowired
     private SyncKingdeePostService syncKingdeePostService;
@@ -264,12 +261,22 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
      * 新增修改处理数据
      */
     private void handleData(KingdeePostEntity entity) {
+        String id = entity.getId();
         String kingdeeDeptId = entity.getKingdeeDeptId();
         String useOrgId = entity.getUseOrgId();
         SysAccountingCompanyEntity orgInfo = sysAccountingCompanyService.getById(useOrgId);
         if (Objects.isNull(orgInfo)) {
             throw new ServiceException("组织信息不存在");
         }
+        String erpPostId = entity.getErpPostId();
+        if(StringUtils.isNotBlank(erpPostId)){
+            SysPostEntity sysPost = sysPostService.getById(erpPostId);
+            if(Objects.isNull(sysPost)){
+                throw new ServiceException("ERP岗位不存在");
+            }
+            entity.setName(sysPost.getPostName());
+        }
+
         entity.setUseOrgName(orgInfo.getCompanyName());
         KingdeeDepartmentEntity kingdeeDept = kingdeeDepartmentService.getById(kingdeeDeptId);
         if (Objects.isNull(kingdeeDept)) {
@@ -282,5 +289,12 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
         }
         entity.setKingdeeDeptCode(kingdeeDeptCode);
         entity.setUseOrgCode(orgInfo.getCode());
+        int orgNameCount=this.lambdaQuery().eq(KingdeePostEntity::getUseOrgId,useOrgId).
+                eq(KingdeePostEntity::getName,entity.getName()).
+                ne(StringUtils.isNotBlank(id),KingdeePostEntity::getId,id).
+                count();
+        if (orgNameCount > 0) {
+            throw new ServiceException( orgInfo.getCompanyName() + "下"+entity.getName()+"岗位已存在");
+        }
     }
 }

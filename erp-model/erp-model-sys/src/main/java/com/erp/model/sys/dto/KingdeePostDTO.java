@@ -128,17 +128,20 @@ public class KingdeePostDTO implements Serializable {
         @NotBlank(message = "组织不能为空")
         private String useOrgId;
 
-        /**
-         * 岗位名称
-         */
-        @NotBlank(message = "岗位名称不能为空")
-        private String name;
+
 
         /**
          * 金蝶部门表id 来源 http://172.16.100.11:3002/project/36/interface/api/30879
          */
-        @NotBlank(message = "金蝶岗位不能为空")
+        @NotBlank(message = "金蝶部门不能为空")
         private String kingdeeDeptId;
+
+
+        /**
+         * erp 岗位 来源 http://172.16.100.11:3002/project/36/interface/api/89
+         */
+        @NotBlank(message = "岗位名不能为空")
+        private String erpPostId;
 
     }
 
@@ -157,16 +160,16 @@ public class KingdeePostDTO implements Serializable {
         private String useOrgId;
 
         /**
-         * 岗位名称
-         */
-        @NotBlank(message = "岗位名称不能为空")
-        private String name;
-
-        /**
          * 金蝶部门表id 来源 http://172.16.100.11:3002/project/36/interface/api/30879
          */
-        @NotBlank(message = "金蝶岗位不能为空")
+        @NotBlank(message = "金蝶部门不能为空")
         private String kingdeeDeptId;
+
+        /**
+         * erp 岗位 来源 http://172.16.100.11:3002/project/36/interface/api/89
+         */
+        @NotBlank(message = "岗位名不能为空")
+        private String erpPostId;
 
     }
 
@@ -202,6 +205,8 @@ public class KingdeePostDTO implements Serializable {
          * 岗位名称
          */
         private String name;
+
+        private String erpPostId;
 
     }
 

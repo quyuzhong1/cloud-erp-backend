@@ -60,6 +60,12 @@ public class KingdeePostEntity extends BaseEntity<KingdeePostEntity> {
     @TableField("disabled")
     private Boolean disabled;
 
+    /**
+     * erp岗位表id 对应 sys_post 表id
+     */
+    @TableField("erp_post_id")
+    private String erpPostId;
+
     @TableField(exist = false)
     private String kingdeeDeptCode;
 
