@@ -758,6 +758,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             return;
         }
         CurrencyEnum usd = CurrencyEnum.USD;
+        CurrencyEnum cny = CurrencyEnum.CNY;
         //sku no list
         List<String> skuNoList = successList.stream().map(LogisticsProductExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
         //国家
@@ -787,8 +788,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 String declarePriceStr = item.getDeclarePrice();
                 if (StringUtils.isNotBlank(declarePriceStr)) {
                     logistics.setDeclarePrice(new BigDecimal(declarePriceStr));
-                    logistics.setDeclareCurrency(usd.getCurrencyCode());
-                    logistics.setDeclareCurrencySymbol(usd.getCurrencySymbol());
+                    logistics.setDeclareCurrency(cny.getCurrencyCode());
+                    logistics.setDeclareCurrencySymbol(cny.getCurrencySymbol());
                 }
                 //目的国申报价
                 String destDeclarePriceStr = item.getDestDeclarePrice();
@@ -797,12 +798,15 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     logistics.setDestCurrencySymbol(usd.getCurrencySymbol());
                     logistics.setDestCurrency(usd.getCurrencyCode());
                 }
-                logistics.setFirstQty(StrUtil.isBlank(item.getFirstQtyStr()) ? null : Integer.valueOf(item.getFirstQtyStr()));
-                logistics.setSecondQty(StrUtil.isBlank(item.getSecondQtyStr()) ? null : Integer.valueOf(item.getSecondQtyStr()));
+                logistics.setFirstQty(StrUtil.isBlank(item.getFirstQtyStr()) ? null : new BigDecimal(item.getFirstQtyStr()));
+                logistics.setSecondQty(StrUtil.isBlank(item.getSecondQtyStr()) ? null : new BigDecimal(item.getSecondQtyStr()));
 
                 List<String> errorMsgList = new ArrayList<>();
                 if (StringUtils.isBlank(skuId)) {
                     errorMsgList.add("sku不存在或者sku未审核通过");
+                }
+                if (!StrUtil.equals(logistics.getApproveStatus().getCode(),ApproveStatusEnum.WAIT_SUBMIT.getCode())) {
+                    errorMsgList.add("只有待提交物流产品支持导入");
                 }
                 //国家
                 String countryName = item.getCountry();

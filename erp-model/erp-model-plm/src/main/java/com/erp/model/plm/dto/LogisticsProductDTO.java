@@ -160,12 +160,12 @@ public class LogisticsProductDTO {
         /**
          * 第一数量
          */
-        private Integer firstQty;
+        private BigDecimal firstQty;
 
         /**
          * 第二数量
          */
-        private Integer secondQty;
+        private BigDecimal secondQty;
 
         /**
          * 销售状态
@@ -731,12 +731,12 @@ public class LogisticsProductDTO {
         /**
          * 第一数量
          */
-        private Integer firstQty;
+        private BigDecimal firstQty;
 
         /**
          * 第二数量
          */
-        private Integer secondQty;
+        private BigDecimal secondQty;
     }
 
     @Data
@@ -981,12 +981,12 @@ public class LogisticsProductDTO {
         /**
          * 第一数量
          */
-        private Integer firstQty;
+        private BigDecimal firstQty;
 
         /**
          * 第二数量
          */
-        private Integer secondQty;
+        private BigDecimal secondQty;
 
 
     }
