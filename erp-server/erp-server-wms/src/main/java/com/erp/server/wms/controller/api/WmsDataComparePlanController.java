@@ -53,18 +53,37 @@ public class WmsDataComparePlanController extends BaseController {
     }
 
     /**
-    * 数据对比映射方案删除
+    * 修改
     * @author shukai
     * @date:  2024-03-20
     * @param dto
     * @return ApiResult
     */
-    @PostMapping("/delete")
-    @LogAction(value = LogActionEnum.DELETE, desc = "数据对比映射方案删除")
-    public ApiResult<?> update(@RequestBody @Validated WmsDataComparePlanDTO.DeteleDTO dto) {
-        wmsDataComparePlanService.removeByIds(dto.getIds());
+    @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "数据对比映射方案修改")
+        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+        tableField = "create_user_id",
+        menuCode = "wms:wmsDataComparePlan:update",
+        serviceClass = WmsDataComparePlanService.class,
+        keyIdName = "id")
+    public ApiResult<?> update(@RequestBody @Validated WmsDataComparePlanDTO.UpdateDTO dto) {
+        wmsDataComparePlanService.update(dto);
         return success();
     }
+    
+    /**
+     * 数据对比映射方案删除
+     * @author shukai
+     * @date:  2024-03-20
+     * @param dto
+     * @return ApiResult
+     */
+     @PostMapping("/delete")
+     @LogAction(value = LogActionEnum.DELETE, desc = "数据对比映射方案删除")
+     public ApiResult<?> update(@RequestBody @Validated WmsDataComparePlanDTO.DeteleDTO dto) {
+         wmsDataComparePlanService.removeByIds(dto.getIds());
+         return success();
+     }
 
     /**
      *查询对比映射方案
