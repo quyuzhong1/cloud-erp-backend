@@ -4,19 +4,16 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpPullTaskFeignDTO;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.*;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.core.exception.ServiceException;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.enums.PlatformEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
@@ -24,8 +21,7 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
-import com.erp.model.sys.dto.KingdeePostDTO;
-import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
+import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -42,6 +38,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.checkerframework.checker.units.qual.K;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -93,8 +90,12 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
     @Autowired
     private BankAccountService bankAccountService;
+
     @Resource
     private MQProducerService mqProducerService;
+
+    @Resource
+    private KingdeeReceiptConditionService kingdeeReceiptConditionService;
     /**
      * 销售订单同步金碟
      *
@@ -146,6 +147,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
         //销售组织
         String salesOrgId = entity.getSalesOrgId();
+        resultMap.put("seller", entity.getSellerName());
 
         //库存组织
         String warehouseOrgId = entity.getWarehouseOrgId();
@@ -160,33 +162,21 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         //销售员
         String sellerId = entity.getSellerId();
         String deptCode = "";
-
-        //当为空的时候 就取岗位表的
-        KingdeePostDTO.FindUserKingdeePostInfoDTO findUserPostKingdee = new KingdeePostDTO.FindUserKingdeePostInfoDTO();
-        findUserPostKingdee.setUserId(sellerId);
-        findUserPostKingdee.setOrgCode(salesOrgCode);
-        KingdeePostDTO.UserKingdeePostInfoDTO kingdeePost = kingdeeFeign.getUserKingdeePost(findUserPostKingdee);
-        if (kingdeePost != null) {
-            deptCode = kingdeePost.getKingdeeDeptCode();
-        }
-        resultMap.put("deptCode", deptCode);
-
-
         //获取业务员信息
         if (StringUtils.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
-            findBusinessOperator.setOrgCode(salesOrgCode);
+            findBusinessOperator.setUserId(salesOrgId);
             findBusinessOperator.setUserId(sellerId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
-            KingdeeBusinessOperatorEntity kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            KingdeeOperatorRefPostDTO.OperatorDTO kingdeeSeller = kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员
-            if (!Objects.isNull(kingSellerInfo)) {
-                resultMap.put("sellerCode", kingSellerInfo.getKingdeePostCode());
-                resultMap.put("seller", kingSellerInfo.getKingdeeUserName());
+            if (!Objects.isNull(kingdeeSeller)) {
+                deptCode=kingdeeSeller.getDeptCode();
+                resultMap.put("sellerCode", kingdeeSeller.getUserPostCode());
             }
         }
-
+        resultMap.put("deptCode", deptCode);
         String currency = entity.getCurrency();
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(currency));
         //结算币别
@@ -199,7 +189,6 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         //运费金额
         BigDecimal shippingFee = entity.getShippingFee();
         resultMap.put("shippingFee", shippingFee);
-
         //是否含税
         Boolean isTax = entity.getIsTax();
         resultMap.put("isTax", isTax);
@@ -218,9 +207,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             if (customerInfo != null) {
                 resultMap.put("customerCode", customerInfo.getCode());
             }
-
         }
-
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         String kingdeeWarehouseCode = "";
         if (CollectionUtils.isNotEmpty(warehouseList)) {
@@ -244,12 +231,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             }
         }
         // 收款条件
-        List<DictBasicEntity> receiveConditionList = dictBasicMap.get(DictBasicTypeEnum.COLLECTION_TERMS.getType());
-        if (CollectionUtils.isNotEmpty(receiveConditionList) && StrUtils.isNotEmpty(entity.getReceiveCondition())) {
-            DictBasicEntity dictBasicEntity = receiveConditionList.stream().filter(obj -> Objects.equals(obj.getValue(), entity.getReceiveCondition())).findFirst().orElse(null);
-            if (Objects.nonNull(dictBasicEntity)) {
-                resultMap.put("receiveCondition", dictBasicEntity.getRemark());
-            }
+        KingdeeReceiptConditionEntity receiptCondition = kingdeeReceiptConditionService.getById(entity.getReceiveCondition());
+        if (Objects.nonNull(receiptCondition)) {
+            resultMap.put("receiveCondition", receiptCondition.getCode());
         }
 
         // 收款日期
@@ -261,10 +245,11 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             resultMap.put("receiveAmount", entity.getReceiveAmount());
         }
         // 收款账号
-        if (StrUtils.isNotEmpty(entity.getReceiveAccount())) {
-            List<BankAccountEntity> bankAccountList = bankAccountService.findByOrgIdAndAccountNo(entity.getSalesOrgId(), entity.getReceiveAccount());
-            if (CollUtil.isNotEmpty(bankAccountList)) {
-                resultMap.put("receiveAccount", entity.getReceiveAccount());
+        String receiveAccount = entity.getReceiveAccount();
+        if (StrUtils.isNotEmpty(receiveAccount)) {
+            BankAccountEntity bankAccount = bankAccountService.getById(receiveAccount);
+            if (Objects.nonNull(bankAccount)) {
+                resultMap.put("receiveAccount", bankAccount.getBankAccountNo());
             }
         }
 

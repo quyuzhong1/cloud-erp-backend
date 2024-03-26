@@ -742,6 +742,50 @@ public class CustomerDTO implements Serializable {
     }
 
     /**
+     * 收货信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ReceiveInfoDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * code
+         */
+        private String code;
+
+        /**
+         * 客户名称
+         */
+        private String name;
+
+        /**
+         * 收货地址
+         */
+        private String receiveAddress;
+
+        /**
+         * 收货人
+         */
+        private String receiverName;
+
+        /**
+         * 联系电话
+         */
+        private String telNumber;
+
+        /**
+         * 启用禁用
+         */
+        private Boolean disabled;
+
+    }
+
+    /**
      * 获取到基础的信息
      */
     @Data

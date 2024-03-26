@@ -12,6 +12,7 @@ import com.erp.model.wms.entity.OtherOutstockEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -190,4 +191,20 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
      * @return OtherOutstockDTO.AddDTO
      */
     OtherOutstockDTO.AddDTO buildLossMainDto(WarehouseEntity warehouse,Boolean isOnwayWarehouse,String userId);
+
+    /**
+     * 下载导入模板
+     *
+     * @author Jim
+     * {@code @date:} 2024/03/21
+     */
+    void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 导入
+     *
+     * @author Jim
+     * {@code @date:} 2024/03/21
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 }

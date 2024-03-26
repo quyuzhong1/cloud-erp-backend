@@ -520,6 +520,10 @@ public class DateUtil {
         return matcher.matches();
     }
 
+    public static String nowExcelFileFormat(){
+        return DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+    }
+
     public static LocalDateTime getStartOfMonth(int monthsToAdd) {
         LocalDateTime startOfMonth;
 

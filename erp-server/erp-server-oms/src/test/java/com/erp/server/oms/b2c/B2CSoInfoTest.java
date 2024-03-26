@@ -1,12 +1,14 @@
 package com.erp.server.oms.b2c;
 
 import cn.hutool.json.JSONUtil;
+import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.enums.WarehouseDeliveryTypeEnum;
 import com.erp.model.wms.enums.WarehouseManageTypeEnum;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.oms.ErpServerOmsApplication;
 import com.erp.server.oms.service.SkuMappingService;
 import com.erp.server.oms.service.SoB2cService;
@@ -20,6 +22,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author zdy
@@ -50,23 +53,11 @@ public class B2CSoInfoTest {
 
     @Test
     public void test(){
-        ListingInfoParamDTO param = new ListingInfoParamDTO();
-        String platform="AliExpress";
-        String shopId="1744978322774822913";
-        List<String> skuIdList = Arrays.asList("1619184264417382401");
-        List<String> shopIdList = Arrays.asList(shopId);
-        param.setPlatform(platform);
-        param.setSkuIdList(skuIdList);
-        param.setShopIdList(shopIdList);
-        String warehouseManageType = "selfBuild";
-        //子件发货
-        String singleDelivery = WarehouseDeliveryTypeEnum.SINGLE.getCode();
-        //自建
-        String selfBuild = WarehouseManageTypeEnum.SELF_BUILD.getCode();
-        //是否自建 如果是就是要拆分
-        Boolean isSelfBuild = selfBuild.equals(warehouseManageType);
-//        List<ListingInfoWithSkuMappingDTO> skuMappingList = skuMappingService.findListDto(param);
-//        System.out.println(JSONUtil.parse(skuMappingList));
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_RECCONDITION.getCode());
+        //查询子单据id
+        String fieldKeys = "FID,FNumber,FName,FFORBIDSTATUS,FDOCUMENTSTATUS";
+        List<Map<String, Object>> list = apiUtils.queryList("", fieldKeys, 1000, 1, 0);
+        System.out.println("-----------"+JSONUtil.toJsonStr(list));
 
 
 

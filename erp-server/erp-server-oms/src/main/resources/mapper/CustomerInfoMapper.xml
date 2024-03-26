@@ -64,10 +64,26 @@
         where ci.is_deleted = FALSE and group_id != '' ORDER BY group_name
     </select>
 
-    <select id="listCustomerByProperty" resultType="com.erp.model.oms.vo.CustomerInfoVO">
-        select id,"name", code,customer_property
-        from customer_info ci
-        where ci.is_deleted = FALSE and customer_property != ''
+
+
+    <!--根据名称搜索-->
+    <select id="listReceiveByName" resultType="com.erp.model.oms.dto.CustomerDTO$ReceiveInfoDTO">
+        SELECT
+            ci.id,
+               ci.code,
+               ci.name,
+               ca.address AS receiveAddress,
+               ca.person AS receiverName,
+               ca.tel_number AS telNumber
+        FROM customer_info ci
+        LEFT JOIN customer_address ca
+        ON ci.id = ca.main_id
+        AND ca.is_deleted = FALSE
+        WHERE ci.is_deleted = FALSE
+        <if test="name != null and name != ''">
+            AND ci.name LIKE CONCAT('%', #{name}::text, '%')
+        </if>
+        ORDER BY ca.is_default desc limit 1
     </select>
 
 

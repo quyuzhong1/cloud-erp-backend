@@ -281,5 +281,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
     List<SupplierUserVO> srmList(UserPagingSearchDTO dto);
 
     void updateStateSrm(UpdateUserStateDTO stateDTO);
+
+    List<SysUserInfoEntity> listErpUser();
 }
 

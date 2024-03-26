@@ -19,8 +19,8 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
+import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
@@ -151,11 +151,11 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             findBusinessOperator.setUserId(purchaseUserId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.CGY.getCode());
             //获取员工业务信息
-            KingdeeBusinessOperatorEntity kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员
             if (!Objects.isNull(kingSellerInfo)) {
-                resultMap.put("purchaseUserCode", kingSellerInfo.getKingdeePostCode());
-                resultMap.put("purchaseUserName", kingSellerInfo.getKingdeeUserName());
+                resultMap.put("purchaseUserCode", kingSellerInfo.getUserPostCode());
+                resultMap.put("purchaseUserName", kingSellerInfo.getUserName());
             }
         }
 

@@ -196,6 +196,14 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
         return this.lambdaQuery().in(CustomerAddressEntity::getMainId,mainIdList).list();
     }
 
+    @Override
+    public List<CustomerAddressEntity> listByCustomerName(String customerName) {
+        if(StringUtils.isBlank(customerName)){
+             return this.list();
+        }
+        return baseMapper.listByCustomerName(customerName);
+    }
+
     /**
      * 獲取刪除id
      *

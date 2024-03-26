@@ -18,8 +18,7 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
-import com.erp.model.sys.dto.KingdeePostDTO;
-import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
+import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
@@ -80,8 +79,6 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
     @Resource
     private KingdeeFeign kingdeeFeign;
 
-    @Resource
-    private QcInfoService qcInfoService;
 
     @Resource
     private SoReturnReceiveService soReturnReceiveService;
@@ -115,8 +112,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Arrays.asList(entity.getCustomerId()));
         //退货单
         SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(entity.getSourceId());
-        //退货详情
-        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainId(entity.getSourceId());
+
 
 
         String soId = "";
@@ -166,29 +162,19 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         }
         //销售员
         String sellerId = entity.getSellerId();
-        String deptCode = "";
-        String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
 
-        //当为空的时候 就取岗位表的
-        KingdeePostDTO.FindUserKingdeePostInfoDTO findUserPostKingdee = new KingdeePostDTO.FindUserKingdeePostInfoDTO();
-        findUserPostKingdee.setUserId(sellerId);
-        findUserPostKingdee.setOrgCode(salesOrgCode);
-        KingdeePostDTO.UserKingdeePostInfoDTO kingdeePost = kingdeeFeign.getUserKingdeePost(findUserPostKingdee);
-        if (kingdeePost != null) {
-            deptCode = kingdeePost.getKingdeeDeptCode();
-        }
-        resultMap.put("sellerDeptCode", deptCode);
         //获取业务员信息
         if (StringUtils.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
-            findBusinessOperator.setOrgCode(salesOrgCode);
+            findBusinessOperator.setOrgId(entity.getSalesOrgId());
             findBusinessOperator.setUserId(sellerId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
-            KingdeeBusinessOperatorEntity kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员
             if (!Objects.isNull(kingSellerInfo)) {
-                resultMap.put("sellerUserCode", kingSellerInfo.getKingdeePostCode());
+                resultMap.put("sellerUserCode", kingSellerInfo.getUserPostCode());
+                resultMap.put("sellerDeptCode", kingSellerInfo.getDeptCode());
             }
         }
 

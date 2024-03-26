@@ -316,6 +316,34 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         return resultList;
     }
 
+    @Override
+    public List<SysMenuVO> findLeftMenuByRoleIds(List<String> roleIds, Integer type) {
+        if (CollectionUtils.isEmpty(roleIds)) {
+            return new ArrayList<>();
+        }
+        List<SysMenuEntity> allList = sysMenuService
+                .lambdaQuery()
+                .eq(SysMenuEntity::getDisabled, Boolean.FALSE)
+                .eq(SysMenuEntity::getType,type)
+                .list();
+        List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
+        List<String> menuIds;
+        if (roleIds.contains(CommonConstants.ADMIN_ROLE_ID)) {
+            menuIds = allList.stream().map(s -> s.getMenuId()).collect(Collectors.toList());
+        } else {
+            menuIds = baseMapper.findMenuIdsByRoleIds(roleIds);
+        }
+        List<SysMenuVO> resultList = menuList.stream().
+                filter(item -> "0".equals(item.getParentId()) && menuIds.contains(item.getMenuId()))
+                .sorted(Comparator.comparing(SysMenuVO::getIndex))
+                .map(item -> {
+                    item.setParentName("");
+                    item.setChildrenList(getRoleChildrenLeftList(item, menuList, menuIds, SysConstant.FUNCTION_TYPE, SysConstant.BUTTON_TYPE));
+                    return item;
+                }).collect(Collectors.toList());
+        return resultList;
+    }
+
 
     /**
      * 获取左侧菜单所有列表

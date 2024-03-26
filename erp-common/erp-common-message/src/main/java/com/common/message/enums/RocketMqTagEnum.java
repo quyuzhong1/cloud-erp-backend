@@ -219,6 +219,8 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_SYS_DEPARTMENT_TAG(1012, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_sys_department_tag"),
 
+
+
     /**
      * 直接调拨单同步金蝶
      */
@@ -308,6 +310,21 @@ public enum RocketMqTagEnum {
      * 委外发料单同步金蝶
      */
     KINGDEE_SUBCONTRACT_ISSUE_TAG(1030, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_subcontract_issue_tag"),
+
+    /**
+     * 岗位同步金蝶
+     */
+    KINGDEE_SYS_POST_TAG(1031, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_sys_post_tag"),
+
+    /**
+     * 员工任岗同步金蝶
+     */
+    KINGDEE_SYS_USER_POST_TAG(1032, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_sys_user_post_tag"),
+
+    /**
+     * 业务员同步金蝶
+     */
+    KINGDEE_OPERATOR_TAG(1033, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_operator_tag"),
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 
     /**

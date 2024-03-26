@@ -33,7 +33,7 @@ public interface KingdeeCommonService {
      * @author Will
      * @date: 2023/3/10 14:57
      */
-    void updateBusinessSyncKingdeeStatus(Integer code, String businessId, String status, String kingdeeId);
+    void updateBusinessSyncKingdeeStatus(Integer code, String businessId, String status, String kingdeeId,String kingdeeCode);
 
     /**
      * @param platformEntity
@@ -243,6 +243,15 @@ public interface KingdeeCommonService {
      */
     String createkingdeeSoChange(Map<String, Object> paramMap);
 
+    /**
+     * 直接添加
+     * @description
+     * @param
+     * @return
+     * @date 2024-03-15 18:22
+     * @author Lambda
+     */
+    Boolean save(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param, Integer type);
 }
 
 

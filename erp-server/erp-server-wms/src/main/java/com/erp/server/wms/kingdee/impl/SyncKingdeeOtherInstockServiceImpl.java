@@ -16,7 +16,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
-import com.erp.model.sys.entity.DeptKingdeeEntity;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.wms.entity.OtherInstockDetailEntity;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -120,7 +120,7 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
             DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
             dto.setDeptId(entity.getDeptId());
             dto.setOrgId(entity.getOrgId());
-            DeptKingdeeEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
+            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
             if (ObjectUtils.isNotEmpty(deptKingdee)) {
                 resultMap.put("deptCode", deptKingdee.getKingdeeDeptCode());
             }

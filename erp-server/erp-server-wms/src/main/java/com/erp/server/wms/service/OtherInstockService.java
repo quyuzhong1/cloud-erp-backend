@@ -17,6 +17,7 @@ import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
@@ -191,4 +192,20 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      * @param remark
      */
     String generateByOverseasInbound(OverseasWarehouseInboundEntity entity, List<OverseasWarehouseInboundDetailEntity> detailEntityList, String remark,boolean isTransitWarehouse);
+
+    /**
+     * 下载导入模板
+     *
+     * @author Jim
+     * {@code @date:} 2024/03/21
+     */
+    void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 导入
+     *
+     * @author Jim
+     * {@code @date:} 2024/03/21
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 }

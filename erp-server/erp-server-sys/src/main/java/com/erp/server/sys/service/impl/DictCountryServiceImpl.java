@@ -1,5 +1,7 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.io.resource.ClassPathResource;
 import cn.hutool.core.util.ObjectUtil;
@@ -8,20 +10,41 @@ import cn.hutool.json.JSON;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
-import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.dto.DictGlobalAreaDTO;
+import com.erp.model.sys.dto.KingdeeDTO;
+import com.erp.model.sys.entity.*;
+import com.erp.model.sys.enums.KingdeeAssistDataTypeEnum;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.sys.mapper.DictCountryMapper;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeCountryService;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeGlobalAreaService;
 import com.erp.server.sys.service.DictCityService;
 import com.erp.server.sys.service.DictCountryService;
 import com.erp.server.sys.service.DictGlobalAreaService;
+import com.erp.server.sys.service.ThirdpartyRefBusinessService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,10 +65,68 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
     @Resource
     private DictGlobalAreaService dictGlobalAreaService;
 
+    @Resource
+    private ThirdpartyRefBusinessService thirdpartyRefBusinessService;
+
+    @Resource
+    private SyncKingdeeCountryService syncKingdeeCountryService;
+
+
+
+
     @Override
     public List<DictCountryDTO.ListDTO> listCountry() {
         List<DictCountryDTO.ListDTO> list = baseMapper.listCountry();
         return list;
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean add(DictCountryDTO.AddDTO dto) {
+        DictCountryEntity entity = new DictCountryEntity();
+        entity.setNameCn(dto.getName());
+        entity.setRegionCode(dto.getParentRegionId());
+        entity.setKingdeeCode(dto.getCode());
+        handleData(entity);
+        entity.setId(dto.getCode());
+        Boolean addResult = this.save(entity);
+        if (addResult) {
+            syncKingdeeCountryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        }
+        return addResult;
+    }
+
+    @Override
+    public Boolean update(DictCountryDTO.UpdateDTO dto) {
+        DictCountryEntity entity = new DictCountryEntity();
+        entity.setNameCn(dto.getName());
+        entity.setId(dto.getCode());
+        entity.setRegionCode(dto.getParentRegionId());
+        entity.setKingdeeCode(dto.getCode());
+        handleData(entity);
+        Boolean updateResult = this.saveOrUpdate(entity);
+        if (updateResult) {
+            syncKingdeeCountryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        }
+        return updateResult;
+    }
+
+    public void handleData(DictCountryEntity entity) {
+        String id = entity.getId();
+        int codeCount = this.lambdaQuery().
+                eq(DictCountryEntity::getKingdeeCode, entity.getKingdeeCode()).
+                ne(StringUtils.isNotBlank(id), DictCountryEntity::getId,id).
+                count();
+        if (codeCount > 0) {
+            throw new ServiceException("国家二字码已存在");
+        }
+        int nameCount = this.lambdaQuery().eq(DictCountryEntity::getNameCn, entity.getNameCn()).
+                ne(StringUtils.isNotBlank(id), DictCountryEntity::getId,id).
+                count();
+        if (nameCount > 0) {
+            throw new ServiceException("国家名已存在");
+        }
     }
 
     @Override
@@ -62,24 +143,7 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         return resultList;
     }
 
-    public static void main(String[] args) {
-        // 1. 读取resources文件夹下locList.xml文件
-        ClassPathResource resource = new ClassPathResource("locList.xml");
-        String xmlContent = resource.readUtf8Str();
 
-        // 将XML转换为JSON
-        JSON json = JSONUtil.parseFromXml(xmlContent);
-        // 2. 解析文件
-        JSONObject jsonObject = JSONUtil.parseObj(json.toString());
-        System.out.println(JSONUtil.toJsonStr(jsonObject));
-        JSONArray jsonArray = jsonObject.getJSONObject("Location").getJSONArray("CountryRegion");
-        LinkedHashMap<Object, Object> collect = jsonArray.stream().collect(Collectors.toMap(item -> new JSONObject(item).get("Name"),
-                item -> new JSONObject(item).get("Code"),
-                (oldValue, newValue) -> oldValue,
-                LinkedHashMap::new
-        ));
-        System.out.println(JSONUtil.toJsonStr(collect));
-    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -196,6 +260,198 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(DictCountryEntity::getNameCn,names).list();
+    }
+
+    @Override
+    public List<DictCountryEntity> listByRegionCode(String regionCode) {
+        if(StringUtils.isEmpty(regionCode)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().eq(DictCountryEntity::getRegionCode,regionCode).list();
+    }
+
+    @Override
+    public Boolean init() {
+        Class<DictCountryEntity> AreaClass = DictCountryEntity.class;
+        TableName tableName = AreaClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String businessType = tableName.value();
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BOS_ASSISTANTDATA_DETAIL.getCode());
+        LinkedList<String> queryFilters = new LinkedList<>();
+        String areaCode = KingdeeAssistDataTypeEnum.COUNTRY.getCode();
+        //类别
+        queryFilters.add(StrUtil.format("FId.FNumber = {}", "'" + areaCode + "'"));
+        //查询
+        String fieldKeys = "FEntryID,FNumber,FDataValue,FId.FNumber,FParentId,FSeq";
+        String filterStr = String.join(" and ", queryFilters);
+        // 当前页数
+        Integer pageIndex = 0;
+        // 每次最多获取100条
+        Integer pageSize = 1000;
+        List<KingdeeDTO.AssistDTO> countryList = new ArrayList<>(20);
+        Boolean dataSign = true;
+        while (dataSign) {
+            List<Map<String, Object>> result = apiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, 0);
+            if (result.size() < pageSize) {
+                dataSign = false;
+            }
+            List<KingdeeDTO.AssistDTO> entityList = result.stream().map(obj ->
+                    BeanUtil.toBean(obj, KingdeeDTO.AssistDTO.class)).collect(Collectors.toList());
+            countryList.addAll(entityList);
+            pageIndex++;
+        }
+        List<DictCountryEntity> saveOrUpdateList = new ArrayList<>(20);
+        List<ThirdpartyRefBusinessEntity> thirdpartySaveList = new ArrayList<>(20);
+        //数据库存在的
+        List<DictCountryEntity> dbList = this.list();
+        List<String> idList = dbList.stream().map(DictCountryEntity::getId).collect(Collectors.toList());
+        List<ThirdpartyRefBusinessEntity> thirdpartyDbList = thirdpartyRefBusinessService.listByBusinessIds(idList);
+        for (KingdeeDTO.AssistDTO item : countryList) {
+            String kingdeeId = item.getKingdeeId();
+            String kingdeeCode = item.getKingdeeCode();
+            String parentId = item.getParentId();
+            String name = item.getName();
+            DictCountryEntity dbEntity = dbList.stream().filter(entity ->
+                            entity.getKingdeeCode().equals(kingdeeCode)
+                                    || entity.getRegionCode().equals(kingdeeCode) ).
+                    findFirst().orElse(null);
+            //表示没有
+            if (Objects.isNull(dbEntity)) {
+                DictCountryEntity addEntity = new DictCountryEntity();
+                String id = kingdeeCode;
+                addEntity.setKingdeeCode(kingdeeCode);
+                addEntity.setRegionCode(parentId);
+                addEntity.setNameCn(name);
+                addEntity.setId(id);
+                saveOrUpdateList.add(addEntity);
+
+                ThirdpartyRefBusinessEntity refEntity = new ThirdpartyRefBusinessEntity();
+                refEntity.setBusinessType(businessType);
+                refEntity.setBusinessId(id);
+                refEntity.setThirdpartyId(kingdeeId);
+                thirdpartySaveList.add(refEntity);
+            } else {
+                //表示有
+                if (!dbEntity.getNameCn().equals(name)
+                        || !dbEntity.getRegionCode().equals(parentId)
+                        || !dbEntity.getKingdeeCode().equals(kingdeeCode)) {
+                    dbEntity.setKingdeeCode(kingdeeCode);
+                    dbEntity.setRegionCode(kingdeeCode);
+                    dbEntity.setNameCn(name);
+                    saveOrUpdateList.add(dbEntity);
+                }
+                ThirdpartyRefBusinessEntity thirdpartyEntity = thirdpartyDbList.stream().filter(entity ->
+                        entity.getBusinessId().equals(dbEntity.getId()) &&
+                                kingdeeId.equals(entity.getThirdpartyId())
+                ).findFirst().orElse(null);
+                if (Objects.isNull(thirdpartyEntity)) {
+                    ThirdpartyRefBusinessEntity refEntity = new ThirdpartyRefBusinessEntity();
+                    refEntity.setBusinessType(businessType);
+                    refEntity.setBusinessId(dbEntity.getId());
+                    refEntity.setThirdpartyId(kingdeeId);
+                    thirdpartySaveList.add(refEntity);
+                }
+            }
+        }
+
+
+
+        return null;
+    }
+
+    @Override
+    public PagingVO<DictCountryDTO.PagingViewDTO> paging(PagingDTO<DictCountryDTO.PagingParamDTO> dto) {
+        DictCountryDTO.PagingParamDTO paramDTO = dto.getParams();
+        paramDTO.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<DictCountryDTO.PagingViewDTO> pageData = this.baseMapper.paging(query, paramDTO);
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public DictCountryDTO.ViewDTO view(String id) {
+        DictCountryDTO.ViewDTO result = new DictCountryDTO.ViewDTO();
+        DictCountryEntity entity = this.getById(id);
+        if(Objects.isNull(entity)){
+            throw new ServiceException("国家不存在");
+        }
+        result.setCode(entity.getId());
+        result.setName(entity.getNameCn());
+        result.setParentRegionId(entity.getRegionCode());
+        return result;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId, String syncKingdeeCode) {
+        Boolean result = false;
+        if (StringUtils.isNotBlank(syncKingdeeCode)) {
+            result = this.lambdaUpdate()
+                    .eq(DictCountryEntity::getId, id)
+                    .set(StringUtils.isNotBlank(syncKingdeeCode), DictCountryEntity::getKingdeeCode, syncKingdeeCode)
+                    .update();
+        }
+
+        ThirdpartyRefBusinessEntity refBusinessEntity = thirdpartyRefBusinessService.getByBusinessId(id);
+        if (Objects.isNull(refBusinessEntity)) {
+            Class<DictCountryEntity> AreaClass = DictCountryEntity.class;
+            TableName tableName = AreaClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String businessType = tableName.value();
+            ThirdpartyRefBusinessEntity refEntity = new ThirdpartyRefBusinessEntity();
+            refEntity.setBusinessType(businessType);
+            refEntity.setBusinessId(id);
+            refEntity.setThirdpartyId(syncKingdeeId);
+            thirdpartyRefBusinessService.save(refEntity);
+        }else{
+            String thirdpartyId = refBusinessEntity.getThirdpartyId();
+            if(!syncKingdeeId.equals(thirdpartyId)){
+                refBusinessEntity.setThirdpartyId(syncKingdeeId);
+                thirdpartyRefBusinessService.updateById(refBusinessEntity);
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    public BatchResultDTO delete(String id) {
+        DictCountryEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException("国家不存在");
+        }
+        List<DictCityDTO.ListDTO> cityList = dictCityService.listCity(id);
+        if(CollectionUtils.isNotEmpty(cityList)){
+            throw new ServiceException("国家下存在省市，无法删除");
+        }
+        Boolean result= this.removeById(id);
+        if (result ) {
+            //金蝶推送
+            syncKingdeeCountryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+            thirdpartyRefBusinessService.removeByBusinessId(id);
+
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
+
+    }
+
+    @Override
+    public void exportList(DictCountryDTO.PagingParamDTO dto, HttpServletResponse response) {
+        List<DictCountryDTO.PagingViewDTO> list = this.baseMapper.listExport(dto);
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/country.xlsx";
+        String name = "国家Excel导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
     }
 
 
