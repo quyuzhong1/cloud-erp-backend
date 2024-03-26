@@ -3,5 +3,14 @@
 <mapper namespace="com.erp.server.oms.mapper.CustomerAddressMapper">
 
 
-
+    <select id="listByCustomerName" resultType="com.erp.model.oms.entity.CustomerAddressEntity">
+        SELECT ca.*
+        FROM
+        customer_address ca
+        LEFT JOIN customer_info ci
+        ON ca.main_id = ci.id AND ci.is_deleted = false
+        WHERE ci.name
+        LIKE CONCAT('%', #{customerName}::text, '%')
+        ORDER BY ca.is_default DESC
+    </select>
 </mapper>

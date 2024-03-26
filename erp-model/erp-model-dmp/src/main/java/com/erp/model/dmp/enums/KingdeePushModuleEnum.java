@@ -40,6 +40,12 @@ public enum KingdeePushModuleEnum {
     PUR_POXCHANGE("PUR_POXChange","采购变更"),
     PUR_RECEIVEBILL("PUR_ReceiveBill","收料通知单"),
     SUB_PICKMTRL("SUB_PickMtrl","委外领料单"),
+    CN_BANKACNT("CN_BANKACNT","银行账号"),
+    BD_RECCONDITION("BD_RecCondition","收款条件"),
+    BD_PAYMENTCONDITION("BD_PaymentCondition","付款条件"),
+    HR_ORG_HRPOST("HR_ORG_HRPOST","岗位信息"),
+    BD_NEWSTAFF("BD_NEWSTAFF","员工任岗位信息"),
+    BD_OPERATOR("BD_OPERATOR","业务员信息"),
 
 
     ;

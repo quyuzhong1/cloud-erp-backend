@@ -1,4 +1,7 @@
 package com.erp.server.oms.service;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.BankAccountDTO;
 import com.erp.model.oms.entity.BankAccountEntity;
 import com.common.business.service.SuperService;
 import org.springframework.web.multipart.MultipartFile;
@@ -66,4 +69,26 @@ public interface BankAccountService extends SuperService<BankAccountEntity> {
      * @return java.util.List<com.erp.model.oms.entity.BankAccountEntity>
      */
     List<BankAccountEntity> listByAccountNameList(List<String> receiveAccountList);
+
+    /**
+     * 分页获取银行账号信息
+     * @description
+     * @param dto
+     * @return
+     * @date 2024-03-06 14:45
+     * @author Lambda
+     */
+    PagingVO<BankAccountDTO.PagingViewDTO> paging(PagingDTO<BankAccountDTO.PagingParamDTO> dto);
+
+    BankAccountDTO.ViewDTO view(String id);
+
+    /**
+     * 添加银行账号
+     * @description
+     * @param dto
+     * @return
+     * @date 2024-03-06 15:58
+     * @author Lambda
+     */
+    Boolean add(BankAccountDTO.AddDTO dto);
 }

@@ -762,7 +762,7 @@ public class SoInfoDTO implements Serializable {
         private String salesDeptId;
 
         /**
-         * 销售员id
+         * 销售员id 来源 http://172.16.100.11:3002/project/36/interface/api/31031
          */
         @NotBlank(message = "销售员不能为空", groups = {AddGroup.class})
         private String sellerId;
@@ -886,7 +886,7 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal receiveAmount;
 
         /**
-         * 收款条件 http://172.16.100.11:3002/project/110/interface/api/13435?key=collectionTerms
+         * 收款条件 http://172.16.100.11:3002/project/110/interface/api/cat_2732
          */
         @NotBlank(message = "收款条件不能为空", groups = {AddGroup.class})
         private String receiveCondition;

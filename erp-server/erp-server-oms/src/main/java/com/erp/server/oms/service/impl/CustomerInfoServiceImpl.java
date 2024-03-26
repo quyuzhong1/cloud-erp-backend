@@ -21,6 +21,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -678,7 +679,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 contactEntities.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
             }*/
             //批量保存销售员信息
-            customerSellerService.batchSellerHistory(list,LocalDate.now());
+            customerSellerService.batchSellerHistory(list, LocalDate.now());
 
         }
         return Boolean.TRUE;
@@ -1053,7 +1054,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:oms:listCustomerByProperty",keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:oms:listCustomerByProperty", keyGenerator = "myKeyGenerator")
     public List<CustomerInfoVO> listCustomerByProperty() {
         return baseMapper.listCustomerByProperty();
     }
@@ -1408,6 +1409,88 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         return this.lambdaQuery().eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE).
                 in(CustomerInfoEntity::getName, customerNameList).list();
+    }
+
+    @Override
+    public List<CustomerInfoEntity> listByName(String name) {
+        if (StringUtils.isBlank(name)) {
+            return this.list();
+        }
+        return this.lambdaQuery().like(CustomerInfoEntity::getName, name).
+                orderByAsc(CustomerInfoEntity::getDisabled).list();
+    }
+
+    @Override
+    public List<CustomerDTO.ReceiveInfoDTO> listReceiveByName(String name) {
+        List<CustomerInfoEntity> customerList = this.listByName(name);
+        List<CustomerDTO.ReceiveInfoDTO> resultList = new ArrayList<>(customerList.size());
+        List<CustomerAddressEntity> addressList = customerAddressService.listByCustomerName(name);
+        for (CustomerInfoEntity item : customerList) {
+            CustomerDTO.ReceiveInfoDTO info = new CustomerDTO.ReceiveInfoDTO();
+            info.setName(item.getName());
+            info.setId(item.getId());
+            info.setCode(item.getCode());
+            info.setDisabled(item.getDisabled());
+            CustomerAddressEntity address = addressList.stream().filter(a -> a.getMainId().equals(item.getId())).findFirst().orElse(null);
+            if (Objects.nonNull(address)) {
+                info.setReceiverName(address.getPerson());
+                info.setTelNumber(address.getTelNumber());
+                info.setReceiveAddress(address.getAddress());
+            }
+            resultList.add(info);
+        }
+        return resultList;
+    }
+
+    @Override
+    public List<CustomerDTO.ReceiveInfoDTO> listDTOByNameList(List<String> customerNameList) {
+        if (CollectionUtils.isEmpty(customerNameList)){
+            return Collections.emptyList();
+        }
+        List<CustomerInfoEntity> list = listByNameList(customerNameList);
+        if (CollectionUtils.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        List<String> mainIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        Map<String, List<CustomerAddressEntity>> addressMap = customerAddressService.listByMainIdList(mainIds)
+                .stream()
+                .collect(Collectors.groupingBy(CustomerAddressEntity::getMainId));
+
+       return list.stream().map(item ->{
+            CustomerDTO.ReceiveInfoDTO info = new CustomerDTO.ReceiveInfoDTO();
+            info.setName(item.getName());
+            info.setId(item.getId());
+            info.setCode(item.getCode());
+            info.setDisabled(item.getDisabled());
+
+            CustomerAddressEntity address = null;
+           List<CustomerAddressEntity> addressList = addressMap.get(info.getId());
+           if (CollectionUtils.isNotEmpty(addressList)){
+               CustomerAddressEntity defaultAddressEntity = addressList.stream()
+                       .filter(CustomerAddressEntity::getIsDefault)
+                       .findFirst()
+                       .orElse(null);
+               if (null != defaultAddressEntity){
+                   // 默认地址
+                    address = defaultAddressEntity;
+               } else {
+                   // 最新地址
+                   address = addressList.stream()
+                           .max(Comparator.comparing(CustomerAddressEntity::getCreateUserName))
+                           .orElse(null);
+               }
+           }
+           if (null != address) {
+                info.setReceiverName(address.getPerson());
+                info.setTelNumber(address.getTelNumber());
+                info.setReceiveAddress(address.getAddress());
+            } else {
+                info.setReceiverName("");
+                info.setTelNumber("");
+                info.setReceiveAddress("");
+            }
+            return info;
+            }).collect(Collectors.toList());
     }
 
     @Override

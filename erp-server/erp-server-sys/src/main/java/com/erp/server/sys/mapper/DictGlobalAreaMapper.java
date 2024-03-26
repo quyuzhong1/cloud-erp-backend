@@ -1,7 +1,10 @@
 package com.erp.server.sys.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
+import com.erp.model.sys.dto.KingdeeDepartmentDTO;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -27,4 +30,13 @@ public interface DictGlobalAreaMapper extends BaseMapper<DictGlobalAreaEntity> {
      * @return java.util.List<com.erp.model.sys.entity.DictGlobalAreaEntity>
      */
     List<DictGlobalAreaDTO.InfoDTO> listByCountryIds(@Param("countryIds") List<String> countryIds);
+
+    IPage<DictGlobalAreaDTO.PagingViewDTO> paging(Page query, @Param("params")DictGlobalAreaDTO.PagingParamDTO paramDTO);
+
+    /**
+     * 导出
+     * @param dto
+     * @return
+     */
+    List<DictGlobalAreaDTO.PagingViewDTO> listExport(@Param("params")DictGlobalAreaDTO.PagingParamDTO dto);
 }

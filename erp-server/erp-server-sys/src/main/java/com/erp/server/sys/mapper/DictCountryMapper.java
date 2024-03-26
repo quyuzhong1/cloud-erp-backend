@@ -1,6 +1,8 @@
 package com.erp.server.sys.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -36,4 +38,16 @@ public interface DictCountryMapper extends BaseMapper<DictCountryEntity> {
      * @return List<ListDTO>
      */
     List<DictCountryDTO.ListDTO> listCountryByParam(@Param("params") DictCountryDTO.ListParamDTO params);
+
+    /**
+     * 分页查询
+     * @description
+     * @param paramDTO
+     * @return
+     * @date 2024-03-19 16:57
+     * @author Lambda
+     */
+    IPage<DictCountryDTO.PagingViewDTO> paging(Page query, @Param("params")DictCountryDTO.PagingParamDTO paramDTO);
+
+    List<DictCountryDTO.PagingViewDTO> listExport(@Param("params")DictCountryDTO.PagingParamDTO dto);
 }

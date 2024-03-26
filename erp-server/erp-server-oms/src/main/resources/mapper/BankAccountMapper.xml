@@ -30,6 +30,25 @@
         is_deleted,
         bank_account_no, account_name, bank_type
     </sql>
+    <!--分页获取数据-->
+    <select id="paging" resultType="com.erp.model.oms.dto.BankAccountDTO$PagingViewDTO">
+          SELECT
+             id,
+             bank_account_no AS bankAccountNo,
+             account_name AS accountName,
+             org_id AS orgId,
+             org_name AS orgName,
+             disabled
+          FROM bank_account
+          WHERE is_deleted = false
+          ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+          id DESC
+    </select>
 
 
 </mapper>

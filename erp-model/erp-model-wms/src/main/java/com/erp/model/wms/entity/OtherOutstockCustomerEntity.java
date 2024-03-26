@@ -53,6 +53,18 @@ public class OtherOutstockCustomerEntity extends BaseEntity<OtherOutstockCustome
     @TableField("tel_number")
     private String telNumber;
 
+    /**
+     * 客户id
+     */
+    @TableField("customer_id")
+    private String customerId;
+
+    /**
+     * 客户code
+     */
+    @TableField("customer_code")
+    private String customerCode;
+
 
     public static final String MAIN_ID = "main_id";
 

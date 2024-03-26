@@ -410,16 +410,7 @@ public interface SysUserFeign {
     @PostMapping("feign/city/listByIds")
     List<DictCityEntity> listCityByIds(@RequestBody List<String> ids);
 
-    /**
-     * 根据用戶id 获取金蝶的对应岗位code
-     *
-     * @param userId
-     * @return com.erp.model.sys.dto.KingdeePostDTO.UserKingdeePostInfoDTO
-     * @author yl
-     * @date 2023-06-05 10:08
-     */
-    @PostMapping("feign/user/getUserKingdeePostByUserId")
-    KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePostByUserId(@RequestBody String userId);
+
 
     /**
      * @param userIds

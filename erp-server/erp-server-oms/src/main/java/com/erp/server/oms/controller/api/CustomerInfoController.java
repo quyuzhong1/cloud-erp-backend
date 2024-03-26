@@ -296,6 +296,15 @@ public class CustomerInfoController extends BaseController {
     }
 
     /**
+     * 根据名称搜索客户收货信息
+     */
+    @GetMapping("/listByName")
+    public ApiResult<List<CustomerDTO.ReceiveInfoDTO>> listByName(@RequestParam(value = "name",required = false) String name) {
+        List<CustomerDTO.ReceiveInfoDTO> list = customerInfoService.listReceiveByName(name);
+        return success(list);
+    }
+
+    /**
      * 启用的客户列表
      */
     @PostMapping("/listEnable")

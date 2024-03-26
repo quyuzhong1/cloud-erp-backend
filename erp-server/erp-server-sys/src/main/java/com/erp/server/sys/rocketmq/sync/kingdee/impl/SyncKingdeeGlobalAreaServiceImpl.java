@@ -1,0 +1,95 @@
+package com.erp.server.sys.rocketmq.sync.kingdee.impl;
+
+import cn.hutool.json.JSONUtil;
+import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
+import com.common.core.utils.MathUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.ApiModuleTypeEnum;
+import com.common.message.enums.AssistantDataEnum;
+import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeGlobalAreaService;
+import com.erp.server.sys.service.ThirdpartyRefBusinessService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
+/**
+ * @author Lambda
+ * @Classname SyncKingdeeGlobalAreaServiceImpl
+ * @Description TODO
+ * @Date 2024-03-19 14:39
+ * @Created by yl
+ */
+@Slf4j
+@Service
+public class SyncKingdeeGlobalAreaServiceImpl implements SyncKingdeeGlobalAreaService {
+
+    @Resource
+    private ThirdpartyRefBusinessService thirdpartyRefBusinessService;
+
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void syncDataToKingdee(DictGlobalAreaEntity entity, String operate) {
+        Map<String, Object> resultMap = new HashMap<>();
+        boolean isExistParent = false;
+        resultMap.put("isExistParent", isExistParent);
+        //业务id
+        resultMap.put("id",entity.getId());
+        //编码
+        resultMap.put("code",entity.getKingdeeCode());
+        //名称
+        resultMap.put("name",entity.getRegionName());
+        ThirdpartyRefBusinessEntity thirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(entity.getId());
+        String syncKingdeeId="";
+        if (Objects.nonNull(thirdpartyRef)) {
+            syncKingdeeId = thirdpartyRef.getThirdpartyId();
+        }
+        //金蝶id
+        resultMap.put("syncKingdeeId",syncKingdeeId);
+        resultMap.put("operate", operate);
+            //模块类型
+        Integer moduleType = ApiModuleTypeEnum.GLOBAL_AREA.getCode();
+        //辅助资料类型编码
+        String fNumber = AssistantDataEnum.GLOBAL_AREA.getCode();
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            sendMqAndSaveTask(entity,operate,resultMap);
+            return;
+        }
+        resultMap.put("moduleType",moduleType);
+        resultMap.put("fNumber", fNumber);
+        sendMqAndSaveTask(entity,operate,resultMap);
+
+    }
+
+    private void sendMqAndSaveTask(DictGlobalAreaEntity entity, String operate, Map<String, Object> resultMap) {
+        //添加推送任务
+        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+        taskFeignDTO.setSourceId(entity.getId());
+        taskFeignDTO.setSourceCode(entity.getRegionCode());
+        taskFeignDTO.setSourceType(SourceTypeEnum.GLOBAL_AREA.getCode());
+        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+        taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_ASSISTANT_DATA_TAG.getName());
+        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+        taskFeignDTO.setSyncOperate(operate);
+        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+    }
+}

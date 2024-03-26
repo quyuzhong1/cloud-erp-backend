@@ -452,7 +452,7 @@ public class SupplierDTO implements Serializable {
         private Boolean srmDisabled;
 
         /**
-         * 付款条件
+         * 付款条件 来源 http://172.16.100.11:3002/project/83/interface/api/31039
          */
         @NotBlank(message = "付款条件不能为空")
         private String paymentCondition;
