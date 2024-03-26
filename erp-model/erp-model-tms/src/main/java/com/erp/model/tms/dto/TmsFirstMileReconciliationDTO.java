@@ -1,0 +1,377 @@
+package com.erp.model.tms.dto;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import com.common.business.dto.base.SortDTO;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.io.Serializable;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+import javax.validation.constraints.NotEmpty;
+import com.common.business.dto.AdvanceQueryDTO;
+import java.util.Map;
+import javax.validation.constraints.Digits;
+
+/**
+ * <p>
+ * 头程对账单请求响应实体
+ * </p>
+ *
+ * @author Jim
+ * @since 2024-03-25
+*/
+@Data
+@NoArgsConstructor
+public class TmsFirstMileReconciliationDTO implements Serializable {
+
+
+     /**
+     * 状态统计
+     */
+     @Data
+     @NoArgsConstructor
+     @AllArgsConstructor
+     public static class TabListDTO {
+
+         /**
+         * 类型
+         */
+         private String tabFlag;
+
+         /**
+         * 数量
+         */
+         private Integer count;
+
+     }
+     /**
+     * 分页列表查询参数
+     */
+     @Data
+     @NoArgsConstructor
+     public static class PagingParamDTO extends SortDTO {
+
+         /**
+         * 页面高级查询
+         */
+         private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+            * sqlMap 默认key default
+        */
+        private Map<String,String> sqlMap;
+
+     }
+    /**
+    * 分页列表
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 对账单号
+        */
+        private String code;
+
+        /**
+        * 审核状态
+        */
+        private String approveStatus;
+
+        /**
+        * 审核人id
+        */
+        private String approveUserId;
+
+        /**
+        * 审核人名称
+        */
+        private String approveUserName;
+
+        /**
+        * 生成对账日期
+        */
+        private LocalDate reconciliationDate;
+
+        /**
+        * 提交日期
+        */
+        private LocalDate submitDate;
+
+        /**
+        * 提交日期
+        */
+        private LocalDate approveDate;
+
+        /**
+        * 对账开始日期
+        */
+        private LocalDate startDate;
+
+        /**
+        * 对账结束日期
+        */
+        private LocalDate endDate;
+
+        /**
+        * 物流商Id
+        */
+        private String logisticsSupplierId;
+
+        /**
+        * 物流商名称
+        */
+        private String logisticsSupplierName;
+
+        /**
+        * 币别
+        */
+        private String currency;
+
+        /**
+        * 汇率
+        */
+        private BigDecimal exchangeRate;
+
+        /**
+        * 费用合计
+        */
+        private BigDecimal totalCost;
+
+        /**
+        * 审核不通过原因
+        */
+        private String reason;
+
+
+        /**
+        * 审核状态名称
+        */
+        private String approveStatusName;
+
+        /**
+        * 创建时间
+        */
+        private LocalDateTime createTime;
+
+        /**
+        * 创建人名称
+        */
+        private String createUserName;
+    }
+
+    /**
+    * 导出Excel
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+        /**
+        * 勾选的id集合
+        */
+        private List<String> ids;
+    }
+
+    /**
+    * 详情
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 对账单号
+        */
+        private String code;
+
+        /**
+        * 审核状态
+        */
+        private String approveStatus;
+
+        /**
+        * 审核人id
+        */
+        private String approveUserId;
+
+        /**
+        * 审核人名称
+        */
+        private String approveUserName;
+
+        /**
+        * 生成对账日期
+        */
+        private LocalDate reconciliationDate;
+
+        /**
+        * 提交日期
+        */
+        private LocalDate submitDate;
+
+        /**
+        * 提交日期
+        */
+        private LocalDate approveDate;
+
+        /**
+        * 对账开始日期
+        */
+        private LocalDate startDate;
+
+        /**
+        * 对账结束日期
+        */
+        private LocalDate endDate;
+
+        /**
+        * 物流商Id
+        */
+        private String logisticsSupplierId;
+
+        /**
+        * 物流商名称
+        */
+        private String logisticsSupplierName;
+
+        /**
+        * 币别
+        */
+        private String currency;
+
+        /**
+        * 汇率
+        */
+        private BigDecimal exchangeRate;
+
+        /**
+        * 费用合计
+        */
+        private BigDecimal totalCost;
+
+        /**
+        * 审核不通过原因
+        */
+        private String reason;
+
+
+    }
+
+    /**
+    * 新增
+    */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO {
+
+
+    }
+
+    /**
+    * 修改
+    */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends CommonDTO {
+
+        /**
+        * 主键id
+        */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO {
+
+        /**
+        * 生成对账日期
+        */
+        private LocalDate reconciliationDate;
+
+        /**
+        * 提交日期
+        */
+        private LocalDate submitDate;
+
+        /**
+        * 提交日期
+        */
+        private LocalDate approveDate;
+
+        /**
+        * 对账开始日期
+        */
+        private LocalDate startDate;
+
+        /**
+        * 对账结束日期
+        */
+        private LocalDate endDate;
+
+        /**
+        * 物流商Id
+        */
+        @NotBlank(message = "物流商Id不能为空")
+        @Size(max = 19,message = "物流商Id最大长度不能超过19位")
+        private String logisticsSupplierId;
+
+        /**
+        * 物流商名称
+        */
+        @NotBlank(message = "物流商名称不能为空")
+        @Size(max = 100,message = "物流商名称最大长度不能超过100位")
+        private String logisticsSupplierName;
+
+        /**
+        * 币别
+        */
+        @NotBlank(message = "币别不能为空")
+        @Size(max = 32,message = "币别最大长度不能超过32位")
+        private String currency;
+
+        /**
+        * 汇率
+        */
+        @NotNull(message = "汇率不能为空")
+        @Digits(integer = 12, fraction = 4, message = "汇率整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal exchangeRate;
+
+        /**
+        * 费用合计
+        */
+        @NotNull(message = "费用合计不能为空")
+        @Digits(integer = 12, fraction = 4, message = "费用合计整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal totalCost;
+
+        /**
+        * 审核不通过原因
+        */
+        @NotBlank(message = "审核不通过原因不能为空")
+        @Size(max = 255,message = "审核不通过原因最大长度不能超过255位")
+        private String reason;
+
+
+    }
+
+
+}

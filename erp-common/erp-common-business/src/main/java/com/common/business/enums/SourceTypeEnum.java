@@ -113,6 +113,8 @@ public enum SourceTypeEnum {
     //TMS
     TMS_B2C_DECLARE_RECONCILIATION("tmsB2cDeclareReconciliation", "B2c报关对账单","tms_b2c_declare_reconciliation"),
     TRANSFER_DECLARE("transferDeclare", "中转报关","transfer_declare"),
+    DICT_BASIC("dictBasic", "字典","dict_basic"),
+    TMS_CFG_COST("tmsCfgCost", "费用管理配置","tms_cfg_cost"),
 
     //Mabang
     MABANG_FBA_DELIVERY("MB_FBA_DELIVERY", "马帮FBA发货单",""),
