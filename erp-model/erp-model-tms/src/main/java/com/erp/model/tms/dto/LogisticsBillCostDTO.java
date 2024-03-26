@@ -440,6 +440,9 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private BigDecimal weightLogistics;
 
+        private String logisticsBillDetailId;
+
+        private String trackNo;
     }
 
     @Data

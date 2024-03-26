@@ -130,7 +130,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             throw new ServiceException("物流单保存失败");
         }
 
-        logisticsBillDetailService.add(logisticsBillEntity, addDTO.getDetailList());
+        logisticsBillDetailService.add(logisticsBillEntity, addDTO.getDetailList(),true);
 
 
         return save;

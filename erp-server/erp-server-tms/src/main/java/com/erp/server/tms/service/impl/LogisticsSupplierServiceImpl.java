@@ -413,6 +413,14 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         return list;
     }
 
+    @Override
+    public List<LogisticsSupplierEntity> listByName(List<String> supplierNameList) {
+        if(CollectionUtils.isEmpty(supplierNameList)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(LogisticsSupplierEntity::getSupplierName, supplierNameList).list();
+    }
+
 
     /**
      * 填充分页数据

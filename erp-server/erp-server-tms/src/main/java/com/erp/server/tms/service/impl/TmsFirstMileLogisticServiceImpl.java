@@ -5,6 +5,10 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.metadata.WriteTable;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -15,19 +19,24 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.InvoicesStatusEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ExportUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.excel.KingdeeBankAccountExcelDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.FmDeliveryLogisticsStatusEnum;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
+import com.erp.model.tms.dto.excel.FmLogisticsBillCostExcelDTO;
+import com.erp.model.tms.dto.excel.FmLogisticsBillExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
@@ -37,6 +46,8 @@ import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.convert.FmLogisticsConverter;
+import com.erp.server.tms.listener.FmLogisticsBillCostExcelListener;
+import com.erp.server.tms.listener.FmLogisticsBillExcelListener;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -44,6 +55,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.jfree.chart.util.ExportUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -142,6 +154,20 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         //新增物流费用单
         LogisticsBillCostDTO.AddDTO costAddDTO = this.packCostAddDTO(generateLogisticDTO,addDTO,tmsFirstMileLogisticEntity);
 
+        //新增物流单明细
+        List<LogisticsBillDetailDTO.AddDTO> detailAddList = new ArrayList<>();
+        LogisticsBillDetailDTO.AddDTO detailAddDto = new LogisticsBillDetailDTO.AddDTO();
+        detailAddDto.setMainId(tmsFirstMileLogisticEntity.getId());
+        detailAddDto.setTrackNo(tmsFirstMileLogisticEntity.getCounterNo());
+        detailAddDto.setTrackStatus(FmLogisticTrackStatusEnum.WAIT_ORDER.getCode());
+        detailAddList.add(detailAddDto);
+        logisticsBillDetailService.add(tmsFirstMileLogisticEntity,detailAddList,false);
+
+        List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Collections.singletonList(tmsFirstMileLogisticEntity.getId()));
+        LogisticsBillDetailEntity billDetailEntity = CollectionUtils.isEmpty(detailEntityList)?new LogisticsBillDetailEntity():detailEntityList.get(0);
+
+        costAddDTO.setLogisticsBillDetailId(billDetailEntity.getId());
+        costAddDTO.setTrackNo(tmsFirstMileLogisticEntity.getCounterNo());
         //物流费用单明细
         List<TmsFirstMileLogisticDTO.LogisticFee> logisticFeeList = addDTO.getLogisticFeeList();
         List<TmsLogisticsBillCostDetailDTO.AddDTO> costDetailList = new ArrayList<>();
@@ -155,14 +181,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         costAddDTO.setCostDetailList(costDetailList);
         logisticsBillCostService.add(costAddDTO);
 
-        //新增物流单明细
-        List<LogisticsBillDetailDTO.AddDTO> detailAddList = new ArrayList<>();
-        LogisticsBillDetailDTO.AddDTO detailAddDto = new LogisticsBillDetailDTO.AddDTO();
-        detailAddDto.setMainId(tmsFirstMileLogisticEntity.getId());
-        detailAddDto.setTrackNo(tmsFirstMileLogisticEntity.getCounterNo());
-        detailAddDto.setTrackStatus(FmLogisticTrackStatusEnum.WAIT_ORDER.getCode());
-        detailAddList.add(detailAddDto);
-        logisticsBillDetailService.add(tmsFirstMileLogisticEntity,detailAddList);
 
         //设置附件信息
         Class<LogisticsBillEntity> credentialClass = LogisticsBillEntity.class;
@@ -291,13 +309,16 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             detailAddDto.setTrackNo(updateDTO.getCounterNo());
             detailAddDto.setTrackStatus(FmLogisticTrackStatusEnum.WAIT_ORDER.getCode());
             detailAddList.add(detailAddDto);
-            logisticsBillDetailService.add(old,detailAddList);
+            logisticsBillDetailService.add(old,detailAddList,false);
         }
-
+        List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Collections.singletonList(old.getId()));
+        LogisticsBillDetailEntity billDetailEntity = CollectionUtils.isEmpty(detailEntityList)?new LogisticsBillDetailEntity():detailEntityList.get(0);
         //更新物流单费用及明细
         LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostService.getByLogisticsBillId(old.getId());
         Optional.ofNullable(logisticsBillCostEntity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "头程物流费用单"));
         LogisticsBillCostDTO.UpdateDTO updateCostDTO = this.packCostUpdateDTO(generateLogisticDTO,updateDTO,logisticsBillCostEntity);
+        updateCostDTO.setLogisticsBillDetailId(billDetailEntity.getId());
+        updateCostDTO.setTrackNo(old.getCounterNo());
         List<TmsFirstMileLogisticDTO.LogisticFee> logisticFeeList = CollectionUtil.isEmpty(updateDTO.getLogisticFeeList())?new ArrayList<>():updateDTO.getLogisticFeeList();
         List<TmsLogisticsBillCostDetailDTO.UpdateDTO> costDetailList = new ArrayList<>();
         for (TmsFirstMileLogisticDTO.LogisticFee logisticFee : logisticFeeList) {
@@ -410,10 +431,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
 
             //处理实际时效和预警
-            int days = pagingVO.getActualHour() / 24; // 计算天数部分
-            int remainingHours = pagingVO.getActualHour() % 24; // 计算剩余小时数部分
-            String actualDesc = (days !=0 ? days+ "天":"") + remainingHours + "小时";
-            pagingVO.setActualDesc(actualDesc);
+            if(pagingVO.getActualHour() != null){
+                int days = pagingVO.getActualHour() / 24; // 计算天数部分
+                int remainingHours = pagingVO.getActualHour() % 24; // 计算剩余小时数部分
+                String actualDesc = (days !=0 ? days+ "天":"") + remainingHours + "小时";
+                pagingVO.setActualDesc(actualDesc);
+            }
             if(StringUtils.isNotBlank(logisticsChannelEntity.getEffectiveTime()) && StringUtils.isNotBlank(logisticsChannelEntity.getEffectiveTimeUnit())){
                 //0为默认值，不处理
                 if(logisticsChannelEntity.getEffectiveTime().equals("0")){
@@ -431,7 +454,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 pagingVO.setEstimatedTimeUnit("天");
                 pagingVO.setEstimatedTimeDesc(pagingVO.getEstimatedDay() + pagingVO.getEstimatedTimeUnit());
                 //设置预警
-                pagingVO.setWarnHour(estimatedDay*24 - pagingVO.getActualHour());
+                if(pagingVO.getActualHour() != null){
+                    pagingVO.setWarnHour(estimatedDay*24 - pagingVO.getActualHour());
+                }
             }
         }
     }
@@ -460,10 +485,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         dto.setLogisticsChannelName(logisticsDTO.getLogisticsChannelName());
 
         //处理实际时效
-        int days = dto.getActualHour() / 24; // 计算天数部分
-        int remainingHours = dto.getActualHour() % 24; // 计算剩余小时数部分
-        String actualDesc = (days !=0 ? days+ "天":"") + remainingHours + "小时";
-        dto.setActualDesc(actualDesc);
+        if(Objects.nonNull(dto.getActualHour())){
+            int days = dto.getActualHour() / 24; // 计算天数部分
+            int remainingHours = dto.getActualHour() % 24; // 计算剩余小时数部分
+            String actualDesc = (days !=0 ? days+ "天":"") + remainingHours + "小时";
+            dto.setActualDesc(actualDesc);
+        }
 
         //设置物流商信息
         LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(dto.getLogisticsSupplierId());
@@ -553,7 +580,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 return;
             }
             int estimatedDay = Integer.parseInt(v.getEffectiveTime());
-            v.setRemainingTime(estimatedDay*24 - v.getActualHour());
+            if(Objects.nonNull(v.getActualHour())){
+                v.setRemainingTime(estimatedDay*24 - v.getActualHour());
+            }
         });
         TmsFirstMileLogisticDTO.StatisticsVO.OverdueStatistics overdueStatistics = new TmsFirstMileLogisticDTO.StatisticsVO.OverdueStatistics();
         overdueStatistics.setAlmostOverdue((int) overdueList.stream().filter(v -> Objects.nonNull(v.getRemainingTime()) && v.getRemainingTime() >= 0 && v.getRemainingTime() <=72 ).count());
@@ -739,8 +768,39 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
 
     @Override
-    public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
-        return null;
+    public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) throws Exception{
+        FmLogisticsBillExcelListener billListener = new FmLogisticsBillExcelListener();
+        EasyExcel.read(excelFile.getInputStream(), FmLogisticsBillExcelDTO.class, billListener).sheet(0).doRead();
+        FmLogisticsBillCostExcelListener costListener = new FmLogisticsBillCostExcelListener();
+        EasyExcel.read(excelFile.getInputStream(), FmLogisticsBillCostExcelDTO.class, costListener).sheet(1).doRead();
+        List<FmLogisticsBillExcelDTO> errorBillList = billListener.getErrorList();
+        List<FmLogisticsBillCostExcelDTO> errorCostList = costListener.getErrorList();
+        if(CollectionUtils.isNotEmpty(errorCostList) || CollectionUtils.isNotEmpty(errorBillList)){
+            String fileName = new String("物流单导出失败.xlsx".getBytes(), "UTF-8");
+            response.addHeader("Content-Disposition", "filename=" + fileName);
+            response.setContentType("application/vnd.ms-excel");
+            ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+            if(CollectionUtils.isEmpty(errorBillList)){
+                WriteSheet writeSheet1 = EasyExcel.writerSheet(0, "物流费用").build();
+                WriteTable writeTable = EasyExcel.writerTable(0).head(FmLogisticsBillCostExcelDTO.class).needHead(true).build();
+                excelWriter.write(errorCostList, writeSheet1,writeTable);
+            }else if (CollectionUtils.isEmpty(errorCostList)){
+                WriteSheet writeSheet1 = EasyExcel.writerSheet(0, "物流信息").build();
+                WriteTable writeTable = EasyExcel.writerTable(0).head(FmLogisticsBillExcelDTO.class).needHead(true).build();
+                excelWriter.write(errorBillList, writeSheet1,writeTable);
+            }else{
+                WriteSheet writeSheet1 = EasyExcel.writerSheet(0, "物流信息").build();
+                WriteSheet writeSheet2 = EasyExcel.writerSheet(1, "物流费用").build();
+                WriteTable writeTable = EasyExcel.writerTable(0).head(FmLogisticsBillExcelDTO.class).needHead(true).build();
+                WriteTable writeTable2 = EasyExcel.writerTable(1).head(FmLogisticsBillCostExcelDTO.class).needHead(true).build();
+                excelWriter.write(errorBillList, writeSheet1,writeTable);
+                excelWriter.write(errorCostList, writeSheet2,writeTable2);
+            }
+            excelWriter.finish();
+            response.flushBuffer();
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -894,6 +954,47 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
         }
         return result;
+    }
+
+    @Override
+    public List<LogisticsBillEntity> listByOutstcockCode(List<String> outstockCodeList) {
+        if (CollectionUtil.isEmpty(outstockCodeList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(LogisticsBillEntity::getOutstockCode, outstockCodeList).list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateImport(List<LogisticsBillEntity> updateList, List<LogisticsBillDetailEntity> updateDetailList, List<LogisticsTrackEntity> addTrackList) {
+        if(CollectionUtils.isNotEmpty(updateList)){
+            this.updateBatchById(updateList);
+        }
+        if(CollectionUtils.isNotEmpty(updateDetailList)){
+            logisticsBillDetailService.updateBatchById(updateDetailList);
+        }
+        if(CollectionUtils.isNotEmpty(addTrackList)){
+            logisticsTrackService.saveBatch(addTrackList);
+        }
+    }
+
+    @Override
+    public List<LogisticsBillEntity> listByTransportNo(List<String> transportNoList) {
+        if (CollectionUtil.isEmpty(transportNoList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(LogisticsBillEntity::getTransportNo, transportNoList).list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateImportCost(List<LogisticsBillCostEntity> updateCostList, List<TmsLogisticsBillCostDetailEntity> updateCostDetailList) {
+        if(CollectionUtils.isNotEmpty(updateCostList)){
+            logisticsBillCostService.updateBatchById(updateCostList);
+        }
+        if(CollectionUtils.isNotEmpty(updateCostDetailList)){
+            logisticsBillCostDetailService.updateBatchById(updateCostDetailList);
+        }
     }
 
 }

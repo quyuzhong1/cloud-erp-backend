@@ -116,4 +116,6 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      *@date 2023-12-05
      */
     List<BaseChildDTO.ListChildTreeDTO> tree();
+
+    List<LogisticsSupplierEntity> listByName(List<String> supplierNameList);
 }

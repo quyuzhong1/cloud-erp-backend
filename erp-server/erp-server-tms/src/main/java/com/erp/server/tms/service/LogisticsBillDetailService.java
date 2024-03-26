@@ -29,7 +29,7 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @author lambda
      * @date: 2023-11-09
      */
-    Boolean add(LogisticsBillEntity billEntity, List<LogisticsBillDetailDTO.AddDTO> list );
+    Boolean add(LogisticsBillEntity billEntity, List<LogisticsBillDetailDTO.AddDTO> list ,boolean isGenerateCost);
 
     /**
      * 修改

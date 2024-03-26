@@ -222,7 +222,7 @@ public class TmsFirstMileLogisticController extends BaseController {
      */
     @PostMapping("/import")
     @LogAction(value = LogActionEnum.IMPORT, desc = "头程物流单导入")
-    public ApiResult<Boolean> importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult<Boolean> importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) throws Exception {
         return success(tmsFirstMileLogisticService.importExcel(excelFile,response));
     }
 
