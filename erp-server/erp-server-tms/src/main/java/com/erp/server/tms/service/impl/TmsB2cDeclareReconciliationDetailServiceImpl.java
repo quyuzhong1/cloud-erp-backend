@@ -7,7 +7,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -19,12 +21,11 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
+import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
+import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
 import com.erp.server.tms.mapper.TmsB2cDeclareReconciliationDetailMapper;
-import com.erp.server.tms.service.CommonService;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.TmsB2cDeclareReconciliationDetailService;
-import com.erp.server.tms.service.TmsB2cDeclareReconciliationService;
+import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -35,10 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -60,28 +58,33 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     @Autowired
     private TmsB2cDeclareReconciliationService tmsB2cDeclareReconciliationService;
 
+    @Autowired
+    private TransferDeclareService transferDeclareService;
+
+    @Autowired
+    private TransferDeclareDetailService transferDeclareDetailService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(TmsB2cDeclareReconciliationDetailDTO.AddDTO addDTO) {
-        TmsB2cDeclareReconciliationDetailEntity tmsB2cDeclareReconciliationDetailEntity = new TmsB2cDeclareReconciliationDetailEntity();
-        BeanMapperUtils.copy(addDTO, tmsB2cDeclareReconciliationDetailEntity);
+    public BaseResultDTO.AddDTO add(List<TmsB2cDeclareReconciliationDetailDTO.AddDTO> detailList) {
+        List<TmsB2cDeclareReconciliationDetailEntity> reconciliationDetailList = BeanMapperUtils.copyList(TmsB2cDeclareReconciliationDetailEntity.class, detailList);
 
-        // 数据处理
-        handleData(tmsB2cDeclareReconciliationDetailEntity);
-
-        log.info("开始新增b2c报关对账单明细");
-        boolean save = super.save(tmsB2cDeclareReconciliationDetailEntity);
-        if(!save) {
-            throw new ServiceException("b2c报关对账单明细保存失败");
+        //新增数据验证
+        checkAddData(reconciliationDetailList);
+        //新增数据处理
+        List<TmsB2cDeclareReconciliationDetailEntity> resultList = handleAddData(reconciliationDetailList);
+        //无新增数据则直接返回
+        if (CollectionUtils.isEmpty(resultList)) {
+            return new BaseResultDTO.AddDTO();
         }
-        // TODO 新增明细（如果有明细的话）
-
-
+        log.info("开始新增报关对账单明细");
+        boolean save = super.saveBatch(reconciliationDetailList);
+        if(!save) {
+            throw new ServiceException("报关对账单明细保存失败");
+        }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "b2c报关对账单明细" , tmsB2cDeclareReconciliationDetailEntity.getId());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode(), tmsB2cDeclareReconciliationDetailEntity.getId(), "新增操作");
-        return new BaseResultDTO.AddDTO(tmsB2cDeclareReconciliationDetailEntity.getId(), tmsB2cDeclareReconciliationDetailEntity.getId());
+        return new BaseResultDTO.AddDTO(reconciliationDetailList.get(0).getId(), reconciliationDetailList.get(0).getId());
     }
 
 
@@ -183,18 +186,83 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     }
 
     @Override
-    public BaseResultDTO.AddDTO updateStatus(TmsB2cDeclareReconciliationDetailDTO.UpdateStatusDTO dto) {
-        TmsB2cDeclareReconciliationDetailEntity entity = super.getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException("未找到b2c报关对账单明细数据"));
+    public BatchResultDTO updateStatus(String id, String status) {
+        TmsB2cDeclareReconciliationDetailEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到b2c报关对账单明细数据"));
         if (!StrUtil.equals(entity.getStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())) {
             throw new ServiceException("只有待对账数据支持更新对账");
         }
-        lambdaUpdate().eq(TmsB2cDeclareReconciliationDetailEntity::getId,dto.getId())
-                .set(TmsB2cDeclareReconciliationDetailEntity::getStatus,dto.getStatus())
+        lambdaUpdate().eq(TmsB2cDeclareReconciliationDetailEntity::getId,id)
+                .set(TmsB2cDeclareReconciliationDetailEntity::getStatus,status)
                 .update();
-
-        return new BaseResultDTO.AddDTO(entity.getId(),entity.getSoCode());
+        // 记录主单操作日志
+        operateLogService.addModuleOperateLog(StrUtil.format("销售订单【{}】更新状态为【{}】",entity.getSoCode(), TmsB2cDeclareReconciliationStatusEnum.getName(status)), ModuleTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode(), entity.getId(), "更新状态操作");
+        return BatchResultDTO.success(entity.getId(), entity.getSoCode(), OperationTypeEnum.UPDATE_STATUS);
     }
 
+    @Override
+    public Boolean cleanDetailMainId(String id) {
+        return  lambdaUpdate().eq(TmsB2cDeclareReconciliationDetailEntity::getMainId,id)
+                .set(TmsB2cDeclareReconciliationDetailEntity::getMainId,"")
+                .update();
+    }
+
+    /**
+     * @description: 保存校验
+     * @author Will
+     * @date: 2024/3/26 16:57
+     * @param reconciliationDetailList
+     */
+    private void checkAddData (List<TmsB2cDeclareReconciliationDetailEntity> reconciliationDetailList) {
+        if (CollectionUtils.isEmpty(reconciliationDetailList)) {
+            return;
+        }
+        List<String> sourceDetailIdList = reconciliationDetailList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<TmsB2cDeclareReconciliationDetailEntity> oldDetailList = this.listDetailBySourceDetailIdList(sourceDetailIdList);
+
+        if (CollectionUtils.isNotEmpty(oldDetailList)) {
+            String codes = oldDetailList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_HAS_GENERATE,codes);
+        }
+    }
+
+    /**
+     * @description: 新增数据处理
+     * @author Will
+     * @date: 2024/3/26 17:05
+     * @param reconciliationDetailList
+     * @return List<TmsB2cDeclareReconciliationDetailEntity>
+     */
+    private  List<TmsB2cDeclareReconciliationDetailEntity> handleAddData (List<TmsB2cDeclareReconciliationDetailEntity> reconciliationDetailList) {
+        //可新增数据
+        List<TmsB2cDeclareReconciliationDetailEntity> resultList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(reconciliationDetailList)) {
+            return resultList;
+        }
+        //中专报关明细数据
+        List<String> sourceDetailIdList = reconciliationDetailList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<TransferDeclareDetailEntity> transferDeclareDetailList = transferDeclareDetailService.listByIds(sourceDetailIdList);
+
+        for (TmsB2cDeclareReconciliationDetailEntity detailEntity : reconciliationDetailList) {
+
+
+        }
+        return resultList;
+    }
+
+    /**
+     * @description: 根据来源明细id集合查询
+     * @author Will
+     * @date: 2024/3/26 16:56
+     * @param sourceDetailIdList
+     * @return List<TmsB2cDeclareReconciliationDetailEntity>
+     */
+    private List<TmsB2cDeclareReconciliationDetailEntity> listDetailBySourceDetailIdList (List<String> sourceDetailIdList) {
+        if (CollectionUtils.isEmpty(sourceDetailIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(TmsB2cDeclareReconciliationDetailEntity::getSourceDetailId,sourceDetailIdList)
+                .list();
+    }
 
     /**
     * 新增修改处理数据

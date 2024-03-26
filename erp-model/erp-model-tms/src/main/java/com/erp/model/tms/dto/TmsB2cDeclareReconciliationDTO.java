@@ -301,6 +301,16 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
 
+        /**
+         * 对账开始日期
+         */
+        private LocalDate startDate;
+
+        /**
+         * 对账结束日期
+         */
+        private LocalDate endDate;
+
     }
 
     /**
@@ -316,22 +326,16 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 结算币别
+         */
+        @NotBlank(message = "结算币别不能为空")
+        private String currency;
     }
 
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
-
-
-        /**
-        * 对账开始日期
-        */
-        private LocalDate startDate;
-
-        /**
-        * 对账结束日期
-        */
-        private LocalDate endDate;
 
         /**
          * 明细id集合

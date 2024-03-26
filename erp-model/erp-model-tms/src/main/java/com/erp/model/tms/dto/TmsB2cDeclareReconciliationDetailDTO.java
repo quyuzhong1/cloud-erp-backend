@@ -378,13 +378,6 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 主表id
-        */
-        @NotBlank(message = "主表id不能为空")
-        @Size(max = 19,message = "主表id最大长度不能超过19位")
-        private String mainId;
-
-        /**
         * 来源id
         */
         @NotBlank(message = "来源id不能为空")
@@ -431,7 +424,7 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
          * 对账明细id
          */
         @NotBlank(message = "对账明细id不能为空")
-        private String id;
+        private List<String> ids;
 
         /**
          * 对账状态
