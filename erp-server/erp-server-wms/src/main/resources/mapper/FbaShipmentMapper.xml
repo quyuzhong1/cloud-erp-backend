@@ -130,7 +130,7 @@
 			T.shop_name,
 			G.sku_no,
 			G.msku,
-			G.receive_qty,
+			G.receive_qty::VARCHAR receive_qty,
 			TO_CHAR(G.receive_date , 'YYYY-MM-DD') receive_date
 		FROM
 			fba_shipment

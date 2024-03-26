@@ -141,6 +141,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
         	wmsDataCompareImportEntity.setFileUrl(excelFile);
         	wmsDataCompareImportEntity.setParseStatus(WmsDataCompareImportParseStatusEnum.WAIT.getCode());
         	wmsDataCompareImportEntity.setCurrParseOffset(0);
+        	wmsDataCompareImportEntityList.add(wmsDataCompareImportEntity);
         }
         WmsDataCompareExcelDto wmsDataCompareExcelDto = WmsDataCompareUtils.getWmsDataCompareExcelDto(excelFiles);
         List<List<String>> headFieldLists = wmsDataCompareExcelDto.getHeadFieldLists();
@@ -363,6 +364,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 			if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 30, TimeUnit.MINUTES)) {
 				this.parseExcelData(id, headFieldList, allDatasMap);
 				this.compareSystemImportData(id);
+				this.dealUploadResultExcel(id);
 			}else {
 				log.info("数据对比任务id={}正在处理中" , id);
 			}
@@ -434,8 +436,8 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 							wmsDataCompareTempEntity.setPkFieldValue(sb.length() > 0 ? sb.toString().substring(1) : "");
 							wmsDataCompareTempEntityList.add(wmsDataCompareTempEntity);
 						}
-						i = i + 1;
 						wmsDataCompareTaskService.saveTempTable(importId , wmsDataCompareTempEntityList , currParseOffset , i == partitionList.size());
+						i = i + 1;
 					}
 				}
 			}
@@ -523,6 +525,9 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 								invokeObject = method.invoke(importDataDto);
 								if(invokeObject != null) {
 									importData = invokeObject.toString();
+									if(systemField.endsWith("Date") || systemField.endsWith("Time")) {
+										importData = DateUtil.format(DateUtil.parse(importData), "yyyy-MM-dd");
+									}
 								}
 							} catch (Exception e) {
 								throw new ServiceException(wmsDataCompareTaskEntity.getBillType() + "调用get反射方法失败");
@@ -665,7 +670,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		.set(WmsDataCompareTaskEntity::getStatus, WmsDataCompareTaskStatusEnum.FINISH.getCode())
 		.set(WmsDataCompareTaskEntity::getResultReportUrl, resultReportUrl)
 		.update();
-		wmsDataCompareTempService.remove(Wrappers.<WmsDataCompareTempEntity>lambdaQuery().eq(WmsDataCompareTempEntity::getTaskId, id));
+		wmsDataCompareTempService.deleteData(id);
 	}
 	
 	private List<String> getWriteDatas(WmsDataCompareBillService<?> wmsDataCompareBillService , List<ImportDataMappingDTO> importDataMappingDTOList , String dtoJson){

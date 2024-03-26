@@ -15,6 +15,7 @@ import javax.validation.constraints.Size;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -398,6 +399,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
     	/**
          * 数据库数据id
          */
+    	@ExcelIgnore
     	private String id;
     }
     
@@ -458,21 +460,25 @@ public class WmsDataCompareTaskDTO implements Serializable {
     	 /**
     	 * 店铺id查询条件
     	 */
+    	 @ExcelIgnore
     	private String shopId;
     	
     	/**
     	 * 仓库id查询条件
     	 */
+    	 @ExcelIgnore
     	private String warehouseId;
     	 
     	 /**
     	 * 出库日期查询条件
     	 */
+    	 @ExcelIgnore
     	private List<LocalDate> billDateList;
     	
     	/**
     	 *  销售单号查询条件
     	 */
+    	 @ExcelIgnore
     	private List<String> soCodeList;
      }
      
@@ -548,6 +554,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
      	/**
     	 * 店铺id查询条件
     	 */
+     	@ExcelIgnore
     	private String shopId;
      	 
      	 /**
@@ -559,6 +566,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
      	/**
      	  * 签收日期查询条件
      	  */
+     	@ExcelIgnore
      	 private List<LocalDate> receiveDateList;
      	 
       }
@@ -608,11 +616,13 @@ public class WmsDataCompareTaskDTO implements Serializable {
       	/**
      	  * 仓库id查询条件
      	  */
+      	@ExcelIgnore
      	 private String toWarehouseId;
       	
       	/**
       	  * 出库日期查询条件
       	  */
+      	@ExcelIgnore
       	private List<LocalDate> receiveDateList;
       	 
        }

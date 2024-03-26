@@ -303,7 +303,7 @@
 		        SELECT g.id,T.so_code,
 			T.warehouse_name,
 			G.sku_no,
-			G.actual_qty,
+			G.actual_qty::VARCHAR actual_qty,
 			TO_CHAR(T.bill_date, 'YYYY-MM-DD') bill_date
 		FROM
 			so_outstock

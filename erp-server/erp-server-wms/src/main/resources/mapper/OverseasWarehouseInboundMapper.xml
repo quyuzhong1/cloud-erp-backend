@@ -172,7 +172,7 @@
 			G.sku_no,
 			G.platform_sku_no,
 			T.to_warehouse_name,
-			G.receive_qty,
+			G.receive_qty::VARCHAR receive_qty,
 			TO_CHAR( G.receive_time, 'YYYY-MM-DD' ) receive_time 
 		FROM
 			overseas_warehouse_inbound
