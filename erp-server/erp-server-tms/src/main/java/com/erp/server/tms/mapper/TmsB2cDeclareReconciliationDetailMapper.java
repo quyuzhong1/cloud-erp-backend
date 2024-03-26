@@ -1,6 +1,8 @@
 package com.erp.server.tms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -20,6 +22,15 @@ import java.util.List;
 @Mapper
 public interface TmsB2cDeclareReconciliationDetailMapper extends BaseMapper<TmsB2cDeclareReconciliationDetailEntity> {
 
+    /**
+     * @description: 分页查询
+     * @author Will
+     * @date: 2024/3/26 10:50
+     * @param query
+     * @param params
+     * @return IPage<ListDTO>
+     */
+    IPage<TmsB2cDeclareReconciliationDetailDTO.ListDTO> paging(Page query,@Param("params")  TmsB2cDeclareReconciliationDetailDTO.PagingParamDTO params);
 
     /**
      * 导出Excel查询
@@ -27,4 +38,5 @@ public interface TmsB2cDeclareReconciliationDetailMapper extends BaseMapper<TmsB
      * @return
      */
     List<TmsB2cDeclareReconciliationDetailDTO.ListDTO> listExport(@Param("params") TmsB2cDeclareReconciliationDetailDTO.ExportDTO params);
+
 }

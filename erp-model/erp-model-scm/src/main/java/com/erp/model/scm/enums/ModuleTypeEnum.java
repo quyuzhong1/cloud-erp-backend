@@ -76,6 +76,7 @@ public enum ModuleTypeEnum {
     CUSTOMER_B2B_SELLER_CHANGE("63", "b2b客户销售员变更单"),
     PRODUCT_CERTIFICATE("64", "产品认证"),
     PRODUCT_REGISTRATION("68", "产品备案"),
+    TMS_B2C_DECLARE_RECONCILIATION("69", "B2C报关账单"),
     ;
 
 

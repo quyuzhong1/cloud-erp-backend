@@ -6,14 +6,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -90,6 +86,11 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
         private String approveStatus;
 
         /**
+         * 审核名称
+         */
+        private String approveStatusName;
+
+        /**
         * 审核人id
         */
         private String approveUserId;
@@ -125,6 +126,11 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
         private LocalDate endDate;
 
         /**
+         * 对账周期
+         */
+        private String cycle;
+
+        /**
         * 物流商Id
         */
         private String logisticsSupplierId;
@@ -138,6 +144,11 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
         * 币别
         */
         private String currency;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
 
         /**
         * 汇率
@@ -154,21 +165,27 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
         */
         private String reason;
 
+        /**
+         * 实际物流费用
+         */
+        private BigDecimal actualShippingCost;
 
         /**
-        * 审核状态名称
-        */
-        private String approveStatusName;
+         * 实际报关费
+         */
+        private BigDecimal actualDeclareCost;
 
         /**
-        * 创建时间
-        */
-        private LocalDateTime createTime;
+         * 实际其他费
+         */
+        private BigDecimal actualOtherCost;
+
 
         /**
-        * 创建人名称
-        */
-        private String createUserName;
+         * 实际重量单位
+         */
+        private String actualWeightUnit;
+
     }
 
     /**
@@ -270,7 +287,10 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
         */
         private String reason;
 
-
+        /**
+         * 报关对账单明细
+         */
+        private List<TmsB2cDeclareReconciliationDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -302,20 +322,6 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
     @NoArgsConstructor
     public static class CommonDTO {
 
-        /**
-        * 生成对账日期
-        */
-        private LocalDate reconciliationDate;
-
-        /**
-        * 提交日期
-        */
-        private LocalDate submitDate;
-
-        /**
-        * 提交日期
-        */
-        private LocalDate approveDate;
 
         /**
         * 对账开始日期
@@ -328,47 +334,9 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
         private LocalDate endDate;
 
         /**
-        * 物流商Id
-        */
-        @NotBlank(message = "物流商Id不能为空")
-        @Size(max = 19,message = "物流商Id最大长度不能超过19位")
-        private String logisticsSupplierId;
-
-        /**
-        * 物流商名称
-        */
-        @NotBlank(message = "物流商名称不能为空")
-        @Size(max = 100,message = "物流商名称最大长度不能超过100位")
-        private String logisticsSupplierName;
-
-        /**
-        * 币别
-        */
-        @NotBlank(message = "币别不能为空")
-        @Size(max = 32,message = "币别最大长度不能超过32位")
-        private String currency;
-
-        /**
-        * 汇率
-        */
-        @NotNull(message = "汇率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "汇率整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal exchangeRate;
-
-        /**
-        * 费用合计
-        */
-        @NotNull(message = "费用合计不能为空")
-        @Digits(integer = 12, fraction = 4, message = "费用合计整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal totalCost;
-
-        /**
-        * 审核不通过原因
-        */
-        @NotBlank(message = "审核不通过原因不能为空")
-        @Size(max = 255,message = "审核不通过原因最大长度不能超过255位")
-        private String reason;
-
+         * 明细id集合
+         */
+        private List<TmsB2cDeclareReconciliationDetailDTO.UpdateDTO> detailList;
 
     }
 

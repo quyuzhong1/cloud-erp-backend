@@ -1,30 +1,30 @@
 package com.erp.server.tms.controller.api;
 
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.TmsB2cDeclareReconciliationService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
-import javax.servlet.http.HttpServletResponse;
-import java.util.*;
+import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
+import com.erp.server.tms.service.TmsB2cDeclareReconciliationDetailService;
+import com.erp.server.tms.service.TmsB2cDeclareReconciliationService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * b2c报关对账单
@@ -40,6 +40,10 @@ public class TmsB2cDeclareReconciliationController extends BaseController {
 
     @Resource
     private TmsB2cDeclareReconciliationService tmsB2cDeclareReconciliationService;
+
+    @Resource
+    private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
+
 
     /**
     * 新增
@@ -349,5 +353,18 @@ public class TmsB2cDeclareReconciliationController extends BaseController {
         tmsB2cDeclareReconciliationService.exportList(dto, response);
     }
 
+
+    /**
+     * 导出明细Excel数据
+     * @author Will
+     * @date: 2024/3/26 9:56
+     * @param dto
+     * @param response
+     */
+    @PostMapping("/exportDetail")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "b2c报关对账单明细导出Excel数据")
+    public void exportDetailList(@RequestBody @Validated TmsB2cDeclareReconciliationDetailDTO.ExportDTO dto, HttpServletResponse response) {
+        tmsB2cDeclareReconciliationDetailService.exportDetailList(dto, response);
+    }
 
 }

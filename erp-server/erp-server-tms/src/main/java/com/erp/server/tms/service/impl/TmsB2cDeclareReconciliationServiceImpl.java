@@ -1,51 +1,47 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
-
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
-import com.erp.server.tms.mapper.TmsB2cDeclareReconciliationMapper;
-import com.erp.server.tms.service.TmsB2cDeclareReconciliationService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
-
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.base.*;
+import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
+import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
+import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
+import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.tms.mapper.TmsB2cDeclareReconciliationMapper;
+import com.erp.server.tms.service.CommonService;
+import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.TmsB2cDeclareReconciliationDetailService;
+import com.erp.server.tms.service.TmsB2cDeclareReconciliationService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.annotation.Resource;
-import java.util.stream.Collectors;
 import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import java.util.stream.Collectors;
 /**
  * <p>
  * b2c报关对账单 服务实现类
@@ -66,6 +62,12 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
     @Autowired
     private WorkflowFeign workflowFeign;
 
+    @Autowired
+    private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -78,19 +80,19 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
 
         log.info("开始新增b2c报关对账单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_BGZD);
         tmsB2cDeclareReconciliationEntity.setCode(code);
         boolean save = super.save(tmsB2cDeclareReconciliationEntity);
         if(!save) {
             throw new ServiceException("b2c报关对账单保存失败");
         }
 
+        //明细添加
+        tmsB2cDeclareReconciliationDetailService.update(addDTO.getDetailList(),tmsB2cDeclareReconciliationEntity.getId());
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c报关对账单" , tmsB2cDeclareReconciliationEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, tmsB2cDeclareReconciliationEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode(), tmsB2cDeclareReconciliationEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(tmsB2cDeclareReconciliationEntity.getId(), code);
     }
@@ -119,10 +121,9 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录b2c报关对账单日志数据，单号：【{}】", tmsB2cDeclareReconciliationEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), tmsB2cDeclareReconciliationEntity.getCode(), "b2c报关对账单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, tmsB2cDeclareReconciliationEntity, null, tmsB2cDeclareReconciliationEntity.getId(), msg);
+        log.info("编辑 开始记录b2c报关对账单日志数据，单号：【{}】", tmsB2cDeclareReconciliationEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), tmsB2cDeclareReconciliationEntity.getCode(), "b2c报关对账单");
+        operateLogService.addModuleOperateLogByObj(old, tmsB2cDeclareReconciliationEntity, ModuleTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode(), tmsB2cDeclareReconciliationEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -193,14 +194,12 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         log.info("提交 开始修改b2c报关对账单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
-        // TODO 启动流程（如果需要的话）
         log.info("提交 开始启动b2c报关对账单流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录b2c报关对账单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "b2c报关对账单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -242,8 +241,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "b2c报关对账单", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -289,8 +287,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "b2c报关对账单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -319,7 +316,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         // 删除日志数据
         log.info("删除 开始删除b2c报关对账单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "b2c报关对账单");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除b2c报关对账单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode(), entity.getCode(), "删除b2c报关对账单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
@@ -344,12 +341,10 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "b2c报关对账单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        revokeDTO.setBusinessKey(SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode());
         revokeDTO.setUserId(commonService.getUserInfo().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -363,7 +358,6 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
 
         return Boolean.TRUE;
     }
@@ -374,7 +368,6 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         TmsB2cDeclareReconciliationDTO.ViewDTO data = BeanMapperUtils.map(TmsB2cDeclareReconciliationDTO.ViewDTO.class, tmsB2cDeclareReconciliationEntity);
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
         return data;
     }
     /**
@@ -389,8 +382,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        startDTO.setBusinessKey(SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(commonService.getUserInfo().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
@@ -399,10 +391,22 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
             throw new ServiceException(result.getMsg());
         }
     }
+    /**
+     * @description: 分页查询调整
+     * @author Will
+     * @date: 2024/3/26 14:20
+     * @param data
+     */
     private void fillOne(TmsB2cDeclareReconciliationDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        List<TmsB2cDeclareReconciliationDetailEntity> detailList = tmsB2cDeclareReconciliationDetailService.listMainIdList(Arrays.asList(data.getId()));
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        List<TmsB2cDeclareReconciliationDetailDTO.ViewDTO> viewDTOList = BeanMapperUtils.copyList(TmsB2cDeclareReconciliationDetailDTO.ViewDTO.class, detailList);
+        data.setDetailList(viewDTOList);
     }
 
     /**
@@ -452,10 +456,19 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
            return;
         }
 
+        //币别信息
+        List<String> currencyIdList = list.stream().map(TmsB2cDeclareReconciliationDTO.ListDTO::getCurrency).collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+
         // 属性赋值
         for(TmsB2cDeclareReconciliationDTO.ListDTO data : list) {
+            //审核状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            //对账周期
+            data.setCycle(StrUtil.format("{}-{}",data.getStartDate(),data.getEndDate()));
+            //币别符号
+            String currencySymbol = currencyList.stream().filter(obj -> StrUtil.equals(obj.getId(), data.getCurrency())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
+            data.setCurrencySymbol(currencySymbol);
         }
     }
     /**

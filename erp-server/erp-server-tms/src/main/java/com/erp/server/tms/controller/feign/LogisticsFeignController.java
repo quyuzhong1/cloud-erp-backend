@@ -68,7 +68,7 @@ public class LogisticsFeignController {
      **/
     @PostMapping("/listLogisticsChannel")
     public List<LogisticsChannelDTO.ListSelectDTO> listLogisticsChannel(@RequestBody List<String> logisticsSupplierIds) {
-        return logisticsChannelService.listLogisticsChannel(logisticsSupplierIds);
+        return logisticsChannelService.listLogisticsChannel(new LogisticsChannelDTO.ParamDTO(logisticsSupplierIds));
     }
 
     /**

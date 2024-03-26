@@ -54,6 +54,28 @@
         main_id, source_id, source_detail_id, source_type, source_code, so_id, so_detail_id, so_code, date, country, logistics_channel_id, logistics_channel_name, qty, estimate_weight, estimate_weight_unit, actual_weight, actual_weight_unit, actual_billing_weight, actual_shipping_cost, actual_declare_cost, actual_other_cost, remark, status, confirm_date, confirm_user_id, confirm_user_name
     </sql>
 
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO$ListDTO">
+        select
+        <include refid="Base_Column_List" />
+        from tms_b2c_declare_reconciliation_detail tbdrd
+        <where>
+            ${params.sqlMap.default}
+            and tbdrd.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            tbdrd.id desc
+        </where>
+    </select>
+
 
     <!-- 导出查询 -->
     <select id="listExport" resultType="com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO$ListDTO">
@@ -61,8 +83,7 @@
             <include refid="Base_Column_List" />
         from tms_b2c_declare_reconciliation_detail tbdrd
         <where>
-        ${params.sqlMap.default}
-        and tbdrd.is_deleted = false
+        tbdrd.is_deleted = false and main_id = #{mainId}
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -70,5 +91,6 @@
         tbdrd.id desc
         </where>
     </select>
+
 
 </mapper>

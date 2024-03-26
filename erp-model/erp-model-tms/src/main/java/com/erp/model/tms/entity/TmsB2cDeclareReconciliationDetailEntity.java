@@ -1,15 +1,15 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 
 /**
@@ -86,6 +86,16 @@ public class TmsB2cDeclareReconciliationDetailEntity extends BaseEntity<TmsB2cDe
     */
     @TableField("logistics_channel_name")
     private String logisticsChannelName;
+    /**
+     * 物流商Id
+     */
+    @TableField("logistics_supplier_id")
+    private String logisticsSupplierId;
+    /**
+     * 物流商名称
+     */
+    @TableField("logistics_supplier_name")
+    private String logisticsSupplierName;
     /**
     * 产品数量
     */

@@ -1203,6 +1203,9 @@ public enum ApiError implements Serializable {
     ERROR_CFG_SAILING_EXIST(94031,"已存在渠道【{}】的截单开船数据"),
     ERROR_CFG_COST_EXIST(94032,"费用名称【{}】已存在"),
     ERROR_WAREHOUSE_MAPPING_EXIST(94033,"仓库代码（物流商）【{}】已存在"),
+    ERROR_DECLARE_RECONCILIATION_NOT_EXIST(94034,"报关对账单不存在"),
+    ERROR_DECLARE_RECONCILIATION_DETAIL_NOT_EXIST(94035,"报关对账单明细不存在"),
+    ERROR_DECLARE_RECONCILIATION_ADD_DETAIL(94036,"报关对账单【{}】添加对账明细数据的供应商【{}】必须一致"),
 
 
     /**

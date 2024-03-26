@@ -110,6 +110,9 @@ public enum SourceTypeEnum {
     COUNTRY("country", "国家","dict_country"),
     PROVINCE_CITY("provinceCity", "省市","dict_city"),
 
+    //TMS
+    TMS_B2C_DECLARE_RECONCILIATION("tmsB2cDeclareReconciliation", "B2c报关对账单","tms_b2c_declare_reconciliation"),
+
     //Mabang
     MABANG_FBA_DELIVERY("MB_FBA_DELIVERY", "马帮FBA发货单",""),
     LOGISTICS_SUPPLIER("logisticsSupplier","物流商",""),
