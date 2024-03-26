@@ -245,13 +245,13 @@ public class ProductLogisticsEntity extends BaseEntity implements Serializable {
      * 第一数量
      */
     @TableField("first_qty")
-    private Integer firstQty;
+    private BigDecimal firstQty;
 
     /**
      * 第二数量
      */
     @TableField("second_qty")
-    private Integer secondQty;
+    private BigDecimal secondQty;
 
     @TableField(exist = false)
     private String skuNo;
