@@ -51,5 +51,21 @@
         WHERE pd.id = #{skuId} AND pd.is_deleted = FALSE
         ORDER BY pd.id desc
     </select>
+    <select id="listProductCustomsBySkuIds" resultMap="BaseResultMap">
+        select id,sku_id,country,customs_code,tax_rate,type from product_customs
+        where is_deleted = FALSE
+          <if test="dto.skuIds != null and dto.skuIds.size > 0">
+              and sku_id in
+              <foreach collection="dto.skuIds" item="item" open="(" separator="," close=")">
+                  #{item}
+              </foreach>
+          </if>
+        <if test="dto.country != null">
+            and (country = #{dto.country} or country = '')
+        </if>
+        <if test="dto.country == null">
+            and country = ''
+        </if>
+    </select>
 
 </mapper>
