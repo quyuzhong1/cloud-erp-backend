@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -243,8 +244,12 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         List<TransferDeclareDetailEntity> transferDeclareDetailList = transferDeclareDetailService.listByIds(sourceDetailIdList);
 
         for (TmsB2cDeclareReconciliationDetailEntity detailEntity : reconciliationDetailList) {
-
-
+            //中转报关明细
+            TransferDeclareDetailEntity transferDeclareDetail = transferDeclareDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(transferDeclareDetail)) {
+                throw new ServiceException("未找到中专报关明细");
+            }
+            detailEntity.setSoId(transferDeclareDetail.getSoId());
         }
         return resultList;
     }

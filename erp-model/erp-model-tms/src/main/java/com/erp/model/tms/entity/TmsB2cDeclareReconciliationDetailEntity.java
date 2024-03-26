@@ -57,11 +57,6 @@ public class TmsB2cDeclareReconciliationDetailEntity extends BaseEntity<TmsB2cDe
     @TableField("so_id")
     private String soId;
     /**
-    * 销售订单明细id
-    */
-    @TableField("so_detail_id")
-    private String soDetailId;
-    /**
     * 销售订单编码
     */
     @TableField("so_code")
