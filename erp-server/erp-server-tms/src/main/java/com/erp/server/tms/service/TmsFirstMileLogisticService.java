@@ -6,7 +6,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
-import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.entity.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -69,7 +69,7 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
 
     List<BatchResultDTO> generateReconciliation(TmsFirstMileLogisticDTO.GenerateReconciliationDTO dto);
 
-    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
+    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) throws Exception;
 
     void export(TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response);
 
@@ -84,4 +84,12 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
     Boolean updateRemark(TmsFirstMileLogisticDTO.UpdateRemarkDTO dto);
 
     TmsFirstMileLogisticDTO.LogisticsDTO getLogisticsAndShipping(TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO dto);
+
+    List<LogisticsBillEntity> listByOutstcockCode(List<String> outstockCodeList);
+
+    void updateImport(List<LogisticsBillEntity> updateList, List<LogisticsBillDetailEntity> updateDetailList, List<LogisticsTrackEntity> addTrackList);
+
+    List<LogisticsBillEntity> listByTransportNo(List<String> transportNoList);
+
+    void updateImportCost(List<LogisticsBillCostEntity> updateCostList, List<TmsLogisticsBillCostDetailEntity> updateCostDetailList);
 }

@@ -60,22 +60,24 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean add(LogisticsBillEntity billEntity, List<LogisticsBillDetailDTO.AddDTO> detailList) {
-            if (CollectionUtils.isEmpty(detailList)) {
-                return Boolean.FALSE;
-            }
-            String mainId = billEntity.getId();
-            String channelId = billEntity.getChannelId();
-            LogisticsAuthDTO.ViewDTO view = logisticsAuthService.getViewByChannelId(channelId);
-            List<LogisticsBillDetailEntity> list = BeanMapper.copyList(detailList, LogisticsBillDetailEntity.class);
-            list.forEach(l -> {
-                l.setMainId(mainId);
-                l.setLogisticsAuthId(view.getId());
-            });
-            //批量新增
-            this.saveBatch(list);
+    public Boolean add(LogisticsBillEntity billEntity, List<LogisticsBillDetailDTO.AddDTO> detailList ,boolean isGenerateCost) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return Boolean.FALSE;
+        }
+        String mainId = billEntity.getId();
+        String channelId = billEntity.getChannelId();
+        LogisticsAuthDTO.ViewDTO view = logisticsAuthService.getViewByChannelId(channelId);
+        List<LogisticsBillDetailEntity> list = BeanMapper.copyList(detailList, LogisticsBillDetailEntity.class);
+        list.forEach(l -> {
+            l.setMainId(mainId);
+            l.setLogisticsAuthId(view.getId());
+        });
+        //批量新增
+        this.saveBatch(list);
+        if (isGenerateCost) {
             //新增物流费用单
-            logisticsBillService.addLogisticsBillCost(billEntity,list);
+            logisticsBillService.addLogisticsBillCost(billEntity, list);
+        }
         return Boolean.TRUE;
     }
 

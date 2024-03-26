@@ -490,6 +490,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
+    public List<LogisticsChannelEntity> listByName(List<String> channelNameList) {
+        if(CollectionUtils.isEmpty(channelNameList)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(LogisticsChannelEntity::getName, channelNameList).list();
+    }
+
+    @Override
     public LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelId(String channelId) {
         LogisticsChannelDTO.SignShipDTO signShipDTO = new LogisticsChannelDTO.SignShipDTO();
         LogisticsChannelEntity channelEntity = this.getById(channelId);

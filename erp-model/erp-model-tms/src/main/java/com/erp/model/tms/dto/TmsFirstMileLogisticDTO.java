@@ -180,6 +180,11 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * 装箱信息
          */
         private List<PackingDTO> packingDTOList;
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+
     }
 
     /**
