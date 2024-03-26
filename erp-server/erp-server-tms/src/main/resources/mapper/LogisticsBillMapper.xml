@@ -519,4 +519,31 @@
           and lc.effective_time != '0'
           and lb.order_type = #{orderType}
     </select>
+    <select id="firstMileFeeCostExport"
+            resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$ExportCostDTO">
+        select
+                lb.outstock_code as outstockCode,
+                lb.source_code as sourceCode,
+                lb.transport_no as transportNo,
+        lbc.actual_weight || lbc.weight_unit as weight,
+        lbc.volume_weight || lbc.weight_unit as volumeWeight,
+        lbc.weight_logistics || lbc.weight_unit as weightLogistics,
+        lbc.volume_weight_logistics || lbc.weight_unit as volumeWeightLogistics,
+                lbc.currency,
+                lbc.id as costId
+        from
+        logistics_bill lb
+        inner join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id
+        inner join logistics_bill_detail lbd on lbd.main_id = lb.id
+        where
+        ${params.sqlMap.default}
+        and lb.order_type = #{params.orderType}
+        and lb.is_deleted =false
+        and lbc.is_deleted = false
+        and lbd.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+    </select>
 </mapper>

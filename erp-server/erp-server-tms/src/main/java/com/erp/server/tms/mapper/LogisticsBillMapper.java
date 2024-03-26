@@ -89,4 +89,6 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
     TmsFirstMileLogisticDTO.StatisticsVO.ReconciliationStatistics reconciliationStatistics(String orderType);
 
     List<TmsFirstMileLogisticDTO.OverdueDTO> overdueStatistics(String code);
+
+    List<TmsFirstMileLogisticDTO.ExportCostDTO> firstMileFeeCostExport(@Param("params") TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO);
 }

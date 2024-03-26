@@ -829,7 +829,45 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     public void exportFeeDetail(TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
+        pagingParamDTO.setPermissionSql(pagingParamDTO.getPermissionSql());
+        pagingParamDTO.setOrderType(OrderTypeEnum.FIRST_MILE.getCode());
+        List<TmsFirstMileLogisticDTO.ExportCostDTO> list = baseMapper.firstMileFeeCostExport( pagingParamDTO);
+        List<TmsFirstMileLogisticDTO.ExportCostDTO> handleList = fillCostExportDb(list);
+        ExcelUtil.export("物流费用明细单"+ DateUtil.currentYMD(),"物流费用明细单",handleList,TmsFirstMileLogisticDTO.ExportCostDTO.class,response);
+    }
 
+    private List<TmsFirstMileLogisticDTO.ExportCostDTO> fillCostExportDb(List<TmsFirstMileLogisticDTO.ExportCostDTO> list) {
+        List<String> costIdList = list.stream().map(TmsFirstMileLogisticDTO.ExportCostDTO::getCostId).distinct().collect(Collectors.toList());
+        List<TmsLogisticsBillCostDetailDTO.CostViewDTO> allCostDetailEntityList = logisticsBillCostDetailService.listCostByMainIdList(costIdList);
+        if(CollectionUtils.isEmpty(allCostDetailEntityList)){
+            return list;
+        }
+        List<TmsFirstMileLogisticDTO.ExportCostDTO> resultList = new ArrayList<>();
+        for (TmsFirstMileLogisticDTO.ExportCostDTO exportCostDTO : list) {
+            List<TmsLogisticsBillCostDetailDTO.CostViewDTO> costDetailEntityList = allCostDetailEntityList.stream().filter(v->v.getMainId().equals(exportCostDTO.getCostId()) && StringUtils.isNotBlank(v.getType())).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(costDetailEntityList)){
+                resultList.add(exportCostDTO);
+                continue;
+            }
+            Map<String,List<TmsLogisticsBillCostDetailDTO.CostViewDTO>> costViewMap = costDetailEntityList.stream().collect(Collectors.groupingBy(TmsLogisticsBillCostDetailDTO.CostViewDTO::getCostName));
+            costViewMap.forEach((key,value)->{
+                TmsFirstMileLogisticDTO.ExportCostDTO costDTO = BeanUtil.copyProperties(exportCostDTO,TmsFirstMileLogisticDTO.ExportCostDTO.class);
+                costDTO.setCostName(key);
+                String currencySymbol = CurrencyEnum.getSymbolByCode(costDTO.getCurrency());
+                //预计费用
+                TmsLogisticsBillCostDetailDTO.CostViewDTO estimateCost = value.stream().filter(v->v.getType().equals(LogisticsBillCostTypeEnum.ESTIMATED.getCode())).findFirst().orElse(new TmsLogisticsBillCostDetailDTO.CostViewDTO());
+                if(Objects.nonNull(estimateCost.getCostValue())){
+                    costDTO.setCompleteEstimatedFee(currencySymbol+estimateCost.getCostValue());
+                }
+                //实际费用
+                TmsLogisticsBillCostDetailDTO.CostViewDTO actualCost = value.stream().filter(v->v.getType().equals(LogisticsBillCostTypeEnum.ACTUAL.getCode())).findFirst().orElse(new TmsLogisticsBillCostDetailDTO.CostViewDTO());
+                if(Objects.nonNull(actualCost.getCostValue())){
+                    costDTO.setCompleteActualFee(currencySymbol+actualCost.getCostValue());
+                }
+                resultList.add(costDTO);
+            });
+        }
+        return resultList;
     }
 
     @Override

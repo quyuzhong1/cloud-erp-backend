@@ -525,6 +525,56 @@ public class TmsFirstMileLogisticDTO implements Serializable {
     }
 
     /**
+     * 导出费用dto
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportCostDTO {
+
+        @ExcelProperty(value = "发货单")
+        private String outstockCode;
+
+        @ExcelProperty(value = "业务单号")
+        private String sourceCode;
+
+        @ExcelProperty(value = "运单号")
+        private String transportNo;
+
+        @ExcelProperty(value = "箱子包装重量")
+        private String weight;
+
+        @ExcelProperty(value = "体积重量")
+        private String volumeWeight;
+
+        @ExcelProperty(value = "实际重量")
+        private String weightLogistics;
+
+        @ExcelProperty(value = "实际体积重")
+        private String volumeWeightLogistics;
+
+        @ExcelProperty(value = "费用名称")
+        private String costName;
+
+        @ExcelIgnore
+        private String costId;
+
+        @ExcelIgnore
+        private BigDecimal estimatedFee;
+
+        @ExcelIgnore
+        private BigDecimal actualFee;
+
+        @ExcelIgnore
+        private String currency;
+
+        @ExcelProperty(value = "预估费用")
+        private String completeEstimatedFee;
+
+        @ExcelProperty(value = "实际费用")
+        private String completeActualFee;
+    }
+
+    /**
      * 分页
      */
     @Data

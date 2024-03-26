@@ -242,6 +242,7 @@ public class TmsFirstMileLogisticController extends BaseController {
      */
     @PostMapping("/exportFeeDetail")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程物流单费用明细")
+    @WebAdvanceQuery
     public ApiResult exportFeeDetail(@RequestBody @Valid TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
         tmsFirstMileLogisticService.exportFeeDetail(pagingParamDTO,response);
         return success();
