@@ -98,14 +98,19 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean update(DictCountryDTO.UpdateDTO dto) {
-        DictCountryEntity entity = new DictCountryEntity();
+        String id=dto.getId();
+        DictCountryEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException("国家不存在");
+        }
+        String code = dto.getCode();
         entity.setNameCn(dto.getName());
-        entity.setId(dto.getCode());
         entity.setRegionCode(dto.getParentRegionId());
-        entity.setKingdeeCode(dto.getCode());
+        entity.setKingdeeCode(code);
         handleData(entity);
-        Boolean updateResult = this.saveOrUpdate(entity);
+        Boolean updateResult = this.updateById(entity);
         if (updateResult) {
             syncKingdeeCountryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }

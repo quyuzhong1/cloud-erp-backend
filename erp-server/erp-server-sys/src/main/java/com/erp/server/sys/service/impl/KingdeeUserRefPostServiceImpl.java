@@ -92,6 +92,12 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
     public Boolean update(KingdeeUserRefPostDTO.UpdateDTO updateDTO) {
         KingdeeUserRefPostEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶员工任岗单"));
+        String oldOrgId = old.getUseOrgId();
+        String newOrgId = updateDTO.getUseOrgId();
+        if (!oldOrgId.equals(newOrgId)) {
+            throw new ServiceException("组织不能修改");
+        }
+
         KingdeeUserRefPostEntity kingdeeUserRefPostEntity = BeanMapperUtils.map(KingdeeUserRefPostEntity.class, updateDTO);
         kingdeeUserRefPostEntity.setKingdeeId(old.getKingdeeId());
         kingdeeUserRefPostEntity.setCode(old.getCode());
@@ -305,11 +311,23 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
      * 新增修改处理数据
      */
     private void handleData(KingdeeUserRefPostEntity entity) {
+        String id = entity.getId();
         String useOrgId = entity.getUseOrgId();
         SysAccountingCompanyEntity orgInfo = sysAccountingCompanyService.getById(useOrgId);
         if (Objects.isNull(orgInfo)) {
             throw new ServiceException("组织信息不存在");
         }
+        String kingdeePostId = entity.getKingdeePostId();
+        String erpUserId = entity.getErpUserId();
+        int count = this.lambdaQuery().ne(StringUtils.isNotBlank(id), KingdeeUserRefPostEntity::getId, id).
+                eq(KingdeeUserRefPostEntity::getKingdeePostId, kingdeePostId).
+                eq(KingdeeUserRefPostEntity::getErpUserId, erpUserId).
+                eq(KingdeeUserRefPostEntity::getUseOrgId, useOrgId).count();
+        if (count > 0) {
+              throw new ServiceException("该员工该岗位已存在");
+        }
+
+
         entity.setUseOrgName(orgInfo.getCompanyName());
         entity.setUseOrgCode(orgInfo.getCode());
     }

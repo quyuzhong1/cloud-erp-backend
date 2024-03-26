@@ -88,6 +88,12 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
     public Boolean update(KingdeeDepartmentDTO.UpdateDTO updateDTO) {
         KingdeeDepartmentEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶部门不存在"));
+        String oldOrgId = old.getUseOrgId();
+        String newOrgId = updateDTO.getUseOrgId();
+        if (!oldOrgId.equals(newOrgId)) {
+            throw new ServiceException("组织不能修改");
+        }
+
         KingdeeDepartmentEntity kingdeeDepartmentEntity = BeanMapperUtils.map(KingdeeDepartmentEntity.class, updateDTO);
         kingdeeDepartmentEntity.setKingdeeId(old.getKingdeeId());
         kingdeeDepartmentEntity.setKingdeeDeptCode(old.getKingdeeDeptCode());
@@ -226,7 +232,7 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
 
         List<String> parentKingdeeCodeList = list.stream().map(KingdeeDepartmentDTO.PagingViewDTO::getParentKingdeeCode).
                 distinct().collect(Collectors.toList());
-        List<SysDepartmentEntity> erpDeptList = sysDepartmentService.listByIds(erpDeptIdList);
+        List<SysDepartmentEntity> erpDeptList = CollectionUtils.isNotEmpty(erpDeptIdList) ? sysDepartmentService.listByIds(erpDeptIdList) : Collections.emptyList();
 
         List<KingdeeDepartmentEntity> kingdeeDepartmentList = this.listByParentKingdeeCodeList(parentKingdeeCodeList);
         for(KingdeeDepartmentDTO.PagingViewDTO item:list){

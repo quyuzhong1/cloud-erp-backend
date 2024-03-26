@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -98,6 +99,7 @@ public class DictCountryDTO implements Serializable {
          * 国家名称
          */
         @NotBlank(message = "国家二字码不能为空")
+        @Size(max = 10, message = "国家二字码长度不能超过10")
         private String code;
 
         /**
@@ -112,6 +114,10 @@ public class DictCountryDTO implements Serializable {
     @NoArgsConstructor
     public static class UpdateDTO{
 
+
+        @NotBlank(message = "国家不存在")
+        private String id;
+
         /**
          * 国家名称
          */
@@ -122,6 +128,7 @@ public class DictCountryDTO implements Serializable {
          * 国家名称
          */
         @NotBlank(message = "国家二字码不能为空")
+        @Size(max = 10, message = "国家二字码长度不能超过10")
         private String code;
 
         /**

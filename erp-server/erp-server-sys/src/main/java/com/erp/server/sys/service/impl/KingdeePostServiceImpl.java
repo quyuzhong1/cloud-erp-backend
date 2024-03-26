@@ -93,6 +93,12 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
     public Boolean update(KingdeePostDTO.UpdateDTO updateDTO) {
         KingdeePostEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶岗位"));
+        String oldOrgId = old.getUseOrgId();
+        String newOrgId = updateDTO.getUseOrgId();
+        if (!oldOrgId.equals(newOrgId)) {
+            throw new ServiceException("组织不能修改");
+        }
+
         KingdeePostEntity kingdeePostEntity = BeanMapperUtils.map(KingdeePostEntity.class, updateDTO);
         kingdeePostEntity.setKingdeeId(old.getKingdeeId());
         kingdeePostEntity.setCode(old.getCode());
@@ -290,6 +296,7 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
         entity.setKingdeeDeptCode(kingdeeDeptCode);
         entity.setUseOrgCode(orgInfo.getCode());
         int orgNameCount=this.lambdaQuery().eq(KingdeePostEntity::getUseOrgId,useOrgId).
+                eq(KingdeePostEntity::getKingdeeDeptId,kingdeeDeptId).
                 eq(KingdeePostEntity::getName,entity.getName()).
                 ne(StringUtils.isNotBlank(id),KingdeePostEntity::getId,id).
                 count();
