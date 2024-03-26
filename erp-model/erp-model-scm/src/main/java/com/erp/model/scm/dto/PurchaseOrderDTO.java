@@ -206,7 +206,7 @@ public class PurchaseOrderDTO implements Serializable {
         private Integer stockInQty;
 
         /**
-         * 未交货数量/待交货量
+         * 未交货数量/待交货量 srm改为 剩余送货量
          */
         private Integer deliveryQty;
 
