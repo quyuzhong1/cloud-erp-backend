@@ -2285,7 +2285,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public Boolean packingSave(WmsCartonDTO.WmsCartonAdd dto) {
         //待审核的数据可以上传装箱数据
         SoOutstockEntity entity = this.getById(dto.getId());
-        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
+        if (!ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.APPROVE_ING_IS_PACKING);
         }
 
