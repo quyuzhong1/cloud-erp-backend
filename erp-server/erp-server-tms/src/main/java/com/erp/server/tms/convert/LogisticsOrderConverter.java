@@ -110,7 +110,7 @@ public interface LogisticsOrderConverter {
      * @return
      */
     @Mappings({
-            @Mapping(target = "declare_product_code", source = "skuId"),
+            @Mapping(target = "declare_product_code", source = "skuNo"),
             @Mapping(target = "declare_product_name_cn", source = "declareChineseName"),
             @Mapping(target = "declare_product_name_en", source = "declareEnglishName"),
             @Mapping(target = "declare_product_code_qty", source = "quantity"),
@@ -216,7 +216,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "invoiceUnitcharge", source = "price"),
             @Mapping(target = "invoiceCurrencycode", source = "declareCurrency"),
             @Mapping(target = "hsCode", source = "customsCode"),
-            @Mapping(target = "sku", source = "skuId")
+            @Mapping(target = "sku", source = "skuNo")
     })
     WeiShiCreateOrderRequest.ItemArr orderRequestByWeiShi(LogisticsProductVO logisticsProductVO);
 
@@ -340,7 +340,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "unitWeight" ,source = "weight",qualifiedByName = "divideByOneThousandWithThreeDecimal"),
             @Mapping(target = "remark" ,source = "remark"),
             @Mapping(target = "productUrl" ,source = "url"),
-            @Mapping(target = "sku" ,source = "skuId"),
+            @Mapping(target = "sku" ,source = "skuNo"),
             @Mapping(target = "invoiceRemark" ,source = "distributionInfo"),
             @Mapping(target = "currencyCode" ,source = "declareCurrency"),
             @Mapping(target = "invoicePart" ,source = "englishMaterial"),
@@ -466,7 +466,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "nameEN" ,source = "declareEnglishName"),
             @Mapping(target = "price" ,source = "price"),
             @Mapping(target = "qty" ,source = "quantity"),
-            @Mapping(target = "sku" ,source = "skuId"),
+            @Mapping(target = "sku" ,source = "skuNo"),
             @Mapping(target = "weight" ,source = "weight",qualifiedByName = "divideByOneThousandWithThreeDecimal"),
             @Mapping(target = "url" ,source = "url")
     })
