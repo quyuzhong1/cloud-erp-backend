@@ -231,6 +231,7 @@ public class TmsFirstMileLogisticController extends BaseController {
      */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程物流单")
+    @WebAdvanceQuery
     public ApiResult export(@RequestBody @Valid TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
         tmsFirstMileLogisticService.export(pagingParamDTO,response);
         return success();

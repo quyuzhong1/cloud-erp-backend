@@ -458,6 +458,19 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                     pagingVO.setWarnHour(estimatedDay*24 - pagingVO.getActualHour());
                 }
             }
+            pagingVO.setCompleteWeight(pagingVO.getWeight()+pagingVO.getWeightUnit());
+            pagingVO.setCompleteVolumeWeight(pagingVO.getVolumeWeight()+pagingVO.getWeightUnit());
+            pagingVO.setCompleteEstimatedFee(pagingVO.getCurrencySymbol()+(Objects.isNull(pagingVO.getEstimatedFee())?"":pagingVO.getEstimatedFee()));
+            pagingVO.setCompleteActualFee(pagingVO.getCurrencySymbol()+(Objects.isNull(pagingVO.getActualFee())?"":pagingVO.getActualFee()));
+            if(pagingVO.getWarnHour()!=null){
+                if(pagingVO.getWarnHour()> 72){
+                    pagingVO.setWarnMsg("时效正常");
+                }else if(pagingVO.getWarnHour() < 0){
+                    pagingVO.setWarnMsg(StrUtil.format("[]小时后超期",pagingVO.getWarnHour()));
+                }else{
+                    pagingVO.setWarnMsg(StrUtil.format("已超期[]小时",pagingVO.getWarnHour()));
+                }
+            }
         }
     }
 
@@ -805,7 +818,13 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     public void export(TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
-
+        pagingParamDTO.setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(1, Integer.MAX_VALUE,false);
+        pagingParamDTO.setOrderType(OrderTypeEnum.FIRST_MILE.getCode());
+        IPage<TmsFirstMileLogisticDTO.PagingVO> pageData = baseMapper.firstMilePaging(query, pagingParamDTO);
+        List<TmsFirstMileLogisticDTO.PagingVO> list = pageData.getRecords();
+        fillPagingDb(list);
+        ExcelUtil.export("物流单"+ DateUtil.currentYMD(),"物流单",list,TmsFirstMileLogisticDTO.PagingVO.class,response);
     }
 
     @Override
@@ -885,7 +904,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     @Override
     public List<TmsFirstMileLogisticDTO.DeliveryDTO> getCanGenerateDeliveryOrder(TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO dto) {
         FirstMileDeliveryDTO.GenerateLogisticReqDTO reqDto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
-        reqDto.setIds(Arrays.asList(dto.getOutstockId()));
+        if(StringUtils.isNotBlank(dto.getOutstockId())){
+            reqDto.setIds(Arrays.asList(dto.getOutstockId()));
+        }
         reqDto.setPackingStatus(PackingStatusEnum.PACKING.getCode());
         reqDto.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.WAIT.code);
         List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(reqDto);

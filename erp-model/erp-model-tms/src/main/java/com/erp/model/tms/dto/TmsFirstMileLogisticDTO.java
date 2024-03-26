@@ -5,6 +5,9 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
+import com.alibaba.excel.annotation.ExcelProperty;
+import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -531,203 +534,273 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         /**
          * id
          */
+        @ExcelIgnore
         private String id;
 
         /**
          * 运单号
          */
+        @ExcelProperty(value = "运单号")
+        @ColumnWidth(20)
         private String transportNo;
         /**
          * 柜号
          */
+        @ExcelProperty(value = "柜号")
+        @ColumnWidth(20)
         private String counterNo;
 
         /**
          * 业务单号
          */
+        @ExcelProperty(value = "业务单号")
         private String businessCode;
 
         /**
          * 来源id(发货id)
          */
+        @ExcelIgnore
         private String outstockId;
 
         /**
          * 来源单号(发货单号)
          */
+        @ExcelProperty(value = "来源单号(发货单号)")
         private String outstockCode;
 
         /**
          * 物流状态
          */
+        @ExcelIgnore
         private String logisticsStatus;
 
         /**
          * 物流状态名称
          */
+        @ExcelProperty(value = "物流状态")
         private String logisticsStatusName;
         /**
          * 物流轨迹
          */
+        @ExcelProperty(value = "物流轨迹")
         private String logisticsTrack;
 
         /**
          * 发票状态
          */
+        @ExcelIgnore
         private String invoicesStatus;
 
         /**
          * 发票状态名称
          */
+        @ExcelProperty(value = "发票状态")
         private String invoicesStatusName;
 
         /**
          * 对账状态
          */
+        @ExcelIgnore
         private String reconciliationStatus;
 
         /**
          * 对账状态名称
          */
+        @ExcelProperty(value = "对账状态")
         private String reconciliationStatusName;
         /**
          * 运输方式
          */
+        @ExcelIgnore
         private String shippingMethod;
 
         /**
          * 运输方式名称
          */
+        @ExcelProperty(value = "运输方式")
         private String shippingMethodName;
 
         /**
          * 渠道id
          */
+        @ExcelIgnore
         private String logisticsChannelId;
 
         /**
          * 渠道名称
          */
+        @ExcelProperty(value = "渠道名称")
         private String logisticsChannelName;
 
         /**
          * 物流商id
          */
+        @ExcelIgnore
         private String logisticsSupplierId;
 
         /**
          * 物流商名称
          */
+        @ExcelProperty(value = "物流商名称")
         private String logisticsSupplierName;
 
         /**
          * 发货仓库名称
          */
+        @ExcelProperty(value = "发货仓库名称")
         private String fromWarehouseName;
 
         /**
          * 目的仓库名称
          */
+        @ExcelProperty(value = "目的仓库名称")
         private String toWarehouseName;
 
         /**
          * 店铺名称
          */
+        @ExcelProperty(value = "店铺名称")
         private String shopName;
 
         /**
          * 国家
          */
+        @ExcelProperty(value = "国家")
         private String country;
 
         /**
          * 重量
          */
+        @ExcelIgnore
         private BigDecimal weight;
 
         /**
          * 体积重
          */
+        @ExcelIgnore
         private BigDecimal volumeWeight;
 
         /**
          * 重量单位
          */
+        @ExcelIgnore
         private String weightUnit;
+
+        /**
+         * 完整体重描述
+         */
+        @ExcelProperty(value = "重量")
+        private String completeWeight;
+
+        /**
+         * 完整体积重描述
+         */
+        @ExcelProperty(value = "体积重")
+        private String completeVolumeWeight;
 
         /**
          * 预估费用
          */
+        @ExcelIgnore
         private BigDecimal estimatedFee;
 
         /**
          * 实际费用
          */
+        @ExcelIgnore
         private BigDecimal actualFee;
 
         /**
          * 币种
          */
+        @ExcelIgnore
         private String currency;
 
         /**
          * 币种符号
          */
+        @ExcelIgnore
         private String currencySymbol;
+
+        /**
+         * 完整预估费用
+         */
+        @ExcelProperty(value = "预估费用")
+        private String completeEstimatedFee;
+
+        /**
+         * 完整实际费用
+         */
+        @ExcelProperty(value = "实际费用")
+        private String completeActualFee;
 
         /**
          * 下单时间
          */
+        @ExcelProperty(value = "下单时间")
         private LocalDateTime orderTime;
 
         /**
          * 签收时间
          */
+        @ExcelProperty(value = "签收时间")
         private LocalDateTime signTime;
 
         /**
          * 预计时效(天)
          */
+        @ExcelIgnore
         private Integer estimatedDay;
 
         /**
          * 预计时效描述
          */
+        @ExcelProperty(value = "预计时效")
         private String estimatedTimeDesc;
 
         /**
          * 预计时效单位
          */
+        @ExcelIgnore
         private String estimatedTimeUnit;
 
         /**
          * 实际时效(描述)
          */
+        @ExcelProperty(value = "实际时效")
         private String actualDesc;
 
         /**
          * 实际时效（小时数）
          */
+        @ExcelIgnore
         private Integer actualHour;
 
         /**
          * 预警小时数
          */
+        @ExcelIgnore
         private Integer warnHour;
+
+        @ExcelProperty(value = "预警")
+        private String warnMsg;
 
         /**
          * 备注
          */
+        @ExcelProperty(value = "备注")
         private String remark;
 
         /**
          * 收货地址
          */
+        @ExcelIgnore
         private String toAddress;
 
         /**
          * 总箱数
          */
+        @ExcelIgnore
         private Integer boxCount;
     }
     /**
