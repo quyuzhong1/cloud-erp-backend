@@ -190,7 +190,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
         //更新发货单物流状态
         FirstMileDeliveryDTO.UpdateStatusDTO updateDeliveryDto = new FirstMileDeliveryDTO.UpdateStatusDTO();
-        updateDeliveryDto.setId(addDTO.getOutstockId());
+        updateDeliveryDto.setIds(Arrays.asList(addDTO.getOutstockId()));
         updateDeliveryDto.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.FINISH.code);
         if(!wmsFirstMileDeliveryFeign.updateStatus(updateDeliveryDto)){
             throw new ServiceException("发货单更新物流状态失败");
@@ -334,14 +334,14 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         //更新发货单物流状态
         if(!oldOutstockId.equals(updateDTO.getOutstockId())){
             FirstMileDeliveryDTO.UpdateStatusDTO updateOldDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
-            updateOldDTO.setId(oldOutstockId);
+            updateOldDTO.setIds(Arrays.asList(oldOutstockId));
             updateOldDTO.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.WAIT.code);
             if(!wmsFirstMileDeliveryFeign.updateStatus(updateOldDTO)){
                 throw new ServiceException("发货单更新物流状态失败");
             }
 
             FirstMileDeliveryDTO.UpdateStatusDTO updateNewDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
-            updateNewDTO.setId(updateDTO.getOutstockId());
+            updateNewDTO.setIds(Arrays.asList(updateDTO.getOutstockId()));
             updateNewDTO.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.FINISH.code);
             if(!wmsFirstMileDeliveryFeign.updateStatus(updateNewDTO)){
                 throw new ServiceException("发货单更新物流状态失败");
@@ -814,6 +814,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> delete(List<String> ids) {
         List<LogisticsBillEntity> logisticsBillEntityList = listByIds(ids);
         if(CollectionUtils.isEmpty(logisticsBillEntityList)){
@@ -829,6 +830,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         List<String> costIds = new ArrayList<>();
         List<String> costDetailIds = new ArrayList<>();
 
+        List<String> outstockIds = new ArrayList<>();
+
         for(LogisticsBillEntity logisticsBillEntity : logisticsBillEntityList){
             LogisticsBillDetailEntity detailEntity = detailList.stream().filter(v->v.getMainId().equals(logisticsBillEntity.getId())).findFirst().orElse(null);
             if(Objects.nonNull(detailEntity) && !detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.WAIT_ORDER.getCode())){
@@ -836,6 +839,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 continue;
             }
             mainIds.add(logisticsBillEntity.getId());
+            outstockIds.add(logisticsBillEntity.getOutstockId());
             if(Objects.nonNull(detailEntity)){
                 detailIds.add(detailEntity.getId());
             }
@@ -863,6 +867,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
         if(CollectionUtils.isNotEmpty(costDetailIds)){
             logisticsBillCostDetailService.removeByIds(costDetailIds);
+        }
+        if(CollectionUtils.isNotEmpty(outstockIds)){
+            FirstMileDeliveryDTO.UpdateStatusDTO dto = new FirstMileDeliveryDTO.UpdateStatusDTO();
+            dto.setIds(outstockIds);
+            dto.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.WAIT.code);
+            wmsFirstMileDeliveryFeign.updateStatus(dto);
         }
         return resultDTOList;
     }

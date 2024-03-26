@@ -1795,7 +1795,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             return false;
         }
         return this.lambdaUpdate()
-                .eq(FirstMileDeliveryEntity :: getId,dto.getId())
+                .in(FirstMileDeliveryEntity :: getId,dto.getIds())
                 .set(StringUtils.isNotBlank(dto.getLogisticsStatus()),FirstMileDeliveryEntity::getLogisticsStatus, dto.getLogisticsStatus())
                 .set(StringUtils.isNotBlank(dto.getDeclareStatus()),FirstMileDeliveryEntity::getDeclareStatus,dto.getDeclareStatus())
                 .update();
