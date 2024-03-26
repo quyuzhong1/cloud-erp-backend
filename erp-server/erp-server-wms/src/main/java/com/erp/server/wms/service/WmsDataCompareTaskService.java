@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 import java.util.List;
+import java.util.Map;
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -43,6 +44,8 @@ public interface WmsDataCompareTaskService extends SuperService<WmsDataCompareTa
     */
     Boolean update(WmsDataCompareTaskDTO.UpdateDTO dto);
 
+    void dealParseTask(String id , Map<String, List<List<String>>> allDatasMap);
+    
     /**
      * 高级查询分页查询
      * @param dto

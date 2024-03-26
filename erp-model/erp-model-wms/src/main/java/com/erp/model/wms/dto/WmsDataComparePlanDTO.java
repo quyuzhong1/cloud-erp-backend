@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
+
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -77,6 +79,21 @@ public class WmsDataComparePlanDTO implements Serializable {
         private String id;
 
     }
+    
+    /**
+     * 修改
+     */
+     @Data
+     @NoArgsConstructor
+     public static class DeteleDTO  {
+
+         /**
+         * 主键ids
+         */
+         @NotBlank(message = "主键id列表不能为空")
+         private List<@NotBlank(message = "主键id不能为空") String> ids;
+
+     }
     
     /**
      * 新增

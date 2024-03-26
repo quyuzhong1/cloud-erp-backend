@@ -37,6 +37,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -85,6 +86,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 /**
@@ -343,11 +345,10 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 						.set(WmsDataCompareTaskEntity::getSubStatus, WmsDataCompareTaskSubStatusEnum.WAIT_PARSE.getCode()));
 				wmsDataCompareImportService.updateBatchById(wmsDataCompareImportEntityList);
 				
-				List<String> finalHeadFieldList = headFieldList;
 				TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
 		            @Override
 		            public void afterCommit() {
-		            	wmsDataCompareExecutorPool.submit(() -> dealParseTask(id, finalHeadFieldList , allDatasMap));
+		            	wmsDataCompareExecutorPool.submit(() -> dealParseTask(id , allDatasMap));
 		            }
 		        });
 			}else {
@@ -360,11 +361,12 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		return setNextViewDTO;
 	}
 
-	public void dealParseTask(String id ,List<String> headFieldList, Map<String, List<List<String>>> allDatasMap) {
+	@Override
+	public void dealParseTask(String id , Map<String, List<List<String>>> allDatasMap) {
 		String redisKey = "datacompare:task:" + id;
 		try {
 			if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 30, TimeUnit.MINUTES)) {
-				this.parseExcelData(id, headFieldList, allDatasMap);
+				this.parseExcelData(id , allDatasMap);
 				this.compareSystemImportData(id);
 				this.dealUploadResultExcel(id);
 			}else {
@@ -382,15 +384,26 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					.set(WmsDataCompareTaskEntity::getErrorMessage, ExceptionUtil.stacktraceToString(e, 2000))
 					.set(errorCount == 3 , WmsDataCompareTaskEntity::getStatus, WmsDataCompareTaskStatusEnum.ERROR.getCode())
 					.eq(WmsDataCompareTaskEntity::getId, id));
-			if(errorCount == 3) {
-				//TODO 告警
+			if(errorCount >= 3) {
+				String body = "{\r\n" + 
+						"    \"msg_type\": \"text\",\r\n" + 
+						"    \"content\": {\r\n" + 
+						"        \"text\": \"%s\"\r\n" + 
+						"    }\r\n" + 
+						"}";
+				if(BusinessCommonConstants.hasProfile("prod")) {
+					body = String.format(body, "数据对比生产环境告警：" + "任务id=" + id + "处理失败");
+				}else {
+					body = String.format(body, "数据对比测试环境告警：" + "任务id=" + id + "处理失败");
+				}
+				HttpUtil.post("https://open.feishu.cn/open-apis/bot/v2/hook/c76b72f8-0bf9-4967-a9ce-0728767c1ccc", body);
 			}
 		}finally {
 			redisTemplate.delete(redisKey);
 		}
 	}
 	
-	private void parseExcelData(String id ,List<String> headFieldList, Map<String, List<List<String>>> allDatasMap) throws Exception {
+	private void parseExcelData(String id , Map<String, List<List<String>>> allDatasMap) throws Exception {
 		WmsDataCompareTaskEntity wmsDataCompareTaskEntity = getById(id);
 		if(WmsDataCompareTaskSubStatusEnum.WAIT_PARSE.getCode().equals(wmsDataCompareTaskEntity.getSubStatus())) {
 			List<ImportDataMappingDTO> importDataMappingDTOList = JSON.parseArray(wmsDataCompareTaskEntity.getImportDataMapping() , WmsDataComparePlanDTO.ImportDataMappingDTO.class);
