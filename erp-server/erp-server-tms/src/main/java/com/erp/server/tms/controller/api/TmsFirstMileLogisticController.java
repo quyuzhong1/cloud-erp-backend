@@ -13,6 +13,7 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
+import com.erp.server.tms.query.TmsFirstMileLogisticQueryHandler;
 import com.erp.server.tms.service.TmsFirstMileLogisticService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -63,7 +64,7 @@ public class TmsFirstMileLogisticController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = TmsFirstMileLogisticQueryHandler.class)
     public ApiResult<PagingVO<TmsFirstMileLogisticDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<TmsFirstMileLogisticDTO.PagingParamDTO> dto) {
         PagingVO<TmsFirstMileLogisticDTO.PagingVO> pagingVO = tmsFirstMileLogisticService.paging(dto);
         return success(pagingVO);
@@ -232,7 +233,7 @@ public class TmsFirstMileLogisticController extends BaseController {
      */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程物流单")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = TmsFirstMileLogisticQueryHandler.class)
     public ApiResult export(@RequestBody @Valid TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
         tmsFirstMileLogisticService.export(pagingParamDTO,response);
         return success();
@@ -243,7 +244,7 @@ public class TmsFirstMileLogisticController extends BaseController {
      */
     @PostMapping("/exportFeeDetail")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程物流单费用明细")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = TmsFirstMileLogisticQueryHandler.class)
     public ApiResult exportFeeDetail(@RequestBody @Valid TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
         tmsFirstMileLogisticService.exportFeeDetail(pagingParamDTO,response);
         return success();

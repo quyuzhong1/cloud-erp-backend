@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -304,4 +305,6 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     Boolean updateStatus(FirstMileDeliveryDTO.UpdateStatusDTO dto);
 
     List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(FirstMileDeliveryDTO.StatisticsReq dto);
+
+    List<FirstMileDeliveryEntity> advanceQuery(AdvanceQueryContainer advanceQueryContainer);
 }

@@ -396,6 +396,14 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         return new PagingVO<>(pageData);
     }
 
+    @Override
+    public List<TmsFirstMileLogisticDTO.PagingVO> hasWarnPaging(TmsFirstMileLogisticDTO.PagingParamDTO dto) {
+        dto.setOrderType(OrderTypeEnum.FIRST_MILE.getCode());
+        List<TmsFirstMileLogisticDTO.PagingVO> list =  baseMapper.hasWarnPaging(dto);
+        fillPagingDb(list);
+        return list;
+    }
+
     private void fillPagingDb(List<TmsFirstMileLogisticDTO.PagingVO> list) {
         if(CollectionUtils.isEmpty(list)){
             return;

@@ -16,6 +16,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -1805,6 +1806,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Override
     public List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(FirstMileDeliveryDTO.StatisticsReq dto) {
         return baseMapper.logisticStatistics(dto);
+    }
+
+    @Override
+    public List<FirstMileDeliveryEntity> advanceQuery(AdvanceQueryContainer advanceQueryContainer) {
+        return baseMapper.advanceQuery(advanceQueryContainer);
     }
 }
 

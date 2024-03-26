@@ -272,4 +272,13 @@
         group by EXTRACT(month FROM approve_time), EXTRACT(year FROM approve_time)
         order by  EXTRACT(year FROM approve_time), EXTRACT(month FROM approve_time)
     </select>
+    <select id="advanceQuery" resultType="com.erp.model.wms.entity.FirstMileDeliveryEntity">
+        select
+            fmd.*
+        from first_mile_delivery fmd
+                 left join warehouse fw on fmd.delivery_warehouse_id = fw.id and fw.is_deleted =false
+                 left join warehouse tw on fmd.dest_warehouse_id = tw.id and tw.is_deleted = false
+        where   ${params.sqlMap.default}
+            and fmd.is_deleted = false
+    </select>
 </mapper>

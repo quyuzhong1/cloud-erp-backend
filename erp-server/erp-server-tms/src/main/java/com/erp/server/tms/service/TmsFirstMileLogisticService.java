@@ -56,6 +56,8 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
 
     PagingVO<TmsFirstMileLogisticDTO.PagingVO> paging(PagingDTO<TmsFirstMileLogisticDTO.PagingParamDTO> dto);
 
+    List<TmsFirstMileLogisticDTO.PagingVO> hasWarnPaging(TmsFirstMileLogisticDTO.PagingParamDTO dto);
+
     TmsFirstMileLogisticDTO.StatisticsVO statistics();
 
     TmsFirstMileLogisticDTO.ViewDTO view(String id);

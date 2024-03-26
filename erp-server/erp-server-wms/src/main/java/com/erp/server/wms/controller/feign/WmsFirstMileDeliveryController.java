@@ -1,6 +1,9 @@
 package com.erp.server.wms.controller.feign;
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.server.wms.service.FirstMileDeliveryService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -45,5 +48,17 @@ public class WmsFirstMileDeliveryController {
     @PostMapping("/logisticStatistics")
     public List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(@RequestBody FirstMileDeliveryDTO.StatisticsReq dto){
         return firstMileDeliveryService.logisticStatistics(dto);
+    }
+
+
+    /**
+     * 高级查询
+     * @param
+     * @return
+     */
+    @PostMapping("/advanceQuery")
+    @WebAdvanceQuery
+    public List<FirstMileDeliveryEntity> advanceQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer){
+        return firstMileDeliveryService.advanceQuery(advanceQueryContainer);
     }
 }

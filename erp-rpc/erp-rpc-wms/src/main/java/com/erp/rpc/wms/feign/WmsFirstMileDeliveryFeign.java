@@ -1,6 +1,8 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,4 +31,11 @@ public interface WmsFirstMileDeliveryFeign {
      */
     @PostMapping("/feign/firstMileDelivery/logisticStatistics")
     List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(@RequestBody FirstMileDeliveryDTO.StatisticsReq dto);
+
+
+    /**
+     * 高级查询发货单
+     */
+    @PostMapping("/feign/firstMileDelivery/advanceQuery")
+    List<FirstMileDeliveryEntity> advanceQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer);
 }
