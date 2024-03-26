@@ -612,7 +612,10 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
             //填入产品首批量产入库时间
             setFirstMassInstock(ids);
-
+            
+            //更新采购入库单明细对应采购订单明细的执行状态
+            updatePodArrivalState(ids);
+            
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
@@ -626,7 +629,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购入库单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "审核操作");
 
     }
-
 
     private void setFirstMassInstock(List<String> ids) {
         //填入产品首批量产入库时间
@@ -677,6 +679,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
         //更新单据为待提交
         updateApproveStatus(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+        //更新采购入库单明细对应采购订单明细的执行状态
+        updatePodArrivalState(ids);
 
         // 回滚库存
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.PURCHASE_STOCK_IN, ids);
@@ -1792,6 +1797,24 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 SubcontractIssueDTO.AutoAddDTO autoAddDTO = new SubcontractIssueDTO.AutoAddDTO(addDTO, isApprove);
                 subcontractIssueService.autoAdd(autoAddDTO);
             }
+        }
+    }
+
+    /**
+     * @description: 更新采购订单执行状态
+     * @author Will
+     * @date: 2024/3/22 11:56
+     * @param ids
+     */
+    private void updatePodArrivalState (List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listByMainIds(ids);
+        List<String> podIds = poInstockDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(podIds)) {
+            //修改到货状态
+            poReturnService.updateArrivalState(podIds);
         }
     }
 

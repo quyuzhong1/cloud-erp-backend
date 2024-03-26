@@ -382,6 +382,11 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         }
         List<String> skuNoList = successList.stream().map(ProductCertificateExcelDTO::getSkuNo).collect(Collectors.toList());
         List<ProductDetailEntity> skuList = productDetailService.listBySkuNoList(skuNoList);
+        
+        //认证项目
+        List<String> dictProductList = successList.stream().map(obj -> ProductCertificateProjectEnum.getCode(obj.getDictProjectName())).distinct().collect(Collectors.toList());
+        List<String> skuIdList = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+        List<ProductCertificateEntity> productCertificateList = listBySkuListAndDictProductList(skuIdList, dictProductList);
 
         //产品认证
         List<BasicDictEntity> productAttestationList = basicDictService.listByType(BasicDictTypeEnum.PRODUCT_ATTESTATION.getCode());
@@ -447,7 +452,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             entity.setRemark(excelDTO.getRemark());
             //数据验证
             try {
-                checkProductCertificate(Arrays.asList(entity));
+                checkProductCertificateParam(Arrays.asList(entity),skuList,productCertificateList);
             } catch (Exception e) {
                 errorMsgList.add(e.getMessage());
             }
@@ -468,17 +473,19 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     /**
      * 获取MultipartFile
      */
-    private MultipartFile getMulFileByPath(String filePath) {
+    private static MultipartFile getMulFileByPath(String filePath) {
         try {
+           String fileUrl = filePath.replace(" ","%20");
+
             // 打开 URL 连接
-            URL url = new URL(filePath);
+            URL url = new URL(fileUrl);
             URLConnection conn = url.openConnection();
             // 从连接获取输入流
             BufferedInputStream inputStream = new BufferedInputStream(conn.getInputStream());
 
             // 读取输入流中的数据并存储到 ByteArrayOutputStream 中
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[8192];
             int bytesRead;
             while ((bytesRead = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, bytesRead);
@@ -626,6 +633,8 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         }
     }
 
+
+
     /**
      * @description: 验证重复
      * @author Will
@@ -643,6 +652,21 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         List<String> dictProductList = resultList.stream().map(ProductCertificateEntity::getDictProject).distinct().collect(Collectors.toList());
         List<ProductCertificateEntity> productCertificateList = listBySkuListAndDictProductList(skuIdList, dictProductList);
 
+        checkProductCertificateParam(resultList,productDetailEntityList,productCertificateList);
+    }
+
+    /**
+     * @description: 参数传递验证
+     * @author Will
+     * @date: 2024/3/20 12:20
+     * @param resultList
+     * @param productDetailEntityList
+     * @param productCertificateList
+     */
+    private void checkProductCertificateParam (List<ProductCertificateEntity> resultList,List<ProductDetailEntity> productDetailEntityList,List<ProductCertificateEntity> productCertificateList) {
+        if (CollectionUtils.isEmpty(resultList)) {
+            return;
+        }
         Map<String, List<ProductCertificateEntity>> map = resultList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getDictProject())));
         for (Map.Entry<String, List<ProductCertificateEntity>> entry : map.entrySet()) {
             List<ProductCertificateEntity> value = entry.getValue();
@@ -662,7 +686,9 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                 throw new ServiceException(ApiError.ERROR_PRODUCT_CERTIFICATE_EXIST,skuNo, ProductCertificateProjectEnum.getName(value.get(0).getDictProject()));
             }
         }
+
     }
+
     /**
      * @description: 查询认证
      * @author Will
