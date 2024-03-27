@@ -80,6 +80,8 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 String remark = "";
                 if(CollectionUtil.isNotEmpty(yunTuCreateOrders)){
                     remark = yunTuCreateOrders.get(0).getRemark();
+                }else if (StringUtils.isNotEmpty(yunTuResponse.getResultDesc())){
+                    remark = yunTuResponse.getResultDesc();
                 }
                 logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.YUN_TU.getCode(),
