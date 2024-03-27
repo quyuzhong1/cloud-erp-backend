@@ -276,6 +276,11 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
         if (CollectionUtils.isNotEmpty(postList)) {
             throw new ServiceException("该部门下存在任岗信息,无法删除");
         }
+        String kingdeeDeptCode = entity.getKingdeeDeptCode();
+        int count = this.lambdaQuery().eq(KingdeeDepartmentEntity::getParentKingdeeCode, kingdeeDeptCode).count();
+        if (count > 0) {
+            throw new ServiceException("该部门下存在子部门,无法删除");
+        }
 
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶部门不存在"));
         Boolean result = this.removeById(id);

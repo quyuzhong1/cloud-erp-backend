@@ -76,6 +76,7 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
             return Boolean.TRUE;
         }
         entity.setRegionName(regionName);
+        handleData(entity);
         Boolean updateResult = this.updateById(entity);
         if(updateResult){
             syncKingdeeGlobalAreaService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
