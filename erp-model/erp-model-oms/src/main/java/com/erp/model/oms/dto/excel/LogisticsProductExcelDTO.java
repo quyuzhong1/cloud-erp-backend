@@ -112,12 +112,12 @@ public class LogisticsProductExcelDTO {
 
     @ColumnWidth(30)
     @ExcelProperty(value = "第一数量", index = 16)
-    @FieldValid(fieldName = "第一数量" ,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER,maxLength = 16)
+    @FieldValid(fieldName = "第一数量" ,formatPattern = FieldFormatPatternTypeEnum.AMOUNT,maxLength = 16)
     private String firstQtyStr;
 
     @ColumnWidth(30)
     @ExcelProperty(value = "第二数量", index = 17)
-    @FieldValid(fieldName = "第二数量" ,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER,maxLength = 16)
+    @FieldValid(fieldName = "第二数量" ,formatPattern = FieldFormatPatternTypeEnum.AMOUNT,maxLength = 16)
     private String secondQtyStr;
 
 
