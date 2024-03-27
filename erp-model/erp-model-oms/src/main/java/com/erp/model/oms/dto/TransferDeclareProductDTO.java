@@ -62,9 +62,13 @@ public class TransferDeclareProductDTO implements Serializable {
     private String declareEnglishName;
 
     /**
-     * 目的国申报价
+     * 出口申报价/报关申报价
      */
     private BigDecimal declarePrice;
+    /**
+     * 目的国申报价
+     */
+    private BigDecimal destDeclarePrice;
 
     /**
      * 目的国申报币种

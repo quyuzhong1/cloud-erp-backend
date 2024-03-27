@@ -33,8 +33,7 @@ public interface TransferDeclareConverter {
             @Mapping(target = "declareCurrency", source = "currency"),
             @Mapping(target = "amount", ignore = true),
             @Mapping(target = "childOrderId", ignore = true),
-            @Mapping(target = "destCurrencySymbol", source = "currencySymbol"),
-            @Mapping(target = "destDeclarePrice", ignore = true)
+            @Mapping(target = "destCurrencySymbol", source = "currencySymbol")
     })
     LogisticsProductDTO.ProductDTO omsProductToTmsProduct(TransferDeclareProductDTO transferDeclareProductDTO);
 }

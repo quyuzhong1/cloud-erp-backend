@@ -577,15 +577,18 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 }
                 LogisticsProductDTO.ProductDTO productDTO = TransferDeclareConverter.INSTANCE.omsProductToTmsProduct(transferDeclareProductDTO);
                 Integer qty = transferDeclareProductDTO.getQty();
-                BigDecimal price = transferDeclareProductDTO.getDeclarePrice();
-                productDTO.setAmount(MathUtil.multiply(price, qty));
+                //目的国申报价
+                BigDecimal destDeclarePrice = transferDeclareProductDTO.getDestDeclarePrice();
+                //报关申报价
+                BigDecimal declarePrice = transferDeclareProductDTO.getDeclarePrice();
+                productDTO.setAmount(MathUtil.multiply(declarePrice, qty));
                 //目的国申报价
                 //表示最大的报关价还小于 目的过申报价
-                if (Objects.nonNull(price) && maxCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && maxCustomsAmount.compareTo(price) < 0) {
+                if (Objects.nonNull(destDeclarePrice) && maxCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && maxCustomsAmount.compareTo(destDeclarePrice) < 0) {
                     productDTO.setDestDeclarePrice(maxCustomsAmount);
                 }
                 //表示最小的报关价还小于 目的过申报价
-                if (Objects.nonNull(price) && minCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && price.compareTo(minCustomsAmount) < 0) {
+                if (Objects.nonNull(destDeclarePrice) && minCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && destDeclarePrice.compareTo(minCustomsAmount) < 0) {
                     productDTO.setDestDeclarePrice(minCustomsAmount);
                 }
                 productDTO.setCustomsCode(customCode);
