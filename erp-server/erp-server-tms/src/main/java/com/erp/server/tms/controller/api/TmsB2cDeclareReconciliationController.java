@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -15,6 +16,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
+import com.erp.server.tms.query.TmsB2cDeclareReconciliationQueryHandler;
 import com.erp.server.tms.service.TmsB2cDeclareReconciliationDetailService;
 import com.erp.server.tms.service.TmsB2cDeclareReconciliationService;
 import lombok.extern.slf4j.Slf4j;
@@ -85,7 +87,7 @@ public class TmsB2cDeclareReconciliationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:tmsB2cDeclareReconciliation:paging",
-            tableAlias = ""
+            tableAlias = "tbdr"
     )
     public ApiResult<List<TmsB2cDeclareReconciliationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(tmsB2cDeclareReconciliationService.tabList(dto));
@@ -102,8 +104,9 @@ public class TmsB2cDeclareReconciliationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:tmsB2cDeclareReconciliation:paging",
-            tableAlias = ""
+            tableAlias = "tbdr"
     )
+    @WebAdvanceQuery(handler = TmsB2cDeclareReconciliationQueryHandler.class)
     public ApiResult<PagingVO<TmsB2cDeclareReconciliationDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<TmsB2cDeclareReconciliationDTO.PagingParamDTO> dto) {
         return success(tmsB2cDeclareReconciliationService.paging(dto));
     }
@@ -349,6 +352,7 @@ public class TmsB2cDeclareReconciliationController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "b2c报关对账单导出Excel数据")
+    @WebAdvanceQuery(handler = TmsB2cDeclareReconciliationQueryHandler.class)
     public void exportList(@RequestBody @Validated TmsB2cDeclareReconciliationDTO.ExportDTO dto, HttpServletResponse response) {
         tmsB2cDeclareReconciliationService.exportList(dto, response);
     }

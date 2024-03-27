@@ -148,17 +148,18 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         TmsB2cDeclareReconciliationDTO.PagingParamDTO searchParam = new TmsB2cDeclareReconciliationDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
         List<TmsB2cDeclareReconciliationDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        if (CollUtil.isEmpty(list)) {
+            list.stream().forEach(obj -> obj.setTabFlagName(ApproveStatusEnum.getName(obj.getTabFlag())));
+        }
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
         // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(TmsB2cDeclareReconciliationDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new TmsB2cDeclareReconciliationDTO.TabListDTO(status, 0));
+            list.add(new TmsB2cDeclareReconciliationDTO.TabListDTO(status,ApproveStatusEnum.getName(status), 0));
         }
         });
-        list.add(new TmsB2cDeclareReconciliationDTO.TabListDTO("all", list.stream().mapToInt(TmsB2cDeclareReconciliationDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
         return list;
     }
 

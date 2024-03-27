@@ -2,10 +2,13 @@ package com.erp.model.tms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.tms.enums.TmsB2cDeclareReconciliationImportEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -424,6 +427,39 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
          */
         @NotBlank(message = "对账状态不能为空")
         private String status;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExcelImportDTO {
+
+        /**
+         * 导入类型，standard标准，config配置
+         */
+        @NotNull(message = "导入类型不能为空")
+        private TmsB2cDeclareReconciliationImportEnum typeEnum;
+
+
+        /**
+         * 导入文件
+         */
+        @NotNull(message = "导入文件不能为空")
+        private MultipartFile excelFile;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+
+        /**
+         * 成功返回数据
+         */
+        private List<TmsB2cDeclareReconciliationDetailDTO.ViewDTO> successList;
+
+        /**
+         * 错误url
+         */
+        private String errorUrl;
     }
 
 }

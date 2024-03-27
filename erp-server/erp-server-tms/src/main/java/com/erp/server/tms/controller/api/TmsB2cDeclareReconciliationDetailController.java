@@ -12,19 +12,25 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.server.tms.query.TmsB2cDeclareReconciliationDetailQueryHandler;
 import com.erp.server.tms.service.TmsB2cDeclareReconciliationDetailService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,7 +49,13 @@ public class TmsB2cDeclareReconciliationDetailController extends BaseController 
     @Resource
     private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
 
-
+    /**
+     * 分页查询
+     * @author Will
+     * @date: 2024/3/27 14:18
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -86,5 +98,49 @@ public class TmsB2cDeclareReconciliationDetailController extends BaseController 
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+    /**
+     * 下载模板
+     * @author Will
+     * @date: 22024/3/27 18:22
+     * @param request
+     * @param response
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载报关对账单模板")
+    @GetMapping("/exportExcelTemplate")
+    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/declareReconciliationDetailTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+        return success();
+    }
 
+    /**
+     * 导入对账单
+     * @author Will
+     * @date: 2024/3/27 11:30
+     * @param excelImportDTO
+     * @param response
+     * @return ApiResult<ImportDTO>
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入对账单明细")
+    @PostMapping("/importFile")
+    public ApiResult<TmsB2cDeclareReconciliationDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated TmsB2cDeclareReconciliationDetailDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+        TmsB2cDeclareReconciliationDetailDTO.ImportDTO importDTO = tmsB2cDeclareReconciliationDetailService.importFile(excelImportDTO, response);
+        return success(importDTO);
+    }
 }
