@@ -1,5 +1,5 @@
 package com.erp.server.tms.mapper;
-import com.erp.model.tms.entity.TmsB2cDeclareReconciliationCostEntity;
+import com.erp.model.tms.entity.TmsReconciliationCostEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -14,6 +14,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2024-03-26
  */
 @Mapper
-public interface TmsB2cDeclareReconciliationCostMapper extends BaseMapper<TmsB2cDeclareReconciliationCostEntity> {
+public interface TmsReconciliationCostMapper extends BaseMapper<TmsReconciliationCostEntity> {
 
 }
