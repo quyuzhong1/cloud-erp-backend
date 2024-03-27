@@ -473,7 +473,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
     	 * 出库日期查询条件
     	 */
     	 @ExcelIgnore
-    	private List<LocalDate> billDateList;
+    	private List<LocalDateTime> billDateList;
     	
     	/**
     	 *  销售单号查询条件
@@ -567,7 +567,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
      	  * 签收日期查询条件
      	  */
      	@ExcelIgnore
-     	 private List<LocalDate> receiveDateList;
+     	 private List<LocalDateTime> receiveDateList;
      	 
       }
 
@@ -623,7 +623,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
       	  * 出库日期查询条件
       	  */
       	@ExcelIgnore
-      	private List<LocalDate> receiveDateList;
+      	private List<LocalDateTime> receiveDateList;
       	 
        }
        

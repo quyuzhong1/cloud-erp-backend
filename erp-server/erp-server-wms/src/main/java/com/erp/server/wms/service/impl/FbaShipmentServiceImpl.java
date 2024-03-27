@@ -1815,16 +1815,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 	@Override
 	public List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO> getDataCompareByCondition(
 			com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO params) {
-		if(CollUtil.isEmpty(params.getReceiveDateList()) && StringUtils.isNotBlank(params.getReceiveDate())) {
-			String[] receiveDates = params.getReceiveDate().split(",");
-			if(receiveDates.length > 1) {
-				List<LocalDate> receiveDateList = new ArrayList<>(receiveDates.length);
-				for(String billDate : receiveDates) {
-					receiveDateList.add(LocalDateUtil.parseStrToLocalDate(billDate));
-				}
-				params.setReceiveDateList(receiveDateList);
-			}
-		}
 		if(CollUtil.isEmpty(params.getReceiveDateList())) {
 			throw new ServiceException("FBA货件签收的系统数据范围【签收日期】不能为空");
 		}

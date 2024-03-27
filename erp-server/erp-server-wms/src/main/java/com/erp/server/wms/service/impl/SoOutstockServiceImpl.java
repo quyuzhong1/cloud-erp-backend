@@ -2263,16 +2263,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 			throw new ServiceException("销售出库单的系统数据范围【销售平台】不能为空");
 		}
 		
-		if(CollUtil.isEmpty(params.getBillDateList()) && StringUtils.isNotBlank(params.getBillDate())) {
-			String[] billDates = params.getBillDate().split(",");
-			if(billDates.length > 1) {
-				List<LocalDate> billDateList = new ArrayList<>(billDates.length);
-				for(String billDate : billDates) {
-					billDateList.add(LocalDateUtil.parseStrToLocalDate(billDate));
-				}
-				params.setBillDateList(billDateList);
-			}
-		}
 		if(CollUtil.isEmpty(params.getBillDateList())) {
 			throw new ServiceException("销售出库单的系统数据范围【出库日期】不能为空");
 		}

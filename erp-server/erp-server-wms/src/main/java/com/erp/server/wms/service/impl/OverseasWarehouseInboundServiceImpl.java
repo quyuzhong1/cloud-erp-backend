@@ -1217,16 +1217,6 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
     @Override
 	public List<OverseasInboundDTO> getDataCompareByCondition(OverseasInboundDTO params) {
-		if(CollUtil.isEmpty(params.getReceiveDateList()) && StringUtils.isNotBlank(params.getReceiveTime())) {
-			String[] receiveTimes = params.getReceiveTime().split(",");
-			if(receiveTimes.length > 1) {
-				List<LocalDate> receiveTimeList = new ArrayList<>(receiveTimes.length);
-				for(String billDate : receiveTimes) {
-					receiveTimeList.add(LocalDateUtil.parseStrToLocalDate(billDate));
-				}
-				params.setReceiveDateList(receiveTimeList);
-			}
-		}
 		if(CollUtil.isEmpty(params.getReceiveDateList())) {
 			throw new ServiceException("第三方仓货件签收的系统数据范围【签收日期】不能为空");
 		}
