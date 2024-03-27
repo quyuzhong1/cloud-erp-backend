@@ -254,7 +254,13 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }
-        return BeanMapperUtils.copyList(WarehouseDTO.UpdateDTO.class, list);
+        List<WarehouseDTO.UpdateDTO> resultList = new ArrayList<>();
+        for (WarehouseEntity warehouseEntity : list) {
+            WarehouseDTO.UpdateDTO updateDTO = BeanMapperUtils.map(WarehouseDTO.UpdateDTO.class, warehouseEntity);
+            updateDTO.setApproveStatusEnum(warehouseEntity.getApproveStatus());
+            resultList.add(updateDTO);
+        }
+         return resultList;
     }
 
     /**
