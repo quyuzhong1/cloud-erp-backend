@@ -76,17 +76,17 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
     public static class ListDTO {
 
         /**
-        * 主键id
+        * 主键id【可排序】
         */
         private String  id;
 
         /**
-        * 对账单号
+        * 对账单号【可排序】
         */
         private String code;
 
         /**
-        * 审核状态
+        * 审核状态【可排序】
         */
         private String approveStatus;
 
@@ -96,37 +96,37 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
         private String approveStatusName;
 
         /**
-        * 审核人id
+        * 审核人id【可排序】
         */
         private String approveUserId;
 
         /**
-        * 审核人名称
+        * 审核人名称【可排序】
         */
         private String approveUserName;
 
         /**
-        * 生成对账日期
+        * 生成对账日期【可排序】
         */
         private LocalDate reconciliationDate;
 
         /**
-        * 提交日期
+        * 提交日期【可排序】
         */
         private LocalDate submitDate;
 
         /**
-        * 提交日期
+        * 提交日期【可排序】
         */
         private LocalDate approveDate;
 
         /**
-        * 对账开始日期
+        * 对账开始日期【可排序】
         */
         private LocalDate startDate;
 
         /**
-        * 对账结束日期
+        * 对账结束日期【可排序】
         */
         private LocalDate endDate;
 
@@ -136,17 +136,17 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
         private String cycle;
 
         /**
-        * 物流商Id
+        * 物流商Id【可排序】
         */
         private String logisticsSupplierId;
 
         /**
-        * 物流商名称
+        * 物流商名称【可排序】
         */
         private String logisticsSupplierName;
 
         /**
-        * 币别
+        * 币别【可排序】
         */
         private String currency;
 
@@ -161,33 +161,37 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
         private BigDecimal exchangeRate;
 
         /**
-        * 费用合计
+        * 费用合计【可排序】
         */
         private BigDecimal totalCost;
 
         /**
-        * 审核不通过原因
+        * 审核不通过原因【可排序】
         */
         private String reason;
 
         /**
-         * 实际物流费用
+         * 实际物流费用【可排序】
          */
         private BigDecimal actualShippingCost;
 
         /**
-         * 实际报关费
+         * 实际报关费【可排序】
          */
         private BigDecimal actualDeclareCost;
 
         /**
-         * 实际其他费
+         * 实际其他费【可排序】
          */
         private BigDecimal actualOtherCost;
 
+        /**
+         * 实际计费重【可排序】
+         */
+        private BigDecimal actualBillingWeight;
 
         /**
-         * 实际重量单位
+         * 实际重量单位【可排序】
          */
         private String actualWeightUnit;
 

@@ -301,16 +301,27 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         List<String> soCodeList = successList.stream().map(DeclareReconciliationStandardExcelDTO::getSoCode).collect(Collectors.toList());
         List<TransferDeclareDetailEntity> transferDeclareDetailList = transferDeclareDetailService.listBySoCodeList(soCodeList);
 
+        //原对账明细信息
+        List<TmsB2cDeclareReconciliationDetailEntity> oldList = this.listBySoCodeList(soCodeList);
+
         //配置信息
         List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> erpFieldList = cfgReconciliationFieldService.erpFieldList(Arrays.asList(DictBasicEnum.CFG_B2C_DECLARE_ERP_FIELD.getType()));
 
-        for (DeclareReconciliationStandardExcelDTO excelDTO : successList) {
-             List<String> errorMsgList = new ArrayList<>();
-            TransferDeclareDetailEntity transferDeclareDetail = transferDeclareDetailList.stream().filter(obj -> StrUtil.equals(obj.getSoCode(), excelDTO.getSoCode())).findFirst().orElse(null);
-            if( ObjectUtil.isEmpty(transferDeclareDetail))  {
-                errorMsgList.add("未找到销售订单对应中专报关单明细");
+        Map<String, List<DeclareReconciliationStandardExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(DeclareReconciliationStandardExcelDTO::getSoCode));
+        for ( Map.Entry<String, List<DeclareReconciliationStandardExcelDTO>> entry : map.entrySet()) {
+            List<DeclareReconciliationStandardExcelDTO> value = entry.getValue();
+            for (DeclareReconciliationStandardExcelDTO excelDTO : value) {
+                List<String> errorMsgList = new ArrayList<>();
+                TransferDeclareDetailEntity transferDeclareDetail = transferDeclareDetailList.stream().filter(obj -> StrUtil.equals(obj.getSoCode(), excelDTO.getSoCode())).findFirst().orElse(null);
+                if( ObjectUtil.isEmpty(transferDeclareDetail))  {
+                    errorMsgList.add("未找到销售订单对应中专报关单明细");
+                }
+                CfgReconciliationFieldDTO.ErpFieldDropDownDTO erpFieldDropDownDTO = erpFieldList.stream().filter(obj -> StrUtil.equals(obj.getErpFieldName(), excelDTO.getCostName())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(erpFieldDropDownDTO)) {
+
+                }
+
             }
-            CfgReconciliationFieldDTO.ErpFieldDropDownDTO erpFieldDropDownDTO = erpFieldList.stream().filter(obj -> StrUtil.equals(obj.getErpFieldName(), excelDTO.getCostName())).findFirst().orElse(null);
         }
 
         return resultList;
@@ -319,6 +330,19 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     private TmsB2cDeclareReconciliationDetailDTO.ImportDTO importConfigFile(MultipartFile excelFile) {
         TmsB2cDeclareReconciliationDetailDTO.ImportDTO importDTO = new TmsB2cDeclareReconciliationDetailDTO.ImportDTO();
         return importDTO;
+    }
+    
+    /**
+     * @description: 根据销售订单编码集合查询
+     * @author Will
+     * @date: 2024/3/27 15:53
+     * @param soCodeList 
+     */
+    private List<TmsB2cDeclareReconciliationDetailEntity> listBySoCodeList (List<String> soCodeList) {
+        if (CollectionUtils.isEmpty(soCodeList)) {
+            return Collections.EMPTY_LIST;
+        }
+       return lambdaQuery().in(TmsB2cDeclareReconciliationDetailEntity::getSoCode,soCodeList).list();
     }
 
     /**

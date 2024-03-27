@@ -1,9 +1,10 @@
 package com.erp.server.tms.query;
 
-import com.common.business.enums.QueryConditionEnum;
-import com.common.business.enums.QueryDataTypeEnum;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.query.AbstractQueryHandler;
 import org.springframework.stereotype.Component;
+
+import java.util.Collections;
 
 @Component
 public class TmsB2cDeclareReconciliationQueryHandler extends AbstractQueryHandler {
@@ -11,17 +12,37 @@ public class TmsB2cDeclareReconciliationQueryHandler extends AbstractQueryHandle
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if(field.equals("tab")){
-            if("all".equals(value.toString())){
-                return this.getQueryAllSql();
-            }
-            if("registered".equals(value.toString())){
-                this.buildDefaultDTO("pr.status","registered");
-            }else if ("notRegister".equals(value.toString())){
-                this.buildSplicingSQLDTO("pr.status", QueryConditionEnum.NE,"registered", QueryDataTypeEnum.STRING);
-            }
+        if("tab".equals(field)){
+            return getTabSql(value);
         }
         return null;
+    }
+
+    /**
+     * @description: tabSql拼接
+     * @author Will
+     * @date: 2024/1/18 19:58
+     * @param value
+     * @return String
+     */
+    public String getTabSql (Object value) {
+        // 待提交
+        if (ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(value)) {
+            super.buildDefaultDTO("si.approve_status", Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
+        }
+        // 待审核
+        if (ApproveStatusEnum.APPROVE_ING.getCode().equals(value)) {
+            super.buildDefaultDTO("si.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+        }
+        // 已审核
+        if (ApproveStatusEnum.APPROVE.getCode().equals(value)) {
+            super.buildDefaultDTO("si.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+        }
+        //不通过
+        if (ApproveStatusEnum.REJECT.getCode().equals(value)) {
+            super.buildDefaultDTO("si.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
+        }
+        return super.getSplicingSQL();
     }
 }
 

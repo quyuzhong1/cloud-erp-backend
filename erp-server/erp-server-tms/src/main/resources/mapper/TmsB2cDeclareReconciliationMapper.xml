@@ -31,29 +31,34 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        code,
-        approve_status,
-        approve_user_id,
-        approve_user_name,
-        reconciliation_date,
-        submit_date,
-        approve_date,
-        start_date,
-        end_date,
-        logistics_supplier_id,
-        logistics_supplier_name,
-        currency, exchange_rate,
-        total_cost,
-        reason
+        tbdr.id,
+        tbdr.create_user_id as createUserId,
+        tbdr.create_user_name as createUserName,
+        tbdr.create_time as createTime,
+        tbdr.update_user_id as updateUserId,
+        tbdr.update_user_name as updateUserName,
+        tbdr.update_time as updateTime,
+        tbdr.version,
+        tbdr.is_deleted as isDeleted,
+        tbdr.code,
+        tbdr.approve_status as approveStatus,
+        tbdr.approve_user_id as approveUserId,
+        tbdr.approve_user_name as approveUserName,
+        tbdr.reconciliation_date as reconciliationDate,
+        tbdr.submit_date as submitDate,
+        tbdr.approve_date as approveDate,
+        tbdr.start_date as startDate,
+        tbdr.end_date as endDate,
+        tbdr.logistics_supplier_id as logisticsSupplierId,
+        tbdr.logistics_supplier_name as logisticsSupplierName,
+        tbdr.currency, exchange_rate as exchangeRate,
+        tbdr.total_cost as totalCost,
+        tbdr.reason,
+        tbdrd.actualBillingWeight,
+        tbdrd.actualWeightUnit,
+        tbdrd.actualShippingCost,
+        tbdrd.actualDeclareCost,
+        tbdrd.actualOtherCost
     </sql>
 
     <!-- 分页查询 -->
@@ -61,6 +66,16 @@
         select
                <include refid="Base_Column_List" />
         from tms_b2c_declare_reconciliation tbdr
+        left join (
+            select
+                   sum(actual_billing_weight) as actualBillingWeight,
+                   max(actual_weight_unit) as actualWeightUnit,
+                   sum(actual_shipping_cost) as actualShippingCost,
+                   sum(actual_declare_cost) as actualDeclareCost,
+                   sum(actual_other_cost) as actualOtherCost,
+                   main_id
+            from tms_b2c_declare_reconciliation_detail where is_deleted = false group by main_id
+        ) tbdrd on tbdr.id = tbdrd.main_id
         <where>
             ${params.sqlMap.default}
             and tbdr.is_deleted = false

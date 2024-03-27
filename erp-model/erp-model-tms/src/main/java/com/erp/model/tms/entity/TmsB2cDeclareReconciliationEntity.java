@@ -1,15 +1,17 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 
 /**
@@ -54,12 +56,12 @@ public class TmsB2cDeclareReconciliationEntity extends BaseEntity<TmsB2cDeclareR
     /**
     * 提交日期
     */
-    @TableField("submit_date")
+    @TableField(value = "submit_date",updateStrategy = FieldStrategy.IGNORED)
     private LocalDate submitDate;
     /**
     * 提交日期
     */
-    @TableField("approve_date")
+    @TableField(value = "approve_date",updateStrategy = FieldStrategy.IGNORED)
     private LocalDate approveDate;
     /**
     * 对账开始日期
