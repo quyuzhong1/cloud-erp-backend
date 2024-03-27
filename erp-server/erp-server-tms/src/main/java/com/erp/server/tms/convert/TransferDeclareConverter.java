@@ -27,7 +27,7 @@ public interface TransferDeclareConverter {
     List<TransferLogisticsCreateOrderReq.ProductDetail> declareProductEntityToCreateOrderReq(List<TransferDeclareProductEntity> declareProductEntity);
 
     @Mappings({
-            @Mapping(target = "price", source = "declarePrice"),
+            @Mapping(target = "price", source = "destDeclarePrice"),
             @Mapping(target = "declarePrice", source = "declarePrice"),
             @Mapping(target = "quantity", source = "qty"),
             @Mapping(target = "declareCurrency", source = "currency"),

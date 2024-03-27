@@ -598,7 +598,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "invoiceCnName",source = "declareChineseName"),
             @Mapping(target = "invoiceQuantity",source = "quantity"),
             @Mapping(target = "unitCode", constant = "PCE"),
-            @Mapping(target = "invoiceUnitCharge",source = "price",qualifiedByName = "bigDecimalToStr"),
+            @Mapping(target = "invoiceUnitCharge",source = "destDeclarePrice",qualifiedByName = "bigDecimalToStr"),
             @Mapping(target = "hsCode",source = "customsCode"),
             @Mapping(target = "invoiceMaterial",source = "englishMaterial"),
             @Mapping(target = "invoiceNote",source = "distributionInfo"),
