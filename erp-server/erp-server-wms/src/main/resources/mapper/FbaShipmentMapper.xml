@@ -126,28 +126,30 @@
     </select>
     
     <select id="getDataCompareByCondition" resultType="com.erp.model.wms.dto.WmsDataCompareTaskDTO$FbaShipmentDTO">
-		 SELECT g.id,T.code,
+		 SELECT h.id,T.code,
 			T.shop_name,
 			G.sku_no,
 			G.msku,
-			G.receive_qty::VARCHAR receive_qty,
-			TO_CHAR(G.receive_date , 'YYYY-MM-DD') receive_date
+			h.receive_qty::VARCHAR receive_qty,
+			TO_CHAR(h.receive_date , 'YYYY-MM-DD') receive_date
 		FROM
 			fba_shipment
 			T LEFT JOIN fba_shipment_detail G ON T.ID = G.main_id 
+			left join fba_shipment_receive h on g.id = h.detail_id 
 		WHERE
 			T.is_deleted = 'f' 
 			AND G.is_deleted = 'f' 
+			and h.is_deleted = 'f' 
 			<if test="params.receiveDateList !=null and params.receiveDateList.size>0">
-            AND g.receive_date >= #{params.receiveDateList[0]} and
+            AND h.receive_date >= #{params.receiveDateList[0]} and
             (#{params.receiveDateList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > g.receive_date
+            DAY' ) > h.receive_date
         	</if>
         	<if test="params.shopName!=null and params.shopName!=''">
             AND t.shop_name = #{params.shopName}
         	</if>
 			<if test="params.id!=null and params.id!=''">
-            and not exists (select id from wms_data_compare_temp where system_data_id = g.id and task_id = #{params.id})
+            and not exists (select id from wms_data_compare_temp where system_data_id = h.id and task_id = #{params.id})
         	</if>
     </select>
 </mapper>

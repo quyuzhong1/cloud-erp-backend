@@ -297,9 +297,8 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				WmsDataCompareUtils.compareExcelIndexList(importDataMappingDTOList, headFieldList);
 				importDataMapping = JSON.toJSONString(importDataMappingDTOList);
 				
-				Set<String> pkValueSet = new HashSet<>(); 
 				Map<String, Integer> pkValueSameCountMaps = new HashMap<>();
-				List<Integer> excelPkIndexList = importDataMappingDTOList.stream().map(ImportDataMappingDTO::getHeadIndex).collect(Collectors.toList());
+				List<Integer> excelPkIndexList = importDataMappingDTOList.stream().filter(i -> i.getPkFlag() != null && i.getPkFlag()).map(ImportDataMappingDTO::getHeadIndex).collect(Collectors.toList());
 				for(Map.Entry<String, List<List<String>>> allDatas : allDatasMap.entrySet()) {
 					for(List<String> data : allDatas.getValue()) {
 						String pkValue = excelPkIndexList.stream().map(index -> {
@@ -309,30 +308,30 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 							}
 							return d;
 						}).collect(Collectors.joining("-"));
-						if(pkValueSet.contains(pkValue)) {
-							Integer sameCount = pkValueSameCountMaps.get(pkValue);
-							if(sameCount == null) {
-								pkValueSameCountMaps.put(pkValue, 1);
-							}else {
-								pkValueSameCountMaps.put(pkValue, sameCount + 1);
-							}
-						}else {
-							pkValueSet.add(pkValue);
+						Integer sameCount = 1;
+						if(pkValueSameCountMaps.containsKey(pkValue)) {
+							sameCount = pkValueSameCountMaps.get(pkValue) + 1;
 						}
+						pkValueSameCountMaps.put(pkValue, sameCount);
 					}
 				}
 				
+				List<String> errMessageList = new ArrayList<>();
 				if(pkValueSameCountMaps.size() > 0) {
-					List<String> errMessageList = new ArrayList<>();
 					for(Map.Entry<String, Integer> pkValueSameCountMap : pkValueSameCountMaps.entrySet()) {
-						StringBuffer sb = new StringBuffer();
-						sb.append("唯一键值[");
-						sb.append(pkValueSameCountMap.getKey());
-						sb.append("]，重复[");
-						sb.append(pkValueSameCountMap.getValue());
-						sb.append("]行");
-						errMessageList.add(sb.toString());
+						Integer value = pkValueSameCountMap.getValue();
+						if(value > 1) {
+							StringBuffer sb = new StringBuffer();
+							sb.append("唯一键值[");
+							sb.append(pkValueSameCountMap.getKey());
+							sb.append("]，重复[");
+							sb.append(value);
+							sb.append("]行");
+							errMessageList.add(sb.toString());
+						}
 					}
+				}
+				if(CollUtil.isNotEmpty(errMessageList)) {
 					setNextViewDTO.setErrMessageList(errMessageList);
 					return setNextViewDTO;
 				}
@@ -455,10 +454,16 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 							for(ImportDataMappingDTO importDataMappingDTO : importDataMappingDTOList) {
 								Integer headIndex = importDataMappingDTO.getHeadIndex();
 								if(headIndex != null) {
-									Method method = compareDTO.getClass().getMethod("set" + StringUtils.capitalize(importDataMappingDTO.getSystemField()) , String.class);
+									String systemField = importDataMappingDTO.getSystemField();
+									Method method = compareDTO.getClass().getMethod("set" + StringUtils.capitalize(systemField) , String.class);
 									String excelValue = p.get(headIndex);
 									if(excelValue == null) {
 										excelValue = "";
+									}
+									if(StringUtils.isNotBlank(excelValue)) {
+										if(systemField.endsWith("Date") || systemField.endsWith("Time")) {
+											excelValue = DateUtil.format(DateUtil.parse(excelValue), "yyyy-MM-dd");
+										}
 									}
 									method.invoke(compareDTO, excelValue);
 									if(importDataMappingDTO.getPkFlag() != null && importDataMappingDTO.getPkFlag()) {
@@ -498,7 +503,6 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				List<ImportDataMappingDTO> importDataMappingDTOList = JSON.parseArray(wmsDataCompareTaskEntity.getImportDataMapping() , WmsDataComparePlanDTO.ImportDataMappingDTO.class);
 				List<ImportDataMappingDTO> pkImportDataMappingDTOList = importDataMappingDTOList.stream().filter(i -> i.getPkFlag() != null && i.getPkFlag()).collect(Collectors.toList());
 				importDataMappingDTOList = importDataMappingDTOList.stream().filter(i -> i.getPkFlag() == null || !i.getPkFlag()).collect(Collectors.toList());
-				List<String> pkFieldValueList = new ArrayList<>();
 				Map<String, List<Object>> pkFieldValueSystemDataMaps = new HashMap<>();
 				dataCompareByConditionList.forEach(d -> {
 					StringBuffer sb = new StringBuffer();
@@ -518,10 +522,9 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					String pkFieldValue = sb.length() > 0 ? sb.toString().substring(1) : "";
 					List<Object> datas = pkFieldValueSystemDataMaps.get(pkFieldValue);
 					if(CollUtil.isEmpty(datas)) {
-						pkFieldValueList.add(pkFieldValue);
 						datas = new ArrayList<>();
-						datas.add(d);
 					}
+					datas.add(d);
 					pkFieldValueSystemDataMaps.put(pkFieldValue, datas);
 				});
 				
@@ -531,7 +534,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				Map<String, WmsDataCompareTempEntity> pkFieldValueImportDataMaps = wmsDataCompareTempService.list(Wrappers.<WmsDataCompareTempEntity>lambdaQuery()
 						.eq(WmsDataCompareTempEntity::getTaskId, id)
 						.eq(WmsDataCompareTempEntity::getMainDataType, WmsDataCompareTempMainDataTypeEnum.IMPORT.getCode())
-						.in(WmsDataCompareTempEntity::getPkFieldValue, pkFieldValueList))
+						.in(WmsDataCompareTempEntity::getPkFieldValue, pkFieldValueSystemDataMaps.keySet()))
 						.stream().collect(Collectors.toMap(WmsDataCompareTempEntity::getPkFieldValue, w -> w));
 				List<WmsDataCompareTempEntity> insertOrUpdateTempEntity = new ArrayList<>();
 				for(Map.Entry<String, List<Object>> pkFieldValueSystemDataMap : pkFieldValueSystemDataMaps.entrySet()) {
@@ -540,7 +543,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					WmsDataCompareTempEntity wmsDataCompareTempEntity = pkFieldValueImportDataMaps.get(pkFieldValue);
 					if(wmsDataCompareTempEntity != null) {
 						Object systemDataDto = systemDataList.get(0);
-						if(systemDataList.size() == 0) {
+						if(systemDataList.size() == 1) {
 							systemDataList = new ArrayList<>();
 						}else {
 							systemDataList = systemDataList.subList(1, systemDataList.size());
@@ -580,8 +583,10 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 							wmsDataCompareTempEntity.setCompareResult(WmsDataCompareTempCompareResultEnum.SAME.getCode());
 							resultSameCount = resultSameCount + 1;
 						}
+						wmsDataCompareTempEntity.setSystemDataJson(JSON.toJSONString(systemDataDto));
 						wmsDataCompareTempEntity.setSystemDataId(((DataCompareDTO)systemDataDto).getId());
 						wmsDataCompareTempEntity.setCompareStatus(WmsDataCompareTempCompareStatusEnum.FINISH.getCode());
+						insertOrUpdateTempEntity.add(wmsDataCompareTempEntity);
 					}
 					
 					for(Object systemData : systemDataList) {
@@ -641,7 +646,9 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					ExcelWriter excelWriter = EasyExcel.write(fileName).build();
 				    List<List<String>> headList = new ArrayList<>();
 				    List<String> firstHead = new ArrayList<>();
+				    firstHead.add("对比结果");
 				    List<String> secordHead = new ArrayList<>();
+				    secordHead.add("");
 				    boolean firstFlag = true;
 				    for(ImportDataMappingDTO importDataMappingDTO : importDataMappingDTOList) {
 				    	if(firstFlag) {
@@ -667,6 +674,8 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					headList.add(secordHead);
 					
 				    WmsDataCompareBillService<?> wmsDataCompareBillService = wmsDataCompareHandlerFactory.get(billType);
+				    List<String> diffIndexs = new ArrayList<>();
+				    int i = headList.size();
 				    for(WmsDataCompareTempEntity wmsDataCompareTempEntity : wmsDataCompareTempEntityList) {
 				    	String compareResult = wmsDataCompareTempEntity.getCompareResult();
 				    	String systemDataJson = "";
@@ -677,14 +686,33 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				    	if(WmsDataCompareTempCompareResultEnum.MISS.getCode().equals(compareResult) || WmsDataCompareTempCompareResultEnum.DIFF.getCode().equals(compareResult) ) {
 				    		importDataJson = wmsDataCompareTempEntity.getImportDataJson();
 				    	}
-				    	
-				    	List<String> writeDatas = getWriteDatas(wmsDataCompareBillService, importDataMappingDTOList, systemDataJson);
+				    	if(WmsDataCompareTempCompareResultEnum.DIFF.getCode().equals(compareResult)) {
+				    		String diffFields = wmsDataCompareTempEntity.getDiffFields();
+				    		if(StringUtils.isNotBlank(diffFields)) {
+				    			List<ImportDataMappingDTO> diffDtoList = JSON.parseArray(diffFields , WmsDataComparePlanDTO.ImportDataMappingDTO.class);
+				    			for(ImportDataMappingDTO diffDto : diffDtoList) {
+				    				int j = 1;
+				    				for(ImportDataMappingDTO importDataMappingDTO : importDataMappingDTOList) {
+				    					if(importDataMappingDTO.getSystemField().equals(diffDto.getSystemField())) {
+				    						diffIndexs.add(i + "-" + j);
+				    						diffIndexs.add(i + "-" + (j + importDataMappingDTOList.size()));
+				    						break;
+				    					}
+				    					j = j + 1;
+				    				}
+				    			}
+				    		}
+				    	}
+				    	List<String> writeDatas = new ArrayList<>();
+				    	writeDatas.add(WmsDataCompareTempCompareResultEnum.getName(compareResult));
+				    	writeDatas.addAll(getWriteDatas(wmsDataCompareBillService, importDataMappingDTOList, systemDataJson));
 				    	writeDatas.addAll(getWriteDatas(wmsDataCompareBillService, importDataMappingDTOList, importDataJson));
 				    	headList.add(writeDatas);
+				    	i = i + 1;
 			    	}
 				    
 				    int size = importDataMappingDTOList.size();
-					WriteSheet writeSheet = EasyExcel.writerSheet().registerWriteHandler(new MergeStrategy(size)).build();
+					WriteSheet writeSheet = EasyExcel.writerSheet().registerWriteHandler(new MergeStrategy(size , diffIndexs)).build();
 					excelWriter.write(headList, writeSheet);
 				    excelWriter.finish();
 				    

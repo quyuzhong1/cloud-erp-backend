@@ -8,11 +8,11 @@ import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.alibaba.excel.metadata.Head;
 import com.alibaba.excel.write.merge.AbstractMergeStrategy;
@@ -136,36 +136,22 @@ public class WmsDataCompareUtils {
 	// 自定义合并策略
    public static class MergeStrategy extends AbstractMergeStrategy {
         private int headerSize;
+        
+        private List<String> diffIndexs;
 
-        public MergeStrategy(int headerSize) {
+        public MergeStrategy(int headerSize , List<String> diffIndexs) {
             this.headerSize = headerSize;
+            this.diffIndexs = diffIndexs;
         }
 
 		@Override
 		protected void merge(org.apache.poi.ss.usermodel.Sheet sheet, org.apache.poi.ss.usermodel.Cell cell, Head head,
 				Integer relativeRowIndex) {
 			Workbook workbook = sheet.getWorkbook();
-			cell.setCellStyle(createBorderCellStyle(workbook));
-			if (cell.getRowIndex() == 0 && cell.getColumnIndex() == 0) {
-                sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, headerSize - 1));
-                cell.setCellStyle(createCellStyle(workbook));
-            }
-			if (cell.getRowIndex() == 0 && cell.getColumnIndex() == headerSize) {
-                sheet.addMergedRegion(new CellRangeAddress(0, 0, headerSize, headerSize*2 - 1));
-                cell.setCellStyle(createCellStyle(workbook));
-            }
-		}
-		
-		private static CellStyle createCellStyle(Workbook workbook) {
-	        CellStyle cellStyle = workbook.createCellStyle();
-
-	        // 设置对齐方式
-	        cellStyle.setAlignment(HorizontalAlignment.CENTER);
-	        cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-
-	        return cellStyle;
-	    }
-		private static CellStyle createBorderCellStyle(Workbook workbook) {
+			int rowIndex = cell.getRowIndex();
+			int columnIndex = cell.getColumnIndex();
+			String key = rowIndex + "-" + columnIndex;
+			
 			CellStyle cellStyle = workbook.createCellStyle();
 			
 			// 设置边框样式
@@ -174,8 +160,30 @@ public class WmsDataCompareUtils {
 			cellStyle.setBorderLeft(BorderStyle.THIN);
 			cellStyle.setBorderRight(BorderStyle.THIN);
 			
-			return cellStyle;
+			if(diffIndexs.stream().anyMatch(d -> key.equals(d))) {
+				Font font = workbook.createFont();
+		        font.setColor(Font.COLOR_RED);
+				cellStyle.setFont(font);
+			}
+			
+			if (rowIndex == 0 && columnIndex == 0) {
+				sheet.addMergedRegion(new CellRangeAddress(0, 1, 0, 0));
+				cellStyle.setAlignment(HorizontalAlignment.CENTER);
+		        cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+			}
+			if (rowIndex == 0 && columnIndex == 1) {
+                sheet.addMergedRegion(new CellRangeAddress(0, 0, 1, headerSize));
+                cellStyle.setAlignment(HorizontalAlignment.CENTER);
+    	        cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            }
+			if (rowIndex == 0 && columnIndex == (headerSize + 1)) {
+                sheet.addMergedRegion(new CellRangeAddress(0, 0, headerSize + 1, headerSize*2));
+                cellStyle.setAlignment(HorizontalAlignment.CENTER);
+    	        cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            }
+			cell.setCellStyle(cellStyle);
 		}
+		
     }
    
 }

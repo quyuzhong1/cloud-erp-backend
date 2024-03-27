@@ -47,6 +47,10 @@ public class WmsDataComparePlanServiceImpl extends SuperServiceImpl<WmsDataCompa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(WmsDataComparePlanDTO.AddDTO addDTO) {
+    	Integer count = lambdaQuery().eq(WmsDataComparePlanEntity::getName, addDTO.getName()).count();
+    	if(count != null && count > 0) {
+    		throw new ServiceException("数据对比映射方案名称已存在");
+    	}
         WmsDataComparePlanEntity wmsDataComparePlanEntity = new WmsDataComparePlanEntity();
         BeanMapperUtils.copy(addDTO, wmsDataComparePlanEntity);
 
