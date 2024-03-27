@@ -8,6 +8,7 @@ import java.util.List;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 
 /**
@@ -90,7 +91,7 @@ public class WmsDataComparePlanDTO implements Serializable {
          /**
          * 主键ids
          */
-         @NotBlank(message = "主键id列表不能为空")
+         @NotEmpty(message = "主键id列表不能为空")
          private List<@NotBlank(message = "主键id不能为空") String> ids;
 
      }

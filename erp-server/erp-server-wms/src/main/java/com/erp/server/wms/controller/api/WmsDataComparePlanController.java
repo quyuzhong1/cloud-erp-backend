@@ -80,7 +80,7 @@ public class WmsDataComparePlanController extends BaseController {
      */
      @PostMapping("/delete")
      @LogAction(value = LogActionEnum.DELETE, desc = "数据对比映射方案删除")
-     public ApiResult<?> update(@RequestBody @Validated WmsDataComparePlanDTO.DeteleDTO dto) {
+     public ApiResult<?> delete(@RequestBody @Validated WmsDataComparePlanDTO.DeteleDTO dto) {
          wmsDataComparePlanService.removeByIds(dto.getIds());
          return success();
      }
