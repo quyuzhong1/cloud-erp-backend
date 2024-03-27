@@ -19,6 +19,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
@@ -261,6 +262,8 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         List<String> soIdList = transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).collect(Collectors.toList());
         List<SoB2cEntity> soB2cList = soB2cFeign.listByIds(soIdList);
 
+        //b2c销售订单明细
+        List<SoB2cDetailEntity> soB2cDetailList = soB2cFeign.listDetailByMainIds(soIdList);
 
         //b2c收货订单
         List<SoB2cReceiverEntity> soB2cReceiverList = soB2cFeign.listSoB2cReceiverByMainIdList(soIdList);
@@ -291,6 +294,14 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             detailEntity.setSoCode(transferDeclareDetail.getSoCode());
             detailEntity.setShopId(soB2cEntity.getShopId());
 
+            //销售订单明细
+            List<SoB2cDetailEntity> detailList = soB2cDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), soB2cEntity.getId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(detailList)) {
+                throw new ServiceException("未找到B2c销售订单明细");
+            }
+            long skuCount = detailList.stream().map(SoB2cDetailEntity::getSkuId).distinct().count();
+            detailEntity.setQty(Math.toIntExact(skuCount));
+
             SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), soB2cEntity.getId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soB2cReceiverEntity)) {
                 throw new ServiceException("未找到B2c销售订单买家信息");
@@ -300,11 +311,8 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             if (ObjectUtil.isEmpty(soB2cLogisticsEntity)) {
                 throw new ServiceException("未找到B2c销售订单物流信息");
             }
-            detailEntity.setLogisticsChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
-            detailEntity.setLogisticsChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
-            detailEntity.setActualWeight(soB2cLogisticsEntity.getWeight());
-            detailEntity.setActualWeightUnit(UnitEnum.WeightUnitEnum.G.getCode());
-
+            detailEntity.setEstimateWeight(soB2cLogisticsEntity.getWeight());
+            detailEntity.setEstimateWeightUnit(UnitEnum.WeightUnitEnum.G.getCode());
         }
         return resultList;
     }

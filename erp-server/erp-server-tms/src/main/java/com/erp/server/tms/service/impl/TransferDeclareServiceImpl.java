@@ -633,7 +633,6 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         for (TransferDeclareDetailEntity transferDeclareDetailEntity : transferDeclareDetailList) {
             TmsB2cDeclareReconciliationDetailDTO.AddDTO addDTO = new TmsB2cDeclareReconciliationDetailDTO.AddDTO();
             addDTO.setSourceDetailId(transferDeclareDetailEntity.getId());
-            addDTO.setSourceId(addDTO.getSourceId());
             addDTO.setSourceType(SourceTypeEnum.TRANSFER_DECLARE.getCode());
             addDetailList.add(addDTO);
         }
