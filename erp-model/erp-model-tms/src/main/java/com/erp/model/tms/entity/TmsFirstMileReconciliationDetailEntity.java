@@ -84,8 +84,8 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
     /**
      * 签收日期
      */
-    @TableField("reveive_date")
-    private LocalDate reveiveDate;
+    @TableField("receive_date")
+    private LocalDate receiveDate;
     /**
      * 计费方式
      */
@@ -198,7 +198,7 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
 
     public static final String TO_COUNTRY = "to_country";
 
-    public static final String REVEIVE_DATE = "reveive_date";
+    public static final String RECEIVE_DATE = "receive_date";
 
     public static final String BILLING_METHOD = "billing_method";
 
@@ -235,10 +235,5 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
     public static final String CONFIRM_USER_ID = "confirm_user_id";
 
     public static final String CONFIRM_USER_NAME = "confirm_user_name";
-
-    @Override
-    public Serializable pkVal() {
-        return null;
-    }
 
 }

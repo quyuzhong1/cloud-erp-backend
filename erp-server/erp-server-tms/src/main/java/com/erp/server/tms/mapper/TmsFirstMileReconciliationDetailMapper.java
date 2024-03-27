@@ -1,8 +1,12 @@
 package com.erp.server.tms.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -16,4 +20,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface TmsFirstMileReconciliationDetailMapper extends BaseMapper<TmsFirstMileReconciliationDetailEntity> {
 
+    IPage<TmsFirstMileReconciliationDetailDTO.ListDTO> paging(Page<?> query, @Param("params") TmsFirstMileReconciliationDetailDTO.PagingParamDTO params);
 }

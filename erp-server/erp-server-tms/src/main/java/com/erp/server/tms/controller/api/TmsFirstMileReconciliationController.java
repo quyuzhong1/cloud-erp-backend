@@ -1,8 +1,8 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.Resource;
 
@@ -19,7 +19,6 @@ import com.common.core.controller.BaseController;
 import com.erp.server.tms.service.TmsFirstMileReconciliationService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
@@ -46,26 +45,12 @@ public class TmsFirstMileReconciliationController extends BaseController {
     private TmsFirstMileReconciliationService tmsFirstMileReconciliationService;
 
     /**
-     * 新增
-     *
-     * @param dto
-     * @return ApiResult<String>
-     * @author Jim
-     * @date: 2024-03-25
-     */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "头程对账单新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated TmsFirstMileReconciliationDTO.AddDTO dto) {
-        return success(tmsFirstMileReconciliationService.add(dto));
-    }
-
-    /**
      * 修改
      *
-     * @param dto
+     * @param dto DTO
      * @return ApiResult
      * @author Jim
-     * @date: 2024-03-25
+     * {@code @date:} 2024-03-25
      */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程对账单修改")
@@ -81,14 +66,12 @@ public class TmsFirstMileReconciliationController extends BaseController {
 
     /**
      * 获取状态统计
-     *
-     * @return
      */
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:tmsFirstMileReconciliation:paging",
-            tableAlias = ""
+            tableAlias = "tfmr"
     )
     public ApiResult<List<TmsFirstMileReconciliationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(tmsFirstMileReconciliationService.tabList(dto));
@@ -97,42 +80,29 @@ public class TmsFirstMileReconciliationController extends BaseController {
     /**
      * 列表查询
      *
-     * @param dto
+     * @param dto DTO DTO
      * @return ApiResult<PagingVO < TmsFirstMileReconciliationDTO.ListDTO>>
      * @author Jim
-     * @date: 2024-03-25
+     * {@code @date:} 2024-03-25
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:tmsFirstMileReconciliation:paging",
-            tableAlias = ""
+            tableAlias = "tfmr"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<TmsFirstMileReconciliationDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<TmsFirstMileReconciliationDTO.PagingParamDTO> dto) {
         return success(tmsFirstMileReconciliationService.paging(dto));
     }
 
     /**
-     * 新增并提交审核
-     *
-     * @param dto
-     * @return ApiResult<Void>
-     * @author Jim
-     * @date: 2024-03-25
-     */
-    @PostMapping("/addAndSubmit")
-    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated TmsFirstMileReconciliationDTO.AddDTO dto) {
-        BaseResultDTO.AddDTO result = tmsFirstMileReconciliationService.addAndSubmit(dto);
-        return success(result);
-    }
-
-    /**
      * 修改并提交审核
      *
-     * @param dto
+     * @param dto DTO
      * @return ApiResult<Void>
      * @author Jim
-     * @date: 2024-03-25
+     * {@code @date:}2024-03-25
      */
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -148,10 +118,10 @@ public class TmsFirstMileReconciliationController extends BaseController {
     /**
      * 提交审核
      *
-     * @param dto
+     * @param dto DTO
      * @return ApiResult<List < BatchResultDTO>>
      * @author Jim
-     * @date: 2024-03-25
+     * {@code @date:}2024-03-25
      */
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -184,10 +154,10 @@ public class TmsFirstMileReconciliationController extends BaseController {
     /**
      * 审核
      *
-     * @param dto
+     * @param dto DTO
      * @return ApiResult<List < BatchResultDTO>>
      * @author Jim
-     * @date: 2024-03-25
+     * {@code @date:}2024-03-25
      */
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -221,10 +191,10 @@ public class TmsFirstMileReconciliationController extends BaseController {
     /**
      * 反审核
      *
-     * @param dto
+     * @param dto DTO
      * @return ApiResult<List < BatchResultDTO>>
      * @author Jim
-     * @date: 2024-03-25
+     * {@code @date:}2024-03-25
      */
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -258,10 +228,10 @@ public class TmsFirstMileReconciliationController extends BaseController {
     /**
      * 删除
      *
-     * @param dto
+     * @param dto DTO
      * @return ApiResult<List < BatchResultDTO>>
      * @author Jim
-     * @date: 2024-03-25
+     * {@code @date:}2024-03-25
      */
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -294,10 +264,10 @@ public class TmsFirstMileReconciliationController extends BaseController {
     /**
      * 撤销
      *
-     * @param dto
+     * @param dto DTO
      * @return ApiResult<List < BatchResultDTO>>
      * @author Jim
-     * @date: 2024-03-25
+     * {@code @date:}2024-03-25
      */
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -330,10 +300,10 @@ public class TmsFirstMileReconciliationController extends BaseController {
     /**
      * 详情
      *
-     * @param id
+     * @param id ID
      * @return ApiResult<TmsFirstMileReconciliationDTO.ViewDTO>>
      * @author Jim
-     * @date: 2024-03-25
+     * {@code @date:}2024-03-25
      */
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -349,11 +319,9 @@ public class TmsFirstMileReconciliationController extends BaseController {
     /**
      * 导出Excel数据
      *
-     * @param dto
-     * @param response
-     * @return
+     * @param dto DTO
      * @author Jim
-     * @date: 2024-03-25
+     * {@code @date:}2024-03-25
      */
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,

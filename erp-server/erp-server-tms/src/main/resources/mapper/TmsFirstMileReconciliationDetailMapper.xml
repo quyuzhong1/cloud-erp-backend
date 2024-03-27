@@ -22,7 +22,7 @@
        <result column="shop_name" property="shopName" />
        <result column="from_country" property="fromCountry" />
        <result column="to_country" property="toCountry" />
-       <result column="reveive_date" property="reveiveDate" />
+       <result column="receive_date" property="receiveDate" />
        <result column="billing_method" property="billingMethod" />
        <result column="billing_method_name" property="billingMethodName" />
        <result column="type" property="type" />
@@ -54,8 +54,94 @@
         update_time,
         version,
         is_deleted,
-        main_id, source_id, source_type, source_code, track_no, business_code, shop_id, shop_name, from_country, to_country, reveive_date, billing_method, billing_method_name, type, total_logistics_cost, actual_weight, actual_weight_unit, volume_weight, volume_weight_unit, billing_weight, billing_weight_unit, actual_shipping_cost, actual_declare_cost, actual_other_cost, remark, status, confirm_date, confirm_user_id, confirm_user_name
+        main_id,
+        source_id,
+        source_type,
+        source_code,
+        track_no,
+        business_code,
+         shop_id, shop_name,
+         from_country,
+         to_country,
+          receive_date,
+           billing_method,
+           billing_method_name,
+           type,
+           total_logistics_cost,
+            actual_weight,
+            actual_weight_unit,
+            volume_weight,
+            volume_weight_unit,
+            billing_weight,
+            billing_weight_unit,
+            actual_shipping_cost,
+            actual_declare_cost,
+            actual_other_cost,
+            remark,
+            status,
+            confirm_date,
+            confirm_user_id,
+            confirm_user_name
     </sql>
 
+    <sql id="Clause_Column_List">
+        tfmr.id,
+        tfmr.create_user_id,
+        tfmr.create_user_name,
+        tfmr.create_time,
+        tfmr.update_user_id,
+        tfmr.update_user_name,
+        tfmr.update_time,
+        tfmr.version,
+        tfmr.is_deleted,
+        tfmr.main_id,
+        tfmr.source_id,
+        tfmr.source_type,
+        tfmr.source_code,
+        tfmr.track_no,
+        tfmr.business_code,
+         shop_id, tfmr.shop_name,
+         tfmr.from_country,
+         tfmr.to_country,
+          tfmr.receive_date,
+           tfmr.billing_method,
+           tfmr.billing_method_name,
+           tfmr.type,
+           tfmr.total_logistics_cost,
+            tfmr.actual_weight,
+            tfmr.actual_weight_unit,
+            tfmr.volume_weight,
+            tfmr.volume_weight_unit,
+            tfmr.billing_weight,
+            tfmr.billing_weight_unit,
+            tfmr.actual_shipping_cost,
+            tfmr.actual_declare_cost,
+            tfmr.actual_other_cost,
+            tfmr.remark,
+            tfmr.status,
+            tfmr.confirm_date,
+            tfmr.confirm_user_id,
+            tfmr.confirm_user_name
+    </sql>
 
+    <select id="paging" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO$ListDTO">
+        select
+        <include refid="Base_Column_List" />
+         from tms_first_mile_reconciliation_detail tfmrd
+        <where>
+            ${params.sqlMap.default}
+            and tfmrd.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            tfmrd.id desc
+        </where>
+    </select>
 </mapper>
