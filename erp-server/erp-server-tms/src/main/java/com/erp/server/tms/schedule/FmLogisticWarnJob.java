@@ -11,6 +11,7 @@ import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
+import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -66,29 +67,79 @@ public class FmLogisticWarnJob {
     public void sendFmLogisticWarnJob() {
         //查询全部预警
         List<TmsFirstMileLogisticDTO.PagingVO> pagingVOS = firstMileLogisticService.hasWarnPaging(new TmsFirstMileLogisticDTO.PagingParamDTO());
-        pagingVOS = pagingVOS.stream().filter(v-> Objects.nonNull(v.getWarnHour()) && v.getWarnHour() < 0).collect(Collectors.toList());
+        pagingVOS = pagingVOS.stream().filter(v-> Objects.nonNull(v.getWarnHour()) && v.getWarnHour() < 0 && !FmLogisticTrackStatusEnum.SIGN.getCode().equals(v.getLogisticsStatus())).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(pagingVOS)){
             return;
         }
-        List<String> shopIdList = pagingVOS.stream().map(TmsFirstMileLogisticDTO.PagingVO::getShopId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-        List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIdList);
+        //今日超期
+        List<TmsFirstMileLogisticDTO.PagingVO> todayPagingVOS = pagingVOS.stream().filter(v-> v.getWarnHour() > -24).collect(Collectors.toList());
+        //预警发送人员分为两部分，一部分是销售店铺负责人，一部分是抄送人
+        //处理抄送人消息发送
+        int totalWarnCount = pagingVOS.size();
+        int todayCount = todayPagingVOS.size();
+        String titleContent = StrUtil.format("总计{}票货物出现异常，今天新增{}异常，请即时跟进", totalWarnCount,todayCount);
+        String msgContent = StrUtil.format("通知类型：在途异常通知");
+        this.sendMsgWhenOverdue(new ArrayList<>(),titleContent,msgContent);
 
-        List<TmsFirstMileLogisticDTO.MsgDTO> msgDTOList = new ArrayList<>();
+        //处理店铺负责人消息推送
+        List<String> shopIdList = pagingVOS.stream().map(TmsFirstMileLogisticDTO.PagingVO::getShopId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(shopIdList)){
+            return;
+        }
+        //封装负责人id
+        List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIdList);
         for (TmsFirstMileLogisticDTO.PagingVO pagingVO : pagingVOS) {
             TmsFirstMileLogisticDTO.MsgDTO msgDTO = new TmsFirstMileLogisticDTO.MsgDTO();
             ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(v->v.getId().equals(pagingVO.getShopId())).findFirst().orElse(null);
             if(Objects.nonNull(shopInfoEntity) && StringUtils.isNotBlank(shopInfoEntity.getChargeId())){
-                msgDTO.setShopChargeIdList(Arrays.asList(shopInfoEntity.getChargeId()));
+                pagingVO.setChargeId(shopInfoEntity.getChargeId());
             }
-            String titleContent = StrUtil.format("总计{}票货物出现异常，今天新增{}异常，请即时跟进", "","");
-            String msgContent = StrUtil.format("通知类型：在途异常通知");
-            msgDTO.setTitleContent(titleContent);
-            msgDTO.setMessageContent(msgContent);
-            msgDTOList.add(msgDTO);
         }
-        msgDTOList.forEach(v->{
-            this.sendMsgWhenOverdue(v.getShopChargeIdList(),v.getTitleContent(),v.getMessageContent());
+        pagingVOS = pagingVOS.stream().filter(v->StringUtils.isNotBlank(v.getChargeId())).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(pagingVOS)){
+            return;
+        }
+        Map<String,List<TmsFirstMileLogisticDTO.PagingVO>> pagingMap = pagingVOS.stream().collect(Collectors.groupingBy(TmsFirstMileLogisticDTO.PagingVO::getChargeId));
+        pagingMap.forEach((key,value)->{
+            List<TmsFirstMileLogisticDTO.PagingVO> todayWarnByCharge = value.stream().filter(v-> v.getWarnHour() > -24).collect(Collectors.toList());
+            int totalWarnCountByCharge = value.size();
+            int todayCountByCharge = todayWarnByCharge.size();
+            String titleContentByCharge = StrUtil.format("总计{}票货物出现异常，今天新增{}异常，请即时跟进", totalWarnCountByCharge,todayCountByCharge);
+            String msgContentByCharge = StrUtil.format("通知类型：在途异常通知");
+            this.sendMsgWhenOverdueByCharge(Arrays.asList(key),titleContentByCharge,msgContentByCharge);
         });
+    }
+    private void sendMsgWhenOverdueByCharge(List<String> shopChargeIdList,String titleContent,String messageContent){
+        if(CollectionUtils.isEmpty(shopChargeIdList)){
+            return;
+        }
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.NOTIC.getCode());
+        if(Objects.isNull(cfgSettingEntity)){
+            return;
+        }
+
+        CfgSettingValueDTO.NoticeDTO noticeDTO = JSONUtil.toBean(cfgSettingEntity.getDataJson(),CfgSettingValueDTO.NoticeDTO.class);
+        if(Objects.isNull(noticeDTO)){
+            return;
+        }
+        if(!noticeDTO.getIsInTransitShopCharge()){
+           return;
+        }
+        //获取飞书的unionid 与用户关系
+        List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+        FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+        //过滤出有飞书配置的用户
+        List<String> finalSendUserIds = shopChargeIdList;
+        unionIdList =  unionIdList.stream().filter(u -> finalSendUserIds.contains(u.getUserId())).collect(Collectors.toList());
+        List<String> unionIds = unionIdList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(unionIds)){
+            return;
+        }
+        sendMessage.setUnionIds(unionIds);
+        Map contentMap = fsService.getCardMessageMap(titleContent , messageContent, fsAppUrl);
+        sendMessage.setContentMap(contentMap);
+        //发送消息
+        fsService.sendMessage(sendMessage);
     }
 
     private void sendMsgWhenOverdue(List<String> shopChargeIdList,String titleContent,String messageContent){
