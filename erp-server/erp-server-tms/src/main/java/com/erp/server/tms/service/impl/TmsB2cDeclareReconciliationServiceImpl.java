@@ -40,6 +40,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 /**
@@ -82,6 +83,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_BGZD);
         tmsB2cDeclareReconciliationEntity.setCode(code);
+        tmsB2cDeclareReconciliationEntity.setReconciliationDate(LocalDate.now());
         boolean save = super.save(tmsB2cDeclareReconciliationEntity);
         if(!save) {
             throw new ServiceException("b2c报关对账单保存失败");
@@ -426,7 +428,8 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
             .set(TmsB2cDeclareReconciliationEntity::getApproveUserId, userInfo.getUid())
             .set(TmsB2cDeclareReconciliationEntity::getApproveUserName, userInfo.getUserName())
             .set(TmsB2cDeclareReconciliationEntity::getApproveStatus, approveStatus)
-            .update(new TmsB2cDeclareReconciliationEntity());
+            .set(TmsB2cDeclareReconciliationEntity::getApproveDate, LocalDate.now())
+            .update();
      }
 
     /**
@@ -440,7 +443,9 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
             .set(TmsB2cDeclareReconciliationEntity::getApproveUserId, "")
             .set(TmsB2cDeclareReconciliationEntity::getApproveUserName, "")
             .set(TmsB2cDeclareReconciliationEntity::getApproveStatus, approveStatus)
-            .update(new TmsB2cDeclareReconciliationEntity());
+            .set(TmsB2cDeclareReconciliationEntity::getApproveDate,null)
+            .set(TmsB2cDeclareReconciliationEntity::getSubmitDate,null)
+            .update();
         }
 
     /**
@@ -450,7 +455,8 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(TmsB2cDeclareReconciliationEntity::getId, id)
         .set(TmsB2cDeclareReconciliationEntity::getApproveStatus, approveStatus)
-        .update(new TmsB2cDeclareReconciliationEntity());
+        .set(ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(approveStatus),TmsB2cDeclareReconciliationEntity::getSubmitDate,LocalDate.now())
+        .update();
     }
 
     /**
@@ -491,6 +497,6 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
     * 新增修改处理数据
     */
     private void handleData(TmsB2cDeclareReconciliationEntity tmsB2cDeclareReconciliationEntity) {
-    // TODO 验证数据 & 数据赋值
+
     }
 }

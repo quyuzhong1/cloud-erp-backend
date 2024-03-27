@@ -1,5 +1,6 @@
 package com.erp.server.tms.listener;
 
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -51,6 +52,13 @@ public class DeclareReconciliationStandardExcelListener extends AnalysisEventLis
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
+        if ((StrUtil.isBlank(excelDTO.getCostName()) || StrUtil.isBlank(excelDTO.getCostValue()))
+                && StrUtil.isBlank(excelDTO.getActualWeight())
+                && StrUtil.isBlank(excelDTO.getActualBillingWeight())
+                && StrUtil.isBlank(excelDTO.getActualWeightUnit())) {
+            errorMsgList.add("实际实重、实际计费重、（费用项、费用金额）至少填一个");
+        }
+
         //添加数据用于判断是否为空
         dataList.add(excelDTO);
         //存在错误数据则直接返回
