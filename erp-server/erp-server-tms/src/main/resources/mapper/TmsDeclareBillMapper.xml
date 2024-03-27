@@ -15,8 +15,7 @@
        <result column="code" property="code" />
        <result column="source_type" property="sourceType" />
        <result column="declare_status" property="declareStatus" />
-       <result column="logistics_supplier_id" property="logisticsSupplierId" />
-       <result column="delivery_type" property="deliveryType" />
+       <result column="delivery_type" property="businessType" />
        <result column="country" property="country" />
        <result column="net_weight" property="netWeight" />
        <result column="gross_weight" property="grossWeight" />
@@ -45,6 +44,10 @@
        <result column="box_qty" property="boxQty" />
        <result column="is_invalid" property="isInvalid" />
        <result column="merged_code" property="mergedCode" />
+        <result column="country_name" property="countryName" />
+        <result column="source_id" property="sourceId" />
+        <result column="source_code" property="sourceCode" />
+        <result column="transport_no" property="transportNo" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -58,7 +61,7 @@
         update_time,
         version,
         is_deleted,
-        code, source_type, declare_status, logistics_supplier_id, delivery_type, country, net_weight, gross_weight, declare_date, declare_type, pre_input_no, dest_customs, sender_id, sender_name, export_customs_name, export_date, receiver_name, dict_supervision_method, dict_nature_levy, license_no, trading_area, to_area, to_port, export_port, dict_pack_type, dict_transaction_method, remark, shipping_fee, insurance_fee, other_fee, box_qty, is_invalid, merged_code
+        code, source_type,transport_no, source_id,source_code,declare_status, country_name, business_type, country, net_weight, gross_weight, declare_date, declare_type, pre_input_no, dest_customs, sender_id, sender_name, export_customs_name, export_date, receiver_name, dict_supervision_method, dict_nature_levy, license_no, trading_area, to_area, to_port, export_port, dict_pack_type, dict_transaction_method, remark, shipping_fee, insurance_fee, other_fee, box_qty, is_invalid, merged_code
     </sql>
 
 

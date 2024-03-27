@@ -1,15 +1,18 @@
 package com.erp.model.tms.dto;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotNull;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -23,6 +26,429 @@ import javax.validation.constraints.Digits;
 @NoArgsConstructor
 public class TmsDeclareBillDTO implements Serializable {
 
+    /**
+     * 删除
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeleteDTO {
+        /**
+         * id集合
+         */
+        @NotNull(message = "id集合不能为空")
+        private List<String> ids;
+
+    }
+
+
+    /**
+     * 更新报关状态DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MergeDeclareDTO {
+        /**
+         * id集合
+         */
+        @NotNull(message = "id集合不能为空")
+        private List<String> ids;
+
+        /**
+         * 合同协议号
+         */
+        private String code;
+
+    }
+
+    /**
+     * 更新报关状态DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDeclareStatusDTO {
+        /**
+         * id集合
+         */
+        @NotNull(message = "id集合不能为空")
+        private List<String> ids;
+
+        /**
+         * 报关日期
+         */
+        private LocalDate date;
+
+    }
+
+    /**
+     * 发货单信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeliveryDTO {
+        /**
+         * 业务id（发货单id或销售出库单id）
+         */
+        private String sourceId;
+
+        /**
+         * 业务code（发货单code或销售出库单code）
+         */
+        private String sourceCode;
+
+        /**
+         * 运输方式
+         */
+        private String shippingMethod;
+
+        /**
+         * 运输方式名称
+         */
+        private String shippingMethodName;
+
+        /**
+         * 物流商id
+         */
+        private String logisticsSupplierId;
+
+        /**
+         * 物流商名称
+         */
+        private String logisticsSupplierName;
+
+        /**
+         * 柜号
+         */
+        private String counterNo;
+
+        /**
+         * 总箱数
+         */
+        private Integer boxCount;
+
+        /**
+         * 毛重
+         */
+        private BigDecimal grossWeight;
+
+        /**
+         * 净重
+         */
+        private BigDecimal netWeight;
+
+        /**
+         * 产品明细
+         */
+        private List<ProductDetail> productDetailList;
+        /**
+         * 装箱信息
+         */
+        private List<PackingDTO> packingDTOList;
+    }
+
+    /**
+     * 装箱信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PackingDTO {
+
+        private String id;
+        /**
+         * 关联单号
+         */
+        private String code;
+
+        /**
+         * 装箱SKU
+         * 例：（sku*qty+sku*qty+...）
+         */
+        private String boxDesc;
+
+        /**
+         * 箱号
+         */
+        private String boxNo;
+
+        /**
+         * 箱子包装尺寸
+         */
+        private String boxSize;
+        /**
+         * 箱子包装重量
+         */
+        private String packageWeight;
+
+        /**
+         * 体积重
+         */
+        private BigDecimal volumeWeight;
+
+        /**
+         * 长宽高相乘结果
+         */
+        private BigDecimal multiplySize;
+    }
+
+    /**
+     * 产品明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductDetail {
+        /**
+         * sku id
+         */
+        private String skuId;
+        /**
+         * sku no
+         */
+        private String skuNo;
+        /**
+         * 中国海关编码(商品编号)
+         */
+        private String customsCode;
+        /**
+         * 报关中文名（商品名称）
+         */
+        private String declareChineseName;
+        /**
+         * 申报要素
+         */
+        private String declareElement;
+        /**
+         * 报关单位
+         */
+        private String declareUnit;
+
+        /**
+         * 报关单位名称
+         */
+        private String declareUnitName;
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 总价
+         */
+        private BigDecimal totalPrice;
+
+        /**
+         * 报关币别
+         */
+        private String declareCurrency;
+
+        /**
+         * 报关币别名称
+         */
+        private String declareCurrencyName;
+        /**
+         * 报关币别符号
+         */
+        private String declareCurrencySymbol;
+        /**
+         * 原产国
+         */
+        private String sourceCountry;
+        /**
+         * 原产国名称
+         */
+        private String sourceCountryName;
+
+        /**
+         * 最终目的国（地区）
+         */
+        private String toCountry;
+
+        /**
+         * 最终目的国（地区）名称
+         */
+        private String toCountryName;
+        /**
+         * 境内货源地
+         */
+        private String sourceCargo;
+        /**
+         * 征免
+         */
+        private String exemption;
+    }
+
+    /**
+     * 分页
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingVO {
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 合同协议号(可排序)
+         */
+        private String code;
+
+        /**
+         * 报关状态(可排序)
+         */
+        private String declareStatus;
+
+        /**
+         * 报关状态名称
+         */
+        private String declareStatusName;
+
+        /**
+         * 物流商id
+         */
+        private String logisticsSupplierId;
+
+        /**
+         * 物流商名称
+         */
+        private String logisticsSupplierName;
+
+        /**
+         * 类型（发货类型或订单类型）(可排序)
+         */
+        private String businessType;
+
+        /**
+         * 类型名称
+         */
+        private String businessTypeName;
+
+        /**
+         * 关联单号
+         */
+        private List<String> associatedCodeList;
+
+        /**
+         * 目的国家(可排序)
+         */
+        private String country;
+
+        /**
+         * 目的国家名称(可排序)
+         */
+        private String countryName;
+
+        /**
+         * 总箱数(可排序)
+         */
+        private Integer boxQty;
+
+        /**
+         * 总净重(可排序)
+         */
+        private BigDecimal netWeight;
+        /**
+         * 总毛重(可排序)
+         */
+        private BigDecimal grossWeight;
+        /**
+         * 报关日期(可排序)
+         */
+        private LocalDate declareDate;
+        /**
+         * 报关类型(可排序)
+         */
+        private String declareType;
+
+        /**
+         * 报关类型名称
+         */
+        private String declareTypeName;
+
+        /**
+         * 创建人可排序)
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间可排序)
+         */
+        private LocalDateTime createTime;
+    }
+
+    /**
+     * 列表统计返回结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class StatisticsVO {
+
+        /**
+         * 上月发货
+         */
+        private Integer lastMonthDelivery;
+
+        /**
+         * 本月发货
+         */
+        private Integer thisMonthDelivery;
+
+        /**
+         * 上月报关
+         */
+        private Integer lastMonthDeclare;
+
+        /**
+         * 本月报关
+         */
+        private Integer thisMonthDeclare;
+    }
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
+         * 来源类型，后端处理，前端不用管
+         */
+        private String sourceType;
+    }
+
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO {
+        /**
+         * 类型
+         */
+        private String tabFlag;
+
+        /**
+         * 类型名
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count = 0;
+    }
 
 
 
@@ -37,172 +463,204 @@ public class TmsDeclareBillDTO implements Serializable {
         * 主键id
         */
         private String  id;
+        /**
+         * 业务id（发货单id或销售出库单id）
+         */
+        private String sourceId;
 
         /**
-        * 合同协议号
-        */
-        private String code;
+         * 业务code（发货单code或销售出库单code）
+         */
+        private String sourceCode;
 
         /**
-        * 来源类型：头程,B2B
-        */
-        private String sourceType;
-
-        /**
-        * 报关状态
-        */
-        private String declareStatus;
-
-        /**
-        * 物流商id
-        */
-        private String logisticsSupplierId;
-
-        /**
-        * 发货类型
-        */
-        private String deliveryType;
-
-        /**
-        * 目的国家
-        */
-        private String country;
-
-        /**
-        * 总净重
-        */
-        private BigDecimal netWeight;
-
-        /**
-        * 总毛重
-        */
-        private BigDecimal grossWeight;
-
-        /**
-        * 报关日期
-        */
-        private LocalDateTime declareDate;
-
-        /**
-        * 报关类型
-        */
-        private String declareType;
-
-        /**
-        * 预录入编号
-        */
+         * 预录入编号
+         */
         private String preInputNo;
 
         /**
-        * 申报地海关
-        */
+         * 申报地海关
+         */
         private String destCustoms;
 
         /**
-        * 发货人id
-        */
+         * 报关类型
+         */
+        private String declareType;
+
+        /**
+         * 报关类型名称
+         */
+        private String declareTypeName;
+
+
+        /**
+         * 发货人id
+         */
         private String senderId;
 
         /**
-        * 发货人名称
-        */
+         * 发货人名称
+         */
         private String senderName;
 
         /**
-        * 出境关别
-        */
+         * 出境关别
+         */
         private String exportCustomsName;
 
         /**
-        * 出口日期
-        */
-        private LocalDateTime exportDate;
+         * 出口日期
+         */
+        private LocalDate exportDate;
 
         /**
-        * 收货人名称
-        */
+         * 报关日期
+         */
+        private LocalDate declareDate;
+
+        /**
+         * 收货人名称
+         */
         private String receiverName;
+        /**
+         * 运输方式
+         */
+        private String shippingMethod;
 
         /**
-        * 监管方式
-        */
+         * 运输方式名称
+         */
+        private String shippingMethodName;
+
+        /**
+         * 物流商id
+         */
+        private String logisticsSupplierId;
+
+        /**
+         * 物流商名称
+         */
+        private String logisticsSupplierName;
+
+        /**
+         * 柜号
+         */
+        private String counterNo;
+
+        /**
+         * 监管方式
+         */
         private String dictSupervisionMethod;
 
         /**
-        * 征免性质
-        */
+         * 监管方式名称
+         */
+        private String dictSupervisionMethodName;
+
+        /**
+         * 征免性质
+         */
         private String dictNatureLevy;
 
         /**
-        * 许可证号
-        */
+         * 征免性质名称
+         */
+        private String dictNatureLevyName;
+
+        /**
+         * 许可证号
+         */
         private String licenseNo;
 
         /**
-        * 贸易国
-        */
+         * 合同协议号
+         */
+        private String code;
+
+        /**
+         * 贸易国
+         */
         private String tradingArea;
 
         /**
-        * 运抵国
-        */
+         * 运抵区
+         */
         private String toArea;
 
         /**
-        * 运抵港
-        */
+         * 运抵港
+         */
         private String toPort;
 
         /**
-        * 出境口岸
-        */
+         * 出境口岸
+         */
         private String exportPort;
 
         /**
-        * 包装种类
-        */
+         * 包装种类
+         */
         private String dictPackType;
 
         /**
-        * 成交方式
-        */
+         * 包装种类名称
+         */
+        private String dictPackTypeName;
+
+        /**
+         * 总箱数
+         */
+        private Integer boxCount;
+
+        /**
+         * 毛重
+         */
+        private BigDecimal grossWeight;
+
+        /**
+         * 净重
+         */
+        private BigDecimal netWeight;
+
+        /**
+         * 成交方式
+         */
         private String dictTransactionMethod;
 
         /**
-        * 备注
-        */
+         * 成交方式名称
+         */
+        private String dictTransactionMethodName;
+
+        /**
+         * 备注
+         */
         private String remark;
 
         /**
-        * 运费
-        */
+         * 运费
+         */
         private BigDecimal shippingFee;
 
         /**
-        * 保费
-        */
+         * 保费
+         */
         private BigDecimal insuranceFee;
 
         /**
-        * 杂费
-        */
+         * 杂费
+         */
         private BigDecimal otherFee;
 
         /**
-        * 总箱数
-        */
-        private Integer boxQty;
-
+         * 产品明细
+         */
+        private List<ProductDetail> productDetailList;
         /**
-        * 是否作废 
-        */
-        private Boolean isInvalid;
-
-        /**
-        * 合并后表头
-        */
-        private String mergedCode;
-
+         * 装箱信息
+         */
+        private List<PackingDTO> packingDTOList;
 
     }
 
@@ -212,8 +670,11 @@ public class TmsDeclareBillDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
-
+        /**
+         * 业务id（发货单id或销售出库单id）
+         */
+        @NotBlank(message = "来源类型：头程,B2B不能为空")
+        private String sourceId;
     }
 
     /**
@@ -235,226 +696,117 @@ public class TmsDeclareBillDTO implements Serializable {
     @NoArgsConstructor
     public static class CommonDTO {
 
-        /**
-        * 来源类型：头程,B2B
-        */
-        @NotBlank(message = "来源类型：头程,B2B不能为空")
-        @Size(max = 255,message = "来源类型：头程,B2B最大长度不能超过255位")
-        private String sourceType;
 
         /**
-        * 报关状态
-        */
-        @NotBlank(message = "报关状态不能为空")
-        @Size(max = 30,message = "报关状态最大长度不能超过30位")
-        private String declareStatus;
-
-        /**
-        * 物流商id
-        */
-        @NotBlank(message = "物流商id不能为空")
-        @Size(max = 30,message = "物流商id最大长度不能超过30位")
-        private String logisticsSupplierId;
-
-        /**
-        * 发货类型
-        */
-        @NotBlank(message = "发货类型不能为空")
-        @Size(max = 30,message = "发货类型最大长度不能超过30位")
-        private String deliveryType;
-
-        /**
-        * 目的国家
-        */
-        @NotBlank(message = "目的国家不能为空")
-        @Size(max = 30,message = "目的国家最大长度不能超过30位")
-        private String country;
-
-        /**
-        * 总净重
-        */
-        @NotNull(message = "总净重不能为空")
-        @Digits(integer = 12, fraction = 4, message = "总净重整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal netWeight;
-
-        /**
-        * 总毛重
-        */
-        @NotNull(message = "总毛重不能为空")
-        @Digits(integer = 12, fraction = 4, message = "总毛重整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal grossWeight;
-
-        /**
-        * 报关日期
-        */
-        private LocalDateTime declareDate;
-
-        /**
-        * 报关类型
-        */
-        @NotBlank(message = "报关类型不能为空")
-        @Size(max = 30,message = "报关类型最大长度不能超过30位")
-        private String declareType;
-
-        /**
-        * 预录入编号
-        */
-        @NotBlank(message = "预录入编号不能为空")
-        @Size(max = 255,message = "预录入编号最大长度不能超过255位")
+         * 预录入编号
+         */
         private String preInputNo;
 
         /**
-        * 申报地海关
-        */
-        @NotBlank(message = "申报地海关不能为空")
-        @Size(max = 30,message = "申报地海关最大长度不能超过30位")
+         * 申报地海关
+         */
         private String destCustoms;
 
         /**
-        * 发货人id
-        */
-        @NotBlank(message = "发货人id不能为空")
-        @Size(max = 30,message = "发货人id最大长度不能超过30位")
+         * 报关类型
+         */
+        @NotBlank(message = "报关类型不能为空")
+        private String declareType;
+
+        /**
+         * 发货人id
+         */
         private String senderId;
 
         /**
-        * 发货人名称
-        */
-        @NotBlank(message = "发货人名称不能为空")
-        @Size(max = 50,message = "发货人名称最大长度不能超过50位")
+         * 发货人名称
+         */
         private String senderName;
 
         /**
-        * 出境关别
-        */
-        @NotBlank(message = "出境关别不能为空")
-        @Size(max = 30,message = "出境关别最大长度不能超过30位")
+         * 出境关别
+         */
         private String exportCustomsName;
 
         /**
-        * 出口日期
-        */
-        private LocalDateTime exportDate;
+         * 出口日期
+         */
+        private LocalDate exportDate;
 
         /**
-        * 收货人名称
-        */
-        @NotBlank(message = "收货人名称不能为空")
-        @Size(max = 255,message = "收货人名称最大长度不能超过255位")
+         * 报关日期
+         */
+        private LocalDate declareDate;
+
+        /**
+         * 收货人名称
+         */
         private String receiverName;
 
         /**
-        * 监管方式
-        */
-        @NotBlank(message = "监管方式不能为空")
-        @Size(max = 30,message = "监管方式最大长度不能超过30位")
+         * 监管方式
+         */
         private String dictSupervisionMethod;
 
         /**
-        * 征免性质
-        */
-        @NotBlank(message = "征免性质不能为空")
-        @Size(max = 30,message = "征免性质最大长度不能超过30位")
+         * 征免性质
+         */
         private String dictNatureLevy;
 
         /**
-        * 许可证号
-        */
-        @NotBlank(message = "许可证号不能为空")
-        @Size(max = 255,message = "许可证号最大长度不能超过255位")
+         * 许可证号
+         */
         private String licenseNo;
 
         /**
-        * 贸易国
-        */
-        @NotBlank(message = "贸易国不能为空")
-        @Size(max = 30,message = "贸易国最大长度不能超过30位")
+         * 贸易国
+         */
         private String tradingArea;
 
         /**
-        * 运抵国
-        */
-        @NotBlank(message = "运抵国不能为空")
-        @Size(max = 30,message = "运抵国最大长度不能超过30位")
+         * 运抵区
+         */
         private String toArea;
 
         /**
-        * 运抵港
-        */
-        @NotBlank(message = "运抵港不能为空")
-        @Size(max = 30,message = "运抵港最大长度不能超过30位")
+         * 运抵港
+         */
         private String toPort;
 
         /**
-        * 出境口岸
-        */
-        @NotBlank(message = "出境口岸不能为空")
-        @Size(max = 30,message = "出境口岸最大长度不能超过30位")
+         * 出境口岸
+         */
         private String exportPort;
 
         /**
-        * 包装种类
-        */
-        @NotBlank(message = "包装种类不能为空")
-        @Size(max = 30,message = "包装种类最大长度不能超过30位")
+         * 包装种类
+         */
         private String dictPackType;
 
         /**
-        * 成交方式
-        */
-        @NotBlank(message = "成交方式不能为空")
-        @Size(max = 30,message = "成交方式最大长度不能超过30位")
+         * 成交方式
+         */
         private String dictTransactionMethod;
 
         /**
-        * 备注
-        */
-        @NotBlank(message = "备注不能为空")
-        @Size(max = 255,message = "备注最大长度不能超过255位")
+         * 备注
+         */
         private String remark;
 
         /**
-        * 运费
-        */
-        @NotNull(message = "运费不能为空")
-        @Digits(integer = 12, fraction = 4, message = "运费整数位不能超过12位，小数位不能超过4位")
+         * 运费
+         */
         private BigDecimal shippingFee;
 
         /**
-        * 保费
-        */
-        @NotNull(message = "保费不能为空")
-        @Digits(integer = 12, fraction = 4, message = "保费整数位不能超过12位，小数位不能超过4位")
+         * 保费
+         */
         private BigDecimal insuranceFee;
 
         /**
-        * 杂费
-        */
-        @NotNull(message = "杂费不能为空")
-        @Digits(integer = 12, fraction = 4, message = "杂费整数位不能超过12位，小数位不能超过4位")
+         * 杂费
+         */
         private BigDecimal otherFee;
 
-        /**
-        * 总箱数
-        */
-        @NotNull(message = "总箱数不能为空")
-        private Integer boxQty;
-
-        /**
-        * 是否作废 
-        */
-        @NotNull(message = "是否作废 不能为空")
-        private Boolean isInvalid;
-
-        /**
-        * 合并后表头
-        */
-        @NotBlank(message = "合并后表头不能为空")
-        @Size(max = 255,message = "合并后表头最大长度不能超过255位")
-        private String mergedCode;
-
-
     }
-
-
 }

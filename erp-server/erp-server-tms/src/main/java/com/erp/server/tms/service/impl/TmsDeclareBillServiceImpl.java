@@ -3,6 +3,9 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.server.tms.mapper.TmsDeclareBillMapper;
 import com.erp.server.tms.service.TmsDeclareBillService;
@@ -22,6 +25,9 @@ import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * <p>
  * 报关单 服务实现类
@@ -59,7 +65,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(!save) {
             throw new ServiceException("报关单保存失败");
         }
-
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "报关单" , tmsDeclareBillEntity.getCode());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
@@ -94,6 +99,66 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, tmsDeclareBillEntity, null, tmsDeclareBillEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<TmsDeclareBillDTO.TabListDTO> tabList() {
+        return null;
+    }
+
+    @Override
+    public PagingVO<TmsDeclareBillDTO.PagingVO> paging(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public TmsDeclareBillDTO.StatisticsVO statistics() {
+        return null;
+    }
+
+    @Override
+    public List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeliveryOrder() {
+        return null;
+    }
+
+    @Override
+    public TmsDeclareBillDTO.ViewDTO view(String id) {
+        return null;
+    }
+
+    @Override
+    public List<BatchResultDTO> updateToDeclare(TmsDeclareBillDTO.UpdateDeclareStatusDTO dto) {
+        return null;
+    }
+
+    @Override
+    public List<BatchResultDTO> cancelDeclare(TmsDeclareBillDTO.UpdateDeclareStatusDTO dto) {
+        return null;
+    }
+
+    @Override
+    public List<BatchResultDTO> mergeDeclare(TmsDeclareBillDTO.MergeDeclareDTO dto) {
+        return null;
+    }
+
+    @Override
+    public List<BatchResultDTO> cancelMerge(TmsDeclareBillDTO.MergeDeclareDTO dto) {
+        return null;
+    }
+
+    @Override
+    public void export(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
+
+    }
+
+    @Override
+    public void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
+
+    }
+
+    @Override
+    public List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto) {
+        return null;
     }
 
 

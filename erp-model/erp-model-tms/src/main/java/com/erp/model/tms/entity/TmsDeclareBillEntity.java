@@ -42,20 +42,38 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     @TableField("declare_status")
     private String declareStatus;
     /**
-    * 物流商id
-    */
-    @TableField("logistics_supplier_id")
-    private String logisticsSupplierId;
-    /**
     * 发货类型
     */
-    @TableField("delivery_type")
-    private String deliveryType;
+    @TableField("business_type")
+    private String businessType;
+
+    /**
+     * 来源id
+     */
+    @TableField("source_id")
+    private String sourceId;
+    /**
+     * 来源编码
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
+    /**
+     * 提运单号，头程的话这个值是空的，B2B的话是页面手动输入
+     */
+    @TableField("transport_no")
+    private String transportNo;
     /**
     * 目的国家
     */
     @TableField("country")
     private String country;
+
+    /**
+     * 目的国家名称
+     */
+    @TableField("country_name")
+    private String countryName;
     /**
     * 总净重
     */
