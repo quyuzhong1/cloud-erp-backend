@@ -756,6 +756,11 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String shopName;
 
         /**
+         * 店铺id
+         */
+        @ExcelIgnore
+        private String shopId;
+        /**
          * 国家
          */
         @ExcelProperty(value = "国家")

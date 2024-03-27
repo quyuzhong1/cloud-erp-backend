@@ -378,6 +378,7 @@
     </select>
     <select id="firstMilePaging" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$PagingVO">
         SELECT lb.id,
+                lb.shop_id as  shopId,
                lb.outstock_id as outstockId,
                lb.transport_no as transportNo,
                lb.counter_no as counterNo,
@@ -548,6 +549,7 @@
     </select>
     <select id="hasWarnPaging" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$PagingVO">
         SELECT lb.id,
+               lb.shop_id as  shopId,
                lb.outstock_id as outstockId,
                lb.transport_no as transportNo,
                lb.counter_no as counterNo,

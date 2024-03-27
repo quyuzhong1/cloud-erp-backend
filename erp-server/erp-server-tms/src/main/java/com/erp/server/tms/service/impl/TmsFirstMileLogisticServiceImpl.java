@@ -809,7 +809,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 }
             }
             //设置消息发送
-            if(detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.ORDERED.getCode())){
+            if(Objects.nonNull(detailEntity) && detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.ORDERED.getCode())){
                 TmsFirstMileLogisticDTO.MsgDTO msgDTO = new TmsFirstMileLogisticDTO.MsgDTO();
                 ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(v->v.getId().equals(logisticsBillEntity.getShopId())).findFirst().orElse(null);
                 if(Objects.nonNull(shopInfoEntity) && StringUtils.isNotBlank(shopInfoEntity.getChargeId())){
@@ -847,7 +847,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             return;
         }
         List<String> sendUserIds = new ArrayList<>();
-        if(noticeDTO.getIsChannelShopCharge()){
+        if(noticeDTO.getIsChannelShopCharge() && CollectionUtils.isNotEmpty(shopChargeIdList)){
             sendUserIds.addAll(shopChargeIdList);
         }
         if(CollectionUtils.isNotEmpty(noticeDTO.getChannelUserIdList())){

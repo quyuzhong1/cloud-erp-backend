@@ -14,6 +14,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.server.tms.query.TmsFirstMileLogisticQueryHandler;
+import com.erp.server.tms.schedule.FmLogisticWarnJob;
 import com.erp.server.tms.service.TmsFirstMileLogisticService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -45,6 +46,8 @@ public class TmsFirstMileLogisticController extends BaseController {
     @Resource
     private TmsFirstMileLogisticService tmsFirstMileLogisticService;
 
+    @Resource
+    private FmLogisticWarnJob fmLogisticWarnJob;
     /**
      * tabList
      * @author lrp
@@ -178,7 +181,18 @@ public class TmsFirstMileLogisticController extends BaseController {
         List<BatchResultDTO> resultDTOS = tmsFirstMileLogisticService.updateChannel(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
-
+    /**
+     * 更新渠道
+     * @author lrp
+     * @date:  2024-03-19
+     * @return ApiResult<String>
+     */
+    @GetMapping("/testJob")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "头程物流单更新渠道")
+    public ApiResult<List<BatchResultDTO>> testJob() {
+        fmLogisticWarnJob.sendFmLogisticWarnJob();
+        return success();
+    }
     /**
      * 生成对账单
      * @author lrp
