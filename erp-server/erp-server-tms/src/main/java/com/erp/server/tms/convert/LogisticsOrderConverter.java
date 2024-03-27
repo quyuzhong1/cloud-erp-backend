@@ -336,7 +336,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "CName" ,source = "declareChineseName"),
             @Mapping(target = "hsCode" ,source = "customsCode"),
             @Mapping(target = "quantity" ,source = "quantity"),
-            @Mapping(target = "unitPrice" ,source = "price"),
+            @Mapping(target = "unitPrice" ,source = "destDeclarePrice"),
             @Mapping(target = "unitWeight" ,source = "weight",qualifiedByName = "divideByOneThousandWithThreeDecimal"),
             @Mapping(target = "remark" ,source = "remark"),
             @Mapping(target = "productUrl" ,source = "url"),
@@ -594,7 +594,7 @@ public interface LogisticsOrderConverter {
 
     @Mappings({
             @Mapping(target = "skuNo",source = "skuNo"),
-            @Mapping(target = "invoiceEnName",constant = "declareEnglishName"),
+            @Mapping(target = "invoiceEnName",source = "declareEnglishName"),
             @Mapping(target = "invoiceCnName",source = "declareChineseName"),
             @Mapping(target = "invoiceQuantity",source = "quantity"),
             @Mapping(target = "unitCode", constant = "PCE"),
