@@ -29,6 +29,7 @@ import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareEntity;
+import com.erp.model.tms.enums.InstockForecastStatusEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -333,21 +334,18 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     }
 
     /**
-    * 新增修改处理数据
-    */
-    private void handleData(TmsB2cDeclareReconciliationDetailEntity tmsB2cDeclareReconciliationDetailEntity) {
-
-    }
-
-    /**
      * @description: 分页查询数据处理
      * @author Will
      * @date: 2024/3/26 10:02
      * @param list
      */
     private void fillList (List<TmsB2cDeclareReconciliationDetailDTO.ListDTO> list) {
-
-
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (TmsB2cDeclareReconciliationDetailDTO.ListDTO listDTO :list) {
+            listDTO.setInstockForecastStatusName(InstockForecastStatusEnum.UPLOAD_SUCCESS.getName());
+        }
     }
 
     private void handleUpdateData (List<TmsB2cDeclareReconciliationDetailEntity> list,String mainId) {
