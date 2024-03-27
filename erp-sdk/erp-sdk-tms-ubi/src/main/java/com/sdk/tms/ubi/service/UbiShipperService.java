@@ -74,6 +74,8 @@ public class UbiShipperService {
      * @return
      */
     public List<OrderResponse> createOrder(Map<String, String> authMap, UbiOrder ubiOrder) {
+        log.info("==========UbiShipperService.createOrder==========start");
+        log.info("authMap:{}, orderRequest:{}",authMap, ubiOrder);
         String token = authMap.get("clientId");
         String key = authMap.get("clientSecret");
         String url = authMap.get("url");

@@ -130,6 +130,8 @@ public class DsfShipperService {
      * @return ResponseMsg
      */
     public ResponseMsg createOrder(Map<String, String> authMap, OrderRequest orderRequest) {
+        log.info("==========DsfShipperService.createOrder==========start");
+        log.info("authMap:{}, orderRequest:{}",authMap, orderRequest);
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String url = authMap.get("url");

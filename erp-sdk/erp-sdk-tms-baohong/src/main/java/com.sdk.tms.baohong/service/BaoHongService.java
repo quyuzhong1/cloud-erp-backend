@@ -13,6 +13,7 @@ import com.sdk.tms.baohong.api.product.ProductRow;
 import com.sdk.tms.baohong.api.product.ServiceForProduct;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import com.sdk.tms.baohong.utils.BaoHongUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
@@ -21,7 +22,7 @@ import javax.xml.ws.Holder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-
+@Slf4j
 @Component
 @Validated
 public class BaoHongService {
@@ -71,6 +72,8 @@ public class BaoHongService {
      * @return
      */
     public BaoHongResponse<String> createOrder(CreateOrderInfo createOrderInfo){
+        log.info("==========BaoHongService.createOrder==========start");
+        log.info("createOrderInfo:{}",createOrderInfo);
         TransferLogisticsContext.setRequestJson(JSONObject.toJSONString(createOrderInfo));
         HeaderRequest headerRequest = BaoHongUtils.getOrderHeader();
         ServiceForOrder service = BaoHongUtils.getOrderService();
