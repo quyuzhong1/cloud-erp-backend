@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.TmsDeclareBillMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.TmsDeclareBillEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="source_type" property="sourceType" />
+       <result column="declare_status" property="declareStatus" />
+       <result column="logistics_supplier_id" property="logisticsSupplierId" />
+       <result column="delivery_type" property="deliveryType" />
+       <result column="country" property="country" />
+       <result column="net_weight" property="netWeight" />
+       <result column="gross_weight" property="grossWeight" />
+       <result column="declare_date" property="declareDate" />
+       <result column="declare_type" property="declareType" />
+       <result column="pre_input_no" property="preInputNo" />
+       <result column="dest_customs" property="destCustoms" />
+       <result column="sender_id" property="senderId" />
+       <result column="sender_name" property="senderName" />
+       <result column="export_customs_name" property="exportCustomsName" />
+       <result column="export_date" property="exportDate" />
+       <result column="receiver_name" property="receiverName" />
+       <result column="dict_supervision_method" property="dictSupervisionMethod" />
+       <result column="dict_nature_levy" property="dictNatureLevy" />
+       <result column="license_no" property="licenseNo" />
+       <result column="trading_area" property="tradingArea" />
+       <result column="to_area" property="toArea" />
+       <result column="to_port" property="toPort" />
+       <result column="export_port" property="exportPort" />
+       <result column="dict_pack_type" property="dictPackType" />
+       <result column="dict_transaction_method" property="dictTransactionMethod" />
+       <result column="remark" property="remark" />
+       <result column="shipping_fee" property="shippingFee" />
+       <result column="insurance_fee" property="insuranceFee" />
+       <result column="other_fee" property="otherFee" />
+       <result column="box_qty" property="boxQty" />
+       <result column="is_invalid" property="isInvalid" />
+       <result column="merged_code" property="mergedCode" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, source_type, declare_status, logistics_supplier_id, delivery_type, country, net_weight, gross_weight, declare_date, declare_type, pre_input_no, dest_customs, sender_id, sender_name, export_customs_name, export_date, receiver_name, dict_supervision_method, dict_nature_levy, license_no, trading_area, to_area, to_port, export_port, dict_pack_type, dict_transaction_method, remark, shipping_fee, insurance_fee, other_fee, box_qty, is_invalid, merged_code
+    </sql>
+
+
+</mapper>
