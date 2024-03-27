@@ -21,9 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.erp.model.sys.vo.FsBatchSendMessageDTO.getTextMessageMap;
 
@@ -265,5 +263,60 @@ public class FsService {
             throw new RuntimeException(e);
         }
         return larkResultDTO;
+    }
+
+
+    /**
+     * 获取飞书消息卡片信息
+     *
+     * @param
+     * @return java.util.Map<java.lang.String, java.lang.Object>
+     * @author yl
+     * @date 2022-11-18 12:31
+     */
+    public Map<String, Object> getCardMessageMap(String messageContent, String productContent, String url) {
+        Map<String, Object> cardMap = new LinkedHashMap<>();
+        Map<String, Boolean> configMap = new HashMap<>();
+        configMap.put("wide_screen_mode", true);
+        cardMap.put("config", configMap);
+        Map<String, Object> headerMap = new HashMap<>();
+        Map<String, String> titleMap = new HashMap<>();
+        titleMap.put("tag", "plain_text");
+        titleMap.put("content", messageContent);
+        headerMap.put("title", titleMap);
+        cardMap.put("header", headerMap);
+        List<Map> elements = new ArrayList<>();
+        Map<String, Object> fieldAllMap = new LinkedHashMap<>();
+        fieldAllMap.put("tag", "div");
+        List<Map> fieldMapList = new ArrayList<>();
+        Map<String, Object> fieldMap = new LinkedHashMap<>();
+        fieldMap.put("is_short", true);
+        Map textMap = new HashMap();
+        textMap.put("tag", "lark_md");
+        textMap.put("content", productContent);
+        fieldMap.put("text", textMap);
+        fieldMapList.add(fieldMap);
+        fieldAllMap.put("fields", fieldMapList);
+        elements.add(fieldAllMap);
+        Map<String, Object> actionAllMap = new LinkedHashMap<>();
+        actionAllMap.put("tag", "action");
+        actionAllMap.put("layout", "bisected");
+        List<Map> actionList = new ArrayList<>();
+        Map<String, Object> actionMap = new LinkedHashMap<>();
+        actionMap.put("tag", "button");
+        actionMap.put("url", url);
+        actionMap.put("type", "primary");
+        Map<String, Object> actionTextMap = new HashMap<>();
+        actionTextMap.put("tag", "plain_text");
+        actionTextMap.put("content", "查看详情");
+        actionMap.put("text", actionTextMap);
+        Map<String, Object> actionValueMap = new HashMap<>();
+        actionValueMap.put("chosen", "approve");
+        actionMap.put("value", actionValueMap);
+        actionList.add(actionMap);
+        actionAllMap.put("actions", actionList);
+        elements.add(actionAllMap);
+        cardMap.put("elements", elements);
+        return cardMap;
     }
 }

@@ -301,6 +301,16 @@ public class TmsFirstMileLogisticDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    public static class MsgDTO {
+        private List<String> shopChargeIdList;
+        private String titleContent;
+        private String messageContent;
+    }
+    /**
+     * 更新渠道
+     */
+    @Data
+    @NoArgsConstructor
     public static class UpdateChannelDTO {
 
         /**

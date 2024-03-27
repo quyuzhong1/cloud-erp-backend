@@ -12,6 +12,7 @@ import com.erp.server.sys.service.SysPostUserService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -87,6 +88,14 @@ public class SysPostUserServiceImpl extends ServiceImpl<SysPostUserMapper, SysPo
     @Override
     public List<SysPostUserEntity> getByUserId(String userId) {
         return lambdaQuery().eq(SysPostUserEntity::getUserId, userId).list();
+    }
+
+    @Override
+    public List<SysPostUserEntity> getUserIdByPostIds(List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
+            return new ArrayList<>();
+        }
+        return lambdaQuery().in(SysPostUserEntity::getPostId, ids).list();
     }
 
     public void removePostUser(String postId, Set<String> userIds) {

@@ -4,7 +4,9 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
@@ -12,6 +14,7 @@ import com.alibaba.excel.write.metadata.WriteTable;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -36,6 +39,9 @@ import com.erp.model.oms.enums.FmDeliveryLogisticsStatusEnum;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.SysPostUserEntity;
+import com.erp.model.sys.vo.FsBatchSendMessageDTO;
+import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.FmLogisticsBillCostExcelDTO;
 import com.erp.model.tms.dto.excel.FmLogisticsBillExcelDTO;
@@ -46,8 +52,11 @@ import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.sys.feign.SysPostFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
+import com.erp.sdk.fs.service.FsService;
 import com.erp.server.tms.convert.FmLogisticsConverter;
 import com.erp.server.tms.listener.FmLogisticsBillCostExcelListener;
 import com.erp.server.tms.listener.FmLogisticsBillExcelListener;
@@ -60,6 +69,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.jfree.chart.util.ExportUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -127,6 +138,21 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Resource
     private ScmTaskFeign scmTaskFeign;
+
+    @Resource
+    private CfgSettingService cfgSettingService;
+
+    @Resource
+    private SysPostFeign sysPostFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Value("${third.fs.appUrl}")
+    private String fsAppUrl;
+
+    @Resource
+    private FsService fsService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -745,6 +771,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(!logisticsChannelEntity.getMainId().equals(supplierEntity.getId())){
             throw new ServiceException("物流渠道与物流供应商不匹配");
         }
+        List<String> shopIdList = logisticsBillEntityList.stream().map(LogisticsBillEntity::getShopId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIdList);
         List<String> mainIdList = logisticsBillEntityList.stream().map(LogisticsBillEntity::getId).collect(Collectors.toList());
         List<String> outstockIdList = logisticsBillEntityList.stream().map(LogisticsBillEntity::getOutstockId).collect(Collectors.toList());
         List<LogisticsBillCostEntity> costList = logisticsBillCostService.listByLogisticsBillIdList(mainIdList);
@@ -756,10 +784,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         List<LogisticsBillEntity> updateList = new ArrayList<>();
         List<LogisticsBillCostEntity> updateCostList = new ArrayList<>();
         ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(dto.getLogisticsChannelId());
+        List<TmsFirstMileLogisticDTO.MsgDTO> msgDTOList = new ArrayList<>();
         for(LogisticsBillEntity logisticsBillEntity : logisticsBillEntityList){
             LogisticsBillDetailEntity detailEntity = detailList.stream().filter(v->v.getMainId().equals(logisticsBillEntity.getId())).findFirst().orElse(null);
             if(Objects.nonNull(detailEntity) && !(detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.WAIT_ORDER.getCode()) || detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.ORDERED.getCode()))){
                 resultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getCounterNo(),"只有待下单和已下单状态支持更改物流信息"));
+                continue;
             }
             logisticsBillEntity.setShippingMethod(dto.getShippingMethod());
             logisticsBillEntity.setChannelId(dto.getLogisticsChannelId());
@@ -778,6 +808,19 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                     updateCostList.add(logisticsBillCostEntity);
                 }
             }
+            //设置消息发送
+            if(detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.ORDERED.getCode())){
+                TmsFirstMileLogisticDTO.MsgDTO msgDTO = new TmsFirstMileLogisticDTO.MsgDTO();
+                ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(v->v.getId().equals(logisticsBillEntity.getShopId())).findFirst().orElse(null);
+                if(Objects.nonNull(shopInfoEntity) && StringUtils.isNotBlank(shopInfoEntity.getChargeId())){
+                    msgDTO.setShopChargeIdList(Arrays.asList(shopInfoEntity.getChargeId()));
+                }
+                String titleContent = StrUtil.format("{}将物流渠道更换为{}，请知悉", commonService.getUserInfo().getUserName(),supplierEntity.getSupplierName()+"-"+logisticsChannelEntity.getName());
+                String msgContent = StrUtil.format("通知类型：更换渠道通知\n货件单号：{}\n发货单号: {}\n店铺:{}",logisticsBillEntity.getSourceCode(),logisticsBillEntity.getOutstockCode(),logisticsBillEntity.getShopName());
+                msgDTO.setTitleContent(titleContent);
+                msgDTO.setMessageContent(msgContent);
+                msgDTOList.add(msgDTO);
+            }
         }
 
         if(CollectionUtils.isNotEmpty(updateList)){
@@ -786,7 +829,59 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(CollectionUtils.isNotEmpty(updateCostList)){
             logisticsBillCostService.updateBatchById(updateCostList);
         }
+        msgDTOList.forEach(v->{
+            sendMsgWhenChannelChange(v.getShopChargeIdList(),v.getTitleContent(),v.getMessageContent());
+        });
         return resultDTOList;
+    }
+
+    @Async
+    public void sendMsgWhenChannelChange(List<String> shopChargeIdList,String titleContent,String messageContent){
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.NOTIC.getCode());
+        if(Objects.isNull(cfgSettingEntity)){
+            return;
+        }
+
+        CfgSettingValueDTO.NoticeDTO noticeDTO = JSONUtil.toBean(cfgSettingEntity.getDataJson(),CfgSettingValueDTO.NoticeDTO.class);
+        if(Objects.isNull(noticeDTO)){
+            return;
+        }
+        List<String> sendUserIds = new ArrayList<>();
+        if(noticeDTO.getIsChannelShopCharge()){
+            sendUserIds.addAll(shopChargeIdList);
+        }
+        if(CollectionUtils.isNotEmpty(noticeDTO.getChannelUserIdList())){
+            sendUserIds.addAll(noticeDTO.getChannelUserIdList());
+        }
+        //处理岗位，获取岗位下全部人
+        if(CollectionUtils.isNotEmpty(noticeDTO.getChannelPostIdList())){
+            //岗位id
+            List<String> postIdList = noticeDTO.getChannelPostIdList();
+            List<SysPostUserEntity> userEntityList = sysPostFeign.getUserIdByPostIds(postIdList);
+            if(CollectionUtils.isNotEmpty(userEntityList)){
+                sendUserIds.addAll(userEntityList.stream().map(SysPostUserEntity::getUserId).distinct().collect(Collectors.toList()));
+            }
+        }
+        //没有需要发送的人员
+        if(CollectionUtils.isEmpty(sendUserIds)){
+            return;
+        }
+        sendUserIds = sendUserIds.stream().distinct().collect(Collectors.toList());
+        //获取飞书的unionid 与用户关系
+        List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+        FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+        //过滤出有飞书配置的用户
+        List<String> finalSendUserIds = sendUserIds;
+        unionIdList =  unionIdList.stream().filter(u -> finalSendUserIds.contains(u.getUserId())).collect(Collectors.toList());
+        List<String> unionIds = unionIdList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(unionIds)){
+            return;
+        }
+        sendMessage.setUnionIds(unionIds);
+        Map contentMap = fsService.getCardMessageMap(titleContent , messageContent, fsAppUrl);
+        sendMessage.setContentMap(contentMap);
+        //发送消息
+        fsService.sendMessage(sendMessage);
     }
 
     @Override
