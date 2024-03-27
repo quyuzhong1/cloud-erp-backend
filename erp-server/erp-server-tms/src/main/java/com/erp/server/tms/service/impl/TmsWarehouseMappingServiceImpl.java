@@ -242,7 +242,8 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
             List<String> errorMsgList = new ArrayList<>();
             //仓库是否存在
             String warehouseId = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getName(), excelDTO.getErpWarehouseName())
-                            && ApproveStatusEnum.APPROVE.equals(obj.getApproveStatusEnum()))
+                            && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatusEnum().getCode())
+                            && !obj.getDisabled())
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
             if (StrUtil.isBlank(warehouseId)) {
                 errorMsgList.add("未找到有效仓库名称");

@@ -67,6 +67,12 @@ public class TmsB2cDeclareReconciliationDetailEntity extends BaseEntity<TmsB2cDe
     @TableField("date")
     private LocalDate date;
     /**
+     * 店铺id
+     */
+    @TableField("shop_id")
+    private String shopId;
+
+    /**
     * 国家
     */
     @TableField("country")

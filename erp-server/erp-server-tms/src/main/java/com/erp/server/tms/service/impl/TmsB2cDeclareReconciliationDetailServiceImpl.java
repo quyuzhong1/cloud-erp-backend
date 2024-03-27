@@ -11,6 +11,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -18,13 +19,18 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
+import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.mapper.TmsB2cDeclareReconciliationDetailMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -64,6 +70,10 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
 
     @Autowired
     private TransferDeclareDetailService transferDeclareDetailService;
+
+    @Autowired
+    private SoB2cFeign soB2cFeign;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -243,13 +253,58 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         List<String> sourceDetailIdList = reconciliationDetailList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getSourceDetailId).collect(Collectors.toList());
         List<TransferDeclareDetailEntity> transferDeclareDetailList = transferDeclareDetailService.listByIds(sourceDetailIdList);
 
+        //中专报关数据
+        List<String> declareIdList = transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<TransferDeclareEntity> transferDeclareList = transferDeclareService.listByIds(declareIdList);
+
+        //B2c销售订单
+        List<String> soIdList = transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).collect(Collectors.toList());
+        List<SoB2cEntity> soB2cList = soB2cFeign.listByIds(soIdList);
+
+
+        //b2c收货订单
+        List<SoB2cReceiverEntity> soB2cReceiverList = soB2cFeign.listSoB2cReceiverByMainIdList(soIdList);
+
+        //b2c销售订单物流信息
+        List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIdList);
+
         for (TmsB2cDeclareReconciliationDetailEntity detailEntity : reconciliationDetailList) {
             //中转报关明细
             TransferDeclareDetailEntity transferDeclareDetail = transferDeclareDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(transferDeclareDetail)) {
                 throw new ServiceException("未找到中专报关明细");
             }
+            //中专报关主表信息
+            TransferDeclareEntity transferDeclareEntity = transferDeclareList.stream().filter(obj -> StrUtil.equals(obj.getId(), transferDeclareDetail.getMainId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(transferDeclareEntity)) {
+                throw new ServiceException("未找到中专报关信息");
+            }
+            detailEntity.setSourceId(transferDeclareEntity.getId());
+            detailEntity.setSourceCode(transferDeclareEntity.getCode());
+            detailEntity.setDate(transferDeclareEntity.getInstockForecastDate());
+            //销售订单
+            SoB2cEntity soB2cEntity = soB2cList.stream().filter(obj -> StrUtil.equals(obj.getId(), transferDeclareDetail.getSoId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soB2cEntity)) {
+                throw new ServiceException("未找到B2c销售订单");
+            }
             detailEntity.setSoId(transferDeclareDetail.getSoId());
+            detailEntity.setSoCode(transferDeclareDetail.getSoCode());
+            detailEntity.setShopId(soB2cEntity.getShopId());
+
+            SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), soB2cEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soB2cReceiverEntity)) {
+                throw new ServiceException("未找到B2c销售订单买家信息");
+            }
+            detailEntity.setCountry(soB2cReceiverEntity.getCountry());
+            SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), soB2cEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soB2cLogisticsEntity)) {
+                throw new ServiceException("未找到B2c销售订单物流信息");
+            }
+            detailEntity.setLogisticsChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
+            detailEntity.setLogisticsChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
+            detailEntity.setActualWeight(soB2cLogisticsEntity.getWeight());
+            detailEntity.setActualWeightUnit(UnitEnum.WeightUnitEnum.G.getCode());
+
         }
         return resultList;
     }
