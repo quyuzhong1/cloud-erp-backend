@@ -3,6 +3,7 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.oms.entity.KingdeeReceiptConditionEntity;
 import com.erp.model.scm.entity.KingdeePaymentConditionEntity;
 import com.erp.server.scm.mapper.KingdeePaymentConditionMapper;
 import com.erp.server.scm.service.KingdeePaymentConditionService;
@@ -11,6 +12,7 @@ import com.erp.server.scm.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,6 +57,14 @@ public class KingdeePaymentConditionServiceImpl extends SuperServiceImpl<Kingdee
         }
 
         return Boolean.TRUE;
+    }
+
+    @Override
+    public void updateDisable(List<String> ids, boolean disable) {
+        if (CollectionUtils.isNotEmpty(ids)) {
+            this.lambdaUpdate().set(KingdeePaymentConditionEntity::getDisabled, disable).
+                    in(KingdeePaymentConditionEntity::getId, ids).update();
+        }
     }
 
 

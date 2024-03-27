@@ -13,6 +13,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,6 +67,14 @@ public class KingdeeReceiptConditionServiceImpl extends SuperServiceImpl<Kingdee
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, kingdeeReceiptConditionEntity, null, kingdeeReceiptConditionEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public void updateDisable(List<String> ids, boolean disable) {
+        if (CollectionUtils.isNotEmpty(ids)) {
+            this.lambdaUpdate().set(KingdeeReceiptConditionEntity::getDisabled, disable).
+                    in(KingdeeReceiptConditionEntity::getId, ids).update();
+        }
     }
 
 

@@ -196,6 +196,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Autowired
     private MachineInfoFeign machineInfoFeign;
 
+    @Autowired
+    private KingdeeReceiptConditionService kingdeeReceiptConditionService;
+
     /**
      * 添加销售订单
      *
@@ -506,9 +509,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             view.setReceiveMethodName(receiveMethodName);
         }
         // 收款条件
-        List<DictBasicEntity> receiveConditionList = dictBasicMap.get(DictBasicTypeEnum.COLLECTION_TERMS.getType());
+        List<KingdeeReceiptConditionEntity> receiveConditionList = kingdeeReceiptConditionService.list();
         if (CollectionUtils.isNotEmpty(receiveConditionList)) {
-            String receiveConditionName = receiveConditionList.stream().filter(obj -> Objects.equals(obj.getValue(), view.getReceiveCondition())).map(DictBasicEntity::getName).findFirst().orElse(null);
+            String receiveConditionName = receiveConditionList.stream().filter(obj -> Objects.equals(obj.getId(), view.getReceiveCondition())).map(KingdeeReceiptConditionEntity::getName).findFirst().orElse(null);
             view.setReceiveConditionName(receiveConditionName);
         }
         // 收款账号
@@ -1915,17 +1918,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String customerId = soInfo.getCustomerId();
         String receiveCondition = soInfo.getReceiveCondition();
 
+        String receiveConditionStr="";
 
         //收款条件
-        String receiveMethodType = DictBasicTypeEnum.RECEIVE_METHOD.getType();
-        DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(receiveMethodType, receiveCondition);
-        if (Objects.isNull(dictBasic)) {
-            soPi.setReceiveConditionStr("");
-        } else {
-            soPi.setReceiveConditionStr(dictBasic.getName());
-
+        if (StringUtils.isNotBlank(receiveCondition)) {
+            KingdeeReceiptConditionEntity receiveConditionEntity = kingdeeReceiptConditionService.getById(receiveCondition);
+            if (Objects.nonNull(receiveConditionEntity)) {
+                receiveConditionStr = receiveConditionEntity.getName();
+            }
         }
-
+        soPi.setReceiveConditionStr(receiveConditionStr);
         CustomerInfoEntity customerInfo = StringUtils.isNotEmpty(customerId) ? customerInfoService.getById(customerId) : null;
         String customerName = "";
         if (customerInfo != null) {
@@ -2173,10 +2175,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             ValidatorUtil.isTrue(Objects.nonNull(dictBasicEntity), () -> new ServiceException("收款方式错误"));
         }
         // 收款条件
-        List<DictBasicEntity> receiveConditionList = dictBasicMap.get(DictBasicTypeEnum.COLLECTION_TERMS.getType());
+        List<KingdeeReceiptConditionEntity> receiveConditionList = kingdeeReceiptConditionService.list();
         if (CollectionUtils.isNotEmpty(receiveConditionList) && StrUtils.isNotEmpty(soInfoEntity.getReceiveCondition())) {
-            DictBasicEntity dictBasicEntity = receiveConditionList.stream().filter(obj -> Objects.equals(obj.getValue(), soInfoEntity.getReceiveCondition())).findFirst().orElse(null);
-            ValidatorUtil.isTrue(Objects.nonNull(dictBasicEntity), () -> new ServiceException("收款条件错误"));
+            KingdeeReceiptConditionEntity receiptCondition = receiveConditionList.stream().filter(obj -> Objects.equals(obj.getId(), soInfoEntity.getReceiveCondition())).findFirst().orElse(null);
+            ValidatorUtil.isTrue(Objects.nonNull(receiptCondition), () -> new ServiceException("收款条件错误"));
         }
         // 收款账号
         if (StrUtils.isNotEmpty(soInfoEntity.getReceiveAccount())) {
@@ -2799,8 +2801,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> keyList = new ArrayList<>(5);
         //收款方式
         keyList.add(DictBasicTypeEnum.RECEIVE_METHOD.getType());
-        //收款条件
-        keyList.add(DictBasicTypeEnum.COLLECTION_TERMS.getType());
+
         //交货方式
         keyList.add(DictBasicTypeEnum.DELIVERY_MODE.getType());
         //贸易条款
@@ -2823,6 +2824,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
         }
 
+        //收款条件
+        List<KingdeeReceiptConditionEntity> receiptConditionList = kingdeeReceiptConditionService.list();
 
         //以序号分组
         Map<String, List<B2BSoImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(B2BSoImportExcelDTO::getNo));
@@ -3024,8 +3027,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addSo.setIsTax(isTax);
 
             String receiveConditionStr = mainInfo.getReceiveCondition();
-            String receiveCondition = dictBasicList.stream().filter(d -> d.getName().equals(receiveConditionStr)).findFirst().
-                    map(DictBasicEntity::getValue).orElse("");
+            String receiveCondition = receiptConditionList.stream().filter(d -> d.getName().equals(receiveConditionStr)).findFirst().
+                    map(KingdeeReceiptConditionEntity::getId).orElse("");
             if (StringUtils.isBlank(receiveCondition)) {
                 errorMsgList.add("收款条件不存在");
             }

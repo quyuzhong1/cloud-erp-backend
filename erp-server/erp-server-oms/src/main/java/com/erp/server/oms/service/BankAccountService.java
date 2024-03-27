@@ -91,4 +91,11 @@ public interface BankAccountService extends SuperService<BankAccountEntity> {
      * @author Lambda
      */
     Boolean add(BankAccountDTO.AddDTO dto);
+
+    /**
+     * 修改状态
+     * @param disableIds
+     * @param disable
+     */
+    void updateDisable(List<String> disableIds, boolean disable);
 }

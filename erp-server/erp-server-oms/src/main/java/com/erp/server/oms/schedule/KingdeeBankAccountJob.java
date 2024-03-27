@@ -6,12 +6,15 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.kingdee.KingdeeShopEntity;
 import com.erp.model.oms.dto.BankAccountDTO;
+import com.erp.model.oms.dto.KingdeeReceiptConditionDTO;
 import com.erp.model.oms.entity.BankAccountEntity;
+import com.erp.model.oms.entity.KingdeeReceiptConditionEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.oms.service.BankAccountService;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -61,6 +64,14 @@ public class KingdeeBankAccountJob {
         }
         //数据库存在的
         List<BankAccountEntity> dbList = bankAccountService.list();
+
+        //这个是查询到的
+        List<String> queryKingdeeIds = bankAccountDTOList.stream().map(BankAccountDTO.KingdeeBankAccountDTO::getKingdeeId).collect(Collectors.toList());
+        //表示这些是删除的 那就要禁用
+        List<String> disableIds = dbList.stream().filter(d -> !queryKingdeeIds.contains(d.getKingdeeId())).map(BankAccountEntity::getId).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(disableIds)){
+            bankAccountService.updateDisable(disableIds,true);
+        }
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.emptyList());
         List<BankAccountEntity> saveOrUpdateList = new ArrayList<>(10);
         for (BankAccountDTO.KingdeeBankAccountDTO item : bankAccountDTOList) {

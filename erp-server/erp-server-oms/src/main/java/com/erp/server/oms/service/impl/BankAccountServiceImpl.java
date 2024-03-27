@@ -13,6 +13,7 @@ import com.erp.model.oms.dto.BankAccountDTO;
 import com.erp.model.oms.dto.CustomerB2CDTO;
 import com.erp.model.oms.dto.excel.KingdeeBankAccountExcelDTO;
 import com.erp.model.oms.entity.BankAccountEntity;
+import com.erp.model.oms.entity.KingdeeReceiptConditionEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.listener.KingdeeBankAccountListener;
@@ -60,7 +61,7 @@ public class BankAccountServiceImpl extends SuperServiceImpl<BankAccountMapper, 
 
     @Override
     public List<BankAccountEntity> findByOrgIdAndAccountNo(String orgId, String bankAccountNo) {
-        return lambdaQuery().eq(BankAccountEntity::getOrgId, orgId).eq(BankAccountEntity::getBankAccountNo, bankAccountNo).list();
+        return lambdaQuery().eq(BankAccountEntity::getOrgId, orgId).eq(BankAccountEntity::getId, bankAccountNo).list();
     }
 
     /**
@@ -152,6 +153,15 @@ public class BankAccountServiceImpl extends SuperServiceImpl<BankAccountMapper, 
         // 数据处理
         handleData(bankAccount);
         return this.save(bankAccount);
+    }
+
+    @Override
+    public void updateDisable(List<String> ids, boolean disable) {
+        if (CollectionUtils.isNotEmpty(ids)) {
+            this.lambdaUpdate().set(BankAccountEntity::getDisabled, disable).
+                    in(BankAccountEntity::getId, ids).update();
+        }
+
     }
 
     private void handleData(BankAccountEntity bankAccount) {

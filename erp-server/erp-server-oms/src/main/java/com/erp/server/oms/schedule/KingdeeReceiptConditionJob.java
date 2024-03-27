@@ -13,6 +13,7 @@ import com.erp.server.oms.service.BankAccountService;
 import com.erp.server.oms.service.KingdeeReceiptConditionService;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -61,6 +62,14 @@ public class KingdeeReceiptConditionJob {
         }
         //数据库存在的
         List<KingdeeReceiptConditionEntity> dbList = kingdeeReceiptConditionService.list();
+        //这个是查询到的
+        List<String> queryKingdeeIds = receiptConditionList.stream().map(KingdeeReceiptConditionDTO.KingdeeDTO::getKingdeeId).collect(Collectors.toList());
+        //表示这些是删除的 那就要禁用
+        List<String> disableIds = dbList.stream().filter(d -> !queryKingdeeIds.contains(d.getKingdeeId())).map(KingdeeReceiptConditionEntity::getId).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(disableIds)){
+            kingdeeReceiptConditionService.updateDisable(disableIds,true);
+        }
+
         List<KingdeeReceiptConditionEntity> saveOrUpdateList = new ArrayList<>(10);
         for (KingdeeReceiptConditionDTO.KingdeeDTO item : receiptConditionList) {
             String kingdeeId = item.getKingdeeId();

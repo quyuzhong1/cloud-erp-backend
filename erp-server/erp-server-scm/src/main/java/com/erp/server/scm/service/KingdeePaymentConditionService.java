@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.scm.dto.KingdeePaymentConditionDTO;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务类
@@ -26,4 +28,5 @@ public interface KingdeePaymentConditionService extends SuperService<KingdeePaym
     Boolean update(KingdeePaymentConditionDTO.UpdateDTO dto);
 
 
+    void updateDisable(List<String> ids, boolean disable);
 }

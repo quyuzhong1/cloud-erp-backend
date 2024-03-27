@@ -22,6 +22,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.scm.dto.KingdeePaymentConditionDTO;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,7 +49,7 @@ public class KingdeePaymentConditionController extends BaseController {
     @GetMapping("/select")
     public ApiResult<List<BaseDropDownDTO.DisabledDTO>> select() {
         List<KingdeePaymentConditionEntity> list = kingdeePaymentConditionService.list();
-        List<BaseDropDownDTO.DisabledDTO> result = list.stream()
+        List<BaseDropDownDTO.DisabledDTO> result = list.stream().sorted(Comparator.comparing(KingdeePaymentConditionEntity::getDisabled))
                 .map(x -> new BaseDropDownDTO.DisabledDTO(x.getId(),x.getName(),x.getDisabled()))
                 .collect(Collectors.toList());
         return success(result);

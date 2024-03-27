@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -37,7 +38,7 @@ public class BankAccountController extends BaseController {
     @GetMapping("/select")
     public ApiResult<List<BaseDropDownDTO.DisabledDTO>> select(@RequestParam(value = "orgId") String orgId) {
         List<BankAccountEntity> list = bankAccountService.findByOrgId(orgId);
-        List<BaseDropDownDTO.DisabledDTO> result = list.stream()
+        List<BaseDropDownDTO.DisabledDTO> result = list.stream().sorted(Comparator.comparing(BankAccountEntity::getDisabled))
                 .map(x -> new BaseDropDownDTO.DisabledDTO(x.getId(), x.getBankAccountNo()+"      "+x.getAccountName(),x.getDisabled()))
                 .collect(Collectors.toList());
         return success(result);

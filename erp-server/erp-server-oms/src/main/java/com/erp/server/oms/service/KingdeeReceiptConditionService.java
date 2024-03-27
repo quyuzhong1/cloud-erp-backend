@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.KingdeeReceiptConditionDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 金蝶收款条件 服务类
@@ -24,5 +26,12 @@ public interface KingdeeReceiptConditionService extends SuperService<KingdeeRece
     */
     Boolean update(KingdeeReceiptConditionDTO.UpdateDTO dto);
 
-
+    /**
+     * @description
+     * @param ids
+     * @return
+     * @date 2024-03-27 12:28
+     * @author Lambda
+     */
+    void updateDisable(List<String> ids, boolean disable);
 }
