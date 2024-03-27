@@ -2702,6 +2702,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             groupSkuDTO.setPackQty(usePackQty);
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(groupSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
             groupSkuDTO.setProductName(skuVO.getSkuName());
+            groupSkuDTO.setSkuNo(skuVO.getSkuNo());
         }
         return list;
     }
