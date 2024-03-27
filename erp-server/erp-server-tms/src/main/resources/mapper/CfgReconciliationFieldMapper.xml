@@ -16,8 +16,6 @@
        <result column="third_name" property="thirdName" />
        <result column="third_code" property="thirdCode" />
        <result column="third_field_name" property="thirdFieldName" />
-       <result column="erp_field_name" property="sourceType" />
-       <result column="erp_field" property="erpField" />
        <result column="status" property="status" />
        <result column="remark" property="remark" />
     </resultMap>
@@ -72,7 +70,7 @@
         crf.create_time DESC
     </select>
 
-    <select id="listExportExcel" resultType="com.erp.model.tms.dto.excel.CfgReconciliationFieldExportExcelDTO">
+    <select id="listExportExcel" resultType="com.erp.model.tms.dto.excel.CfgReconciliationFieldExportDTO">
         SELECT
             crf.id,
             crf.create_user_id,
@@ -87,8 +85,8 @@
             crf.third_name,
             crf.third_code,
             crf.third_field_name,
-            crf.erp_field_name,
-            crf.erp_field,
+            crf.source_type,
+            crf.source_id,
             crf.status,
             crf.remark
         FROM cfg_reconciliation_field as crf
