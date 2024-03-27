@@ -57,17 +57,19 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         if (CollectionUtils.isEmpty(logisticsOrderVO.getLogisticsProductVOList())) {
             return Collections.emptyList();
         }
-        List<Parcel> parcelList = new ArrayList<>(logisticsOrderVO.getLogisticsProductVOList().size());
+        Parcel parcel = new Parcel();
+        ParceInfoVO parceInfoVO = logisticsOrderVO.getParceInfoVO();
+        parcel.setWeight(parceInfoVO.getTotalWeight());
+        parcel.setParcel_value(parceInfoVO.getTotalPrice());
+        parcel.setCurrency(parceInfoVO.getCurrency());
+        String includeBattery = "N";
+        LogisticsProductVO logisticsProductVO1 = logisticsOrderVO.getLogisticsProductVOList().stream().filter(e -> Objects.nonNull(e.getIsElectric()) && e.getIsElectric()).findFirst().orElse(null);
+        if (Objects.nonNull(logisticsProductVO1) && logisticsProductVO1.getIsElectric()){
+            includeBattery = "Y";
+        }
+        parcel.setInclude_battery(includeBattery);
+        List<DeclareProductInfo> declareProductInfos = new ArrayList<>(logisticsOrderVO.getLogisticsProductVOList().size());
         logisticsOrderVO.getLogisticsProductVOList().forEach(logisticsProductVO -> {
-            Parcel parcel = new Parcel();
-            parcel.setWeight(logisticsProductVO.getWeight());
-            parcel.setParcel_value(logisticsProductVO.getPrice().multiply(BigDecimal.valueOf(logisticsProductVO.getQuantity())));
-            parcel.setCurrency(logisticsOrderVO.getParceInfoVO().getCurrency());
-            if (logisticsProductVO.getIsElectric()) {
-                parcel.setInclude_battery("Y");
-            } else {
-                parcel.setInclude_battery("N");
-            }
             //海关申报信息
             DeclareProductInfo productInfo = LogisticsOrderConverter.INSTANCE.dsfProductMapping(logisticsProductVO);
             if (StringUtils.isEmpty(productInfo.getCountry_export())) {
@@ -82,10 +84,10 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
             if (StringUtils.isEmpty(productInfo.getCurrency_import())) {
                 productInfo.setCurrency_import(logisticsOrderVO.getParceInfoVO().getCurrency());
             }
-            parcel.setDeclare_product_info(Collections.singletonList(productInfo));
-            parcelList.add(parcel);
+            declareProductInfos.add(productInfo);
         });
-        return parcelList;
+        parcel.setDeclare_product_info(declareProductInfos);
+        return Collections.singletonList(parcel);
     }
 
     @Override
