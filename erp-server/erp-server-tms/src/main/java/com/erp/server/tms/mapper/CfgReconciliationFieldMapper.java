@@ -3,6 +3,7 @@ package com.erp.server.tms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
+import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportDTO;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportExcelDTO;
 import com.erp.model.tms.entity.CfgReconciliationFieldEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -37,5 +38,5 @@ public interface CfgReconciliationFieldMapper extends BaseMapper<CfgReconciliati
      *
      * @param params 参数
      */
-    List<CfgReconciliationFieldExportExcelDTO> listExportExcel(@Param("params") CfgReconciliationFieldDTO.PagingParamDTO params);
+    List<CfgReconciliationFieldExportDTO> listExportExcel(@Param("params") CfgReconciliationFieldDTO.PagingParamDTO params);
 }

@@ -20,6 +20,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
+import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportDTO;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportExcelDTO;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldImportExcelDTO;
 import com.erp.model.tms.entity.CfgReconciliationFieldEntity;
@@ -28,6 +29,7 @@ import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
 import com.erp.model.tms.enums.CfgReconciliationTypeEnum;
 import com.erp.model.tms.enums.DictBasicEnum;
+import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
 import com.erp.server.tms.convert.CfgReconciliationFieldConverter;
 import com.erp.server.tms.listener.CfgReconciliationFieldExcelListener;
 import com.erp.server.tms.mapper.CfgReconciliationFieldMapper;
@@ -122,7 +124,9 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
 
     @Override
     public Boolean exportExcel(CfgReconciliationFieldDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<CfgReconciliationFieldExportExcelDTO> resultList = baseMapper.listExportExcel(dto);
+        List<CfgReconciliationFieldExportDTO> sourceList = baseMapper.listExportExcel(dto);
+        // 转换
+        List<CfgReconciliationFieldExportExcelDTO> resultList = convertExcelList(sourceList);
         String fileName = "对账字段配置数据";
         try {
             ExcelUtil.export(fileName, "对账字段配置数据", resultList, CfgReconciliationFieldExportExcelDTO.class, response);
@@ -130,6 +134,25 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
             throw new ServiceException(ApiError.ERROR_1015);
         }
         return Boolean.TRUE;
+    }
+
+    private List<CfgReconciliationFieldExportExcelDTO> convertExcelList(List<CfgReconciliationFieldExportDTO> sourceList) {
+        Map<String, CfgReconciliationTypeEnum> typeMap = Arrays.stream(CfgReconciliationTypeEnum.values())
+                .collect(Collectors.toMap(CfgReconciliationTypeEnum::getCode, Function.identity()));
+
+        Map<String, CfgReconciliationFieldDTO.ErpFieldDropDownDTO> erpFieldMap = this.mapErpFieldByUniqueCode(null);
+
+        return sourceList.stream().map(e -> {
+            CfgReconciliationTypeEnum cfgReconciliationTypeEnum = typeMap.get(e.getReconciliationType());
+            CfgReconciliationFieldExportExcelDTO dto = new CfgReconciliationFieldExportExcelDTO();
+            BeanMapperUtils.copy(e, dto);
+            // 对账类型
+            dto.setReconciliationTypeName(null == cfgReconciliationTypeEnum ? "" : cfgReconciliationTypeEnum.getName());
+            // 数大臣
+            CfgReconciliationFieldDTO.ErpFieldDropDownDTO fieldDropDownDTO = erpFieldMap.get(CfgReconciliationFieldDTO.ErpFieldDropDownDTO.convertUniqueCode(e.getSourceType(), e.getSourceId()));
+            dto.setErpFieldName(null == fieldDropDownDTO ? "" : fieldDropDownDTO.getErpFieldName());
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     @Override
@@ -381,7 +404,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
             throw new ServiceException("配置核对类型不存在");
         }
         // 设置来源ERP字段名
-        Map<String, CfgReconciliationFieldDTO.ErpFieldDropDownDTO> erpFieldNameMap = this.mapErpFieldByUniqueCode(null);
+        Map<String, CfgReconciliationFieldDTO.ErpFieldDropDownDTO> erpFieldNameMap = this.mapErpFieldByUniqueCode(Collections.singletonList(typeEnum.getCode()));
         CfgReconciliationFieldDTO.ErpFieldDropDownDTO dropDownDTO = erpFieldNameMap.get(CfgReconciliationFieldDTO.ErpFieldDropDownDTO.convertUniqueCode(entity.getSourceType(), entity.getSourceId()));
         if (null == dropDownDTO) {
             throw new ServiceException("数大臣ERP字段不存在");
@@ -394,7 +417,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
                 .eq(CfgReconciliationFieldEntity::getSourceId, entity.getSourceId())
                 .ne(CfgReconciliationFieldEntity::getId, entity.getId())
                 .count();
-        if (count > 1){
+        if (count > 1) {
             String msg = StrUtil.format("【{}】【{}】【{}】历史配置已存在",
                     typeEnum.getName(),
                     entity.getThirdName(),
