@@ -97,4 +97,5 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
     void updateImportCost(List<LogisticsBillCostEntity> updateCostList, List<TmsLogisticsBillCostDetailEntity> updateCostDetailList);
 
     BigDecimal calculateShippingCost(TmsFirstMileLogisticDTO.CalculateShippingCostDTO dto);
+    void sendMsgWhenChannelChange(List<String> shopChargeIdList,String titleContent,String messageContent);
 }

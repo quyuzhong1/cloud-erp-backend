@@ -138,8 +138,8 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
         }
         List<TmsLogisticsBillCostDetailDTO.CostCompareDTO> costCompareDTOList = baseMapper.getCostCompareListById(id);
         costCompareDTOList.forEach(v->{
-            if(Objects.nonNull(v.getActualCost()) && Objects.nonNull(v.getEstimatedCost())){
-                v.setCostDiff(v.getEstimatedCost().subtract(v.getActualCost()));
+            if(Objects.nonNull(v.getActualCost()) && Objects.nonNull(v.getEstimatedFee())){
+                v.setCostDiff(v.getEstimatedFee().subtract(v.getActualCost()));
             }
         });
         return costCompareDTOList;

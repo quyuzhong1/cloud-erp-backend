@@ -46,8 +46,6 @@ public class TmsFirstMileLogisticController extends BaseController {
     @Resource
     private TmsFirstMileLogisticService tmsFirstMileLogisticService;
 
-    @Resource
-    private FmLogisticWarnJob fmLogisticWarnJob;
     /**
      * tabList
      * @author lrp
@@ -180,18 +178,6 @@ public class TmsFirstMileLogisticController extends BaseController {
     public ApiResult<List<BatchResultDTO>> updateChannel(@RequestBody @Valid TmsFirstMileLogisticDTO.UpdateChannelDTO dto) {
         List<BatchResultDTO> resultDTOS = tmsFirstMileLogisticService.updateChannel(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-    /**
-     * 更新渠道
-     * @author lrp
-     * @date:  2024-03-19
-     * @return ApiResult<String>
-     */
-    @GetMapping("/testJob")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "头程物流单更新渠道")
-    public ApiResult<List<BatchResultDTO>> testJob() {
-        fmLogisticWarnJob.sendFmLogisticWarnJob();
-        return success();
     }
     /**
      * 生成对账单

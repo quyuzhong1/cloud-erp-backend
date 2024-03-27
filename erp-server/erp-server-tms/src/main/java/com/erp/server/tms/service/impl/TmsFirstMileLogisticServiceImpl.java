@@ -70,6 +70,7 @@ import org.apache.commons.math3.util.Pair;
 import org.jfree.chart.util.ExportUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -153,6 +154,10 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Resource
     private FsService fsService;
+
+    @Resource
+    @Lazy
+    private TmsFirstMileLogisticService service;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -334,7 +339,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         //更新物流单明细
         if(!updateDTO.getCounterNo().equals(oldCounterNo)){
             //删除旧的，新增新的
-            logisticsBillDetailService.removeByMainIds(Collections.singletonList(old.getId()));
+            logisticsBillDetailService.removeByMainIds(Collections.singletonList(old.getId()),false);
             List<LogisticsBillDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             LogisticsBillDetailDTO.AddDTO detailAddDto = new LogisticsBillDetailDTO.AddDTO();
             detailAddDto.setMainId(old.getId());
@@ -830,12 +835,13 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             logisticsBillCostService.updateBatchById(updateCostList);
         }
         msgDTOList.forEach(v->{
-            sendMsgWhenChannelChange(v.getShopChargeIdList(),v.getTitleContent(),v.getMessageContent());
+            service.sendMsgWhenChannelChange(v.getShopChargeIdList(),v.getTitleContent(),v.getMessageContent());
         });
         return resultDTOList;
     }
 
     @Async
+    @Override
     public void sendMsgWhenChannelChange(List<String> shopChargeIdList,String titleContent,String messageContent){
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.NOTIC.getCode());
         if(Objects.isNull(cfgSettingEntity)){

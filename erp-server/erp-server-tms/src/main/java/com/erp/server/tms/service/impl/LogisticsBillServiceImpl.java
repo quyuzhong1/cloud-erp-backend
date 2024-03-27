@@ -171,7 +171,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         List<LogisticsBillEntity> billEntityList = listByOutstockIds(outstockIdList);
         if (CollectionUtils.isNotEmpty(billEntityList)) {
             List<String> ids = billEntityList.stream().map(LogisticsBillEntity::getId).collect(Collectors.toList());
-            logisticsBillDetailService.removeByMainIds(ids);
+            logisticsBillDetailService.removeByMainIds(ids,true);
             return this.removeByIds(ids);
         }
         return Boolean.FALSE;
@@ -208,7 +208,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 this.save(saveEntity);
             }
 
-            logisticsBillDetailService.removeByMainIds(Arrays.asList(saveEntity.getId()));
+            logisticsBillDetailService.removeByMainIds(Arrays.asList(saveEntity.getId()),true);
             List<LogisticsBillDetailDTO.AddDTO> detailList = addDTO.getDetailList();
             List<LogisticsBillDetailEntity> detailEntityList = new ArrayList<>();
             for (LogisticsBillDetailDTO.AddDTO dto : detailList) {
@@ -970,7 +970,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         //如果不是新增的，将原来的删除
         if(!isAdd && CollectionUtils.isNotEmpty(logisticsBillEntityList)){
-            logisticsBillDetailService.removeByMainIds(logisticsBillEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+            logisticsBillDetailService.removeByMainIds(logisticsBillEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()),true);
         }
         if(CollectionUtils.isNotEmpty(addDetailEntityList)){
             logisticsBillDetailService.saveBatch(addDetailEntityList);

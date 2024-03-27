@@ -117,14 +117,16 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean removeByMainIds(List<String> mainIds) {
+    public Boolean removeByMainIds(List<String> mainIds,boolean isDeleteCost) {
         List<LogisticsBillDetailEntity> list = listByMainIds(mainIds);
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
         }
-        //删除物流费用明细
         List<String> detailIdList = list.stream().map(LogisticsBillDetailEntity::getId).collect(Collectors.toList());
-        logisticsBillCostService.deleteByLogisticsBillDetailIdList(detailIdList);
+        //删除物流费用明细
+        if(isDeleteCost){
+            logisticsBillCostService.deleteByLogisticsBillDetailIdList(detailIdList);
+        }
         //删除物流明细
         return  this.removeByIds(detailIdList);
     }
@@ -186,7 +188,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         List<LogisticsBillEntity> billList = logisticsBillService.listByOutstockIdList(outstockIdList);
         if (CollectionUtils.isNotEmpty(billList)) {
             List<String> billIdList = billList.stream().map(LogisticsBillEntity::getId).collect(Collectors.toList());
-            this.removeByMainIds(billIdList);
+            this.removeByMainIds(billIdList,true);
             List<LogisticsBillDetailEntity> billDetailList = new ArrayList<>(billIdList.size());
             for (String mainId : billIdList) {
                 LogisticsBillDetailEntity detailEntity = new LogisticsBillDetailEntity();

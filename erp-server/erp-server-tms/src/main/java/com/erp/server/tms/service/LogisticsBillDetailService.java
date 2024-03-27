@@ -59,7 +59,7 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @Author Luo_WG
      * @Date 2023/11/9 19:52
      **/
-    Boolean removeByMainIds(List<String> mainIds);
+    Boolean removeByMainIds(List<String> mainIds,boolean isDeleteCost);
 
     /**
      * 更改状态

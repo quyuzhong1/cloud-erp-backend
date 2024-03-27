@@ -61,7 +61,7 @@ public class TmsLogisticsBillCostDetailDTO implements Serializable {
         /**
          * 预估费用
          */
-        private BigDecimal estimatedCost;
+        private BigDecimal estimatedFee;
 
         /**
          * 实际费用
