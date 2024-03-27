@@ -43,7 +43,7 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
 
     TmsDeclareBillDTO.StatisticsVO statistics();
 
-    List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeliveryOrder();
+    List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeliveryOrder(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
 
     TmsDeclareBillDTO.ViewDTO view(String id);
 
@@ -60,4 +60,6 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
     void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response);
 
     List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto);
+
+    BaseResultDTO.AddDTO addFmDeclare(TmsDeclareBillDTO.AddDTO dto);
 }

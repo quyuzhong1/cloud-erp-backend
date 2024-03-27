@@ -43,6 +43,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.PackingExcelDTO;
@@ -1811,6 +1812,25 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Override
     public List<FirstMileDeliveryEntity> advanceQuery(AdvanceQueryContainer advanceQueryContainer) {
         return baseMapper.advanceQuery(advanceQueryContainer);
+    }
+
+    @Override
+    public List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO dto) {
+//        List<TmsDeclareBillDTO.DeliveryDTO> result = baseMapper.getGenerateDeclare(dto);
+//        if(CollectionUtils.isEmpty(result)){
+//            return new ArrayList<>();
+//        }
+//        List<String> ids = result.stream().map(FirstMileDeliveryDTO.GenerateLogisticDTO::getOutstockId).collect(Collectors.toList());
+//        //箱子明细信息
+//        List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDetailList = baseMapper.listPackingDetail(ids);
+//        Map<String,List<WmsCartonDetailDTO.ListPackingDetailDTO>> packingDetailMap = packingDetailList.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId));
+//        //设置箱子明细信息
+//        result.forEach(v->{
+//            List<WmsCartonDetailDTO.ListPackingDetailDTO> list = packingDetailMap.get(v.getOutstockId());
+//            v.setPackingDTOList(list);
+//        });
+//        return result;
+        return null;
     }
 }
 

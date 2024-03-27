@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.feign;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.server.wms.service.FirstMileDeliveryService;
@@ -60,5 +61,13 @@ public class WmsFirstMileDeliveryController {
     @WebAdvanceQuery
     public List<FirstMileDeliveryEntity> advanceQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer){
         return firstMileDeliveryService.advanceQuery(advanceQueryContainer);
+    }
+
+    /**
+     * 查询可以生成报关单的发货单
+     **/
+    @PostMapping("/getCanGenerateDeclare")
+    public List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeclare(@RequestBody TmsDeclareBillDTO.QuerySourceDTO dto) {
+        return firstMileDeliveryService.getCanGenerateDeclare(dto);
     }
 }

@@ -1,31 +1,30 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
-import com.erp.server.tms.query.TmsFirstMileLogisticQueryHandler;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.wms.enums.FmDeliveryDeclareStatusEnum;
+import com.erp.model.wms.enums.PackingStatusEnum;
+import com.erp.server.tms.service.TmsDeclareBillService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.TmsDeclareBillService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.tms.dto.TmsDeclareBillDTO;
-
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -89,7 +88,7 @@ public class TmsFmDeclareBillController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "头程报关单新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated TmsDeclareBillDTO.AddDTO dto) {
-        return success(tmsDeclareBillService.add(dto));
+        return success(tmsDeclareBillService.addFmDeclare(dto));
     }
 
     /**
@@ -119,7 +118,11 @@ public class TmsFmDeclareBillController extends BaseController {
      */
     @GetMapping("/getCanGenerateDeliveryOrder")
     public ApiResult<List<TmsDeclareBillDTO.DeliveryDTO>> getCanGenerateDeliveryOrder() {
-        return success(tmsDeclareBillService.getCanGenerateDeliveryOrder());
+        TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
+                .packingStatus(PackingStatusEnum.PACKING.getCode())
+                .declareStatus(FmDeliveryDeclareStatusEnum.WAIT.getCode())
+                .build();
+        return success(tmsDeclareBillService.getCanGenerateDeliveryOrder(querySourceDTO));
     }
 
     /**

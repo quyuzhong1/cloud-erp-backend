@@ -14,6 +14,8 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.wms.enums.FmDeliveryDeclareStatusEnum;
+import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.server.tms.service.TmsDeclareBillService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -33,7 +35,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @LogSystemModule("B2B报关单")
-@RequestMapping("/tmsFmDeclareBill")
+@RequestMapping("/tmsB2BDeclareBill")
 public class TmsB2BDeclareBillController extends BaseController {
 
     @Resource
@@ -115,7 +117,11 @@ public class TmsB2BDeclareBillController extends BaseController {
      */
     @GetMapping("/getCanGenerateDeliveryOrder")
     public ApiResult<List<TmsDeclareBillDTO.DeliveryDTO>> getCanGenerateDeliveryOrder() {
-        return success(tmsDeclareBillService.getCanGenerateDeliveryOrder());
+        TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
+                .packingStatus(PackingStatusEnum.PACKING.getCode())
+                .declareStatus(FmDeliveryDeclareStatusEnum.WAIT.getCode())
+                .build();
+        return success(tmsDeclareBillService.getCanGenerateDeliveryOrder(querySourceDTO));
     }
 
     /**

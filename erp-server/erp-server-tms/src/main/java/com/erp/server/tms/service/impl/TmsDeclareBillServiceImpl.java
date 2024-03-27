@@ -7,6 +7,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
+import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.mapper.TmsDeclareBillMapper;
 import com.erp.server.tms.service.TmsDeclareBillService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -26,6 +27,7 @@ import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -46,7 +48,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Autowired
     private DocNoGenHelper docNoGenHelper;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Resource
+    private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
+
+    @Override
+    public BaseResultDTO.AddDTO addFmDeclare(TmsDeclareBillDTO.AddDTO dto) {
+
+        return null;
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(TmsDeclareBillDTO.AddDTO addDTO) {
@@ -117,7 +127,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
-    public List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeliveryOrder() {
+    public List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeliveryOrder(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO) {
+        List<TmsDeclareBillDTO.DeliveryDTO> deliveryDTOList = wmsFirstMileDeliveryFeign.getCanGenerateDeclare(querySourceDTO);
         return null;
     }
 
@@ -160,7 +171,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     public List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto) {
         return null;
     }
-
 
     /**
     * 新增修改处理数据

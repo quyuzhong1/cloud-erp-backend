@@ -2,6 +2,8 @@ package com.erp.model.tms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -79,6 +81,30 @@ public class TmsDeclareBillDTO implements Serializable {
 
     }
 
+    /**
+     * 查询可以生成报关单的DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class QuerySourceDTO {
+
+        /**
+         * 装箱状态
+         */
+        private String packingStatus;
+
+        /**
+         * 报关状态
+         */
+        private String declareStatus;
+
+        /**
+         * 发货单ids
+         */
+        private List<String> ids;
+    }
     /**
      * 发货单信息
      */
