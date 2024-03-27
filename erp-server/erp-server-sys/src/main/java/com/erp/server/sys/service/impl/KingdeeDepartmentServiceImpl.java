@@ -374,6 +374,8 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
             if (Objects.nonNull(parentDept)) {
                 kingdeeDepartmentEntity.setParentKingdeeCode(parentDept.getKingdeeDeptCode());
             }
+        }else{
+            kingdeeDepartmentEntity.setParentId("0");
         }
         kingdeeDepartmentEntity.setUseOrgCode(orgInfo.getCode());
 
