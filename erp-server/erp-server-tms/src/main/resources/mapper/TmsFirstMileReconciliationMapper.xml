@@ -44,7 +44,24 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDTO$ListDTO">
-
+        select
+        <include refid="Base_Column_List" />
+        from tms_first_mile_reconciliation tfmr
+        <where>
+            ${params.sqlMap.default}
+            and tfmr.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            tfmr.id desc
+        </where>
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -52,7 +69,24 @@
     </select>
 
     <select id="listExport" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDTO$ListDTO">
-
+        select
+        <include refid="Base_Column_List" />
+        from tms_first_mile_reconciliation tfmr
+        <where>
+            ${params.sqlMap.default}
+            and tfmr.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            tfmr.id desc
+        </where>
     </select>
     <select id="tabList" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDTO$TabListDTO">
         SELECT

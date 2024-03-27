@@ -6,6 +6,7 @@ import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.server.tms.mapper.TmsFirstMileReconciliationMapper;
 import com.erp.server.tms.service.TmsFirstMileReconciliationService;
@@ -130,14 +131,14 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     @Override
     public PagingVO<TmsFirstMileReconciliationDTO.ListDTO> paging(PagingDTO<TmsFirstMileReconciliationDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        Page<?> query = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<TmsFirstMileReconciliationDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
-           return new PagingVO(pageData);
+           return new PagingVO<>(pageData);
         }
         // 数据处理
         fillList(pageData.getRecords());
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
     @Override
@@ -146,16 +147,18 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         searchParam.setPermissionSql(param.getPermissionSql());
         List<TmsFirstMileReconciliationDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
+        if (CollUtil.isEmpty(list)) {
+            list.forEach(obj -> obj.setTabFlagName(ApproveStatusEnum.getName(obj.getTabFlag())));
+        }
+        // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
         // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(TmsFirstMileReconciliationDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new TmsFirstMileReconciliationDTO.TabListDTO(status, 0));
-        }
+                list.add(new TmsFirstMileReconciliationDTO.TabListDTO(status,ApproveStatusEnum.getName(status), 0));
+            }
         });
-        list.add(new TmsFirstMileReconciliationDTO.TabListDTO("all", list.stream().mapToInt(TmsFirstMileReconciliationDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
         return list;
     }
 

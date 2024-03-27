@@ -29,7 +29,7 @@ public interface TmsFirstMileReconciliationMapper extends BaseMapper<TmsFirstMil
     * @param params
     * @return
     */
-    IPage<TmsFirstMileReconciliationDTO.ListDTO> paging(Page query, @Param("params") TmsFirstMileReconciliationDTO.PagingParamDTO params);
+    IPage<TmsFirstMileReconciliationDTO.ListDTO> paging(Page<?> query, @Param("params") TmsFirstMileReconciliationDTO.PagingParamDTO params);
 
     /**
     * 状态数量
