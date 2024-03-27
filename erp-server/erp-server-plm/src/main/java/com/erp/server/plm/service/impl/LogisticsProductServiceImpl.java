@@ -169,7 +169,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         String salesStatusName = SaleStateEnum.getNameByCode(salesStatus);
         productBaseInfo.setSalesStatusName(salesStatusName);
         String categoryId = productBaseInfo.getCategoryId();
-        List<String> categoryIdList = basicCategoryService.getPidList(categoryId);
+        List<String> categoryIdList = StringUtils.isNotBlank(categoryId) ? basicCategoryService.getPidList(categoryId) : Collections.emptyList();
         List<BasicCategoryEntity> categoryList = CollectionUtils.isNotEmpty(categoryIdList) ? basicCategoryService.listByIds(categoryIdList) : Collections.emptyList();
         String categoryName = categoryList.stream().map(BasicCategoryEntity::getName).collect(Collectors.joining("-"));
         productBaseInfo.setCategoryName(categoryName);
