@@ -40,6 +40,11 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
          private String tabFlag;
 
          /**
+          * 类型名称
+          */
+         private String tabFlagName;
+
+         /**
          * 数量
          */
          private Integer count;

@@ -82,4 +82,13 @@ public interface TmsB2cDeclareReconciliationDetailService extends SuperService<T
      * @return Boolean
      */
     Boolean cleanDetailMainId(String id);
+    /**
+     * @description: 导入
+     * @author Will
+     * @date: 2024/3/27 11:35
+     * @param excelImportDTO
+     * @param response
+     * @return ImportDTO
+     */
+    TmsB2cDeclareReconciliationDetailDTO.ImportDTO importFile(TmsB2cDeclareReconciliationDetailDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response);
 }

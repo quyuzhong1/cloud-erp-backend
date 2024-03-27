@@ -4,6 +4,8 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -18,21 +20,27 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
+import com.erp.model.tms.dto.excel.DeclareReconciliationStandardExcelDTO;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareEntity;
+import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.InstockForecastStatusEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.server.tms.listener.DeclareReconciliationStandardExcelListener;
 import com.erp.server.tms.mapper.TmsB2cDeclareReconciliationDetailMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -43,8 +51,11 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -76,7 +87,9 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     @Autowired
     private SoB2cFeign soB2cFeign;
 
-
+    @Autowired
+    private CfgReconciliationFieldService cfgReconciliationFieldService;
+    
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -217,6 +230,95 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         return  lambdaUpdate().eq(TmsB2cDeclareReconciliationDetailEntity::getMainId,id)
                 .set(TmsB2cDeclareReconciliationDetailEntity::getMainId,"")
                 .update();
+    }
+
+    @Override
+    public TmsB2cDeclareReconciliationDetailDTO.ImportDTO importFile(TmsB2cDeclareReconciliationDetailDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+        switch (excelImportDTO.getTypeEnum()) {
+            case STANDARD:
+                return importStandardFile(excelImportDTO.getExcelFile());
+            case CONFIG:
+                return importConfigFile(excelImportDTO.getExcelFile());
+            default:
+                throw new ServiceException("输入类型有误");
+        }
+    }
+
+    private TmsB2cDeclareReconciliationDetailDTO.ImportDTO importStandardFile(MultipartFile excelFile) {
+        TmsB2cDeclareReconciliationDetailDTO.ImportDTO importDTO = new TmsB2cDeclareReconciliationDetailDTO.ImportDTO();
+
+        DeclareReconciliationStandardExcelListener excelListenerUtil = new DeclareReconciliationStandardExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), DeclareReconciliationStandardExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<DeclareReconciliationStandardExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        //导入数据处理
+        List<DeclareReconciliationStandardExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<DeclareReconciliationStandardExcelDTO> errorList = excelListenerUtil.getErrorList();
+        //导入数据保存
+        List<TmsB2cDeclareReconciliationDetailDTO.ViewDTO> successImortList = handleImportStandardData(successList, errorList);
+
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "报关对账单错误数据.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, DeclareReconciliationStandardExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importDTO.setSuccessList(successImortList);
+        importDTO.setErrorUrl(url);
+        return importDTO;
+    }
+
+    /**
+     * @description: 标准版导入数据处理
+     * @author Will
+     * @date: 2024/3/27 12:07
+     * @param successList
+     * @param errorList
+     * @return List<AddDTO>
+     */
+    private List<TmsB2cDeclareReconciliationDetailDTO.ViewDTO> handleImportStandardData (List<DeclareReconciliationStandardExcelDTO> successList,
+                                                                                        List<DeclareReconciliationStandardExcelDTO> errorList ) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<TmsB2cDeclareReconciliationDetailDTO.ViewDTO> resultList = new ArrayList<>();
+
+        //中专报关信息
+        List<String> soCodeList = successList.stream().map(DeclareReconciliationStandardExcelDTO::getSoCode).collect(Collectors.toList());
+        List<TransferDeclareDetailEntity> transferDeclareDetailList = transferDeclareDetailService.listBySoCodeList(soCodeList);
+
+        //配置信息
+        List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> erpFieldList = cfgReconciliationFieldService.erpFieldList(Arrays.asList(DictBasicEnum.CFG_B2C_DECLARE_ERP_FIELD.getType()));
+
+        for (DeclareReconciliationStandardExcelDTO excelDTO : successList) {
+             List<String> errorMsgList = new ArrayList<>();
+            TransferDeclareDetailEntity transferDeclareDetail = transferDeclareDetailList.stream().filter(obj -> StrUtil.equals(obj.getSoCode(), excelDTO.getSoCode())).findFirst().orElse(null);
+            if( ObjectUtil.isEmpty(transferDeclareDetail))  {
+                errorMsgList.add("未找到销售订单对应中专报关单明细");
+            }
+            CfgReconciliationFieldDTO.ErpFieldDropDownDTO erpFieldDropDownDTO = erpFieldList.stream().filter(obj -> StrUtil.equals(obj.getErpFieldName(), excelDTO.getCostName())).findFirst().orElse(null);
+        }
+
+        return resultList;
+    }
+
+    private TmsB2cDeclareReconciliationDetailDTO.ImportDTO importConfigFile(MultipartFile excelFile) {
+        TmsB2cDeclareReconciliationDetailDTO.ImportDTO importDTO = new TmsB2cDeclareReconciliationDetailDTO.ImportDTO();
+        return importDTO;
     }
 
     /**
