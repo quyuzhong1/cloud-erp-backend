@@ -859,8 +859,8 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         if (errorList.isEmpty()) {
             return Boolean.TRUE;
         }
-        String excelPath = "excel/OtherOutStockError.xlsx";
-        String name = "OtherOutStockError";
+        String excelPath = "excel/otherOutstockError.xlsx";
+        String name = "otherOutstockError";
         try {
             new ExcelPrintUtils().patchExport(errorList,
                     response,
