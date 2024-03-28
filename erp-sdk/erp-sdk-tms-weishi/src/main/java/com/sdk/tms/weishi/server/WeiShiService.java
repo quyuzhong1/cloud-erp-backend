@@ -7,13 +7,14 @@ import com.sdk.tms.weishi.constants.WeiShiConstants;
 import com.sdk.tms.weishi.dto.request.*;
 import com.sdk.tms.weishi.dto.response.*;
 import com.sdk.tms.weishi.utils.WeiShiUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
-
+@Slf4j
 @Component
 @Validated
 public class WeiShiService {
@@ -31,6 +32,8 @@ public class WeiShiService {
      *  创建订单
      */
     public WeiShiCreateOrder createOrder(@Valid WeiShiCreateOrderRequest request,Map<String, String> authMap){
+        log.info("==========WeiShiService.createOrder==========start");
+        log.info("authMap:{}, orderRequest:{}",authMap, request);
         String response = WeiShiUtils.sendPost(authMap.get("url"),WeiShiConstants.METHOD_CREATE_ORDER,JSONObject.toJSONString(request),authMap.get("clientId"),authMap.get("clientSecret"));
         return JSONObject.parseObject(response,WeiShiCreateOrder.class);
     }

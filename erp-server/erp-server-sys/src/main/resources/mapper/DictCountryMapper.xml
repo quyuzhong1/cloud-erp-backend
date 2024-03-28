@@ -15,9 +15,9 @@
            dc.subregion_code,
            dga.subregion_name,
            dc.disabled
-        FROM dict_country dc LEFT JOIN dict_global_area dga
---         ON dc.region_code=dga.id
-        ON dc.subregion_code=dga.id
+        FROM dict_country dc
+        LEFT JOIN dict_global_area dga
+        ON dc.subregion_code=dga.id AND dga.is_deleted=FALSE
         WHERE dc.is_deleted=FALSE
         ORDER BY dc.index DESC
     </select>

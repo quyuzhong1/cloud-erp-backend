@@ -272,6 +272,11 @@ public class PurchaseOrderDTO implements Serializable {
         private Boolean isEndReceive;
 
         /**
+         * 结束交货时间
+         */
+        private LocalDateTime endReceiveTime;
+
+        /**
          * 来源单号
          */
         private String sourceCode;

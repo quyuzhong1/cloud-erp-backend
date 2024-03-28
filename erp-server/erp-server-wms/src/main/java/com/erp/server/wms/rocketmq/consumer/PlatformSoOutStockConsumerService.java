@@ -99,15 +99,16 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
         log.info("[销售出库单] 消费:dto={}", JSONUtil.toJsonStr(ext));
         PlatformSoOutStockDTO dto = JSONUtil.toBean(ext.toString(), PlatformSoOutStockDTO.class);
         // 已有出库详情/不保存订单
-        Boolean hasDeliveryDetail = Boolean.FALSE;
-        if (StringUtils.isNotEmpty(dto.getPlatformCode()) && StringUtils.isNotEmpty(dto.getDictPlatform())){
-            hasDeliveryDetail = dmpMongoDbFeign.checkHasDeliveryDetail(dto.getPlatformCode(), dto.getDictPlatform());
-        }
-        if (hasDeliveryDetail){
-            log.warn("[亚马逊物流销售消费服务]:已存在对应销售出库单不新增：单号={}", dto.getPlatformCode());
-            return ApiResult.success();
-        }
-        // 查询销售出库单是否存在?
+        // 2024-03-25允许所有来源订单处理
+//        Boolean hasDeliveryDetail = Boolean.FALSE;
+//        if (StringUtils.isNotEmpty(dto.getPlatformCode()) && StringUtils.isNotEmpty(dto.getDictPlatform())){
+//            hasDeliveryDetail = dmpMongoDbFeign.checkHasDeliveryDetail(dto.getPlatformCode(), dto.getDictPlatform());
+//        }
+//        if (hasDeliveryDetail){
+//            log.warn("[亚马逊物流销售消费服务]:已存在对应销售出库单不新增：单号={}", dto.getPlatformCode());
+//            return ApiResult.success();
+//        }
+        // 查询销售订单是否存在?
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.getByPlatformCode(
                 Collections.singletonList(dto.getPlatformCode()),
                 dto.getDictPlatform(),

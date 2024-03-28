@@ -342,7 +342,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         //送货信息
         List<DeliveryOrderDetailEntity> deliveryOrderDetailList = detailService.listDetailByDetailSourceIds(detailIds);
         //查询采购签收信息
-        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds((List<String>) orderIds);
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(new ArrayList<>(orderIds));
         //入库信息
         List<PoInstockDetailEntity> stockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(detailIds);
         //退货信息

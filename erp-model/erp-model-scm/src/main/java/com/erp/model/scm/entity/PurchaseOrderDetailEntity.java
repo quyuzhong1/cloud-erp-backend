@@ -136,6 +136,12 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private Boolean isEndReceive;
 
     /**
+     * 结束交货时间
+     */
+    @TableField("end_receive_time")
+    private LocalDateTime endReceiveTime;
+
+    /**
      * 来源明细id
      */
     @TableField("source_detail_id")

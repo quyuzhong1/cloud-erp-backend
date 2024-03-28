@@ -642,7 +642,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 .stream()
                 .anyMatch(e -> CollectionUtils.isEmpty(e.getHistorySkuMappingList()));
         if (notExistMapping){
-            throw new ServiceException("找不到历史映射关系:单号=" + dto.getSourceCode());
+            throw new ServiceException("找不到历史映射关系");
         }
         // 生成库存检查参数
         List<String> skuIdList = new LinkedList<>();

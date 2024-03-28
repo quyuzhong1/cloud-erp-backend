@@ -185,10 +185,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<SupplierCredentialDTO.AddDTO> credentialList = dto.getCredentialList();
         //检查资质日期
         supplierCredentialService.checkDate(credentialList);
-        String paymentConditionId = dto.getPaymentCondition();
+        String paymentConditionCode = dto.getPaymentCondition();
         //验证付款条件是否正确
-        if (StrUtils.isNotEmpty(paymentConditionId)) {
-            KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getById(paymentConditionId);
+        if (StrUtils.isNotEmpty(paymentConditionCode)) {
+            KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getByCode(paymentConditionCode);
             if (Objects.isNull(paymentCondition)) {
                 throw new ServiceException("付款条件错误");
             }
@@ -290,10 +290,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         result.setApproveStatus(supplier.getApproveStatus().getStatus());
         result.setPhase(supplier.getPhase().getPhase());
         String paymentConditionName="";
-        String paymentConditionId = supplier.getPaymentCondition();
+        String paymentConditionCode = supplier.getPaymentCondition();
         //付款条件
-        if (StringUtils.isNotBlank(paymentConditionId)) {
-            KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getById(paymentConditionId);
+        if (StringUtils.isNotBlank(paymentConditionCode)) {
+            KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getByCode(paymentConditionCode);
             if (Objects.nonNull(paymentCondition)) {
                 paymentConditionName = paymentCondition.getName();
             }
@@ -330,10 +330,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
-        String paymentConditionId = dto.getPaymentCondition();
+        String paymentConditionCode = dto.getPaymentCondition();
         //验证付款条件是否正确
-        if (StrUtils.isNotEmpty(paymentConditionId)) {
-            KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getById(paymentConditionId);
+        if (StrUtils.isNotEmpty(paymentConditionCode)) {
+            KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getByCode(paymentConditionCode);
             if (Objects.isNull(paymentCondition)) {
                 throw new ServiceException("付款条件错误");
             }
@@ -509,7 +509,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setPayMethodName(payMethodName);
             //付款条件
-            String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getId().equals(item.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getCode().equals(item.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setPaymentConditionName(paymentConditionName);
 
             ApproveStatusEnum statusEnum = item.getApproveStatus();
@@ -1114,12 +1114,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
         view.setPayCurrency(entity.getPayCurrency());
         view.setPaymentCondition(entity.getPaymentCondition());
-        String paymentConditionId = entity.getPaymentCondition();
+        String paymentConditionCode = entity.getPaymentCondition();
 
         //付款条件名称
         String paymentConditionName = "";
-        if(StringUtils.isNotBlank(paymentConditionId)){
-            KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getById(paymentConditionId);
+        if(StringUtils.isNotBlank(paymentConditionCode)){
+            KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getById(paymentConditionCode);
             if (Objects.nonNull(paymentCondition)) {
                 paymentConditionName = paymentCondition.getName();
             }

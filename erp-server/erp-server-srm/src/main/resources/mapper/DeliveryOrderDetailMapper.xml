@@ -41,6 +41,35 @@
         is_deleted,
         main_id, source_detail_id, sku_id, sku_no, delivery_qty, gift_qty, receive_qty, gift_receive_qty, qc_good_qty, remark, is_urgent,product_name,order_qty,planDeliveryDate
     </sql>
+    <select id="listDetailDTOByDetailSourceIds"
+            resultType="com.erp.model.srm.dto.DeliveryOrderDetailDTO$ListDTO">
+        select
+            o.source_type,
+            o.receipt_status,
+            d.main_id,
+            d.source_detail_id,
+            d.sku_id,
+            d.sku_no,
+            d.product_name,
+            d.order_qty,
+            d.delivery_qty,
+            d.gift_qty,
+            d.receive_qty,
+            d.gift_receive_qty,
+            d.qc_good_qty,
+            d.remark,
+            d.is_urgent,
+            d.plan_delivery_date
+        from delivery_order_detail d
+                 LEFT JOIN delivery_order o on o.id = d.main_id and o.is_deleted =FALSE
+        where d.is_deleted =FALSE
+        <if test="detailIds != null and detailIds.size > 0">
+            and d.source_detail_id in
+            <foreach collection="detailIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 
 
 </mapper>

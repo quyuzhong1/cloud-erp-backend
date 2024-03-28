@@ -1,18 +1,21 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
+import com.common.business.utils.CollectionUtils;
+import com.erp.model.plm.dto.ProductCustomsSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.server.plm.mapper.ProductCustomsMapper;
 import com.erp.server.plm.service.ProductCustomsService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.plm.service.ProductDetailService;
+import javafx.print.Collation;
 import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * <p>
@@ -54,5 +57,18 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
             customsEntityList.add(productCustomsEntity);
         });
         return this.saveBatch(customsEntityList);
+    }
+
+    /**
+     * 获取sku定义的目的国申报海关编码
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<ProductCustomsEntity> listProductCustomsBySkuIds(ProductCustomsSkuDTO dto) {
+        if (Objects.isNull(dto) || CollectionUtil.isEmpty(dto.getSkuIds())){
+            return Collections.emptyList();
+        }
+        return baseMapper.listProductCustomsBySkuIds(dto);
     }
 }
