@@ -109,6 +109,11 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
         /**
          * 订单预报状态
          */
+        private String instockForecastStatus;
+
+        /**
+         * 订单预报状态名称
+         */
         private String instockForecastStatusName;
 
         /**
@@ -335,14 +340,25 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
         private BigDecimal actualOtherCost;
 
         /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+        /**
         * 备注
         */
         private String remark;
 
         /**
-        * 对账状态
+        * 对账状态,/tms/drop/down/dict/list?key=declareReconciliationStatus
         */
         private String status;
+
+
+        /**
+         * 对账状态名称
+         */
+        private String statusName;
 
         /**
         * 确认时间
@@ -447,7 +463,7 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
         private List<String> ids;
 
         /**
-         * 对账状态
+         * 对账状态,/tms/drop/down/dict/list?key=declareReconciliationStatus
          */
         @NotBlank(message = "对账状态不能为空")
         private String status;
