@@ -189,6 +189,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Resource
     private InventoryCloseRecordFeign inventoryCloseRecordFeign;
 
+    @Resource
+    private KingdeePaymentConditionService kingdeePaymentConditionService;
+
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
         PurchaseOrderDTO.SearchParamDTO params = pagingDTO.getParams();
@@ -322,11 +325,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
         }
         // 采购订单供应商付款条件
-        if(StrUtils.isNotEmpty(supplierUpdateDTO.getPaymentCondition())) {
-            List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
-            Map<String, List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO>> paymentConditionMap = paymentConditionList.stream().collect(Collectors.groupingBy(com.erp.model.sys.dto.DictBasicDTO.ViewDTO::getValue));
-            if(paymentConditionMap.containsKey(supplierUpdateDTO.getPaymentCondition())) {
-                supplierUpdateDTO.setPaymentConditionName(paymentConditionMap.get(supplierUpdateDTO.getPaymentCondition()).get(0).getName());
+        String paymentConditionCode = supplierUpdateDTO.getPaymentCondition();
+        if(StrUtils.isNotEmpty(paymentConditionCode)) {
+            KingdeePaymentConditionEntity paymentCondition =  kingdeePaymentConditionService.getByCode(paymentConditionCode);
+            if(Objects.nonNull(paymentCondition)){
+                supplierUpdateDTO.setPaymentConditionName(paymentCondition.getName());
             }
         }
         dto.setPurchaseOrderSupplierDTO(supplierUpdateDTO);
@@ -689,11 +692,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         exportPdfDTO.setSupplierTel(purchaseOrderSupplier.getContactTelNumber());
         // 采购订单供应商付款条件
-        if(StrUtils.isNotEmpty(purchaseOrderSupplier.getPaymentCondition())) {
-            List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
-            Map<String, List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO>> paymentConditionMap = paymentConditionList.stream().collect(Collectors.groupingBy(com.erp.model.sys.dto.DictBasicDTO.ViewDTO::getValue));
-            if(paymentConditionMap.containsKey(purchaseOrderSupplier.getPaymentCondition())) {
-                exportPdfDTO.setPaymentConditionName(paymentConditionMap.get(purchaseOrderSupplier.getPaymentCondition()).get(0).getName());
+        String  paymentConditionCode = purchaseOrderSupplier.getPaymentCondition();
+        if(StrUtils.isNotEmpty(paymentConditionCode)) {
+            KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getByCode(paymentConditionCode);
+            if(Objects.nonNull(paymentCondition)) {
+                exportPdfDTO.setPaymentConditionName(paymentCondition.getName());
             }
         }
 

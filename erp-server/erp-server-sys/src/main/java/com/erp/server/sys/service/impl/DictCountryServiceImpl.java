@@ -132,6 +132,7 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         if (nameCount > 0) {
             throw new ServiceException("国家名已存在");
         }
+        entity.setSubregionCode(entity.getRegionCode());
     }
 
     @Override

@@ -13,6 +13,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,6 +66,14 @@ public class KingdeePaymentConditionServiceImpl extends SuperServiceImpl<Kingdee
             this.lambdaUpdate().set(KingdeePaymentConditionEntity::getDisabled, disable).
                     in(KingdeePaymentConditionEntity::getId, ids).update();
         }
+    }
+
+    @Override
+    public KingdeePaymentConditionEntity getByCode(String code) {
+        if(StringUtils.isBlank(code)){
+            return null;
+        }
+        return this.lambdaQuery().eq(KingdeePaymentConditionEntity::getCode, code).last("LIMIT 1").one();
     }
 
 

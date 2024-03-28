@@ -29,4 +29,14 @@ public interface KingdeePaymentConditionService extends SuperService<KingdeePaym
 
 
     void updateDisable(List<String> ids, boolean disable);
+
+    /**
+     * 根据code 获取数据
+     * @description
+     * @param code
+     * @return
+     * @date 2024-03-28 9:54
+     * @author Lambda
+     */
+    KingdeePaymentConditionEntity getByCode(String code);
 }

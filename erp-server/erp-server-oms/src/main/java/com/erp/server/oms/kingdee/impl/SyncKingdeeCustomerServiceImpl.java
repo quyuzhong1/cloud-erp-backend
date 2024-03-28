@@ -169,7 +169,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         //获取业务员信息
         if (StringUtils.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
-            findBusinessOperator.setOrgCode("100");
+            findBusinessOperator.setOrgCode(useOrgCode);
             findBusinessOperator.setUserId(sellerId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
