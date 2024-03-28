@@ -24,24 +24,22 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
-import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import com.erp.model.oms.entity.CustomerB2bSellerChangeEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.CustomerSellerEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
-import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
+import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
+import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.sys.feign.KingdeeFeign;
-import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.convert.CustomerInfoConverter;
 import com.erp.server.oms.mapper.CustomerB2bSellerChangeMapper;
@@ -95,16 +93,22 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO add(CustomerB2bSellerChangeDTO.AddDTO addDTO) {
-
+        String xsyCode = KingdeeBusinessOperatorTypeEnum.XSY.getCode();
         if(StringUtils.isBlank(addDTO.getChangeSellerId())){
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "变更后的销售员id不能为空");
         }
-        List<KingdeeBusinessOperatorEntity> kingdeeBusinessOperatorEntityList = kingdeeFeign.listBusinessOperatorByUserIdList(Collections.singletonList(addDTO.getChangeSellerId()));
-        if(CollectionUtils.isNotEmpty(kingdeeBusinessOperatorEntityList)){
-            addDTO.setChangeSellerName(kingdeeBusinessOperatorEntityList.get(0).getKingdeeUserName());
-        }else{
+
+        KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO businessOperatorDTO = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+        businessOperatorDTO.setOrgCode("100");
+        businessOperatorDTO.setBusinessOperatorType(xsyCode);
+        businessOperatorDTO.setUserId(addDTO.getChangeSellerId());
+        KingdeeOperatorRefPostDTO.OperatorDTO businessOperator = kingdeeFeign.getBusinessOperator(businessOperatorDTO);
+        if (Objects.isNull(businessOperator)) {
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "查询不到销售员");
+        }else{
+            addDTO.setChangeSellerName(businessOperator.getUserName());
         }
+
         CustomerInfoEntity customerInfoEntity = customerInfoService.getById(addDTO.getMainId());
         if(Objects.isNull(customerInfoEntity)){
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "客户信息为空");
@@ -238,12 +242,19 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         if(StringUtils.isBlank(dto.getChangeSellerId())){
             throw new ServiceException("变更后的销售员id不能为空");
         }
-        List<KingdeeBusinessOperatorEntity> kingdeeBusinessOperatorEntityList = kingdeeFeign.listBusinessOperatorByUserIdList(Collections.singletonList(dto.getChangeSellerId()));
-        if(CollectionUtils.isNotEmpty(kingdeeBusinessOperatorEntityList)){
-            dto.setChangeSellerName(kingdeeBusinessOperatorEntityList.get(0).getKingdeeUserName());
-        }else{
+
+        String xsyCode = KingdeeBusinessOperatorTypeEnum.XSY.getCode();
+        KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO businessOperatorDTO = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+        businessOperatorDTO.setOrgCode("100");
+        businessOperatorDTO.setBusinessOperatorType(xsyCode);
+        businessOperatorDTO.setUserId(dto.getChangeSellerId());
+        KingdeeOperatorRefPostDTO.OperatorDTO businessOperator = kingdeeFeign.getBusinessOperator(businessOperatorDTO);
+        if (Objects.isNull(businessOperator)) {
             throw new ServiceException("查询不到销售员");
+        }else{
+            dto.setChangeSellerName(businessOperator.getUserName());
         }
+
         this.update(dto);
         //提交流程
         CustomerB2bSellerChangeEntity entity = this.getById(dto.getId());
@@ -583,11 +594,17 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         if(StringUtils.isBlank(updateDTO.getChangeSellerId())){
             throw new ServiceException("变更后的销售员id不能为空");
         }
-        List<KingdeeBusinessOperatorEntity> kingdeeBusinessOperatorEntityList = kingdeeFeign.listBusinessOperatorByUserIdList(Collections.singletonList(updateDTO.getChangeSellerId()));
-        if(CollectionUtils.isNotEmpty(kingdeeBusinessOperatorEntityList)){
-            updateDTO.setChangeSellerName(kingdeeBusinessOperatorEntityList.get(0).getKingdeeUserName());
-        }else{
+        String xsyCode = KingdeeBusinessOperatorTypeEnum.XSY.getCode();
+        KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO businessOperatorDTO = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+        businessOperatorDTO.setOrgCode("100");
+        businessOperatorDTO.setBusinessOperatorType(xsyCode);
+        businessOperatorDTO.setUserId(updateDTO.getChangeSellerId());
+        KingdeeOperatorRefPostDTO.OperatorDTO businessOperator = kingdeeFeign.getBusinessOperator(businessOperatorDTO);
+        if (Objects.isNull(businessOperator)) {
             throw new ServiceException("查询不到销售员");
+        }else{
+            updateDTO.setChangeSellerName(businessOperator.getUserName());
+
         }
         //销售员信息
         CustomerSellerEntity currentSellerEntity = customerSellerService.getCurrentInfo(old.getMainId());
@@ -615,6 +632,12 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
 
     @Override
     public List<BatchResultDTO> batchAdd(List<CustomerB2bSellerChangeDTO.AddDTO> addDTOList) {
+        List<String> mainIdList = addDTOList.stream().map(CustomerB2bSellerChangeDTO.AddDTO::getMainId).collect(Collectors.toList());
+        List<CustomerInfoEntity> customerInfoList = CollectionUtils.isNotEmpty(mainIdList) ? customerInfoService.listByIds(mainIdList) : Collections.emptyList();
+        List<String> useOrgIdList = customerInfoList.stream().map(CustomerInfoEntity::getUseOrgId).distinct().collect(Collectors.toList());
+        if(useOrgIdList.size()> 1){
+             throw new ServiceException("只能选择同一个使用组织的客户进行销售员变更");
+        }
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         for(CustomerB2bSellerChangeDTO.AddDTO addDTO : addDTOList){
             batchResultDTOList.add(service.add(addDTO));

@@ -134,6 +134,11 @@ public class CustomerDTO implements Serializable {
         private String useOrgName;
 
         /**
+         * 使用组织id
+         */
+        private String useOrgId;
+
+        /**
          * 客户分组id
          */
         private String groupId;
@@ -739,6 +744,50 @@ public class CustomerDTO implements Serializable {
          * false 没有
          */
         private Boolean disabled;
+    }
+
+    /**
+     * 收货信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ReceiveInfoDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * code
+         */
+        private String code;
+
+        /**
+         * 客户名称
+         */
+        private String name;
+
+        /**
+         * 收货地址
+         */
+        private String receiveAddress;
+
+        /**
+         * 收货人
+         */
+        private String receiverName;
+
+        /**
+         * 联系电话
+         */
+        private String telNumber;
+
+        /**
+         * 启用禁用
+         */
+        private Boolean disabled;
+
     }
 
     /**

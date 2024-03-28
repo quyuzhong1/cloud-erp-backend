@@ -38,7 +38,11 @@ public class KingdeeBusinessOperatorDTO  {
     public static class FindBusinessOperatorDTO{
 
         //组织
+        private String orgId;
+
+        //组织
         private String orgCode;
+
 
         //业务员类型
         private String businessOperatorType;

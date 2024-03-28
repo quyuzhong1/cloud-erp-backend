@@ -162,6 +162,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     private TransferLogisticsFeign transferLogisticsFeign;
     @Resource
     private PurchaseOrderDetailMapper purchaseOrderDetailMapper;
+
+    @Resource
+    private KingdeePaymentConditionService  kingdeePaymentConditionService;
     /**
      * 保存供应商信息
      *
@@ -182,11 +185,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<SupplierCredentialDTO.AddDTO> credentialList = dto.getCredentialList();
         //检查资质日期
         supplierCredentialService.checkDate(credentialList);
+        String paymentConditionCode = dto.getPaymentCondition();
         //验证付款条件是否正确
-        if (StrUtils.isNotEmpty(dto.getPaymentCondition())) {
-            List<DictBasicDTO.ViewDTO> paymentConditionList = sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
-            List<String> paymentConditionCodes = paymentConditionList.stream().map(DictBasicDTO.ViewDTO::getValue).distinct().collect(Collectors.toList());
-            if (!paymentConditionCodes.contains(dto.getPaymentCondition())) {
+        if (StrUtils.isNotEmpty(paymentConditionCode)) {
+            KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getByCode(paymentConditionCode);
+            if (Objects.isNull(paymentCondition)) {
                 throw new ServiceException("付款条件错误");
             }
         }
@@ -286,14 +289,16 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         BeanMapper.copy(supplier, result);
         result.setApproveStatus(supplier.getApproveStatus().getStatus());
         result.setPhase(supplier.getPhase().getPhase());
+        String paymentConditionName="";
+        String paymentConditionCode = supplier.getPaymentCondition();
         //付款条件
-        List<DictBasicDTO.ViewDTO> paymentConditionList = sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
-        if (StrUtils.isNotEmpty(result.getPaymentCondition())) {
-            DictBasicDTO.ViewDTO dict = paymentConditionList.stream().filter(r -> Objects.equals(r.getValue(), result.getPaymentCondition())).findFirst().orElse(null);
-            if (Objects.nonNull(dict)) {
-                result.setPaymentConditionName(dict.getName());
+        if (StringUtils.isNotBlank(paymentConditionCode)) {
+            KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getByCode(paymentConditionCode);
+            if (Objects.nonNull(paymentCondition)) {
+                paymentConditionName = paymentCondition.getName();
             }
         }
+        result.setPaymentCondition(paymentConditionName);
         //根据供应商id 查询 联系人信息
         List<SupplierContactDTO.UpdateDTO> contactList = supplierContactService.listBySupplierId(supplierId);
         result.setContactList(contactList);
@@ -325,12 +330,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
-
+        String paymentConditionCode = dto.getPaymentCondition();
         //验证付款条件是否正确
-        if (StrUtils.isNotEmpty(dto.getPaymentCondition())) {
-            List<DictBasicDTO.ViewDTO> paymentConditionList = sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
-            List<String> paymentConditionCodes = paymentConditionList.stream().map(DictBasicDTO.ViewDTO::getValue).distinct().collect(Collectors.toList());
-            if (!paymentConditionCodes.contains(dto.getPaymentCondition())) {
+        if (StrUtils.isNotEmpty(paymentConditionCode)) {
+            KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getByCode(paymentConditionCode);
+            if (Objects.isNull(paymentCondition)) {
                 throw new ServiceException("付款条件错误");
             }
         }
@@ -446,9 +450,6 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     public PagingVO<SupplierDTO.PagingViewDTO> paging(PagingDTO<SupplierDTO.PagingParamDTO> dto) {
         SupplierDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-//        if (SupplierTabEnum.TO_ME_CHECK_TASK.getCode().equalsIgnoreCase(params.getTabFlag())){
-//            params.setBusinessIds(commonService.listProcessCurBusinessIds(SourceTypeEnum.SUPPLIER.getCode()));
-//        }
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
         List<SupplierDTO.PagingViewDTO> list = pageData.getRecords();
@@ -471,7 +472,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //获取到采购订单数据
         List<PurchaseOrderSupplierEntity> orderSupplierList = purchaseOrderSupplierService.getBySupplierIds(supplierIdList);
         //付款条件
-        List<DictBasicDTO.ViewDTO> paymentConditionList = sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+        List<KingdeePaymentConditionEntity> paymentConditionList = kingdeePaymentConditionService.list();
 
 
         //最新审核人
@@ -508,7 +509,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setPayMethodName(payMethodName);
             //付款条件
-            String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getValue().equals(item.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getCode().equals(item.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setPaymentConditionName(paymentConditionName);
 
             ApproveStatusEnum statusEnum = item.getApproveStatus();
@@ -946,7 +947,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //获取供应商默认联系人信息
             List<SupplierContactEntity> contactList = supplierContactService.getDefaultBySupplierIdList(supplierIdList);
             //付款条件
-            List<DictBasicDTO.ViewDTO> paymentConditionList = sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+            List<KingdeePaymentConditionEntity> paymentConditionList = kingdeePaymentConditionService.list();
             //获取到采购订单数据
             List<PurchaseOrderSupplierEntity> orderSupplierList = purchaseOrderSupplierService.getBySupplierIds(supplierIdList);
 
@@ -1004,7 +1005,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 exportExcel.setPayMethodName(payMethodName);
                 //付款条件
                 String  paymentCondition = item.getPaymentCondition();
-                String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getValue().equals(paymentCondition)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getId().equals(paymentCondition)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 exportExcel.setPaymentConditionName(paymentConditionName);
                 //采购员
                 exportExcel.setPurchaseUserName(item.getPurchaseUserName());
@@ -1113,10 +1114,16 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
         view.setPayCurrency(entity.getPayCurrency());
         view.setPaymentCondition(entity.getPaymentCondition());
+        String paymentConditionCode = entity.getPaymentCondition();
 
         //付款条件名称
-        List<DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
-        String paymentConditionName = paymentConditionList.stream().filter(obj -> StrUtil.equals(obj.getValue(), entity.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        String paymentConditionName = "";
+        if(StringUtils.isNotBlank(paymentConditionCode)){
+            KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getById(paymentConditionCode);
+            if (Objects.nonNull(paymentCondition)) {
+                paymentConditionName = paymentCondition.getName();
+            }
+        }
         view.setPaymentConditionName(paymentConditionName);
         view.setCompanyAddress(entity.getCompanyAddress());
         return view;

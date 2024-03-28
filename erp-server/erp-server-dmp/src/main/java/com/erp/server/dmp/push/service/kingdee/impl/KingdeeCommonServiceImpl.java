@@ -310,10 +310,11 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             if (CollectionUtils.isNotEmpty(successEntitys)) {
                 //数据id
                 String id = successEntitys.get(MathUtil.ZERO).getId();
+
                 //金蝶id
                 map.put("syncKingdeeId", id);
                 //更新业务表中的金蝶id
-                updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), SyncStatusEnum.SUCCESS_SYNC.getCode(), id);
+                updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), SyncStatusEnum.SUCCESS_SYNC.getCode(), id,"");
             }
         }
         return Boolean.TRUE;
@@ -333,12 +334,17 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         }
         //数据id
         String id = save.getResult().getId();
+        RepoStatus repoStatus=save.getResult().getResponseStatus();
+        String kingdeeCode="";
+        if(repoStatus.isIsSuccess()){
+            kingdeeCode= repoStatus.getSuccessEntitys().get(0).getNumber();
+        }
         //金蝶id
         map.put("syncKingdeeId", id);
         //提交
         submit(map, apiUtils, id, type);
         //更新业务表中的金蝶id
-        updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), "", id);
+        updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), "", id,kingdeeCode);
         return Boolean.TRUE;
     }
 
@@ -357,7 +363,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         //金蝶id
         map.put("syncKingdeeId", id);
         //更新业务表中的金蝶id
-        updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), SyncStatusEnum.SUCCESS_SYNC.getCode(), id);
+        updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), SyncStatusEnum.SUCCESS_SYNC.getCode(), id,"");
         return Boolean.TRUE;
     }
 
@@ -371,7 +377,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         //金蝶id
         map.put("syncKingdeeId", id);
         //更新业务表中的金蝶id
-        updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), "", id);
+        updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), "", id,"");
         //给修改json对象赋值ID
         KingdeeUtils.makeFieldJson(json, "FId", ".", id);
         StringBuffer allKey = FastJsonUtil.getAllKey(json);
@@ -431,7 +437,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             audit(map, apiUtils, id, type);
         }
         //更新业务单据状态
-        kingdeeCommonService.updateBusinessSyncKingdeeStatus(type, map.get("id").toString(), SyncStatusEnum.SUCCESS_SYNC.getCode(), id);
+        kingdeeCommonService.updateBusinessSyncKingdeeStatus(type, map.get("id").toString(), SyncStatusEnum.SUCCESS_SYNC.getCode(), id,"");
         return Boolean.TRUE;
     }
 
@@ -457,14 +463,14 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateBusinessSyncKingdeeStatus(Integer code, String businessId, String status, String kingdeeId) {
+    public void updateBusinessSyncKingdeeStatus(Integer code, String businessId, String status, String kingdeeId,String kingdeeCode) {
         //更新业务单据状态
         Map<String, Object> params = new HashMap<>(MathUtil.THREE);
         params.put("code", code.toString());
         params.put("businessId", businessId);
         params.put("status", status);
         params.put("kingdeeId", kingdeeId);
-
+        params.put("kingdeeCode", kingdeeCode);
         ApiModuleTypeEnum apiModuleTypeEnum = Arrays.stream(ApiModuleTypeEnum.values()).filter(obj -> obj.getCode().equals(code)).findFirst().orElse(null);
         if (ObjectUtils.isEmpty(apiModuleTypeEnum)) {
             return;
@@ -642,6 +648,32 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         log.warn("KingdeeCommonServiceImpl.createkingdeeSoChange  result>>>>>>{}", result);
 
         return result;
+    }
+
+    @Override
+    public Boolean save(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param, Integer type) {
+        String msg = "新增数据";
+        if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
+            msg = "修改数据";
+        }
+        log.warn("msg>>>>>{}，param>>>>>>>{},json>>>>>>>>{}", msg, JSONUtil.toJsonStr(param), json);
+        SaveResult save = apiUtils.save(param);
+        if (!save.isSuccessfully()) {
+            throw new ServiceException(ApiError.ERROR_ADD_KINGDEE_DATA);
+        }
+        //数据id
+        String id = save.getResult().getId();
+        RepoStatus repoStatus=save.getResult().getResponseStatus();
+        String kingdeeCode="";
+        if(repoStatus.isIsSuccess()){
+            kingdeeCode= repoStatus.getSuccessEntitys().get(0).getNumber();
+        }
+        //金蝶id
+        map.put("syncKingdeeId", id);
+        //更新业务表中的金蝶id
+        updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), "", id,kingdeeCode);
+        return Boolean.TRUE;
+
     }
 
     /**
