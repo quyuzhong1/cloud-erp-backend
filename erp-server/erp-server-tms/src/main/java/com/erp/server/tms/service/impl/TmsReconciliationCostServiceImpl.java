@@ -107,7 +107,7 @@ public class TmsReconciliationCostServiceImpl extends SuperServiceImpl<TmsReconc
 
         for (TmsReconciliationCostEntity tmsReconciliationCostEntity : list) {
            //查询汇率
-            currencyMap.get(tmsReconciliationCostEntity.getCurrency())
+            BigDecimal rate = currencyMap.get(tmsReconciliationCostEntity.getCurrency());
             if(ObjectUtil.isEmpty(rate)){
                throw new ServiceException("汇率为空，请维护汇率后再提交");
            }
