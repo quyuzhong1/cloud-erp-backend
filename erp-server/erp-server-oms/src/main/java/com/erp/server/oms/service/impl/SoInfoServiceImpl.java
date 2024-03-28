@@ -45,6 +45,7 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
+import com.erp.model.scm.entity.KingdeePaymentConditionEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCurrencyEntity;
@@ -498,7 +499,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         view.setAttachNameList(attachmentNameList);
 
         // 字典值获取
-        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType(), DictBasicTypeEnum.COLLECTION_TERMS.getType());
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType());
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
         Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
 
@@ -2164,7 +2165,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     private void checkDict(SoInfoEntity soInfoEntity) {
         // 字典值获取
-        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType(), DictBasicTypeEnum.COLLECTION_TERMS.getType());
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType());
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
         Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
 
@@ -2496,12 +2497,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         soPi.setSalesOrgName(soInfo.getSalesOrgName());
 
         //收款条件
-        String receiveMethodType = DictBasicTypeEnum.RECEIVE_METHOD.getType();
-        DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(receiveMethodType, receiveCondition);
-        if (Objects.isNull(dictBasic)) {
+        KingdeeReceiptConditionEntity receiptConditionEntity = kingdeeReceiptConditionService.getById(receiveCondition);
+        if (Objects.isNull(receiptConditionEntity)) {
             soPi.setReceiveConditionStr("");
         } else {
-            soPi.setReceiveConditionStr(dictBasic.getName());
+            soPi.setReceiveConditionStr(receiptConditionEntity.getName());
 
         }
 

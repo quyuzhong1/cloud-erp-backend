@@ -34,6 +34,7 @@ import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeUserPostService;
 import com.erp.server.sys.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -56,7 +57,6 @@ import java.util.stream.Collectors;
 public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeOperatorRefPostMapper, KingdeeOperatorRefPostEntity> implements KingdeeOperatorRefPostService {
 
 
-
     @Autowired
     private SysAccountingCompanyService sysAccountingCompanyService;
 
@@ -77,30 +77,58 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO add(String typeCode,String userPostId) {
+    public BatchResultDTO add(String typeCode, String userPostId) {
         KingdeeUserRefPostEntity userPost = kingdeeUserRefPostService.getById(userPostId);
         if (Objects.isNull(userPost) || StringUtils.isBlank(userPost.getCode())) {
-             throw new ServiceException("用户岗位不存在");
+            throw new ServiceException("用户岗位不存在");
         }
-        KingdeeOperatorRefPostEntity kingdeeOperator=this.getByTypeAndUserPost(typeCode,userPostId);
+        KingdeeOperatorRefPostEntity kingdeeOperator = this.getByTypeAndUserPost(typeCode, userPostId);
         if (Objects.nonNull(kingdeeOperator)) {
             throw new ServiceException("该业务类型已存在");
         }
-        KingdeeOperatorRefPostEntity addEntity =new KingdeeOperatorRefPostEntity();
+
+        KingdeeOperatorRefPostEntity addEntity = new KingdeeOperatorRefPostEntity();
         addEntity.setUserPostId(userPostId);
         addEntity.setTypeCode(typeCode);
         addEntity.setUseOrgId(userPost.getUseOrgId());
         addEntity.setUseOrgName(userPost.getUseOrgName());
-        Boolean  result=this.save(addEntity);
-        if(result){
+        handleDb(addEntity);
+        Boolean result = this.save(addEntity);
+        if (result) {
             syncKingdeeOperatorService.syncDataToKingdee(addEntity, SyncOperateEnum.OPERATE_ADD.getCode());
         }
         return BatchResultDTO.success(addEntity.getId(), addEntity.getId(), OperationTypeEnum.ADD);
     }
 
+    private void handleDb(KingdeeOperatorRefPostEntity entity) {
+        //类型
+        String typeCode = entity.getTypeCode();
+        //使用组织
+        String useOrgId = entity.getUseOrgId();
+
+        //使用组织
+        String useOrgName = entity.getUseOrgName();
+        //用户岗位
+        String userPostId = entity.getUserPostId();
+        List<KingdeeOperatorRefPostEntity> list = this.lambdaQuery().
+                eq(KingdeeOperatorRefPostEntity::getTypeCode, typeCode).eq(KingdeeOperatorRefPostEntity::getUseOrgId, useOrgId).list();
+        List<String> userPostIdList = list.stream().map(KingdeeOperatorRefPostEntity::getUserPostId).distinct().collect(Collectors.toList());
+        userPostIdList.add(userPostId);
+        List<KingdeeUserRefPostEntity> userRefPostList = CollectionUtils.isNotEmpty(userPostIdList) ?
+                kingdeeUserRefPostService.listByIds(userPostIdList) : Collections.emptyList();
+
+        Map<String, List<KingdeeUserRefPostEntity>> map = userRefPostList.stream().collect(Collectors.groupingBy(KingdeeUserRefPostEntity::getErpUserId));
+        for (Map.Entry<String, List<KingdeeUserRefPostEntity>> item : map.entrySet()) {
+            if (item.getValue().size() > 1) {
+                throw new ServiceException("该用戶在" + useOrgName + " 组织下存在多个岗位");
+            }
+
+        }
+    }
+
     private KingdeeOperatorRefPostEntity getByTypeAndUserPost(String typeCode, String userPostId) {
-        return this.lambdaQuery().eq(KingdeeOperatorRefPostEntity::getTypeCode,typeCode).
-                eq(KingdeeOperatorRefPostEntity::getUserPostId,userPostId).last("LIMIT 1").one();
+        return this.lambdaQuery().eq(KingdeeOperatorRefPostEntity::getTypeCode, typeCode).
+                eq(KingdeeOperatorRefPostEntity::getUserPostId, userPostId).last("LIMIT 1").one();
     }
 
 
@@ -134,7 +162,7 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
         List<KingdeeOperatorRefPostEntity> dbList = this.list();
         List<BaseIdDTO.CodeDTO> orgList = sysAccountingCompanyService.getByIds(Collections.emptyList());
         //员工任岗信息
-        List<KingdeeUserRefPostEntity> userPostList=  kingdeeUserRefPostService.list();
+        List<KingdeeUserRefPostEntity> userPostList = kingdeeUserRefPostService.list();
 
         List<KingdeeOperatorRefPostEntity> saveOrUpdateList = new ArrayList<>(20);
         for (KingdeeOperatorRefPostDTO.KingdeeDTO item : operatorList) {
@@ -144,13 +172,13 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
             //code
             String kingdeeId = item.getKingdeeId();
             //类型code
-            String typeCode=item.getTypeCode();
+            String typeCode = item.getTypeCode();
 
             //使用组织code
             String useOrgCode = item.getUseOrgCode();
 
             //员工任岗code
-            String userPostCode=item.getUserPostCode();
+            String userPostCode = item.getUserPostCode();
             KingdeeUserRefPostEntity userPostEntity = userPostList.stream().filter(p -> p.getCode().equals(userPostCode)).
                     findFirst().orElse(null);
             if (Objects.isNull(userPostEntity)) {
@@ -169,7 +197,7 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
             KingdeeOperatorRefPostEntity dbEntity = dbList.stream().filter(entity -> entity.getKingdeeId().equals(kingdeeId)).
                     findFirst().orElse(null);
             //表示没有
-            if(Objects.isNull(dbEntity)){
+            if (Objects.isNull(dbEntity)) {
                 KingdeeOperatorRefPostEntity addEntity = new KingdeeOperatorRefPostEntity();
                 addEntity.setCode(code);
                 addEntity.setUseOrgId(useOrgId);
@@ -179,12 +207,12 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
                 addEntity.setUserPostId(userPostId);
                 addEntity.setKingdeeId(kingdeeId);
                 saveOrUpdateList.add(addEntity);
-            }else{
-                if(!dbEntity.getCode().equals(code) ||
+            } else {
+                if (!dbEntity.getCode().equals(code) ||
                         !dbEntity.getUseOrgId().equals(orgInfo.getId()) ||
                         !dbEntity.getTypeCode().equals(typeCode) ||
                         !dbEntity.getUserPostId().equals(userPostId)
-                ){
+                ) {
                     dbEntity.setCode(code);
                     dbEntity.setUseOrgId(useOrgId);
                     dbEntity.setUseOrgName(useOrgName);
@@ -211,7 +239,7 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     @Override
     public BatchResultDTO delete(String id) {
         KingdeeOperatorRefPostEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶业务员"));
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶业务员"));
         String kingdeeId = entity.getKingdeeId();
         Boolean result = this.removeById(id);
         if (result && StringUtils.isNotBlank(kingdeeId)) {
@@ -220,9 +248,6 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
-
-
-
 
 
     @Override
@@ -237,9 +262,9 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     @Override
     public KingdeeOperatorRefPostDTO.OperatorDTO find(KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO dto) {
         KingdeeOperatorRefPostDTO.OperatorDTO result = baseMapper.find(dto);
-        if(Objects.nonNull(result)){
+        if (Objects.nonNull(result)) {
             SysUserInfoEntity userInfo = sysUserInfoService.getById(dto.getUserId());
-            if(Objects.nonNull(userInfo)){
+            if (Objects.nonNull(userInfo)) {
                 result.setUserName(userInfo.getUserName());
             }
         }
@@ -260,7 +285,7 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
         }
         List<UserInfoDTO.BusinessOperationUserDTO> wantList = dbList.stream().filter(d -> !userId.equals(d.getUserId())).collect(Collectors.toList());
         resultList.addAll(wantList);
-        Integer zero= MathUtil.ZERO;
+        Integer zero = MathUtil.ZERO;
         for (UserInfoDTO.BusinessOperationUserDTO item : resultList) {
             Integer deleteState = item.getDeleteState();
             Integer userState = item.getUserState();
@@ -276,7 +301,7 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
 
     @Override
     public List<KingdeeOperatorRefPostDTO.OperatorDTO> listOperatorByUserIdList(List<String> userIdList) {
-        List<KingdeeOperatorRefPostDTO.OperatorDTO> resultList =baseMapper.listOperatorByUserIdList(userIdList);
+        List<KingdeeOperatorRefPostDTO.OperatorDTO> resultList = baseMapper.listOperatorByUserIdList(userIdList);
         return resultList;
     }
 }
