@@ -27,6 +27,7 @@ public class YunTuServiceTest {
     public YunTuServiceTest(){
         authMap.put("clientId","ITC0893791");
         authMap.put("clientSecret","axzc2utvPbfc9UbJDOh+7w==");
+        authMap.put("url","http://omsapi.uat.yunexpress.com");
     }
 
     @Test
