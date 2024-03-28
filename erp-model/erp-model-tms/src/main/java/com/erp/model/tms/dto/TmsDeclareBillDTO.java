@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
@@ -120,6 +121,10 @@ public class TmsDeclareBillDTO implements Serializable {
          * 业务code（发货单code或销售出库单code）
          */
         private String sourceCode;
+        /**
+         * 业务类型
+         */
+        private String businessType;
 
         /**
          * 目的国
@@ -716,7 +721,6 @@ public class TmsDeclareBillDTO implements Serializable {
         @NotBlank(message = "来源类型：头程,B2B不能为空")
         private String sourceId;
     }
-
     /**
     * 修改
     */

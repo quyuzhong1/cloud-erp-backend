@@ -1,28 +1,38 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
+import com.erp.model.tms.entity.TmsDeclareBillDetailEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
-import com.erp.model.tms.enums.ShippingBillingMethodEnum;
+import com.erp.model.tms.enums.DeclareStatusEnum;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.enums.FmDeliveryDeclareStatusEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
+import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.mapper.TmsDeclareBillMapper;
 import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
+import com.google.common.collect.Lists;
+import freemarker.template.utility.StringUtil;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import java.util.*;
@@ -49,8 +59,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
-    @Autowired
-    private DocNoGenHelper docNoGenHelper;
 
     @Resource
     private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
@@ -61,39 +69,85 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Resource
     private LogisticsSupplierService logisticsSupplierService;
 
-    @Override
-    public BaseResultDTO.AddDTO addFmDeclare(TmsDeclareBillDTO.AddDTO dto) {
+    @Resource
+    private RedisUtil redisUtil;
 
-        return null;
+    @Resource
+    private TmsDeclareBillDetailService detailService;
+
+    @Resource
+    @Lazy
+    private TmsDeclareBillServiceImpl service;
+
+    @Override
+    public Boolean addFmDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
+        TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
+                .packingStatus(PackingStatusEnum.PACKING.getCode())
+                .declareStatus(FmDeliveryDeclareStatusEnum.WAIT.getCode())
+                .ids(Arrays.asList(addDTO.getSourceId()))
+                .build();
+        List<TmsDeclareBillDTO.DeliveryDTO> deliveryDTOList = wmsFirstMileDeliveryFeign.getCanGenerateDeclare(querySourceDTO);
+        if(CollectionUtils.isEmpty(deliveryDTOList)){
+            throw new ServiceException("没有可生成报关单的发货单");
+        }
+        TmsDeclareBillDTO.DeliveryDTO deliveryDTO = deliveryDTOList.get(0);
+        TmsDeclareBillEntity baseTmsDeclareBillEntity = new TmsDeclareBillEntity();
+        BeanMapperUtils.copy(addDTO, baseTmsDeclareBillEntity);
+        baseTmsDeclareBillEntity.setSourceCode(deliveryDTO.getSourceCode());
+        baseTmsDeclareBillEntity.setSourceId(deliveryDTO.getSourceId());
+        baseTmsDeclareBillEntity.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
+        baseTmsDeclareBillEntity.setBusinessType(deliveryDTO.getBusinessType());
+        baseTmsDeclareBillEntity.setDeclareStatus(DeclareStatusEnum.WAIT.getCode());
+        //50个明细为一个报关单
+        List<TmsDeclareBillDTO.ProductDetail> allProductDetailList = deliveryDTO.getProductDetailList();
+        if(CollectionUtils.isEmpty(allProductDetailList)){
+            throw new ServiceException("没有可生成报关单的明细");
+        }
+        List<List<TmsDeclareBillDTO.ProductDetail>> productDetailListList = Lists.partition(allProductDetailList, 50);
+        for(List<TmsDeclareBillDTO.ProductDetail> productDetailList : productDetailListList){
+            TmsDeclareBillEntity tmsDeclareBillEntity = BeanUtil.copyProperties(baseTmsDeclareBillEntity,TmsDeclareBillEntity.class);
+            List<TmsDeclareBillDetailEntity> detailEntityList = BeanUtil.copyToList(productDetailList,TmsDeclareBillDetailEntity.class);
+            service.add(tmsDeclareBillEntity,detailEntityList,SourceTypeEnum.FIRST_MILE_DELIVERY);
+        }
+        //更新发货单的报关状态
+        FirstMileDeliveryDTO.UpdateStatusDTO dto = new FirstMileDeliveryDTO.UpdateStatusDTO();
+        dto.setIds(Arrays.asList(addDTO.getSourceId()));
+        dto.setDeclareStatus(FmDeliveryDeclareStatusEnum.FINISH.getCode());
+        wmsFirstMileDeliveryFeign.updateStatus(dto);
+        return true;
     }
 
     @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO add(TmsDeclareBillDTO.AddDTO addDTO) {
-        TmsDeclareBillEntity tmsDeclareBillEntity = new TmsDeclareBillEntity();
-        BeanMapperUtils.copy(addDTO, tmsDeclareBillEntity);
-
-        // 数据处理
-        handleData(tmsDeclareBillEntity);
+    public BaseResultDTO.AddDTO add(TmsDeclareBillEntity tmsDeclareBillEntity,List<TmsDeclareBillDetailEntity> detailEntityList,SourceTypeEnum sourceTypeEnum) {
+        //生成合同号
+        String code = this.generateContractCode(sourceTypeEnum);
+        tmsDeclareBillEntity.setCode(code);
 
         log.info("开始新增报关单");
-        // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
-        tmsDeclareBillEntity.setCode(code);
         boolean save = super.save(tmsDeclareBillEntity);
         if(!save) {
             throw new ServiceException("报关单保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "报关单" , tmsDeclareBillEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, tmsDeclareBillEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
+        String msg = StrUtil.format("用户【{}】新增【{}】合同号为【{}】", commonService.getUserInfo().getUserName(), "报关单" , tmsDeclareBillEntity.getCode());
+        operateLogService.addModuleOperateLog(msg, sourceTypeEnum.getCode(), tmsDeclareBillEntity.getId(), "新增操作");
+        detailService.add(tmsDeclareBillEntity,detailEntityList);
         return new BaseResultDTO.AddDTO(tmsDeclareBillEntity.getId(), code);
     }
 
+    private String generateContractCode(SourceTypeEnum sourceTypeEnum) {
+        String key = StrUtil.format(RedisCacheConstants.TMS_DECLARE_CODE,sourceTypeEnum.getCode(), DateUtil.currentYMD());
+        Object value = redisUtil.get(key);
+        int number;
+        if(value == null) {
+            number = 1;
+        }else{
+            number = (Integer) value;
+            number++;
+        }
+        redisUtil.set(key,number,86400);
+        return StrUtil.format("{}{}{}", "HT", DateUtil.currentYMD(), StringUtil.leftPad(String.valueOf(number), 3, "0"));
+    }
     /**
     * 修改
     */
@@ -111,12 +165,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(!save) {
             throw new ServiceException("报关单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
             log.info("编辑 开始记录报关单日志数据，单号：【{}】", tmsDeclareBillEntity.getCode());
             String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), tmsDeclareBillEntity.getCode(), "报关单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, tmsDeclareBillEntity, null, tmsDeclareBillEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -142,7 +194,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<String> sourceCodes = deliveryDTOList.stream().map(TmsDeclareBillDTO.DeliveryDTO::getSourceCode).collect(Collectors.toList());
         List<LogisticsBillEntity> logisticsBillEntityList = logisticService.listByOutstcockCode(sourceCodes);
         List<String> supplierIds = logisticsBillEntityList.stream().map(LogisticsBillEntity::getLogisticsSupplierId).distinct().collect(Collectors.toList());
-        List<LogisticsSupplierEntity> logisticsSupplierEntityList = logisticsSupplierService.listByIds(supplierIds);
+        List<LogisticsSupplierEntity> logisticsSupplierEntityList = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(supplierIds)){
+            logisticsSupplierEntityList = logisticsSupplierService.listByIds(supplierIds);
+        }
         for (TmsDeclareBillDTO.DeliveryDTO deliveryDTO : deliveryDTOList) {
             LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(v->v.getOutstockId().equals(deliveryDTO.getSourceId())).findFirst().orElse(new LogisticsBillEntity());
             LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntityList.stream().filter(v->v.getId().equals(logisticsBillEntity.getLogisticsSupplierId())).findFirst().orElse(new LogisticsSupplierEntity());

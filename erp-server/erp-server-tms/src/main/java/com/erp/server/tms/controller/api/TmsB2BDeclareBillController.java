@@ -87,7 +87,8 @@ public class TmsB2BDeclareBillController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "B2B报关单新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated TmsDeclareBillDTO.AddDTO dto) {
-        return success(tmsDeclareBillService.add(dto));
+//        return success(tmsDeclareBillService.add(dto));
+        return null;
     }
 
     /**

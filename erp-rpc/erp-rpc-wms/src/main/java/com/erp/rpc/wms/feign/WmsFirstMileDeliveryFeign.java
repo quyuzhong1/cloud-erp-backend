@@ -21,7 +21,7 @@ public interface WmsFirstMileDeliveryFeign {
     List<FirstMileDeliveryDTO.GenerateLogisticDTO> getGenerateLogisticDTO(@RequestBody FirstMileDeliveryDTO.GenerateLogisticReqDTO dto);
 
     /**
-     * 查询已装箱并且未生成物流单的发货单
+     * 更新状态
      */
     @PostMapping("/feign/firstMileDelivery/updateStatus")
     Boolean updateStatus(@RequestBody FirstMileDeliveryDTO.UpdateStatusDTO dto);

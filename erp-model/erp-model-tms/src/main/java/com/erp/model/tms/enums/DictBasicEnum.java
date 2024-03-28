@@ -24,9 +24,12 @@ public enum DictBasicEnum {
 
     CFG_B2C_DECLARE_ERP_FIELD("cfgB2cDeclareErpField", "B2C报关对账单-数大臣字段"),
     CFG_FIRST_MILE_ERP_FIELD("cfgFirstMileErpField", "头程对账单-数大臣字段"),
+    DECLARE_DECLARE_TYPE("declareDeclareType", "报关单-报关类型"),
+    DECLARE_SUPERVISION_METHOD("declareSupervisionMethod", "报关单-监管方式"),
+    DECLARE_NATURE_LEVY("declareNatureLevy", "报关单-征免性质"),
+    DECLARE_PACK_TYPE("declarePackType", "报关单-包装种类"),
+    DECLARE_TRANSACTION_METHOD("declareTransactionMethod", "报关单-成交方式"),
     ;
-
-
     private String type;
     private String desc;
 

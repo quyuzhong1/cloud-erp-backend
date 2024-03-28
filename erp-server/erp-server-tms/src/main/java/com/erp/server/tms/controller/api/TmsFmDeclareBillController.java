@@ -86,7 +86,7 @@ public class TmsFmDeclareBillController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "头程报关单新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated TmsDeclareBillDTO.AddDTO dto) {
+    public ApiResult<Boolean> add(@RequestBody @Validated TmsDeclareBillDTO.AddDTO dto) {
         return success(tmsDeclareBillService.addFmDeclare(dto));
     }
 

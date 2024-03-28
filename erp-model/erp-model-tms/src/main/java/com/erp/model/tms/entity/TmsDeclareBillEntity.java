@@ -1,15 +1,15 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 
 /**
@@ -88,7 +88,7 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     * 报关日期
     */
     @TableField("declare_date")
-    private LocalDateTime declareDate;
+    private LocalDate declareDate;
     /**
     * 报关类型
     */
@@ -123,7 +123,7 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     * 出口日期
     */
     @TableField("export_date")
-    private LocalDateTime exportDate;
+    private LocalDate exportDate;
     /**
     * 收货人名称
     */

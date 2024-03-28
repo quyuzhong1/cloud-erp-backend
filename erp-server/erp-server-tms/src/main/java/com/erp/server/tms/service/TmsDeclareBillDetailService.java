@@ -3,6 +3,9 @@ import com.erp.model.tms.entity.TmsDeclareBillDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.TmsDeclareBillDetailDTO;
+import com.erp.model.tms.entity.TmsDeclareBillEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -18,10 +21,9 @@ public interface TmsDeclareBillDetailService extends SuperService<TmsDeclareBill
     * 新增
     * @author lrp
     * @date: 2024-03-27
-    * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(TmsDeclareBillDetailDTO.AddDTO dto);
+    Boolean add(TmsDeclareBillEntity tmsDeclareBillEntity, List<TmsDeclareBillDetailEntity> detailEntityList);
 
     /**
     * 修改

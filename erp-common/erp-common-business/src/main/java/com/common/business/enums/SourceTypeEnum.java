@@ -154,6 +154,8 @@ public enum SourceTypeEnum {
     TRANSFER_LOGISTICS_GET_ALL_PRODUCT_INFO("transferLogisticsGetAllProductInfo", "物流报关商获取备案产品","dmp_pull_task"),
     TRANSFER_LOGISTICS_CREATE_INBOUND("transferLogisticsCreateInbound", "物流报关商创建入库单","dmp_push_task"),
     TRANSFER_LOGISTICS_PRINT_LABEL("transferLogisticsPrintLabel", "物流报关商打印标签","dmp_pull_task"),
+    FM_DECLARE_BILL("fmDeclareBill", "头程报关单","tms_declare_bill"),
+    B2B_DECLARE_BILL("b2bDeclareBill", "B2B报关单","tms_declare_bill"),
 
 
     // 亚马逊相关

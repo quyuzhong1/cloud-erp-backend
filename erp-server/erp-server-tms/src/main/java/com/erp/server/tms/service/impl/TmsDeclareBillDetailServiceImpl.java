@@ -4,6 +4,7 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.TmsDeclareBillDetailEntity;
+import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.server.tms.mapper.TmsDeclareBillDetailMapper;
 import com.erp.server.tms.service.TmsDeclareBillDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -38,26 +39,9 @@ public class TmsDeclareBillDetailServiceImpl extends SuperServiceImpl<TmsDeclare
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(TmsDeclareBillDetailDTO.AddDTO addDTO) {
-        TmsDeclareBillDetailEntity tmsDeclareBillDetailEntity = new TmsDeclareBillDetailEntity();
-        BeanMapperUtils.copy(addDTO, tmsDeclareBillDetailEntity);
-
-        // 数据处理
-        handleData(tmsDeclareBillDetailEntity);
-
-        log.info("开始新增报关单明细");
-        boolean save = super.save(tmsDeclareBillDetailEntity);
-        if(!save) {
-            throw new ServiceException("报关单明细保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "报关单明细" , tmsDeclareBillDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, tmsDeclareBillDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(tmsDeclareBillDetailEntity.getId(), tmsDeclareBillDetailEntity.getId());
+    public Boolean add(TmsDeclareBillEntity tmsDeclareBillEntity, List<TmsDeclareBillDetailEntity> detailEntityList) {
+        detailEntityList.forEach(v->v.setMainId(tmsDeclareBillEntity.getId()));
+        return super.saveBatch(detailEntityList);
     }
 
     /**

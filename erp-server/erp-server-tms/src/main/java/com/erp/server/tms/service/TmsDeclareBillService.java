@@ -19,15 +19,6 @@ import java.util.List;
 public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity> {
 
     /**
-    * 新增
-    * @author lrp
-    * @date: 2024-03-27
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(TmsDeclareBillDTO.AddDTO dto);
-
-    /**
     * 修改
     * @author lrp
     * @date: 2024-03-27
@@ -61,5 +52,5 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
 
     List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto);
 
-    BaseResultDTO.AddDTO addFmDeclare(TmsDeclareBillDTO.AddDTO dto);
+    Boolean addFmDeclare(TmsDeclareBillDTO.AddDTO dto);
 }

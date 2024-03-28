@@ -286,7 +286,8 @@
             fmd.id as sourceId,
             fmd.code as sourceCode,
             fmd.country_id as country,
-            fmd.country_name as countryName
+            fmd.country_name as countryName,
+            fmd.source_type as businessType
         from
              first_mile_delivery fmd
         where fmd.is_deleted = false
