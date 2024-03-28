@@ -3,10 +3,12 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -24,16 +26,21 @@ import com.erp.sdk.oms.amz.spapi.utils.AmazonAuthClientUtils;
 import com.erp.server.dmp.mapper.CfgAppClientMapper;
 import com.erp.server.dmp.service.CfgAppClientService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.google.gson.annotations.SerializedName;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -129,20 +136,12 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
             }
             throw new ServiceException("亚马逊授权信息转换异常");
         }
-
         ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
         if (null == shopInfo) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
         if (shopInfo.getDisabled()){
             throw new ServiceException(ApiError.ERROR_MARKETPLACE_UNAUTHORIZED, shopInfo.getId());
-        }
-
-        // 查询已授权信息
-        //根据店铺id 获取到授权信息
-        ShopAuthEntity shopAuth = shopInfoFeign.getShopAuthByShopId(shopId);
-        if (Objects.isNull(shopAuth)) {
-            throw new ServiceException("未找到已授权信息");
         }
 
         AppClientEnum appClient = AppClientEnum.AMAZON_ACCESS_TOKEN;
@@ -157,19 +156,8 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
         Map<SettingEnum, String> configMap = cfgSettingService.getMap(SettingEnum.AMAZON_SP_API_CONFIG);
         // 添加token信息到缓存并按失效时间消失
         AmazonShopInfoDTO redisShopInfoDTO = initShopInfoDTO(shopInfo, configMap, cfgAppClient);
-        // 刷新token请求
-        AmazonTokenDTO tokenDTO = AmazonAuthClientUtils.refreshAuthorizeInfo(
-                cfgAppClient.getUrl(),
-                cfgAppClient.getClientId(),
-                cfgAppClient.getClientSecret(),
-                shopAuth.getRefreshToken());
-        // 更新shopAuth
-        shopAuth.setAccessToken(tokenDTO.getAccessToken());
-        shopAuth.setRefreshToken(tokenDTO.getRefreshToken());
-        shopInfoFeign.updateShopAuthById(shopAuth);
-//        if (!shopInfoFeign.updateShopAuthById(shopAuth)) {
-//            throw new ServiceException("更新店铺授权信息失败:" + JSONUtil.toJsonStr(shopAuth));
-//        }
+
+        AmazonTokenDTO tokenDTO = this.requestAmzAndAuth(shopInfo, cfgAppClient);
         // token添加到redis
         redisShopInfoDTO.setRefreshToken(tokenDTO.getRefreshToken());
         redisShopInfoDTO.setAccessToken(tokenDTO.getAccessToken());
@@ -177,6 +165,55 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
         redisUtil.set(tokenKey, redisShopInfoDTO, tokenDTO.getExpiresIn());
 
         return redisShopInfoDTO;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @DataIdempotent(keyIdName = "shopInfo.id", waitTime = 90)
+    public AmazonTokenDTO requestAmzAndAuth(ShopInfoEntity shopInfo, CfgAppClientEntity cfgAppClient) {
+        // 查询已授权信息
+        //根据店铺id 获取到授权信息
+        ShopAuthEntity shopAuth = shopInfoFeign.getShopAuthByShopId(shopInfo.getId());
+        if (Objects.isNull(shopAuth)) {
+            throw new ServiceException("未找到已授权信息");
+        }
+        LocalDateTime currentExpiresTime = shopAuth.getUpdateTime().plusSeconds(shopAuth.getExpiresIn());
+        if (currentExpiresTime.isAfter(LocalDateTime.now())){
+            return new AmazonTokenDTO(shopAuth.getAccessToken(), shopAuth.getRefreshToken(), shopAuth.getType(), shopAuth.getExpiresIn());
+        }
+        // 刷新token请求
+        AmazonTokenDTO tokenDTO = AmazonAuthClientUtils.refreshAuthorizeInfo(
+                cfgAppClient.getUrl(),
+                cfgAppClient.getClientId(),
+                cfgAppClient.getClientSecret(),
+                shopAuth.getRefreshToken());
+        // 亚马逊关联的店铺列表
+        List<ShopInfoEntity> entityList = shopInfoFeign.getRelatedShopById(shopInfo);
+        if (CollectionUtils.isEmpty(entityList)){
+            // 更新当前店铺shopAuth
+            shopAuth.setAccessToken(tokenDTO.getAccessToken());
+            shopAuth.setRefreshToken(tokenDTO.getRefreshToken());
+            shopInfoFeign.updateShopAuthById(shopAuth);
+            return tokenDTO;
+        }
+        List<String> shopIds = entityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        List<ShopAuthEntity> authList = shopInfoFeign.listShopAuthByShopIds(shopIds);
+        if (CollectionUtils.isEmpty(authList)){
+            // 更新当前店铺shopAuth
+            shopAuth.setAccessToken(tokenDTO.getAccessToken());
+            shopAuth.setRefreshToken(tokenDTO.getRefreshToken());
+            shopInfoFeign.updateShopAuthById(shopAuth);
+            return tokenDTO;
+        }
+        // 批量更新
+        authList.add(shopAuth);
+        authList.forEach(e->{
+            e.setAccessToken(tokenDTO.getAccessToken());
+            e.setRefreshToken(tokenDTO.getRefreshToken());
+        });
+        shopInfoFeign.batchUpdateShopAuthById(authList);
+        return tokenDTO;
     }
 
     /**
