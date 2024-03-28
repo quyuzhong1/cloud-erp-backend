@@ -173,19 +173,16 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         TmsDeclareBillEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "报关单"));
         TmsDeclareBillEntity tmsDeclareBillEntity =  BeanMapperUtils.map(TmsDeclareBillEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(tmsDeclareBillEntity);
-        log.info("编辑 开始修改报关单数据，单号：【{}】", old.getCode());
+        if(!old.getDeclareStatus().equals(DeclareStatusEnum.WAIT.getCode())){
+            throw new ServiceException("报关单状态不是待报关，不能编辑");
+        }
         boolean save = super.updateById(tmsDeclareBillEntity);
         if(!save) {
             throw new ServiceException("报关单保存失败");
         }
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录报关单日志数据，单号：【{}】", tmsDeclareBillEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), tmsDeclareBillEntity.getCode(), "报关单");
-        operateLogService.addModuleOperateLogByObj(old, tmsDeclareBillEntity, null, tmsDeclareBillEntity.getId(), msg);
+        log.info("编辑 开始记录报关单日志数据，单号：【{}】", tmsDeclareBillEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), tmsDeclareBillEntity.getCode(), "报关单");
+        operateLogService.addModuleOperateLogByObj(old, tmsDeclareBillEntity, SourceTypeEnum.FM_DECLARE_BILL.getCode(), tmsDeclareBillEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
