@@ -265,7 +265,7 @@ public class SysUserFeignController extends BaseController {
      *
      * @return
      */
-    @PostMapping("/listUserByUserNames")
+    @GetMapping("/listUserByUserNames")
     public List<FindUserDTO> listUserByUserNames(@RequestParam("userNames") List<String> userNames,@RequestParam("userType") String userType) {
         List<FindUserDTO> list = sysUserInfoService.listUserByUserNames(userNames,userType);
         return list;

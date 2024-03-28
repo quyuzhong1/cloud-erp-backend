@@ -989,7 +989,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                     errorList.add(importExcelDTO);
                     continue;
                 } else {
-                    userDTO = userDTOList.stream().filter(e-> !e.getDisabled()).findFirst().orElse(null);
+                    userDTO = userDTOList.stream().findFirst().orElse(null);
                 }
             }
 
