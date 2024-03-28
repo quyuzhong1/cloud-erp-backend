@@ -1,10 +1,11 @@
 package com.erp.server.tms.service;
 
-import com.common.business.vo.PagingVO;
-import com.erp.model.tms.entity.CfgReconciliationFieldEntity;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
+import com.erp.model.tms.entity.CfgReconciliationFieldEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -109,4 +110,13 @@ public interface CfgReconciliationFieldService extends SuperService<CfgReconcili
      * {@code @date:} 2024-03-25
      */
     Map<String, CfgReconciliationFieldDTO.ErpFieldDropDownDTO> mapErpFieldByUniqueCode(List<String> reconciliationTypeList);
+
+    /**
+     * @description: 根据对账类型查询
+     * @author Will
+     * @date: 2024/3/28 11:08
+     * @param reconciliationType
+     * @return List<CfgReconciliationFieldDTO.ErpFieldViewDTO>
+     */
+    List<CfgReconciliationFieldDTO.ErpFieldViewDTO> getByReconciliationType(String reconciliationType);
 }

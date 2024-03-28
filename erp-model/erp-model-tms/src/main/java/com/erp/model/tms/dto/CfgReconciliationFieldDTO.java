@@ -3,18 +3,17 @@ package com.erp.model.tms.dto;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -317,6 +316,60 @@ public class CfgReconciliationFieldDTO implements Serializable {
          * ERP字段来源ID
          */
         private String sourceId;
+
+        public String combineUniqueCode(){
+            return StrUtil.format("{}_{}", this.sourceType, this.sourceId);
+        }
+
+        public static String convertUniqueCode(String sourceType, String sourceId){
+            return StrUtil.format("{}_{}", sourceType, sourceId);
+        }
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ErpFieldViewDTO {
+        /**
+         * 核对类型
+         */
+        private String reconciliationType;
+        /**
+         * ERP字段名称
+         */
+        private String erpFieldName;
+        /**
+         * ERP字段来源类型
+         */
+        private String sourceType;
+        /**
+         * ERP字段来源ID
+         */
+        private String sourceId;
+
+        /**
+         * 第三方名称
+         */
+        private String thirdName;
+        /**
+         * 第三方名称代号
+         */
+        private String thirdCode;
+        /**
+         * 第三方字段名称
+         */
+        private String thirdFieldName;
+
+        /**
+         * 启用状态
+         */
+        private Boolean status;
+        /**
+         * 备注
+         */
+        private String remark;
 
         public String combineUniqueCode(){
             return StrUtil.format("{}_{}", this.sourceType, this.sourceId);

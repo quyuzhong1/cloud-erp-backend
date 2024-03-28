@@ -29,7 +29,6 @@ import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
 import com.erp.model.tms.enums.CfgReconciliationTypeEnum;
 import com.erp.model.tms.enums.DictBasicEnum;
-import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
 import com.erp.server.tms.convert.CfgReconciliationFieldConverter;
 import com.erp.server.tms.listener.CfgReconciliationFieldExcelListener;
 import com.erp.server.tms.mapper.CfgReconciliationFieldMapper;
@@ -283,6 +282,29 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         return erpFieldNameList
                 .stream()
                 .collect(Collectors.toMap(CfgReconciliationFieldDTO.ErpFieldDropDownDTO::combineUniqueCode, Function.identity()));
+    }
+
+    @Override
+    public List<CfgReconciliationFieldDTO.ErpFieldViewDTO> getByReconciliationType(String reconciliationType) {
+        List<CfgReconciliationFieldEntity> list = lambdaQuery()
+                .eq(CfgReconciliationFieldEntity::getReconciliationType, reconciliationType)
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        //费用配置
+        List<String> sourceIdList = list.stream().map(CfgReconciliationFieldEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listByIds(sourceIdList);
+
+        List<CfgReconciliationFieldDTO.ErpFieldViewDTO> resultList = new ArrayList<>();
+        for (CfgReconciliationFieldEntity fieldEntity : list) {
+            CfgReconciliationFieldDTO.ErpFieldViewDTO erpFieldViewDTO = BeanMapperUtils.map(CfgReconciliationFieldDTO.ErpFieldViewDTO.class, fieldEntity);
+            //费用名称
+            String costName = tmsCfgCostList.stream().filter(obj -> StrUtil.equals(obj.getId(), fieldEntity.getSourceId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCostName())).orElse("");
+            erpFieldViewDTO.setErpFieldName(costName);
+            resultList.add(erpFieldViewDTO);
+        }
+        return resultList;
     }
 
     private void handleImportCfgReconciliationFieldFile(List<CfgReconciliationFieldImportExcelDTO> successList, List<CfgReconciliationFieldImportExcelDTO> errorList) {

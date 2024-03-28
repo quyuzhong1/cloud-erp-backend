@@ -27,6 +27,7 @@ import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
+import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -433,6 +434,10 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         //国家信息
         List<String> countryIdList = viewDTOList.stream().map(TmsB2cDeclareReconciliationDetailDTO.ViewDTO::getCountry).collect(Collectors.toList());
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIdList);
+
+        //币别信息
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(data.getCurrency()));
+
         for (TmsB2cDeclareReconciliationDetailDTO.ViewDTO viewDTO : viewDTOList) {
             //店铺名称
             String shopName = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), viewDTO.getShopId()))
@@ -442,6 +447,12 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
             String countryName = countryList.stream().filter(obj -> StrUtil.equals(obj.getId(), viewDTO.getCountry()))
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
             viewDTO.setCountryName(countryName);
+
+            //币别符号
+            if (CollUtil.isNotEmpty(currencyList)) {
+                viewDTO.setCurrencySymbol(currencyList.get(0).getSymbol());
+            }
+            viewDTO.setStatusName(TmsB2cDeclareReconciliationStatusEnum.getName(viewDTO.getStatus()));
         }
         data.setDetailList(viewDTOList);
 
