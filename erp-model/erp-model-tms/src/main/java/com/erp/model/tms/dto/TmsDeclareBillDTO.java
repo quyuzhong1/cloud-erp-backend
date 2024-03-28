@@ -122,6 +122,15 @@ public class TmsDeclareBillDTO implements Serializable {
         private String sourceCode;
 
         /**
+         * 目的国
+         */
+        private String country;
+
+        /**
+         * 目的国名称
+         */
+        private String countryName;
+        /**
          * 运输方式
          */
         private String shippingMethod;
@@ -303,6 +312,11 @@ public class TmsDeclareBillDTO implements Serializable {
          * 征免
          */
         private String exemption;
+        /**
+         * 净重
+         */
+        private BigDecimal netWeight;
+
     }
 
     /**

@@ -2,6 +2,7 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.LogisticsProductDTO;
+import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductLogisticsDTO;
 import com.erp.model.plm.dto.ProductLogisticsShowDTO;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
@@ -90,4 +91,6 @@ public interface ProductLogisticsService extends IService<ProductLogisticsEntity
      * @return ProductLogisticsEntity
      */
     ProductLogisticsEntity getEntityById(String id);
+
+    List<ProductDetailDTO.ProductLogisticDTO> listProductLogisticsByIds(List<String> skuIdList);
 }

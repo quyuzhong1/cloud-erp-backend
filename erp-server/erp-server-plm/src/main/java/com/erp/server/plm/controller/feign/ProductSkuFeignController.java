@@ -52,6 +52,9 @@ public class ProductSkuFeignController {
     private ProductRefLabelService productRefLabelService;
 
 
+    @Resource
+    private ProductLogisticsService productLogisticsService;
+
     /**
      * 产品包装信息
      */
@@ -420,5 +423,18 @@ public class ProductSkuFeignController {
             return Collections.emptyList();
         }
         return productInfoService.listProductBySkuIds(skuIds);
+    }
+
+
+    /**
+     * @param skuIdList
+     * @return List<ProductDTO>
+     * @description:  根据skuId集合信息查询物流产品信息（组合品根据combinationDeclareType判断是否拆分）
+     * @author Will
+     * @date: 2023/11/16 15:16
+     */
+    @PostMapping("/listProductLogisticsByIds")
+    public List<ProductDetailDTO.ProductLogisticDTO> listProductLogisticsByIds(@RequestBody List<String> skuIdList){
+        return productLogisticsService.listProductLogisticsByIds(skuIdList);
     }
 }

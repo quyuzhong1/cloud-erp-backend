@@ -102,5 +102,32 @@
         WHERE pl.id = #{id} AND pd.is_deleted = FALSE
         ORDER BY pd.id desc
     </select>
+    <select id="listProductLogisticsByIds"
+            resultType="com.erp.model.plm.dto.ProductDetailDTO$ProductLogisticDTO">
+        select
+            pl.sku_id as  skuId,
+            pd.sku_no as  skuNo,
+            pl.customs_code as   customsCode,
+            pl.declare_chinese_name as   declareChineseName,
+            pl.declare_element as   declareElement,
+            pl.declare_unit as declareUnit,
+            pl.declare_price as price,
+            pl.declare_currency as  declareCurrency,
+            pl.declare_currency_symbol as   declareCurrencySymbol,
+            pl.source_country as   sourceCountry,
+            pl.source_cargo as    sourceCargo,
+            pl.exemption,
+            pl.combination_declare_type as   combinationDeclareType,
+            (select net_weight from product_pack pp where pp.sku_id= pl.sku_id and pp.is_deleted = false) as netWeight
+        from
+        product_logistics pl
+        inner join product_detail pd on pd.id = pl.sku_id
+        where pd.is_deleted = false
+        and pl.is_deleted = false
+        and pl.sku_id in
+        <foreach collection="skuIdList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
 
 </mapper>

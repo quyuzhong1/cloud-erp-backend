@@ -2,6 +2,7 @@ package com.erp.server.plm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.plm.dto.LogisticsProductDTO;
+import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductLogisticsShowDTO;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -46,6 +47,8 @@ public interface ProductLogisticsMapper extends BaseMapper<ProductLogisticsEntit
      * @return ProductLogisticsEntity
      */
     ProductLogisticsEntity getEntityById(@Param("id")String id);
+
+    List<ProductDetailDTO.ProductLogisticDTO> listProductLogisticsByIds(@Param("skuIdList") List<String> skuIdList);
 }
 
 

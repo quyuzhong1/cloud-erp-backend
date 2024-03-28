@@ -281,4 +281,26 @@
         where   ${params.sqlMap.default}
             and fmd.is_deleted = false
     </select>
+    <select id="getGenerateDeclare" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$DeliveryDTO">
+        select
+            fmd.id as sourceId,
+            fmd.code as sourceCode,
+            fmd.country_id as country,
+            fmd.country_name as countryName
+        from
+             first_mile_delivery fmd
+        where fmd.is_deleted = false
+        <if test="params.packingStatus != null and params.packingStatus != ''">
+            AND fmd.packing_status = #{params.packingStatus}
+        </if>
+        <if test="params.declareStatus != null and params.declareStatus != ''">
+            AND fmd.declare_status = #{params.declareStatus}
+        </if>
+        <if test="params.ids != null and params.ids.size > 0">
+            AND fmd.id IN
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
 </mapper>

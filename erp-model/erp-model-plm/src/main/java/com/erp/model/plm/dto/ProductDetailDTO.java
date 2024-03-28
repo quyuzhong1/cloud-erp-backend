@@ -5,7 +5,10 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @Description: 多规格sku信息请求参数
@@ -203,6 +206,103 @@ public class ProductDetailDTO implements Serializable {
 
     }
 
+
+    /**
+     * 产品物流信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductLogisticDTO {
+
+        /**
+         * sku id
+         */
+        private String skuId;
+        /**
+         * sku no
+         */
+        private String skuNo;
+        /**
+         * 中国海关编码(商品编号)
+         */
+        private String customsCode;
+        /**
+         * 报关中文名（商品名称）
+         */
+        private String declareChineseName;
+        /**
+         * 申报要素
+         */
+        private String declareElement;
+        /**
+         * 报关单位
+         */
+        private String declareUnit;
+
+        /**
+         * 报关单位名称
+         */
+        private String declareUnitName;
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 子sku数量(默认1),BOM用量
+         */
+        private Integer childQty = 1;
+
+        /**
+         * 子SKU集合
+         */
+        private List<ProductLogisticDTO> childList = new ArrayList<>();
+
+        /**
+         * 净重
+         */
+        private BigDecimal netWeight;
+        /**
+         * 报关币别
+         */
+        private String declareCurrency;
+
+        /**
+         * 报关币别名称
+         */
+        private String declareCurrencyName;
+        /**
+         * 报关币别符号
+         */
+        private String declareCurrencySymbol;
+        /**
+         * 原产国
+         */
+        private String sourceCountry;
+        /**
+         * 原产国名称
+         */
+        private String sourceCountryName;
+
+        /**
+         * 境内货源地
+         */
+        private String sourceCargo;
+        /**
+         * 征免
+         */
+        private String exemption;
+
+        /**
+         * 组合品申报类型
+         */
+        private String combinationDeclareType;
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+    }
 
     /**
      * 产品信息

@@ -36,7 +36,9 @@ import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
+import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -82,6 +84,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -1816,21 +1819,95 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
     @Override
     public List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO dto) {
-//        List<TmsDeclareBillDTO.DeliveryDTO> result = baseMapper.getGenerateDeclare(dto);
-//        if(CollectionUtils.isEmpty(result)){
-//            return new ArrayList<>();
-//        }
-//        List<String> ids = result.stream().map(FirstMileDeliveryDTO.GenerateLogisticDTO::getOutstockId).collect(Collectors.toList());
-//        //箱子明细信息
-//        List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDetailList = baseMapper.listPackingDetail(ids);
-//        Map<String,List<WmsCartonDetailDTO.ListPackingDetailDTO>> packingDetailMap = packingDetailList.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId));
-//        //设置箱子明细信息
-//        result.forEach(v->{
-//            List<WmsCartonDetailDTO.ListPackingDetailDTO> list = packingDetailMap.get(v.getOutstockId());
-//            v.setPackingDTOList(list);
-//        });
-//        return result;
-        return null;
+        List<TmsDeclareBillDTO.DeliveryDTO> result = baseMapper.getGenerateDeclare(dto);
+        if(CollectionUtils.isEmpty(result)){
+            return new ArrayList<>();
+        }
+        List<String> sourceIds = result.stream().map(TmsDeclareBillDTO.DeliveryDTO::getSourceId).collect(Collectors.toList());
+        List<FirstMileDeliveryDetailEntity> allDetailEntityList = firstMileDeliveryDetailService.listByMainIds(sourceIds);
+        //查询物流产品信息
+        List<String> skuIds = allDetailEntityList.stream().map(FirstMileDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailDTO.ProductLogisticDTO> allProductLogisticDTOList = plmTaskFeign.listProductLogisticsByIds(skuIds);
+        //装箱信息
+        List<String> ids = result.stream().map(TmsDeclareBillDTO.DeliveryDTO::getSourceId).collect(Collectors.toList());
+        //箱子明细信息
+        List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDetailList = baseMapper.listPackingDetail(ids);
+        Map<String,List<WmsCartonDetailDTO.ListPackingDetailDTO>> packingDetailMap = packingDetailList.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId));
+
+        for (TmsDeclareBillDTO.DeliveryDTO deliveryDTO : result) {
+            List<FirstMileDeliveryDetailEntity> detailEntityList = allDetailEntityList.stream().filter(entity -> entity.getMainId().equals(deliveryDTO.getSourceId())).collect(Collectors.toList());
+            //处理产品信息
+            if(CollectionUtils.isNotEmpty(detailEntityList)){
+                //转成MAP，相同sku数量相加
+                Map<String,FirstMileDeliveryDetailEntity> detailEntityMap = detailEntityList.stream().collect(Collectors.toMap(FirstMileDeliveryDetailEntity::getSkuId,
+                        Function.identity(),(o1, o2)->{
+                            FirstMileDeliveryDetailEntity mergeDetail = new FirstMileDeliveryDetailEntity();
+                            mergeDetail.setSkuId(o1.getSkuId());
+                            mergeDetail.setPlanQty(o1.getPlanQty()+o2.getPlanQty());
+                            return mergeDetail;
+                        }));
+                List<TmsDeclareBillDTO.ProductDetail> productDetailList = new ArrayList<>();
+                List<ProductDetailDTO.ProductLogisticDTO> productLogisticDTOList = allProductLogisticDTOList.stream().filter(v->detailEntityMap.containsKey(v.getSkuId())).collect(Collectors.toList());
+                for (ProductDetailDTO.ProductLogisticDTO productLogisticDTO : productLogisticDTOList) {
+                    FirstMileDeliveryDetailEntity detailEntity = detailEntityMap.get(productLogisticDTO.getSkuId());
+                    if(productLogisticDTO.getCombinationDeclareType().equals(CombinationDeclareTypeEnums.SPLIT.getCode()) && productLogisticDTO.getIsCombination()){
+                        //拆分申报的组合品，拆成子SKU
+                        for (ProductDetailDTO.ProductLogisticDTO logisticDTO : productLogisticDTO.getChildList()) {
+                            TmsDeclareBillDTO.ProductDetail productDetail = BeanUtil.copyProperties(logisticDTO,TmsDeclareBillDTO.ProductDetail.class);
+                            productDetail.setQty(detailEntity.getPlanQty() * logisticDTO.getChildQty());
+                            productDetail.setToCountry(deliveryDTO.getCountry());
+                            productDetail.setToCountryName(deliveryDTO.getCountryName());
+                            productDetailList.add(productDetail);
+                        }
+                    }else{
+                        TmsDeclareBillDTO.ProductDetail productDetail = BeanUtil.copyProperties(productLogisticDTO,TmsDeclareBillDTO.ProductDetail.class);
+                        productDetail.setQty(detailEntity.getPlanQty());
+                        productDetail.setToCountry(deliveryDTO.getCountry());
+                        productDetail.setToCountryName(deliveryDTO.getCountryName());
+                        productDetailList.add(productDetail);
+                    }
+                }
+                deliveryDTO.setNetWeight(productDetailList.stream().map(TmsDeclareBillDTO.ProductDetail::getNetWeight).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add));
+                deliveryDTO.setProductDetailList(productDetailList);
+            }
+
+            //设置装箱信息
+            List<WmsCartonDetailDTO.ListPackingDetailDTO> list = packingDetailMap.getOrDefault(deliveryDTO.getSourceId(),new ArrayList<>());
+            if(CollectionUtils.isNotEmpty(list)){
+                List<TmsDeclareBillDTO.PackingDTO> packingDTOList = BeanUtil.copyToList(list,TmsDeclareBillDTO.PackingDTO.class);
+                packingDTOList.forEach(t->t.setCode(deliveryDTO.getSourceCode()));
+                deliveryDTO.setPackingDTOList(packingDTOList);
+            }
+            deliveryDTO.setBoxCount(list.size());
+            deliveryDTO.setGrossWeight(list.stream()
+                    .map(WmsCartonDetailDTO.ListPackingDetailDTO::getPackageWeight)
+                    .map(BigDecimal::new)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add));
+        }
+        //合并相同的sku
+        for (TmsDeclareBillDTO.DeliveryDTO deliveryDTO : result) {
+            List<TmsDeclareBillDTO.ProductDetail> productDetails = deliveryDTO.getProductDetailList();
+            // 根据 skuId 进行分组，并对数量进行求和
+            List<TmsDeclareBillDTO.ProductDetail> mergedDetails = new ArrayList<>(productDetails.stream()
+                    .collect(Collectors.toMap(
+                            TmsDeclareBillDTO.ProductDetail::getSkuId,
+                            Function.identity(),
+                            (existing, replacement) -> {
+                                // 合并数量
+                                existing.setQty(existing.getQty() + replacement.getQty());
+                                // 其他字段取第一个出现的值
+                                return existing;
+                            }
+                    ))
+                    .values());
+            mergedDetails.forEach(v->{
+                if(Objects.nonNull(v.getPrice())){
+                    v.setTotalPrice(v.getPrice().multiply(new BigDecimal(v.getQty())));
+                }
+            });
+            deliveryDTO.setProductDetailList(mergedDetails);
+        }
+        return result;
     }
 }
 

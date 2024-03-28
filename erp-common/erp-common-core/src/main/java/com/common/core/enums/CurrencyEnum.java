@@ -164,7 +164,6 @@ public enum CurrencyEnum {
         this.currencySymbol = currencySymbol;
 
     }
-
     public static CurrencyEnum getByCode(String currencyCode) {
         CurrencyEnum[] values = values();
         for (CurrencyEnum value : values) {
@@ -180,6 +179,16 @@ public enum CurrencyEnum {
         for (CurrencyEnum value : values) {
             if (value.currencyCode.equals(currencyCode)) {
                 return value.currencySymbol;
+            }
+        }
+        return null;
+    }
+
+    public static String getNameByCode(String currencyCode) {
+        CurrencyEnum[] values = values();
+        for (CurrencyEnum value : values) {
+            if (value.currencyCode.equals(currencyCode)) {
+                return value.currencyName;
             }
         }
         return null;
