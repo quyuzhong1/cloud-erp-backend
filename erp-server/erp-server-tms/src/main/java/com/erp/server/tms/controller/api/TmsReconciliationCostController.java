@@ -1,9 +1,7 @@
 package com.erp.server.tms.controller.api;
 
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -47,26 +45,4 @@ public class TmsReconciliationCostController extends BaseController {
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated TmsReconciliationCostDTO.AddDTO dto) {
         return success(tmsReconciliationCostService.add(dto));
     }
-
-    /**
-    * 修改
-    * @author will
-    * @date:  2024-03-26
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "对账费用单修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "tms:tmsB2cDeclareReconciliationCost:update",
-        serviceClass = TmsReconciliationCostService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated TmsReconciliationCostDTO.UpdateDTO dto) {
-        tmsReconciliationCostService.update(dto);
-        return success();
-    }
-
-
-
 }
