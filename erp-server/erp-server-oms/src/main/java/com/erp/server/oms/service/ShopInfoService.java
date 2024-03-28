@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
 import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
@@ -276,4 +277,12 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return void
      **/
     ResponseEntity<String> shopRedactTest(String data, HttpServletResponse response, HttpServletRequest request);
+
+
+    /**
+     * 查询亚马逊同账号所有店铺
+     * @Author Jim
+     * @Date 2024/03/28
+     **/
+    List<ShopInfoEntity> getRelatedShopById(String platformShopCode);
 }

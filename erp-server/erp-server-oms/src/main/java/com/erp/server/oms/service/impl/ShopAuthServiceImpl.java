@@ -330,4 +330,18 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
     private void handleData(ShopAuthEntity shopAuthEntity) {
         // TODO 验证数据 & 数据赋值
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean batchUpdateShopAuthById(List<ShopAuthEntity> shopAuthEntityList) {
+        return this.updateBatchById(shopAuthEntityList);
+    }
+
+    @Override
+    public List<ShopAuthEntity> listShopAuthByShopIds(List<String> shopIdList) {
+        return this.lambdaQuery()
+                .in(ShopAuthEntity::getShopId, shopIdList)
+                .list();
+    }
 }

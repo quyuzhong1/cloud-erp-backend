@@ -98,4 +98,25 @@ public interface ShopInfoFeign {
      */
     @PostMapping("feign/shop/listByParams")
     List<ShopInfoEntity> listByParams(@RequestBody ShopInfoDTO.ListParamDTO dto);
+
+    /**
+     * 批量更新店铺授权信息
+     *
+     */
+    @PostMapping("feign/shop/batchUpdateShopAuthById")
+    Boolean batchUpdateShopAuthById(@RequestBody List<ShopAuthEntity> shopAuthEntity);
+
+    /**
+     * 批量获取授权信息
+     */
+    @PostMapping("feign/shop/listShopAuthByShopIds")
+    List<ShopAuthEntity> listShopAuthByShopIds(@RequestBody List<String> shopIdList);
+
+
+    /**
+     * 根据店铺ID获取所有同账号的店铺
+     */
+    @PostMapping("feign/shop/getRelatedShopById")
+    List<ShopInfoEntity> getRelatedShopById(@RequestBody ShopInfoEntity shopInfo);
+
 }

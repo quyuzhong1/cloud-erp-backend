@@ -137,4 +137,28 @@ public class ShopInfoFeignController extends BaseController {
         return shopInfoService.listByParams(dto);
     }
 
+    /**
+     * 批量更新店铺授权信息
+     *
+     */
+    @PostMapping("/batchUpdateShopAuthById")
+    public Boolean batchUpdateShopAuthById(@RequestBody List<ShopAuthEntity> shopAuthEntity){
+        return shopAuthService.batchUpdateShopAuthById(shopAuthEntity);
+    }
+
+    /**
+     * 批量获取授权信息
+     */
+    @PostMapping("/listShopAuthByShopIds")
+    public List<ShopAuthEntity> listShopAuthByShopIds(@RequestBody List<String> shopIdList){
+        return shopAuthService.listShopAuthByShopIds(shopIdList);
+    }
+
+    /**
+     * 根据店铺ID获取所有同账号的店铺
+     */
+    @PostMapping("/getRelatedShopById")
+    public List<ShopInfoEntity> getRelatedShopById(@RequestBody ShopInfoEntity shopInfo){
+        return shopInfoService.getRelatedShopById(shopInfo.getPlatformShopCode());
+    }
 }
