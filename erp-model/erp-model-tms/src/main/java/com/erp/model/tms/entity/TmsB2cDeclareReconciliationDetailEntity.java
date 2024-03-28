@@ -3,6 +3,7 @@ package com.erp.model.tms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.tms.dto.TmsReconciliationCostDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -10,6 +11,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 
 /**
@@ -167,6 +169,12 @@ public class TmsB2cDeclareReconciliationDetailEntity extends BaseEntity<TmsB2cDe
     */
     @TableField("confirm_user_name")
     private String confirmUserName;
+
+    /**
+     * 费用编辑（导入数据返回）
+     */
+    @TableField(exist = false)
+    private List<TmsReconciliationCostDTO.UpdateDTO> updateList;
 
 
     public static final String MAIN_ID = "main_id";

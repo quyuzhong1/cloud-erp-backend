@@ -1,6 +1,7 @@
 package com.erp.model.tms.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.common.business.enums.UnitEnum;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
@@ -55,7 +56,7 @@ public class DeclareReconciliationStandardExcelDTO implements Serializable {
      * 重量单位
      */
     @ExcelProperty(value = "重量单位", index = 5)
-    @FieldValid(fieldName = "重量单位")
+    @FieldValid(fieldName = "重量单位",enumClass = UnitEnum.WeightUnitEnum.class)
     private String  actualWeightUnit;
 
     /**

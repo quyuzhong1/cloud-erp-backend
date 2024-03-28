@@ -1,14 +1,15 @@
 package com.erp.model.tms.dto;
 
-import java.math.BigDecimal;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import lombok.experimental.Accessors;
+
 import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -20,7 +21,7 @@ import javax.validation.constraints.Digits;
 */
 @Data
 @NoArgsConstructor
-public class TmsB2cDeclareReconciliationCostDTO implements Serializable {
+public class TmsReconciliationCostDTO implements Serializable {
 
 
 
@@ -85,24 +86,25 @@ public class TmsB2cDeclareReconciliationCostDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
+    @Accessors(chain = true)
     public static class UpdateDTO extends CommonDTO {
 
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
 
     @Data
     @NoArgsConstructor
+    @Accessors(chain = true)
     public static class CommonDTO {
 
         /**
-        * 主表id（对账单明细id）
-        */
-        @NotBlank(message = "主表id（对账单明细id）不能为空")
+         * 主表id
+         */
+        @NotBlank(message = "主表id不能为空")
         private String mainId;
 
         /**
@@ -111,20 +113,6 @@ public class TmsB2cDeclareReconciliationCostDTO implements Serializable {
         @NotNull(message = "费用值不能为空")
         @Digits(integer = 12, fraction = 4, message = "费用值整数位不能超过12位，小数位不能超过4位")
         private BigDecimal costValue;
-
-        /**
-        * 币别
-        */
-        @NotBlank(message = "币别不能为空")
-        @Size(max = 32,message = "币别最大长度不能超过32位")
-        private String currency;
-
-        /**
-        * 汇率
-        */
-        @NotNull(message = "汇率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "汇率整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal exchangeRate;
 
         /**
         * 费用设置id
@@ -141,6 +129,17 @@ public class TmsB2cDeclareReconciliationCostDTO implements Serializable {
         private String type;
 
 
+        /**
+         * 对账类型（b2cDeclare=B2C报关对账单、firstMile=头程对账单）
+         */
+        @NotBlank(message = "对账类型不能为空")
+        private String reconciliationType;
+
+        /**
+         * 币别
+         */
+        @NotBlank(message = "币别不能为空")
+        private String currency;
     }
 
 

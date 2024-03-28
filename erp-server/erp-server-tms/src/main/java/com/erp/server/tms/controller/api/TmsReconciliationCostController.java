@@ -1,23 +1,24 @@
 package com.erp.server.tms.controller.api;
 
 
-import lombok.extern.slf4j.Slf4j;
-
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
+import com.erp.model.tms.dto.TmsReconciliationCostDTO;
+import com.erp.server.tms.service.TmsReconciliationCostService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.TmsReconciliationCostService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.tms.dto.TmsB2cDeclareReconciliationCostDTO;
+import javax.annotation.Resource;
 
 /**
  * 对账费用单
@@ -43,7 +44,7 @@ public class TmsReconciliationCostController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "对账费用单新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated TmsB2cDeclareReconciliationCostDTO.AddDTO dto) {
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated TmsReconciliationCostDTO.AddDTO dto) {
         return success(tmsReconciliationCostService.add(dto));
     }
 
@@ -61,7 +62,7 @@ public class TmsReconciliationCostController extends BaseController {
         menuCode = "tms:tmsB2cDeclareReconciliationCost:update",
         serviceClass = TmsReconciliationCostService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated TmsB2cDeclareReconciliationCostDTO.UpdateDTO dto) {
+    public ApiResult<?> update(@RequestBody @Validated TmsReconciliationCostDTO.UpdateDTO dto) {
         tmsReconciliationCostService.update(dto);
         return success();
     }

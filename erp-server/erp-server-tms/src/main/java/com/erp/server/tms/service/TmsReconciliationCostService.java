@@ -1,8 +1,11 @@
 package com.erp.server.tms.service;
-import com.erp.model.tms.entity.TmsReconciliationCostEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.tms.dto.TmsB2cDeclareReconciliationCostDTO;
+import com.erp.model.tms.dto.TmsReconciliationCostDTO;
+import com.erp.model.tms.entity.TmsReconciliationCostEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -21,16 +24,16 @@ public interface TmsReconciliationCostService extends SuperService<TmsReconcilia
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(TmsB2cDeclareReconciliationCostDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(TmsReconciliationCostDTO.AddDTO dto);
 
     /**
     * 修改
     * @author will
     * @date: 2024-03-26
-    * @param dto
+    * @param updateList
     * @return
     */
-    Boolean update(TmsB2cDeclareReconciliationCostDTO.UpdateDTO dto);
+    Boolean update(List<TmsReconciliationCostDTO.UpdateDTO> updateList);
 
 
 }

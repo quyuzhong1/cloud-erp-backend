@@ -51,7 +51,7 @@
         update_time,
         version,
         is_deleted,
-        main_id, source_id, source_detail_id, source_type, source_code, so_id, so_detail_id, so_code, date, country, logistics_channel_id, logistics_channel_name, qty, estimate_weight, estimate_weight_unit, actual_weight, actual_weight_unit, actual_billing_weight, actual_shipping_cost, actual_declare_cost, actual_other_cost, remark, status, confirm_date, confirm_user_id, confirm_user_name
+        main_id, source_id, source_detail_id, source_type, source_code, so_id, so_detail_id, so_code, date,shop_id, country, logistics_channel_id, logistics_channel_name, qty, estimate_weight, estimate_weight_unit, actual_weight, actual_weight_unit, actual_billing_weight, actual_shipping_cost, actual_declare_cost, actual_other_cost, remark, status, confirm_date, confirm_user_id, confirm_user_name
     </sql>
 
     <!-- 分页查询 -->

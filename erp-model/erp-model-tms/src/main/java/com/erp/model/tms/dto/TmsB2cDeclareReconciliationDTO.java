@@ -2,6 +2,7 @@ package com.erp.model.tms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -229,7 +230,12 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
         /**
         * 审核状态
         */
-        private String approveStatus;
+        private ApproveStatusEnum approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
 
         /**
         * 审核人id
@@ -252,7 +258,7 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
         private LocalDate submitDate;
 
         /**
-        * 提交日期
+        * 审核日期
         */
         private LocalDate approveDate;
 
@@ -265,6 +271,12 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
         * 对账结束日期
         */
         private LocalDate endDate;
+
+        /**
+         * 对账周期
+         */
+        private String cycle;
+
 
         /**
         * 物流商Id

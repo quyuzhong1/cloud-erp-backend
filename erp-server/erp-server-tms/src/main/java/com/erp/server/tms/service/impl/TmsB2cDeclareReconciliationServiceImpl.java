@@ -19,13 +19,17 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.tms.mapper.TmsB2cDeclareReconciliationMapper;
@@ -65,6 +69,12 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
 
     @Autowired
     private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private ShopInfoFeign shopInfoFeign;
+
+    @Autowired
+    private SysDictFeign sysDictFeign;
 
     @Autowired
     private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
@@ -284,7 +294,6 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         TmsB2cDeclareReconciliationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到b2c报关对账单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -339,7 +348,6 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
         log.info("撤销 开始修改b2c报关对账单状态，id：【{}】", id);
@@ -408,12 +416,35 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        //对账周期
+        data.setCycle(StrUtil.format("{}-{}",data.getStartDate(),data.getEndDate()));
+        //审核状态名称
+        data.setApproveStatusName(data.getApproveStatus().getName());
+
+        //明细
         List<TmsB2cDeclareReconciliationDetailEntity> detailList = tmsB2cDeclareReconciliationDetailService.listMainIdList(Arrays.asList(data.getId()));
         if (CollUtil.isEmpty(detailList)) {
             return;
         }
         List<TmsB2cDeclareReconciliationDetailDTO.ViewDTO> viewDTOList = BeanMapperUtils.copyList(TmsB2cDeclareReconciliationDetailDTO.ViewDTO.class, detailList);
+        //店铺信息
+        List<String> shopIdList = viewDTOList.stream().map(TmsB2cDeclareReconciliationDetailDTO.ViewDTO::getShopId).collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = shopInfoFeign.listShopInfoByIds(shopIdList);
+        //国家信息
+        List<String> countryIdList = viewDTOList.stream().map(TmsB2cDeclareReconciliationDetailDTO.ViewDTO::getCountry).collect(Collectors.toList());
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIdList);
+        for (TmsB2cDeclareReconciliationDetailDTO.ViewDTO viewDTO : viewDTOList) {
+            //店铺名称
+            String shopName = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), viewDTO.getShopId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            viewDTO.setShopName(shopName);
+            //国家名称
+            String countryName = countryList.stream().filter(obj -> StrUtil.equals(obj.getId(), viewDTO.getCountry()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+            viewDTO.setCountryName(countryName);
+        }
         data.setDetailList(viewDTOList);
+
     }
 
     /**

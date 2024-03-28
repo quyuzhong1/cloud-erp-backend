@@ -112,6 +112,11 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
         private String instockForecastStatusName;
 
         /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
          * 店铺名称
          */
         private String shopName;
@@ -257,10 +262,23 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
         private LocalDate date;
 
         /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
         * 国家
         */
         private String country;
-
+        /**
+         * 国家名称
+         */
+        private String countryName;
         /**
         * 物流渠道id
         */
@@ -341,7 +359,10 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
         */
         private String confirmUserName;
 
-
+        /**
+         * 费用编辑（导入数据返回）
+         */
+        private List<TmsReconciliationCostDTO.UpdateDTO> updateList;
     }
 
     /**
@@ -373,7 +394,10 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
         @Size(max = 255,message = "备注最大长度不能超过255位")
         private String remark;
 
-
+        /**
+         * 费用编辑（导入数据返回）
+         */
+        private List<TmsReconciliationCostDTO.UpdateDTO> updateList;
     }
 
     @Data
