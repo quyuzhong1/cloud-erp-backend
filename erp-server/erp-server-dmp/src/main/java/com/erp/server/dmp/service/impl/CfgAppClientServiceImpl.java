@@ -36,6 +36,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -179,8 +180,10 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
             throw new ServiceException("未找到已授权信息");
         }
         LocalDateTime currentExpiresTime = shopAuth.getUpdateTime().plusSeconds(shopAuth.getExpiresIn());
-        if (currentExpiresTime.isAfter(LocalDateTime.now())){
-            return new AmazonTokenDTO(shopAuth.getAccessToken(), shopAuth.getRefreshToken(), shopAuth.getType(), shopAuth.getExpiresIn());
+        // 重新计算当前过期时间
+        long until = LocalDateTime.now().until(currentExpiresTime, ChronoUnit.SECONDS);
+        if (until > 0){
+            return new AmazonTokenDTO(shopAuth.getAccessToken(), shopAuth.getRefreshToken(), shopAuth.getType(), (int) until);
         }
         // 刷新token请求
         AmazonTokenDTO tokenDTO = AmazonAuthClientUtils.refreshAuthorizeInfo(
