@@ -1032,7 +1032,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 errorList.add(importExcelDTO);
                 continue;
             }
-            if (null != skuVO.getStatus() && Objects.equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode(), skuVO.getStatus())){
+            if (null != skuVO.getStatus() && !Objects.equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode(), skuVO.getStatus())){
                 importExcelDTO.setErrorMsg(StrUtil.format("【{}】SKU未审核通过", importExcelDTO.getSkuNo()));
                 errorList.add(importExcelDTO);
                 continue;
