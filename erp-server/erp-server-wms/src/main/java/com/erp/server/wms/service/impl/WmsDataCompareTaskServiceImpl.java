@@ -789,6 +789,10 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 			if(StringUtils.isNotBlank(billType)) {
 				l.setBillTypeName(WmsDataCompareTaskBillTypeEnum.getName(billType));
 			}
+			String status = l.getStatus();
+			if(StringUtils.isNotBlank(status)) {
+				l.setStatusName(WmsDataCompareTaskStatusEnum.getName(status));
+			}
 		});
 	}
 }
