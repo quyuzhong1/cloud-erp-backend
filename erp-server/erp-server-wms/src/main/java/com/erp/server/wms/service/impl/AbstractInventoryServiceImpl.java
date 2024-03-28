@@ -234,7 +234,6 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
     /**
      * 检查库存交易的否允许
      *
-     * @param sourceCode
      * @param closeDate                     关账时间
      * @param orgId                         组织
      * @param warehouseId                   仓库
@@ -263,23 +262,23 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                     throw new ServiceException(ApiError.ERROR_INVENTORY_CLOSED, closeDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
                 }
             }
-        }
-        // 检查盘盈盘亏单最新单据时间并非在途库存
-        if (!CollectionUtils.isEmpty(lastStocktakingProfitLossList) && !InventoryStatusEnum.IN_TRANSIT.equals(inventoryStatusEnum)){
-            StocktakingProfitLossDTO.LastDTO lastDTO = lastStocktakingProfitLossList.stream().filter(e -> e.getInventoryOrgId().equalsIgnoreCase(orgId) && e.getSkuId().equalsIgnoreCase(skuId)).findFirst().orElse(null);
-            if (null != lastDTO && (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate()))){
-                // 查询存在的最新单号
-                String code = stocktakingProfitLossService.findLastOneCode(warehouseId, lastDTO.getSkuId(), lastDTO.getBillDate());
-                if (null == sourceType) {
-                    // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
-                    throw new ServiceException(ApiError.ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED, code, lastDTO.getBillDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
+            // 检查盘盈盘亏单最新单据时间并非在途库存
+            if (!CollectionUtils.isEmpty(lastStocktakingProfitLossList) && !InventoryStatusEnum.IN_TRANSIT.equals(inventoryStatusEnum)){
+                StocktakingProfitLossDTO.LastDTO lastDTO = lastStocktakingProfitLossList.stream().filter(e -> e.getInventoryOrgId().equalsIgnoreCase(orgId) && e.getSkuId().equalsIgnoreCase(skuId)).findFirst().orElse(null);
+                if (null != lastDTO && (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate()))){
+                    // 查询存在的最新单号
+                    String code = stocktakingProfitLossService.findLastOneCode(warehouseId, lastDTO.getSkuId(), lastDTO.getBillDate());
+                    if (null == sourceType) {
+                        // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
+                        throw new ServiceException(ApiError.ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED, code, lastDTO.getBillDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
+                    }
+                    // 盘点类型跳过检查
+                    if (!InventorySourceTypeEnum.STOCKTAKING_PROFIT_LOSS.equals(sourceType)){
+                        // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
+                        throw new ServiceException(ApiError.ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED, code, lastDTO.getBillDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
+                    }
                 }
-                // 盘点类型跳过检查
-                if (!InventorySourceTypeEnum.STOCKTAKING_PROFIT_LOSS.equals(sourceType)){
-                    // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
-                    throw new ServiceException(ApiError.ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED, code, lastDTO.getBillDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
-                }
-           }
+            }
         }
 
         // 盘点冻结
