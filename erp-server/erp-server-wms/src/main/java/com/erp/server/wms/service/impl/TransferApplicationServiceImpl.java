@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
@@ -137,6 +138,9 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     @Resource
     private TransferApplicationQueryHandler transferApplicationQueryHandler;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     @Override
     public PagingVO<TransferApplicationDTO.ListDTO> paging(PagingDTO<TransferApplicationDTO.SearchParamDTO> pagingDTO) {
         TransferApplicationDTO.SearchParamDTO params = pagingDTO.getParams();
@@ -191,7 +195,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
         log.info("调拨申请单新增");
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.DBSQ, BusinessNoTypeEnum.CODE_DBSQ.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.DBSQ, BusinessNoTypeEnum.CODE_DBSQ.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_DBSQ);
         entity.setCode(code);
         //新增主表数据
         boolean save = this.save(entity);

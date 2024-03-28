@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -55,6 +56,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -104,6 +106,9 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
 
     @Autowired
     private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
 
     @Override
     public PagingVO<SubcontractChangeDTO.ListDTO> paging(PagingDTO<SubcontractChangeDTO.PagingParamDTO> pagingParamDTO) {
@@ -220,7 +225,8 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
 
         log.info("开始新增委外变更单");
         // 生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.SUBCH, BusinessNoTypeEnum.CODE_SUBCH.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.SUBCH, BusinessNoTypeEnum.CODE_SUBCH.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SUBCH);
         subcontractChangeEntity.setCode(code);
         boolean save = super.save(subcontractChangeEntity);
         if(!save) {

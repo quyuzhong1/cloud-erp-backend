@@ -156,8 +156,8 @@ public interface SysUserFeign {
     /**
      * 查询时间格式的业务编码
      */
-    @PostMapping("feign/code/getBusinessNo")
-    String getBusinessNo(SysCodeDTO dto);
+//    @PostMapping("feign/code/getBusinessNo")
+//    String getBusinessNo(SysCodeDTO dto);
 
     @PostMapping("feign/user/getUserDeptList")
     List<SysUserDeptDTO> getUserDeptList();
