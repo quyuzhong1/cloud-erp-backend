@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -128,7 +129,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Resource
     private KingdeePaymentConditionService kingdeePaymentConditionService;
 
-
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
 
     /**
      * 添加采购价目表
@@ -152,7 +154,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, purchasePrice);
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGJM, BusinessNoTypeEnum.CODE_CGJM.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGJM, BusinessNoTypeEnum.CODE_CGJM.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGJM);
         purchasePrice.setCode(code);
         purchasePrice.setId(id);
         String pricingUserId = dto.getPricingUserId();
@@ -896,7 +899,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             // 当该新增的主单有明细时才新增
             if(CollUtil.isNotEmpty(addItemList)) {
                 //生成单号
-                String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGJM, BusinessNoTypeEnum.CODE_CGJM.getCode()));
+//                String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGJM, BusinessNoTypeEnum.CODE_CGJM.getCode()));
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGJM);
                 purchasePriceEntity.setCode(code);
                 String id = IdWorker.getIdStr();
                 purchasePriceEntity.setId(id);

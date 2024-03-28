@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -120,6 +121,9 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     @Resource
     private SupplierService supplierService;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
 
     @Override
     public PagingVO<PurchaseApplicationDTO.ListDTO> paging(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> pagingDTO) {
@@ -190,7 +194,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         doOpHandleDataId(dto.getApplyUserId(),dto.getApplyDeptId(),entity);
         log.info("采购申请单新增");
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.PL, BusinessNoTypeEnum.CODE_PL.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.PL, BusinessNoTypeEnum.CODE_PL.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_PL);
         entity.setCode(code);
         //新增主表数据
         boolean save = this.save(entity);

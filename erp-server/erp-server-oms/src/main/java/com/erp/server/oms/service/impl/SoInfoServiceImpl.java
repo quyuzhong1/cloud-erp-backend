@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
@@ -200,6 +201,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Autowired
     private KingdeeReceiptConditionService kingdeeReceiptConditionService;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     /**
      * 添加销售订单
      *
@@ -243,7 +247,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         addEntity.setId(id);
         if (StringUtils.isBlank(code)) {
             //生成单号
-            code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSD, BusinessNoTypeEnum.CODE_XSD.getCode()));
+//            code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSD, BusinessNoTypeEnum.CODE_XSD.getCode()));
+            code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSD);
         }
         addEntity.setCode(code);
         //销售组织
@@ -2862,7 +2867,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 errorMsgList.add("单据类型不存在");
             }
             //生成单号
-            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSD, BusinessNoTypeEnum.CODE_XSD.getCode()));
+//            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSD, BusinessNoTypeEnum.CODE_XSD.getCode()));
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSD);
             addSo.setCode(code);
 
             addSo.setOrderType(orderType);

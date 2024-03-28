@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
@@ -129,6 +130,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Resource
     private KingdeeReceiptConditionService kingdeeReceiptConditionService;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     /**
      * 获取到分组的id 集合
      *
@@ -193,7 +197,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         addEntity.setGroupName(groupName);
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CUST, BusinessNoTypeEnum.CODE_CUST.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CUST, BusinessNoTypeEnum.CODE_CUST.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CUST);
         addEntity.setCode(code);
         //销售员
         String sellerId = dto.getSellerId();
