@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -113,6 +114,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     @Autowired
     private CommonService commonService;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     @Override
     public List<TransferOutEntity> listBySourceIds(List<String> ids) {
         return lambdaQuery()
@@ -135,7 +139,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         handleData(transferOutEntity);
         log.info("开始新增分步式调出单主单");
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.FBDC, BusinessNoTypeEnum.CODE_FBDC.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.FBDC, BusinessNoTypeEnum.CODE_FBDC.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FBDC);
         transferOutEntity.setCode(code);
         boolean save = super.save(transferOutEntity);
         ValidatorUtil.isTrue(save,()->new ServiceException("分步式调出单保存失败"));

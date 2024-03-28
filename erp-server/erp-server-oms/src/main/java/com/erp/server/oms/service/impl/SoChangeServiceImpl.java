@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
@@ -109,6 +110,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     @Autowired
     private SoChangeQueryHandler soChangeQueryHandler;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     /**
      * 添加销售订单
      *
@@ -152,7 +156,8 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
         // 判断是否可以修改地址和联系人信息
         checkChangeCustomerInfo(soId, dto.getReceiveAddressId(), dto.getAddressType(), dto.getReceiverName(), dto.getTelNumber());
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSBG, BusinessNoTypeEnum.CODE_XSBG.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSBG, BusinessNoTypeEnum.CODE_XSBG.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSBG);
         soChange.setCode(code);
         Boolean addResult = this.save(soChange);
         if (addResult) {

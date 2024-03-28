@@ -47,5 +47,5 @@ public interface SysCodeService extends IService<SysCodeEntity> {
      * @param dto
      * @return String
      */
-    String getBusinessNo(SysCodeDTO dto);
+//    String getBusinessNo(SysCodeDTO dto);
 }

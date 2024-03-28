@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -132,6 +133,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Resource
     private SoReturnQueryHandler soReturnQueryHandler;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
 
     @Override
     public PagingVO<SoReturnDTO.PagingView> paging(PagingDTO<SoReturnDTO.PagingParam> pagingParamDTO) {
@@ -232,7 +236,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setIsTax(soInfoEntity.getIsTax());
         soReturnEntity.setAddressTypeDict(soInfoEntity.getAddressType());
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THDD, BusinessNoTypeEnum.CODE_THDD.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THDD, BusinessNoTypeEnum.CODE_THDD.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_THDD);
         soReturnEntity.setCode(code);
         soReturnEntity.setSourceId(dto.getSourceId());
         soReturnEntity.setSourceCode(soInfoEntity.getCode());

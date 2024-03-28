@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -107,6 +108,9 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     @Override
     public PagingVO<SalesDemandDTO.ListDTO> paging(PagingDTO<SalesDemandDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -135,7 +139,8 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         doOpHandleDataId(dto.getApplyUserId(), dto.getApplyDeptId(), dto.getShopId(), entity);
         log.info("备货申请单新增");
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.BH, BusinessNoTypeEnum.CODE_BH.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.BH, BusinessNoTypeEnum.CODE_BH.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_BH);
         entity.setCode(code);
         //新增主表数据
         boolean save = this.save(entity);

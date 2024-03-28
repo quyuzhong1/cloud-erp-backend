@@ -159,50 +159,50 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
     }
 
 
-    @Deprecated
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public String getBusinessNo(SysCodeDTO dto) {
-        //加锁
-        RLock lock = redisson.getLock(DistributedLockEnum.SYS_GEN_DOCNO.getCode() + ":" + dto.getType());
-        boolean isLock;
-        try {
-            isLock = lock.tryLock(5, TimeUnit.SECONDS);
-            log.info("是否获取到分布式锁: {}", isLock);
-            if (!isLock) {
-                throw new ServiceException(ApiError.ERROR_1026);
-            }
-            //生成单号
-            getOrSaveSysCode(dto);
-            //判断最后修改日期是否是当天，不是则重置num
-            if (dto.getUpdateTime().before(DateUtil.beginOfDay(new Date()))) {
-                dto.setNum(MathUtil.ONE);
-            }
-            StringBuffer sysCode = new StringBuffer();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMdd");
-            sysCode.append(dto.getCategory())
-                    .append(LocalDateTime.now().format(formatter))
-                    .append(String.format("%05d",dto.getNum()));
-            if (StringUtils.isBlank(sysCode)) {
-                throw new ServiceException(ApiError.ERROR_9027);
-            }
-            //更新当前顺序码
-            log.info("seata事务id:{}", RootContext.getXID());
-            updateNumByCode(dto.getId(),dto.getNum());
-            return sysCode.toString();
-        }  catch (InterruptedException e) {
-            log.error("生成单号获取锁异常",e);
-            throw new ServiceException(ApiError.ERROR_1026);
-        } finally {
-            //释放锁  锁是否存在，是当前执行线程的锁
-            if(lock.isLocked() && lock.isHeldByCurrentThread()){
-                // 释放锁
-                lock.unlock();
-                log.info("分布式锁释放锁: {}", Thread.currentThread().getId());
-            }
-        }
-    }
+//    @Deprecated
+//    @Override
+//    @Transactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class)
+//    public String getBusinessNo(SysCodeDTO dto) {
+//        //加锁
+//        RLock lock = redisson.getLock(DistributedLockEnum.SYS_GEN_DOCNO.getCode() + ":" + dto.getType());
+//        boolean isLock;
+//        try {
+//            isLock = lock.tryLock(5, TimeUnit.SECONDS);
+//            log.info("是否获取到分布式锁: {}", isLock);
+//            if (!isLock) {
+//                throw new ServiceException(ApiError.ERROR_1026);
+//            }
+//            //生成单号
+//            getOrSaveSysCode(dto);
+//            //判断最后修改日期是否是当天，不是则重置num
+//            if (dto.getUpdateTime().before(DateUtil.beginOfDay(new Date()))) {
+//                dto.setNum(MathUtil.ONE);
+//            }
+//            StringBuffer sysCode = new StringBuffer();
+//            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMdd");
+//            sysCode.append(dto.getCategory())
+//                    .append(LocalDateTime.now().format(formatter))
+//                    .append(String.format("%05d",dto.getNum()));
+//            if (StringUtils.isBlank(sysCode)) {
+//                throw new ServiceException(ApiError.ERROR_9027);
+//            }
+//            //更新当前顺序码
+//            log.info("seata事务id:{}", RootContext.getXID());
+//            updateNumByCode(dto.getId(),dto.getNum());
+//            return sysCode.toString();
+//        }  catch (InterruptedException e) {
+//            log.error("生成单号获取锁异常",e);
+//            throw new ServiceException(ApiError.ERROR_1026);
+//        } finally {
+//            //释放锁  锁是否存在，是当前执行线程的锁
+//            if(lock.isLocked() && lock.isHeldByCurrentThread()){
+//                // 释放锁
+//                lock.unlock();
+//                log.info("分布式锁释放锁: {}", Thread.currentThread().getId());
+//            }
+//        }
+//    }
 
 
     /**

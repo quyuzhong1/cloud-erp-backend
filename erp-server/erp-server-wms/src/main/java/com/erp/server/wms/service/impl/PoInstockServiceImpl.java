@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -138,6 +139,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     @Autowired
     private SubcontractIssueService subcontractIssueService;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
 
     @Override
     public PagingVO<PoInstockDTO.ListDTO> paging(PagingDTO<PoInstockDTO.SearchParamDTO> pagingDTO) {
@@ -211,7 +215,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         doOpHandleDataId(dto.getStockInDeptId(), dto.getStockInUserId(), dto.getDeliveryWarehouseId(), entity);
         log.info("采购入库单新增");
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGRK, BusinessNoTypeEnum.CODE_CGRK.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGRK, BusinessNoTypeEnum.CODE_CGRK.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGRK);
         entity.setCode(code);
         //新增主表数据
         boolean save = this.save(entity);
@@ -287,7 +292,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             doOpHandleDataId(item.getStockInDeptId(), item.getStockInUserId(), item.getDeliveryWarehouseId(), entity);
             log.info("采购入库单新增");
             //生成单号
-            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGRK, BusinessNoTypeEnum.CODE_CGRK.getCode()));
+//            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGRK, BusinessNoTypeEnum.CODE_CGRK.getCode()));
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGRK);
             entity.setCode(code);
             //新增主表数据
             boolean save = this.save(entity);

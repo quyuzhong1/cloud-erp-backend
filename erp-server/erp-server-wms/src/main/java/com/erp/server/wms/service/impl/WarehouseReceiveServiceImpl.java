@@ -8,6 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -138,6 +139,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     private SrmDeliveryOrderFeign srmDeliveryOrderFeign;
     @Resource
     private CfgSettingService cfgSettingService;
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
 
 /*
     @Autowired
@@ -285,7 +288,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getDeliveryWarehouseId());
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGSH, BusinessNoTypeEnum.CODE_CGSH.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGSH, BusinessNoTypeEnum.CODE_CGSH.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGSH);
         //设置收货单主表
         WarehouseReceiveEntity warehouseReceiveEntity = new WarehouseReceiveEntity();
         warehouseReceiveEntity.setSubcontractType(purchaseOrderEntity.getSubcontractType());

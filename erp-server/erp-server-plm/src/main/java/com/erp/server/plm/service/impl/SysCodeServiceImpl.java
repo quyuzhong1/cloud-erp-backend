@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -20,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -42,6 +44,8 @@ public class SysCodeServiceImpl implements SysCodeService {
 
     @Autowired
     private ProductDetailService productDetailService;
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
 
     /**
      * @description: 根据产品id和颜色生产sku编号
@@ -113,7 +117,8 @@ public class SysCodeServiceImpl implements SysCodeService {
         SysCodeDTO dto = new SysCodeDTO();
         dto.setCategory(businessHead);
         dto.setType(businessNoTypeEnum.getCode());
-        String sysNo = sysUserFeign.getBusinessNo(dto);
+//        String sysNo = sysUserFeign.getBusinessNo(dto);
+        String sysNo = docNoGenHelper.generateCode(businessNoTypeEnum);
         return sysNo;
     }
 

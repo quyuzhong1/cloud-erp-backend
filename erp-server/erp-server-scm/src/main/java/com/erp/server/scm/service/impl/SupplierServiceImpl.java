@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
@@ -162,6 +163,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     private TransferLogisticsFeign transferLogisticsFeign;
     @Resource
     private PurchaseOrderDetailMapper purchaseOrderDetailMapper;
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     /**
      * 保存供应商信息
      *
@@ -213,7 +217,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         addEntity.setId(supplierId);
         addEntity.setCategoryName(categoryName);
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.GYS, BusinessNoTypeEnum.CODE_GYS.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.GYS, BusinessNoTypeEnum.CODE_GYS.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_GYS);
         addEntity.setCode(code);
         String purchaseUserId = dto.getPurchaseUserId();
         if (StringUtils.isNotBlank(purchaseUserId)) {
@@ -1149,7 +1154,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 BeanMapper.copy(item, supplier);
                 String supplierId = IdWorker.getIdStr();
                 supplier.setId(supplierId);
-                String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.GYS, BusinessNoTypeEnum.CODE_GYS.getCode()));
+//                String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.GYS, BusinessNoTypeEnum.CODE_GYS.getCode()));
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_GYS);
                 supplier.setCode(code);
                 supplier.setSrmDisabled(true);
                 addSupplierList.add(supplier);
