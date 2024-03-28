@@ -3,21 +3,27 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.TmsDeclareBillDetailEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.DeclareStatusEnum;
+import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.enums.FmDeliveryDeclareStatusEnum;
@@ -32,6 +38,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.google.common.collect.Lists;
 import freemarker.template.utility.StringUtil;
 import org.apache.commons.collections4.CollectionUtils;
+import org.bouncycastle.util.StringList;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +70,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Autowired
     private CommonService commonService;
 
+    /**
+     * 限制报关单最多sku
+     */
+    private final int limitSkuNo = 50;
+
     @Resource
     private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
 
@@ -82,6 +94,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Lazy
     private TmsDeclareBillServiceImpl service;
 
+    @Resource
+    private DictBasicService dictBasicService;
+
     @Override
     public Boolean addFmDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
         TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
@@ -96,10 +111,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         TmsDeclareBillDTO.DeliveryDTO deliveryDTO = deliveryDTOList.get(0);
         TmsDeclareBillEntity baseTmsDeclareBillEntity = new TmsDeclareBillEntity();
         BeanMapperUtils.copy(addDTO, baseTmsDeclareBillEntity);
-        baseTmsDeclareBillEntity.setSourceCode(deliveryDTO.getSourceCode());
-        baseTmsDeclareBillEntity.setSourceId(deliveryDTO.getSourceId());
+        BeanMapperUtils.copy(deliveryDTO, baseTmsDeclareBillEntity);
         baseTmsDeclareBillEntity.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
-        baseTmsDeclareBillEntity.setBusinessType(deliveryDTO.getBusinessType());
         baseTmsDeclareBillEntity.setDeclareStatus(DeclareStatusEnum.WAIT.getCode());
         baseTmsDeclareBillEntity.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
         //50个明细为一个报关单
@@ -107,7 +120,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(CollectionUtils.isEmpty(allProductDetailList)){
             throw new ServiceException("没有可生成报关单的明细");
         }
-        List<List<TmsDeclareBillDTO.ProductDetail>> productDetailListList = Lists.partition(allProductDetailList, 50);
+        List<List<TmsDeclareBillDTO.ProductDetail>> productDetailListList = Lists.partition(allProductDetailList, limitSkuNo);
         for(List<TmsDeclareBillDTO.ProductDetail> productDetailList : productDetailListList){
             TmsDeclareBillEntity tmsDeclareBillEntity = BeanUtil.copyProperties(baseTmsDeclareBillEntity,TmsDeclareBillEntity.class);
             List<TmsDeclareBillDetailEntity> detailEntityList = BeanUtil.copyToList(productDetailList,TmsDeclareBillDetailEntity.class);
@@ -194,12 +207,77 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     @Override
     public PagingVO<TmsDeclareBillDTO.PagingVO> paging(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto) {
-        return null;
+        TmsDeclareBillDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<TmsDeclareBillDTO.PagingVO> pageData = baseMapper.paging(query, params);
+        List<TmsDeclareBillDTO.PagingVO> list = pageData.getRecords();
+        fillPagingDb(list,params.getType());
+        return new PagingVO<>(pageData);
     }
 
     @Override
-    public TmsDeclareBillDTO.StatisticsVO statistics() {
-        return null;
+    public TmsDeclareBillDTO.StatisticsVO statisticsByFm() {
+        TmsDeclareBillDTO.StatisticsVO statisticsVO = new TmsDeclareBillDTO.StatisticsVO();
+        List<TmsDeclareBillDTO.StatisticsAllDTO> statisticsAllDTOList = this.baseMapper.statistics(TmsDeclareBillDTO.StatisticsDTO.builder()
+                        .beginDate(DateUtil.getStartOfMonth(-1))
+                        .endDate(DateUtil.getEndOfMonth(0))
+                        .declareStatus(DeclareStatusEnum.DECLARED.getCode())
+                        .type(SourceTypeEnum.FM_DECLARE_BILL.getCode())
+                .build());
+        FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq = new FirstMileDeliveryDTO.StatisticsReq();
+        deliveryStaticsReq.setStatus(ApproveStatusEnum.APPROVE.getStatus());
+        deliveryStaticsReq.setBeginDate(DateUtil.getStartOfMonth(-1));
+        deliveryStaticsReq.setEndDate(DateUtil.getEndOfMonth(0));
+        List<FirstMileDeliveryDTO.LogisticStatisticsDTO> deliveryLogisticDTOList = wmsFirstMileDeliveryFeign.logisticStatistics(deliveryStaticsReq);
+        statisticsVO.setLastMonthDelivery(!deliveryLogisticDTOList.isEmpty() ?deliveryLogisticDTOList.get(0).getCount():0);
+        statisticsVO.setThisMonthDelivery(deliveryLogisticDTOList.size()>1?deliveryLogisticDTOList.get(1).getCount():0);
+
+        statisticsVO.setLastMonthDeclare(!statisticsAllDTOList.isEmpty() ?statisticsAllDTOList.get(0).getCount():0);
+        statisticsVO.setThisMonthDeclare(statisticsAllDTOList.size()>1?statisticsAllDTOList.get(1).getCount():0);
+        return statisticsVO;
+    }
+
+    private void fillPagingDb(List<TmsDeclareBillDTO.PagingVO> list,String type) {
+        if(CollectionUtils.isEmpty(list)){
+            return;
+        }
+        List<DictBasicDTO.ViewDTO> declareTypeDict = dictBasicService.getByKey(DictBasicEnum.DECLARE_DECLARE_TYPE.getType());
+        List<String> sourceCodes = list.stream().map(TmsDeclareBillDTO.PagingVO::getSourceCode).collect(Collectors.toList());
+        List<String> ids = list.stream().map(TmsDeclareBillDTO.PagingVO::getId).collect(Collectors.toList());
+        List<TmsDeclareBillDTO.MergedDTO> mergedDTOList = baseMapper.getMergedDTOList(ids);
+        Map<String, List<String>> mergedMap = mergedDTOList.stream()
+                .collect(Collectors.groupingBy(TmsDeclareBillDTO.MergedDTO::getId, Collectors.mapping(TmsDeclareBillDTO.MergedDTO::getSourceCode, Collectors.toList())));
+        if(type.equals(SourceTypeEnum.FM_DECLARE_BILL.getCode())){
+            //处理供应商
+            List<LogisticsBillEntity> logisticsList =  logisticService.listByOutstcockCode(sourceCodes);
+            List<String> supplierIds = logisticsList.stream().map(LogisticsBillEntity::getLogisticsSupplierId).distinct().collect(Collectors.toList());
+            List<LogisticsSupplierEntity> supplierList = CollectionUtils.isNotEmpty(supplierIds)?logisticsSupplierService.listByIds(supplierIds):new ArrayList<>();
+            list.forEach(v->{
+                //供应商
+                LogisticsBillEntity logistics = logisticsList.stream().filter(e->e.getOutstockCode().equals(v.getSourceCode())).findFirst().orElse(null);
+                if(logistics!=null){
+                    LogisticsSupplierEntity supplier = supplierList.stream().filter(e->e.getId().equals(logistics.getLogisticsSupplierId())).findFirst().orElse(new LogisticsSupplierEntity());
+                    v.setLogisticsSupplierId(supplier.getSupplierId());
+                    v.setLogisticsSupplierName(supplier.getSupplierName());
+                }
+                //发货类型
+                v.setBusinessTypeName(SourceTypeEnum.getName(v.getBusinessType()));
+            });
+        }else if (type.equals(SourceTypeEnum.B2B_DECLARE_BILL.getCode())){
+
+        }
+
+        list.forEach(v->{
+            v.setDeclareStatusName(EnumMessage.getNameByCode(DeclareStatusEnum.class,v.getDeclareStatus()));
+            DictBasicDTO.ViewDTO declareType = declareTypeDict.stream().filter(e->e.getCode().equals(v.getDeclareType())).findFirst().orElse(new DictBasicDTO.ViewDTO());
+            v.setDeclareTypeName(declareType.getName());
+            List<String> sourceCodeList = new ArrayList<>();
+            sourceCodeList.add(v.getSourceCode());
+            List<String> mergedSourceCodeList = mergedMap.getOrDefault(v.getId(),new ArrayList<>());
+            sourceCodeList.addAll(mergedSourceCodeList);
+            v.setSourceCodeList(sourceCodeList);
+        });
     }
 
     @Override

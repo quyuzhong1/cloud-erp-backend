@@ -72,6 +72,77 @@
           and db.type = #{code}
         group by db.declare_status
     </select>
+    <select id="paging" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$PagingVO">
+        SELECT  db.id,
+                db.source_code as  sourceCode,
+            db.code,
+                db.merged_code != '' as isMerged,
+                db.declare_status as declareStatus,
+                db.business_type as businessType,
+                db.country,
+                db.country_name as  countryName,
+                db.box_qty as  boxQty,
+                db.net_weight as  netWeight,
+                db.gross_weight as  grossWeight,
+                db.declare_date as   declareDate,
+                db.declare_type as   declareType,
+                db.create_user_name as   createUserName,
+                db.create_time as   createTime,
+                db.is_invalid as    isInvalid
+        from  tms_declare_bill  db
+        where
+            ${params.sqlMap.default}
+          and db.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        db.create_time DESC
+    </select>
+
+    <select id="getMergedDTOList" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$MergedDTO">
+        SELECT db.id,
+               db2.source_code as sourceCode
+        from
+            tms_declare_bill db
+                inner join tms_declare_bill db2 on db.code = db2.merged_code
+        where db.is_deleted = false
+          and db2.is_deleted = false
+        and db.id in
+        <foreach collection="ids" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <select id="statistics" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$StatisticsAllDTO">
+        SELECT  EXTRACT(year FROM db.declare_date),  EXTRACT(month FROM db.declare_date) as month,
+        count(1)
+        from tms_declare_bill db
+        where db.is_deleted = false
+        <if test="declareStatus != null and declareStatus != ''">
+            and  db.declare_status = #{declareStatus}
+        </if>
+        <if test="type != null and type != ''">
+            and  db.type = #{type}
+        </if>
+        <if test="beginDate != null">
+            and db.declare_date >= #{beginDate}
+        </if>
+        <if test="endDate != null ">
+            and db.declare_date <![CDATA[<=]]>  #{endDate}
+        </if>
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        group by EXTRACT(month FROM db.declare_date), EXTRACT(year FROM db.declare_date)
+        order by  EXTRACT(year FROM db.declare_date), EXTRACT(month FROM db.declare_date)
+    </select>
 
 
 </mapper>

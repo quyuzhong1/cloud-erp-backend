@@ -62,7 +62,13 @@ public class TmsFmDeclareBillController extends BaseController {
      */
     @PostMapping("/paging")
     @WebAdvanceQuery
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFmDeclareBill:paging",
+            tableAlias = "db"
+    )
     public ApiResult<PagingVO<TmsDeclareBillDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto) {
+        dto.getParams().setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
         PagingVO<TmsDeclareBillDTO.PagingVO> pagingVO = tmsDeclareBillService.paging(dto);
         return success(pagingVO);
     }
@@ -74,8 +80,13 @@ public class TmsFmDeclareBillController extends BaseController {
      * @return ApiResult<String>
      */
     @GetMapping("/statistics")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFmDeclareBill:paging",
+            tableAlias = "db"
+    )
     public ApiResult<TmsDeclareBillDTO.StatisticsVO> statistics() {
-        return success(tmsDeclareBillService.statistics());
+        return success(tmsDeclareBillService.statisticsByFm());
     }
 
     /**

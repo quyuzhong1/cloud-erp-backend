@@ -1,9 +1,12 @@
 package com.erp.server.tms.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -20,4 +23,10 @@ import java.util.List;
 public interface TmsDeclareBillMapper extends BaseMapper<TmsDeclareBillEntity> {
 
     List<TmsDeclareBillDTO.TabListDTO> tabList(String code);
+
+    IPage<TmsDeclareBillDTO.PagingVO> paging(Page query,@Param("params") TmsDeclareBillDTO.PagingParamDTO params);
+
+    List<TmsDeclareBillDTO.MergedDTO> getMergedDTOList(List<String> ids);
+
+    List<TmsDeclareBillDTO.StatisticsAllDTO> statistics( TmsDeclareBillDTO.StatisticsDTO build);
 }

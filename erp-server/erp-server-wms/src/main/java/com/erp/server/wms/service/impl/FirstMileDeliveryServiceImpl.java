@@ -42,8 +42,6 @@ import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.srm.entity.DeliveryOrderEntity;
-import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
@@ -1878,7 +1876,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 packingDTOList.forEach(t->t.setCode(deliveryDTO.getSourceCode()));
                 deliveryDTO.setPackingDTOList(packingDTOList);
             }
-            deliveryDTO.setBoxCount(list.size());
+            deliveryDTO.setBoxQty(list.size());
             deliveryDTO.setGrossWeight(list.stream()
                     .map(WmsCartonDetailDTO.ListPackingDetailDTO::getPackageWeight)
                     .map(BigDecimal::new)

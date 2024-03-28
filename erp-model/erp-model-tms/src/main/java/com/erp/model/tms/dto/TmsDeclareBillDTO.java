@@ -1,6 +1,5 @@
 package com.erp.model.tms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
@@ -163,7 +162,7 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          * 总箱数
          */
-        private Integer boxCount;
+        private Integer boxQty;
 
         /**
          * 毛重
@@ -324,6 +323,12 @@ public class TmsDeclareBillDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class MergedDTO {
+        private String id;
+        private String sourceCode;
+    }
     /**
      * 分页
      */
@@ -340,6 +345,11 @@ public class TmsDeclareBillDTO implements Serializable {
          * 合同协议号(可排序)
          */
         private String code;
+
+        /**
+         * 来源编号
+         */
+        private String sourceCode;
 
         /**
          * 报关状态(可排序)
@@ -372,9 +382,9 @@ public class TmsDeclareBillDTO implements Serializable {
         private String businessTypeName;
 
         /**
-         * 关联单号
+         * 关联单号List
          */
-        private List<String> associatedCodeList;
+        private List<String> sourceCodeList;
 
         /**
          * 目的国家(可排序)
@@ -422,6 +432,58 @@ public class TmsDeclareBillDTO implements Serializable {
          * 创建时间可排序)
          */
         private LocalDateTime createTime;
+
+        /**
+         * 是否合并
+         */
+        private boolean isMerged;
+
+        /**
+         * 是否作废
+         */
+        private boolean isInvalid;
+    }
+
+    /**
+     * 列表统计返回结果
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class StatisticsAllDTO {
+
+        /**
+         * 年份
+         */
+        private Integer year;
+
+        /**
+         * 月份
+         */
+        private Integer month;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
+    /**
+     * 列表统计返回结果
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class StatisticsDTO extends SortDTO{
+
+        private LocalDateTime beginDate;
+
+        private LocalDateTime endDate;
+
+        private String declareStatus;
+
+        private String type;
     }
 
     /**
@@ -468,9 +530,9 @@ public class TmsDeclareBillDTO implements Serializable {
         private Map<String,String> sqlMap;
 
         /**
-         * 来源类型，后端处理，前端不用管
+         * 类型，后端处理，前端不用管
          */
-        private String sourceType;
+        private String type;
     }
 
     /**

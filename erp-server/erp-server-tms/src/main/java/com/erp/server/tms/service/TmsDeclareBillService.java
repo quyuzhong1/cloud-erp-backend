@@ -33,7 +33,7 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
 
     PagingVO<TmsDeclareBillDTO.PagingVO> paging(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto);
 
-    TmsDeclareBillDTO.StatisticsVO statistics();
+    TmsDeclareBillDTO.StatisticsVO statisticsByFm();
 
     List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeliveryOrder(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
 

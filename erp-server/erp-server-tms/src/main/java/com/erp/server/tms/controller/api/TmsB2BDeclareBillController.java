@@ -75,7 +75,7 @@ public class TmsB2BDeclareBillController extends BaseController {
      */
     @GetMapping("/statistics")
     public ApiResult<TmsDeclareBillDTO.StatisticsVO> statistics() {
-        return success(tmsDeclareBillService.statistics());
+        return null;
     }
 
     /**
