@@ -35,6 +35,7 @@
         select
         prod.id,
         pro.approve_status,
+        pro.approve_time,
         prod.main_id,
         prod.sku_id,
         prod.sku_no,
@@ -47,7 +48,8 @@
         prod.source_detail_id,
         prod.purchase_order_detail_id,
         pro.return_mode,
-        pro.bill_date
+        pro.bill_date,
+        pro.source_type
         from
         po_return pro
         inner join po_return_detail prod on pro.id = prod.main_id and prod.is_deleted = false

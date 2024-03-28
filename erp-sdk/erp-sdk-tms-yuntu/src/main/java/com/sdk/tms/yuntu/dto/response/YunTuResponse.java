@@ -12,6 +12,8 @@ public class YunTuResponse<T> implements Serializable {
     private String message;
     private String requestId;
     private String timeStamp;
+    private String resultCode;
+    private String resultDesc;
 
     @Getter(value= AccessLevel.NONE)
     private T item;

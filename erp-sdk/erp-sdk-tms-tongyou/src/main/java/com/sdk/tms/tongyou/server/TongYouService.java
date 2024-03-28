@@ -12,12 +12,13 @@ import com.sdk.tms.tongyou.dto.request.TongYouGetOrderRequest;
 import com.sdk.tms.tongyou.dto.request.TongYouPrintLabelRequest;
 import com.sdk.tms.tongyou.dto.response.*;
 import com.sdk.tms.tongyou.utils.TongYouUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Map;
-
+@Slf4j
 @Component
 @Validated
 public class TongYouService {
@@ -35,6 +36,8 @@ public class TongYouService {
      *  创建订单
      */
     public TongYouCreateOrder createOrder(TongYouCreateOrderRequest request,Map<String, String> authMap){
+        log.info("==========TongYouService.createOrder==========start");
+        log.info("authMap:{}, orderRequest:{}",authMap, request);
         TongYouSignDTO tongYouSignDTO = TongYouSignDTO.builder()
                 .logisticsId(request.getLogisticsId())
                 .orderNo(request.getOrderNo())
