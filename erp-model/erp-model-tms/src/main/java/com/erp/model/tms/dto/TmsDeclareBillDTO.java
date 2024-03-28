@@ -880,6 +880,11 @@ public class TmsDeclareBillDTO implements Serializable {
         private String exportPort;
 
         /**
+         * 提运单号
+         */
+        private String transportNo;
+
+        /**
          * 包装种类
          */
         private String dictPackType;

@@ -337,8 +337,26 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> updateToDeclare(TmsDeclareBillDTO.UpdateDeclareStatusDTO dto) {
-        return null;
+        if(Objects.isNull(dto.getDate())){
+            throw new ServiceException("报关日期不能为空");
+        }
+        List<TmsDeclareBillEntity> entityList = this.listByIds(dto.getIds());
+        List<TmsDeclareBillEntity> updateList = new ArrayList<>();
+        List<BatchResultDTO> resultList = new ArrayList<>();
+        for (TmsDeclareBillEntity entity : entityList) {
+            if(!entity.getDeclareStatus().equals(DeclareStatusEnum.WAIT.getCode())){
+                resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有待报关的单据才能更新成已报关"));
+                continue;
+            }
+            entity.setDeclareStatus(DeclareStatusEnum.DECLARED.getCode());
+            updateList.add(entity);
+        }
+        if(CollectionUtils.isNotEmpty(updateList)){
+            this.updateBatchById(updateList);
+        }
+        return resultList;
     }
 
     @Override
