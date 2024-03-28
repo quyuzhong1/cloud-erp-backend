@@ -24,6 +24,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -899,6 +900,17 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 errorList.add(importExcelDTO);
                 continue;
             }
+            if (null != warehouseDTO.getApproveStatus() && !ApproveStatusEnum.APPROVE.equals(warehouseDTO.getApproveStatus())){
+                importExcelDTO.setErrorMsg(StrUtil.format("【{}】仓库未审核通过", importExcelDTO.getWarehouseName()));
+                errorList.add(importExcelDTO);
+                continue;
+            }
+            if (null != warehouseDTO.getDisabled() && warehouseDTO.getDisabled()){
+                importExcelDTO.setErrorMsg(StrUtil.format("【{}】仓库未启用", importExcelDTO.getWarehouseName()));
+                errorList.add(importExcelDTO);
+                continue;
+            }
+
             String currentWarehouseId = warehouseDTO.getId();
             WarehouseLocationEntity locationEntity = null;
             if (StringUtils.isNotBlank(importExcelDTO.getWarehouseLocation())){
@@ -932,6 +944,11 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             SkuVO skuVO = existSkuMap.get(importExcelDTO.getSkuNo());
             if (null == skuVO){
                 importExcelDTO.setErrorMsg(StrUtil.format("SKU【{}】不存在", importExcelDTO.getSkuNo()));
+                errorList.add(importExcelDTO);
+                continue;
+            }
+            if (null != skuVO.getStatus() && Objects.equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode(), skuVO.getStatus())){
+                importExcelDTO.setErrorMsg(StrUtil.format("【{}】SKU未审核通过", importExcelDTO.getSkuNo()));
                 errorList.add(importExcelDTO);
                 continue;
             }
