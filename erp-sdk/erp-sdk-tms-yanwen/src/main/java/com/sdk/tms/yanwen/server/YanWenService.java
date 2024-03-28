@@ -13,6 +13,7 @@ import com.sdk.tms.yanwen.dto.request.YanWenGetLabelRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenQueryOrderRequest;
 import com.sdk.tms.yanwen.dto.response.*;
 import com.sdk.tms.yanwen.utils.YanWenUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
@@ -20,7 +21,7 @@ import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
-
+@Slf4j
 @Component
 @Validated
 public class YanWenService {
@@ -44,9 +45,11 @@ public class YanWenService {
     /**
      *  创建运单
      */
-    public YanWenResponse<YanWenCreateWayBill> createWayBill(@Valid YanWenCreateWayBillRequest request,Map<String,String> map){
+    public YanWenResponse<YanWenCreateWayBill> createWayBill(@Valid YanWenCreateWayBillRequest request,Map<String,String> authMap){
+        log.info("==========YanWenService.createOrder==========start");
+        log.info("authMap:{}, orderRequest:{}",authMap, request);
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
-        String response = YanWenUtils.sendPost(map.get("url"),YanWenConstants.METHOD_ORDER_CREATE,paramsMap,map.get("clientId"),map.get("clientSecret"));
+        String response = YanWenUtils.sendPost(authMap.get("url"),YanWenConstants.METHOD_ORDER_CREATE,paramsMap,authMap.get("clientId"),authMap.get("clientSecret"));
         YanWenResponse<YanWenCreateWayBill> yanWenResponseDTO;
         try {
             yanWenResponseDTO = JSONObject.parseObject(response,new TypeReference<YanWenResponse<YanWenCreateWayBill>>() {}.getType());

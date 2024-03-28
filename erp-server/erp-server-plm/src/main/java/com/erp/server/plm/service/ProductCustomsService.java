@@ -1,4 +1,5 @@
 package com.erp.server.plm.service;
+import com.erp.model.plm.dto.ProductCustomsSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.common.business.service.SuperService;
 
@@ -45,4 +46,11 @@ public interface ProductCustomsService extends SuperService<ProductCustomsEntity
      * @return java.lang.Boolean
      **/
     Boolean addProductCustoms();
+
+    /**
+     * 获取sku定义的目的国申报海关编码
+     * @param dto
+     * @return
+     */
+    List<ProductCustomsEntity> listProductCustomsBySkuIds(ProductCustomsSkuDTO dto);
 }

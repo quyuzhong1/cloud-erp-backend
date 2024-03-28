@@ -11,6 +11,7 @@ import com.sdk.tms.yuntu.dto.request.*;
 import com.sdk.tms.yuntu.dto.response.*;
 import com.sdk.tms.yuntu.utils.YunTuUtils;
 import io.seata.common.util.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
@@ -18,7 +19,7 @@ import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
-
+@Slf4j
 @Component
 @Validated
 public class YunTuService {
@@ -42,6 +43,8 @@ public class YunTuService {
      *  运单申请
      */
     public YunTuResponse<List<YunTuCreateOrder>> createOrder(@Valid List<YunTuCreateOrderRequest> request,Map<String, String> authMap){
+        log.info("==========YunTuService.createOrder==========start");
+        log.info("authMap:{}, orderRequest:{}",authMap, request);
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String url = authMap.get("url");

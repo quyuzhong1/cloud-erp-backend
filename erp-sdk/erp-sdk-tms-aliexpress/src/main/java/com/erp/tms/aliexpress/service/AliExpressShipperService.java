@@ -56,6 +56,8 @@ public class AliExpressShipperService {
     }
 
     public OrderResult createOrder(Map<String, String> authMap, OrderRequest orderRequest) throws ApiException, InterruptedException {
+        log.info("==========AliExpressShipperService.createOrder==========start");
+        log.info("authMap:{}, orderRequest:{}",authMap, orderRequest);
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");

@@ -484,4 +484,14 @@ public interface PlmTaskFeign {
      */
     @PostMapping("/feign/bom/listAllLevelSku")
     BomSkuPageDTO.ListAllSkuDTO listAllLevelSku(@RequestBody BomSkuPageDTO.AllSkuParamDTO params);
+
+    /**
+     * @description: 根据skuId查询海关编码
+     * @author zdy
+     * @date: 2023/11/16 15:14
+     * @param dto
+     * @return List<ProductDTO>
+     */
+    @PostMapping("feign/product/listProductCustomsBySkuIds")
+    List<ProductCustomsEntity> listProductCustomsBySkuIds(@RequestBody ProductCustomsSkuDTO dto);
 }
