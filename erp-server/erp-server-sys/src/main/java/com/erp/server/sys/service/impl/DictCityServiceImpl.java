@@ -310,7 +310,16 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         if (Objects.isNull(entity)) {
             throw new ServiceException("城市不存在");
         }
+
+        //省id
+        String provinceId = dto.getParentId();
+        DictCityEntity province = this.getById(provinceId);
+        if (Objects.isNull(province)) {
+            throw new ServiceException("上级省不存在");
+        }
+
         entity.setName(dto.getName());
+        entity.setParentId(provinceId);
         handleData(entity);
         Boolean updateResult = this.updateById(entity);
         if (updateResult) {

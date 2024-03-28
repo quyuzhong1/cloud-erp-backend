@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -276,7 +277,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         List<DictBasicDTO> settleDictList = scmDictFeign.listDictByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
 
         //付款条件
-        List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+        List<BaseDropDownDTO.DisabledDTO>  paymentConditionList =  scmTaskFeign.listPaymentCondition();
 
         //币种信息
         List<String> currencyIdList = list.stream().map(PoReconciliationDetailDTO.ListDTO::getCurrency).collect(Collectors.toList());
@@ -299,8 +300,8 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             listDTO.setSettleDictName(settleDictName);
 
             //付款条件名称
-            String paymentConditionName = paymentConditionList.stream().filter(obj -> StrUtil.equals(obj.getValue(), listDTO.getPaymentCondition())).findFirst()
-                    .flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            String paymentConditionName = paymentConditionList.stream().filter(obj -> StrUtil.equals(obj.getCode(), listDTO.getPaymentCondition())).findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getValue())).orElse("");
             listDTO.setPaymentConditionName(paymentConditionName);
 
             //币种符号

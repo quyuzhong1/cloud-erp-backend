@@ -58,6 +58,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.checkerframework.checker.units.qual.K;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -124,6 +125,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     @Resource
     private DictBasicService dictBasicService;
+
+    @Resource
+    private KingdeeReceiptConditionService kingdeeReceiptConditionService;
 
     /**
      * 获取到分组的id 集合
@@ -1011,12 +1015,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             base.setPerson(address.getPerson());
             base.setTelNumber(address.getTelNumber());
         }
-
-        if (StrUtils.isNotEmpty(customer.getConditionDict())) {
-            base.setReceiveCondition(customer.getConditionDict());
-            List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicTypeEnum.COLLECTION_TERMS.getType());
-            DictBasicDTO.ViewDTO viewDTO = dictList.stream().filter(req -> Objects.equals(req.getValue(), customer.getConditionDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
-            base.setReceiveConditionName(viewDTO.getName());
+        String receiptConditionId =customer.getConditionDict();
+        if (StrUtils.isNotEmpty(receiptConditionId)) {
+            base.setReceiveCondition(receiptConditionId);
+            KingdeeReceiptConditionEntity receiptCondition = kingdeeReceiptConditionService.getById(receiptConditionId);
+            base.setReceiveConditionName(receiptCondition != null ? receiptCondition.getName() : "");
         }
         return base;
     }
@@ -1155,8 +1158,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
         Map<String, DictCurrencyEntity> currencyNameMap = currencyList.stream().collect(Collectors.toMap(DictCurrencyEntity::getName, Function.identity()));
         // 收款条件
-        List<DictBasicDTO.ViewDTO> collectionTermList = dictBasicService.getByKey(DictBasicTypeEnum.COLLECTION_TERMS.getType());
-        Map<String, DictBasicDTO.ViewDTO> collectionTermNameMap = collectionTermList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
+        List<KingdeeReceiptConditionEntity> receiptConditionList = kingdeeReceiptConditionService.list();
         // 部门
         List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
         Map<String, List<SysUserDeptDTO>> deptNameMap = userDeptList.stream().filter(r -> StrUtils.isNotEmpty(r.getDeptName())).collect(Collectors.groupingBy(SysUserDeptDTO::getDeptName));
@@ -1286,10 +1288,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             customerInfoEntity.setCurrency(currencyNameMap.get(currencyName).getId());
             // 收款条件
             String conditionDictName = ExcelUtil.convertCellValueToString(row.getCell(16));
-            if (StrUtils.isEmpty(conditionDictName) || !collectionTermNameMap.containsKey(conditionDictName)) {
+            String conditionDictId=receiptConditionList.stream().filter(c->c.getName().equals(conditionDictName)).map(c->c.getId()).findFirst().orElse("");
+            if (StrUtils.isEmpty(conditionDictName) ||StringUtils.isEmpty(conditionDictId)) {
                 throw new ServiceException(StrUtil.format("第【{}】行收款条件为空或未找到收款条件【{}】", noticeRow, conditionDictName));
             }
-            customerInfoEntity.setConditionDict(collectionTermNameMap.get(conditionDictName).getValue());
+            customerInfoEntity.setConditionDict(conditionDictId);
 
             // 无附件
 

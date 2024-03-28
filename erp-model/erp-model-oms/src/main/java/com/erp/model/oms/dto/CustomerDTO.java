@@ -134,6 +134,11 @@ public class CustomerDTO implements Serializable {
         private String useOrgName;
 
         /**
+         * 使用组织id
+         */
+        private String useOrgId;
+
+        /**
          * 客户分组id
          */
         private String groupId;

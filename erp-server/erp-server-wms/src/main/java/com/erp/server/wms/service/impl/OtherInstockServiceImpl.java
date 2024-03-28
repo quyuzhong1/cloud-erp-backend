@@ -880,6 +880,18 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 .stream()
                 .collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity()));
 
+        // 验收员
+        List<String> userNameList = successList.stream()
+                .map(OtherInStockImportExcelDTO::getReceiverName)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, List<FindUserDTO>> userMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(userNameList)){
+            userMap = sysUserFeign.listUserByUserNames(userNameList, UserTypeEnum.ERP.code)
+                    .stream()
+                    .collect(Collectors.groupingBy(FindUserDTO::getUserName));
+        }
 
         // 校验和处理
         for (OtherInStockImportExcelDTO importExcelDTO : successList) {
@@ -928,6 +940,18 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 }
             }
 
+            // 验收员
+            FindUserDTO userDTO = null;
+            if (StringUtils.isNotBlank(importExcelDTO.getReceiverName())){
+                List<FindUserDTO> userDTOList = userMap.get(importExcelDTO.getReceiverName());
+                if (CollectionUtils.isEmpty(userDTOList)){
+                    importExcelDTO.setErrorMsg(StrUtil.format("【{}】验收员不存在", importExcelDTO.getReceiverName()));
+                    errorList.add(importExcelDTO);
+                    continue;
+                } else {
+                    userDTO = userDTOList.stream().findFirst().orElse(null);
+                }
+            }
 
             // 部门
             SysDepartmentDTO departmentDTO = null;
@@ -947,7 +971,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 errorList.add(importExcelDTO);
                 continue;
             }
-            if (null != skuVO.getStatus() && Objects.equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode(), skuVO.getStatus())){
+            if (null != skuVO.getStatus() && !Objects.equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode(), skuVO.getStatus())){
                 importExcelDTO.setErrorMsg(StrUtil.format("【{}】SKU未审核通过", importExcelDTO.getSkuNo()));
                 errorList.add(importExcelDTO);
                 continue;
@@ -965,6 +989,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                         warehouseDTO,
                         locationEntity,
                         departmentDTO,
+                        userDTO,
                         Collections.singletonList(detailDTO)
                 );
                 String idStr = this.add(addDTO);

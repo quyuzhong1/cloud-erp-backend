@@ -632,6 +632,12 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
 
     @Override
     public List<BatchResultDTO> batchAdd(List<CustomerB2bSellerChangeDTO.AddDTO> addDTOList) {
+        List<String> mainIdList = addDTOList.stream().map(CustomerB2bSellerChangeDTO.AddDTO::getMainId).collect(Collectors.toList());
+        List<CustomerInfoEntity> customerInfoList = CollectionUtils.isNotEmpty(mainIdList) ? customerInfoService.listByIds(mainIdList) : Collections.emptyList();
+        List<String> useOrgIdList = customerInfoList.stream().map(CustomerInfoEntity::getUseOrgId).distinct().collect(Collectors.toList());
+        if(useOrgIdList.size()> 1){
+             throw new ServiceException("只能选择同一个使用组织的客户进行销售员变更");
+        }
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         for(CustomerB2bSellerChangeDTO.AddDTO addDTO : addDTOList){
             batchResultDTOList.add(service.add(addDTO));
