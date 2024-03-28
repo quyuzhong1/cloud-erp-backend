@@ -51,4 +51,5 @@ public interface DeliveryOrderDetailService extends SuperService<DeliveryOrderDe
 
     List<DeliveryOrderDetailEntity> listDetailByDetailSourceIds(List<String> purchaseDetailIds);
 
+    List<DeliveryOrderDetailDTO.ListDTO> listDetailDTOByDetailSourceIds(List<String> purchaseDetailIds);
 }
