@@ -39,7 +39,7 @@ public interface OtherOutStockConverter {
             @Mapping(target = "skuId", source = "skuVO.skuId"),
             @Mapping(target = "skuNo", source = "skuVO.skuNo"),
             @Mapping(target = "actualQty", source = "actualQty"),
-            @Mapping(target = "warehouseLocation", expression = "java(null == locationEntity ? \"\" : locationEntity.getId())"),
+            @Mapping(target = "warehouseLocation", expression = "java(null == locationEntity ? \"\" : locationEntity.getCode())"),
             @Mapping(target = "remark", source = "importExcelDTO.remark"),
     })
     OtherOutstockDetailDTO.AddDTO combineDetailDTO(OtherOutStockImportExcelDTO importExcelDTO,

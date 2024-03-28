@@ -1,18 +1,15 @@
 package com.erp.server.wms.convert;
 
-import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.FindUserDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.dto.OtherInstockDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.OtherInStockImportExcelDTO;
-import com.erp.model.wms.dto.excel.OtherOutStockImportExcelDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.InstockTypeEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
-import com.erp.model.wms.enums.OutstockTypeEnum;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -36,7 +33,7 @@ public interface OtherInStockConverter {
             @Mapping(target = "skuId", source = "skuVO.skuId"),
             @Mapping(target = "skuNo", source = "skuVO.skuNo"),
             @Mapping(target = "actualQty", source = "actualQty"),
-            @Mapping(target = "warehouseLocation", expression = "java(null == locationEntity ? \"\" : locationEntity.getId())"),
+            @Mapping(target = "warehouseLocation", expression = "java(null == locationEntity ? \"\" : locationEntity.getCode())"),
             @Mapping(target = "remark", source = "importExcelDTO.remark"),
     })
     OtherInstockDetailDTO.AddDTO combineDetailDTO(OtherInStockImportExcelDTO importExcelDTO,
@@ -51,7 +48,7 @@ public interface OtherInStockConverter {
             @Mapping(target = "inventoryDirection", source = "inventoryDirectionEnum.code"),
             @Mapping(target = "warehouseKeeperId", constant = ""),
             // 入库单无领料人
-            @Mapping(target = "receiverId", constant = ""),
+            @Mapping(target = "receiverId", expression = "java(null == userDTO ? \"\" : userDTO.getUserId())"),
             @Mapping(target = "warehouseId", source = "warehouseDTO.id"),
             @Mapping(target = "type", source = "inStockTypeEnum.code"),
             @Mapping(target = "typeName", source = "inStockTypeEnum.name"),
@@ -65,5 +62,6 @@ public interface OtherInStockConverter {
                                          WarehouseDTO.ListDTO warehouseDTO,
                                          WarehouseLocationEntity locationEntity,
                                          SysDepartmentDTO departmentDTO,
+                                         FindUserDTO userDTO,
                                          List<OtherInstockDetailDTO.AddDTO> detailList);
 }
