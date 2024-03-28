@@ -6,6 +6,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
+import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
@@ -41,7 +42,8 @@ public interface SrmDeliveryOrderFeign {
 
     @PostMapping("/feign/deliveryOrder/listDetailByDetailSourceIds")
     List<DeliveryOrderDetailEntity> listDetailByDetailSourceIds(@RequestBody List<String> purchaseDetailIds);
-
+    @PostMapping("/feign/deliveryOrder/listDetailDTOByDetailSourceIds")
+    public List<DeliveryOrderDetailDTO.ListDTO> listDetailDTOByDetailSourceIds(@RequestBody List<String> purchaseDetailIds);
     @PostMapping("/feign/deliveryOrder/getExportList")
     List<DeliveryOrderExportExcelDTO> getExportList(@RequestBody DeliveryOrderDTO.ParamDTO dto);
 

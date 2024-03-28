@@ -44,8 +44,10 @@ import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.srm.dto.CfgSettingDTO;
+import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.enums.ConfigKeyEnum;
+import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
@@ -2323,7 +2325,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> podIds = records.stream().map(PurchaseOrderDTO.ListDTO::getPurchaseDetailId).collect(Collectors.toList());
         List<String> ids = records.stream().map(PurchaseOrderDTO.ListDTO::getId).distinct().collect(Collectors.toList());
         //送货信息
-        List<DeliveryOrderDetailEntity> deliveryOrderDetailList = srmDeliveryOrderFeign.listDetailByDetailSourceIds(podIds);
+        List<DeliveryOrderDetailDTO.ListDTO> deliveryOrderDetailList = srmDeliveryOrderFeign.listDetailDTOByDetailSourceIds(podIds);
         //查询采购签收信息
         List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(ids);
         //入库信息
@@ -2371,9 +2373,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //已送货数量
             if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
                 deliveryQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
-                        .map(DeliveryOrderDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+                        .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 //收发差异
-                diffSendAndReceive = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
+                diffSendAndReceive = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId())
+                                && StringUtils.isNotBlank(e.getReceiptStatus()) && e.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode()) )
                         .map(deliveryOrderDetailEntity -> deliveryOrderDetailEntity.getDeliveryQty() - deliveryOrderDetailEntity.getReceiveQty())
                         .reduce(MathUtil.ZERO, Integer::sum);
             }

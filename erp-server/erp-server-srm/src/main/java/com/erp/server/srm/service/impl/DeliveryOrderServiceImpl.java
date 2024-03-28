@@ -340,7 +340,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         List<String> detailIds = addDeliveryDTOS.stream().map(DeliveryOrderDTO.AddDeliveryDTO::getPurchaseDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderFeign.getPurchaseOrderDetailByIds(detailIds);
         //送货信息
-        List<DeliveryOrderDetailEntity> deliveryOrderDetailList = detailService.listDetailByDetailSourceIds(detailIds);
+        List<DeliveryOrderDetailDTO.ListDTO> deliveryOrderDetailList = detailService.listDetailDTOByDetailSourceIds(detailIds);
         //查询采购签收信息
         List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(new ArrayList<>(orderIds));
         //入库信息
@@ -386,7 +386,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     @DataIdempotent(keyIdName = "deliveryOrderEntity.id")
     private void handleDeliverOrderDetailList(String mainId, List<DeliveryOrderDTO.AddDeliveryDTO> deliveryDTOS,
                                               List<PurchaseOrderDetailEntity> purchaseOrderDetailList, List<BatchResultDTO> dtos,
-                                              List<DeliveryOrderDetailEntity> deliveryOrderDetailList, List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList,
+                                              List<DeliveryOrderDetailDTO.ListDTO> deliveryOrderDetailList, List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList,
                                               List<PoInstockDetailEntity> stockInDetailList, List<PoReturnDetailEntity> returnOrderDetailList) {
         if (CollectionUtils.isEmpty(deliveryDTOS)){
             return;
@@ -433,7 +433,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
      * @param returnOrderDetailList
      */
     private void checkPurchaseOrderDetail(DeliveryOrderDTO.AddDeliveryDTO addDeliveryDTO, PurchaseOrderDetailEntity detailEntity,
-                                          List<DeliveryOrderDetailEntity> deliveryOrderDetailList, List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList,
+                                          List<DeliveryOrderDetailDTO.ListDTO> deliveryOrderDetailList, List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList,
                                           List<PoInstockDetailEntity> stockInDetailList, List<PoReturnDetailEntity> returnOrderDetailList) {
         //没有采购明细记录
         if (Objects.isNull(detailEntity)){
@@ -480,9 +480,10 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         //已送货数量
         if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
             deliveryQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(addDeliveryDTO.getPurchaseDetailId()) )
-                    .map(DeliveryOrderDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+                    .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             //收发差异
-            diffSendAndReceive = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(addDeliveryDTO.getPurchaseDetailId()) )
+            diffSendAndReceive = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(addDeliveryDTO.getPurchaseDetailId())
+                            && StrUtils.isNotEmpty(e.getReceiptStatus()) && e.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode()) )
                     .map(deliveryOrderDetailEntity -> deliveryOrderDetailEntity.getDeliveryQty() - deliveryOrderDetailEntity.getReceiveQty())
                     .reduce(MathUtil.ZERO, Integer::sum);
         }
