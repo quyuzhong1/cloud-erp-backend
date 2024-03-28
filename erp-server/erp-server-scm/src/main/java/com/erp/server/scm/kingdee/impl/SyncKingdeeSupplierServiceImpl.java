@@ -17,20 +17,14 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.scm.dto.SupplierContactDTO;
-import com.erp.model.scm.entity.DictBasicEntity;
-import com.erp.model.scm.entity.SupplierAccountEntity;
-import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.scm.entity.SupplierGradeEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
-import com.erp.server.scm.service.DictBasicService;
-import com.erp.server.scm.service.SupplierAccountService;
-import com.erp.server.scm.service.SupplierContactService;
-import com.erp.server.scm.service.SupplierGradeService;
+import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +59,10 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
 
     @Resource
     private SupplierContactService supplierContactService;
+
+
+    @Resource
+    private KingdeePaymentConditionService kingdeePaymentConditionService;
 
     @Autowired
     private SysDictFeign sysDictFeign;
@@ -136,11 +134,11 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
         }
 
         // 付款条件
-        if(StrUtils.isNotEmpty(entity.getPaymentCondition())) {
-            List<DictBasicDTO.ViewDTO> dicts = sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
-            List<String> dictCodes = dicts.stream().map(DictBasicDTO.ViewDTO::getValue).distinct().collect(Collectors.toList());
-            if(CollUtil.isNotEmpty(dictCodes) && dictCodes.contains(entity.getPaymentCondition())) {
-                resultMap.put("paymentCondition",entity.getPaymentCondition());
+        String paymentCondition = entity.getPaymentCondition();
+        if (StrUtils.isNotEmpty(paymentCondition)) {
+            KingdeePaymentConditionEntity conditionEntity = kingdeePaymentConditionService.getById(paymentCondition);
+            if (Objects.nonNull(conditionEntity)) {
+                resultMap.put("paymentCondition", conditionEntity.getCode());
             }
         }
 

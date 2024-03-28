@@ -12,10 +12,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -659,6 +656,7 @@ public class DeliveryOrderDTO implements Serializable {
          * 送货数量
          */
         @NotNull(message = "送货数量不能为空")
+        @Min(value = 1,message = "送货数量最小值为1")
         private Integer planDeliveryQty;
     }
 

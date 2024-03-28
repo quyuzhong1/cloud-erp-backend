@@ -28,8 +28,8 @@ public interface SysDictFeign {
      * @param type
      * @return
      */
-    @GetMapping("/feign/dictBasic/getByType")
-    List<DictBasicDTO.ViewDTO> getByType(@RequestParam(value = "type") String type);
+//    @GetMapping("/feign/dictBasic/getByType")
+//    List<DictBasicDTO.ViewDTO> getByType(@RequestParam(value = "type") String type);
 
 
     /**

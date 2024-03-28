@@ -1,5 +1,6 @@
 package com.erp.server.sys.rocketmq.sync.kingdee;
 
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 
 /**
@@ -17,5 +18,5 @@ public interface SyncKingdeeSysDeptService {
      * @param entity
      * @param operate
      */
-    void syncDataToKingdee(SysDepartmentEntity entity, String operate);
+    void syncDataToKingdee(KingdeeDepartmentEntity entity, String operate);
 }

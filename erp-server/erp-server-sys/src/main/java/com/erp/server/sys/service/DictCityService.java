@@ -1,9 +1,13 @@
 package com.erp.server.sys.service;
 
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -16,7 +20,6 @@ import java.util.List;
  */
 public interface DictCityService extends SuperService<DictCityEntity> {
 
-    Boolean add(DictCityDTO.AddDTO dto);
 
     
     /**
@@ -41,4 +44,91 @@ public interface DictCityService extends SuperService<DictCityEntity> {
      * @return
      */
     DictCityEntity getReginByName(String reginName,Integer level);
+
+
+    /**
+     * 省份分页
+     * @param dto
+     * @return
+     */
+    PagingVO<DictCityDTO.PagingViewDTO> provincePaging(PagingDTO<DictCityDTO.ProvincePagingParamDTO> dto);
+
+    /**
+     * 添加省
+     * @param dto
+     * @return
+     */
+    Boolean addProvince(DictCityDTO.AddProvinceDTO dto);
+
+    Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId, String syncKingdeeCode);
+
+    /**
+     * 修改省信息
+     * @param dto
+     * @return
+     */
+    Boolean updateProvince(DictCityDTO.UpdateProvinceDTO dto);
+
+    /**
+     * 删除
+     * @description
+     * @param id
+     * @return
+     * @date 2024-03-20 12:27
+     * @author Lambda
+     */
+    BatchResultDTO delete(String id);
+
+    /**
+     * 省详情
+     * @param id
+     * @return
+     */
+    DictCityDTO.ViewDTO provinceView(String id);
+
+    /**
+     * 城市分页
+     * @param dto
+     * @return
+     */
+    PagingVO<DictCityDTO.PagingViewDTO> cityPaging(PagingDTO<DictCityDTO.CityPagingParamDTO> dto);
+
+    /**
+     * 添加城市
+     * @param dto
+     * @return
+     */
+    Boolean addCity(DictCityDTO.AddCityDTO dto);
+
+    /**
+     * 城市详情
+     * @description
+     * @param id
+     * @return
+     * @date 2024-03-20 14:44
+     * @author Lambda
+     */
+    DictCityDTO.ViewDTO cityView(String id);
+
+    /**
+     * 修改城市
+     * @param dto
+     * @return
+     */
+    Boolean updateCity(DictCityDTO.UpdateCityDTO dto);
+
+    /**
+     * 省导出
+     * @param dto
+     */
+    void provinceExport(DictCityDTO.ProvincePagingParamDTO dto, HttpServletResponse response);
+
+    /**
+     * 城市导出
+     * @param dto
+     * @param response
+     */
+    void cityExport(DictCityDTO.ProvincePagingParamDTO dto, HttpServletResponse response);
+
+    List<DictCityEntity> listProvince();
 }

@@ -177,6 +177,16 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         return this.lambdaQuery().in(DeliveryOrderDetailEntity::getSourceDetailId, purchaseDetailIds).list();
     }
 
+    /**
+     * 获取明细和主表状态
+     * @param purchaseDetailIds
+     * @return
+     */
+    @Override
+    public List<DeliveryOrderDetailDTO.ListDTO> listDetailDTOByDetailSourceIds(List<String> purchaseDetailIds) {
+        return baseMapper.listDetailDTOByDetailSourceIds(purchaseDetailIds);
+    }
+
 
     /**
     * 新增修改处理数据

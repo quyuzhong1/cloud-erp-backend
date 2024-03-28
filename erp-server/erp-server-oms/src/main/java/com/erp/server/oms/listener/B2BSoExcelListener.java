@@ -19,12 +19,11 @@ import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
+import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
-import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.server.oms.service.BankAccountService;
 import com.erp.server.oms.service.CustomerAddressService;
@@ -37,7 +36,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 
@@ -183,8 +181,6 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
                 errorList.add(excelDTO);
                 return;
             }
-
-
             addDTO = new SoInfoDTO.AddDTO();
             //要货日期
             String requireDateStr = excelDTO.getRequireDate();
@@ -250,10 +246,10 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
             }
 
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO businessOperatorDTO = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
-            businessOperatorDTO.setOrgCode(salesOrg.getCode());
+            businessOperatorDTO.setOrgId(salesOrg.getId());
             businessOperatorDTO.setBusinessOperatorType(xsyCode);
             businessOperatorDTO.setUserId(sellerId);
-            KingdeeBusinessOperatorEntity businessOperator = kingdeeFeign.getBusinessOperator(businessOperatorDTO);
+            KingdeeOperatorRefPostDTO.OperatorDTO businessOperator = kingdeeFeign.getBusinessOperator(businessOperatorDTO);
             if (Objects.isNull(businessOperator)) {
                 errorMsgList.add("金蝶未存在该销售员");
             }

@@ -71,4 +71,11 @@ public interface CustomerAddressService extends SuperService<CustomerAddressEnti
      * @return java.util.List<com.erp.model.oms.entity.CustomerAddressEntity>
      */
     List<CustomerAddressEntity> listByMainIdList(List<String> mainIdList);
+
+    /**
+     * 根据客户名称模糊查询
+     * @param customerName
+     * @return
+     */
+    List<CustomerAddressEntity> listByCustomerName(String customerName);
 }

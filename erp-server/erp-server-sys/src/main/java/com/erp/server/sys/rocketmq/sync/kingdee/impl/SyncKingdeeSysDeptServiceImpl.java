@@ -8,9 +8,11 @@ import com.common.business.enums.SyncOperateEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysDeptService;
+import com.erp.server.sys.service.KingdeeDepartmentService;
 import com.erp.server.sys.service.SysDepartmentService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +34,7 @@ import java.util.Map;
 public class SyncKingdeeSysDeptServiceImpl implements SyncKingdeeSysDeptService {
 
     @Resource
-    private SysDepartmentService sysDepartmentService;
+    private KingdeeDepartmentService kingdeeDepartmentService;
 
     @Resource
     private DmpMqFeign dmpMqFeign;
@@ -43,7 +45,7 @@ public class SyncKingdeeSysDeptServiceImpl implements SyncKingdeeSysDeptService 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(SysDepartmentEntity entity, String operate) {
+    public void syncDataToKingdee(KingdeeDepartmentEntity entity, String operate) {
 
         if (ObjectUtils.isEmpty(entity)) {
             return;
@@ -53,27 +55,21 @@ public class SyncKingdeeSysDeptServiceImpl implements SyncKingdeeSysDeptService 
 
         //业务id
         resultMap.put("id",entity.getId());
-        //编码
-        resultMap.put("code",entity.getCode());
+
         //名称
-        resultMap.put("name",entity.getName());
+        resultMap.put("name",entity.getKingdeeDeptName());
         //金蝶id
-        resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
+        resultMap.put("syncKingdeeId",entity.getKingdeeId());
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
-
-        //删除操作
-        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
-        }
-
+        String useOrgCode = entity.getUseOrgCode();
+        resultMap.put("createOrgCode", useOrgCode);
+        resultMap.put("useOrgCode",useOrgCode);
         //上级负责部门编码
-        SysDepartmentEntity parent = sysDepartmentService.getById(entity.getParentId());
+        KingdeeDepartmentEntity parent = kingdeeDepartmentService.getById(entity.getParentId());
         if (ObjectUtils.isNotEmpty(parent)) {
-            resultMap.put("parentCode", parent.getCode());
+            resultMap.put("parentCode", parent.getKingdeeDeptCode());
         }
-
         //生成任务
         sendMqAndSaveTask(entity,operate,resultMap);
     }
@@ -86,11 +82,11 @@ public class SyncKingdeeSysDeptServiceImpl implements SyncKingdeeSysDeptService 
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (SysDepartmentEntity entity, String operate, Map<String, Object> resultMap) {
+    private void sendMqAndSaveTask (KingdeeDepartmentEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());
-        dmpSyncTaskDTO.setSourceCode(entity.getCode());
+        dmpSyncTaskDTO.setSourceCode(entity.getId());
         dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SYS_DEPARTMENT.getCode());
         dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
         dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SYS_DEPARTMENT_TAG.getName());

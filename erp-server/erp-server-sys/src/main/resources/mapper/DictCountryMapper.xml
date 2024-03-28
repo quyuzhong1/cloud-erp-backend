@@ -15,9 +15,9 @@
            dc.subregion_code,
            dga.subregion_name,
            dc.disabled
-        FROM dict_country dc LEFT JOIN dict_global_area dga
---         ON dc.region_code=dga.id
-        ON dc.subregion_code=dga.id
+        FROM dict_country dc
+        LEFT JOIN dict_global_area dga
+        ON dc.subregion_code=dga.id AND dga.is_deleted=FALSE
         WHERE dc.is_deleted=FALSE
         ORDER BY dc.index DESC
     </select>
@@ -47,5 +47,62 @@
             </foreach>
         </if>
         ORDER BY dc.index DESC
+    </select>
+    <!--分页查询-->
+    <select id="paging" resultType="com.erp.model.sys.dto.DictCountryDTO$PagingViewDTO">
+        SELECT
+        dc.id,
+        dc.name_cn AS nameCn,
+        dc.kingdee_code AS kingdeeCode,
+        dga.region_name AS parentRegionName,
+        dc.update_time AS updateTime,
+        dc.update_user_name AS updateUserName
+        FROM  dict_country dc
+        LEFT JOIN dict_global_area dga
+        ON dc.region_code = dga.id AND dga.is_deleted = FALSE
+        WHERE dc.is_deleted = FALSE
+        AND
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        dc.create_time desc
+    </select>
+    <select id="listExport" resultType="com.erp.model.sys.dto.DictCountryDTO$PagingViewDTO">
+        SELECT
+        dc.id,
+        dc.name_cn AS nameCn,
+        dc.kingdee_code AS kingdeeCode,
+        dga.region_name AS parentRegionName,
+        dc.update_time AS updateTime,
+        dc.update_user_name AS updateUserName
+        FROM  dict_country dc
+        LEFT JOIN dict_global_area dga
+        ON dc.region_code = dga.id AND dga.is_deleted = FALSE
+        WHERE dc.is_deleted = FALSE
+        AND
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        dc.create_time desc
     </select>
 </mapper>

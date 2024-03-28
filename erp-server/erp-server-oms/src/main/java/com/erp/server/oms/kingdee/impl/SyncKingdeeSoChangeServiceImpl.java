@@ -14,8 +14,8 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
+import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
-import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -135,17 +135,6 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
 
         //销售员
         String sellerId = soInfo.getSellerId();
-        String deptCode = "";
-
-        //当为空的时候 就取岗位表的
-        KingdeePostDTO.FindUserKingdeePostInfoDTO findUserPostKingdee = new KingdeePostDTO.FindUserKingdeePostInfoDTO();
-        findUserPostKingdee.setUserId(sellerId);
-        findUserPostKingdee.setOrgCode(salesOrgCode);
-        KingdeePostDTO.UserKingdeePostInfoDTO kingdeePost = kingdeeFeign.getUserKingdeePost(findUserPostKingdee);
-        if (kingdeePost != null) {
-            deptCode = kingdeePost.getKingdeeDeptCode();
-        }
-        resultMap.put("deptCode", deptCode);
 
         //客户id
         String customerId = soInfo.getCustomerId();
@@ -166,19 +155,19 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         }
         //变更原因
         resultMap.put("remark", entity.getRemark());
-
+        resultMap.put("seller", soInfo.getSellerName());
         //获取员工
         if (StringUtils.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
-            findBusinessOperator.setOrgCode(salesOrgCode);
+            findBusinessOperator.setOrgId(salesOrgId);
             findBusinessOperator.setUserId(sellerId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
-            KingdeeBusinessOperatorEntity kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员
             if (!Objects.isNull(kingSellerInfo)) {
-                resultMap.put("sellerCode", kingSellerInfo.getKingdeePostCode());
-                resultMap.put("seller", kingSellerInfo.getKingdeeUserName());
+                resultMap.put("sellerCode", kingSellerInfo.getUserPostCode());
+                resultMap.put("deptCode", kingSellerInfo.getDeptCode());
             }
         }
 

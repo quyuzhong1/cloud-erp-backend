@@ -2,6 +2,8 @@ package com.common.message.constant;
 
 import com.common.message.enums.RocketMqTagEnum;
 
+import javax.ws.rs.POST;
+
 /**
  * @author Will
  * @version 1.0
@@ -30,6 +32,24 @@ public class RocketMqConsumerGroup {
      * 金蝶部门（部门管理）
      */
     public static final String SYNC_KINGDEE_SYS_DEPARTMENT = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_sys_department";
+
+
+    /**
+     * 金蝶岗位
+     */
+    public static final String SYNC_KINGDEE_SYS_POST = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_sys_post";
+
+
+    /**
+     * 金蝶员工任岗
+     */
+    public static final String SYNC_KINGDEE_SYS_USER_POST = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_sys_user_post";
+
+    /**
+     * 金蝶员工任岗
+     */
+    public static final String SYNC_KINGDEE_OPERATOR = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_operator";
+
     /**
      * 金蝶采购订单（采购订单）
      */
