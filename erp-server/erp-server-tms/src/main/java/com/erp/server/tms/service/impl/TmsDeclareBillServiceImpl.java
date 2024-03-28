@@ -7,15 +7,18 @@ import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.TmsDeclareBillDetailEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.DeclareStatusEnum;
+import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.enums.FmDeliveryDeclareStatusEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
@@ -98,6 +101,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         baseTmsDeclareBillEntity.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
         baseTmsDeclareBillEntity.setBusinessType(deliveryDTO.getBusinessType());
         baseTmsDeclareBillEntity.setDeclareStatus(DeclareStatusEnum.WAIT.getCode());
+        baseTmsDeclareBillEntity.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
         //50个明细为一个报关单
         List<TmsDeclareBillDTO.ProductDetail> allProductDetailList = deliveryDTO.getProductDetailList();
         if(CollectionUtils.isEmpty(allProductDetailList)){
@@ -174,8 +178,18 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
-    public List<TmsDeclareBillDTO.TabListDTO> tabList() {
-        return null;
+    public List<TmsDeclareBillDTO.TabListDTO> tabList(SourceTypeEnum sourceTypeEnum) {
+        List<TmsDeclareBillDTO.TabListDTO> tabList = baseMapper.tabList(sourceTypeEnum.getCode());
+        List<TmsDeclareBillDTO.TabListDTO> result = new ArrayList<>();
+        for(DeclareStatusEnum statusEnum : DeclareStatusEnum.values()){
+            TmsDeclareBillDTO.TabListDTO tabListDTO = new TmsDeclareBillDTO.TabListDTO();
+            tabListDTO.setTabFlag(statusEnum.getCode());
+            tabListDTO.setTabFlagName(statusEnum.getName());
+            TmsDeclareBillDTO.TabListDTO queryResult = tabList.stream().filter(v->v.getTabFlag().equals(tabListDTO.getTabFlag())).findFirst().orElse(new TmsDeclareBillDTO.TabListDTO());
+            tabListDTO.setCount(queryResult.getCount());
+            result.add(tabListDTO);
+        }
+        return result;
     }
 
     @Override

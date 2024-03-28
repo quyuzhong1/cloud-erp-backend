@@ -1,4 +1,5 @@
 package com.erp.server.tms.service;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.common.business.service.SuperService;
@@ -28,7 +29,7 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
     Boolean update(TmsDeclareBillDTO.UpdateDTO dto);
 
 
-    List<TmsDeclareBillDTO.TabListDTO> tabList();
+    List<TmsDeclareBillDTO.TabListDTO> tabList(SourceTypeEnum sourceTypeEnum);
 
     PagingVO<TmsDeclareBillDTO.PagingVO> paging(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto);
 

@@ -7,6 +7,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -49,7 +50,7 @@ public class TmsB2BDeclareBillController extends BaseController {
      */
     @GetMapping("/tabList")
     public ApiResult<List<TmsDeclareBillDTO.TabListDTO>> tabList() {
-        return success(tmsDeclareBillService.tabList());
+        return success(tmsDeclareBillService.tabList(SourceTypeEnum.B2B_DECLARE_BILL));
     }
 
     /**

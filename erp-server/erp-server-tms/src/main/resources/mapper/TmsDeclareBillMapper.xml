@@ -48,6 +48,7 @@
         <result column="source_id" property="sourceId" />
         <result column="source_code" property="sourceCode" />
         <result column="transport_no" property="transportNo" />
+        <result column="type" property="type" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -61,8 +62,16 @@
         update_time,
         version,
         is_deleted,
-        code, source_type,transport_no, source_id,source_code,declare_status, country_name, business_type, country, net_weight, gross_weight, declare_date, declare_type, pre_input_no, dest_customs, sender_id, sender_name, export_customs_name, export_date, receiver_name, dict_supervision_method, dict_nature_levy, license_no, trading_area, to_area, to_port, export_port, dict_pack_type, dict_transaction_method, remark, shipping_fee, insurance_fee, other_fee, box_qty, is_invalid, merged_code
+        code, source_type,type,transport_no, source_id,source_code,declare_status, country_name, business_type, country, net_weight, gross_weight, declare_date, declare_type, pre_input_no, dest_customs, sender_id, sender_name, export_customs_name, export_date, receiver_name, dict_supervision_method, dict_nature_levy, license_no, trading_area, to_area, to_port, export_port, dict_pack_type, dict_transaction_method, remark, shipping_fee, insurance_fee, other_fee, box_qty, is_invalid, merged_code
     </sql>
+    <select id="tabList" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$TabListDTO">
+        SELECT db.declare_status as tabFlag,
+               count(1)   as count
+        FROM tms_declare_bill db
+        where db.is_deleted = false
+          and db.type = #{code}
+        group by db.declare_status
+    </select>
 
 
 </mapper>

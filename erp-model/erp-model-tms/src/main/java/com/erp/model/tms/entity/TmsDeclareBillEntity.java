@@ -25,7 +25,11 @@ import java.time.LocalDate;
 @Accessors(chain = true)
 @TableName("tms_declare_bill")
 public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
-
+    /**
+     * 类型：头程,B2B
+     */
+    @TableField("type")
+    private String type;
     /**
     * 合同协议号
     */
