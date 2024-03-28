@@ -1,21 +1,21 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
-import com.common.business.utils.CollectionUtils;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.plm.dto.ProductCustomsSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.server.plm.mapper.ProductCustomsMapper;
 import com.erp.server.plm.service.ProductCustomsService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.plm.service.ProductDetailService;
-import javafx.print.Collation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import lombok.extern.slf4j.Slf4j;
-
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
