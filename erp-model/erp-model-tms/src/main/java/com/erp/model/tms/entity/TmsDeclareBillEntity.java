@@ -113,11 +113,7 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     */
     @TableField("sender_id")
     private String senderId;
-    /**
-    * 发货人名称
-    */
-    @TableField("sender_name")
-    private String senderName;
+
     /**
     * 出境关别
     */

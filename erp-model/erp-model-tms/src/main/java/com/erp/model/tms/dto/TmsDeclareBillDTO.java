@@ -718,7 +718,7 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          * 总箱数
          */
-        private Integer boxCount;
+        private Integer boxQty;
 
         /**
          * 毛重
@@ -823,11 +823,6 @@ public class TmsDeclareBillDTO implements Serializable {
          * 发货人id
          */
         private String senderId;
-
-        /**
-         * 发货人名称
-         */
-        private String senderName;
 
         /**
          * 出境关别

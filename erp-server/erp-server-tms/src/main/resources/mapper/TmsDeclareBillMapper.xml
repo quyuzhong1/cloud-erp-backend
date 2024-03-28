@@ -24,7 +24,6 @@
        <result column="pre_input_no" property="preInputNo" />
        <result column="dest_customs" property="destCustoms" />
        <result column="sender_id" property="senderId" />
-       <result column="sender_name" property="senderName" />
        <result column="export_customs_name" property="exportCustomsName" />
        <result column="export_date" property="exportDate" />
        <result column="receiver_name" property="receiverName" />
@@ -62,7 +61,7 @@
         update_time,
         version,
         is_deleted,
-        code, source_type,type,transport_no, source_id,source_code,declare_status, country_name, business_type, country, net_weight, gross_weight, declare_date, declare_type, pre_input_no, dest_customs, sender_id, sender_name, export_customs_name, export_date, receiver_name, dict_supervision_method, dict_nature_levy, license_no, trading_area, to_area, to_port, export_port, dict_pack_type, dict_transaction_method, remark, shipping_fee, insurance_fee, other_fee, box_qty, is_invalid, merged_code
+        code, source_type,type,transport_no, source_id,source_code,declare_status, country_name, business_type, country, net_weight, gross_weight, declare_date, declare_type, pre_input_no, dest_customs, sender_id, export_customs_name, export_date, receiver_name, dict_supervision_method, dict_nature_levy, license_no, trading_area, to_area, to_port, export_port, dict_pack_type, dict_transaction_method, remark, shipping_fee, insurance_fee, other_fee, box_qty, is_invalid, merged_code
     </sql>
     <select id="tabList" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$TabListDTO">
         SELECT db.declare_status as tabFlag,

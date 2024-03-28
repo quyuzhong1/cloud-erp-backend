@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -10,49 +11,44 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.DictBasicDTO;
-import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
-import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.tms.entity.LogisticsSupplierEntity;
-import com.erp.model.tms.entity.TmsDeclareBillDetailEntity;
-import com.erp.model.tms.entity.TmsDeclareBillEntity;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DeclareStatusEnum;
 import com.erp.model.tms.enums.DictBasicEnum;
-import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.enums.FmDeliveryDeclareStatusEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.PackingStatusEnum;
+import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.mapper.TmsDeclareBillMapper;
 import com.erp.server.tms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
 import com.google.common.collect.Lists;
 import freemarker.template.utility.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.bouncycastle.util.StringList;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.TmsDeclareBillDTO;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -96,6 +92,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     @Resource
     private DictBasicService dictBasicService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Override
     public Boolean addFmDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
@@ -304,7 +303,40 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     @Override
     public TmsDeclareBillDTO.ViewDTO view(String id) {
-        return null;
+        TmsDeclareBillEntity entity = this.getById(id);
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "头程报关单"));
+        TmsDeclareBillDTO.ViewDTO viewDTO = BeanUtil.copyProperties(entity,TmsDeclareBillDTO.ViewDTO.class);
+        List<TmsDeclareBillDetailEntity> detailEntityList = detailService.listByMainIds(Arrays.asList(entity.getId()));
+        List<TmsDeclareBillDTO.ProductDetail> productDetailList = BeanUtil.copyToList(detailEntityList,TmsDeclareBillDTO.ProductDetail.class);
+        productDetailList.forEach(v->v.setTotalPrice(v.getPrice().multiply(new BigDecimal(v.getQty()))));
+        viewDTO.setProductDetailList(productDetailList);
+        List<TmsDeclareBillDTO.DeliveryDTO> deliveryDTOList = this.getCanGenerateDeliveryOrder(TmsDeclareBillDTO.QuerySourceDTO.builder().ids(Arrays.asList(entity.getSourceId())).build());
+        if(CollectionUtils.isEmpty(deliveryDTOList)){
+            throw new ServiceException("未找到发货单信息");
+        }
+        TmsDeclareBillDTO.DeliveryDTO deliveryDTO = deliveryDTOList.get(0);
+        BeanUtil.copyProperties(deliveryDTO,viewDTO, CopyOptions.create().setOverride(false));
+        fillViewDTO(viewDTO);
+        return viewDTO;
+    }
+
+    private void fillViewDTO(TmsDeclareBillDTO.ViewDTO viewDTO) {
+        //处理字典值
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.DECLARE_DECLARE_TYPE.getType(),
+                DictBasicEnum.DECLARE_SUPERVISION_METHOD.getType(),
+                DictBasicEnum.DECLARE_NATURE_LEVY.getType(),
+                DictBasicEnum.DECLARE_PACK_TYPE.getType(),
+                DictBasicEnum.DECLARE_TRANSACTION_METHOD.getType()));
+        viewDTO.setDeclareTypeName(dictBasicEntityList.stream().filter(v->v.getType().equals(DictBasicEnum.DECLARE_DECLARE_TYPE.getType())&&v.getCode().equals(viewDTO.getDeclareType())).map(DictBasicEntity::getName).findFirst().orElse(""));
+        viewDTO.setDictSupervisionMethodName(dictBasicEntityList.stream().filter(v->v.getType().equals(DictBasicEnum.DECLARE_SUPERVISION_METHOD.getType())&&v.getCode().equals(viewDTO.getDictSupervisionMethod())).map(DictBasicEntity::getName).findFirst().orElse(""));
+        viewDTO.setDictNatureLevyName(dictBasicEntityList.stream().filter(v->v.getType().equals(DictBasicEnum.DECLARE_NATURE_LEVY.getType())&&v.getCode().equals(viewDTO.getDictNatureLevy())).map(DictBasicEntity::getName).findFirst().orElse(""));
+        viewDTO.setDictPackTypeName(dictBasicEntityList.stream().filter(v->v.getType().equals(DictBasicEnum.DECLARE_PACK_TYPE.getType())&&v.getCode().equals(viewDTO.getDictPackType())).map(DictBasicEntity::getName).findFirst().orElse(""));
+        viewDTO.setDictTransactionMethodName(dictBasicEntityList.stream().filter(v->v.getType().equals(DictBasicEnum.DECLARE_TRANSACTION_METHOD.getType())&&v.getCode().equals(viewDTO.getDictTransactionMethod())).map(DictBasicEntity::getName).findFirst().orElse(""));
+        //处理发货人
+        SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(viewDTO.getSenderId());
+        if(Objects.nonNull(sysAccountingCompanyEntity)){
+            viewDTO.setSenderName(sysAccountingCompanyEntity.getCompanyName());
+        }
     }
 
     @Override

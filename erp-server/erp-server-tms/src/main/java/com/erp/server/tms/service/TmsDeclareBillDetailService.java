@@ -34,5 +34,6 @@ public interface TmsDeclareBillDetailService extends SuperService<TmsDeclareBill
     */
     Boolean update(TmsDeclareBillDetailDTO.UpdateDTO dto);
 
+    List<TmsDeclareBillDetailEntity> listByMainIds(List<String> mainId);
 
 }

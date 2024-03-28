@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.tms.entity.TmsDeclareBillDetailEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.server.tms.mapper.TmsDeclareBillDetailMapper;
@@ -11,6 +12,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,6 +71,15 @@ public class TmsDeclareBillDetailServiceImpl extends SuperServiceImpl<TmsDeclare
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, tmsDeclareBillDetailEntity, null, tmsDeclareBillDetailEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<TmsDeclareBillDetailEntity> listByMainIds(List<String> mainIds) {
+
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(TmsDeclareBillDetailEntity::getMainId, mainIds).list();
     }
 
 
