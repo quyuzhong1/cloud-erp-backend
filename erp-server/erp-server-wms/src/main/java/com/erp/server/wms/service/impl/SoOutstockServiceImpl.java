@@ -2274,6 +2274,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 				params.setShopName(shopInfoEntity.getName());
 			}
 		}
+		boolean haveShopName = StringUtils.isNotBlank(params.getShopName());
+		
 		String warehouseId = params.getWarehouseId();
 		if(StringUtils.isNotBlank(warehouseId)) {
 			WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
@@ -2290,13 +2292,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 		List<String> soCodeList = soOutstockDTOList.stream().filter(s -> StringUtils.isNotBlank(s.getSoCode()))
 				.map(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO::getSoCode).distinct().collect(Collectors.toList());
 		if(CollUtil.isEmpty(soCodeList)) {
-			return soOutstockDTOList;
+			return new ArrayList<>();
 		}
 		
 		params.setSoCodeList(soCodeList);
 		
 		List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO> soB2cDTOList = soB2cFeign.getDataCompareByCondition(params);
 		
+		List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> resultDTOList = new ArrayList<>();
 		if(CollUtil.isNotEmpty(soB2cDTOList)) {
 			Map<String, List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO>> b2cCodeDTOMaps = soB2cDTOList.stream()
 					.collect(Collectors.groupingBy(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO::getCode));
@@ -2307,19 +2310,26 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 					if(CollUtil.isNotEmpty(soCodeDTOList)) {
 						soOutstockDTO.setDictPlatform(soCodeDTOList.stream().filter(s -> StringUtils.isNotBlank(s.getDictPlatform()))
 								.map(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO::getDictPlatform).findAny().orElse(null));
+						if(StringUtils.isBlank(soOutstockDTO.getDictPlatform())) {
+							return;
+						}
 						soOutstockDTO.setShopName(soCodeDTOList.stream().filter(s -> StringUtils.isNotBlank(s.getShopName()))
 								.map(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO::getShopName).findAny().orElse(null));
+						if(haveShopName && StringUtils.isBlank(soOutstockDTO.getShopName())) {
+							return;
+						}
 						String skuNo = soOutstockDTO.getSkuNo();
 						if(StringUtils.isNotBlank(skuNo)) {
 							soOutstockDTO.setPlatformSkuNo(soCodeDTOList.stream().filter(s -> StringUtils.isNotBlank(s.getSkuNo()) 
 									&& StringUtils.isNotBlank(s.getPlatformSkuNo()) && skuNo.equals(s.getSkuNo()))
 								.map(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO::getPlatformSkuNo).findAny().orElse(null));
 						}
+						resultDTOList.add(soOutstockDTO);
 					}
 				}
 			});
 		}
 		
-		return soOutstockDTOList;
+		return resultDTOList;
 	}
 }
