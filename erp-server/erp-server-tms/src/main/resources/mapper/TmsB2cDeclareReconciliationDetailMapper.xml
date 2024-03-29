@@ -92,5 +92,16 @@
         </where>
     </select>
 
+    <!-- 查询币别 -->
+    <select id="getCurrencyById" resultType="java.lang.String">
+        select
+            tbdr.currency
+        from tms_b2c_declare_reconciliation tbdr
+        inner join tms_b2c_declare_reconciliation_detail tbdrd on tbdr.id = tbdrd.main_id and tbdrd.is_deleted = false
+        <where>
+            tbdr.is_deleted = false and tbdrd.id = #{id}
+        </where>
+    </select>
+
 
 </mapper>

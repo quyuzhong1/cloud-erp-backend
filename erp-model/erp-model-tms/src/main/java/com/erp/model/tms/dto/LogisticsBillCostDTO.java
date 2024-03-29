@@ -374,7 +374,7 @@ public class LogisticsBillCostDTO implements Serializable {
         /**
          * 费用明细
          */
-        private List<TmsLogisticsBillCostDetailDTO.ViewDTO>  costDetailList;
+        private List<TmsCostDetailDTO.ViewDTO>  costDetailList;
     }
 
     /**
@@ -418,7 +418,7 @@ public class LogisticsBillCostDTO implements Serializable {
         /**
          * 费用明细
          */
-        private List<TmsLogisticsBillCostDetailDTO.UpdateDTO>  costDetailList;
+        private List<TmsCostDetailDTO.UpdateDTO>  costDetailList;
 
         /**
          * 实重
@@ -525,7 +525,7 @@ public class LogisticsBillCostDTO implements Serializable {
          * 费用明细
          */
         @NotEmpty(message = "费用明细不能为空")
-        private List<TmsLogisticsBillCostDetailDTO.AddDTO>  costDetailList;
+        private List<TmsCostDetailDTO.AddDTO>  costDetailList;
 
     }
     /**
@@ -553,7 +553,7 @@ public class LogisticsBillCostDTO implements Serializable {
         /**
          * 费用明细
          */
-        private List<TmsLogisticsBillCostDetailDTO.AddDTO>  costDetailList;
+        private List<TmsCostDetailDTO.AddDTO>  costDetailList;
     }
 
 

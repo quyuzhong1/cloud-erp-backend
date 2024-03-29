@@ -91,4 +91,12 @@ public interface TmsB2cDeclareReconciliationDetailService extends SuperService<T
      * @return ImportDTO
      */
     TmsB2cDeclareReconciliationDetailDTO.ImportDTO importFile(TmsB2cDeclareReconciliationDetailDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response);
+    /**
+     * @description: 根据id查询币别
+     * @author Will
+     * @date: 2024/3/28 16:01
+     * @param id
+     * @return String
+     */
+    String getCurrencyById(String id);
 }

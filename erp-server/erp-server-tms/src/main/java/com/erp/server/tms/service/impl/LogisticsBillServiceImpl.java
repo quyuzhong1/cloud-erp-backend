@@ -774,7 +774,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 if (CollectionUtils.isEmpty(tmsCfgCostList)) {
                     throw new ServiceException("未找到自发货物流费用配置");
                 }
-                TmsLogisticsBillCostDetailDTO.AddDTO costDetailAddDTO = new TmsLogisticsBillCostDetailDTO.AddDTO();
+                TmsCostDetailDTO.AddDTO costDetailAddDTO = new TmsCostDetailDTO.AddDTO();
                 costDetailAddDTO.setCfgCostId(tmsCfgCostList.get(0).getId());
                 costDetailAddDTO.setCostValue(viewDTO.getTotalShippingCost());
                 costDetailAddDTO.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());

@@ -165,6 +165,11 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
                 .list();
     }
 
+    @Override
+    public List<TmsCfgCostEntity> listByCostAttribution(String dictCostAttribution) {
+        return lambdaQuery().eq(TmsCfgCostEntity::getDictCostAttribution,dictCostAttribution).list();
+    }
+
     /**
      * 新增修改数据校验
      */

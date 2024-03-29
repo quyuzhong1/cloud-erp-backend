@@ -83,4 +83,6 @@ public interface TmsCfgCostService extends SuperService<TmsCfgCostEntity> {
      * @return List<TmsCfgCostEntity>
      */
     List<TmsCfgCostEntity> listByCostNameList(List<String> costNameList);
+
+    List<TmsCfgCostEntity> listByCostAttribution(String dictCostAttribution);
 }

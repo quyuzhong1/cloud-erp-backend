@@ -341,6 +341,10 @@ public class CfgReconciliationFieldDTO implements Serializable {
          */
         private String erpFieldName;
         /**
+         * ERP字段名称(字典的字段编码)
+         */
+        private String erpFieldCode;
+        /**
          * ERP字段来源类型
          */
         private String sourceType;
