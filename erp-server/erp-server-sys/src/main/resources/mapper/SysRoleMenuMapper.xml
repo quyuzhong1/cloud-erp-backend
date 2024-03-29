@@ -10,8 +10,8 @@
         </foreach>
     </select>
 
-    <select id="findMenuCodeByRoleIds" resultType="String">
-            SELECT  DISTINCT sm.menu_code  FROM sys_role_menu srm
+    <select id="findMenuIdsByRoleIdsAndType" resultType="String">
+            SELECT  DISTINCT sm.menu_id  FROM sys_role_menu srm
             JOIN sys_menu sm ON srm.menu_id= sm.menu_id
             WHERE sm.disabled = false
             and srm.role_id IN
@@ -22,6 +22,21 @@
             <if test="type != null and type != '' and type != 0">
                 AND sm.type=#{type}
             </if>
+
+    </select>
+
+    <select id="findMenuCodeByRoleIds" resultType="String">
+        SELECT  DISTINCT sm.menu_code  FROM sys_role_menu srm
+        JOIN sys_menu sm ON srm.menu_id= sm.menu_id
+        WHERE sm.disabled = false
+        and srm.role_id IN
+        <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+            #{roleId}
+        </foreach>
+
+        <if test="type != null and type != '' and type != 0">
+            AND sm.type=#{type}
+        </if>
 
     </select>
 
