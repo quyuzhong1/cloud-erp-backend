@@ -11,6 +11,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
@@ -19,10 +20,12 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DeclareStatusEnum;
 import com.erp.model.tms.enums.DictBasicEnum;
@@ -533,17 +536,16 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     @Override
     public void export(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
-
+        pagingParamDTO.setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(1, Integer.MAX_VALUE,false);
+        IPage<TmsDeclareBillDTO.PagingVO> pageData = baseMapper.paging(query, pagingParamDTO);
+        List<TmsDeclareBillDTO.PagingVO> list = pageData.getRecords();
+        fillPagingDb(list,pagingParamDTO.getType());
+        ExcelUtil.export("报关单"+ DateUtil.currentYMD(),"报关单",list,TmsDeclareBillDTO.PagingVO.class,response);
     }
 
     @Override
     public void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
 
-    }
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(TmsDeclareBillEntity tmsDeclareBillEntity) {
-    // TODO 验证数据 & 数据赋值
     }
 }

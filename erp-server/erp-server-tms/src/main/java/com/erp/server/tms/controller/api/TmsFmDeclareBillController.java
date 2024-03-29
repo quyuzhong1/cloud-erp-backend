@@ -215,6 +215,7 @@ public class TmsFmDeclareBillController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程报关单")
     @WebAdvanceQuery
     public ApiResult export(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
+        pagingParamDTO.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
         tmsDeclareBillService.export(pagingParamDTO,response);
         return success();
     }
