@@ -56,9 +56,7 @@
         SELECT
             count(DISTINCT pod.purchase_order_id)
         from purchase_order_detail as pod
-        left join ( select  dod.source_detail_id, SUM(dod.delivery_qty) qty from delivery_order_detail dod where dod.is_deleted = false GROUP BY dod.source_detail_id )
-        as d on d.source_detail_id = pod.purchase_order_detail_id
-        where pod.is_deleted = false and (d.qty is null or pod.purchase_qty > d.qty)
+        where pod.is_deleted = false and pod.execution_status not in ('finish','closed')
         and pod.execution_status in ('confirm','delivery')
         <if test="code != null and code != '' and code == 'expired'">
             and date_part('day', pod.plan_delivery_date::timestamp - CURRENT_DATE::timestamp) <![CDATA[ < ]]> 0
@@ -104,13 +102,11 @@
         pod.remark,
         pod.purchase_user_name as purchaseUserName
         from purchase_order_detail pod
-        left join ( select  dod.source_detail_id, SUM(dod.delivery_qty) qty from delivery_order_detail dod where dod.is_deleted = false GROUP BY dod.source_detail_id )
-            as d on d.source_detail_id = pod.purchase_order_detail_id
         <where>
             <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
                 ${params.sqlMap.default}
             </if>
-            and pod.is_deleted = false and (d.qty is null or pod.purchase_qty > d.qty)
+            and pod.is_deleted = false and pod.execution_status not in ('finish','closed')
             <if test="params.supplierId != null and params.supplierId != ''">
                 and pod.supplier_id = #{params.supplierId}
             </if>
@@ -148,8 +144,6 @@
         pod.remark,
         pod.purchase_user_name as purchaseUserName
         from purchase_order_detail pod
-        left join ( select  dod.source_detail_id, SUM(dod.delivery_qty) qty from delivery_order_detail dod where dod.is_deleted = false GROUP BY dod.source_detail_id )
-        as d on d.source_detail_id = pod.purchase_order_detail_id
         <where>
             <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
                 ${params.sqlMap.default}
