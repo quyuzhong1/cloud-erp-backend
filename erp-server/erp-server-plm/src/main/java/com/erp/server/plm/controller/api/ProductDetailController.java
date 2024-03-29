@@ -148,12 +148,12 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 根据sku进行模糊搜索
-     * @param skuNo
+     * @param remoteSearchSku
      * @return
      */
-    @GetMapping("/getSkuList")
-    public ApiResult<List<ProductDetailDTO.SkuDTO>> getSkuList(@RequestParam(value = "skuNo")String skuNo){
-        List<ProductDetailDTO.SkuDTO> skuDTOList = productDetailService.getSkuList(skuNo);
+    @GetMapping("/getSkuList" )
+    public ApiResult<List<ProductDetailDTO.SkuDTO>> getSkuList(@RequestParam(value = "remoteSearchSku",required = false) String remoteSearchSku){
+        List<ProductDetailDTO.SkuDTO> skuDTOList = productDetailService.getSkuList(remoteSearchSku);
         return this.success(skuDTOList);
     }
     /**
