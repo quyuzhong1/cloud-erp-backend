@@ -1619,7 +1619,7 @@
             ${params.sqlMap.default}
            and pi.is_deleted = FALSE AND pd.is_deleted = FALSE
     </select>
-    <select id="getSkuList" resultType="com.erp.model.plm.dto.ProductDetailDTO.SkuDTO">
+    <select id="getSkuList" resultType="com.erp.model.plm.dto.ProductDetailDTO$SkuDTO">
         select
             pi."id",
             pd.id AS sku_id,
