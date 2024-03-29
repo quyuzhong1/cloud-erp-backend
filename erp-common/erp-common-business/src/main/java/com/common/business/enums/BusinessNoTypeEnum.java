@@ -27,7 +27,7 @@ public enum BusinessNoTypeEnum {
     CODE_CGRK(13, "cgrk","采购收货单", BusinessNoConstant.CGRK),
     CODE_CGTH(14, "cgth","采购退货单", BusinessNoConstant.CGTH),
     CODE_USER(15, "user_no","用户编号", ""),
-    CODE_QC(16, "qc","质检单", BusinessNoConstant.PC),
+    CODE_QC(16, "qc","质检单", BusinessNoConstant.QC),
     CODE_DEPT(17, "bm","部门编号", BusinessNoConstant.BM),
     CODE_RKYB(18, "rkyb","入库预报", BusinessNoConstant.RKYB),
     CODE_DBSQ(19, "dbsq","调拨申请", BusinessNoConstant.DBSQ),

@@ -8,10 +8,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
-import com.erp.model.wms.entity.OtherOutstockEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -207,4 +204,12 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
      * {@code @date:} 2024/03/21
      */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 导入批量保存
+     *
+     * @author Jim
+     * {@code @date:} 2024/03/21
+     */
+    void importBatchSave(List<OtherOutstockEntity> saveList);
 }
