@@ -635,8 +635,8 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
 
     /**
      *搜索sku
-     * @param skuNo
+     * @param pagingDTO
      * @return
      */
-    List<ProductDetailDTO.SkuDTO> listSku(String skuNo);
+    PagingVO<ProductDetailDTO.SkuDTO> listSku(PagingDTO<ProductSkuDTO> pagingDTO);
 }
