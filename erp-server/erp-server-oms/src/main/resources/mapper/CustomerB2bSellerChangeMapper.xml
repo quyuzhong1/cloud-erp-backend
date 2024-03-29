@@ -45,6 +45,7 @@
             ci.code,
             ci,name,
             ci.short_name as shortName,
+            ci.use_org_id as useOrgId,
             cbs.origin_seller_name as originSellerName,
             cbs.change_seller_name as changeSellerName,
             cbs.approve_status as approveStatus,

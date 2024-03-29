@@ -926,7 +926,7 @@ public class LogisticsProductDTO {
         private Integer quantity;
 
         /**
-         * 报关申报价
+         * 出口申报价/报关申报价
          */
         private BigDecimal declarePrice;
 
@@ -1016,7 +1016,6 @@ public class LogisticsProductDTO {
          * 目的国申报价
          */
         private BigDecimal destDeclarePrice;
-
 
         /**
          * 目的国币种

@@ -235,5 +235,34 @@ public class ProductDetailDTO implements Serializable {
          * 属性
          */
         private String property;
+
+        /**
+         * 物流属性id
+         */
+        private String logisticsPropertyId;
     }
+    @Data
+    @NoArgsConstructor
+    public static class SkuDTO {
+        /**
+         * 产品id
+         */
+        private String id;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * spu编号
+         */
+        private String spuNo;
+
+    }
+
 }

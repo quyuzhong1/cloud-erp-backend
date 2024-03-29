@@ -89,8 +89,6 @@ public interface BusinessNoConstant {
     String SUBCH = "SUBCH";
     //采购变更单
     String ZJGZ = "ZJGZ";
-    // 质检单
-    String PC = "PC";
     // 盘点计划
     String PDJH = "PDJH";
 

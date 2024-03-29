@@ -1,9 +1,13 @@
 package com.erp.server.sys.service;
 
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -16,15 +20,15 @@ import java.util.List;
  */
 public interface DictGlobalAreaService extends SuperService<DictGlobalAreaEntity> {
 
-    
+
+
+
     /**
-     * 添加地区
-     * @author yl
-     * @date 2023-05-11 14:57
-     * @param list
-     * @return java.lang.Boolean
+     * 修改
+     * @param dto
+     * @return
      */
-    Boolean addOrUpdate(List<DictGlobalAreaDTO.AddOrUpdateDTO> list);
+    Boolean update(DictGlobalAreaDTO.UpdateDTO dto);
 
     
     /**
@@ -52,4 +56,56 @@ public interface DictGlobalAreaService extends SuperService<DictGlobalAreaEntity
      * @return java.util.List<com.erp.model.sys.entity.DictGlobalAreaEntity>
      */
     List<DictGlobalAreaEntity> listGlobalArea();
+
+    /**
+     * 初始化金蝶数据
+     * @description
+     * @param
+     * @return
+     * @date 2024-03-19 10:36
+     * @author Lambda
+     */
+    Boolean init();
+
+    /**
+     * 分页
+     * @description
+     * @param
+     * @return
+     * @date 2024-03-19 14:00
+     * @author Lambda
+     */
+    PagingVO<DictGlobalAreaDTO.PagingViewDTO> paging(PagingDTO<DictGlobalAreaDTO.PagingParamDTO> dto);
+
+    /**
+     * 详情
+     * @param id
+     * @return
+     */
+    DictGlobalAreaDTO.ViewDTO view(String id);
+
+    /**
+     * 删除
+     * @description
+     * @param id
+     * @return
+     * @date 2024-03-19 15:55
+     * @author Lambda
+     */
+    BatchResultDTO delete(String id);
+
+    Boolean addGlobalArea(DictGlobalAreaDTO.AddDTO dto);
+
+
+    Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId, String syncKingdeeCode);
+
+    /**
+     * 导出
+     * @description
+     * @param
+     * @return
+     * @date 2024-03-20 16:17
+     * @author Lambda
+     */
+    void exportList(DictGlobalAreaDTO.PagingParamDTO dto, HttpServletResponse response);
 }

@@ -66,6 +66,19 @@ public class BankAccountEntity extends BaseEntity<BankAccountEntity> {
     @TableField("disabled")
     private Boolean disabled;
 
+    /**
+     * 金蝶id
+     */
+    @TableField("kingdee_id")
+    private String kingdeeId;
+
+    /**
+     * 金蝶状态
+     */
+    @TableField("kingdee_status")
+    private String kingdeeStatus;
+
+
     public static final String BANK_ACCOUNT_NO = "bank_account_no";
 
     public static final String ACCOUNT_NAME = "account_name";

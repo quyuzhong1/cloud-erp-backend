@@ -76,7 +76,7 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
         Boolean success = true;
         //总重量 单位g
         Integer totalWeight = parceInfoVO.getTotalWeight();
-        if (Objects.isNull(totalWeight)) {
+        if (Objects.nonNull(totalWeight)) {
             BigDecimal orderWeight = MathUtil.divide(new BigDecimal(totalWeight), new BigDecimal("1000"), 3);
             orderRequest.setOrderWeight(orderWeight.toString());
         }

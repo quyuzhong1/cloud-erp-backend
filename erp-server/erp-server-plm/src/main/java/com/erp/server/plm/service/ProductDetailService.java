@@ -632,4 +632,11 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     List<SkuSimpleVO> searchSkuWithCombination(String searchKeyword);
 
     List<SkuVO> getSkuInfoAdvanceQuery(AdvanceQueryContainer advanceQueryContainer);
+
+    /**
+     *搜索sku
+     * @param skuNo
+     * @return
+     */
+    List<ProductDetailDTO.SkuDTO> listSku(String skuNo);
 }

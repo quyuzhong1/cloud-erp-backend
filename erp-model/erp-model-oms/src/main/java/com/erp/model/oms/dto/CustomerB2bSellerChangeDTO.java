@@ -42,6 +42,11 @@ public class CustomerB2bSellerChangeDTO implements Serializable {
          * 客户id
          */
         private String customerId;
+
+        /**
+         * 使用组织
+         */
+        private String useOrgId;
         /**
          * code[可排序]
          */

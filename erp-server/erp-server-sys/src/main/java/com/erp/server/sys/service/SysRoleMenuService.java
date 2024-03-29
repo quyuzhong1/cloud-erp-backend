@@ -2,11 +2,11 @@ package com.erp.server.sys.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.sys.dto.RoleMenuDTO;
 import com.erp.model.sys.dto.SysRoleMenuBatchDTO;
 import com.erp.model.sys.dto.SysRoleMenuDTO;
 import com.erp.model.sys.entity.SysRoleMenuEntity;
+import com.erp.model.sys.vo.SysMenuVO;
 
 import java.util.List;
 
@@ -56,6 +56,7 @@ public interface SysRoleMenuService extends IService<SysRoleMenuEntity> {
 
     List<SysMenuVO> findLeftMenuByRoleIds(List<String> roleIds);
 
+    List<SysMenuVO> findLeftMenuByRoleIds(List<String> roleIds,Integer type);
     /**
      * 获取左侧菜单所有列表
      * @Author Luo_WG

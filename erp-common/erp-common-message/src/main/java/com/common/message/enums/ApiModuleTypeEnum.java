@@ -43,6 +43,12 @@ public enum ApiModuleTypeEnum {
 
     PO_RECEIVE(32, "poReceive", "采购收货单","wms"),
     SUBCONTRACT_ISSUE(33, "subcontractIssue", "委外发料单","wms"),
+    SYS_POST(34, "post", "金蝶岗位","sys"),
+    SYS_USER_POST(35, "userPost", "金蝶员工任岗","sys"),
+    KINGDEE_OPERATOR(36, "kingdeeOperator", "金蝶业务员","sys"),
+    GLOBAL_AREA(37, "globalArea", "区域","sys"),
+    COUNTRY(38, "country", "国家","sys"),
+    PROVINCE_CITY(39, "provinceCity", "省市","sys"),
 
     ;
     private Integer code;

@@ -1,0 +1,117 @@
+package com.erp.server.sys.rocketmq.sync.kingdee.impl;
+
+import cn.hutool.json.JSONUtil;
+import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.ApiModuleTypeEnum;
+import com.common.message.enums.AssistantDataEnum;
+import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeCountryService;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeOperatorService;
+import com.erp.server.sys.service.DictGlobalAreaService;
+import com.erp.server.sys.service.ThirdpartyRefBusinessService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
+/**
+ * @author Lambda
+ * @Classname SyncKingdeeCountryServiceImpl
+ * @Description TODO
+ * @Date 2024-03-19 17:36
+ * @Created by yl
+ */
+@Slf4j
+@Service
+public class SyncKingdeeCountryServiceImpl implements SyncKingdeeCountryService {
+    @Resource
+    private ThirdpartyRefBusinessService thirdpartyRefBusinessService;
+    @Resource
+    private DictGlobalAreaService dictGlobalAreaService;
+
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void syncDataToKingdee(DictCountryEntity entity, String operate) {
+
+        Map<String, Object> resultMap = new HashMap<>();
+        Boolean isExistParent = true;
+        resultMap.put("isExistParent", isExistParent);
+        //业务id
+        resultMap.put("id",entity.getId());
+        //编码
+        resultMap.put("code",entity.getKingdeeCode());
+        //名称
+        resultMap.put("name",entity.getNameCn());
+        ThirdpartyRefBusinessEntity thirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(entity.getId());
+        String syncKingdeeId="";
+        if (Objects.nonNull(thirdpartyRef)) {
+            syncKingdeeId = thirdpartyRef.getThirdpartyId();
+        }
+        //金蝶id
+        resultMap.put("syncKingdeeId",syncKingdeeId);
+        resultMap.put("operate", operate);
+
+        //模块类型
+        Integer moduleType = ApiModuleTypeEnum.COUNTRY.getCode();
+        //辅助资料类型编码
+        String fNumber = AssistantDataEnum.COUNTRY.getCode();
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            sendMqAndSaveTask(entity,operate,resultMap);
+            return;
+        }
+        if(isExistParent){
+            DictGlobalAreaEntity areaEntity = dictGlobalAreaService.getById(entity.getRegionCode());
+            if(Objects.isNull(areaEntity)){
+                throw new ServiceException(new ApiResult(1,"未找到上级区域"));
+            }
+            //上级编码
+            resultMap.put("parentCode",areaEntity.getKingdeeCode());
+            //上级
+            ThirdpartyRefBusinessEntity pidThirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(entity.getRegionCode());
+            if (Objects.nonNull(pidThirdpartyRef)) {
+                resultMap.put("pid",pidThirdpartyRef.getThirdpartyId());
+            }
+
+
+        }
+        resultMap.put("moduleType",moduleType);
+        resultMap.put("fNumber", fNumber);
+        sendMqAndSaveTask(entity,operate,resultMap);
+    }
+
+    private void sendMqAndSaveTask(DictCountryEntity entity, String operate, Map<String, Object> resultMap) {
+        //添加推送任务
+        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+        taskFeignDTO.setSourceId(entity.getId());
+        taskFeignDTO.setSourceCode(entity.getRegionCode());
+        taskFeignDTO.setSourceType(SourceTypeEnum.COUNTRY.getCode());
+        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+        taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_ASSISTANT_DATA_TAG.getName());
+        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+        taskFeignDTO.setSyncOperate(operate);
+        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+
+    }
+}

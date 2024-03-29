@@ -1,11 +1,14 @@
 package com.erp.server.admin.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.admin.dto.SysFindMenuDTO;
 import com.erp.model.admin.dto.SysMenuDTO;
 import com.erp.model.admin.entity.MenuEntity;
@@ -16,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -54,6 +58,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuEntity> impleme
      * @date 2022-07-19 10:07
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean saveOrUpdateMenu(MenuEntity sysMenu) {
         String menuId = sysMenu.getMenuId();
         if (StringUtils.isBlank(menuId)) {
@@ -64,7 +69,12 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuEntity> impleme
             sysMenu.setParentId("0");
         }
         sysMenu.setMenuId(menuId);
-        return this.saveOrUpdate(sysMenu);
+        boolean save = this.saveOrUpdate(sysMenu);
+        if (save) {
+            //排序
+            sortMenu(sysMenu);
+        }
+       return save;
     }
 
     @Override
@@ -105,6 +115,32 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuEntity> impleme
         }
     }
 
+    /**
+     * @description: 菜单排序
+     * @author Will
+     * @date: 2024/3/12 15:40
+     * @param sysMenu
+     */
+    private void sortMenu (MenuEntity sysMenu) {
+        //更新菜单排序
+        List<MenuEntity> menuList = this.listByParentId(sysMenu.getParentId());
+        //大于等于当前序号的同级别的菜单重新排序
+        List<MenuEntity> levelMenuList = menuList.stream().filter(obj -> MathUtil.compareTo(obj.getIndex(), sysMenu.getIndex()) >= MathUtil.ZERO
+                        && !StrUtil.equals(sysMenu.getMenuId(),obj.getMenuId()))
+                .sorted(Comparator.comparing(MenuEntity::getIndex)).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(levelMenuList)) {
+            return ;
+        }
+        if (ObjectUtil.isEmpty(sysMenu.getIndex())) {
+            throw new ServiceException("排序字段必填");
+        }
+        Integer index = sysMenu.getIndex() + 1;
+        for (MenuEntity menuEntity : levelMenuList) {
+            menuEntity.setIndex(index);
+            index ++;
+        }
+        this.saveOrUpdateBatch(levelMenuList);
+    }
 
     /**
      * 获取子类的列表
@@ -122,6 +158,20 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuEntity> impleme
                     m.setChildrenList(getChildrenList(m, treeList));
                 }).collect(Collectors.toList());
         return CollectionUtils.isEmpty(collectList) ? null : collectList;
+    }
+
+    /**
+     * @description: 根据父级id查询
+     * @author Will
+     * @date: 2024/3/12 15:29
+     * @param parentId
+     * @return List<MenuEntity>
+     */
+    private List<MenuEntity> listByParentId(String parentId) {
+        List<MenuEntity> list = lambdaQuery().eq(MenuEntity::getParentId, parentId)
+                .orderByAsc(MenuEntity::getIndex)
+                .list();
+        return list;
     }
 
     /**

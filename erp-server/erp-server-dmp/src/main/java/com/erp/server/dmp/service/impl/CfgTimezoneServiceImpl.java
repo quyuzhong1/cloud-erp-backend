@@ -6,6 +6,8 @@ import com.common.business.constant.RedisCacheConstants;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.erp.model.dmp.entity.CfgTimezoneEntity;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
+import com.erp.sdk.oms.amz.spapi.model.sellers.Marketplace;
 import com.erp.server.dmp.mapper.CfgTimezoneMapper;
 import com.erp.server.dmp.service.CfgTimezoneService;
 import lombok.extern.slf4j.Slf4j;
@@ -16,9 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -52,20 +52,25 @@ public class CfgTimezoneServiceImpl extends SuperServiceImpl<CfgTimezoneMapper, 
 
     @Override
     public List<CfgTimezoneEntity> listAndCache() {
-        String listKey = RedisCacheConstants.CFG_TIMEZONE;
+        List<String> keyList = Arrays.stream(AmazonMarketplaceEnum.values())
+                .map(e -> StrUtil.format(RedisCacheConstants.CFG_TIMEZONE_PREFIX, e.getCountryCode()))
+                .collect(Collectors.toList());
+
         // 缓存获取
-        List<CfgTimezoneEntity> cacheList = redisTemplate.opsForList().range(listKey, 0, -1);
-        if (!CollectionUtils.isEmpty(cacheList)){
-            return cacheList;
+        List<CfgTimezoneEntity> cacheList = redisTemplate.opsForValue().multiGet(keyList);
+        if (null != cacheList){
+            cacheList = cacheList.stream().filter(Objects::nonNull).collect(Collectors.toList());
+            if (!CollectionUtils.isEmpty(cacheList)){
+                return cacheList;
+            }
         }
         List<CfgTimezoneEntity> list = this.list();
         if (CollectionUtils.isEmpty(list)){
             return Collections.emptyList();
         }
-        for (CfgTimezoneEntity entity : list) {
-            String currentKey = StrUtil.format(RedisCacheConstants.CFG_TIMEZONE_PREFIX, entity.getCountry());
-            redisTemplate.opsForList().rightPush(currentKey, entity);
-        }
+        Map<String, CfgTimezoneEntity> map = list.stream()
+                .collect(Collectors.toMap(entity -> StrUtil.format(RedisCacheConstants.CFG_TIMEZONE_PREFIX, entity.getCountry()), Function.identity()));
+        redisTemplate.opsForValue().multiSet(map);
         return list;
     }
 

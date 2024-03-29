@@ -1,10 +1,16 @@
 package com.erp.model.sys.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -16,6 +22,138 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class DictCountryDTO implements Serializable {
+
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO{
+
+        /**
+         * ID 也是国家二字码
+         */
+        private String id;
+
+
+
+
+        /**
+         * 国家名称
+         */
+        private String nameCn;
+
+        /**
+         * 金蝶code
+         */
+        private String kingdeeCode;
+
+        /**
+         * 上级区域
+         */
+        private String parentRegionName;
+
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+        /**
+         * 更新人
+         */
+        private String updateUserName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO{
+
+        /**
+         * 国家名
+         */
+        private String name;
+
+        /**
+         * code 就国家二字码
+         */
+        private String code;
+
+        /**
+         * 区域
+         */
+        private String parentRegionId;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO{
+
+        /**
+         * 国家名称
+         */
+        @NotBlank(message = "国家名称不能为空")
+        private String name;
+
+        /**
+         * 国家名称
+         */
+        @NotBlank(message = "国家二字码不能为空")
+        @Size(max = 10, message = "国家二字码长度不能超过10")
+        private String code;
+
+        /**
+         * 上级区域 来源  http://172.16.100.11:3002/project/36/interface/api/31119
+         */
+        @NotBlank(message = "上级区域不能为空")
+        private String parentRegionId;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO{
+
+
+        @NotBlank(message = "国家不存在")
+        private String id;
+
+        /**
+         * 国家名称
+         */
+        @NotBlank(message = "国家名称不能为空")
+        private String name;
+
+        /**
+         * 国家名称
+         */
+        @NotBlank(message = "国家二字码不能为空")
+        @Size(max = 10, message = "国家二字码长度不能超过10")
+        private String code;
+
+        /**
+         * 上级区域 来源  http://172.16.100.11:3002/project/36/interface/api/31119
+         */
+        @NotBlank(message = "上级区域不能为空")
+        private String parentRegionId;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+    }
 
 
     @Data

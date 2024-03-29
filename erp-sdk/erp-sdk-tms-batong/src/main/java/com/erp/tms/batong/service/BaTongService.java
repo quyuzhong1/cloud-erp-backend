@@ -67,6 +67,8 @@ public class BaTongService {
      * @return
      */
     public BaseResult createOrder(Map<String, String> authMap, OrderRequest orderRequest) {
+        log.info("==========BaTongService.createOrder==========start");
+        log.info("authMap:{}, orderRequest:{}",authMap, orderRequest);
         String serviceMethod = BaTongConstants.POST_CREATE_ORDER_URL;
         String baseUrl = BaTongConstants.BASE_URL;
         log.info("创建巴通订单url：{}", baseUrl + serviceMethod);

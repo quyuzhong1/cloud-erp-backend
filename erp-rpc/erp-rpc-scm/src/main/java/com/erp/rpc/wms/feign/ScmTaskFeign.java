@@ -4,6 +4,7 @@ import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SkuCostDTO;
@@ -12,6 +13,7 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -434,5 +436,13 @@ public interface ScmTaskFeign {
      */
     @PostMapping("/feign/scmSyncTask/findDataSendSyncTask")
     void findDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+
+
+    /**
+     * 获取付款条件
+     * @return
+     */
+    @GetMapping("/feign/kingdeePaymentCondition/listPaymentCondition")
+    List<BaseDropDownDTO.DisabledDTO>  listPaymentCondition();
 
 }
