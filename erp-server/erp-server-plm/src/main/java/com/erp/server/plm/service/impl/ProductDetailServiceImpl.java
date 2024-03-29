@@ -4058,7 +4058,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public List<ProductDetailDTO.SkuDTO> getSkuList(String skuNo) {
-        return baseMapper.getSkuList(skuNo);
+    public List<ProductDetailDTO.SkuDTO> listSku(String skuNo) {
+        if(StringUtils.isEmpty(skuNo)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listSku(skuNo);
     }
 }

@@ -149,15 +149,15 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 根据sku进行模糊搜索
-     * @param remoteSearchSku
+     * @param dto
      * @return
      */
-    @GetMapping("/getSkuList" )
-    public ApiResult<List<ProductDetailDTO.SkuDTO>> getSkuList(@RequestParam(value = "remoteSearchSku",required = false) String remoteSearchSku){
-        if (StringUtils.isEmpty(remoteSearchSku)){
+    @PostMapping("/listSku" )
+    public ApiResult<List<ProductDetailDTO.SkuDTO>> listSku(@RequestBody ProductSkuDTO dto){
+        if (Objects.isNull(dto) || StringUtils.isEmpty(dto.getRemoteSearchSku())){
             return success();
         }
-        List<ProductDetailDTO.SkuDTO> skuDTOList = productDetailService.getSkuList(remoteSearchSku);
+        List<ProductDetailDTO.SkuDTO> skuDTOList = productDetailService.listSku(dto.getRemoteSearchSku());
         return this.success(skuDTOList);
     }
     /**

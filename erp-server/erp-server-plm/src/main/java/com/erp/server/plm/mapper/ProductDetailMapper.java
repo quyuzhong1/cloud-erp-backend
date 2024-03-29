@@ -232,7 +232,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @param skuNo
      * @return
      */
-    List<ProductDetailDTO.SkuDTO> getSkuList(@Param("skuNo")String skuNo);
+    List<ProductDetailDTO.SkuDTO> listSku(@Param("skuNo")String skuNo);
 }
 
 

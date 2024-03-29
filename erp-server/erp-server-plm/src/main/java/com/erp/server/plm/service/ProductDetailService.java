@@ -638,5 +638,5 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param skuNo
      * @return
      */
-    List<ProductDetailDTO.SkuDTO> getSkuList(String skuNo);
+    List<ProductDetailDTO.SkuDTO> listSku(String skuNo);
 }
