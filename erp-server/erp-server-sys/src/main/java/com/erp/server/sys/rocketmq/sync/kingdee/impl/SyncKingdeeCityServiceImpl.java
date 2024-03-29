@@ -81,6 +81,12 @@ public class SyncKingdeeCityServiceImpl implements SyncKingdeeCityService {
             }
             //上级编码
             resultMap.put("parentCode",cityEntity.getKingdeeCode());
+
+            //上级
+            ThirdpartyRefBusinessEntity parentThirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(cityEntity.getId());
+            if (Objects.nonNull(parentThirdpartyRef)) {
+                resultMap.put("pid",parentThirdpartyRef.getThirdpartyId());
+            }
         }
         resultMap.put("moduleType",moduleType);
         resultMap.put("fNumber", fNumber);

@@ -86,6 +86,13 @@ public class SyncKingdeeCountryServiceImpl implements SyncKingdeeCountryService 
             }
             //上级编码
             resultMap.put("parentCode",areaEntity.getKingdeeCode());
+            //上级
+            ThirdpartyRefBusinessEntity pidThirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(entity.getRegionCode());
+            if (Objects.nonNull(pidThirdpartyRef)) {
+                resultMap.put("pid",pidThirdpartyRef.getThirdpartyId());
+            }
+
+
         }
         resultMap.put("moduleType",moduleType);
         resultMap.put("fNumber", fNumber);

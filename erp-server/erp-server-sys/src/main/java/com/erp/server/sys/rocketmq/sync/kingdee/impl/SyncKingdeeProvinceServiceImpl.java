@@ -85,6 +85,12 @@ public class SyncKingdeeProvinceServiceImpl implements SyncKingdeeProvinceServic
             }
             //上级编码
             resultMap.put("parentCode",countryEntity.getKingdeeCode());
+
+            //上级
+            ThirdpartyRefBusinessEntity parentThirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(countryEntity.getId());
+            if (Objects.nonNull(parentThirdpartyRef)) {
+                resultMap.put("pid",parentThirdpartyRef.getThirdpartyId());
+            }
         }
         resultMap.put("moduleType",moduleType);
         resultMap.put("fNumber", fNumber);
