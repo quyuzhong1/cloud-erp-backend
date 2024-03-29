@@ -136,7 +136,7 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
         // 付款条件
         String paymentCondition = entity.getPaymentCondition();
         if (StrUtils.isNotEmpty(paymentCondition)) {
-            KingdeePaymentConditionEntity conditionEntity = kingdeePaymentConditionService.getById(paymentCondition);
+            KingdeePaymentConditionEntity conditionEntity = kingdeePaymentConditionService.getByCode(paymentCondition);
             if (Objects.nonNull(conditionEntity)) {
                 resultMap.put("paymentCondition", conditionEntity.getCode());
             }

@@ -1124,7 +1124,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //付款条件名称
         String paymentConditionName = "";
         if(StringUtils.isNotBlank(paymentConditionCode)){
-            KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getById(paymentConditionCode);
+            KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getByCode(paymentConditionCode);
             if (Objects.nonNull(paymentCondition)) {
                 paymentConditionName = paymentCondition.getName();
             }
