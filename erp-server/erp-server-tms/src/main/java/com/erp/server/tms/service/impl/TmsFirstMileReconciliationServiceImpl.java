@@ -6,8 +6,10 @@ import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.mapper.TmsFirstMileReconciliationMapper;
 import com.erp.server.tms.service.TmsFirstMileReconciliationService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -58,14 +60,16 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsFirstMileReconciliationMapper, TmsFirstMileReconciliationEntity> implements TmsFirstMileReconciliationService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private CommonService commonService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
-    @Autowired
+    @Resource
     private WorkflowFeign workflowFeign;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -455,10 +459,24 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
            return;
         }
 
+        //币别信息
+        List<String> currencyIdList = list.stream().map(TmsFirstMileReconciliationDTO.ListDTO::getCurrency).collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+
         // 属性赋值
         for(TmsFirstMileReconciliationDTO.ListDTO data : list) {
+            //审核状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            //对账周期
+            data.setCycle(StrUtil.format("{}-{}",data.getStartDate(),data.getEndDate()));
+            //币别符号
+            String currencySymbol = currencyList
+                    .stream()
+                    .filter(obj -> StrUtil.equals(obj.getId(), data.getCurrency()))
+                    .findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getSymbol()))
+                    .orElse("");
+            data.setCurrencySymbol(currencySymbol);
         }
     }
     /**
