@@ -681,6 +681,7 @@
         where
         po.is_deleted = false
         and po.approve_status = 'approve'
+        and po.update_time >=  CURRENT_DATE - INTERVAL '1 day'
 --         and pod.execution_status in ('confirm','delivery')
     </select>
 </mapper>
