@@ -672,7 +672,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             return;
         }
         //店铺信息
-        List<String> shopIdList = list.stream().map(TmsB2cDeclareReconciliationDetailDTO.ListDTO::getShopId).collect(Collectors.toList());
+        List<String> shopIdList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getShopId())).map(TmsB2cDeclareReconciliationDetailDTO.ListDTO::getShopId).collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoList = shopInfoFeign.listShopInfoByIds(shopIdList);
         //国家信息
         List<String> countryIdList = list.stream().map(TmsB2cDeclareReconciliationDetailDTO.ListDTO::getCountry).collect(Collectors.toList());

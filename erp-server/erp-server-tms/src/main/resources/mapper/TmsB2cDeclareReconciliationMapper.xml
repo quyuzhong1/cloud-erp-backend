@@ -99,6 +99,16 @@
         select
             <include refid="Base_Column_List" />
         from tms_b2c_declare_reconciliation tbdr
+        left join (
+        select
+        sum(actual_billing_weight) as actualBillingWeight,
+        max(actual_weight_unit) as actualWeightUnit,
+        sum(actual_shipping_cost) as actualShippingCost,
+        sum(actual_declare_cost) as actualDeclareCost,
+        sum(actual_other_cost) as actualOtherCost,
+        main_id
+        from tms_b2c_declare_reconciliation_detail where is_deleted = false group by main_id
+        ) tbdrd on tbdr.id = tbdrd.main_id
         <where>
         ${params.sqlMap.default}
         and tbdr.is_deleted = false
