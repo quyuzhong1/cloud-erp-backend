@@ -149,15 +149,15 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 根据sku进行模糊搜索
-     * @param dto
+     * @param pagingDTO
      * @return
      */
     @PostMapping("/listSku" )
-    public ApiResult<List<ProductDetailDTO.SkuDTO>> listSku(@RequestBody ProductSkuDTO dto){
-        if (Objects.isNull(dto) || StringUtils.isEmpty(dto.getRemoteSearchSku())){
+    public ApiResult<PagingVO<ProductDetailDTO.SkuDTO>> listSku(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO){
+        if (Objects.isNull(pagingDTO.getParams()) || StringUtils.isEmpty(pagingDTO.getParams().getRemoteSearchSku())){
             return success();
         }
-        List<ProductDetailDTO.SkuDTO> skuDTOList = productDetailService.listSku(dto.getRemoteSearchSku());
+        PagingVO<ProductDetailDTO.SkuDTO> skuDTOList = productDetailService.listSku(pagingDTO);
         return this.success(skuDTOList);
     }
     /**

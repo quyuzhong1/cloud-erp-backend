@@ -4121,10 +4121,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public List<ProductDetailDTO.SkuDTO> listSku(String skuNo) {
-        if(StringUtils.isEmpty(skuNo)){
-            return Collections.emptyList();
+    public PagingVO<ProductDetailDTO.SkuDTO> listSku(PagingDTO<ProductSkuDTO> pagingDTO) {
+        if(StringUtils.isEmpty(pagingDTO.getParams().getRemoteSearchSku())){
+            return new PagingVO<>();
         }
-        return baseMapper.listSku(skuNo);
+        Page<ProductDetailDTO.SkuDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<ProductDetailDTO.SkuDTO> pageData=  baseMapper.listSku(query, pagingDTO.getParams());
+        return new PagingVO<>(pageData);
     }
 }
