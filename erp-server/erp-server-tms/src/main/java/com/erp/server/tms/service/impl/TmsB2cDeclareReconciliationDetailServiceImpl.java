@@ -350,7 +350,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
 
         //原对账单信息
         List<String> mainIdList = oldList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getMainId).collect(Collectors.toList());
-        List<TmsB2cDeclareReconciliationEntity> oldMainList = tmsB2cDeclareReconciliationService.listByIds(mainIdList);
+        List<TmsB2cDeclareReconciliationEntity> oldMainList = tmsB2cDeclareReconciliationService.listEntityByIds(mainIdList);
 
         //配置信息
         List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> erpFieldList = cfgReconciliationFieldService.erpFieldList(Arrays.asList(DictBasicEnum.CFG_B2C_DECLARE_ERP_FIELD.getType()));
@@ -394,6 +394,10 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                     updateDTO.setCfgCostId(erpFieldDropDownDTO.getSourceId());
                     updateList.add(updateDTO);
                 }
+            }
+            //为空则无需返回
+            if (ObjectUtil.isEmpty(detailEntity)) {
+                return resultList;
             }
             TmsB2cDeclareReconciliationDetailDTO.ViewDTO  viewDTO= BeanMapperUtils.map(TmsB2cDeclareReconciliationDetailDTO.ViewDTO.class,detailEntity);
             viewDTO.setActualWeight(MathUtil.valueOf(reconciliationStandardExcelDTO.getActualWeight()));
@@ -467,7 +471,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             return Collections.EMPTY_LIST;
         }
         //字段配置信息
-        List<CfgReconciliationFieldDTO.ErpFieldViewDTO> erpFieldList = cfgReconciliationFieldService.getByReconciliationType(DictBasicEnum.CFG_B2C_DECLARE_ERP_FIELD.getType());
+        List<CfgReconciliationFieldDTO.ErpFieldViewDTO> erpFieldList = cfgReconciliationFieldService.getByReconciliationType(CfgReconciliationTypeEnum.B2C_DECLARE.getCode());
         Map<String, CfgReconciliationFieldDTO.ErpFieldViewDTO> map = erpFieldList.stream().collect(Collectors.toMap(CfgReconciliationFieldDTO.ErpFieldViewDTO::getThirdFieldName, Function.identity()));
 
         //中专报关信息
