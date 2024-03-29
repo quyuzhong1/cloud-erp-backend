@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -109,6 +110,9 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @Resource
     private PurchasePriceChangeQueryHandler purchasePriceChangeQueryHandler;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
 
 
     /**
@@ -131,7 +135,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, changeEntity);
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGTJ, BusinessNoTypeEnum.CODE_CGTJ.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGTJ, BusinessNoTypeEnum.CODE_CGTJ.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGTJ);
         changeEntity.setCode(code);
         changeEntity.setId(id);
         String pricingUserId = dto.getAdjustUserId();

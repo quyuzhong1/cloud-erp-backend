@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.*;
@@ -168,6 +169,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Value("${companyCode}")
     private String companyCode;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     /**
      * 主页分页查询
      *
@@ -273,7 +277,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getReturnWarehouseId());
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGTH, BusinessNoTypeEnum.CODE_CGTH.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGTH);
         //设置收货单主表
         PoReturnEntity poReturnEntity = new PoReturnEntity();
         BeanMapperUtils.copy(dto, poReturnEntity);

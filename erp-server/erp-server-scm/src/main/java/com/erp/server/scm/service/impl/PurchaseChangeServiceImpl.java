@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -122,6 +123,9 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     @Autowired
     private InventoryCloseRecordFeign inventoryCloseRecordFeign;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
 
     @Override
     public PagingVO<PurchaseChangeDTO.ListDTO> paging(PagingDTO<PurchaseChangeDTO.SearchParamDTO> pagingDTO) {
@@ -152,7 +156,8 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         //数据验证及赋值
         checkPurchaseChange(dto.getPurchaseOrderId(),entity);
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.POC, BusinessNoTypeEnum.CODE_POC.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.POC, BusinessNoTypeEnum.CODE_POC.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_POC);
         entity.setCode(code);
         //处理数据id
         doOpHandleDataId(dto.getChangeUserId(),dto.getChangeDeptId(),entity);

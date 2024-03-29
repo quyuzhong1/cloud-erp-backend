@@ -1703,9 +1703,13 @@
                 pd.id as skuId,
                 pd.sku_no,
                 pi.category,
-                pi.property
+                pi.property,
+                COALESCE(pl.product_property_id,'') AS logisticsPropertyId
             from  product_detail pd
-            left join product_info pi on pi.id = pd.product_id and pi.is_deleted = false
+            left join product_info pi
+            on pi.id = pd.product_id and pi.is_deleted = false
+            left join product_logistics pl
+            on pl.sku_id=pd.id and pl.is_deleted = false
             <where>
                 pd.is_deleted = false and pd.id in
                 <foreach collection="skuIds" open="(" close=")" separator="," item="item">

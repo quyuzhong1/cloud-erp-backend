@@ -27,4 +27,56 @@
           </if>
 
     </select>
+
+    <select id="paging" resultType="com.erp.model.sys.dto.DictGlobalAreaDTO$PagingViewDTO">
+          SELECT
+              dga.id,
+              dga.region_name AS regionName,
+              dga.kingdee_code AS kingdeeCode,
+              dga.update_time AS updateTime,
+              dga.update_user_name AS updateUserName
+          FROM  dict_global_area dga
+          WHERE dga.is_deleted = FALSE
+          AND
+            <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+                ${params.sqlMap.default}
+            </if>
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+           dga.create_time desc
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.sys.dto.DictGlobalAreaDTO$PagingViewDTO">
+        SELECT
+        dga.id,
+        dga.region_name AS regionName,
+        dga.kingdee_code AS kingdeeCode,
+        dga.update_time AS updateTime,
+        dga.update_user_name AS updateUserName
+        FROM  dict_global_area dga
+        WHERE dga.is_deleted = FALSE
+        AND
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        dga.create_time desc
+    </select>
 </mapper>

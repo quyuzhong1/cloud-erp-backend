@@ -170,6 +170,8 @@ public class ExpressShipperService {
      * @throws UnsupportedEncodingException
      */
     public BaseResult createOrder(Map<String, String> authMap, OrderRequest orderRequest) throws UnsupportedEncodingException {
+        log.info("==========ExpressShipperService.createOrder==========start");
+        log.info("authMap:{}, orderRequest:{}",authMap, orderRequest);
         String partnerId = authMap.get("clientId");
         String md5Key = authMap.get("clientSecret");
         String url = authMap.get("url");

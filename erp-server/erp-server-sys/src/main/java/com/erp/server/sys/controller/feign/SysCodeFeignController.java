@@ -56,9 +56,9 @@ public class SysCodeFeignController extends BaseController {
      * @param dto
      * @return String
      */
-    @PostMapping("/getBusinessNo")
-    public String getBusinessNo(@RequestBody SysCodeDTO dto) {
-        String sysCode = sysCodeService.getBusinessNo(dto);
-        return sysCode;
-    }
+//    @PostMapping("/getBusinessNo")
+//    public String getBusinessNo(@RequestBody SysCodeDTO dto) {
+//        String sysCode = sysCodeService.getBusinessNo(dto);
+//        return sysCode;
+//    }
 }

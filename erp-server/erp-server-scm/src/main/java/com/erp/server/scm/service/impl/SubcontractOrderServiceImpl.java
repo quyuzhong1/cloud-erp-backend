@@ -138,6 +138,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @Resource
     private InventoryCloseRecordFeign inventoryCloseRecordFeign;
 
+    @Resource
+    private KingdeePaymentConditionService kingdeePaymentConditionService;
+
     @Override
     public PagingVO<SubcontractOrderDTO.ListDTO> paging(PagingDTO<SubcontractOrderDTO.PagingParamDTO> pagingParamDTO) {
         SubcontractOrderDTO.PagingParamDTO params = pagingParamDTO.getParams();
@@ -570,7 +573,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         }
 
         //供应商付款条件
-        List<DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+        List<KingdeePaymentConditionEntity> paymentConditionList =  kingdeePaymentConditionService.list();
 
 
         List<SubcontractOrderDetailDTO.ViewDTO> parentDTOList = BeanMapperUtils.copyList(SubcontractOrderDetailDTO.ViewDTO.class, parentList);
@@ -593,7 +596,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             viewDTO.setCurInventoryQty(curInventoryQty);
 
             //付款条件
-            String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getValue().equals(viewDTO.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getCode().equals(viewDTO.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             viewDTO.setPaymentConditionName(paymentConditionName);
 
             //子集SKU
@@ -628,7 +631,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 childViewDTO.setCurInventoryQty(childCurInventoryQty);
 
                 //付款条件
-                String childPaymentConditionName = paymentConditionList.stream().filter(obj -> obj.getValue().equals(childViewDTO.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                String childPaymentConditionName = paymentConditionList.stream().filter(obj -> obj.getCode().equals(childViewDTO.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 childViewDTO.setPaymentConditionName(childPaymentConditionName);
             }
 

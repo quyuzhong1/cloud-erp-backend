@@ -43,8 +43,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     @Autowired
     private SysDepartmentUserService sysDepartmentUserService;
 
-    //@Autowired
-    //private SyncKingdeeSysDeptService syncKingdeeSysDeptService;
+
 
     @Autowired
     private SysCodeService sysCodeService;
@@ -75,8 +74,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         }
         this.saveOrUpdate(sysDepartment);
 
-        //金蝶推送
-        //syncKingdeeSysDeptService.syncDataToKingdee(sysDepartment, SyncKingdeeOperateEnum.OPERATE_ADD.getCode());
+
     }
 
     @Override
@@ -318,13 +316,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         return this.getById(sysDepartmentEntity.getParentId());
     }
 
-    @Override
-    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
-        return this.lambdaUpdate()
-                .eq(SysDepartmentEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeId), SysDepartmentEntity::getSyncKingdeeId, syncKingdeeId)
-                .update();
-    }
+
     @Override
     public List<SysDepartmentDTO> listDeptByCodeList(List<String> codeList) {
         if (CollectionUtils.isEmpty(codeList)) {

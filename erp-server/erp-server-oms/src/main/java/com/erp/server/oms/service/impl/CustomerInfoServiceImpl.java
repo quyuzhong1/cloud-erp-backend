@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
@@ -21,6 +22,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -57,6 +59,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.checkerframework.checker.units.qual.K;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -124,6 +127,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Resource
     private DictBasicService dictBasicService;
 
+    @Resource
+    private KingdeeReceiptConditionService kingdeeReceiptConditionService;
+
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     /**
      * 获取到分组的id 集合
      *
@@ -188,7 +197,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         addEntity.setGroupName(groupName);
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CUST, BusinessNoTypeEnum.CODE_CUST.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CUST, BusinessNoTypeEnum.CODE_CUST.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CUST);
         addEntity.setCode(code);
         //销售员
         String sellerId = dto.getSellerId();
@@ -678,7 +688,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 contactEntities.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
             }*/
             //批量保存销售员信息
-            customerSellerService.batchSellerHistory(list,LocalDate.now());
+            customerSellerService.batchSellerHistory(list, LocalDate.now());
 
         }
         return Boolean.TRUE;
@@ -1010,12 +1020,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             base.setPerson(address.getPerson());
             base.setTelNumber(address.getTelNumber());
         }
-
-        if (StrUtils.isNotEmpty(customer.getConditionDict())) {
-            base.setReceiveCondition(customer.getConditionDict());
-            List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicTypeEnum.COLLECTION_TERMS.getType());
-            DictBasicDTO.ViewDTO viewDTO = dictList.stream().filter(req -> Objects.equals(req.getValue(), customer.getConditionDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
-            base.setReceiveConditionName(viewDTO.getName());
+        String receiptConditionId =customer.getConditionDict();
+        if (StrUtils.isNotEmpty(receiptConditionId)) {
+            base.setReceiveCondition(receiptConditionId);
+            KingdeeReceiptConditionEntity receiptCondition = kingdeeReceiptConditionService.getById(receiptConditionId);
+            base.setReceiveConditionName(receiptCondition != null ? receiptCondition.getName() : "");
         }
         return base;
     }
@@ -1053,7 +1062,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:oms:listCustomerByProperty",keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:oms:listCustomerByProperty", keyGenerator = "myKeyGenerator")
     public List<CustomerInfoVO> listCustomerByProperty() {
         return baseMapper.listCustomerByProperty();
     }
@@ -1154,8 +1163,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
         Map<String, DictCurrencyEntity> currencyNameMap = currencyList.stream().collect(Collectors.toMap(DictCurrencyEntity::getName, Function.identity()));
         // 收款条件
-        List<DictBasicDTO.ViewDTO> collectionTermList = dictBasicService.getByKey(DictBasicTypeEnum.COLLECTION_TERMS.getType());
-        Map<String, DictBasicDTO.ViewDTO> collectionTermNameMap = collectionTermList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
+        List<KingdeeReceiptConditionEntity> receiptConditionList = kingdeeReceiptConditionService.list();
         // 部门
         List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
         Map<String, List<SysUserDeptDTO>> deptNameMap = userDeptList.stream().filter(r -> StrUtils.isNotEmpty(r.getDeptName())).collect(Collectors.groupingBy(SysUserDeptDTO::getDeptName));
@@ -1285,10 +1293,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             customerInfoEntity.setCurrency(currencyNameMap.get(currencyName).getId());
             // 收款条件
             String conditionDictName = ExcelUtil.convertCellValueToString(row.getCell(16));
-            if (StrUtils.isEmpty(conditionDictName) || !collectionTermNameMap.containsKey(conditionDictName)) {
+            String conditionDictId=receiptConditionList.stream().filter(c->c.getName().equals(conditionDictName)).map(c->c.getId()).findFirst().orElse("");
+            if (StrUtils.isEmpty(conditionDictName) ||StringUtils.isEmpty(conditionDictId)) {
                 throw new ServiceException(StrUtil.format("第【{}】行收款条件为空或未找到收款条件【{}】", noticeRow, conditionDictName));
             }
-            customerInfoEntity.setConditionDict(collectionTermNameMap.get(conditionDictName).getValue());
+            customerInfoEntity.setConditionDict(conditionDictId);
 
             // 无附件
 
@@ -1408,6 +1417,88 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         return this.lambdaQuery().eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE).
                 in(CustomerInfoEntity::getName, customerNameList).list();
+    }
+
+    @Override
+    public List<CustomerInfoEntity> listByName(String name) {
+        if (StringUtils.isBlank(name)) {
+            return this.list();
+        }
+        return this.lambdaQuery().like(CustomerInfoEntity::getName, name).
+                orderByAsc(CustomerInfoEntity::getDisabled).list();
+    }
+
+    @Override
+    public List<CustomerDTO.ReceiveInfoDTO> listReceiveByName(String name) {
+        List<CustomerInfoEntity> customerList = this.listByName(name);
+        List<CustomerDTO.ReceiveInfoDTO> resultList = new ArrayList<>(customerList.size());
+        List<CustomerAddressEntity> addressList = customerAddressService.listByCustomerName(name);
+        for (CustomerInfoEntity item : customerList) {
+            CustomerDTO.ReceiveInfoDTO info = new CustomerDTO.ReceiveInfoDTO();
+            info.setName(item.getName());
+            info.setId(item.getId());
+            info.setCode(item.getCode());
+            info.setDisabled(item.getDisabled());
+            CustomerAddressEntity address = addressList.stream().filter(a -> a.getMainId().equals(item.getId())).findFirst().orElse(null);
+            if (Objects.nonNull(address)) {
+                info.setReceiverName(address.getPerson());
+                info.setTelNumber(address.getTelNumber());
+                info.setReceiveAddress(address.getAddress());
+            }
+            resultList.add(info);
+        }
+        return resultList;
+    }
+
+    @Override
+    public List<CustomerDTO.ReceiveInfoDTO> listDTOByNameList(List<String> customerNameList) {
+        if (CollectionUtils.isEmpty(customerNameList)){
+            return Collections.emptyList();
+        }
+        List<CustomerInfoEntity> list = listByNameList(customerNameList);
+        if (CollectionUtils.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        List<String> mainIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        Map<String, List<CustomerAddressEntity>> addressMap = customerAddressService.listByMainIdList(mainIds)
+                .stream()
+                .collect(Collectors.groupingBy(CustomerAddressEntity::getMainId));
+
+       return list.stream().map(item ->{
+            CustomerDTO.ReceiveInfoDTO info = new CustomerDTO.ReceiveInfoDTO();
+            info.setName(item.getName());
+            info.setId(item.getId());
+            info.setCode(item.getCode());
+            info.setDisabled(item.getDisabled());
+
+            CustomerAddressEntity address = null;
+           List<CustomerAddressEntity> addressList = addressMap.get(info.getId());
+           if (CollectionUtils.isNotEmpty(addressList)){
+               CustomerAddressEntity defaultAddressEntity = addressList.stream()
+                       .filter(CustomerAddressEntity::getIsDefault)
+                       .findFirst()
+                       .orElse(null);
+               if (null != defaultAddressEntity){
+                   // 默认地址
+                    address = defaultAddressEntity;
+               } else {
+                   // 最新地址
+                   address = addressList.stream()
+                           .max(Comparator.comparing(CustomerAddressEntity::getCreateUserName))
+                           .orElse(null);
+               }
+           }
+           if (null != address) {
+                info.setReceiverName(address.getPerson());
+                info.setTelNumber(address.getTelNumber());
+                info.setReceiveAddress(address.getAddress());
+            } else {
+                info.setReceiverName("");
+                info.setTelNumber("");
+                info.setReceiveAddress("");
+            }
+            return info;
+            }).collect(Collectors.toList());
     }
 
     @Override

@@ -1,8 +1,10 @@
 package com.erp.server.plm.mapper;
+import com.erp.model.plm.dto.ProductCustomsSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -36,4 +38,6 @@ public interface ProductCustomsMapper extends BaseMapper<ProductCustomsEntity> {
      * @return java.util.List<com.erp.model.plm.entity.ProductCustomsEntity>
      **/
     List<ProductCustomsEntity> listBySkuId(String skuId);
+
+    List<ProductCustomsEntity> listProductCustomsBySkuIds(@Param("dto") ProductCustomsSkuDTO dto);
 }

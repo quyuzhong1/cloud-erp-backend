@@ -37,7 +37,7 @@ public class SysDepartmentController extends BaseController {
     private SysDepartmentService sysDepartmentService;
 
     /**
-     * 列表
+     * 分页列表
      */
     @RequestMapping("/tree")
     public ApiResult tree() {

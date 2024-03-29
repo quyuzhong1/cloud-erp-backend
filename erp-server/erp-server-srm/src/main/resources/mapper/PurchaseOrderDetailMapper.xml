@@ -154,7 +154,7 @@
             <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
                 ${params.sqlMap.default}
             </if>
-            and pod.is_deleted = false and (d.qty is null or pod.purchase_qty > d.qty)
+            and pod.is_deleted = false and pod.execution_status not in ('finish','closed')
             <if test="params.supplierId != null and params.supplierId != ''">
                 and pod.supplier_id = #{params.supplierId}
             </if>

@@ -261,6 +261,79 @@ public class DeliveryOrderDetailDTO implements Serializable {
          */
         private LocalDate planDeliveryDate;
     }
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO{
 
+        private String sourceType;
+
+        private String receiptStatus;
+        /**
+         * 送货单Id
+         */
+        private String mainId;
+
+        /**
+         * 来源id明细
+         */
+        private String sourceDetailId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 订单数量
+         */
+        private Integer orderQty;
+
+        /**
+         * 送货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 赠品数量
+         */
+        private Integer giftQty;
+
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 赠品收货数量
+         */
+        private Integer giftReceiveQty;
+
+        /**
+         * 质检合格数
+         */
+        private Integer qcGoodQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 是否加急
+         */
+        private Boolean isUrgent;
+        /**
+         * 预计到达日期
+         */
+        private LocalDate planDeliveryDate;
+    }
 
 }

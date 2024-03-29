@@ -3,7 +3,6 @@ package com.erp.server.srm.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -20,20 +19,16 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
-import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.scm.enums.ConfirmTypeEnum;
-import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.WaitDeliveryCycleEnum;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
@@ -42,11 +37,11 @@ import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
-import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import com.erp.model.wms.enums.PoReceiveSourceTypeEnum;
 import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
@@ -54,7 +49,6 @@ import com.erp.rpc.wms.feign.PurchaseOrderFeign;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
-import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
@@ -345,6 +339,15 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         }
         List<String> detailIds = addDeliveryDTOS.stream().map(DeliveryOrderDTO.AddDeliveryDTO::getPurchaseDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderFeign.getPurchaseOrderDetailByIds(detailIds);
+        //送货信息
+        List<DeliveryOrderDetailEntity> deliveryOrderDetailList = detailService.listDetailByDetailSourceIds(detailIds);
+        //查询采购签收信息
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(new ArrayList<>(orderIds));
+        //入库信息
+        List<PoInstockDetailEntity> stockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(detailIds);
+        //退货信息
+        List<PoReturnDetailEntity> returnOrderDetailList = wmsTaskFeign.listReturnOrderDetailByPodIds(detailIds);
+
         if (CollectionUtils.isEmpty(purchaseOrderEntityList)){
             dtos.add(BatchResultDTO.fail(String.join(",",orderIds),"",ApiError.ERROR_98026.msg));
             return dtos;
@@ -361,7 +364,8 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             try {
                 DeliveryOrderEntity deliveryOrderEntity = builderDeliveryOrder(purchaseOrderEntity, deliveryDTOS);
                 //处理明细列表
-                handleDeliverOrderDetailList(deliveryOrderEntity.getId(), deliveryDTOS, purchaseOrderDetailList, dtos);
+                handleDeliverOrderDetailList(deliveryOrderEntity.getId(), deliveryDTOS, purchaseOrderDetailList, dtos,
+                        deliveryOrderDetailList,receiveList,stockInDetailList,returnOrderDetailList);
             }catch (Exception e){
                 dtos.add(BatchResultDTO.fail(orderId,purchaseOrderEntity.getCode(),e.getMessage()));
             }
@@ -371,13 +375,19 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     /**
      * 校验待发货明细
-     * @param mainId 主表id
-     * @param deliveryDTOS
-     * 新增或更新主表明细时，以订单维度锁表，这时不允许修改明细（在变更明细表记录时，增加订单维度数据幂等）
+     *
+     * @param mainId                  主表id
+     * @param deliveryDTOS            新增或更新主表明细时，以订单维度锁表，这时不允许修改明细（在变更明细表记录时，增加订单维度数据幂等）
+     * @param deliveryOrderDetailList
+     * @param receiveList
+     * @param stockInDetailList
+     * @param returnOrderDetailList
      */
     @DataIdempotent(keyIdName = "deliveryOrderEntity.id")
     private void handleDeliverOrderDetailList(String mainId, List<DeliveryOrderDTO.AddDeliveryDTO> deliveryDTOS,
-                                              List<PurchaseOrderDetailEntity> purchaseOrderDetailList, List<BatchResultDTO> dtos) {
+                                              List<PurchaseOrderDetailEntity> purchaseOrderDetailList, List<BatchResultDTO> dtos,
+                                              List<DeliveryOrderDetailEntity> deliveryOrderDetailList, List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList,
+                                              List<PoInstockDetailEntity> stockInDetailList, List<PoReturnDetailEntity> returnOrderDetailList) {
         if (CollectionUtils.isEmpty(deliveryDTOS)){
             return;
         }
@@ -389,7 +399,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                     addDeliveryDTO.setSupplierId(userService.getSupplierId());
                 }
                 //订单明细校验
-                checkPurchaseOrderDetail(addDeliveryDTO,detailEntity);
+                checkPurchaseOrderDetail(addDeliveryDTO,detailEntity,deliveryOrderDetailList, receiveList, stockInDetailList, returnOrderDetailList);
                 //发货单明细新增
                 addDeliveryOrderDetail(mainId,addDeliveryDTO, detailEntity);
                 dtos.add(BatchResultDTO.success(mainId,addDeliveryDTO.getSkuNo(), OperationTypeEnum.SUBMIT));
@@ -414,47 +424,73 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     /**
      * 校验数量不可超过【待交货量】
+     *
      * @param addDeliveryDTO
      * @param detailEntity
+     * @param deliveryOrderDetailList
+     * @param receiveList
+     * @param stockInDetailList
+     * @param returnOrderDetailList
      */
-    private void checkPurchaseOrderDetail(DeliveryOrderDTO.AddDeliveryDTO addDeliveryDTO,PurchaseOrderDetailEntity detailEntity) {
-        //送货数量校验
-        if (addDeliveryDTO.getPlanDeliveryQty() <= 0){
-            throw new ServiceException(ApiError.ERROR_98026);
-        }
+    private void checkPurchaseOrderDetail(DeliveryOrderDTO.AddDeliveryDTO addDeliveryDTO, PurchaseOrderDetailEntity detailEntity,
+                                          List<DeliveryOrderDetailEntity> deliveryOrderDetailList, List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList,
+                                          List<PoInstockDetailEntity> stockInDetailList, List<PoReturnDetailEntity> returnOrderDetailList) {
         //没有采购明细记录
         if (Objects.isNull(detailEntity)){
             throw new ServiceException(ApiError.ERROR_98026);
         }
-//        //供应商校验
-//        String supplierId = userService.getSupplierId();
-//        if (!addDeliveryDTO.getSupplierId().equalsIgnoreCase(supplierId)){
-//            throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_REF_SUPPLIER_CONFIRM_DIFF, addDeliveryDTO.getCode());
-//        }
-        //订单总数
-        Integer orderQty = detailEntity.getPurchaseQty();
+        //已收货数量
+        Integer receiveQty = MathUtil.ZERO;
         //已送货数量
         Integer deliveryQty = MathUtil.ZERO;
+        //无送货单收货数量
+        Integer unDeliveryReceiveQty = MathUtil.ZERO;
+        //无收货单的入库数量
+        Integer unReceiveInstockQty = MathUtil.ZERO;
+        //收发差异
+        Integer diffSendAndReceive = MathUtil.ZERO;
+        //退货补货数量
+        Integer returnQty = MathUtil.ZERO;
+        //订单总数
+        Integer orderQty = detailEntity.getPurchaseQty();
         //收货数量
-//        Integer receiveQty = MathUtil.ZERO;
-        //已送货明细
-        List<DeliveryOrderDetailEntity> orderDetailEntities = detailService.listDetailByDetailSourceIds(Collections.singletonList(addDeliveryDTO.getPurchaseDetailId()));
-        if (CollectionUtils.isNotEmpty(orderDetailEntities)){
-            deliveryQty = orderDetailEntities.stream().mapToInt(DeliveryOrderDetailEntity::getDeliveryQty).sum();
-//            receiveQty = orderDetailEntities.stream().mapToInt(DeliveryOrderDetailEntity::getReceiveQty).sum();
+        if (CollectionUtils.isNotEmpty(receiveList)) {
+            receiveQty = receiveList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(addDeliveryDTO.getPurchaseDetailId()) )
+                    .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            unDeliveryReceiveQty = receiveList.stream().filter(e -> StringUtils.isEmpty(e.getSourceId()) && e.getPurchaseOrderDetailId().equals(addDeliveryDTO.getPurchaseDetailId()))
+                    .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
         }
-        //可送货数量
-        int waitDeliveryQty = orderQty - deliveryQty;
+        //无收货单的入库数量
+        if (CollectionUtils.isNotEmpty(stockInDetailList)){
+            // 采购入库单（无收货单），只有审核通过的才占用库存数量
+            unReceiveInstockQty = stockInDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(addDeliveryDTO.getPurchaseDetailId())
+                            && Objects.equals(e.getSourceDetailId(), addDeliveryDTO.getPurchaseDetailId())
+                            && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
+                    .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+
+        }
+        // 退货单（退货补货的才会导致在途数量变化）
+        if (CollectionUtils.isNotEmpty(returnOrderDetailList)){
+            returnQty = returnOrderDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(addDeliveryDTO.getPurchaseDetailId())
+                            && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
+                            && StrUtils.isNotEmpty(e.getPurchaseOrderDetailId())
+                            && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode()))
+                    .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+        }
+        //已送货数量
+        if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
+            deliveryQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(addDeliveryDTO.getPurchaseDetailId()) )
+                    .map(DeliveryOrderDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            //收发差异
+            diffSendAndReceive = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(addDeliveryDTO.getPurchaseDetailId()) )
+                    .map(deliveryOrderDetailEntity -> deliveryOrderDetailEntity.getDeliveryQty() - deliveryOrderDetailEntity.getReceiveQty())
+                    .reduce(MathUtil.ZERO, Integer::sum);
+        }
+        //剩余送货量/可下推量=采购订单-送货单数量-无送货单收货数量-无收货单的入库数量+[收发差异]+退货补货数量[库存退货/质检退货]
+        int waitDeliveryQty = orderQty - deliveryQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty;
         if (addDeliveryDTO.getPlanDeliveryQty() > waitDeliveryQty){
             throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_ORDER_MORE_THEN_DELIVERY_QTY, addDeliveryDTO.getPurchaseDetailId());
         }
-    }
-
-    private List<DeliveryOrderEntity> getDeliveryOrderBySourceIds(Set<String> orderIds) {
-        if (CollectionUtils.isEmpty(orderIds)){
-            return Collections.emptyList();
-        }
-        return lambdaQuery().in(DeliveryOrderEntity::getSourceId, orderIds).list();
     }
 
     /**

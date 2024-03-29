@@ -1,9 +1,13 @@
 package com.erp.server.sys.service;
 
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -26,6 +30,16 @@ public interface DictCountryService extends SuperService<DictCountryEntity> {
      */
     List<DictCountryDTO.ListDTO> listCountry();
 
+
+    /**
+     * 添加
+     * @param dto
+     * @return
+     */
+    Boolean add(DictCountryDTO.AddDTO dto);
+
+
+    Boolean update(DictCountryDTO.UpdateDTO dto);
     /**
      * @description: 根据参数查询国家
      * @author Will
@@ -71,4 +85,47 @@ public interface DictCountryService extends SuperService<DictCountryEntity> {
      * @return
      */
     List<DictCountryEntity> listCountryByNames(List<String> names);
+
+
+    /**
+     * 根据区域查
+     * @description
+     * @param
+     * @return
+     * @date 2024-03-19 15:59
+     * @author Lambda
+     */
+    List<DictCountryEntity> listByRegionCode(String globalArea);
+
+    /**
+     * 初始化金蝶数据
+     * @return
+     */
+    Boolean init();
+
+    /**
+     * 分页
+     * @param dto
+     * @return
+     */
+    PagingVO<DictCountryDTO.PagingViewDTO> paging(PagingDTO<DictCountryDTO.PagingParamDTO> dto);
+
+    /**
+     * 详情
+     * @param id
+     * @return
+     */
+    DictCountryDTO.ViewDTO view(String id);
+
+    Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId, String syncKingdeeCode);
+
+    /**
+     * 删除
+     * @param id
+     * @return
+     */
+    BatchResultDTO delete(String id);
+
+
+    void exportList(DictCountryDTO.PagingParamDTO dto, HttpServletResponse response);
 }

@@ -26,6 +26,8 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.plm.dto.LogisticsProductDTO;
+import com.erp.model.plm.dto.ProductCustomsSkuDTO;
+import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
@@ -37,6 +39,7 @@ import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.tms.constant.TmsConstant;
 import com.erp.server.tms.convert.LogisticsBillConverter;
 import com.erp.server.tms.convert.TransferDeclareConverter;
@@ -116,6 +119,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Autowired
     private LogisticsPrintTypeService logisticsPrintTypeService;
 
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(LogisticsBillDTO.AddDTO addDTO) {
@@ -404,7 +409,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         List<LogisticsBillDTO.SkuDTO> skuList = dto.getSkuList();
         List<String> skuIdList = skuList.stream().map(LogisticsBillDTO.SkuDTO::getSkuId).collect(Collectors.toList());
         List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listBySkuIdList(skuIdList);
-        List<LogisticsProductDTO.ProductDTO> ordersSkuList = buildTransferDeclareProduct(dto, skuInfoList, minCustomsAmount, maxCustomsAmount,isAliExpress);
+        List<LogisticsProductDTO.ProductDTO> ordersSkuList = buildTransferDeclareProduct(country, dto, skuInfoList, minCustomsAmount, maxCustomsAmount,isAliExpress);
         //包裹信息
         LogisticsBillDTO.PackageDTO packageDTO = dto.getPackageInfo();
         List<LogisticsProductVO> logisticsProductList = LogisticsBillConverter.INSTANCE.convertLogisticsProduct(ordersSkuList);
@@ -420,9 +425,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //申报总价
         BigDecimal totalPrice = ordersSkuList.stream().filter(s -> Objects.nonNull(s.getDeclarePrice())).map(LogisticsProductDTO.ProductDTO::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         parceInfo.setTotalPrice(totalPrice);
-        //总重量
-        Integer totalWeight = skuInfoList.stream().filter(s -> Objects.nonNull(s.getWeight())).mapToInt(LogisticsProductDTO.ProductDTO::getWeight).sum();
-        parceInfo.setTotalWeight(totalWeight);
+        //总重量 取包裹重量
+//        Integer totalWeight = skuInfoList.stream().filter(s -> Objects.nonNull(s.getWeight())).mapToInt(LogisticsProductDTO.ProductDTO::getWeight).sum();
+//        parceInfo.setTotalWeight(totalWeight);
 
         //根据销售平台和渠道code 获取到原生的渠道
         LogisticsSaleChannelEntity saleChannel = logisticsSaleChannelService.getByPlatform(logisticsPlatform, logisticsChannel.getCode());
@@ -497,17 +502,33 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         return this.lambdaQuery().in(LogisticsBillEntity::getOutstockId, outstockIdList).list();
     }
 
-    private List<LogisticsProductDTO.ProductDTO> buildTransferDeclareProduct(LogisticsBillDTO.GenerateBillDTO dto, List<LogisticsProductDTO.ProductDTO> skuInfoList, BigDecimal minCustomsAmount, BigDecimal maxCustomsAmount, Boolean isAliExpress){
+    private List<LogisticsProductDTO.ProductDTO> buildTransferDeclareProduct(String country, LogisticsBillDTO.GenerateBillDTO dto, List<LogisticsProductDTO.ProductDTO> skuInfoList, BigDecimal minCustomsAmount, BigDecimal maxCustomsAmount, Boolean isAliExpress){
         List<LogisticsProductDTO.ProductDTO> ordersSkuList = null;
         if (Objects.nonNull(isAliExpress) && isAliExpress){
             //速卖通不做sku拆分
             ordersSkuList = new ArrayList<>(skuInfoList.size());
+            List<String> skuIds = skuInfoList.stream().map(LogisticsProductDTO.ProductDTO::getSkuId).collect(Collectors.toList());
+            //获取sku目的国海关编码映射关系
+            List<ProductCustomsEntity> productCustomsList = plmTaskFeign.listProductCustomsBySkuIds(ProductCustomsSkuDTO.builder().skuIds(skuIds).country(country).build());
             for (LogisticsBillDTO.SkuDTO item : dto.getSkuList()){
                 String skuId = item.getSkuId();
+                String customCode = "";
+                ProductCustomsEntity customs;
+                if (StringUtils.isNotEmpty(country)){
+                    customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
+                            && StringUtils.isNotEmpty(country) && StringUtils.isNotEmpty(e.getCountry())).findFirst().orElse(null);
+
+                }else {
+                    customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
+                            && StringUtils.isEmpty(e.getCountry())).findFirst().orElse(null);
+                }
+                if (Objects.nonNull(customs)){
+                    customCode = customs.getCustomsCode();
+                }
                 LogisticsProductDTO.ProductDTO productDTO = skuInfoList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
                 if (Objects.nonNull(productDTO)) {
                     Integer qty = item.getQty();
-                    BigDecimal price = productDTO.getDeclarePrice();
+                    BigDecimal price = productDTO.getDestDeclarePrice();
                     productDTO.setQuantity(qty);
                     productDTO.setPrice(price);
                     productDTO.setAmount(MathUtil.multiply(price, qty));
@@ -529,29 +550,47 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     productDTO.setChildOrderId(sourceDetailId);
                     productDTO.setSkuNo(item.getSkuNo());
                     productDTO.setSkuId(skuId);
+                    productDTO.setCustomsCode(customCode);
                     ordersSkuList.add(productDTO);
                 }
             }
         }else {
             List<com.erp.model.oms.dto.TransferDeclareProductDTO> transferDeclareProductBySoIds = soB2cFeign.getTransferDeclareProductBySoIds(Collections.singletonList(dto.getOrderId()));
             ordersSkuList = new ArrayList<>(transferDeclareProductBySoIds.size());
+            List<String> skuIds = transferDeclareProductBySoIds.stream().map(com.erp.model.oms.dto.TransferDeclareProductDTO::getSkuId).collect(Collectors.toList());
+            //获取sku目的国海关编码映射关系
+            List<ProductCustomsEntity> productCustomsList = plmTaskFeign.listProductCustomsBySkuIds(ProductCustomsSkuDTO.builder().skuIds(skuIds).country(country).build());
             for (com.erp.model.oms.dto.TransferDeclareProductDTO transferDeclareProductDTO : transferDeclareProductBySoIds) {
-                if (Objects.nonNull(transferDeclareProductDTO)) {
-                    LogisticsProductDTO.ProductDTO productDTO = TransferDeclareConverter.INSTANCE.omsProductToTmsProduct(transferDeclareProductDTO);
-                    Integer qty = transferDeclareProductDTO.getQty();
-                    BigDecimal price = transferDeclareProductDTO.getDeclarePrice();
-                    productDTO.setAmount(MathUtil.multiply(price, qty));
-                    //目的国申报价
-                    //表示最大的报关价还小于 目的过申报价
-                    if (Objects.nonNull(price) && maxCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && maxCustomsAmount.compareTo(price) < 0) {
-                        productDTO.setDestDeclarePrice(maxCustomsAmount);
-                    }
-                    //表示最小的报关价还小于 目的过申报价
-                    if (Objects.nonNull(price) && minCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && price.compareTo(minCustomsAmount) < 0) {
-                        productDTO.setDestDeclarePrice(minCustomsAmount);
-                    }
-                    ordersSkuList.add(productDTO);
+                String skuId = transferDeclareProductDTO.getSkuId();
+                String customCode = "";
+                ProductCustomsEntity customs;
+                if (StringUtils.isNotEmpty(country)){
+                    customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
+                            && StringUtils.isNotEmpty(country) && StringUtils.isNotEmpty(e.getCountry())).findFirst().orElse(null);
+
+                }else {
+                    customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
+                            && StringUtils.isEmpty(e.getCountry())).findFirst().orElse(null);
                 }
+                if (Objects.nonNull(customs)){
+                    customCode = customs.getCustomsCode();
+                }
+                LogisticsProductDTO.ProductDTO productDTO = TransferDeclareConverter.INSTANCE.omsProductToTmsProduct(transferDeclareProductDTO);
+                Integer qty = transferDeclareProductDTO.getQty();
+                //目的国申报价
+                BigDecimal destDeclarePrice = transferDeclareProductDTO.getDestDeclarePrice();
+                productDTO.setAmount(MathUtil.multiply(destDeclarePrice, qty));
+                //目的国申报价
+                //表示最大的报关价还小于 目的过申报价
+                if (Objects.nonNull(destDeclarePrice) && maxCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && maxCustomsAmount.compareTo(destDeclarePrice) < 0) {
+                    productDTO.setDestDeclarePrice(maxCustomsAmount);
+                }
+                //表示最小的报关价还小于 目的过申报价
+                if (Objects.nonNull(destDeclarePrice) && minCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && destDeclarePrice.compareTo(minCustomsAmount) < 0) {
+                    productDTO.setDestDeclarePrice(minCustomsAmount);
+                }
+                productDTO.setCustomsCode(customCode);
+                ordersSkuList.add(productDTO);
             }
         }
        return ordersSkuList;

@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
@@ -182,6 +183,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Value("${fdfs.publicUrl:''}")
     private String filePublicUrl;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     /**
      * 保存 质检单
      *
@@ -238,7 +242,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         QcBillStatusEnum waitQc = QcBillStatusEnum.getByCode(QcBillStatusEnum.WAIT_QC.getCode());
         bill.setQcStatus(waitQc);
         if (StringUtils.isBlank(code)) {
-            code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QC, BusinessNoTypeEnum.CODE_QC.getCode()));
+            code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QC);
         }
         bill.setCode(code);
         //采购订单
@@ -565,7 +569,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //处理相关数据
         HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceType(), dto.getSourceId());
         if (StringUtils.isBlank(code)) {
-            code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QC, BusinessNoTypeEnum.CODE_QC.getCode()));
+//            code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QC, BusinessNoTypeEnum.CODE_QC.getCode()));
+            code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QC);
             bill.setCode(code);
         }
         bill.setId(billId);
@@ -1091,7 +1096,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             item.setQcFinishTime(now);
             item.setQcStatus(finishQc);
             if (StringUtils.isBlank(item.getCode())) {
-                String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QC, BusinessNoTypeEnum.CODE_QC.getCode()));
+//                String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QC, BusinessNoTypeEnum.CODE_QC.getCode()));
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QC);
                 item.setCode(code);
             }
         }
@@ -1142,7 +1148,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             item.setQcFinishTime(now);
             item.setQcStatus(exemption);
             if (StringUtils.isBlank(item.getCode())) {
-                String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QC, BusinessNoTypeEnum.CODE_QC.getCode()));
+//                String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QC, BusinessNoTypeEnum.CODE_QC.getCode()));
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QC);
                 item.setCode(code);
             }
         }
