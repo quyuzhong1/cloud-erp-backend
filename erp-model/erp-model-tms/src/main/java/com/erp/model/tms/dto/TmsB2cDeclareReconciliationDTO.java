@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -361,6 +362,7 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
         /**
          * 明细id集合
          */
+        @NotEmpty(message = "明细不能为空")
         private List<TmsB2cDeclareReconciliationDetailDTO.UpdateDTO> detailList;
 
     }

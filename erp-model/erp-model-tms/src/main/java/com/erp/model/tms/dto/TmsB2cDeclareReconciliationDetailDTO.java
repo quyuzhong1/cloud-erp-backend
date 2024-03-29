@@ -411,6 +411,11 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
         private String remark;
 
         /**
+         * 对账状态
+         */
+        private String status;
+
+        /**
          * 费用编辑（导入数据返回）
          */
         private List<TmsCostDetailDTO.UpdateDTO> updateList;

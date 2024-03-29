@@ -48,19 +48,6 @@ public class TmsB2cDeclareReconciliationController extends BaseController {
 
 
     /**
-    * 新增
-    * @author will
-    * @date:  2024-03-19
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "b2c报关对账单新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated TmsB2cDeclareReconciliationDTO.AddDTO dto) {
-        return success(tmsB2cDeclareReconciliationService.add(dto));
-    }
-
-    /**
     * 修改
     * @author will
     * @date:  2024-03-19

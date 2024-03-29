@@ -689,6 +689,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             //入库预报状态
             listDTO.setInstockForecastStatus(InstockForecastStatusEnum.UPLOAD_SUCCESS.getCode());
             listDTO.setInstockForecastStatusName(InstockForecastStatusEnum.UPLOAD_SUCCESS.getName());
+            listDTO.setStatusName(TmsB2cDeclareReconciliationStatusEnum.getName(listDTO.getStatus()));
         }
     }
 
