@@ -147,6 +147,16 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
+     * 根据sku进行模糊搜索
+     * @param skuNo
+     * @return
+     */
+    @GetMapping("/getSkuList")
+    public ApiResult<List<ProductDetailDTO.SkuDTO>> getSkuList(@RequestParam(value = "skuNo")String skuNo){
+        List<ProductDetailDTO.SkuDTO> skuDTOList = productDetailService.getSkuList(skuNo);
+        return this.success(skuDTOList);
+    }
+    /**
      * 根据sku编号查询
      * @author Will
      * @date: 2023/10/24 12:06

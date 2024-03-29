@@ -1619,4 +1619,18 @@
             ${params.sqlMap.default}
            and pi.is_deleted = FALSE AND pd.is_deleted = FALSE
     </select>
+    <select id="getSkuList" resultType="com.erp.model.plm.dto.ProductDetailDTO.SkuDTO">
+        select
+            pi."id",
+            pd.id AS sku_id,
+            pi.spu_no,
+            pd.sku_no
+        FROM product_info pi
+                 INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
+        WHERE pi.is_deleted = FALSE
+          <if test="skuNo != null and skuNo != ''">
+              AND pd.sku_no ILIKE concat('%',#{skuNo}::text,'%')
+          </if>
+        ORDER BY pd.sku_no,pd.update_time
+    </select>
 </mapper>

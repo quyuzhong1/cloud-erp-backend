@@ -4056,4 +4056,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public List<SkuVO> getSkuInfoAdvanceQuery(AdvanceQueryContainer advanceQueryContainer) {
         return baseMapper.getSkuInfoAdvanceQuery(advanceQueryContainer);
     }
+
+    @Override
+    public List<ProductDetailDTO.SkuDTO> getSkuList(String skuNo) {
+        return baseMapper.getSkuList(skuNo);
+    }
 }
