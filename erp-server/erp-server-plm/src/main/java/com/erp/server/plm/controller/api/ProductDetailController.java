@@ -36,6 +36,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.util.StopWatch;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -153,6 +154,9 @@ public class ProductDetailController extends BaseController {
      */
     @GetMapping("/getSkuList" )
     public ApiResult<List<ProductDetailDTO.SkuDTO>> getSkuList(@RequestParam(value = "remoteSearchSku",required = false) String remoteSearchSku){
+        if (StringUtils.isEmpty(remoteSearchSku)){
+            return success();
+        }
         List<ProductDetailDTO.SkuDTO> skuDTOList = productDetailService.getSkuList(remoteSearchSku);
         return this.success(skuDTOList);
     }
