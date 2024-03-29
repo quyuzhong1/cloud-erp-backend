@@ -988,12 +988,12 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
             SkuVO skuVO = existSkuMap.get(importExcelDTO.getSkuNo());
             if (null == skuVO) {
-                importExcelDTO.setErrorMsg(StrUtil.format("SKU【{}】不存在", importExcelDTO.getSkuNo()));
+                importExcelDTO.setErrorMsg(StrUtil.format("SKU【{}】不存在或未审核通过", importExcelDTO.getSkuNo()));
                 errorList.add(importExcelDTO);
                 continue;
             }
             if (null != skuVO.getStatus() && !Objects.equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode(), skuVO.getStatus())) {
-                importExcelDTO.setErrorMsg(StrUtil.format("【{}】SKU未审核通过", importExcelDTO.getSkuNo()));
+                importExcelDTO.setErrorMsg(StrUtil.format("SKU【{}】不存在或未审核通过", importExcelDTO.getSkuNo()));
                 errorList.add(importExcelDTO);
                 continue;
             }
