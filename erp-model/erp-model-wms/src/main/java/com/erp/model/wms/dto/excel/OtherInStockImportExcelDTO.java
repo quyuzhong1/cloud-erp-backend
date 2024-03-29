@@ -5,6 +5,8 @@ import com.alibaba.excel.annotation.ExcelProperty;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
+import com.erp.model.wms.enums.InstockTypeEnum;
+import com.erp.model.wms.enums.InventoryDirectionEnum;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -28,8 +30,8 @@ public class OtherInStockImportExcelDTO implements Serializable {
     /**
      * 出库类型
      */
-    @ExcelProperty(value = "*出库类型", index = 0)
-    @FieldValid(fieldName = "出库类型", isNotBlank = true, maxLength = 32)
+    @ExcelProperty(value = "*入库类型", index = 0)
+    @FieldValid(fieldName = "入库类型", isNotBlank = true, maxLength = 32, enumClass = InstockTypeEnum.class)
     private String type;
 
     /**
@@ -50,7 +52,7 @@ public class OtherInStockImportExcelDTO implements Serializable {
      * 库存方向
      */
     @ExcelProperty(value = "*库存方向", index = 3)
-    @FieldValid(fieldName = "库存方向", isNotBlank = true, maxLength = 50)
+    @FieldValid(fieldName = "库存方向", isNotBlank = true, maxLength = 50, enumClass = InventoryDirectionEnum.class)
     private String inventoryDirection;
 
     /**
