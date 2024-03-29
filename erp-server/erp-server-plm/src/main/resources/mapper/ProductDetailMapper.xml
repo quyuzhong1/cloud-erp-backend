@@ -254,7 +254,16 @@
         <if test="params.permissionSql != '' and params.permissionSql != null">
             ${params.permissionSql}
         </if>
-        ORDER BY pd.create_time DESC
+        <if test="params.remoteSearchSku != null  and params.remoteSearchSku != ''">
+            ORDER BY
+            case when pd.sku_no ILIKE concat(#{skuNo}::text,'%') THEN 1
+            when pd.sku_no ILIKE concat('%',#{skuNo}::text) THEN 2
+            when pd.sku_no ILIKE concat('%',#{skuNo}::text,'%') THEN 3
+            end , pd.sku_no
+        </if>
+        <if test="params.remoteSearchSku = null or params.remoteSearchSku != ''">
+            ORDER BY pd.create_time DESC
+        </if>
     </select>
 
     <select id="listProduct" resultType="com.erp.model.plm.dto.ProductDetailShowDTO">
