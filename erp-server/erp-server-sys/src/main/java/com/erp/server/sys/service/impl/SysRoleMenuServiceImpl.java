@@ -331,7 +331,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         if (roleIds.contains(CommonConstants.ADMIN_ROLE_ID)) {
             menuIds = allList.stream().map(s -> s.getMenuId()).collect(Collectors.toList());
         } else {
-            menuIds = baseMapper.findMenuCodeByRoleIds(roleIds,type);
+            menuIds = baseMapper.findMenuIdsByRoleIdsAndType(roleIds,type);
         }
         List<SysMenuVO> resultList = menuList.stream().
                 filter(item -> "0".equals(item.getParentId()) && menuIds.contains(item.getMenuId()))
