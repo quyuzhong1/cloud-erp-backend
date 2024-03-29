@@ -82,7 +82,7 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
         //判断是否存在上级
         Boolean isExistParent = (Boolean) map.get("isExistParent");
         String pid = map.getOrDefault("pid", "").toString();
-        if (isExistParent && StringUtils.isNotBlank(pid)) {
+        if (isExistParent && StringUtils.isBlank(pid)) {
             //根据上级编码查询上级id
             String parentCode = (String) map.get("parentCode");
             LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
