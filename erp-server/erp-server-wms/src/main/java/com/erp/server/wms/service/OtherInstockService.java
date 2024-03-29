@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import cn.hutool.core.lang.Tuple;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -208,4 +209,12 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      * {@code @date:} 2024/03/21
      */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 导入批量保存
+     *
+     * @author Jim
+     * {@code @date:} 2024/03/21
+     */
+    void importBatchSave(List<OtherInstockEntity> saveList);
 }
