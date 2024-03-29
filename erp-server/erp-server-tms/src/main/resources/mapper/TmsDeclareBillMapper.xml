@@ -74,6 +74,7 @@
         SELECT  db.id,
                 db.source_code as  sourceCode,
                 db.code,
+                (select count(distinct dbd.sku_id) from tms_declare_bill_detail dbd where dbd.is_deleted = false and dbd.main_id = db.id) as goodsQty,
                 db.merge_source_id as mergeSourceId,
                 case when db.merge_source_id !='' then true else false end as isMerged,
                 db.declare_status as declareStatus,

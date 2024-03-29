@@ -1,7 +1,11 @@
 package com.erp.model.tms.dto;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
+import com.alibaba.excel.annotation.ExcelProperty;
+import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.core.excel.EasyExcelListConverter;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -339,113 +343,156 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          * id
          */
+        @ExcelIgnore
         private String id;
 
         /**
          * 合同协议号(可排序)
          */
+        @ExcelProperty(value = "合同协议号")
+        @ColumnWidth(20)
         private String code;
 
         /**
          * 合并来源Id
          */
+        @ExcelIgnore
         private String mergeSourceId;
 
         /**
          * 来源编号
          */
+        @ExcelIgnore
         private String sourceCode;
 
         /**
-         * 报关状态(可排序)
+         * 报关状态(可排序) tms/common/enumDropDown?type=DeclareStatus
          */
+        @ExcelIgnore
         private String declareStatus;
 
         /**
          * 报关状态名称
          */
+        @ExcelProperty(value = "报关状态")
+        @ColumnWidth(10)
         private String declareStatusName;
 
         /**
          * 物流商id
          */
+        @ExcelIgnore
         private String logisticsSupplierId;
 
         /**
          * 物流商名称
          */
+        @ExcelProperty(value = "物流商名称")
+        @ColumnWidth(20)
         private String logisticsSupplierName;
 
         /**
          * 类型（发货类型或订单类型）(可排序)
          */
+        @ExcelIgnore
         private String businessType;
 
         /**
          * 类型名称
          */
+        @ExcelProperty(value = "类型名称")
+        @ColumnWidth(10)
         private String businessTypeName;
 
         /**
          * 关联单号List
          */
+        @ExcelProperty(value = "关联单号",converter = EasyExcelListConverter.class)
+        @ColumnWidth(20)
         private List<String> sourceCodeList;
 
         /**
          * 目的国家(可排序)
          */
+        @ExcelIgnore
         private String country;
 
         /**
          * 目的国家名称(可排序)
          */
+        @ExcelProperty(value = "目的国家名称")
+        @ColumnWidth(10)
         private String countryName;
+
+        /**
+         * 商品数
+         */
+        @ExcelProperty(value = "商品数")
+        @ColumnWidth(10)
+        private Integer goodsQty;
 
         /**
          * 总箱数(可排序)
          */
+        @ExcelProperty(value = "总箱数")
+        @ColumnWidth(10)
         private Integer boxQty;
 
         /**
          * 总净重(可排序)
          */
+        @ExcelProperty(value = "总净重(kg)")
+        @ColumnWidth(10)
         private BigDecimal netWeight;
         /**
          * 总毛重(可排序)
          */
+        @ExcelProperty(value = "总毛重(kg)")
+        @ColumnWidth(10)
         private BigDecimal grossWeight;
         /**
          * 报关日期(可排序)
          */
+        @ExcelProperty(value = "报关日期")
+        @ColumnWidth(20)
         private LocalDate declareDate;
         /**
          * 报关类型(可排序)
          */
+        @ExcelIgnore
         private String declareType;
 
         /**
          * 报关类型名称
          */
+        @ExcelProperty(value = "报关类型名称")
+        @ColumnWidth(15)
         private String declareTypeName;
 
         /**
-         * 创建人可排序)
+         * 创建人(可排序)
          */
+        @ExcelProperty(value = "创建人")
+        @ColumnWidth(20)
         private String createUserName;
 
         /**
-         * 创建时间可排序)
+         * 创建时间(可排序)
          */
+        @ExcelProperty(value = "创建时间")
+        @ColumnWidth(20)
         private LocalDateTime createTime;
 
         /**
          * 是否合并
          */
+        @ExcelIgnore
         private boolean isMerged;
 
         /**
          * 是否作废
          */
+        @ExcelIgnore
         private boolean isInvalid;
     }
 
@@ -596,7 +643,7 @@ public class TmsDeclareBillDTO implements Serializable {
         private String destCustoms;
 
         /**
-         * 报关类型
+         * 报关类型 tms/drop/down/dict/list?key=declareDeclareType
          */
         private String declareType;
 
@@ -666,7 +713,7 @@ public class TmsDeclareBillDTO implements Serializable {
         private String dictSupervisionMethod;
 
         /**
-         * 监管方式名称
+         * 监管方式名称 tms/drop/down/dict/list?key=declareSupervisionMethod
          */
         private String dictSupervisionMethodName;
 
@@ -676,7 +723,7 @@ public class TmsDeclareBillDTO implements Serializable {
         private String dictNatureLevy;
 
         /**
-         * 征免性质名称
+         * 征免性质名称 tms/drop/down/dict/list?key=declareNatureLevy
          */
         private String dictNatureLevyName;
 
@@ -716,7 +763,7 @@ public class TmsDeclareBillDTO implements Serializable {
         private String dictPackType;
 
         /**
-         * 包装种类名称
+         * 包装种类名称 tms/drop/down/dict/list?key=declarePackType
          */
         private String dictPackTypeName;
 
@@ -741,7 +788,7 @@ public class TmsDeclareBillDTO implements Serializable {
         private String dictTransactionMethod;
 
         /**
-         * 成交方式名称
+         * 成交方式名称  tms/drop/down/dict/list?key=declareTransactionMethod
          */
         private String dictTransactionMethodName;
 
