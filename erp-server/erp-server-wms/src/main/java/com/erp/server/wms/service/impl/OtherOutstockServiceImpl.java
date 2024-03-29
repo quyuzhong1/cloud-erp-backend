@@ -22,6 +22,9 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.constant.CfgApiAuthContant;
+import com.erp.model.dmp.dto.CfgApiAuthDTO;
+import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
@@ -37,6 +40,7 @@ import com.erp.model.wms.dto.OtherOutstockCustomerDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.dto.OtherOutstockDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.excel.OtherInStockImportExcelDTO;
 import com.erp.model.wms.dto.excel.OtherOutStockImportExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
@@ -48,10 +52,12 @@ import com.erp.model.wms.enums.OutstockTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.wms.convert.OtherInStockConverter;
 import com.erp.server.wms.convert.OtherOutStockConverter;
 import com.erp.server.wms.kingdee.SyncKingdeeOtherOutstockService;
 import com.erp.server.wms.listener.OtherOutStockExcelListener;
@@ -63,6 +69,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.python.google.common.collect.Lists;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -135,6 +142,9 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @Override
     public PagingVO<OtherOutstockDTO.ListDTO> paging(PagingDTO<OtherOutstockDTO.SearchParamDTO> pagingDTO) {
@@ -949,6 +959,20 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 .stream()
                 .collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity()));
 
+        //仓库配置
+        CfgApiAuthEntity cfgApiAuthEntity = dmpTaskFeign.getByKey(new CfgApiAuthDTO.FeignDTO(CfgApiAuthContant.WAREHOUSE_LOCATION_VALIDATE));
+        List<String> warehouseIdList = new ArrayList<>();
+        if (ObjectUtils.isNotEmpty(cfgApiAuthEntity)) {
+            CfgApiAuthDTO.WarehouseLocationValidateDTO warehouseLocationValidateDTO = JSONUtil.toBean(cfgApiAuthEntity.getValue(), CfgApiAuthDTO.WarehouseLocationValidateDTO.class);
+            warehouseIdList = Arrays.stream(warehouseLocationValidateDTO.getWarehouseIds().split(",")).collect(Collectors.toList());
+        }
+
+        // 标记不可删除的skuId
+        Set<String> signSkuIds = new HashSet<>();
+
+        // 可保存处理的列表
+        List<OtherOutstockEntity> canHandleList = new ArrayList<>();
+
 
         // 校验和处理
         for (OtherOutStockImportExcelDTO importExcelDTO : successList) {
@@ -1045,7 +1069,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
 
             // 客户名称
-            OtherOutstockCustomerDTO.AddDTO addCustomerDTO = null;
+            OtherOutstockCustomerEntity addCustomerEntity = new OtherOutstockCustomerEntity();
             if (StringUtils.isNotBlank(importExcelDTO.getCustomerName())){
                 CustomerDTO.ReceiveInfoDTO customerDTO = customMap.get(importExcelDTO.getCustomerName());
                 if (null == customerDTO){
@@ -1053,35 +1077,111 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                     errorList.add(importExcelDTO);
                     continue;
                 } else {
-                    addCustomerDTO = OtherOutStockConverter.INSTANCE.convertAddDTO(customerDTO);
+                    addCustomerEntity = OtherOutStockConverter.INSTANCE.convertCustomerEntity(customerDTO);
+                }
+            }
+
+            //仓位必填验证
+            //判断仓位是否需要必填
+            if (warehouseIdList.contains(warehouseDTO.getId())) {
+                if (StringUtils.isBlank(importExcelDTO.getWarehouseLocation()) || null == locationEntity){
+                    importExcelDTO.setErrorMsg(StrUtil.format(" 仓库【{}】下仓位不能为空", importExcelDTO.getWarehouseName()));
+                    errorList.add(importExcelDTO);
+                    continue;
+                }
+                if (StringUtils.isBlank(locationEntity.getCode())){
+                    importExcelDTO.setErrorMsg(StrUtil.format(" 仓库【{}】下仓位不能为空", importExcelDTO.getWarehouseName()));
+                    errorList.add(importExcelDTO);
+                    continue;
                 }
             }
 
             try {
-                // 组合DTO
-                OtherOutstockDetailDTO.AddDTO detailDTO = OtherOutStockConverter.INSTANCE.combineDetailDTO(importExcelDTO, skuVO, locationEntity, actualQty);
-
-                OtherOutstockDTO.AddDTO addDTO = OtherOutStockConverter.INSTANCE.combineAddDTO(
+                // 主体
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
+                OtherOutstockEntity entity = OtherOutStockConverter.INSTANCE.combineAddEntity(
                         importExcelDTO,
                         outstockTypeEnum,
                         billDate,
                         inventoryDirectionEnum,
                         warehouseDTO,
                         locationEntity,
-                        userDTO,
                         departmentDTO,
+                        userDTO,
                         orgDTO,
-                        addCustomerDTO,
-                        Collections.singletonList(detailDTO)
+                        code
                 );
-                String idStr = this.add(addDTO);
-                if (StringUtils.isBlank(idStr)){
-                    throw new ServiceException("保存处理失败");
-                }
+                // 明细
+                OtherOutstockDetailEntity detailEntity = OtherOutStockConverter.INSTANCE.combineDetailEntity(importExcelDTO, skuVO, locationEntity, actualQty);
+                entity.setDetailEntityList(Collections.singletonList(detailEntity));
+                // 客户信息
+                entity.setCustomerEntity(addCustomerEntity);
+
+                entity.setImportExcelDTO(importExcelDTO);
+                canHandleList.add(entity);
+                // 添加标记
+                signSkuIds.add(skuVO.getSkuId());
             } catch (Exception e) {
-                importExcelDTO.setErrorMsg(StrUtil.format("处理异常【{}】", ExceptionUtil.stacktraceToOneLineString(e, 255)));
+                importExcelDTO.setErrorMsg(StrUtil.format("转换异常【{}】", ExceptionUtil.stacktraceToOneLineString(e, 255)));
                 errorList.add(importExcelDTO);
             }
+        }
+
+        // 数量分组
+        List<List<OtherOutstockEntity>> partitionList = Lists.partition(canHandleList, 1000);
+
+        // 批量保存
+        for (List<OtherOutstockEntity> currentList : partitionList) {
+            try {
+                // 处理批量保存
+                this.importBatchSave(currentList);
+            } catch (Exception e) {
+                List<OtherOutStockImportExcelDTO> errorSaveList = canHandleList.stream().map(dto  ->
+                        {
+                            OtherOutStockImportExcelDTO errorSaveImportExcelDTO = dto.getImportExcelDTO();
+                            errorSaveImportExcelDTO.setErrorMsg(StrUtil.format("保存异常【{}】", ExceptionUtil.stacktraceToOneLineString(e, 255)));
+                            return errorSaveImportExcelDTO;
+                        }
+                ).collect(Collectors.toList());
+                errorList.addAll(errorSaveList);
+            }
+        }
+        //标记SKU
+        if (CollectionUtils.isNotEmpty(signSkuIds)) {
+            plmTaskFeign.updateOccupyStatus(new ArrayList<>(signSkuIds));
+        }
+
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importBatchSave(List<OtherOutstockEntity> mainEntityList) {
+        if (!this.saveBatch(mainEntityList)){
+            throw new ServiceException("主信息批量保存失败");
+        }
+        // 明细
+        List<OtherOutstockDetailEntity> detailEntityList = mainEntityList.stream().map(e -> {
+            e.getDetailEntityList().forEach(detail -> detail.setMainId(e.getId()));
+            return e.getDetailEntityList();
+        }).flatMap(List::stream).collect(Collectors.toList());
+
+        // 客户
+        List<OtherOutstockCustomerEntity> customerEntityList = mainEntityList.stream().map(e -> {
+            OtherOutstockCustomerEntity customerEntity = e.getCustomerEntity();
+            customerEntity.setMainId(e.getId());
+            return customerEntity;
+        }).collect(Collectors.toList());
+
+        List<Pair<String, String>> pairList = mainEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        // 批量保存操作日志
+        operateLogService.batchAddModuleOperateLog("导入一个其他出库单【%s】", ModuleTypeEnum.OTHER_INSTOCK.getCode(),pairList,"新增操作");
+
+        if (!otherOutstockDetailService.saveBatch(detailEntityList)){
+            throw new ServiceException("明细信息批量保存失败");
+        }
+
+        if (!otherOutstockCustomerService.saveBatch(customerEntityList)){
+            throw new ServiceException("客户信息批量保存失败");
         }
     }
 

@@ -3,6 +3,7 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.wms.dto.excel.OtherOutStockImportExcelDTO;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -10,6 +11,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -169,7 +171,14 @@ public class OtherOutstockEntity extends BaseEntity<OtherOutstockEntity> {
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
 
-    
+    @TableField(exist = false)
+    private List<OtherOutstockDetailEntity> detailEntityList;
+
+    @TableField(exist = false)
+    private OtherOutstockCustomerEntity customerEntity;
+
+    @TableField(exist = false)
+    private OtherOutStockImportExcelDTO importExcelDTO;
 
 
     public static final String CODE = "code";
