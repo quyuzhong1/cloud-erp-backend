@@ -239,6 +239,20 @@ public class ExcelUtil {
 
     }
 
+
+    public static File exportFile(String fileName, String sheetName, List<?> dataResult, List<String> heads) {
+        List<List<String>> hs = new ArrayList<>();
+        for (String s : heads) {
+            hs.add(Arrays.asList(s));
+        }
+        File tempDirectory = FileUtils.getTempDirectory();
+        File filePath = new File(tempDirectory,fileName);
+        //生成本地文件
+        EasyExcel.write(filePath).head(hs).sheet(sheetName).doWrite(dataResult);
+        return filePath;
+
+    }
+
     /**
      * 导出数据为excel文件（按内容自适应列宽）
      *

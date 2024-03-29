@@ -378,7 +378,7 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
         /**
          * 费用编辑（导入数据返回）
          */
-        private List<TmsReconciliationCostDTO.UpdateDTO> updateList;
+        private List<TmsCostDetailDTO.UpdateDTO> updateList;
     }
 
     /**
@@ -413,7 +413,7 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
         /**
          * 费用编辑（导入数据返回）
          */
-        private List<TmsReconciliationCostDTO.UpdateDTO> updateList;
+        private List<TmsCostDetailDTO.UpdateDTO> updateList;
     }
 
     @Data

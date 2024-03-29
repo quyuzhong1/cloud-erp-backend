@@ -6,16 +6,14 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.core.entity.BaseEntity;
-import com.common.core.utils.FieldValidUtil;
-import com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO;
+import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.excel.FmLogisticsBillCostExcelDTO;
-import com.erp.model.tms.dto.excel.FmLogisticsBillExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.tms.entity.TmsLogisticsBillCostDetailEntity;
+import com.erp.model.tms.entity.TmsCostDetailEntity;
 import com.erp.server.tms.service.LogisticsBillCostService;
+import com.erp.server.tms.service.TmsCostDetailService;
 import com.erp.server.tms.service.TmsFirstMileLogisticService;
-import com.erp.server.tms.service.TmsLogisticsBillCostDetailService;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +29,7 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
 
     private final LogisticsBillCostService logisticsBillCostService = SpringUtil.getBean(LogisticsBillCostService.class);
 
-    private final TmsLogisticsBillCostDetailService logisticsBillCostDetailService = SpringUtil.getBean(TmsLogisticsBillCostDetailService.class);
+    private final TmsCostDetailService logisticsBillCostDetailService = SpringUtil.getBean(TmsCostDetailService.class);
 
     @Getter
     private List<FmLogisticsBillCostExcelDTO> dataList = new ArrayList<>();
@@ -63,9 +61,9 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
         List<String> mainIdList = logisticsBillEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<LogisticsBillCostEntity> logisticsBillCostEntitieList = logisticsBillCostService.listByLogisticsBillIdList(mainIdList);
         List<String> costIdList = logisticsBillCostEntitieList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-        List<TmsLogisticsBillCostDetailDTO.CostViewDTO> allCostDetailEntityList = logisticsBillCostDetailService.listCostByMainIdList(costIdList);
+        List<TmsCostDetailDTO.CostViewDTO> allCostDetailEntityList = logisticsBillCostDetailService.listCostByMainIdList(costIdList);
         List<LogisticsBillCostEntity> updateCostList = new ArrayList<>();
-        List<TmsLogisticsBillCostDetailEntity> updateCostDetailList = new ArrayList<>();
+        List<TmsCostDetailEntity> updateCostDetailList = new ArrayList<>();
         for (FmLogisticsBillCostExcelDTO excelDTO : dataList) {
             LogisticsBillEntity entity = logisticsBillEntityList.stream().filter(v->v.getOutstockCode().equals(excelDTO.getOutstockCode())).findFirst().orElse(null);
             if(Objects.isNull(entity)){
@@ -93,13 +91,13 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
             }
             updateCostList.add(costEntity);
             if(Objects.nonNull(excelDTO.getCostName()) && Objects.nonNull(excelDTO.getCost())){
-                TmsLogisticsBillCostDetailDTO.CostViewDTO costViewDTO = allCostDetailEntityList.stream().filter(v->v.getMainId().equals(costEntity.getId()) && v.getCostName().equals(excelDTO.getCostName())).findFirst().orElse(null);
+                TmsCostDetailDTO.CostViewDTO costViewDTO = allCostDetailEntityList.stream().filter(v->v.getMainId().equals(costEntity.getId()) && v.getCostName().equals(excelDTO.getCostName())).findFirst().orElse(null);
                 if(Objects.isNull(costViewDTO)){
                     excelDTO.setErrorMsg("未找到物流明细费用");
                     errorList.add(excelDTO);
                     continue;
                 }
-                TmsLogisticsBillCostDetailEntity updateCostDetailEntity = new TmsLogisticsBillCostDetailEntity();
+                TmsCostDetailEntity updateCostDetailEntity = new TmsCostDetailEntity();
                 updateCostDetailEntity.setId(costViewDTO.getId());
                 updateCostDetailEntity.setCostValue(excelDTO.getCost());
                 updateCostDetailList.add(updateCostDetailEntity);

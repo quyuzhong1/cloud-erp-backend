@@ -38,5 +38,12 @@ public interface TmsB2cDeclareReconciliationDetailMapper extends BaseMapper<TmsB
      * @return
      */
     List<TmsB2cDeclareReconciliationDetailDTO.ListDTO> listExport(@Param("params") TmsB2cDeclareReconciliationDetailDTO.ExportDTO params);
-
+    /**
+     * @description: 查询币别
+     * @author Will
+     * @date: 2024/3/28 15:59
+     * @param id
+     * @return String
+     */
+    String getCurrencyById(@Param("id")String id);
 }

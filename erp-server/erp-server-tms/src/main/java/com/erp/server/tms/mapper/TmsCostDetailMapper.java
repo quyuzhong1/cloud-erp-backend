@@ -1,8 +1,8 @@
 package com.erp.server.tms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO;
-import com.erp.model.tms.entity.TmsLogisticsBillCostDetailEntity;
+import com.erp.model.tms.dto.TmsCostDetailDTO;
+import com.erp.model.tms.entity.TmsCostDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -18,9 +18,9 @@ import java.util.List;
  * @since 2024-03-20
  */
 @Mapper
-public interface TmsLogisticsBillCostDetailMapper extends BaseMapper<TmsLogisticsBillCostDetailEntity> {
+public interface TmsCostDetailMapper extends BaseMapper<TmsCostDetailEntity> {
 
-    List<TmsLogisticsBillCostDetailDTO.CostCompareDTO> getCostCompareListById(String id);
+    List<TmsCostDetailDTO.CostCompareDTO> getCostCompareListById(String id);
     /**
      * @description: 查询费用
      * @author Will
@@ -28,5 +28,5 @@ public interface TmsLogisticsBillCostDetailMapper extends BaseMapper<TmsLogistic
      * @param mainIdList
      * @return List<CostViewDTO>
      */
-    List<TmsLogisticsBillCostDetailDTO.CostViewDTO> listCostByMainIdList(@Param("mainIdList") List<String> mainIdList);
+    List<TmsCostDetailDTO.CostViewDTO> listCostByMainIdList(@Param("mainIdList") List<String> mainIdList);
 }

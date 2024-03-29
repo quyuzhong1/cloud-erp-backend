@@ -1,8 +1,9 @@
 package com.erp.server.tms.service;
 
 import com.common.business.service.SuperService;
-import com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO;
-import com.erp.model.tms.entity.TmsLogisticsBillCostDetailEntity;
+import com.erp.model.tms.dto.TmsCostDetailDTO;
+import com.erp.model.tms.entity.TmsCostDetailEntity;
+import com.erp.model.tms.enums.DictCostAttributionEnum;
 
 import java.util.List;
 
@@ -14,7 +15,7 @@ import java.util.List;
  * @author will
  * @since 2024-03-20
  */
-public interface TmsLogisticsBillCostDetailService extends SuperService<TmsLogisticsBillCostDetailEntity> {
+public interface TmsCostDetailService extends SuperService<TmsCostDetailEntity> {
 
     /**
      * @description: 批量新增
@@ -24,7 +25,7 @@ public interface TmsLogisticsBillCostDetailService extends SuperService<TmsLogis
      * @param mainId
      * @return Boolean
      */
-    Boolean batchAdd(List<TmsLogisticsBillCostDetailDTO.AddDTO> costDetailList, String mainId);
+    Boolean batchAdd(List<TmsCostDetailDTO.AddDTO> costDetailList, String mainId, DictCostAttributionEnum dictCostAttributionEnum);
 
 
     /**
@@ -35,14 +36,14 @@ public interface TmsLogisticsBillCostDetailService extends SuperService<TmsLogis
      * @param mainId
      * @return Boolean
      */
-    Boolean batchUpdate(List<TmsLogisticsBillCostDetailDTO.UpdateDTO> costDetailList, String mainId);
+    Boolean batchUpdate(List<TmsCostDetailDTO.UpdateDTO> costDetailList, String mainId, DictCostAttributionEnum dictCostAttributionEnum);
 
 
     /**
      * 查询预估与实际比对列表
      * @return
      */
-    List<TmsLogisticsBillCostDetailDTO.CostCompareDTO> getCostCompareListById(String id);
+    List<TmsCostDetailDTO.CostCompareDTO> getCostCompareListById(String id);
 
     /**
      * @description: 根据主表id集合查询
@@ -51,7 +52,7 @@ public interface TmsLogisticsBillCostDetailService extends SuperService<TmsLogis
      * @param mainIdList
      * @return List<TmsLogisticsBillCostDetailEntity>
      */
-    List<TmsLogisticsBillCostDetailEntity> listByMainIdList(List<String> mainIdList);
+    List<TmsCostDetailEntity> listByMainIdList(List<String> mainIdList);
     /**
      * @description: 查询费用
      * @author Will
@@ -59,7 +60,7 @@ public interface TmsLogisticsBillCostDetailService extends SuperService<TmsLogis
      * @param mainIdList
      * @return List<CostViewDTO>
      */
-    List<TmsLogisticsBillCostDetailDTO.CostViewDTO> listCostByMainIdList(List<String> mainIdList);
+    List<TmsCostDetailDTO.CostViewDTO> listCostByMainIdList(List<String> mainIdList);
     /**
      * @description: 根据主表id集合查询
      * @author Will

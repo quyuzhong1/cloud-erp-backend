@@ -296,12 +296,22 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         List<String> sourceIdList = list.stream().map(CfgReconciliationFieldEntity::getSourceId).distinct().collect(Collectors.toList());
         List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listByIds(sourceIdList);
 
+        //配置字典信息
+        List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.CFG_B2C_DECLARE_ERP_FIELD.getType()));
+
         List<CfgReconciliationFieldDTO.ErpFieldViewDTO> resultList = new ArrayList<>();
         for (CfgReconciliationFieldEntity fieldEntity : list) {
             CfgReconciliationFieldDTO.ErpFieldViewDTO erpFieldViewDTO = BeanMapperUtils.map(CfgReconciliationFieldDTO.ErpFieldViewDTO.class, fieldEntity);
-            //费用名称
-            String costName = tmsCfgCostList.stream().filter(obj -> StrUtil.equals(obj.getId(), fieldEntity.getSourceId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCostName())).orElse("");
-            erpFieldViewDTO.setErpFieldName(costName);
+            if (StrUtil.equals(fieldEntity.getSourceType(),SourceTypeEnum.TMS_CFG_COST.getCode()) ) {
+                //费用名称
+                String costName = tmsCfgCostList.stream().filter(obj -> StrUtil.equals(obj.getId(), fieldEntity.getSourceId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCostName())).orElse("");
+                erpFieldViewDTO.setErpFieldName(costName);
+            } else {
+                //字段名称
+                DictBasicEntity dictBasicEntity = dictList.stream().filter(obj -> StrUtil.equals(obj.getId(), fieldEntity.getSourceId())).findFirst().orElse(new DictBasicEntity());
+                erpFieldViewDTO.setErpFieldName(dictBasicEntity.getName());
+                erpFieldViewDTO.setErpFieldCode(dictBasicEntity.getCode());
+            }
             resultList.add(erpFieldViewDTO);
         }
         return resultList;

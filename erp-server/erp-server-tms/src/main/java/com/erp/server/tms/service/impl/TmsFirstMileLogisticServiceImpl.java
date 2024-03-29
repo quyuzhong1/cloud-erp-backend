@@ -4,7 +4,6 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
@@ -23,7 +22,6 @@ import com.common.business.enums.InvoicesStatusEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.utils.ExportUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.entity.BaseEntity;
@@ -31,9 +29,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.dto.excel.KingdeeBankAccountExcelDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.FmDeliveryLogisticsStatusEnum;
 import com.erp.model.scm.dto.AttachmentDTO;
@@ -67,7 +63,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.jfree.chart.util.ExportUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -77,7 +72,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -114,7 +108,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     private ShippingTemplateService shippingTemplateService;
 
     @Resource
-    private TmsLogisticsBillCostDetailService logisticsBillCostDetailService;
+    private TmsCostDetailService logisticsBillCostDetailService;
 
     @Resource
     private AttachmentService attachmentService;
@@ -207,9 +201,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         costAddDTO.setTrackNo(tmsFirstMileLogisticEntity.getCounterNo());
         //物流费用单明细
         List<TmsFirstMileLogisticDTO.LogisticFee> logisticFeeList = addDTO.getLogisticFeeList();
-        List<TmsLogisticsBillCostDetailDTO.AddDTO> costDetailList = new ArrayList<>();
+        List<TmsCostDetailDTO.AddDTO> costDetailList = new ArrayList<>();
         for (TmsFirstMileLogisticDTO.LogisticFee logisticFee : logisticFeeList) {
-            TmsLogisticsBillCostDetailDTO.AddDTO dto = new TmsLogisticsBillCostDetailDTO.AddDTO();
+            TmsCostDetailDTO.AddDTO dto = new TmsCostDetailDTO.AddDTO();
             dto.setCostValue(logisticFee.getEstimatedFee());
             dto.setCfgCostId(logisticFee.getCfgCostId());
             dto.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
@@ -357,9 +351,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         updateCostDTO.setLogisticsBillDetailId(billDetailEntity.getId());
         updateCostDTO.setTrackNo(old.getCounterNo());
         List<TmsFirstMileLogisticDTO.LogisticFee> logisticFeeList = CollectionUtil.isEmpty(updateDTO.getLogisticFeeList())?new ArrayList<>():updateDTO.getLogisticFeeList();
-        List<TmsLogisticsBillCostDetailDTO.UpdateDTO> costDetailList = new ArrayList<>();
+        List<TmsCostDetailDTO.UpdateDTO> costDetailList = new ArrayList<>();
         for (TmsFirstMileLogisticDTO.LogisticFee logisticFee : logisticFeeList) {
-            TmsLogisticsBillCostDetailDTO.UpdateDTO dto = new TmsLogisticsBillCostDetailDTO.UpdateDTO();
+            TmsCostDetailDTO.UpdateDTO dto = new TmsCostDetailDTO.UpdateDTO();
             dto.setCostValue(logisticFee.getEstimatedFee());
             dto.setCfgCostId(logisticFee.getCfgCostId());
             dto.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
@@ -587,7 +581,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         //处理费用信息
         LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostService.getByLogisticsBillId(dto.getId());
         if(Objects.nonNull(logisticsBillCostEntity)){
-            List<TmsLogisticsBillCostDetailDTO.CostCompareDTO> costCompareDTOList = logisticsBillCostDetailService.getCostCompareListById(logisticsBillCostEntity.getId());
+            List<TmsCostDetailDTO.CostCompareDTO> costCompareDTOList = logisticsBillCostDetailService.getCostCompareListById(logisticsBillCostEntity.getId());
             dto.setLogisticFeeList( BeanUtil.copyToList(costCompareDTOList,TmsFirstMileLogisticDTO.FeeViewDTO.class));
         }
         //处理时间线
@@ -953,29 +947,29 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     private List<TmsFirstMileLogisticDTO.ExportCostDTO> fillCostExportDb(List<TmsFirstMileLogisticDTO.ExportCostDTO> list) {
         List<String> costIdList = list.stream().map(TmsFirstMileLogisticDTO.ExportCostDTO::getCostId).distinct().collect(Collectors.toList());
-        List<TmsLogisticsBillCostDetailDTO.CostViewDTO> allCostDetailEntityList = logisticsBillCostDetailService.listCostByMainIdList(costIdList);
+        List<TmsCostDetailDTO.CostViewDTO> allCostDetailEntityList = logisticsBillCostDetailService.listCostByMainIdList(costIdList);
         if(CollectionUtils.isEmpty(allCostDetailEntityList)){
             return list;
         }
         List<TmsFirstMileLogisticDTO.ExportCostDTO> resultList = new ArrayList<>();
         for (TmsFirstMileLogisticDTO.ExportCostDTO exportCostDTO : list) {
-            List<TmsLogisticsBillCostDetailDTO.CostViewDTO> costDetailEntityList = allCostDetailEntityList.stream().filter(v->v.getMainId().equals(exportCostDTO.getCostId()) && StringUtils.isNotBlank(v.getType())).collect(Collectors.toList());
+            List<TmsCostDetailDTO.CostViewDTO> costDetailEntityList = allCostDetailEntityList.stream().filter(v->v.getMainId().equals(exportCostDTO.getCostId()) && StringUtils.isNotBlank(v.getType())).collect(Collectors.toList());
             if(CollectionUtils.isEmpty(costDetailEntityList)){
                 resultList.add(exportCostDTO);
                 continue;
             }
-            Map<String,List<TmsLogisticsBillCostDetailDTO.CostViewDTO>> costViewMap = costDetailEntityList.stream().collect(Collectors.groupingBy(TmsLogisticsBillCostDetailDTO.CostViewDTO::getCostName));
+            Map<String,List<TmsCostDetailDTO.CostViewDTO>> costViewMap = costDetailEntityList.stream().collect(Collectors.groupingBy(TmsCostDetailDTO.CostViewDTO::getCostName));
             costViewMap.forEach((key,value)->{
                 TmsFirstMileLogisticDTO.ExportCostDTO costDTO = BeanUtil.copyProperties(exportCostDTO,TmsFirstMileLogisticDTO.ExportCostDTO.class);
                 costDTO.setCostName(key);
                 String currencySymbol = CurrencyEnum.getSymbolByCode(costDTO.getCurrency());
                 //预计费用
-                TmsLogisticsBillCostDetailDTO.CostViewDTO estimateCost = value.stream().filter(v->v.getType().equals(LogisticsBillCostTypeEnum.ESTIMATED.getCode())).findFirst().orElse(new TmsLogisticsBillCostDetailDTO.CostViewDTO());
+                TmsCostDetailDTO.CostViewDTO estimateCost = value.stream().filter(v->v.getType().equals(LogisticsBillCostTypeEnum.ESTIMATED.getCode())).findFirst().orElse(new TmsCostDetailDTO.CostViewDTO());
                 if(Objects.nonNull(estimateCost.getCostValue())){
                     costDTO.setCompleteEstimatedFee(currencySymbol+estimateCost.getCostValue());
                 }
                 //实际费用
-                TmsLogisticsBillCostDetailDTO.CostViewDTO actualCost = value.stream().filter(v->v.getType().equals(LogisticsBillCostTypeEnum.ACTUAL.getCode())).findFirst().orElse(new TmsLogisticsBillCostDetailDTO.CostViewDTO());
+                TmsCostDetailDTO.CostViewDTO actualCost = value.stream().filter(v->v.getType().equals(LogisticsBillCostTypeEnum.ACTUAL.getCode())).findFirst().orElse(new TmsCostDetailDTO.CostViewDTO());
                 if(Objects.nonNull(actualCost.getCostValue())){
                     costDTO.setCompleteActualFee(currencySymbol+actualCost.getCostValue());
                 }
@@ -995,7 +989,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         List<String> mainIdList = logisticsBillEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<LogisticsBillDetailEntity> detailList = logisticsBillDetailService.listByMainIds(mainIdList);
         List<LogisticsBillCostEntity> costList = logisticsBillCostService.listByLogisticsBillIdList(mainIdList);
-        List<TmsLogisticsBillCostDetailEntity> costDetailList = logisticsBillCostDetailService.listByMainIdList(costList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+        List<TmsCostDetailEntity> costDetailList = logisticsBillCostDetailService.listByMainIdList(costList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         List<String> mainIds = new ArrayList<>();
         List<String> detailIds = new ArrayList<>();
@@ -1019,7 +1013,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             List<String> costIdList = costEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(costIdList)){
                 costIds.addAll(costIdList);
-                List<TmsLogisticsBillCostDetailEntity> costDetailEntityList = costDetailList.stream().filter(v->costIdList.contains(v.getMainId())).collect(Collectors.toList());
+                List<TmsCostDetailEntity> costDetailEntityList = costDetailList.stream().filter(v->costIdList.contains(v.getMainId())).collect(Collectors.toList());
                 if(CollectionUtils.isNotEmpty(costDetailEntityList)){
                     costDetailIds.addAll(costDetailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
                 }
@@ -1189,7 +1183,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateImportCost(List<LogisticsBillCostEntity> updateCostList, List<TmsLogisticsBillCostDetailEntity> updateCostDetailList) {
+    public void updateImportCost(List<LogisticsBillCostEntity> updateCostList, List<TmsCostDetailEntity> updateCostDetailList) {
         if(CollectionUtils.isNotEmpty(updateCostList)){
             logisticsBillCostService.updateBatchById(updateCostList);
         }

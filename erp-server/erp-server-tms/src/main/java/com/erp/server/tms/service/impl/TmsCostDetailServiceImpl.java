@@ -8,14 +8,16 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.TmsLogisticsBillCostDetailDTO;
+import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
-import com.erp.model.tms.entity.TmsLogisticsBillCostDetailEntity;
+import com.erp.model.tms.entity.TmsCostDetailEntity;
+import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.server.tms.mapper.TmsLogisticsBillCostDetailMapper;
+import com.erp.server.tms.mapper.TmsCostDetailMapper;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.TmsLogisticsBillCostDetailService;
+import com.erp.server.tms.service.TmsB2cDeclareReconciliationDetailService;
+import com.erp.server.tms.service.TmsCostDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -39,25 +41,28 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsLogisticsBillCostDetailMapper, TmsLogisticsBillCostDetailEntity> implements TmsLogisticsBillCostDetailService {
+public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapper, TmsCostDetailEntity> implements TmsCostDetailService {
     @Autowired
     private OperateLogService operateLogService;
 
     @Autowired
     private DmpTaskFeign dmpTaskFeign;
 
-
     @Autowired
     private LogisticsBillCostService logisticsBillCostService;
 
+    @Autowired
+    private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
+
+
     @Override
-    public Boolean batchAdd(List<TmsLogisticsBillCostDetailDTO.AddDTO> costDetailList, String mainId) {
+    public Boolean batchAdd(List<TmsCostDetailDTO.AddDTO> costDetailList, String mainId, DictCostAttributionEnum dictCostAttributionEnum) {
         if (CollectionUtils.isEmpty(costDetailList)) {
             return Boolean.TRUE;
         }
-        List<TmsLogisticsBillCostDetailEntity> list = BeanMapperUtils.copyList(TmsLogisticsBillCostDetailEntity.class, costDetailList);
+        List<TmsCostDetailEntity> list = BeanMapperUtils.copyList(TmsCostDetailEntity.class, costDetailList);
         // 数据处理
-        handleData(list,mainId);
+        handleData(list,mainId,dictCostAttributionEnum);
         log.info("开始新增自发货费用明细");
 
         boolean saveBatch = super.saveBatch(list);
@@ -68,24 +73,24 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
     }
 
     @Override
-    public Boolean batchUpdate(List<TmsLogisticsBillCostDetailDTO.UpdateDTO> costDetailList, String mainId) {
+    public Boolean batchUpdate(List<TmsCostDetailDTO.UpdateDTO> costDetailList, String mainId,DictCostAttributionEnum dictCostAttributionEnum) {
         if (CollectionUtils.isEmpty(costDetailList)) {
             return Boolean.TRUE;
         }
-        List<TmsLogisticsBillCostDetailEntity> list = BeanMapperUtils.copyList(TmsLogisticsBillCostDetailEntity.class, costDetailList);
+        List<TmsCostDetailEntity> list = BeanMapperUtils.copyList(TmsCostDetailEntity.class, costDetailList);
 
-        List<TmsLogisticsBillCostDetailEntity> oldList = this.listByMainIdList(Arrays.asList(mainId));
+        List<TmsCostDetailEntity> oldList = this.listByMainIdList(Arrays.asList(mainId));
 
         List<String> deleteIds = getDeleteIds(list, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
-            List<TmsLogisticsBillCostDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            List<TmsCostDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getCfgCostId())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("删除了一个费用【%s】", ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), pairList, "编辑操作");
             this.removeByIds(deleteIds);
         }
         // 数据处理
-        handleData(list,mainId);
+        handleData(list,mainId,dictCostAttributionEnum);
         log.info("开始更新自发货费用明细");
 
         if(CollectionUtils.isEmpty(list)){
@@ -106,10 +111,10 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
      * @param oldList
      * @return List<String>
      */
-    private List<String> getDeleteIds(List<TmsLogisticsBillCostDetailEntity> newList, List<TmsLogisticsBillCostDetailEntity> oldList) {
+    private List<String> getDeleteIds(List<TmsCostDetailEntity> newList, List<TmsCostDetailEntity> oldList) {
         List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
-                map(TmsLogisticsBillCostDetailEntity::getId).collect(Collectors.toList());
-        List<String> oldIds = oldList.stream().map(TmsLogisticsBillCostDetailEntity
+                map(TmsCostDetailEntity::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(TmsCostDetailEntity
                 ::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
@@ -123,20 +128,20 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
      * @return List<TmsLogisticsBillCostDetailEntity>
      */
     @Override
-    public List<TmsLogisticsBillCostDetailEntity> listByMainIdList(List<String> mainIdList) {
+    public List<TmsCostDetailEntity> listByMainIdList(List<String> mainIdList) {
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.EMPTY_LIST;
         }
-        return lambdaQuery().in(TmsLogisticsBillCostDetailEntity::getMainId, mainIdList)
+        return lambdaQuery().in(TmsCostDetailEntity::getMainId, mainIdList)
                 .list();
     }
 
     @Override
-    public List<TmsLogisticsBillCostDetailDTO.CostCompareDTO> getCostCompareListById(String id) {
+    public List<TmsCostDetailDTO.CostCompareDTO> getCostCompareListById(String id) {
         if(StringUtils.isBlank(id)){
             return new ArrayList<>();
         }
-        List<TmsLogisticsBillCostDetailDTO.CostCompareDTO> costCompareDTOList = baseMapper.getCostCompareListById(id);
+        List<TmsCostDetailDTO.CostCompareDTO> costCompareDTOList = baseMapper.getCostCompareListById(id);
         costCompareDTOList.forEach(v->{
             if(Objects.nonNull(v.getActualCost()) && Objects.nonNull(v.getEstimatedFee())){
                 v.setCostDiff(v.getEstimatedFee().subtract(v.getActualCost()));
@@ -146,7 +151,7 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
     }
 
     @Override
-    public List<TmsLogisticsBillCostDetailDTO.CostViewDTO> listCostByMainIdList(List<String> mainIdList) {
+    public List<TmsCostDetailDTO.CostViewDTO> listCostByMainIdList(List<String> mainIdList) {
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.EMPTY_LIST;
         }
@@ -158,40 +163,50 @@ public class TmsLogisticsBillCostDetailServiceImpl extends SuperServiceImpl<TmsL
         if (CollectionUtils.isEmpty(mainIdList)) {
             return;
         }
-        lambdaUpdate().in(TmsLogisticsBillCostDetailEntity::getMainId,mainIdList).remove();
+        lambdaUpdate().in(TmsCostDetailEntity::getMainId,mainIdList).remove();
     }
 
 
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<TmsLogisticsBillCostDetailEntity> list,String mainId) {
+    private void handleData(List<TmsCostDetailEntity> list, String mainId,DictCostAttributionEnum dictCostAttributionEnum) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        String currency;
+        switch (dictCostAttributionEnum) {
+            case FIRST_MILE:
+                currency = CurrencyEnum.CNY.getCurrencyCode();
+               break;
+            case SELF_DELIVER:
+                LogisticsBillCostEntity mainEntity = logisticsBillCostService.getById(mainId);
+                currency = ObjectUtil.isEmpty(mainEntity) ? "" : mainEntity.getCurrency();
+                break;
+            case DECLARE:
+                 currency = tmsB2cDeclareReconciliationDetailService.getCurrencyById(mainId);
+                break;
+            default:
+                throw new ServiceException("费用来源类型错误");
+        }
+        if (ObjectUtil.isEmpty(currency)) {
+            log.error("未找到【{}】数据币别,mainId = {}",dictCostAttributionEnum.getName(),mainId);
+            throw new ServiceException(StrUtil.format("未找到【{}】数据币别",dictCostAttributionEnum.getName()));
+        }
 
-        //查询主表数据
-        LogisticsBillCostEntity mainEntity = logisticsBillCostService.getById(mainId);
-        if (ObjectUtil.isEmpty(mainEntity)) {
-            throw new ServiceException("自发货费用不存在");
-        }
         //查询汇率
-        BigDecimal rate;
-        if(StrUtil.equals(CurrencyEnum.CNY.getCurrencyCode(),mainEntity.getCurrency())){
-            rate = BigDecimal.ONE;
-        }else{
-            rate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), mainEntity.getCurrency());
-            if(ObjectUtil.isEmpty(rate)){
-                throw new ServiceException("汇率为空，请维护汇率后再提交");
-            }
+        BigDecimal  rate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+        if(ObjectUtil.isEmpty(rate)){
+            log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+            throw new ServiceException("汇率为空，请维护汇率后再提交");
         }
-        for (TmsLogisticsBillCostDetailEntity entity : list) {
+        for (TmsCostDetailEntity entity : list) {
 
             entity.setMainId(mainId);
             //汇率
             entity.setExchangeRate(rate);
             //币别
-            entity.setCurrency(mainEntity.getCurrency());
+            entity.setCurrency(currency);
         }
     }
 }

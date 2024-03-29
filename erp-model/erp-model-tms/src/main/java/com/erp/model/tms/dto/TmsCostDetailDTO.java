@@ -20,7 +20,7 @@ import java.math.BigDecimal;
 */
 @Data
 @NoArgsConstructor
-public class TmsLogisticsBillCostDetailDTO implements Serializable {
+public class TmsCostDetailDTO implements Serializable {
 
 
 
@@ -147,7 +147,6 @@ public class TmsLogisticsBillCostDetailDTO implements Serializable {
         * 主键id
         */
         private String id;
-
     }
 
     @Data

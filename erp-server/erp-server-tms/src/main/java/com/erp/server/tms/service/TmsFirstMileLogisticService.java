@@ -9,7 +9,6 @@ import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.util.List;
@@ -94,7 +93,7 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
 
     List<LogisticsBillEntity> listByTransportNo(List<String> transportNoList);
 
-    void updateImportCost(List<LogisticsBillCostEntity> updateCostList, List<TmsLogisticsBillCostDetailEntity> updateCostDetailList);
+    void updateImportCost(List<LogisticsBillCostEntity> updateCostList, List<TmsCostDetailEntity> updateCostDetailList);
 
     BigDecimal calculateShippingCost(TmsFirstMileLogisticDTO.CalculateShippingCostDTO dto);
     void sendMsgWhenChannelChange(List<String> shopChargeIdList,String titleContent,String messageContent);
