@@ -19,6 +19,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -381,7 +382,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         TmsFirstMileReconciliationDTO.ViewDTO data = BeanMapperUtils.map(TmsFirstMileReconciliationDTO.ViewDTO.class, tmsFirstMileReconciliationEntity);
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
+        // 明细数据额外分页
         return data;
     }
     /**
@@ -410,6 +411,23 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        if (StringUtils.isNotBlank(data.getCurrency())){
+            List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Collections.singletonList(data.getCurrency()));
+            //币别符号
+            String currencySymbol = currencyList
+                    .stream()
+                    .filter(obj -> StrUtil.equals(obj.getId(), data.getCurrency()))
+                    .findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getSymbol()))
+                    .orElse("");
+            data.setCurrencySymbol(currencySymbol);
+        }
+
+        //审核状态名称
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        //对账周期
+        data.setCycle(StrUtil.format("{}-{}",data.getStartDate(),data.getEndDate()));
+
     }
 
     /**

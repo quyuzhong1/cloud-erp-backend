@@ -243,6 +243,11 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
         private String approveStatus;
 
         /**
+         * 审核名称
+         */
+        private String approveStatusName;
+
+        /**
          * 审核人id
          */
         private String approveUserId;
@@ -278,6 +283,11 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
         private LocalDate endDate;
 
         /**
+         * 对账周期
+         */
+        private String cycle;
+
+        /**
          * 物流商Id
          */
         private String logisticsSupplierId;
@@ -291,6 +301,11 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 币别
          */
         private String currency;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
 
         /**
          * 汇率
