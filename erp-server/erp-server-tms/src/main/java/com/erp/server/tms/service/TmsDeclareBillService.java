@@ -43,7 +43,7 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
 
     List<BatchResultDTO> cancelDeclare(TmsDeclareBillDTO.UpdateDeclareStatusDTO dto);
 
-    List<BatchResultDTO> mergeDeclare(TmsDeclareBillDTO.MergeDeclareDTO dto);
+    Boolean mergeDeclare(TmsDeclareBillDTO.MergeDeclareDTO dto);
 
     List<BatchResultDTO> cancelMerge(TmsDeclareBillDTO.MergeDeclareDTO dto);
 

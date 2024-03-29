@@ -169,7 +169,7 @@ public class TmsB2BDeclareBillController extends BaseController {
      */
     @PostMapping("/mergeDeclare")
     @LogAction(value = LogActionEnum.UPDATE, desc = "B2B报关单合并报关")
-    public ApiResult<List<BatchResultDTO>> mergeDeclare(@RequestBody @Validated TmsDeclareBillDTO.MergeDeclareDTO dto) {
+    public ApiResult<Boolean> mergeDeclare(@RequestBody @Validated TmsDeclareBillDTO.MergeDeclareDTO dto) {
         return success(tmsDeclareBillService.mergeDeclare(dto));
     }
 

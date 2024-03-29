@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum DeclareStatusEnum implements EnumMessage {
     WAIT("wait","待报关"),
     DECLARED("declared","已报关"),
-    CANCEL("cancel","已作废"),
+    INVALID("invalid","已作废"),
     ;
 
     /**

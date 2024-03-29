@@ -27,6 +27,7 @@ import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DeclareStatusEnum;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.enums.FmDeliveryDeclareStatusEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.PackingStatusEnum;
@@ -37,8 +38,10 @@ import com.erp.server.tms.mapper.TmsDeclareBillMapper;
 import com.erp.server.tms.service.*;
 import com.google.common.collect.Lists;
 import freemarker.template.utility.StringUtil;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -48,6 +51,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -123,7 +127,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         for(List<TmsDeclareBillDTO.ProductDetail> productDetailList : productDetailListList){
             TmsDeclareBillEntity tmsDeclareBillEntity = BeanUtil.copyProperties(baseTmsDeclareBillEntity,TmsDeclareBillEntity.class);
             List<TmsDeclareBillDetailEntity> detailEntityList = BeanUtil.copyToList(productDetailList,TmsDeclareBillDetailEntity.class);
-            service.add(tmsDeclareBillEntity,detailEntityList,SourceTypeEnum.FIRST_MILE_DELIVERY);
+            service.add(tmsDeclareBillEntity,detailEntityList,SourceTypeEnum.FIRST_MILE_DELIVERY,false);
         }
         //更新发货单的报关状态
         FirstMileDeliveryDTO.UpdateStatusDTO dto = new FirstMileDeliveryDTO.UpdateStatusDTO();
@@ -134,10 +138,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public BaseResultDTO.AddDTO add(TmsDeclareBillEntity tmsDeclareBillEntity,List<TmsDeclareBillDetailEntity> detailEntityList,SourceTypeEnum sourceTypeEnum) {
-        //生成合同号
-        String code = this.generateContractCode(sourceTypeEnum);
-        tmsDeclareBillEntity.setCode(code);
+    public BaseResultDTO.AddDTO add(TmsDeclareBillEntity tmsDeclareBillEntity,List<TmsDeclareBillDetailEntity> detailEntityList,SourceTypeEnum sourceTypeEnum,boolean isMerged) {
+
+        //合并的话不生成合同号
+        if(!isMerged){
+            //生成合同号
+            String code = this.generateContractCode(sourceTypeEnum);
+            tmsDeclareBillEntity.setCode(code);
+        }
 
         log.info("开始新增报关单");
         boolean save = super.save(tmsDeclareBillEntity);
@@ -145,10 +153,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException("报关单保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】合同号为【{}】", commonService.getUserInfo().getUserName(), "报关单" , tmsDeclareBillEntity.getCode());
+        String msg = StrUtil.format("用户【{}】【{}】【{}】合同号为【{}】", commonService.getUserInfo().getUserName(),isMerged?"合并":"新增", "报关单" , tmsDeclareBillEntity.getCode());
         operateLogService.addModuleOperateLog(msg, sourceTypeEnum.getCode(), tmsDeclareBillEntity.getId(), "新增操作");
         detailService.add(tmsDeclareBillEntity,detailEntityList);
-        return new BaseResultDTO.AddDTO(tmsDeclareBillEntity.getId(), code);
+        return new BaseResultDTO.AddDTO(tmsDeclareBillEntity.getId(), tmsDeclareBillEntity.getCode());
     }
 
     private String generateContractCode(SourceTypeEnum sourceTypeEnum) {
@@ -240,10 +248,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         List<DictBasicDTO.ViewDTO> declareTypeDict = dictBasicService.getByKey(DictBasicEnum.DECLARE_DECLARE_TYPE.getType());
         List<String> sourceCodes = list.stream().map(TmsDeclareBillDTO.PagingVO::getSourceCode).collect(Collectors.toList());
-        List<String> ids = list.stream().map(TmsDeclareBillDTO.PagingVO::getId).collect(Collectors.toList());
-        List<TmsDeclareBillDTO.MergedDTO> mergedDTOList = baseMapper.getMergedDTOList(ids);
-        Map<String, List<String>> mergedMap = mergedDTOList.stream()
-                .collect(Collectors.groupingBy(TmsDeclareBillDTO.MergedDTO::getId, Collectors.mapping(TmsDeclareBillDTO.MergedDTO::getSourceCode, Collectors.toList())));
+        List<String> allMergeSourceIds = list.stream()
+                .map(obj -> obj.getMergeSourceId().split(","))
+                .flatMap(Arrays::stream)
+                .distinct().collect(Collectors.toList());
+        List<TmsDeclareBillEntity> allMergeSourceList = this.listByIds(allMergeSourceIds);
         if(type.equals(SourceTypeEnum.FM_DECLARE_BILL.getCode())){
             //处理供应商
             List<LogisticsBillEntity> logisticsList =  logisticService.listByOutstcockCode(sourceCodes);
@@ -270,9 +279,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             v.setDeclareTypeName(declareType.getName());
             List<String> sourceCodeList = new ArrayList<>();
             sourceCodeList.add(v.getSourceCode());
-            List<String> mergedSourceCodeList = mergedMap.getOrDefault(v.getId(),new ArrayList<>());
+            List<String> mergeIds = Arrays.asList(v.getMergeSourceId().split(","));
+            List<String> mergedSourceCodeList = allMergeSourceList.stream().filter(t->mergeIds.contains(t.getId())).map(TmsDeclareBillEntity::getSourceCode).distinct().collect(Collectors.toList());
             sourceCodeList.addAll(mergedSourceCodeList);
+            sourceCodeList = sourceCodeList.stream().distinct().collect(Collectors.toList());
             v.setSourceCodeList(sourceCodeList);
+            v.setInvalid(v.getDeclareStatus().equals(DeclareStatusEnum.INVALID.getCode()));
         });
     }
 
@@ -360,18 +372,163 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> cancelDeclare(TmsDeclareBillDTO.UpdateDeclareStatusDTO dto) {
-        return null;
+        List<TmsDeclareBillEntity> entityList = this.listByIds(dto.getIds());
+        List<TmsDeclareBillEntity> updateList = new ArrayList<>();
+        List<BatchResultDTO> resultList = new ArrayList<>();
+        for (TmsDeclareBillEntity entity : entityList) {
+            if(!entity.getDeclareStatus().equals(DeclareStatusEnum.DECLARED.getCode())){
+                resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有已报关的单据才能取消报关"));
+                continue;
+            }
+            entity.setDeclareStatus(DeclareStatusEnum.WAIT.getCode());
+            entity.setDeclareDate(null);
+            updateList.add(entity);
+        }
+        if(CollectionUtils.isNotEmpty(updateList)){
+            this.updateBatchById(updateList);
+        }
+        return resultList;
     }
 
     @Override
-    public List<BatchResultDTO> mergeDeclare(TmsDeclareBillDTO.MergeDeclareDTO dto) {
-        return null;
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean mergeDeclare(TmsDeclareBillDTO.MergeDeclareDTO dto) {
+        if(StringUtils.isBlank(dto.getCode())){
+            throw new ServiceException("合同协议号不能为空");
+        }
+        List<TmsDeclareBillEntity> entityList = this.listByIds(dto.getIds());
+        if(CollectionUtils.isEmpty(entityList)){
+            throw new ServiceException("没有需要合并的报关单");
+        }
+        // 校验合并条件
+        if(entityList.stream().anyMatch(v->!v.getDeclareStatus().equals(DeclareStatusEnum.WAIT.getCode()))){
+            throw new ServiceException("仅支持待报关的报关单合并");
+        }
+        TmsDeclareBillEntity mergedEntity = entityList.stream().filter(v->v.getCode().equals(dto.getCode())).findFirst().orElse(null);
+        if(Objects.isNull(mergedEntity)){
+            throw new ServiceException("选择的报关单中没有该表头");
+        }
+        if(entityList.stream().anyMatch(v->StringUtils.isBlank(v.getCountryName())) ||
+        entityList.stream().map(TmsDeclareBillEntity::getCountryName).collect(Collectors.toSet()).size() > 1){
+            throw new ServiceException("不同国家报关单不能合并");
+        }
+        if(mergedEntity.getType().equals(SourceTypeEnum.FM_DECLARE_BILL.getCode())){
+            List<String> outOutCodeList = entityList.stream().map(TmsDeclareBillEntity::getSourceCode).distinct().collect(Collectors.toList());
+            List<LogisticsBillEntity> logisticsBillEntityList = logisticService.listByOutstcockCode(outOutCodeList);
+            logisticsBillEntityList = logisticsBillEntityList.stream().filter(v->StringUtils.isNotBlank(v.getLogisticsSupplierId())).collect(Collectors.toList());
+            if(logisticsBillEntityList.size()!= entityList.size()
+            || logisticsBillEntityList.stream().map(LogisticsBillEntity::getLogisticsSupplierId).collect(Collectors.toSet()).size() > 1){
+                throw new ServiceException("不同物流商的报关单不能合并");
+            }
+        }
+        List<String> ids = entityList.stream().map(TmsDeclareBillEntity::getId).collect(Collectors.toList());
+        List<TmsDeclareBillDetailEntity> detailList = detailService.listByMainIds(ids);
+
+        //合并明细相同sku
+        // 根据 skuId 进行分组，并对数量进行求和
+        List<TmsDeclareBillDetailEntity> mergedDetails = new ArrayList<>(detailList.stream()
+                .collect(Collectors.toMap(
+                        TmsDeclareBillDetailEntity::getSkuId,
+                        Function.identity(),
+                        (existing, replacement) -> {
+                            // 合并数量
+                            existing.setQty(existing.getQty() + replacement.getQty());
+                            // 其他字段取第一个出现的值
+                            return existing;
+                        }
+                ))
+                .values());
+        if(mergedDetails.size()>limitSkuNo){
+            throw new ServiceException(StrUtil.format("合并后SKU数量超过限制，最多合并{}个SKU",limitSkuNo));
+        }
+        mergedEntity.setNetWeight(entityList.stream().map(TmsDeclareBillEntity::getNetWeight).reduce(BigDecimal.ZERO,BigDecimal::add));
+        mergedEntity.setGrossWeight(entityList.stream().map(TmsDeclareBillEntity::getGrossWeight).reduce(BigDecimal.ZERO,BigDecimal::add));
+        mergedEntity.setShippingFee(entityList.stream().map(TmsDeclareBillEntity::getShippingFee).reduce(BigDecimal.ZERO,BigDecimal::add));
+        mergedEntity.setInsuranceFee(entityList.stream().map(TmsDeclareBillEntity::getInsuranceFee).reduce(BigDecimal.ZERO,BigDecimal::add));
+        mergedEntity.setOtherFee(entityList.stream().map(TmsDeclareBillEntity::getOtherFee).reduce(BigDecimal.ZERO,BigDecimal::add));
+        mergedEntity.setBoxQty(entityList.stream().mapToInt(TmsDeclareBillEntity::getBoxQty).sum());
+        //保存合并后的数据
+        mergedEntity.setId(null);
+        mergedEntity.setMergeSourceId(String.join(",",ids));
+        mergedDetails.forEach(v-> v.setId(null));
+        this.add(mergedEntity,mergedDetails,SourceTypeEnum.FM_DECLARE_BILL,true);
+        //更新原数据为作废
+        if(!this.updateToInvalid(ids)){
+            throw new ServiceException("更新原数据为作废失败");
+        }
+        return true;
+    }
+
+    public boolean updateToInvalid(List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
+            return false;
+        }
+        return this.lambdaUpdate().in(TmsDeclareBillEntity::getId,ids)
+                .set(TmsDeclareBillEntity::getDeclareStatus,DeclareStatusEnum.INVALID.getCode())
+                .update();
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> cancelMerge(TmsDeclareBillDTO.MergeDeclareDTO dto) {
-        return null;
+        List<TmsDeclareBillEntity> entityList = this.listByIds(dto.getIds());
+        List<String> allMergeSourceIds = entityList.stream()
+                .map(obj -> obj.getMergeSourceId().split(","))
+                .flatMap(Arrays::stream)
+                .distinct().collect(Collectors.toList());
+        List<TmsDeclareBillEntity> allBeforeEntityList = this.listByIds(allMergeSourceIds);
+        List<TmsDeclareBillEntity> updateList = new ArrayList<>();
+        List<BatchResultDTO> resultList = new ArrayList<>();
+        for (TmsDeclareBillEntity entity : entityList) {
+            if(!entity.getDeclareStatus().equals(DeclareStatusEnum.WAIT.getCode())){
+                resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有待报关的单据才能取消合并"));
+                continue;
+            }
+            List<String> list = Arrays.asList(entity.getMergeSourceId().split(","));
+            List<TmsDeclareBillEntity> beforeEntityList = allBeforeEntityList.stream().filter(v->list.contains(v.getId())).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(beforeEntityList)){
+                resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"仅可操作有存在合并订单类型"));
+                continue;
+            }
+            entity.setDeclareStatus(DeclareStatusEnum.INVALID.getCode());
+            beforeEntityList.forEach(v->v.setDeclareStatus(DeclareStatusEnum.WAIT.getCode()));
+            updateList.add(entity);
+            updateList.addAll(beforeEntityList);
+        }
+        if(CollectionUtils.isNotEmpty(updateList)){
+            this.updateBatchById(updateList);
+        }
+        return resultList;
+    }
+
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto) {
+        List<TmsDeclareBillEntity> entityList = this.listByIds(dto.getIds());
+        List<BatchResultDTO> resultList = new ArrayList<>();
+        List<String> removeIds = new ArrayList<>();
+        List<String> updateSourceIds = new ArrayList<>();
+        for (TmsDeclareBillEntity entity : entityList) {
+            if(!entity.getDeclareStatus().equals(DeclareStatusEnum.WAIT.getCode())){
+                resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有待报关的单据才能删除"));
+                continue;
+            }
+            removeIds.add(entity.getId());
+            updateSourceIds.add(entity.getSourceId());
+        }
+        if(CollectionUtils.isNotEmpty(removeIds)){
+            this.removeByIds(removeIds);
+        }
+        if(CollectionUtils.isNotEmpty(updateSourceIds)){
+            FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
+            updateStatusDTO.setIds(updateSourceIds);
+            updateStatusDTO.setDeclareStatus(FmDeliveryDeclareStatusEnum.WAIT.code);
+            wmsFirstMileDeliveryFeign.updateStatus(updateStatusDTO);
+        }
+        return resultList;
     }
 
     @Override
@@ -383,12 +540,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     public void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
 
     }
-
-    @Override
-    public List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto) {
-        return null;
-    }
-
     /**
     * 新增修改处理数据
     */

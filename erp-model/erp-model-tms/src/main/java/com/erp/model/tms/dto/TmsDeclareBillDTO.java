@@ -347,6 +347,11 @@ public class TmsDeclareBillDTO implements Serializable {
         private String code;
 
         /**
+         * 合并来源Id
+         */
+        private String mergeSourceId;
+
+        /**
          * 来源编号
          */
         private String sourceCode;

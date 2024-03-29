@@ -26,7 +26,5 @@ public interface TmsDeclareBillMapper extends BaseMapper<TmsDeclareBillEntity> {
 
     IPage<TmsDeclareBillDTO.PagingVO> paging(Page query,@Param("params") TmsDeclareBillDTO.PagingParamDTO params);
 
-    List<TmsDeclareBillDTO.MergedDTO> getMergedDTOList(List<String> ids);
-
     List<TmsDeclareBillDTO.StatisticsAllDTO> statistics( TmsDeclareBillDTO.StatisticsDTO build);
 }

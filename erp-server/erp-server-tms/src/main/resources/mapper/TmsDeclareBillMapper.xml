@@ -41,8 +41,7 @@
        <result column="insurance_fee" property="insuranceFee" />
        <result column="other_fee" property="otherFee" />
        <result column="box_qty" property="boxQty" />
-       <result column="is_invalid" property="isInvalid" />
-       <result column="merged_code" property="mergedCode" />
+       <result column="merge_source_id" property="mergeSourceId" />
         <result column="country_name" property="countryName" />
         <result column="source_id" property="sourceId" />
         <result column="source_code" property="sourceCode" />
@@ -61,7 +60,7 @@
         update_time,
         version,
         is_deleted,
-        code, source_type,type,transport_no, source_id,source_code,declare_status, country_name, business_type, country, net_weight, gross_weight, declare_date, declare_type, pre_input_no, dest_customs, sender_id, export_customs_name, export_date, receiver_name, dict_supervision_method, dict_nature_levy, license_no, trading_area, to_area, to_port, export_port, dict_pack_type, dict_transaction_method, remark, shipping_fee, insurance_fee, other_fee, box_qty, is_invalid, merged_code
+        code, source_type,type,transport_no, source_id,source_code,declare_status, country_name, business_type, country, net_weight, gross_weight, declare_date, declare_type, pre_input_no, dest_customs, sender_id, export_customs_name, export_date, receiver_name, dict_supervision_method, dict_nature_levy, license_no, trading_area, to_area, to_port, export_port, dict_pack_type, dict_transaction_method, remark, shipping_fee, insurance_fee, other_fee, box_qty, merge_source_id
     </sql>
     <select id="tabList" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$TabListDTO">
         SELECT db.declare_status as tabFlag,
@@ -74,8 +73,9 @@
     <select id="paging" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$PagingVO">
         SELECT  db.id,
                 db.source_code as  sourceCode,
-            db.code,
-                db.merged_code != '' as isMerged,
+                db.code,
+                db.merge_source_id as mergeSourceId,
+                case when db.merge_source_id !='' then true else false end as isMerged,
                 db.declare_status as declareStatus,
                 db.business_type as businessType,
                 db.country,
@@ -86,8 +86,7 @@
                 db.declare_date as   declareDate,
                 db.declare_type as   declareType,
                 db.create_user_name as   createUserName,
-                db.create_time as   createTime,
-                db.is_invalid as    isInvalid
+                db.create_time as   createTime
         from  tms_declare_bill  db
         where
             ${params.sqlMap.default}
@@ -105,19 +104,6 @@
         db.create_time DESC
     </select>
 
-    <select id="getMergedDTOList" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$MergedDTO">
-        SELECT db.id,
-               db2.source_code as sourceCode
-        from
-            tms_declare_bill db
-                inner join tms_declare_bill db2 on db.code = db2.merged_code
-        where db.is_deleted = false
-          and db2.is_deleted = false
-        and db.id in
-        <foreach collection="ids" item="item" open="(" separator="," close=")">
-            #{item}
-        </foreach>
-    </select>
     <select id="statistics" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$StatisticsAllDTO">
         SELECT  EXTRACT(year FROM db.declare_date),  EXTRACT(month FROM db.declare_date) as month,
         count(1)

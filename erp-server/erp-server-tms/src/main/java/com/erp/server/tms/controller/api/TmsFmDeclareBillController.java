@@ -179,7 +179,7 @@ public class TmsFmDeclareBillController extends BaseController {
      */
     @PostMapping("/mergeDeclare")
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程报关单合并报关")
-    public ApiResult<List<BatchResultDTO>> mergeDeclare(@RequestBody @Validated TmsDeclareBillDTO.MergeDeclareDTO dto) {
+    public ApiResult<Boolean> mergeDeclare(@RequestBody @Validated TmsDeclareBillDTO.MergeDeclareDTO dto) {
         return success(tmsDeclareBillService.mergeDeclare(dto));
     }
 

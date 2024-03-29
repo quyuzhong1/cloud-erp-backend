@@ -1,5 +1,6 @@
 package com.erp.model.tms.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
@@ -91,7 +92,7 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     /**
     * 报关日期
     */
-    @TableField("declare_date")
+    @TableField(value = "declare_date",updateStrategy = FieldStrategy.IGNORED)
     private LocalDate declareDate;
     /**
     * 报关类型
@@ -200,15 +201,10 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     @TableField("box_qty")
     private Integer boxQty;
     /**
-    * 是否作废 
+    * 合并来源Id
     */
-    @TableField("is_invalid")
-    private Boolean isInvalid;
-    /**
-    * 合并后表头
-    */
-    @TableField("merged_code")
-    private String mergedCode;
+    @TableField("merge_source_id")
+    private String mergeSourceId;
 
 
     public static final String CODE = "code";
