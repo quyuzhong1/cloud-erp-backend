@@ -1,74 +1,77 @@
 package com.common.business.enums;
 
+import com.common.business.constant.BusinessNoConstant;
+import lombok.AllArgsConstructor;
+
 /**
  * @author Will
  * @version 1.0
  * @description: 系统编码
  * @date 2022/11/22 10:26
  */
+@AllArgsConstructor
 public enum BusinessNoTypeEnum {
 
-    SKU_NO(1, "sku_no","sku编号"),
-    SPU_NO(2, "spu_no","spu编号"),
-    Bom_NO(3, "bom_no","bom编号"),
-    CODE_BH(4, "bh","备货申请单编号"),
-    CODE_GYS(5, "gys","供应商编号"),
-    CODE_PL(6, "pl","采购申请单编号"),
-    CODE_CGJM(7, "cgjm","采购价目编号"),
-    CODE_CGTJ(8, "cgtj","采购价目调价编号"),
-    CODE_PO(9, "po","采购订单","PO"),
-    CODE_POC(10, "poc","采购变更单"),
-    CODE_ZJGZ(11, "zjgz","质检规则单"),
-    CODE_CGSH(12, "cgsh","采购收货单"),
-    CODE_CGRK(13, "cgrk","采购收货单"),
-    CODE_CGTH(14, "cgth","采购退货单"),
-    CODE_USER(15, "user_no","用户编号"),
-    CODE_QC(16, "qc","质检单"),
-    CODE_DEPT(17, "bm","部门编号"),
-    CODE_RKYB(18, "rkyb","入库预报", "RKYB"),
-    CODE_DBSQ(19, "dbsq","调拨申请"),
-    CODE_CUST(20, "cust","客户"),
-    CODE_INIT_STOCK(21, "init_stock","期初库存"),
-    CODE_THDD(22, "thdd","销售退货订单"),
-    CODE_THTZ(23, "thtz","销售退货通知单"),
-    CODE_XSD(24, "xsd","销售单"),
-    CODE_ZJDB(25, "zjdb","直接调拨单", "ZJDB"),
-    CODE_ZZCX(26, "zzcx","加工单", "ZZCX"),
-    CODE_THQS(27, "thqs","退货签收单"),
-    CODE_XSCK(28, "xsck","销售出库单", "XSCK"),
-    CODE_QTRK(29, "qtrk","其他入库单"),
-    CODE_QTCK(30, "qtck","其他出库单"),
-    CODE_XSBG(31, "xsbg","销售变更单"),
-    CODE_FHTZ(32, "fhtz","发货通知单"),
-    CODE_FBDC(33, "fbdc","分步式调拨调出"),
-    CODE_FBDR(34, "fbdr","分步式调拨调入"),
-    CODE_XSTH(35, "xsth","销售退货入库单"),
-    CODE_KHDZ(36, "khdz","客户地址编号"),
-    CODE_KHLXR(37, "khlxr","客户联系人编号"),
-    CODE_SUB(38, "sub","委外订单","SUB"),
-    CODE_SUBCH(39, "subch","委外变更单"),
-    STOCKTAKING_PLAN(40, "pdjh","盘点计划","PDJH"),
-    STOCKTAKING_TASK(41, "pdrw","盘点任务","PDRW"),
-    STOCKTAKING_PROFIT(42, "pyd","盘盈单","PYD"),
-    STOCKTAKING_LOSS(43, "pkd","盘盈单","PKD"),
-    CODE_SO_B2C(44, "xsds","b2c销售订单","XSDS"),
-    CODE_CWYD(45, "cwyd","仓位移动","CWYD"),
-    CODE_KHDZC(46, "khdzc","b2c客户地址编号","KHDZC"),
-    CODE_KHLXRC(47, "khlxrc","b2c客户联系人编号","KHLXRC"),
-    CODE_CUSTC(48, "custc","客户","CUSTC"),
-    CODE_FBAS(49, "fbas","FBA货件","FBAS"),
-    CODE_FHD(50, "fhd","头程发货单","FHD"),
-    CODE_XSDD(51, "xsdd","b2c销售订单(平台)","XSDD"),
-    CODE_FHJH(52, "fhjh","海外仓发货计划","FHJH"),
-    CODE_YHSQ(53, "yhsq","要货申请","YHSQ"),
-    CODE_FHDC(54, "fhdc","b2c发货单","FHDC"),
-    CODE_FHLJ(55, "fhlj","b2c发货拦截单","FHLJ"),
-    CODE_FLD(56, "fld","委外发料单","FLD"),
-    CODE_SHD(57, "shd","送货单","SHD"),
-    CODE_DZD(58, "dzd","对账单","DZD"),
-
-    CODE_ZZBG(56, "zzbg","中转报关","ZZBG"),
-    CODE_ZB(57, "zb","组包预报","ZB"),
+    SKU_NO(1, "sku_no","sku编号",""),
+    SPU_NO(2, "spu_no","spu编号",""),
+    Bom_NO(3, "bom_no","bom编号", BusinessNoConstant.BOM),
+    CODE_BH(4, "bh","备货申请单编号", BusinessNoConstant.BH),
+    CODE_GYS(5, "gys","供应商编号", BusinessNoConstant.GYS),
+    CODE_PL(6, "pl","采购申请单编号", BusinessNoConstant.PL),
+    CODE_CGJM(7, "cgjm","采购价目编号", BusinessNoConstant.CGJM),
+    CODE_CGTJ(8, "cgtj","采购价目调价编号", BusinessNoConstant.CGTJ),
+    CODE_PO(9, "po","采购订单", BusinessNoConstant.PO),
+    CODE_POC(10, "poc","采购变更单", BusinessNoConstant.POC),
+    CODE_ZJGZ(11, "zjgz","质检规则单", BusinessNoConstant.ZJGZ),
+    CODE_CGSH(12, "cgsh","采购收货单", BusinessNoConstant.CGSH),
+    CODE_CGRK(13, "cgrk","采购收货单", BusinessNoConstant.CGRK),
+    CODE_CGTH(14, "cgth","采购退货单", BusinessNoConstant.CGTH),
+    CODE_USER(15, "user_no","用户编号", ""),
+    CODE_QC(16, "qc","质检单", BusinessNoConstant.PC),
+    CODE_DEPT(17, "bm","部门编号", BusinessNoConstant.BM),
+    CODE_RKYB(18, "rkyb","入库预报", BusinessNoConstant.RKYB),
+    CODE_DBSQ(19, "dbsq","调拨申请", BusinessNoConstant.DBSQ),
+    CODE_CUST(20, "cust","客户", BusinessNoConstant.CUST),
+    CODE_INIT_STOCK(21, "init_stock","期初库存", BusinessNoConstant.QCKC),
+    CODE_THDD(22, "thdd","销售退货订单", BusinessNoConstant.THDD),
+    CODE_THTZ(23, "thtz","销售退货通知单", BusinessNoConstant.THTZ),
+    CODE_XSD(24, "xsd","销售单", BusinessNoConstant.XSD),
+    CODE_ZJDB(25, "zjdb","直接调拨单",  BusinessNoConstant.ZJDB),
+    CODE_ZZCX(26, "zzcx","加工单", BusinessNoConstant.ZZCX),
+    CODE_THQS(27, "thqs","退货签收单", BusinessNoConstant.THQS),
+    CODE_XSCK(28, "xsck","销售出库单",  BusinessNoConstant.XSCK),
+    CODE_QTRK(29, "qtrk","其他入库单", BusinessNoConstant.QTRK),
+    CODE_QTCK(30, "qtck","其他出库单", BusinessNoConstant.QTCK),
+    CODE_XSBG(31, "xsbg","销售变更单", BusinessNoConstant.XSBG),
+    CODE_FHTZ(32, "fhtz","发货通知单", BusinessNoConstant.FHTZ),
+    CODE_FBDC(33, "fbdc","分步式调拨调出", BusinessNoConstant.FBDC),
+    CODE_FBDR(34, "fbdr","分步式调拨调入", BusinessNoConstant.FBDR),
+    CODE_XSTH(35, "xsth","销售退货入库单", BusinessNoConstant.XSTH),
+    CODE_KHDZ(36, "khdz","客户地址编号", BusinessNoConstant.KHDZ),
+    CODE_KHLXR(37, "khlxr","客户联系人编号", BusinessNoConstant.KHLXR),
+    CODE_SUB(38, "sub","委外订单", BusinessNoConstant.SUB),
+    CODE_SUBCH(39, "subch","委外变更单", BusinessNoConstant.SUBCH),
+    STOCKTAKING_PLAN(40, "pdjh","盘点计划",BusinessNoConstant.PDJH),
+    STOCKTAKING_TASK(41, "pdrw","盘点任务",BusinessNoConstant.PDRW),
+    STOCKTAKING_PROFIT(42, "pyd","盘盈单",BusinessNoConstant.PYD),
+    STOCKTAKING_LOSS(43, "pkd","盘盈单",BusinessNoConstant.PKD),
+    CODE_SO_B2C(44, "xsds","b2c销售订单",BusinessNoConstant.XSDS),
+    CODE_CWYD(45, "cwyd","仓位移动",BusinessNoConstant.CWYD),
+    CODE_KHDZC(46, "khdzc","b2c客户地址编号",BusinessNoConstant.KHDZC),
+    CODE_KHLXRC(47, "khlxrc","b2c客户联系人编号",BusinessNoConstant.KHLXRC),
+    CODE_CUSTC(48, "custc","客户",BusinessNoConstant.CUSTC),
+    CODE_FBAS(49, "fbas","FBA货件",BusinessNoConstant.FBAS),
+    CODE_FHD(50, "fhd","头程发货单",BusinessNoConstant.FHD),
+    CODE_XSDD(51, "xsdd","b2c销售订单(平台)",BusinessNoConstant.XSDD),
+    CODE_FHJH(52, "fhjh","海外仓发货计划",BusinessNoConstant.FHJH),
+    CODE_YHSQ(53, "yhsq","要货申请",BusinessNoConstant.YHSQ),
+    CODE_FHDC(54, "fhdc","b2c发货单",BusinessNoConstant.FHDC),
+    CODE_FHLJ(55, "fhlj","b2c发货拦截单",BusinessNoConstant.FHLJ),
+    CODE_FLD(56, "fld","委外发料单",BusinessNoConstant.FLD),
+    CODE_SHD(57, "shd","送货单",BusinessNoConstant.SHD),
+    CODE_DZD(58, "dzd","对账单",BusinessNoConstant.DZD),
+    CODE_ZZBG(56, "zzbg","中转报关",BusinessNoConstant.ZZBG),
+    CODE_ZB(57, "zb","组包预报",BusinessNoConstant.ZB),
     ;
 
 
@@ -87,19 +90,6 @@ public enum BusinessNoTypeEnum {
     // 补0位数
     public static final Integer FILL_0_DIGIT = 5;
 
-
-    BusinessNoTypeEnum(Integer code, String name, String desc) {
-        this.code = code;
-        this.name = name;
-        this.desc = desc;
-    }
-
-    BusinessNoTypeEnum(Integer code, String name, String desc, String prefix) {
-        this.code = code;
-        this.name = name;
-        this.desc = desc;
-        this.prefix = prefix;
-    }
 
     public void setCode(Integer code) {
         this.code = code;
