@@ -686,7 +686,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 logisticsTrackEntity.setStatus(dto.getLogisticsStatus());
                 logisticsTrackEntity.setTrackNo(logisticsBillEntity.getCounterNo());
                 logisticsTrackEntity.setTrackTime(dto.getTime());
-                logisticsTrackEntity.setContent(dto.getLogisticsTrack());
+                logisticsTrackEntity.setContent(StringUtils.isBlank(dto.getLogisticsTrack())?"":dto.getLogisticsTrack());
                 addTrackList.add(logisticsTrackEntity);
             }
             if(statusEnum == FmLogisticTrackStatusEnum.ORDERED){
