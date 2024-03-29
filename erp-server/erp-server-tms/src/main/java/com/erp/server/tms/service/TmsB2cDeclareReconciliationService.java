@@ -1,9 +1,11 @@
 package com.erp.server.tms.service;
-import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
-import com.common.business.service.SuperService;
+
 import com.common.business.dto.base.*;
-import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
+import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -142,5 +144,12 @@ public interface TmsB2cDeclareReconciliationService extends SuperService<TmsB2cD
     * @return
     */
     Boolean approveEnd(ApproveOneDTO dto, TmsB2cDeclareReconciliationEntity entity);
-
+    /**
+     * @description: 根据id查询
+     * @author Will
+     * @date: 2024/3/29 17:27
+     * @param idList
+     * @return List<TmsB2cDeclareReconciliationEntity>
+     */
+    List<TmsB2cDeclareReconciliationEntity> listEntityByIds(List<String> idList);
 }

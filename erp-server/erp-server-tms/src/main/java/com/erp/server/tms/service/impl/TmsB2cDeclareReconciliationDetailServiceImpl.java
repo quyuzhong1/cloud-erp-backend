@@ -417,7 +417,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
 
         DeclareReconciliationConfigExcelListener excelListenerUtil = new DeclareReconciliationConfigExcelListener();
         try {
-            EasyExcel.read(excelFile.getInputStream(), JSONObject.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -477,8 +477,8 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         List<TmsB2cDeclareReconciliationDetailEntity> oldList = this.listBySoCodeList(soCodeList);
 
         //原对账单信息
-        List<String> mainIdList = oldList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getMainId).collect(Collectors.toList());
-        List<TmsB2cDeclareReconciliationEntity> oldMainList = tmsB2cDeclareReconciliationService.listByIds(mainIdList);
+        List<String> mainIdList = oldList.stream().filter(obj -> StrUtil.isNotBlank(obj.getMainId())).map(TmsB2cDeclareReconciliationDetailEntity::getMainId).collect(Collectors.toList());
+        List<TmsB2cDeclareReconciliationEntity> oldMainList = tmsB2cDeclareReconciliationService.listEntityByIds(mainIdList);
 
         List<TmsB2cDeclareReconciliationDetailDTO.ViewDTO> resultList = new ArrayList<>();
         for (JSONObject jsonObject :  successList) {
