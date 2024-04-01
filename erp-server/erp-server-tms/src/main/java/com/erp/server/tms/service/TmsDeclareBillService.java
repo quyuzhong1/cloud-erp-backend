@@ -7,6 +7,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -49,7 +50,7 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
 
     void export(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response);
 
-    void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response);
+    void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException;
 
     List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto);
 

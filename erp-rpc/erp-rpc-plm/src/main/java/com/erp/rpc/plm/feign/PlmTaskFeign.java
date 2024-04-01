@@ -56,6 +56,9 @@ public interface PlmTaskFeign {
     @PostMapping("feign/product/getSkuByParam")
     ProductDetailDTO getSkuByParam(@RequestBody Map<String, String> params);
 
+    @GetMapping("feign/dict/listDictByType")
+    List<BasicDictEntity> listDictByType(@RequestParam("type") String type);
+
     /**
      * 根据spu的参数查询spu，参数：id、spuNo
      */

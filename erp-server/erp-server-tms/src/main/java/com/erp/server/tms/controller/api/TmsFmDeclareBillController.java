@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -156,7 +157,8 @@ public class TmsFmDeclareBillController extends BaseController {
     @PostMapping("/updateToDeclare")
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程报关单更新状态为已报关")
     public ApiResult<List<BatchResultDTO>> updateToDeclare(@RequestBody @Validated TmsDeclareBillDTO.UpdateDeclareStatusDTO dto) {
-        return success(tmsDeclareBillService.updateToDeclare(dto));
+        List<BatchResultDTO> resultDTOList = tmsDeclareBillService.updateToDeclare(dto);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
@@ -168,7 +170,8 @@ public class TmsFmDeclareBillController extends BaseController {
     @PostMapping("/cancelDeclare")
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程报关单更新状态为取消报关")
     public ApiResult<List<BatchResultDTO>> cancelDeclare(@RequestBody @Validated TmsDeclareBillDTO.UpdateDeclareStatusDTO dto) {
-        return success(tmsDeclareBillService.cancelDeclare(dto));
+        List<BatchResultDTO> resultDTOList = tmsDeclareBillService.cancelDeclare(dto);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
@@ -192,7 +195,8 @@ public class TmsFmDeclareBillController extends BaseController {
     @PostMapping("/cancelMerge")
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程报关单取消合并")
     public ApiResult<List<BatchResultDTO>> cancelMerge(@RequestBody @Validated TmsDeclareBillDTO.MergeDeclareDTO dto) {
-        return success(tmsDeclareBillService.cancelMerge(dto));
+        List<BatchResultDTO> resultDTOList = tmsDeclareBillService.cancelMerge(dto);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
@@ -204,7 +208,8 @@ public class TmsFmDeclareBillController extends BaseController {
     @PostMapping("/delete")
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程报关单删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated TmsDeclareBillDTO.DeleteDTO dto) {
-        return success(tmsDeclareBillService.delete(dto));
+        List<BatchResultDTO> resultDTOList = tmsDeclareBillService.delete(dto);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
 
@@ -226,7 +231,8 @@ public class TmsFmDeclareBillController extends BaseController {
     @PostMapping("/exportDeclare")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程报关单报关信息")
     @WebAdvanceQuery
-    public ApiResult exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
+    public ApiResult exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
+        pagingParamDTO.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
         tmsDeclareBillService.exportDeclare(pagingParamDTO,response);
         return success();
     }

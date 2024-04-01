@@ -92,6 +92,7 @@
         where
             ${params.sqlMap.default}
           and db.is_deleted = false
+        and db.type = #{params.type}
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -128,6 +129,52 @@
         </if>
         group by EXTRACT(month FROM db.declare_date), EXTRACT(year FROM db.declare_date)
         order by  EXTRACT(year FROM db.declare_date), EXTRACT(month FROM db.declare_date)
+    </select>
+    <select id="exportDeclare" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$ExportDTO">
+        select
+            db.id,
+            db.source_code as   sourceCode,
+            db.pre_input_no as  preInputNo,
+            db.dest_customs as  destCustoms,
+            db.sender_id as   senderId,
+            db.export_customs_name as   exportCustomsName,
+            db.export_date as   exportDate,
+            db.declare_date as   declareDate,
+            db.receiver_name as    receiverName,
+            db.transport_no as     transportNo,
+            db.dict_supervision_method as   dictSupervisionMethod,
+            db.dict_nature_levy as      dictNatureLevy,
+            db.license_no as        licenseNo,
+            db.code,
+            db.trading_area as       tradingArea,
+            db.to_area as            toArea,
+            db.to_port as             toPort,
+            db.export_port as         exportPort,
+            db.dict_pack_type as        dictPackType,
+            db.box_qty as              boxQty,
+            db.gross_weight as         grossWeight,
+            db.net_weight as           netWeight,
+            db.dict_transaction_method as dict_transaction_method,
+            db.remark,
+            db.shipping_fee as          shippingFee,
+            db.insurance_fee as          insuranceFee,
+            db.other_fee as             otherFee,
+            db.country_name as countryName
+        from tms_declare_bill db
+        where   ${params.sqlMap.default}
+          and db.is_deleted = false
+          and db.type = #{params.type}
+        and db.declare_status in
+        <foreach collection="params.exportDeclareStatus" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        db.create_time DESC
     </select>
 
 

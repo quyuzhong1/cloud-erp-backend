@@ -289,6 +289,17 @@ public interface SysUserFeign {
     SysAccountingCompanyEntity getCompanyById(@RequestBody String id);
 
     /**
+     * 根据主键id查询组织信息
+     *
+     * @param id id:组织id
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
+     * @Author Luo_WG
+     * @Date 2023/4/13 12:19
+     **/
+    @PostMapping("feign/accountingCompany/listCompanyById")
+    List<SysAccountingCompanyEntity> listCompanyById(@RequestBody List<String> id);
+
+    /**
      * 根据用户Id获取部门
      *
      * @param userId userId

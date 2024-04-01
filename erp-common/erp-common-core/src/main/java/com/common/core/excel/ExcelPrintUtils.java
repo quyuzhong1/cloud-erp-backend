@@ -15,6 +15,7 @@ import com.alibaba.excel.write.metadata.fill.FillWrapper;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.metadata.style.WriteFont;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
+import com.common.core.dto.ExcelData;
 import com.common.core.listener.EasyExcelListener;
 import com.common.core.utils.IdUtils;
 import com.common.core.utils.R;
@@ -46,6 +47,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * 导出Excel 模板
@@ -795,6 +798,53 @@ public class ExcelPrintUtils {
 		}
 	}
 
+	public static void exportZipStream(List<ExcelData> excelDataList, HttpServletResponse response, String excelPath,String zipName) {
+		try {
+			// 开始存入
+			OutputStream outputStream = ExcelPrintUtils.getZipOutputStream(zipName, response);
+			try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
+				try {
+					for (ExcelData excelData : excelDataList) {
+						ClassPathResource classPathResource = new ClassPathResource(excelPath);
+						InputStream inputStream = classPathResource.getInputStream();
+						ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+						ExcelWriter excelWriter = EasyExcel.write(byteArrayOutputStream).withTemplate(inputStream).registerWriteHandler(new ExcelFillCellMergeStrategy()).build();
+						// LocalDate转化器，导入导出都可以使用
+						LocalDateTimeConverter converter = new LocalDateTimeConverter();
+						excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey()), converter);
+						excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey(), converter.supportExcelTypeKey()), converter);
+
+						// LocalDateTime转化器，导入导出都可以使用
+						EasyExcelLocalTimeConverter localDateTimeDateConverter = new EasyExcelLocalTimeConverter();
+						excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey()), localDateTimeDateConverter);
+						excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey(), localDateTimeDateConverter.supportExcelTypeKey()), localDateTimeDateConverter);
+						// LocalDate转化器，导入导出都可以使用
+						EasyExcelLocalDateConverter localDateConverter = new EasyExcelLocalDateConverter();
+						excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey()), localDateConverter);
+						excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey(), localDateConverter.supportExcelTypeKey()), localDateConverter);
+
+						WriteSheet writeSheet = EasyExcel.writerSheet().build();
+						FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
+						//列表数据
+						excelWriter.fill(excelData.getDetailList(), fillConfig , writeSheet);
+
+						if (excelData.getData() != null) {
+							excelWriter.fill(excelData.getData() , writeSheet);
+						}
+						excelWriter.finish();
+						zipOut.putNextEntry(new ZipEntry(excelData.getFilename()));
+						zipOut.write(byteArrayOutputStream.toByteArray());
+						zipOut.closeEntry();
+					}
+				} catch (Exception e) {
+					throw new RuntimeException("导出Excel异常", e);
+				}
+			}
+		} catch (Exception e) {
+			throw new RuntimeException("导出Excel异常", e);
+		}
+	}
+
 	/**
 	 * 方法说明
 	 * @author yl
@@ -816,7 +866,7 @@ public class ExcelPrintUtils {
 			getOutputStream(fileName, response);
 			out = response.getOutputStream();
 			bos = new BufferedOutputStream(out);
-			ExcelWriter excelWriter = EasyExcel.write(bos).withTemplate(inputStream).build();
+			ExcelWriter excelWriter = EasyExcel.write(bos).withTemplate(inputStream).registerWriteHandler(new ExcelFillCellMergeStrategy()).build();
 			// LocalDate转化器，导入导出都可以使用
 			LocalDateTimeConverter converter = new LocalDateTimeConverter();
 			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey()), converter);
@@ -840,7 +890,6 @@ public class ExcelPrintUtils {
 				excelWriter.fill(obj , writeSheet);
 			}
 			excelWriter.finish();
-
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.info("导出模板数据异常！");
@@ -943,7 +992,18 @@ public class ExcelPrintUtils {
 //        response.setHeader("Content-disposition", "attachment; filename=" + new String(excelFileName.getBytes("UTF-8"), "ISO-8859-1"));
 		return response.getOutputStream();
 	}
-
+	public static OutputStream getZipOutputStream(String fileName, HttpServletResponse response) throws Exception {
+		// 这里文件名如果涉及中文一定要使用URL编码,否则会乱码
+		String exportFileName = URLEncoder.encode(fileName+ ".zip", StandardCharsets.UTF_8.toString());
+		//response.setContentType("application/force-download");
+		response.setHeader("Content-Disposition", "attachment;filename=" + exportFileName);
+		//response.setContentType("application/json;charset=utf-8");
+		response.setContentType("application/octet-stream");
+		//导出的文件名
+//        String excelFileName = URLEncoder.encode(fileName, "utf-8");
+//        response.setHeader("Content-disposition", "attachment; filename=" + new String(excelFileName.getBytes("UTF-8"), "ISO-8859-1"));
+		return response.getOutputStream();
+	}
 	/**
 	 * 动态获取全部列和数据体
 	 */
@@ -1001,6 +1061,5 @@ public class ExcelPrintUtils {
 		}
 		return dataList;
 	}
-
 
 }

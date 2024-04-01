@@ -6,6 +6,7 @@ import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.excel.EasyExcelListConverter;
+import jnr.ffi.annotations.In;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -333,6 +334,284 @@ public class TmsDeclareBillDTO implements Serializable {
         private String id;
         private String sourceCode;
     }
+
+    /**
+     * 报关单导出
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        private String sourceCode;
+
+        /**
+         * 预录入编号
+         */
+        private String preInputNo;
+
+        /**
+         * 申报地海关
+         */
+        private String destCustoms;
+        /**
+         * 发货人id
+         */
+        private String senderId;
+
+        /**
+         * 发货人名称
+         */
+        private String senderName;
+        /**
+         * 出境关别
+         */
+        private String exportCustomsName;
+        /**
+         * 出口日期
+         */
+        private LocalDate exportDate;
+
+        /**
+         * 报关日期
+         */
+        private LocalDate declareDate;
+
+        /**
+         * 收货人名称
+         */
+        private String receiverName;
+
+        /**
+         * 运输方式
+         */
+        private String shippingMethod;
+
+        /**
+         * 运输方式名称
+         */
+        private String shippingMethodName;
+
+        /**
+         * 提运单号
+         */
+        private String transportNo;
+
+        /**
+         * 监管方式
+         */
+        private String dictSupervisionMethod;
+
+        /**
+         * 监管方式名称 tms/drop/down/dict/list?key=declareSupervisionMethod
+         */
+        private String dictSupervisionMethodName;
+
+        /**
+         * 征免性质
+         */
+        private String dictNatureLevy;
+
+        /**
+         * 征免性质名称 tms/drop/down/dict/list?key=declareNatureLevy
+         */
+        private String dictNatureLevyName;
+
+        /**
+         * 许可证号
+         */
+        private String licenseNo;
+
+        /**
+         * 合同协议号
+         */
+        private String code;
+
+        /**
+         * 贸易国
+         */
+        private String tradingArea;
+
+        /**
+         * 运抵区
+         */
+        private String toArea;
+
+        /**
+         * 运抵港
+         */
+        private String toPort;
+
+        /**
+         * 出境口岸
+         */
+        private String exportPort;
+
+        /**
+         * 包装种类
+         */
+        private String dictPackType;
+
+        /**
+         * 包装种类名称 tms/drop/down/dict/list?key=declarePackType
+         */
+        private String dictPackTypeName;
+
+        /**
+         * 总箱数
+         */
+        private Integer boxQty;
+
+        /**
+         * 毛重
+         */
+        private BigDecimal grossWeight;
+
+        /**
+         * 净重
+         */
+        private BigDecimal netWeight;
+
+        /**
+         * 成交方式
+         */
+        private String dictTransactionMethod;
+
+        /**
+         * 成交方式名称  tms/drop/down/dict/list?key=declareTransactionMethod
+         */
+        private String dictTransactionMethodName;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 运费
+         */
+        private BigDecimal shippingFee;
+
+        /**
+         * 保费
+         */
+        private BigDecimal insuranceFee;
+
+        /**
+         * 杂费
+         */
+        private BigDecimal otherFee;
+
+        /**
+         * 数量
+         */
+        private Integer totalQty;
+
+        /**
+         * 总价
+         */
+        private BigDecimal totalPrice;
+
+        private String countryName;
+
+        /**
+         * 产品明细
+         */
+        private List<ExportProductDetail> productDetailList;
+    }
+
+    /**
+     * 导出产品信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportProductDetail {
+
+        private String mainId;
+
+        private Integer rowNum;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * 中国海关编码(商品编号)
+         */
+        private String customsCode;
+        /**
+         * 报关中文名（商品名称）
+         */
+        private String declareChineseName;
+        /**
+         * 申报要素
+         */
+        private String declareElement;
+        /**
+         * 报关单位
+         */
+        private String declareUnit;
+
+        /**
+         * 报关单位名称
+         */
+        private String declareUnitName;
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 总价
+         */
+        private BigDecimal totalPrice;
+
+        /**
+         * 报关币别
+         */
+        private String declareCurrency;
+
+        /**
+         * 报关币别名称
+         */
+        private String declareCurrencyName;
+
+        /**
+         * 原产国
+         */
+        private String sourceCountry;
+        /**
+         * 原产国名称
+         */
+        private String sourceCountryName;
+
+        /**
+         * 最终目的国（地区）
+         */
+        private String toCountry;
+
+        /**
+         * 最终目的国（地区）名称
+         */
+        private String toCountryName;
+        /**
+         * 境内货源地
+         */
+        private String sourceCargo;
+        /**
+         * 征免
+         */
+        private String exemption;
+    }
+
     /**
      * 分页
      */
@@ -585,6 +864,11 @@ public class TmsDeclareBillDTO implements Serializable {
          * 类型，后端处理，前端不用管
          */
         private String type;
+
+        /**
+         * 导出时的报关状态
+         */
+        private List<String> exportDeclareStatus;
     }
 
     /**
