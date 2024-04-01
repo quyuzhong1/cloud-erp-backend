@@ -914,7 +914,7 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          * 业务code（发货单code或销售出库单code）
          */
-        private String sourceCode;
+        private List<String> sourceCodeList;
 
         /**
          * 预录入编号

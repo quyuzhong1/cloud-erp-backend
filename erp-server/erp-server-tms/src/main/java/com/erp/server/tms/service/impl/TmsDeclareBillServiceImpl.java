@@ -334,15 +334,33 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         TmsDeclareBillEntity entity = this.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "头程报关单"));
         TmsDeclareBillDTO.ViewDTO viewDTO = BeanUtil.copyProperties(entity,TmsDeclareBillDTO.ViewDTO.class);
+        List<String> list = Arrays.asList(entity.getMergeSourceId().split(","));
+        List<String> sourceCodeList = new ArrayList<>();
+        List<String> sourceIdList = new ArrayList<>();
+        sourceCodeList.add(entity.getSourceCode());
+        sourceIdList.add(entity.getSourceId());
+        if(CollectionUtils.isNotEmpty(list)){
+            List<TmsDeclareBillEntity> entityList = this.listByIds(list);
+            sourceCodeList.addAll(entityList.stream().map(TmsDeclareBillEntity::getSourceCode).collect(Collectors.toList()));
+            sourceIdList.addAll(entityList.stream().map(TmsDeclareBillEntity::getSourceId).collect(Collectors.toList()));
+        }
+        sourceIdList = sourceIdList.stream().distinct().collect(Collectors.toList());
+        sourceCodeList = sourceCodeList.stream().distinct().collect(Collectors.toList());
+        viewDTO.setSourceCodeList(sourceCodeList);
         List<TmsDeclareBillDetailEntity> detailEntityList = detailService.listByMainIds(Arrays.asList(entity.getId()));
         List<TmsDeclareBillDTO.ProductDetail> productDetailList = BeanUtil.copyToList(detailEntityList,TmsDeclareBillDTO.ProductDetail.class);
         productDetailList.forEach(v->v.setTotalPrice(v.getPrice().multiply(new BigDecimal(v.getQty()))));
         viewDTO.setProductDetailList(productDetailList);
-        List<TmsDeclareBillDTO.DeliveryDTO> deliveryDTOList = this.getCanGenerateDeliveryOrder(TmsDeclareBillDTO.QuerySourceDTO.builder().ids(Arrays.asList(entity.getSourceId())).build());
+        List<TmsDeclareBillDTO.DeliveryDTO> deliveryDTOList = this.getCanGenerateDeliveryOrder(TmsDeclareBillDTO.QuerySourceDTO.builder().ids(sourceIdList).build());
         if(CollectionUtils.isEmpty(deliveryDTOList)){
             throw new ServiceException("未找到发货单信息");
         }
         TmsDeclareBillDTO.DeliveryDTO deliveryDTO = deliveryDTOList.get(0);
+        List<TmsDeclareBillDTO.PackingDTO> allPackDTOList = deliveryDTOList.stream()
+                .filter(v -> CollectionUtils.isNotEmpty(v.getPackingDTOList()))
+                .flatMap(v -> v.getPackingDTOList().stream())
+                .collect(Collectors.toList());
+        deliveryDTO.setPackingDTOList(allPackDTOList);
         BeanUtil.copyProperties(deliveryDTO,viewDTO, CopyOptions.create().setOverride(false));
         fillViewDTO(viewDTO);
         return viewDTO;
