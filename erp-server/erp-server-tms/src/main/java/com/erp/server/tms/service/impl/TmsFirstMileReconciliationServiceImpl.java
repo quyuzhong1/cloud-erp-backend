@@ -531,7 +531,9 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                         e.getCode(),
                         e.getStartDate(),
                         e.getEndDate(),
-                        StrUtil.format("{}-{}", e.getStartDate(), e.getEndDate())
+                        StrUtil.format("{}-{}", e.getStartDate(), e.getEndDate()),
+                        e.getLogisticsSupplierId(),
+                        e.getLogisticsSupplierName()
                 )).collect(Collectors.toList());
 
     }

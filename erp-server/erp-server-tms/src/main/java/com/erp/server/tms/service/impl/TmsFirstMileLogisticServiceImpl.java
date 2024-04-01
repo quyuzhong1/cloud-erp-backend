@@ -906,7 +906,27 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     public List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> waitSubmitReconciliation(BaseIdsDTO.IdsDTO dto) {
-        return tmsFirstMileReconciliationService.listByApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> list = tmsFirstMileReconciliationService.listByApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        if (CollectionUtils.isEmpty(list)){
+            return list;
+        }
+        // 校验物理商是否一致
+        List<LogisticsBillEntity> entityList = this.listByIds(dto.getIds());
+        if (CollectionUtils.isEmpty(entityList)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "头程物流单");
+        }
+        List<String> logisticsSupperIds = entityList.stream()
+                .map(LogisticsBillEntity::getLogisticsSupplierId)
+                .distinct()
+                .collect(Collectors.toList());
+        if (logisticsSupperIds.size() > 1){
+            throw new ServiceException("物流单的物流商不一致");
+        }
+        // 显示对应物流商对账单
+        return list.stream()
+                .filter(e->logisticsSupperIds.contains(e.getLogisticsSupplierId()))
+                .collect(Collectors.toList());
+
     }
 
     @Override

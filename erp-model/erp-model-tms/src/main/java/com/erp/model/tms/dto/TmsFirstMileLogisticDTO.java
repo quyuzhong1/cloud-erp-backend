@@ -1479,6 +1479,15 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * 对账周期
          */
         private String cycle;
+
+        /**
+         * 物流商Id
+         */
+        private String logisticsSupplierId;
+        /**
+         * 物流商名称
+         */
+        private String logisticsSupplierName;
     }
 
 }
