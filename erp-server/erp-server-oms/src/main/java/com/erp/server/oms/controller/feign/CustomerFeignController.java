@@ -78,8 +78,8 @@ public class CustomerFeignController {
         return customerInfoService.quoteCustomer(ids);
     }
 
-    @PostMapping("/ListCustomerAddressByIds")
-    List<CustomerAddressEntity> ListCustomerAddressByIds(@RequestBody List<String> ids) {
+    @PostMapping("/listCustomerAddressByIds")
+    public List<CustomerAddressEntity> ListCustomerAddressByIds(@RequestBody List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return new ArrayList<>();
         }
@@ -87,11 +87,23 @@ public class CustomerFeignController {
     }
 
     @PostMapping("/listCustomerByIds")
-    List<CustomerInfoEntity> listCustomerByIds(@RequestBody List<String> ids) {
+    public List<CustomerInfoEntity> listCustomerByIds(@RequestBody List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return new ArrayList<>();
         }
         return customerInfoService.listByIds(ids);
+    }
+
+    /**
+     * 根据客户id查询店铺负责人和部门
+     * @Author Luo_WG
+     * @Date 2024/4/1 15:17
+     * @param codeList
+     * @return java.util.List<com.erp.model.oms.entity.CustomerInfoEntity>
+     **/
+    @PostMapping("/listSellerUserDepByCodes")
+    public List<CustomerDTO.SellerUserDeptDTO> listSellerUserDepByCodes(@RequestBody List<String> codeList) {
+        return customerInfoService.listSellerUserDepByCodes(codeList);
     }
 
     /**
