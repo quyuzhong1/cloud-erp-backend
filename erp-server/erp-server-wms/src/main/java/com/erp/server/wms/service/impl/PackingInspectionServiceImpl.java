@@ -1,20 +1,21 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.wms.dto.PackingInspectionDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.PackingInspectionOperationEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.convert.PackingInspectConverter;
 import com.erp.server.wms.service.*;
 import io.seata.common.util.CollectionUtils;
@@ -29,7 +30,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author liuruipeng
@@ -63,6 +63,9 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
     @Resource
     private CommonService commonService;
 
+    @Resource
+    private TransferDeclareFeign transferDeclareFeign;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public PackingInspectionDTO.ViewDTO scan(PackingInspectionDTO.ScanDTO dto) {
@@ -73,6 +76,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         if(Objects.isNull(entity)){
             throw new ServiceException("查询不到发货单，请确认扫描单号");
         }
+
         //因为明细只保存父级SKU，所以如果有组合品没办法直接更新明细，将明细sku拆分放到redis，扫描时操作redis的值，在最后全部扫描完成统一更新数据库
         PackingInspectionDTO.ViewDTO viewDTO = this.getViewDTO(entity.getId());
         //redis没有值，说明可能是开始扫描，或者过期
@@ -84,61 +88,12 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             //组合产品，按最新BOM拆分为子产品和销售数量显示
             //根据SKU查询BOM判断是否是组合SKU
             List<String> skuIdList = detailEntityList.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-//            List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
-//            //可能有多条，取最新bom版本
-//            Map<String, List<BomChildrenSkuDTO>> bomChildrenSkuDTOMap = bomChildrenList.stream()
-//                    .collect(Collectors.toMap(
-//                            BomChildrenSkuDTO::getParentSkuId,
-//                            // 如果有相同的parentSkuId，合并数据
-//                            Collections::singletonList,
-//                            // 合并函数，选择bomVersion最大的数据
-//                            (list1, list2) -> {
-//                                int maxVersion = Math.max(
-//                                        Integer.parseInt(list1.get(0).getBomVersion()),
-//                                        Integer.parseInt(list2.get(0).getBomVersion())
-//                                );
-//                                return Stream.of(list1, list2)
-//                                        .flatMap(Collection::stream)
-//                                        .filter(v -> Integer.parseInt(v.getBomVersion()) == maxVersion)
-//                                        .collect(Collectors.toList());
-//                            },
-//                            // 使用LinkedHashMap保持顺序
-//                            LinkedHashMap::new
-//                    ));
-
-//            List<BomChildrenSkuDTO> distinctBomChildrenSkuList = bomChildrenSkuDTOMap.values().stream().flatMap(List::stream).collect(Collectors.toList());
-//            //去掉组合SKU
-//            skuIdList = skuIdList.stream().filter(v->!bomChildrenSkuDTOMap.containsKey(v)).collect(Collectors.toList());
-            //增加子件SKU 现在skuIdList 里面是单品SKU+组合SKU的子件
-//            skuIdList.addAll(distinctBomChildrenSkuList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList()));
             //查询sku基础信息
             List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
             Map<String,SkuVO> skuVOMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId,Function.identity()));
-            //组合的SKU明细
-//            Map<String,SoB2cDeliveryDetailEntity> combineSkuDetailMap = detailEntityList.stream().filter(v->bomChildrenSkuDTOMap.containsKey(v.getSkuId())).collect(Collectors.toMap(SoB2cDeliveryDetailEntity::getSkuId,Function.identity()));
-//            //单品SKU明细
-//            List<SoB2cDeliveryDetailEntity> singleSkuDetailList = detailEntityList.stream().filter(v->!bomChildrenSkuDTOMap.containsKey(v.getSkuId())).collect(Collectors.toList());
             PackingInspectionDTO.ViewDTO addViewDTO;
-            //新增主记录和单品SKU view
-//            addViewDTO = PackingInspectConverter.INSTANCE.convertViewDTO(entity,singleSkuDetailList);
             addViewDTO = PackingInspectConverter.INSTANCE.convertViewDTO(entity,detailEntityList);
             addViewDTO.setScannedSkuList(new ArrayList<>());
-            //添加组合SKU的子件
-//            PackingInspectionDTO.ViewDTO finalAddViewDTO = addViewDTO;
-//            combineSkuDetailMap.forEach((key, value)->{
-//                List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomChildrenSkuDTOMap.get(key);
-//                for(BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS){
-//                    PackingInspectionDTO.ViewDTO.ScanSkuInfo scanSkuInfo = PackingInspectionDTO.ViewDTO.ScanSkuInfo.builder()
-//                            .skuId(bomChildrenSkuDTO.getSkuId())
-//                            .skuNo(bomChildrenSkuDTO.getSkuNo())
-//                            .warehouseLocation(value.getWarehouseLocation())
-//                            .waitScanQty(value.getWaitScanQty() * bomChildrenSkuDTO.getQuantity())
-//                            .scannedQty((value.getDeliveryQty() - value.getWaitScanQty())* bomChildrenSkuDTO.getQuantity())
-//                            .saleQty(value.getDeliveryQty()* bomChildrenSkuDTO.getQuantity())
-//                            .build();
-//                    finalAddViewDTO.getWaitScanSkuList().add(scanSkuInfo);
-//                }
-//            });
             //设置sku信息
             for (PackingInspectionDTO.ViewDTO.ScanSkuInfo scanSkuInfo: addViewDTO.getWaitScanSkuList()){
                 SkuVO skuVO = skuVOMap.get(scanSkuInfo.getSkuId());
@@ -219,16 +174,12 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             String msg = StrUtil.format("用户【{}】更新【{}】单据单号为【{}】包装验货完成", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
         }
-//        if(dto.getIsAutoDelivery() && entity.getIsInspection()){
-//            //将发货状态更新为已发货
-//            entity.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-//            if (!soB2cDeliveryService.updateById(entity)) {
-//                throw new ServiceException("发货单更新失败");
-//            }
-//            soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()),SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-//            soB2cDeliveryService.generateB2cSoOutstock(entity);
-//
-//        }
+        TransferDeclareDetailEntity declareDetailEntity = transferDeclareFeign.getBySoId(entity.getSourceId());
+        if (ObjectUtil.isNotEmpty(declareDetailEntity)) {
+            viewDTO.setOrderUploadStatus(declareDetailEntity.getOrderUploadStatus());
+            viewDTO.setTransferStatus(declareDetailEntity.getTransferStatus());
+        }
+
         this.saveViewDTO(entity.getId(),viewDTO);
         return viewDTO;
     }

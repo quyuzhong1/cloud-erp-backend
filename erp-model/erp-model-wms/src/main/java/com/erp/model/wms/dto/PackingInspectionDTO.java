@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
@@ -87,6 +86,18 @@ public class PackingInspectionDTO implements Serializable {
          * sku总数量
          */
         private Integer skuTotalQty;
+
+        /**
+         * 中转状态 dict_basic：type=transferStatus
+         * enum :TransferLogisticsStatusEnum,deleted删除,draft草稿,unusual异常,confirmed已确认,submitted已提交,outstock已出货,signed已签收
+         */
+        private String transferStatus;
+
+        /**
+         * 上传状态（订单）dict_basic：type=transferDeclareUploadStatus
+         * enum:TransferDeclareUploadStatusEnum,waitUpload待上传,uploadFailure上传失败,uploadSuccess上传成功
+         */
+        private String orderUploadStatus;
 
         private List<ScanSkuInfo> waitScanSkuList;
 
