@@ -28,19 +28,19 @@ public class TmsB2cDeclareReconciliationQueryHandler extends AbstractQueryHandle
     public String getTabSql (Object value) {
         // 待提交
         if (ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(value)) {
-            super.buildDefaultDTO("si.approve_status", Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
+            super.buildDefaultDTO("tbdr.approve_status", Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
         }
         // 待审核
         if (ApproveStatusEnum.APPROVE_ING.getCode().equals(value)) {
-            super.buildDefaultDTO("si.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+            super.buildDefaultDTO("tbdr.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
         }
         // 已审核
         if (ApproveStatusEnum.APPROVE.getCode().equals(value)) {
-            super.buildDefaultDTO("si.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+            super.buildDefaultDTO("tbdr.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
         }
         //不通过
         if (ApproveStatusEnum.REJECT.getCode().equals(value)) {
-            super.buildDefaultDTO("si.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
+            super.buildDefaultDTO("tbdr.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
         }
         return super.getSplicingSQL();
     }
