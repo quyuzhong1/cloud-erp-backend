@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationImportEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -79,7 +80,7 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private String sourceType;
 
         /**
-         * 来源编码(物流单号)
+         * 来源编码(物流单号对应sourceCode)
          */
         private String sourceCode;
 
@@ -114,9 +115,19 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private String fromCountry;
 
         /**
-         * 发货国家代号
+         * 发货国家
+         */
+        private String fromCountryName;
+
+        /**
+         * 到货国家代号
          */
         private String toCountry;
+
+        /**
+         * 到货国家
+         */
+        private String toCountryName;
 
         /**
          * 签收日期
@@ -142,6 +153,11 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 计费方式名称
          */
         private String billingMethodName;
+
+        /**
+         * 渠道商ID
+         */
+        private String logisticsChannelId;
 
         /**
          * 类型(对账类型)
@@ -209,6 +225,11 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private String status;
 
         /**
+         * 对账状态名称
+         */
+        private String statusName;
+
+        /**
          * 确认时间
          */
         private LocalDate confirmDate;
@@ -232,6 +253,32 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 创建人ID
          */
         private String createUserId;
+
+        /**
+         * 费用列表
+         */
+        private List<CostInfoDTO> costList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CostInfoDTO {
+
+        /**
+         * 费用配置id
+         */
+        private String id;
+
+        /**
+         * 费用名称
+         */
+        private String costName;
+
+        /**
+         * 费用值
+         */
+        private BigDecimal costValue;
     }
 
     /**

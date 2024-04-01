@@ -421,7 +421,6 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
         /**
          * 审核不通过原因
          */
-        @NotBlank(message = "审核不通过原因不能为空")
         @Size(max = 255, message = "审核不通过原因最大长度不能超过255位")
         private String reason;
 

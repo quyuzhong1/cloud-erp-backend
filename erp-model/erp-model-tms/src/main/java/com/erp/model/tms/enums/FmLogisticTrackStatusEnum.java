@@ -86,4 +86,15 @@ public enum FmLogisticTrackStatusEnum implements EnumMessage {
                 .findFirst()
                 .orElse(null);
     }
+
+    /**
+     * 通过code查询
+     * 枚举
+     */
+    public static FmLogisticTrackStatusEnum getNameByCode(String code) {
+        return Stream.of(FmLogisticTrackStatusEnum.values())
+                .filter(e -> e.getCode().equalsIgnoreCase(code))
+                .findFirst()
+                .orElse(null);
+    }
 }

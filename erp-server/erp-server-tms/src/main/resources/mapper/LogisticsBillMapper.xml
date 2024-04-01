@@ -592,28 +592,29 @@
     <select id="waitReconciliationPaging"
             resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO$ListDTO">
         SELECT
-               lb.shop_id as  shopId,
+               lb.shop_id as shopId,
                lb.shop_name as shopName,
-               lb.source_code as relationCode,
+               lb.source_code as sourceCode,
                lb.source_id as relationId,
                lb.id as sourceId,
-               lbc.transport_no as businessNo,
+               lbc.transport_no as relationCode,
                lb.outstock_id as outstockId,
-               lb.outstock_code as outstockCode,
-               lbd.track_status as logisticsStatus,
+               lb.outstock_code as businessCode,
+               lbd.track_status as transportStatus,
                lbc.reconciliation_status as reconciliationStatus,
                lb.shipping_method as shippingMethod,
                lb.channel_id as logisticsChannelId,
                lb.logistics_supplier_id as logisticsSupplierId,
-               lb.to_country as country,
+               lb.to_country as toCountry,
                lbc.logistics_bill_id as logisticBillId,
-               lbc.actual_weight as weight,
+               lbc.actual_weight as actualWeight,
                lbc.volume_weight as volumeWeight,
-               lbc.weight_unit as weightUnit,
+               lbc.billing_weight_logistics as billingWeight,
+               lbc.weight_unit as actualWeightUnit,
                lbc.currency as  currency,
                lb.order_time as orderTime,
                lbd.track_no as trackNo,
-               lbd.sign_time as signTime
+               lbd.sign_time as receiveDate
         from
             logistics_bill lb
                 inner join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id

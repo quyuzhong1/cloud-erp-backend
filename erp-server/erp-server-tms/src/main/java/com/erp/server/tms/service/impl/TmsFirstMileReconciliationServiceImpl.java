@@ -23,6 +23,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
@@ -32,6 +33,7 @@ import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
+import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -358,7 +360,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        // TODO 撤销流程
+        //撤销流程
         log.info("撤销 开始撤销流程，id：【{}】", id);
 
         log.info("撤销 开始修改头程对账单状态，id：【{}】", id);
@@ -367,12 +369,12 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "头程对账单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
+        // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        // 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
+        revokeDTO.setBusinessKey(ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode());
         revokeDTO.setUserId(commonService.getUserInfo().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -462,11 +464,15 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         //国家信息
         List<String> countryIdList = viewDTOList.stream()
                 .flatMap(route -> Stream.of(route.getFromCountry(), route.getToCountry()))
+                .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
-        Map<String, String> countryMap = sysDictFeign.listCountryByIds(countryIdList)
-                .stream()
-                .collect(Collectors.toMap(BaseEntity::getId, DictCountryEntity::getNameCn));
+        Map<String, String> countryMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(countryIdList)){
+            countryMap = sysDictFeign.listCountryByIds(countryIdList)
+                    .stream()
+                    .collect(Collectors.toMap(BaseEntity::getId, DictCountryEntity::getNameCn));
+        }
 
         //币别信息
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Collections.singletonList(data.getCurrency()));
@@ -477,10 +483,14 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
             //国家名称
             viewDTO.setFromCountry(countryMap.getOrDefault(viewDTO.getFromCountry(), ""));
             viewDTO.setToCountry(countryMap.getOrDefault(viewDTO.getToCountry(), ""));
-
             viewDTO.setType(DetailReconciliationTypeEnum.getNameByCode(viewDTO.getType()));
 
-            viewDTO.setTransportStatusName("");
+            // 运输状态
+            FmLogisticTrackStatusEnum statusEnum = FmLogisticTrackStatusEnum.getNameByCode(viewDTO.getTransportStatus());
+            viewDTO.setTransportStatusName(null == statusEnum ? "" : statusEnum.getName());
+
+            // 对账状态
+            viewDTO.setStatusName(TmsB2cDeclareReconciliationStatusEnum.getName(viewDTO.getStatus()));
         }
         data.setDetailList(viewDTOList);
 
