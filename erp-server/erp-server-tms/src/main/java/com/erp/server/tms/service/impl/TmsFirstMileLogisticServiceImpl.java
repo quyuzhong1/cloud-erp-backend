@@ -676,28 +676,44 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"明细为空"));
                 continue;
             }
+
+            if(statusEnum == FmLogisticTrackStatusEnum.ORDERED && StringUtils.isBlank(logisticsBillEntity.getChannelId())){
+                batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"尚未填写渠道信息，请填写后更新"));
+                continue;
+            }
+
+            if(statusEnum == FmLogisticTrackStatusEnum.SIGN && StringUtils.isBlank(logisticsBillEntity.getTransportNo())){
+                batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"尚未物流跟踪号，请填写后更新"));
+                continue;
+            }
+            FmLogisticTrackStatusEnum nowStatusEnum = EnumMessage.getByCode(FmLogisticTrackStatusEnum.class,(detailEntityList.get(0).getTrackStatus()));
+            if(FmLogisticTrackStatusEnum.WAIT_ORDER == nowStatusEnum && FmLogisticTrackStatusEnum.ORDERED != statusEnum){
+                batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"待下单状态只能更新为已下单"));
+                continue;
+            }
+
+            if(FmLogisticTrackStatusEnum.WAIT_ORDER != nowStatusEnum && FmLogisticTrackStatusEnum.WAIT_ORDER == statusEnum){
+                batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),StrUtil.format("{}状态不能更新为待下单",Objects.isNull(nowStatusEnum)?"":nowStatusEnum.getCode())));
+                continue;
+            }
+
             detailEntityList.forEach(v->{
                 v.setTrackStatus(dto.getLogisticsStatus());
             });
             updateDetailList.addAll(detailEntityList);
 
-            if(statusEnum != FmLogisticTrackStatusEnum.WAIT_ORDER){
-                LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
-                logisticsTrackEntity.setStatus(dto.getLogisticsStatus());
-                logisticsTrackEntity.setTrackNo(logisticsBillEntity.getCounterNo());
-                logisticsTrackEntity.setTrackTime(dto.getTime());
-                logisticsTrackEntity.setContent(StringUtils.isBlank(dto.getLogisticsTrack())?"":dto.getLogisticsTrack());
-                addTrackList.add(logisticsTrackEntity);
-            }
+            LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
+            logisticsTrackEntity.setStatus(dto.getLogisticsStatus());
+            logisticsTrackEntity.setTrackNo(logisticsBillEntity.getCounterNo());
+            logisticsTrackEntity.setTrackTime(dto.getTime());
+            logisticsTrackEntity.setContent(StringUtils.isBlank(dto.getLogisticsTrack())?"":dto.getLogisticsTrack());
+            addTrackList.add(logisticsTrackEntity);
+
             if(statusEnum == FmLogisticTrackStatusEnum.ORDERED){
                 logisticsBillEntity.setOrderTime(dto.getTime());
-                updateBillList.add(logisticsBillEntity);
             }
 
-            if(statusEnum == FmLogisticTrackStatusEnum.WAIT_ORDER){
-                logisticsBillEntity.setOrderTime(null);
-                updateBillList.add(logisticsBillEntity);
-            }
+            updateBillList.add(logisticsBillEntity);
         }
         if(CollectionUtils.isNotEmpty(updateDetailList)){
             logisticsBillDetailService.updateBatchById(updateDetailList);
