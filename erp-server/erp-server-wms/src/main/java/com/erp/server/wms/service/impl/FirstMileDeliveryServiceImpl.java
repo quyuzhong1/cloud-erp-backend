@@ -1342,7 +1342,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             //物流单状态中文
             data.setLogisticsStatusName(FmDeliveryLogisticsStatusEnum.getName(data.getLogisticsStatus()));
             //报关单状态中文
-            data.setDeclareStatusName(FmDeliveryDeclareStatusEnum.getName(data.getDeclareStatus()));
+            data.setDeclareStatusName(DeclareStatusEnum.getName(data.getDeclareStatus()));
             //产品名称
             data.setProductName(skuVO.getSkuName());
             //待审核人
@@ -1775,7 +1775,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         for (String billType : dto.getBillTypes()) {
             lambdaUpdate()
-                    .set(FmDeliveryBillTypeEnum.DECLARE.getCode().equals(billType), FirstMileDeliveryEntity::getDeclareStatus, FmDeliveryDeclareStatusEnum.NONE.getCode())
+                    .set(FmDeliveryBillTypeEnum.DECLARE.getCode().equals(billType), FirstMileDeliveryEntity::getDeclareStatus, DeclareStatusEnum.NONE.getCode())
                     .set(FmDeliveryBillTypeEnum.LOGISTICS.getCode().equals(billType), FirstMileDeliveryEntity::getLogisticsStatus, FmDeliveryLogisticsStatusEnum.NONE.getCode())
                     .in(FirstMileDeliveryEntity::getId, dto.getIds())
                     .update();

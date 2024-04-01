@@ -31,10 +31,9 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.DeclareStatusEnum;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.enums.FmDeliveryDeclareStatusEnum;
+import com.erp.model.wms.enums.DeclareStatusEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -118,7 +117,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     public Boolean addFmDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
         TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
                 .packingStatus(PackingStatusEnum.PACKING.getCode())
-                .declareStatus(FmDeliveryDeclareStatusEnum.WAIT.getCode())
+                .declareStatus(DeclareStatusEnum.WAIT.getCode())
                 .ids(Arrays.asList(addDTO.getSourceId()))
                 .build();
         List<TmsDeclareBillDTO.DeliveryDTO> deliveryDTOList = wmsFirstMileDeliveryFeign.getCanGenerateDeclare(querySourceDTO);
@@ -130,7 +129,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         BeanMapperUtils.copy(addDTO, baseTmsDeclareBillEntity);
         BeanMapperUtils.copy(deliveryDTO, baseTmsDeclareBillEntity);
         baseTmsDeclareBillEntity.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
-        baseTmsDeclareBillEntity.setDeclareStatus(DeclareStatusEnum.WAIT.getCode());
+        baseTmsDeclareBillEntity.setDeclareStatus(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode());
         baseTmsDeclareBillEntity.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
         //50个明细为一个报关单
         List<TmsDeclareBillDTO.ProductDetail> allProductDetailList = deliveryDTO.getProductDetailList();
@@ -146,7 +145,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         //更新发货单的报关状态
         FirstMileDeliveryDTO.UpdateStatusDTO dto = new FirstMileDeliveryDTO.UpdateStatusDTO();
         dto.setIds(Arrays.asList(addDTO.getSourceId()));
-        dto.setDeclareStatus(FmDeliveryDeclareStatusEnum.FINISH.getCode());
+        dto.setDeclareStatus(DeclareStatusEnum.FINISH.getCode());
         wmsFirstMileDeliveryFeign.updateStatus(dto);
         return true;
     }
@@ -195,7 +194,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         TmsDeclareBillEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "报关单"));
         TmsDeclareBillEntity tmsDeclareBillEntity =  BeanMapperUtils.map(TmsDeclareBillEntity.class, updateDTO);
-        if(!old.getDeclareStatus().equals(DeclareStatusEnum.WAIT.getCode())){
+        if(!old.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode())){
             throw new ServiceException("报关单状态不是待报关，不能编辑");
         }
         boolean save = super.updateById(tmsDeclareBillEntity);
@@ -212,7 +211,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     public List<TmsDeclareBillDTO.TabListDTO> tabList(SourceTypeEnum sourceTypeEnum) {
         List<TmsDeclareBillDTO.TabListDTO> tabList = baseMapper.tabList(sourceTypeEnum.getCode());
         List<TmsDeclareBillDTO.TabListDTO> result = new ArrayList<>();
-        for(DeclareStatusEnum statusEnum : DeclareStatusEnum.values()){
+        for(com.erp.model.tms.enums.DeclareStatusEnum statusEnum : com.erp.model.tms.enums.DeclareStatusEnum.values()){
             TmsDeclareBillDTO.TabListDTO tabListDTO = new TmsDeclareBillDTO.TabListDTO();
             tabListDTO.setTabFlag(statusEnum.getCode());
             tabListDTO.setTabFlagName(statusEnum.getName());
@@ -240,7 +239,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<TmsDeclareBillDTO.StatisticsAllDTO> statisticsAllDTOList = this.baseMapper.statistics(TmsDeclareBillDTO.StatisticsDTO.builder()
                         .beginDate(DateUtil.getStartOfMonth(-1))
                         .endDate(DateUtil.getEndOfMonth(0))
-                        .declareStatus(DeclareStatusEnum.DECLARED.getCode())
+                        .declareStatus(com.erp.model.tms.enums.DeclareStatusEnum.DECLARED.getCode())
                         .type(SourceTypeEnum.FM_DECLARE_BILL.getCode())
                 .build());
         FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq = new FirstMileDeliveryDTO.StatisticsReq();
@@ -288,7 +287,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
 
         list.forEach(v->{
-            v.setDeclareStatusName(EnumMessage.getNameByCode(DeclareStatusEnum.class,v.getDeclareStatus()));
+            v.setDeclareStatusName(EnumMessage.getNameByCode(com.erp.model.tms.enums.DeclareStatusEnum.class,v.getDeclareStatus()));
             DictBasicDTO.ViewDTO declareType = declareTypeDict.stream().filter(e->e.getCode().equals(v.getDeclareType())).findFirst().orElse(new DictBasicDTO.ViewDTO());
             v.setDeclareTypeName(declareType.getName());
             List<String> sourceCodeList = new ArrayList<>();
@@ -298,7 +297,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             sourceCodeList.addAll(mergedSourceCodeList);
             sourceCodeList = sourceCodeList.stream().distinct().collect(Collectors.toList());
             v.setSourceCodeList(sourceCodeList);
-            v.setIsInvalid(v.getDeclareStatus().equals(DeclareStatusEnum.INVALID.getCode()));
+            v.setIsInvalid(v.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.INVALID.getCode()));
         });
     }
 
@@ -390,11 +389,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<TmsDeclareBillEntity> updateList = new ArrayList<>();
         List<BatchResultDTO> resultList = new ArrayList<>();
         for (TmsDeclareBillEntity entity : entityList) {
-            if(!entity.getDeclareStatus().equals(DeclareStatusEnum.WAIT.getCode())){
+            if(!entity.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode())){
                 resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有待报关的单据才能更新成已报关"));
                 continue;
             }
-            entity.setDeclareStatus(DeclareStatusEnum.DECLARED.getCode());
+            entity.setDeclareStatus(com.erp.model.tms.enums.DeclareStatusEnum.DECLARED.getCode());
             updateList.add(entity);
         }
         if(CollectionUtils.isNotEmpty(updateList)){
@@ -410,11 +409,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<TmsDeclareBillEntity> updateList = new ArrayList<>();
         List<BatchResultDTO> resultList = new ArrayList<>();
         for (TmsDeclareBillEntity entity : entityList) {
-            if(!entity.getDeclareStatus().equals(DeclareStatusEnum.DECLARED.getCode())){
+            if(!entity.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.DECLARED.getCode())){
                 resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有已报关的单据才能取消报关"));
                 continue;
             }
-            entity.setDeclareStatus(DeclareStatusEnum.WAIT.getCode());
+            entity.setDeclareStatus(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode());
             entity.setDeclareDate(null);
             updateList.add(entity);
         }
@@ -435,7 +434,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException("没有需要合并的报关单");
         }
         // 校验合并条件
-        if(entityList.stream().anyMatch(v->!v.getDeclareStatus().equals(DeclareStatusEnum.WAIT.getCode()))){
+        if(entityList.stream().anyMatch(v->!v.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode()))){
             throw new ServiceException("仅支持待报关的报关单合并");
         }
         TmsDeclareBillEntity mergedEntity = entityList.stream().filter(v->v.getCode().equals(dto.getCode())).findFirst().orElse(null);
@@ -498,7 +497,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             return false;
         }
         return this.lambdaUpdate().in(TmsDeclareBillEntity::getId,ids)
-                .set(TmsDeclareBillEntity::getDeclareStatus,DeclareStatusEnum.INVALID.getCode())
+                .set(TmsDeclareBillEntity::getDeclareStatus, com.erp.model.tms.enums.DeclareStatusEnum.INVALID.getCode())
                 .update();
     }
 
@@ -514,7 +513,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<TmsDeclareBillEntity> updateList = new ArrayList<>();
         List<BatchResultDTO> resultList = new ArrayList<>();
         for (TmsDeclareBillEntity entity : entityList) {
-            if(!entity.getDeclareStatus().equals(DeclareStatusEnum.WAIT.getCode())){
+            if(!entity.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode())){
                 resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有待报关的单据才能取消合并"));
                 continue;
             }
@@ -524,8 +523,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"仅可操作有存在合并订单类型"));
                 continue;
             }
-            entity.setDeclareStatus(DeclareStatusEnum.INVALID.getCode());
-            beforeEntityList.forEach(v->v.setDeclareStatus(DeclareStatusEnum.WAIT.getCode()));
+            entity.setDeclareStatus(com.erp.model.tms.enums.DeclareStatusEnum.INVALID.getCode());
+            beforeEntityList.forEach(v->v.setDeclareStatus(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode()));
             updateList.add(entity);
             updateList.addAll(beforeEntityList);
         }
@@ -544,20 +543,28 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<String> removeIds = new ArrayList<>();
         List<String> updateSourceIds = new ArrayList<>();
         for (TmsDeclareBillEntity entity : entityList) {
-            if(!entity.getDeclareStatus().equals(DeclareStatusEnum.WAIT.getCode())){
+            if(!entity.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode())){
                 resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有待报关的单据才能删除"));
                 continue;
             }
             removeIds.add(entity.getId());
+            List<String> mergeIds = Arrays.asList(entity.getMergeSourceId().split(","));
+            if(CollectionUtils.isNotEmpty(mergeIds)){
+                List<TmsDeclareBillEntity> mergeEntityList = this.listByIds(mergeIds);
+                if(CollectionUtils.isNotEmpty(mergeEntityList)){
+                    updateSourceIds.addAll(mergeEntityList.stream().map(TmsDeclareBillEntity::getSourceId).collect(Collectors.toList()));
+                }
+            }
             updateSourceIds.add(entity.getSourceId());
         }
         if(CollectionUtils.isNotEmpty(removeIds)){
             this.removeByIds(removeIds);
         }
         if(CollectionUtils.isNotEmpty(updateSourceIds)){
+            updateSourceIds = updateSourceIds.stream().distinct().collect(Collectors.toList());
             FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
             updateStatusDTO.setIds(updateSourceIds);
-            updateStatusDTO.setDeclareStatus(FmDeliveryDeclareStatusEnum.WAIT.code);
+            updateStatusDTO.setDeclareStatus(DeclareStatusEnum.WAIT.code);
             wmsFirstMileDeliveryFeign.updateStatus(updateStatusDTO);
         }
         return resultList;
@@ -575,7 +582,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     @Override
     public void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
-        pagingParamDTO.setExportDeclareStatus(Arrays.asList(DeclareStatusEnum.DECLARED.getCode(),DeclareStatusEnum.WAIT.getCode()));
+        pagingParamDTO.setExportDeclareStatus(Arrays.asList(com.erp.model.tms.enums.DeclareStatusEnum.DECLARED.getCode(), com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode()));
         List<TmsDeclareBillDTO.ExportDTO> list = baseMapper.exportDeclare(pagingParamDTO);
         if(CollectionUtils.isEmpty(list)){
             return;
@@ -584,7 +591,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         String excelPath = "excel/declareExport.xlsx";
         String name = "报关单导出";
         //超过一行数据压缩成zip
-        if(list.size() == -1){
+        if(list.size() == 1){
             TmsDeclareBillDTO.ExportDTO exportDTO = list.get(0);
             // 导出数据
             StringBuffer sb = new StringBuffer();
@@ -668,5 +675,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
 
         return lambdaQuery().in(TmsDeclareBillEntity::getSourceId, sourceIds).list();
+    }
+
+    @Override
+    public List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateSoOut(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO) {
+        return null;
     }
 }

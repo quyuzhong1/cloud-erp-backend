@@ -15,7 +15,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
-import com.erp.model.wms.enums.FmDeliveryDeclareStatusEnum;
+import com.erp.model.wms.enums.DeclareStatusEnum;
 import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.server.tms.service.TmsDeclareBillService;
 import lombok.extern.slf4j.Slf4j;
@@ -63,7 +63,13 @@ public class TmsB2BDeclareBillController extends BaseController {
      */
     @PostMapping("/paging")
     @WebAdvanceQuery
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:paging",
+            tableAlias = "db"
+    )
     public ApiResult<PagingVO<TmsDeclareBillDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto) {
+        dto.getParams().setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
         PagingVO<TmsDeclareBillDTO.PagingVO> pagingVO = tmsDeclareBillService.paging(dto);
         return success(pagingVO);
     }
@@ -118,13 +124,13 @@ public class TmsB2BDeclareBillController extends BaseController {
      * @date:  2024-03-27
      * @return ApiResult
      */
-    @GetMapping("/getCanGenerateDeliveryOrder")
-    public ApiResult<List<TmsDeclareBillDTO.DeliveryDTO>> getCanGenerateDeliveryOrder() {
+    @GetMapping("/getCanGenerateSoOut")
+    public ApiResult<List<TmsDeclareBillDTO.SoOutDTO>> getCanGenerateSoOut() {
         TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
                 .packingStatus(PackingStatusEnum.PACKING.getCode())
-                .declareStatus(FmDeliveryDeclareStatusEnum.WAIT.getCode())
+                .declareStatus(DeclareStatusEnum.WAIT.getCode())
                 .build();
-        return success(tmsDeclareBillService.getCanGenerateDeliveryOrder(querySourceDTO));
+        return success(tmsDeclareBillService.getCanGenerateSoOut(querySourceDTO));
     }
 
     /**

@@ -64,4 +64,6 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
      * @return java.util.List<com.erp.model.tms.entity.TmsDeclareBillEntity>
      **/
     List<TmsDeclareBillEntity> listBySourceIds(List<String> sourceIds);
+
+    List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateSoOut(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
 }

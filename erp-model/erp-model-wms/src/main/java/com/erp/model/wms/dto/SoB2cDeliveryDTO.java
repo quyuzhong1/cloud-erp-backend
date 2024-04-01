@@ -2,8 +2,6 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
-import com.erp.model.wms.enums.FmDeliveryDeclareStatusEnum;
-import com.erp.model.wms.enums.FmDeliveryLogisticsStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;

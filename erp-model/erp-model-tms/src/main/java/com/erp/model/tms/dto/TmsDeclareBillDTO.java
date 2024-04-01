@@ -110,6 +110,87 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private List<String> ids;
     }
+
+    /**
+     * 销售出库单信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SoOutDTO {
+        /**
+         * 业务id（发货单id或销售出库单id）
+         */
+        private String sourceId;
+
+        /**
+         * 业务code（发货单code或销售出库单code）
+         */
+        private String sourceCode;
+        /**
+         * 业务类型
+         */
+        private String businessType;
+
+        /**
+         * 目的国
+         */
+        private String country;
+
+        /**
+         * 目的国名称
+         */
+        private String countryName;
+        /**
+         * 运输方式
+         */
+        private String shippingMethod;
+
+        /**
+         * 运输方式名称
+         */
+        private String shippingMethodName;
+
+        /**
+         * 物流商id
+         */
+        private String logisticsSupplierId;
+
+        /**
+         * 物流商名称
+         */
+        private String logisticsSupplierName;
+
+        /**
+         * 提运单号
+         */
+        private String transportNo;
+
+        /**
+         * 总箱数
+         */
+        private Integer boxQty;
+
+        /**
+         * 毛重
+         */
+        private BigDecimal grossWeight;
+
+        /**
+         * 净重
+         */
+        private BigDecimal netWeight;
+
+        /**
+         * 产品明细
+         */
+        private List<ProductDetail> productDetailList;
+        /**
+         * 装箱信息
+         */
+        private List<PackingDTO> packingDTOList;
+
+    }
+
     /**
      * 发货单信息
      */

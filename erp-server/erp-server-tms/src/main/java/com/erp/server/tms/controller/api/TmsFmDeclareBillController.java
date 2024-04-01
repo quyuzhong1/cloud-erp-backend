@@ -3,7 +3,6 @@ package com.erp.server.tms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -15,7 +14,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
-import com.erp.model.wms.enums.FmDeliveryDeclareStatusEnum;
+import com.erp.model.wms.enums.DeclareStatusEnum;
 import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.server.tms.query.TmsFmDeclareQueryHandler;
 import com.erp.server.tms.service.TmsDeclareBillService;
@@ -133,7 +132,7 @@ public class TmsFmDeclareBillController extends BaseController {
     public ApiResult<List<TmsDeclareBillDTO.DeliveryDTO>> getCanGenerateDeliveryOrder() {
         TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
                 .packingStatus(PackingStatusEnum.PACKING.getCode())
-                .declareStatus(FmDeliveryDeclareStatusEnum.WAIT.getCode())
+                .declareStatus(DeclareStatusEnum.WAIT.getCode())
                 .build();
         return success(tmsDeclareBillService.getCanGenerateDeliveryOrder(querySourceDTO));
     }
