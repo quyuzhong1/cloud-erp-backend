@@ -70,9 +70,18 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
     /**
      * 待对账分页
      *
-     * @return ImportDTO
      * @author Jim
      * @date: 2024-03-25
      */
     PagingVO<TmsFirstMileReconciliationDetailDTO.ListDTO> waitReconciliationPaging(PagingDTO<TmsFirstMileReconciliationDetailDTO.PagingParamDTO> dto);
+
+
+    /**
+     * 导出
+     *
+     * @return ExportDTO dto
+     * @author Jim
+     * @date: 2024-03-25
+     */
+    void exportList(TmsFirstMileReconciliationDetailDTO.ExportDTO dto, HttpServletResponse response);
 }
