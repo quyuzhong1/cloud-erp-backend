@@ -17,6 +17,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.enums.FmDeliveryDeclareStatusEnum;
 import com.erp.model.wms.enums.PackingStatusEnum;
+import com.erp.server.tms.query.TmsFmDeclareQueryHandler;
 import com.erp.server.tms.service.TmsDeclareBillService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -62,7 +63,7 @@ public class TmsFmDeclareBillController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:tmsFmDeclareBill:paging",
@@ -218,7 +219,7 @@ public class TmsFmDeclareBillController extends BaseController {
      */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程报关单")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
     public ApiResult export(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
         pagingParamDTO.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
         tmsDeclareBillService.export(pagingParamDTO,response);
@@ -230,7 +231,7 @@ public class TmsFmDeclareBillController extends BaseController {
      */
     @PostMapping("/exportDeclare")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程报关单报关信息")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
     public ApiResult exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
         pagingParamDTO.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
         tmsDeclareBillService.exportDeclare(pagingParamDTO,response);
