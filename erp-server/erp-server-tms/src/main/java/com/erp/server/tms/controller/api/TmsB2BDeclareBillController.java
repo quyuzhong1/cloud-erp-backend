@@ -15,7 +15,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
-import com.erp.model.wms.enums.DeclareStatusEnum;
+import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.server.tms.service.TmsDeclareBillService;
 import lombok.extern.slf4j.Slf4j;
@@ -81,8 +81,13 @@ public class TmsB2BDeclareBillController extends BaseController {
      * @return ApiResult<String>
      */
     @GetMapping("/statistics")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFmDeclareBill:paging",
+            tableAlias = "db"
+    )
     public ApiResult<TmsDeclareBillDTO.StatisticsVO> statistics() {
-        return null;
+        return success(tmsDeclareBillService.statisticsBySoOut());
     }
 
     /**
@@ -128,7 +133,7 @@ public class TmsB2BDeclareBillController extends BaseController {
     public ApiResult<List<TmsDeclareBillDTO.SoOutDTO>> getCanGenerateSoOut() {
         TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
                 .packingStatus(PackingStatusEnum.PACKING.getCode())
-                .declareStatus(DeclareStatusEnum.WAIT.getCode())
+                .declareStatus(WmsDeclareStatusEnum.WAIT.getCode())
                 .build();
         return success(tmsDeclareBillService.getCanGenerateSoOut(querySourceDTO));
     }

@@ -42,6 +42,8 @@ public class FirstMileDeliveryDTO implements Serializable {
         private LocalDateTime endDate;
 
         private String status;
+
+        private String orderType;
     }
 
     /**

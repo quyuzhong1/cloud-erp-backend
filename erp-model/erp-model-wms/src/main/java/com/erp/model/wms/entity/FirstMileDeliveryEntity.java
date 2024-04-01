@@ -3,7 +3,7 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.erp.model.wms.enums.DeclareStatusEnum;
+import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.model.wms.enums.FmDeliveryLogisticsStatusEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -161,7 +161,7 @@ public class FirstMileDeliveryEntity extends BaseEntity<FirstMileDeliveryEntity>
     * 报关单状态：none：无需生成，wait：未生成，finish：已生成
     */
     @TableField("declare_status")
-    private DeclareStatusEnum declareStatus;
+    private WmsDeclareStatusEnum declareStatus;
 
 
     public static final String CODE = "code";

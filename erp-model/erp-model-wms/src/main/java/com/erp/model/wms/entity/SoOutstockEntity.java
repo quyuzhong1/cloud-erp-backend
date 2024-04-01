@@ -262,6 +262,13 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     private String packingStatus;
 
 
+    /**
+     * 报关状态
+     * 枚举：DeclareStatusEnum
+     */
+    @TableField("declare_status")
+    private String declareStatus;
+
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;
 

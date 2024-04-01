@@ -66,4 +66,6 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
     List<TmsDeclareBillEntity> listBySourceIds(List<String> sourceIds);
 
     List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateSoOut(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
+
+    TmsDeclareBillDTO.StatisticsVO statisticsBySoOut();
 }

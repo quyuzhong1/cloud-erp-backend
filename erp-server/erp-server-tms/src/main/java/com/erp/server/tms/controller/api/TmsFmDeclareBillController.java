@@ -14,7 +14,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
-import com.erp.model.wms.enums.DeclareStatusEnum;
+import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.server.tms.query.TmsFmDeclareQueryHandler;
 import com.erp.server.tms.service.TmsDeclareBillService;
@@ -132,7 +132,7 @@ public class TmsFmDeclareBillController extends BaseController {
     public ApiResult<List<TmsDeclareBillDTO.DeliveryDTO>> getCanGenerateDeliveryOrder() {
         TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
                 .packingStatus(PackingStatusEnum.PACKING.getCode())
-                .declareStatus(DeclareStatusEnum.WAIT.getCode())
+                .declareStatus(WmsDeclareStatusEnum.WAIT.getCode())
                 .build();
         return success(tmsDeclareBillService.getCanGenerateDeliveryOrder(querySourceDTO));
     }

@@ -671,6 +671,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         }
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         List<LogisticsBillDetailEntity> allDetailList = logisticsBillDetailService.listByMainIds(dto.getIds());
+        List<LogisticsBillCostEntity> allCostList = logisticsBillCostService.listByLogisticsBillIdList(dto.getIds());
         List<LogisticsBillDetailEntity> updateDetailList = new ArrayList<>();
         List<LogisticsTrackEntity> addTrackList = new ArrayList<>();
         List<LogisticsBillEntity> updateBillList = new ArrayList<>();
@@ -678,6 +679,15 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             List<LogisticsBillDetailEntity> detailEntityList = allDetailList.stream().filter(v->v.getMainId().equals(logisticsBillEntity.getId())).collect(Collectors.toList());
             if(CollectionUtils.isEmpty(detailEntityList)){
                 batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"明细为空"));
+                continue;
+            }
+            LogisticsBillCostEntity logisticsBillCostEntity = allCostList.stream().filter(v->v.getLogisticsBillId().equals(logisticsBillEntity.getId())).findFirst().orElse(null);
+            if(Objects.isNull(logisticsBillCostEntity)){
+                batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"物流费用为空"));
+                continue;
+            }
+            if(!(logisticsBillCostEntity.getReconciliationStatus().equals(ReconciliationStatusEnum.INVALID.getCode()) ||logisticsBillCostEntity.getReconciliationStatus().equals(ReconciliationStatusEnum.TO_BE_GENERATED.getCode()))){
+                batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"已生成对账单，不能更新物流状态"));
                 continue;
             }
 
@@ -701,7 +711,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
 
             if(FmLogisticTrackStatusEnum.WAIT_ORDER != nowStatusEnum && FmLogisticTrackStatusEnum.WAIT_ORDER == statusEnum){
-                batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),StrUtil.format("{}状态不能更新为待下单",Objects.isNull(nowStatusEnum)?"":nowStatusEnum.getCode())));
+                batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),StrUtil.format("{}状态不能更新为待下单",Objects.isNull(nowStatusEnum)?"":nowStatusEnum.getName())));
+                continue;
+            }
+
+            if(FmLogisticTrackStatusEnum.ORDERED != nowStatusEnum &&  FmLogisticTrackStatusEnum.WAIT_ORDER != nowStatusEnum && FmLogisticTrackStatusEnum.ORDERED == statusEnum){
+                batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),StrUtil.format("{}状态不能更新为已下单",Objects.isNull(nowStatusEnum)?"":nowStatusEnum.getName())));
                 continue;
             }
 

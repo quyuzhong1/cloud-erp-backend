@@ -303,15 +303,20 @@
     <!--根据发货单id查询装箱清单-->
     <select id="listPackingDetail" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
         SELECT
-        fmcb.box_no,
-        concat(box_length, '*', fmc.box_width, '*', fmc.box_height) AS boxSize,
-        fmc.package_weight,
-        fmcb.box_desc
+            so.id,
+            fmcb.box_no as boxNo,
+            concat(box_length, '*', fmc.box_width, '*', fmc.box_height) AS boxSize,
+            box_length*box_width*box_height as multiplySize,
+            fmc.package_weight as packageWeight,
+            fmcb.box_desc as boxDesc
         FROM so_outstock so
         INNER JOIN wms_carton fmc ON fmc.source_id = so.id AND fmc.is_deleted = FALSE
         INNER JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
         WHERE so.is_deleted = FALSE
-        AND so.id = #{id}
+        AND so.id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
         ORDER BY CAST(fmcb.box_no AS INTEGER)
     </select>
 
@@ -354,5 +359,46 @@
            GROUP BY so.id,
                sod.sku_id,
                sod.sku_no
+    </select>
+    <select id="getCanGenerateDeclare" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$SoOutDTO">
+        SELECT so.id as sourceId,
+               so.code as sourceCode,
+               so.country,
+               so.order_type as businessType
+            from so_outstock so
+        where so.is_deleted = false
+        <if test="params.packingStatus != null and params.packingStatus != ''">
+            AND so.packing_status = #{params.packingStatus}
+        </if>
+        <if test="params.declareStatus != null and params.declareStatus != ''">
+            AND so.declare_status = #{params.declareStatus}
+        </if>
+        <if test="params.ids != null and params.ids.size > 0">
+            AND so.id IN
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+    <select id="logisticStatistics"
+            resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$LogisticStatisticsDTO">
+        SELECT  EXTRACT(year FROM approve_time),  EXTRACT(month FROM approve_time) as month,
+        count(1)
+        from so_outstock
+        where is_deleted = false
+        <if test="orderType != null and orderType != ''">
+            and  order_type = #{orderType}
+        </if>
+        <if test="status != null and status != ''">
+            and  approve_status = #{status}
+        </if>
+        <if test="beginDate != null">
+            and approve_time >= #{beginDate}
+        </if>
+        <if test="endDate != null ">
+            and approve_time <![CDATA[<=]]>  #{endDate}
+        </if>
+        group by EXTRACT(month FROM approve_time), EXTRACT(year FROM approve_time)
+        order by  EXTRACT(year FROM approve_time), EXTRACT(month FROM approve_time)
     </select>
 </mapper>

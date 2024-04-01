@@ -1,6 +1,8 @@
 package com.erp.rpc.wms.feign;
 
 import com.common.business.dto.AdvanceQueryContainer;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -93,4 +95,9 @@ public interface SoOutstockFeign {
     @PostMapping("feign/soOutstock/generateB2cSoOutstockByData")
     Boolean generateB2cSoOutstockByData(@RequestBody SoOutstockDTO.GenerateB2cDTO generateB2cDTO);
 
+    @PostMapping("feign/soOutstock/getCanGenerateDeclare")
+    List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(@RequestBody TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
+
+    @PostMapping("feign/soOutstock/logisticStatistics")
+    List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(@RequestBody FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq);
 }

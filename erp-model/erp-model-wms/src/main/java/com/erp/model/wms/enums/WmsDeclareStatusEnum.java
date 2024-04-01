@@ -10,12 +10,12 @@ import java.util.stream.Stream;
 /**
  * 头程发货单中转状态
  */
-public enum DeclareStatusEnum implements EnumMessage {
+public enum WmsDeclareStatusEnum implements EnumMessage {
     NONE("none","无需生成"),
     WAIT("wait","未生成"),
     FINISH("finish","已生成"),
     ;
-    DeclareStatusEnum(String code, String name) {
+    WmsDeclareStatusEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -43,8 +43,8 @@ public enum DeclareStatusEnum implements EnumMessage {
     /**
      * 通过code查询
      */
-    public static DeclareStatusEnum getByCode(String code){
-        return Stream.of(DeclareStatusEnum.values())
+    public static WmsDeclareStatusEnum getByCode(String code){
+        return Stream.of(WmsDeclareStatusEnum.values())
                 .filter(typeEnum -> typeEnum.getCode().equalsIgnoreCase(code))
                 .findFirst()
                 .orElse(null);
@@ -54,7 +54,7 @@ public enum DeclareStatusEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (DeclareStatusEnum statusEnum : DeclareStatusEnum.values()) {
+        for (WmsDeclareStatusEnum statusEnum : WmsDeclareStatusEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }

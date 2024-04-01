@@ -8,6 +8,8 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -484,4 +486,8 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @author Lambda
      */
     List<WmsCartonDTO.GroupSkuDTO> listGroupSkuById(String id);
+
+    List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
+
+    List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq);
 }

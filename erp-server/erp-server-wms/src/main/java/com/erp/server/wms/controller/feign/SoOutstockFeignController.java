@@ -2,6 +2,8 @@ package com.erp.server.wms.controller.feign;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -139,6 +141,23 @@ public class SoOutstockFeignController {
         return soOutstockService.generateB2cSoOutstock(generateB2cDTO);
     }
 
+    /**
+     * 查询封装报关信息
+     * @return
+     */
+    @PostMapping("/getCanGenerateDeclare")
+    List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(@RequestBody TmsDeclareBillDTO.QuerySourceDTO querySourceDTO) {
+        return soOutstockService.getCanGenerateDeclare(querySourceDTO);
+    }
+
+    /**
+     * 统计状态
+     * @return
+     */
+    @PostMapping("/logisticStatistics")
+    List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(@RequestBody FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq) {
+        return soOutstockService.logisticStatistics(deliveryStaticsReq);
+    }
 }
 
 

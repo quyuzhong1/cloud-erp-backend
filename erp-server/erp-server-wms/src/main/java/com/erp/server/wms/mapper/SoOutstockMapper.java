@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
@@ -84,7 +86,7 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
      * @param id
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDetailDTO.ListPackingDetailDTO>
      **/
-    List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("id") String id);
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("ids") List<String> id);
 
     /**
      * 导出装箱信息
@@ -94,4 +96,8 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
     List<WmsCartonDTO.ExportPackingDTO> exportPacking(@Param("params") SoOutstockDTO.ExportDTO dto);
 
     List<WmsCartonDTO.GroupSkuDTO> listGroupSkuByMainId(@Param("mainId") String id);
+
+    List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(@Param("params") TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
+
+    List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics( FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq);
 }
