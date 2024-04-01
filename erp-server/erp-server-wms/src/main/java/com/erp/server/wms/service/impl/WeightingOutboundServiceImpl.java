@@ -65,7 +65,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
 
         TransferDeclareDetailEntity  declareDetailEntity = transferDeclareFeign.getBySoId(entity.getSourceId());
         if (ObjectUtil.isEmpty(declareDetailEntity)) {
-            throw new ServiceException(ApiError.ERROR_TRANSFER_DECLARE_NOT_EXIST);
+            declareDetailEntity = new TransferDeclareDetailEntity();
         }
         SoB2cEntity soB2cEntity = soB2cFeign.getById(sourceId);
         if(ObjectUtil.isEmpty(soB2cEntity)) {
@@ -92,7 +92,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
         if (isAutoDelivery && entity.getIsWeigh()) {
 
             //如果是待上传或上传失败则直接返回
-            if (StrUtil.equals(soB2cEntity.getTransferStatus(),TransferStatusEnum.NOT.getCode()) || StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
+            if (ObjectUtil.isEmpty(declareDetailEntity) || StrUtil.equals(soB2cEntity.getTransferStatus(),TransferStatusEnum.NOT.getCode()) || StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
                     StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
                 return this.buildViewDTO(entity,soB2cEntity.getTransferStatus(),declareDetailEntity.getOrderUploadStatus());
             }

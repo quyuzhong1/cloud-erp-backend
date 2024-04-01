@@ -84,8 +84,9 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
 
         TransferDeclareDetailEntity declareDetailEntity = transferDeclareFeign.getBySoId(entity.getSourceId());
         if (ObjectUtil.isEmpty(declareDetailEntity)) {
-            throw new ServiceException(ApiError.ERROR_TRANSFER_DECLARE_NOT_EXIST);
+            declareDetailEntity = new TransferDeclareDetailEntity();
         }
+
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
         if(ObjectUtil.isEmpty(soB2cEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
@@ -197,7 +198,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         //直接出库
         if (CollectionUtils.isEmpty(viewDTO.getWaitScanSkuList()) && dto.getIsAutoOut()  && entity.getIsInspection()) {
             //如果是待上传或上传失败则直接返回
-            if (StrUtil.equals(soB2cEntity.getTransferStatus(), TransferStatusEnum.NOT.getCode()) || StrUtil.equals(declareDetailEntity.getOrderUploadStatus(), TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
+            if (ObjectUtil.isEmpty(declareDetailEntity) || StrUtil.equals(soB2cEntity.getTransferStatus(), TransferStatusEnum.NOT.getCode()) || StrUtil.equals(declareDetailEntity.getOrderUploadStatus(), TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
                     StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
                 return viewDTO;
             }
