@@ -2,6 +2,7 @@ package com.erp.server.tms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.erp.server.tms.query.TmsFirstMileReconciliationQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
@@ -91,7 +92,7 @@ public class TmsFirstMileReconciliationController extends BaseController {
             menuCode = "tms:tmsFirstMileReconciliation:paging",
             tableAlias = "tfmr"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = TmsFirstMileReconciliationQueryHandler.class)
     public ApiResult<PagingVO<TmsFirstMileReconciliationDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<TmsFirstMileReconciliationDTO.PagingParamDTO> dto) {
         return success(tmsFirstMileReconciliationService.paging(dto));
     }
