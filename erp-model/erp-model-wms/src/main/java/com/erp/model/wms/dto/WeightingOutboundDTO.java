@@ -94,8 +94,8 @@ public class WeightingOutboundDTO implements Serializable {
 
 
         /**
-         * 中转状态 dict_basic：type=transferStatus
-         * enum :TransferLogisticsStatusEnum,deleted删除,draft草稿,unusual异常,confirmed已确认,submitted已提交,outstock已出货,signed已签收
+         * 中转状态
+         * not 不需要  wait 待中转   already 已经中转
          */
         private String transferStatus;
 

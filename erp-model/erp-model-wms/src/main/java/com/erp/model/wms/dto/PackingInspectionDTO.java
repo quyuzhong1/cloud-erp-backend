@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
@@ -34,6 +35,11 @@ public class PackingInspectionDTO implements Serializable {
         @NotBlank(message = "操作类型不能为空")
         private String operationType;
 
+        /**
+         * 是否自动出库
+         */
+        @NotNull(message = "是否自动出库不能为空")
+        private Boolean isAutoOut;
 
 
         /**
@@ -89,7 +95,7 @@ public class PackingInspectionDTO implements Serializable {
 
         /**
          * 中转状态 dict_basic：type=transferStatus
-         * enum :TransferLogisticsStatusEnum,deleted删除,draft草稿,unusual异常,confirmed已确认,submitted已提交,outstock已出货,signed已签收
+         * not 不需要  wait 待中转   already 已经中转
          */
         private String transferStatus;
 

@@ -4,11 +4,15 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
+import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.wms.dto.PackingInspectionDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -75,6 +79,15 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         SoB2cDeliveryEntity entity = soB2cDeliveryService.getByBusinessCode(dto.getBusinessCode());
         if(Objects.isNull(entity)){
             throw new ServiceException("查询不到发货单，请确认扫描单号");
+        }
+
+        TransferDeclareDetailEntity declareDetailEntity = transferDeclareFeign.getBySoId(entity.getSourceId());
+        if (ObjectUtil.isEmpty(declareDetailEntity)) {
+            throw new ServiceException(ApiError.ERROR_TRANSFER_DECLARE_NOT_EXIST);
+        }
+        SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
+        if(ObjectUtil.isEmpty(soB2cEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
 
         //因为明细只保存父级SKU，所以如果有组合品没办法直接更新明细，将明细sku拆分放到redis，扫描时操作redis的值，在最后全部扫描完成统一更新数据库
@@ -174,13 +187,22 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             String msg = StrUtil.format("用户【{}】更新【{}】单据单号为【{}】包装验货完成", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
         }
-        TransferDeclareDetailEntity declareDetailEntity = transferDeclareFeign.getBySoId(entity.getSourceId());
-        if (ObjectUtil.isNotEmpty(declareDetailEntity)) {
-            viewDTO.setOrderUploadStatus(declareDetailEntity.getOrderUploadStatus());
-            viewDTO.setTransferStatus(declareDetailEntity.getTransferStatus());
-        }
-
+        //数据存redis
         this.saveViewDTO(entity.getId(),viewDTO);
+
+        viewDTO.setTransferStatus(soB2cEntity.getTransferStatus());
+        viewDTO.setOrderUploadStatus(declareDetailEntity.getOrderUploadStatus());
+
+        //直接出库
+        if (CollectionUtils.isEmpty(viewDTO.getWaitScanSkuList()) && dto.getIsAutoOut()) {
+            //如果是待上传或上传失败则直接返回
+            if (StrUtil.equals(soB2cEntity.getTransferStatus(), TransferStatusEnum.NOT.getCode()) || StrUtil.equals(declareDetailEntity.getOrderUploadStatus(), TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
+                    StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
+                return viewDTO;
+            }
+            //出库
+            soB2cDeliveryService.generateB2cSoOutstock(entity);
+        }
         return viewDTO;
     }
 
