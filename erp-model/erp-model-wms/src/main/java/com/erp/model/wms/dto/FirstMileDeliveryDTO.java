@@ -4,7 +4,6 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
-import jnr.ffi.annotations.In;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -527,6 +526,11 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 附件url集合
          */
         private List<String> attachUrlList;
+
+        /**
+         * 物流信息
+         */
+        private FirstMileDeliveryDTO.ViewLogisticDTO logisticsView;
 
         /**
          * 产品信息

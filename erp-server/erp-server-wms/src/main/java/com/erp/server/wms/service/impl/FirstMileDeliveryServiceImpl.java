@@ -836,7 +836,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
 
         //映射物流信息
-        viewLogistic(data, tmsFirstMileLogisticEntities);
+        FirstMileDeliveryDTO.ViewLogisticDTO viewLogisticDTO = viewLogistic(data, tmsFirstMileLogisticEntities);
+        data.setLogisticsView(viewLogisticDTO);
 
         //附件信息
         List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(data.getId()));
@@ -906,7 +907,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
      * @param data
      * @param tmsFirstMileLogisticEntities
      */
-    private void viewLogistic(FirstMileDeliveryDTO.ViewDTO data, List<LogisticsBillEntity> tmsFirstMileLogisticEntities) {
+    private FirstMileDeliveryDTO.ViewLogisticDTO viewLogistic(FirstMileDeliveryDTO.ViewDTO data, List<LogisticsBillEntity> tmsFirstMileLogisticEntities) {
         FirstMileDeliveryDTO.ViewLogisticDTO logisticsViewDTO = new FirstMileDeliveryDTO.ViewLogisticDTO();
         if (CollectionUtil.isNotEmpty(tmsFirstMileLogisticEntities)) {
             LogisticsBillEntity tmsFirstMileLogisticEntity = tmsFirstMileLogisticEntities.get(0);
@@ -927,28 +928,30 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             logisticsViewDTO.setLogisticsRemark(tmsFirstMileLogisticEntity.getRemark());
             //物流运单号
             logisticsViewDTO.setTrackingNoList(Arrays.asList(tmsFirstMileLogisticEntity.getTransportNo()));
+        }
 
-            //发货地址(取值仓库地址)
-            List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(Arrays.asList(data.getDeliveryWarehouseId(), data.getDestWarehouseId()));
-            WarehouseEntity deliveryWarehouse = warehouseEntities.stream().filter(req -> req.getId().equals(data.getDeliveryWarehouseId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(deliveryWarehouse)) {
-                logisticsViewDTO.setDeliveryFromAddress(deliveryWarehouse.getAddress());
+        //发货地址(取值仓库地址)
+        List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(Arrays.asList(data.getDeliveryWarehouseId(), data.getDestWarehouseId()));
+        WarehouseEntity deliveryWarehouse = warehouseEntities.stream().filter(req -> req.getId().equals(data.getDeliveryWarehouseId())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(deliveryWarehouse)) {
+            logisticsViewDTO.setDeliveryFromAddress(deliveryWarehouse.getAddress());
+        }
+
+        //收货地址【FBA取值FBA货件配送地址，第三方仓取值仓库地址】
+        if (SourceTypeEnum.FBA_SHIPMENT.getCode().equals(data.getSourceType())) {
+            FbaShipmentEntity fbaShipmentEntity = fbaShipmentService.getById(data.getSourceId());
+            if (ObjectUtil.isNotEmpty(fbaShipmentEntity)) {
+                logisticsViewDTO.setDeliveryFromAddress(fbaShipmentEntity.getDeliveryFromAddress());
+                logisticsViewDTO.setReceiveToAddress(fbaShipmentEntity.getDeliveryToAddress());
             }
-
-            //收货地址【FBA取值FBA货件配送地址，第三方仓取值仓库地址】
-            if (SourceTypeEnum.FBA_SHIPMENT.getCode().equals(data.getSourceType())) {
-                FbaShipmentEntity fbaShipmentEntity = fbaShipmentService.getById(data.getSourceId());
-                if (ObjectUtil.isNotEmpty(fbaShipmentEntity)) {
-                    logisticsViewDTO.setDeliveryFromAddress(fbaShipmentEntity.getDeliveryFromAddress());
-                    logisticsViewDTO.setReceiveToAddress(fbaShipmentEntity.getDeliveryToAddress());
-                }
-            } else {
-                WarehouseEntity destWarehouse = warehouseEntities.stream().filter(req -> req.getId().equals(data.getDestWarehouseId())).findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(destWarehouse)) {
-                    logisticsViewDTO.setReceiveToAddress(destWarehouse.getAddress());
-                }
+        } else {
+            WarehouseEntity destWarehouse = warehouseEntities.stream().filter(req -> req.getId().equals(data.getDestWarehouseId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(destWarehouse)) {
+                logisticsViewDTO.setReceiveToAddress(destWarehouse.getAddress());
             }
         }
+
+        return logisticsViewDTO;
     }
 
     /**
@@ -1764,8 +1767,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         for (String billType : dto.getBillTypes()) {
             lambdaUpdate()
-                    .set(FmDeliveryBillTypeEnum.DECLARE.getCode().equals(billType), FirstMileDeliveryEntity::getDeliveryStatus, FmDeliveryDeclareStatusEnum.NONE.getCode())
-                    .set(FmDeliveryBillTypeEnum.LOGISTICS.getCode().equals(billType), FirstMileDeliveryEntity::getDeliveryStatus, FmDeliveryLogisticsStatusEnum.NONE.getCode())
+                    .set(FmDeliveryBillTypeEnum.DECLARE.getCode().equals(billType), FirstMileDeliveryEntity::getDeclareStatus, FmDeliveryDeclareStatusEnum.NONE.getCode())
+                    .set(FmDeliveryBillTypeEnum.LOGISTICS.getCode().equals(billType), FirstMileDeliveryEntity::getLogisticsStatus, FmDeliveryLogisticsStatusEnum.NONE.getCode())
                     .in(FirstMileDeliveryEntity::getId, dto.getIds())
                     .update();
         }
