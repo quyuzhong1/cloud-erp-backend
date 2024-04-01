@@ -83,12 +83,8 @@
             <include refid="Base_Column_List" />
         from tms_b2c_declare_reconciliation_detail tbdrd
         <where>
-        tbdrd.is_deleted = false and main_id = #{mainId}
-        <!--权限-->
-        <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${params.permissionSql}
-        </if>
-        tbdrd.id desc
+        tbdrd.is_deleted = false and tbdrd.main_id = #{params.mainId}
+        order by tbdrd.id desc
         </where>
     </select>
 

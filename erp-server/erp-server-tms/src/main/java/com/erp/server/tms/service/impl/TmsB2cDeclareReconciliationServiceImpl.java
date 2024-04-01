@@ -40,6 +40,7 @@ import com.erp.server.tms.service.TmsB2cDeclareReconciliationDetailService;
 import com.erp.server.tms.service.TmsB2cDeclareReconciliationService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -376,6 +377,14 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         updateForApprove(entity.getId(), approveStatus.getStatus());
 
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<TmsB2cDeclareReconciliationEntity> listEntityByIds(List<String> idList) {
+        if (CollectionUtils.isEmpty(idList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return this.listByIds(idList);
     }
 
     @Override

@@ -4,7 +4,6 @@ import cn.hutool.json.JSONObject;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.FieldValidUtil;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +15,7 @@ import java.util.stream.Collectors;
  * @author Will
  * @date: 2024/3/27 12:01
  */
-public class DeclareReconciliationConfigExcelListener extends AnalysisEventListener<JSONObject> {
+public class DeclareReconciliationConfigExcelListener extends AnalysisEventListener<Map<Integer,String>> {
 
     /**
      * 错误信息
@@ -44,13 +43,12 @@ public class DeclareReconciliationConfigExcelListener extends AnalysisEventListe
     * @description: 每解析一行数据回调一遍
     * @author Will
     * @date: 2023/3/7 11:22
-    * @param excelDTO 导入信息
+    * @param map 导入信息
     * @param analysisContext
     */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void invoke(JSONObject excelDTO, AnalysisContext analysisContext) {
-
+    public void invoke(Map<Integer,String>  map, AnalysisContext analysisContext) {
+        JSONObject excelDTO = new JSONObject(map);
         List<String> errorMsgList = new ArrayList<>();
 
         //添加数据用于判断是否为空

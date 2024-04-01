@@ -320,10 +320,12 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
+        fillImportList(successImortList);
         importDTO.setSuccessList(successImortList);
         importDTO.setErrorUrl(url);
         return importDTO;
     }
+
 
     /**
      * @description: 标准版导入数据处理
@@ -348,7 +350,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
 
         //原对账单信息
         List<String> mainIdList = oldList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getMainId).collect(Collectors.toList());
-        List<TmsB2cDeclareReconciliationEntity> oldMainList = tmsB2cDeclareReconciliationService.listByIds(mainIdList);
+        List<TmsB2cDeclareReconciliationEntity> oldMainList = tmsB2cDeclareReconciliationService.listEntityByIds(mainIdList);
 
         //配置信息
         List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> erpFieldList = cfgReconciliationFieldService.erpFieldList(Arrays.asList(DictBasicEnum.CFG_B2C_DECLARE_ERP_FIELD.getType()));
@@ -384,11 +386,18 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                     errorList.add(excelDTO);
                     continue;
                 }
-                TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
-                updateDTO.setCostValue(MathUtil.valueOf(excelDTO.getCostValue()));
-                updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
-                updateDTO.setCfgCostId(erpFieldDropDownDTO.getSourceId());
-                updateList.add(updateDTO);
+                //存在费用并且数量大于0
+                if (ObjectUtil.isNotEmpty(erpFieldDropDownDTO) && MathUtil.compareTo(MathUtil.valueOf(excelDTO.getCostValue()),MathUtil.ZERO) > MathUtil.ZERO) {
+                    TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
+                    updateDTO.setCostValue(MathUtil.valueOf(excelDTO.getCostValue()));
+                    updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+                    updateDTO.setCfgCostId(erpFieldDropDownDTO.getSourceId());
+                    updateList.add(updateDTO);
+                }
+            }
+            //为空则无需返回
+            if (ObjectUtil.isEmpty(detailEntity)) {
+                return resultList;
             }
             TmsB2cDeclareReconciliationDetailDTO.ViewDTO  viewDTO= BeanMapperUtils.map(TmsB2cDeclareReconciliationDetailDTO.ViewDTO.class,detailEntity);
             viewDTO.setActualWeight(MathUtil.valueOf(reconciliationStandardExcelDTO.getActualWeight()));
@@ -412,7 +421,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
 
         DeclareReconciliationConfigExcelListener excelListenerUtil = new DeclareReconciliationConfigExcelListener();
         try {
-            EasyExcel.read(excelFile.getInputStream(), JSONObject.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -443,6 +452,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
+        fillImportList(successImortList);
         importDTO.setSuccessList(successImortList);
         importDTO.setErrorUrl(url);
         return importDTO;
@@ -461,7 +471,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             return Collections.EMPTY_LIST;
         }
         //字段配置信息
-        List<CfgReconciliationFieldDTO.ErpFieldViewDTO> erpFieldList = cfgReconciliationFieldService.getByReconciliationType(DictBasicEnum.CFG_B2C_DECLARE_ERP_FIELD.getType());
+        List<CfgReconciliationFieldDTO.ErpFieldViewDTO> erpFieldList = cfgReconciliationFieldService.getByReconciliationType(CfgReconciliationTypeEnum.B2C_DECLARE.getCode());
         Map<String, CfgReconciliationFieldDTO.ErpFieldViewDTO> map = erpFieldList.stream().collect(Collectors.toMap(CfgReconciliationFieldDTO.ErpFieldViewDTO::getThirdFieldName, Function.identity()));
 
         //中专报关信息
@@ -471,8 +481,8 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         List<TmsB2cDeclareReconciliationDetailEntity> oldList = this.listBySoCodeList(soCodeList);
 
         //原对账单信息
-        List<String> mainIdList = oldList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getMainId).collect(Collectors.toList());
-        List<TmsB2cDeclareReconciliationEntity> oldMainList = tmsB2cDeclareReconciliationService.listByIds(mainIdList);
+        List<String> mainIdList = oldList.stream().filter(obj -> StrUtil.isNotBlank(obj.getMainId())).map(TmsB2cDeclareReconciliationDetailEntity::getMainId).collect(Collectors.toList());
+        List<TmsB2cDeclareReconciliationEntity> oldMainList = tmsB2cDeclareReconciliationService.listEntityByIds(mainIdList);
 
         List<TmsB2cDeclareReconciliationDetailDTO.ViewDTO> resultList = new ArrayList<>();
         for (JSONObject jsonObject :  successList) {
@@ -533,6 +543,34 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         return resultList;
     }
 
+    /**
+     * @description: 导入数据处理
+     * @author Will
+     * @date: 2024/3/29 16:04
+     * @param list
+     */
+    private void fillImportList(List<TmsB2cDeclareReconciliationDetailDTO.ViewDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //店铺信息
+        List<String> shopIdList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getShopId())).map(TmsB2cDeclareReconciliationDetailDTO.ViewDTO::getShopId).collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = shopInfoFeign.listShopInfoByIds(shopIdList);
+        //国家信息
+        List<String> countryIdList = list.stream().map(TmsB2cDeclareReconciliationDetailDTO.ViewDTO::getCountry).collect(Collectors.toList());
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIdList);
+        for (TmsB2cDeclareReconciliationDetailDTO.ViewDTO listDTO :list) {
+            //店铺名称
+            String shopName = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getShopId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            listDTO.setShopName(shopName);
+            //国家名称
+            String countryName = countryList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getCountry()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+            listDTO.setCountryName(countryName);
+            listDTO.setStatusName(TmsB2cDeclareReconciliationStatusEnum.getName(listDTO.getStatus()));
+        }
+    }
 
     /**
      * @description: 根据销售订单编码集合查询
@@ -672,7 +710,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             return;
         }
         //店铺信息
-        List<String> shopIdList = list.stream().map(TmsB2cDeclareReconciliationDetailDTO.ListDTO::getShopId).collect(Collectors.toList());
+        List<String> shopIdList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getShopId())).map(TmsB2cDeclareReconciliationDetailDTO.ListDTO::getShopId).collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoList = shopInfoFeign.listShopInfoByIds(shopIdList);
         //国家信息
         List<String> countryIdList = list.stream().map(TmsB2cDeclareReconciliationDetailDTO.ListDTO::getCountry).collect(Collectors.toList());
