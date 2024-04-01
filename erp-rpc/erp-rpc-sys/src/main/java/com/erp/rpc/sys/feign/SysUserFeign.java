@@ -156,8 +156,8 @@ public interface SysUserFeign {
     /**
      * 查询时间格式的业务编码
      */
-    @PostMapping("feign/code/getBusinessNo")
-    String getBusinessNo(SysCodeDTO dto);
+//    @PostMapping("feign/code/getBusinessNo")
+//    String getBusinessNo(SysCodeDTO dto);
 
     @PostMapping("feign/user/getUserDeptList")
     List<SysUserDeptDTO> getUserDeptList();
@@ -410,16 +410,7 @@ public interface SysUserFeign {
     @PostMapping("feign/city/listByIds")
     List<DictCityEntity> listCityByIds(@RequestBody List<String> ids);
 
-    /**
-     * 根据用戶id 获取金蝶的对应岗位code
-     *
-     * @param userId
-     * @return com.erp.model.sys.dto.KingdeePostDTO.UserKingdeePostInfoDTO
-     * @author yl
-     * @date 2023-06-05 10:08
-     */
-    @PostMapping("feign/user/getUserKingdeePostByUserId")
-    KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePostByUserId(@RequestBody String userId);
+
 
     /**
      * @param userIds

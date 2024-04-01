@@ -1279,6 +1279,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
     }
 
+    @Override
+    public List<ShopInfoEntity> getRelatedShopById(String platformShopCode) {
+        return lambdaQuery()
+                .eq(ShopInfoEntity::getPlatformShopCode, platformShopCode)
+                .list();
+    }
+
     private boolean verifyHmac(String data, String hmacHeader) {
         try {
             Mac sha256Hmac = Mac.getInstance("HmacSHA256");

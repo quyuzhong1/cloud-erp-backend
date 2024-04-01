@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuSimpleVO;
@@ -226,6 +227,14 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
     List<SkuSimpleVO> searchSkuWithCombination(@Param("searchKeyword") String searchKeyword, @Param("state") Integer state);
 
     List<SkuVO> getSkuInfoAdvanceQuery(@Param("params") AdvanceQueryContainer advanceQueryContainer);
+
+    /**
+     *  搜索sku
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<ProductDetailDTO.SkuDTO> listSku(Page query, @Param("params") ProductSkuDTO params);
 }
 
 

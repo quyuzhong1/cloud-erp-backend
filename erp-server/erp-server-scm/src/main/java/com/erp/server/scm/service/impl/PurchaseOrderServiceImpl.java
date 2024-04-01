@@ -44,18 +44,22 @@ import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.srm.dto.CfgSettingDTO;
+import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.enums.ConfigKeyEnum;
+import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
+import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
@@ -187,6 +191,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Resource
     private InventoryCloseRecordFeign inventoryCloseRecordFeign;
+
+    @Resource
+    private KingdeePaymentConditionService kingdeePaymentConditionService;
 
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
@@ -321,11 +328,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
         }
         // 采购订单供应商付款条件
-        if(StrUtils.isNotEmpty(supplierUpdateDTO.getPaymentCondition())) {
-            List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
-            Map<String, List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO>> paymentConditionMap = paymentConditionList.stream().collect(Collectors.groupingBy(com.erp.model.sys.dto.DictBasicDTO.ViewDTO::getValue));
-            if(paymentConditionMap.containsKey(supplierUpdateDTO.getPaymentCondition())) {
-                supplierUpdateDTO.setPaymentConditionName(paymentConditionMap.get(supplierUpdateDTO.getPaymentCondition()).get(0).getName());
+        String paymentConditionCode = supplierUpdateDTO.getPaymentCondition();
+        if(StrUtils.isNotEmpty(paymentConditionCode)) {
+            KingdeePaymentConditionEntity paymentCondition =  kingdeePaymentConditionService.getByCode(paymentConditionCode);
+            if(Objects.nonNull(paymentCondition)){
+                supplierUpdateDTO.setPaymentConditionName(paymentCondition.getName());
             }
         }
         dto.setPurchaseOrderSupplierDTO(supplierUpdateDTO);
@@ -688,11 +695,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         exportPdfDTO.setSupplierTel(purchaseOrderSupplier.getContactTelNumber());
         // 采购订单供应商付款条件
-        if(StrUtils.isNotEmpty(purchaseOrderSupplier.getPaymentCondition())) {
-            List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
-            Map<String, List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO>> paymentConditionMap = paymentConditionList.stream().collect(Collectors.groupingBy(com.erp.model.sys.dto.DictBasicDTO.ViewDTO::getValue));
-            if(paymentConditionMap.containsKey(purchaseOrderSupplier.getPaymentCondition())) {
-                exportPdfDTO.setPaymentConditionName(paymentConditionMap.get(purchaseOrderSupplier.getPaymentCondition()).get(0).getName());
+        String  paymentConditionCode = purchaseOrderSupplier.getPaymentCondition();
+        if(StrUtils.isNotEmpty(paymentConditionCode)) {
+            KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getByCode(paymentConditionCode);
+            if(Objects.nonNull(paymentCondition)) {
+                exportPdfDTO.setPaymentConditionName(paymentCondition.getName());
             }
         }
 
@@ -1091,12 +1098,19 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //已入库数量
             Integer hasStockInQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(stockInDetailList)) {
-                hasStockInQty = stockInDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                hasStockInQty = stockInDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId()))
+                        .map(PoInstockDetailEntity::getStockInQty)
+                        .reduce(MathUtil.ZERO, Integer::sum);
             }
             //已退货补货数量
             Integer hasReturnQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(returnOrderDetailList)) {
-                hasReturnQty = returnOrderDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+                hasReturnQty = returnOrderDetailList.stream()
+                        .filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())
+                                && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())
+                                && !ReturnOrderSourceEnum.QC.getCode().equals(obj.getSourceType())
+                                && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode()))
+                        .map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
             //未入库数量
@@ -1289,7 +1303,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
 
         //退货数量
-        List<PoReturnDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
+        List<PoReturnDetailEntity> purchaseReturnOrderDetailList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
 
         //根据SKU查询BOM判断是否是组合SKU
         List<String> skuIds = records.stream().map(PurchaseOrderDTO.ListDTO::getSkuId).collect(Collectors.toList());
@@ -1336,7 +1350,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         for (PurchaseOrderDTO.ListDTO obj : records) {
 
             //退货补货数量
-            Integer replenishQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer replenishQty = purchaseReturnOrderDetailList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId())
+                            && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+                            && !ReturnOrderSourceEnum.QC.getCode().equals(req.getSourceType())
+                            && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode()))
+                    .map(PoReturnDetailEntity::getReplenishQty)
+                    .reduce(MathUtil.ZERO, Integer::sum);
 
             //已收货数量
             Integer receiveQty = MathUtil.ZERO;
@@ -1354,21 +1373,32 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                         .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             /**
-             * 是否结束交货-无：【采购数量-已收数量】+退货数量[退货补货量]【执行状态按待交货量更新】
-             * 是否结束交货-有：0+退货量【执行状态变更为送货中】
+             * 是否结束交货-无：待交数量 =【采购数量-入库数量】+退货数量[退货补货量]
+             * 是否结束交货-有：
+             *      1、结束交货时间 > 退货单审核时间，则待交数量不计退货数量
+             *      2、结束交货时间 <= 退货单审核时间，则待交数量 = 退货数量[退货补货量]
              */
             Integer deliveryQty ;
             if (ObjectUtils.isNotEmpty(obj.getIsEndReceive()) && obj.getIsEndReceive()) {
-                deliveryQty = replenishQty;
+                //等于或晚于结束交货的退货补货的数量
+                deliveryQty = purchaseReturnOrderDetailList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId())
+                                && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+                                && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())
+                                && (req.getApproveTime().isAfter(obj.getEndReceiveTime()) || req.getApproveTime().isEqual(obj.getEndReceiveTime())))
+                        .map(PoReturnDetailEntity::getReplenishQty)
+                        .reduce(MathUtil.ZERO, Integer::sum);
             } else {
-                 deliveryQty = (ExecutionStatusEnum.FINISH.getCode().equals(obj.getExecutionStatus())
-                        || ExecutionStatusEnum.CLOSED.getCode().equals(obj.getExecutionStatus()))
-                        ? MathUtil.ZERO : obj.getPurchaseQty() + replenishQty - receiveQty;
+                 deliveryQty = obj.getPurchaseQty() + replenishQty - stockInQty;
             }
+            //已收货数量
             obj.setReceiveQty(receiveQty);
             //待交货数量
             obj.setDeliveryQty(deliveryQty);
-            Integer returnQtyt = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            //退货数量
+            Integer returnQtyt = purchaseReturnOrderDetailList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId())
+                            && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
+                    .map(PoReturnDetailEntity::getReturnQty)
+                    .reduce(MathUtil.ZERO, Integer::sum);
             obj.setReturnQty(returnQtyt);
             obj.setStockInQty(stockInQty);
             obj.setTaxRateStr(MathUtil.multiply(obj.getTaxRate(),MathUtil.BigDecimal_100).toString().concat("%"));
@@ -2293,28 +2323,66 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         // 采购订单明细id集合
         List<String> podIds = records.stream().map(PurchaseOrderDTO.ListDTO::getPurchaseDetailId).collect(Collectors.toList());
+        List<String> ids = records.stream().map(PurchaseOrderDTO.ListDTO::getId).distinct().collect(Collectors.toList());
         //送货信息
-        List<DeliveryOrderDetailEntity> deliveryOrderDetailList = srmDeliveryOrderFeign.listDetailByDetailSourceIds(podIds);
-
+        List<DeliveryOrderDetailDTO.ListDTO> deliveryOrderDetailList = srmDeliveryOrderFeign.listDetailDTOByDetailSourceIds(podIds);
+        //查询采购签收信息
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(ids);
+        //入库信息
+        List<PoInstockDetailEntity> stockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+        //退货信息
+        List<PoReturnDetailEntity> returnOrderDetailList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
         records.forEach(obj -> {
             //已收货数量
             Integer receiveQty = MathUtil.ZERO;
+            //已送货数量
+            Integer deliveryQty = MathUtil.ZERO;
+            //无送货单收货数量
+            Integer unDeliveryReceiveQty = MathUtil.ZERO;
+            //无收货单的入库数量
+            Integer unReceiveInstockQty = MathUtil.ZERO;
+            //收发差异
+            Integer diffSendAndReceive = MathUtil.ZERO;
+            //退货补货数量
+            Integer returnQty = MathUtil.ZERO;
             //收货数量
-            if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
-                receiveQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
-                        .map(DeliveryOrderDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (CollectionUtils.isNotEmpty(receiveList)) {
+                receiveQty = receiveList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) )
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                unDeliveryReceiveQty = receiveList.stream().filter(e -> org.apache.commons.lang3.StringUtils.isEmpty(e.getSourceId()) && e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()))
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             obj.setReceiveQty(receiveQty);
-            //已送货数量
-            Integer waitReceiveQty = MathUtil.ZERO;
-            if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
-                waitReceiveQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
-                        .map(DeliveryOrderDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-            }
-            obj.setWaitReceiveQty(waitReceiveQty);
-            //待交货量
-            obj.setDeliveryQty(obj.getPurchaseQty() - waitReceiveQty);
+            //无收货单的入库数量
+            if (CollectionUtils.isNotEmpty(stockInDetailList)){
+                // 采购入库单（无收货单），只有审核通过的才占用库存数量
+                unReceiveInstockQty = stockInDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId())
+                                && Objects.equals(e.getSourceDetailId(), obj.getPurchaseDetailId())
+                                && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
+                        .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
 
+            }
+            // 退货单（退货补货的才会导致在途数量变化）
+            if (CollectionUtils.isNotEmpty(returnOrderDetailList)){
+                returnQty = returnOrderDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId())
+                                && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
+                                && StrUtils.isNotEmpty(e.getPurchaseOrderDetailId())
+                                && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode()))
+                        .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //已送货数量
+            if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
+                deliveryQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
+                        .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+                //收发差异
+                diffSendAndReceive = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId())
+                                && StringUtils.isNotBlank(e.getReceiptStatus()) && e.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode()) )
+                        .map(deliveryOrderDetailEntity -> deliveryOrderDetailEntity.getDeliveryQty() - deliveryOrderDetailEntity.getReceiveQty())
+                        .reduce(MathUtil.ZERO, Integer::sum);
+            }
+            obj.setWaitReceiveQty(deliveryQty);
+            //剩余送货量/可下推量=采购订单-送货单数量-无送货单收货数量-无收货单的入库数量+[收发差异]+退货补货数量[库存退货/质检退货]
+            obj.setDeliveryQty(obj.getPurchaseQty() - deliveryQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty );
             //交货周期
             Boolean deliveryCycleFlag = false;
             if(Objects.nonNull(obj.getDeliveryCycle())){

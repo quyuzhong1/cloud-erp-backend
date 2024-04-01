@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.feign;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
@@ -166,4 +167,14 @@ public class CustomerFeignController {
     public CustomerInfoEntity getCustomerById(@RequestBody String id) {
         return customerInfoService.getCustomerById(id);
     }
+
+    /**
+     * 根据客户名称list获取客户详情list
+     *
+     */
+    @PostMapping("/listDTOByNameList")
+    public List<CustomerDTO.ReceiveInfoDTO> listDTOByNameList(@RequestBody List<String> customerNameList) {
+        return customerInfoService.listDTOByNameList(customerNameList);
+    }
+
 }

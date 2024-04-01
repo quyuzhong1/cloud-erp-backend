@@ -4,6 +4,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -80,7 +81,8 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
     public void setPid(KingdeeApiUtils apiUtils, Map<String, Object> map) {
         //判断是否存在上级
         Boolean isExistParent = (Boolean) map.get("isExistParent");
-        if (isExistParent) {
+        String pid = map.getOrDefault("pid", "").toString();
+        if (isExistParent && StringUtils.isBlank(pid)) {
             //根据上级编码查询上级id
             String parentCode = (String) map.get("parentCode");
             LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();

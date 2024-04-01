@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
@@ -91,6 +92,9 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
 
     @Resource
     private InventoryTransCoreService inventoryTransCoreService;
+
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
 
     @Override
     public List<TransferInDTO.TabListDTO> tabList(PermissionsDTO dto) {
@@ -735,7 +739,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             }
         }
         transferIn.setId(id);
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.FBDR, BusinessNoTypeEnum.CODE_FBDR.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.FBDR, BusinessNoTypeEnum.CODE_FBDR.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FBDR);
         transferIn.setCode(code);
         Boolean addResult = this.save(transferIn);
         //添加成功

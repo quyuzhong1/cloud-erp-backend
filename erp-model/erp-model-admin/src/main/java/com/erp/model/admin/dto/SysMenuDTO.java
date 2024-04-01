@@ -51,6 +51,11 @@ public class SysMenuDTO  implements Serializable {
      */
     private Integer index;
 
+    /**
+     * 所属系统，/api/sys/dictBasic/list?type=menuSystem
+     */
+    private String system;
+
     private List<SysMenuDTO> childrenList;
 
 

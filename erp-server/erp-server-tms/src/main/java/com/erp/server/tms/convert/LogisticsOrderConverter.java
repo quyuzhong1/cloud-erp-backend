@@ -110,7 +110,7 @@ public interface LogisticsOrderConverter {
      * @return
      */
     @Mappings({
-            @Mapping(target = "declare_product_code", source = "skuId"),
+            @Mapping(target = "declare_product_code", source = "skuNo"),
             @Mapping(target = "declare_product_name_cn", source = "declareChineseName"),
             @Mapping(target = "declare_product_name_en", source = "declareEnglishName"),
             @Mapping(target = "declare_product_code_qty", source = "quantity"),
@@ -180,7 +180,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "countryCode" ,source = "receiverInfoVO.country"),
             @Mapping(target = "referenceNo" ,source = "deliveryNo"),
             @Mapping(target = "orderWeight" ,source = "parceInfoVO.totalWeight" ,qualifiedByName = "divideByOneThousandWithThreeDecimal"),
-            @Mapping(target = "orderPieces" ,source = "parceInfoVO.totalQuantity"),
+            @Mapping(target = "orderPieces" ,constant = "1"),
             @Mapping(target = "insuranceValue" ,source = "parceInfoVO.insuranceValue"),
             @Mapping(target = "consignee.consigneeCompany",source = "receiverInfoVO.companyName"),
             @Mapping(target = "consignee.consigneeProvince",source = "receiverInfoVO.province"),
@@ -216,7 +216,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "invoiceUnitcharge", source = "price"),
             @Mapping(target = "invoiceCurrencycode", source = "declareCurrency"),
             @Mapping(target = "hsCode", source = "customsCode"),
-            @Mapping(target = "sku", source = "skuId")
+            @Mapping(target = "sku", source = "skuNo")
     })
     WeiShiCreateOrderRequest.ItemArr orderRequestByWeiShi(LogisticsProductVO logisticsProductVO);
 
@@ -300,7 +300,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "width" ,source = "parceInfoVO.width"),
             @Mapping(target = "height" ,source = "parceInfoVO.height"),
             @Mapping(target = "weight" ,source = "parceInfoVO.totalWeight" ,qualifiedByName = "divideByOneThousandWithThreeDecimal"),
-            @Mapping(target = "packageCount" ,source = "parceInfoVO.totalQuantity"),
+            @Mapping(target = "packageCount" ,constant = "1"),
             @Mapping(target = "sourceCode" ,source = "orderSource"),
             @Mapping(target = "returnOption" ,source = "returnOption"),
             @Mapping(target = "iossCode" ,source = "iossCode"),
@@ -336,11 +336,11 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "CName" ,source = "declareChineseName"),
             @Mapping(target = "hsCode" ,source = "customsCode"),
             @Mapping(target = "quantity" ,source = "quantity"),
-            @Mapping(target = "unitPrice" ,source = "price"),
+            @Mapping(target = "unitPrice" ,source = "destDeclarePrice"),
             @Mapping(target = "unitWeight" ,source = "weight",qualifiedByName = "divideByOneThousandWithThreeDecimal"),
             @Mapping(target = "remark" ,source = "remark"),
             @Mapping(target = "productUrl" ,source = "url"),
-            @Mapping(target = "sku" ,source = "skuId"),
+            @Mapping(target = "sku" ,source = "skuNo"),
             @Mapping(target = "invoiceRemark" ,source = "distributionInfo"),
             @Mapping(target = "currencyCode" ,source = "declareCurrency"),
             @Mapping(target = "invoicePart" ,source = "englishMaterial"),
@@ -466,7 +466,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "nameEN" ,source = "declareEnglishName"),
             @Mapping(target = "price" ,source = "price"),
             @Mapping(target = "qty" ,source = "quantity"),
-            @Mapping(target = "sku" ,source = "skuId"),
+            @Mapping(target = "sku" ,source = "skuNo"),
             @Mapping(target = "weight" ,source = "weight",qualifiedByName = "divideByOneThousandWithThreeDecimal"),
             @Mapping(target = "url" ,source = "url")
     })
@@ -594,11 +594,11 @@ public interface LogisticsOrderConverter {
 
     @Mappings({
             @Mapping(target = "skuNo",source = "skuNo"),
-            @Mapping(target = "invoiceEnName",constant = "declareEnglishName"),
+            @Mapping(target = "invoiceEnName",source = "declareEnglishName"),
             @Mapping(target = "invoiceCnName",source = "declareChineseName"),
             @Mapping(target = "invoiceQuantity",source = "quantity"),
             @Mapping(target = "unitCode", constant = "PCE"),
-            @Mapping(target = "invoiceUnitCharge",source = "price",qualifiedByName = "bigDecimalToStr"),
+            @Mapping(target = "invoiceUnitCharge",source = "destDeclarePrice",qualifiedByName = "bigDecimalToStr"),
             @Mapping(target = "hsCode",source = "customsCode"),
             @Mapping(target = "invoiceMaterial",source = "englishMaterial"),
             @Mapping(target = "invoiceNote",source = "distributionInfo"),

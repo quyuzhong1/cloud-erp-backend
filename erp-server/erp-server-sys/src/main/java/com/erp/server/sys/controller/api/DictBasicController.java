@@ -41,8 +41,9 @@ public class DictBasicController extends BaseController {
 
     /**
      * 获取字典数据 根据属性
-     * type=itemPeople (项目人员)
-     * type=otherPeople(其它人员)
+     * itemPeople (项目人员)
+     * otherPeople(其它人员)
+     * menuSystem 菜单系统
      * @param type
      * @return
      */

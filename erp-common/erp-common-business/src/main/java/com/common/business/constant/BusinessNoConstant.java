@@ -87,4 +87,49 @@ public interface BusinessNoConstant {
 
     //委外变更单
     String SUBCH = "SUBCH";
+    //采购变更单
+    String ZJGZ = "ZJGZ";
+    // 盘点计划
+    String PDJH = "PDJH";
+
+    // 盘点任务
+    String PDRW = "PDRW";
+    // 盘盈单
+    String PYD = "PYD";
+    // 盘盈单
+    String PKD = "PKD";
+    // b2c销售订单
+    String XSDS = "XSDS";
+    // 仓位移动
+    String CWYD = "CWYD";
+    // b2c客户地址编号
+    String KHDZC = "KHDZC";
+    // b2c客户联系人编号
+    String KHLXRC = "KHLXRC";
+    // 客户
+    String CUSTC = "CUSTC";
+    // FBA货件
+    String FBAS = "FBAS";
+    // 头程发货单
+    String FHD = "FHD";
+    // b2c销售订单
+    String XSDD = "XSDD";
+    // 海外仓发货计划
+    String FHJH = "FHJH";
+    // 要货申请
+    String YHSQ = "YHSQ";
+    // b2c发货单
+    String FHDC = "FHDC";
+    // b2c发货拦截单
+    String FHLJ = "FHLJ";
+    // 委外发料单
+    String FLD = "FLD";
+    // 送货单
+    String SHD = "SHD";
+    // 对账单
+    String DZD = "DZD";
+    // 中转报关
+    String ZZBG = "ZZBG";
+    // 组包预报
+    String ZB = "ZB";
 }

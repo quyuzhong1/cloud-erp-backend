@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
+import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
@@ -123,6 +124,14 @@ public class DeliveryOrderFeginController extends BaseController {
     @PostMapping("/listDetailByDetailSourceIds")
     public List<DeliveryOrderDetailEntity> listDetailByDetailSourceIds(@RequestBody List<String> purchaseDetailIds){
         return detailService.listDetailByDetailSourceIds(purchaseDetailIds);
+    }
+
+    /**
+     * 获取明细来源id对应的明细 和主表信息
+     */
+    @PostMapping("/listDetailDTOByDetailSourceIds")
+    public List<DeliveryOrderDetailDTO.ListDTO> listDetailDTOByDetailSourceIds(@RequestBody List<String> purchaseDetailIds){
+        return detailService.listDetailDTOByDetailSourceIds(purchaseDetailIds);
     }
 
     /**

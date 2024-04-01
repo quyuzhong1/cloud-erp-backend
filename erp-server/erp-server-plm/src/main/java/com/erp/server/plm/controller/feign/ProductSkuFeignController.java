@@ -6,10 +6,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.BasicCategoryEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductPurchaseEntity;
-import com.erp.model.plm.entity.ProductSaleEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -50,7 +47,8 @@ public class ProductSkuFeignController {
 
     @Resource
     private ProductRefLabelService productRefLabelService;
-
+    @Resource
+    private ProductCustomsService productCustomsService;
 
     /**
      * 产品包装信息
@@ -420,5 +418,15 @@ public class ProductSkuFeignController {
             return Collections.emptyList();
         }
         return productInfoService.listProductBySkuIds(skuIds);
+    }
+
+    /**
+     * 获取sku定义的目的国申报海关编码
+     * @param dto
+     * @return
+     */
+    @PostMapping("/listProductCustomsBySkuIds")
+    public List<ProductCustomsEntity> listProductCustomsBySkuIds(@RequestBody ProductCustomsSkuDTO dto){
+        return productCustomsService.listProductCustomsBySkuIds(dto);
     }
 }

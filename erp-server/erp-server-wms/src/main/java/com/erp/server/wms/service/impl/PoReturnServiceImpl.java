@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.*;
@@ -168,6 +169,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Value("${companyCode}")
     private String companyCode;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     /**
      * 主页分页查询
      *
@@ -273,7 +277,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getReturnWarehouseId());
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGTH, BusinessNoTypeEnum.CODE_CGTH.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGTH);
         //设置收货单主表
         PoReturnEntity poReturnEntity = new PoReturnEntity();
         BeanMapperUtils.copy(dto, poReturnEntity);
@@ -706,8 +710,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 poReturnEntity.setConfirmStatus(confirmStatus);
                 poReturnEntity.setConfirmDate(confirmStatus.equals(PoReturnConfirmStatusEnum.WAIT_CONFIRM.getStatus()) ? null :LocalDate.now());
             }
-            //采购明细id
-            List<String> podIds = poReturnDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
+            //退货补货退货id集合
+            List<String> poReturnIdList = poReturnEntityList.stream().filter(obj -> StrUtil.equals(obj.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode()))
+                    .map(PoReturnEntity::getId).collect(Collectors.toList());
+            List<String> podIds = poReturnDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getPurchaseOrderDetailId()) && poReturnIdList.contains(obj.getMainId()))
+                    .map(obj -> obj.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(podIds)) {
                 updateArrivalState(podIds);
             }
@@ -859,8 +866,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
             }
         }
-        //采购明细id
-        List<String> podIds = poReturnDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
+        //退货补货退货id集合
+        List<String> poReturnIdList = poReturnEntityList.stream().filter(obj -> StrUtil.equals(obj.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode()))
+                .map(PoReturnEntity::getId).collect(Collectors.toList());
+        List<String> podIds = poReturnDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getPurchaseOrderDetailId()) && poReturnIdList.contains(obj.getMainId()))
+                .map(obj -> obj.getPurchaseOrderDetailId())
+                .distinct().collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(podIds)) {
             updateArrivalState(podIds);
         }
@@ -1180,8 +1191,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public void updateArrivalState(List<String> podIds) {
         //采购订单明细
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(podIds);
+        //采购退货明细
         List<PoReturnDetailEntity> returnDetailEntityList = poReturnDetailService.listReturnOrderDetailByPodIds(podIds);
+        //收货单明细
         List<WarehouseReceiveDetailEntity> receiveDetailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
+        //入库单明细
+        List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listDetailByPodIds(podIds);
 
         //委外订单下采购订单
         List<String> sourceDetailIds = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getSourceDetailId).collect(Collectors.toList());
@@ -1192,21 +1207,55 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         List<PurchaseOrderDetailEntity> list = new ArrayList<>();
         for (PurchaseOrderDetailEntity orderDetailEntity : purchaseOrderDetailEntities) {
+            //库存退货的退货补货数量
+            Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(orderDetailEntity.getId()) 
+                            && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+                            && !ReturnOrderSourceEnum.QC.getCode().equals(obj.getSourceType())
+                            && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode()))
+                    .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            //整个退货补货数量
+            Integer allReturnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(orderDetailEntity.getId())
+                            && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+                            && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode()))
+                    .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            //收货数量
+            Integer receiveQty = receiveDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(orderDetailEntity.getId())
+                            && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
+                    .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            //入库数量
+            Integer inStockQty = poInstockDetailList.stream().filter(obj -> StrUtil.equals(obj.getPurchaseOrderDetailId(), orderDetailEntity.getId())
+                            && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()))
+                    .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
 
-            Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(orderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-
-            Integer receiveQty = receiveDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(orderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-
+            //采购数量
             Integer purchaseQty = orderDetailEntity.getPurchaseQty();
+
+            /**
+             * 执行状态变更节点：
+             * 1、收货单审核、反审
+             * 2、入库单审核、反审
+             * 3、退货单审核、反审
+             * 执行状态变更逻辑：
+             * 收货单数量并且入库单数量为0，则更新为已确认
+             * (收货单数量>0或入库单数量>0) 并且(采购数量+退货补货数量>收货数量并且入库单数量>0并且采购数量+库存退货的退货补货数量>入库数量)，则更新为送货中
+             * (收货单数量>0并且采购数量+退货补货数量=收货数量)或(入库单数量>0并且采购数量+库存退货的退货补货数量=入库数量)，则更新为已完成
+             */
+
             //订单执行状态
             String executionStatus = "";
-            //收货数量为0则执行状态为已确认
-            if (receiveQty - returnQty <= MathUtil.ZERO) {
-                executionStatus = ExecutionStatusEnum.CONFIRM.getCode();
-            } else if (receiveQty - returnQty > MathUtil.ZERO && receiveQty - returnQty < purchaseQty) {
-                //小于采购数量时执行状态为收货中
+            if (MathUtil.compareTo(receiveQty,MathUtil.ZERO) == MathUtil.ZERO
+                    && MathUtil.compareTo(inStockQty,MathUtil.ZERO) == MathUtil.ZERO) {
+               //已确认
+               executionStatus = ExecutionStatusEnum.CONFIRM.getCode();
+            }
+            if((receiveQty > MathUtil.ZERO || inStockQty > MathUtil.ZERO)
+                    && MathUtil.add(purchaseQty,allReturnQty) > receiveQty
+                    && MathUtil.add(purchaseQty,returnQty) > inStockQty ) {
+                //送货中
                 executionStatus = ExecutionStatusEnum.DELIVERY.getCode();
-            } else {
+            }
+            if((receiveQty > MathUtil.ZERO && MathUtil.compareTo(MathUtil.add(purchaseQty,allReturnQty),receiveQty) == MathUtil.ZERO)
+                    || (inStockQty > MathUtil.ZERO && MathUtil.compareTo(MathUtil.add(purchaseQty,returnQty),inStockQty)  == MathUtil.ZERO)) {
                 //已完成
                 executionStatus = ExecutionStatusEnum.FINISH.getCode();
             }
@@ -1228,6 +1277,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
     }
 
+    public static void main(String[] args) {
+        Integer s = 4444444;
+        System.out.println(s == 4444444 );
+    }
 
     /**
      * 下推 退货单

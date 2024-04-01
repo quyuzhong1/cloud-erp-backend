@@ -4,6 +4,8 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.sdk.oms.amz.spapi.dto.AmazonTokenDTO;
 
 /**
  * <p>
@@ -50,4 +52,12 @@ public interface CfgAppClientService extends SuperService<CfgAppClientEntity> {
      * @date 2023-12-01
      */
     AmazonShopInfoDTO cacheAndFindShopAuth(String shopId);
+
+
+    /**
+     * 获取根据信息 获取亚马逊授权相关信息
+     * @author Jim
+     * @date 2024-03-27
+     */
+    AmazonTokenDTO requestAmzAndAuth(ShopInfoEntity shopInfoEntity, CfgAppClientEntity cfgAppClient);
 }

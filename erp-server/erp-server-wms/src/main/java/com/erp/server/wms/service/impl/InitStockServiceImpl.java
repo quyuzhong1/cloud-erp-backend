@@ -6,6 +6,7 @@ import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -56,6 +57,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.InputStream;
@@ -103,6 +105,9 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
 
     @Autowired
     private WarehouseLocationService warehouseLocationService;
+
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
 
     @Override
     public PagingVO<InitStockDTO.ListDTO> paging(PagingDTO<InitStockDTO.SearchParamDTO> pagingParamDTO) {
@@ -208,7 +213,8 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         // 保存期初库存主单
         fillingAddOrUpdate(initStockEntity, dto.getWarehouseId());
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QCKC, BusinessNoTypeEnum.CODE_INIT_STOCK.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QCKC, BusinessNoTypeEnum.CODE_INIT_STOCK.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_INIT_STOCK);
         initStockEntity.setCode(code);
         initStockEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         initStockEntity.setDictTradeType(InventoryBusinessTypeEnum.INVENTORY_INIT.getCode());

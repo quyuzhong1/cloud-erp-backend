@@ -36,6 +36,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.util.StopWatch;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -146,6 +147,19 @@ public class ProductDetailController extends BaseController {
         return this.success(paging);
     }
 
+    /**
+     * 根据sku进行模糊搜索
+     * @param pagingDTO
+     * @return
+     */
+    @PostMapping("/listSku" )
+    public ApiResult<PagingVO<ProductDetailDTO.SkuDTO>> listSku(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO){
+        if (Objects.isNull(pagingDTO.getParams()) || StringUtils.isEmpty(pagingDTO.getParams().getRemoteSearchSku())){
+            return success();
+        }
+        PagingVO<ProductDetailDTO.SkuDTO> skuDTOList = productDetailService.listSku(pagingDTO);
+        return this.success(skuDTOList);
+    }
     /**
      * 根据sku编号查询
      * @author Will

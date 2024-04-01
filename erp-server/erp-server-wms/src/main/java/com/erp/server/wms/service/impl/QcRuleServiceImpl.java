@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -55,6 +56,9 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     /**
      * 添加质检规则
      *
@@ -92,7 +96,8 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         }
 
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QCGZ, BusinessNoTypeEnum.CODE_ZJGZ.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QCGZ, BusinessNoTypeEnum.CODE_ZJGZ.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZJGZ);
         rule.setCode(code);
         rule.setId(id);
         Boolean addResult = this.save(rule);

@@ -206,7 +206,7 @@ public class PurchaseOrderDTO implements Serializable {
         private Integer stockInQty;
 
         /**
-         * 未交货数量/待交货量
+         * 未交货数量/待交货量 srm改为 剩余送货量
          */
         private Integer deliveryQty;
 
@@ -270,6 +270,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 是否结束交货
          */
         private Boolean isEndReceive;
+
+        /**
+         * 结束交货时间
+         */
+        private LocalDateTime endReceiveTime;
 
         /**
          * 来源单号

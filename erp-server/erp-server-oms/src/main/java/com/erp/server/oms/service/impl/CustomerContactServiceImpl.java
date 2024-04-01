@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
@@ -47,6 +48,10 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
 
     @Resource
     private SyncKingdeeCustomerContactService syncKingdeeCustomerContactService;
+
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     /**
      * 检查客户默认联系人是否多个
      *
@@ -85,7 +90,8 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
         for (CustomerContactEntity addDTO : addList) {
             addDTO.setMainId(mainId);
             //生成单号
-            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.KHLXR, BusinessNoTypeEnum.CODE_KHLXR.getCode()));
+//            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.KHLXR, BusinessNoTypeEnum.CODE_KHLXR.getCode()));
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHLXR);
             addDTO.setCode(code);
         }
         this.saveBatch(addList);
@@ -141,7 +147,8 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
         List<CustomerContactEntity> addEntityList = BeanMapper.copyList(addList, CustomerContactEntity.class);
         addEntityList.forEach(req -> {
             //生成单号
-            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.KHLXR, BusinessNoTypeEnum.CODE_KHLXR.getCode()));
+//            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.KHLXR, BusinessNoTypeEnum.CODE_KHLXR.getCode()));
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHLXR);
             req.setCode(code);
         });
         saveOrUpdateList.addAll(updateEntityList);

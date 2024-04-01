@@ -1,8 +1,12 @@
 package com.erp.server.srm.mapper;
+import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -15,5 +19,10 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface DeliveryOrderDetailMapper extends BaseMapper<DeliveryOrderDetailEntity> {
-
+    /**
+     * 获取发货明细及状态
+     * @param detailIds
+     * @return
+     */
+    List<DeliveryOrderDetailDTO.ListDTO> listDetailDTOByDetailSourceIds(@Param("detailIds") List<String> detailIds);
 }

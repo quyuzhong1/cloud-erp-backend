@@ -2,14 +2,16 @@ package com.erp.rpc.sys.feign;
 
 import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
+import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
-import com.erp.model.sys.entity.DeptKingdeeEntity;
-import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.ArrayList;
 import java.util.List;
+
 
 /**
  * @author Lambda
@@ -22,7 +24,7 @@ import java.util.List;
 public interface KingdeeFeign {
 
     @PostMapping("/feign/kingdee/getDeptInfo")
-    DeptKingdeeEntity getDeptKingdee(@RequestBody DeptKingdeeDTO.FindDeptKingdeeDTO dto);
+    KingdeeDepartmentEntity getDeptKingdee(@RequestBody DeptKingdeeDTO.FindDeptKingdeeDTO dto);
 
 
     @PostMapping("/feign/kingdee/getUserKingdeePost")
@@ -41,13 +43,8 @@ public interface KingdeeFeign {
      * @return
      */
     @PostMapping("/feign/kingdee/getBusinessOperator")
-    KingdeeBusinessOperatorEntity getBusinessOperator(@RequestBody KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO  dto);
+    KingdeeOperatorRefPostDTO.OperatorDTO getBusinessOperator(@RequestBody KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO  dto);
 
-    /**
-     * 获取到所有业务员信息
-     * @param userIdList
-     * @return
-     */
-    @PostMapping("/feign/kingdee/listBusinessOperatorByUserIdList")
-    List<KingdeeBusinessOperatorEntity> listBusinessOperatorByUserIdList(@RequestBody List<String> userIdList);
+    @PostMapping("/feign/kingdee/listOperatorByUserIdList")
+    List<KingdeeOperatorRefPostDTO.OperatorDTO> listBusinessOperatorByUserIdList(@RequestBody  List<String> userIdList);
 }

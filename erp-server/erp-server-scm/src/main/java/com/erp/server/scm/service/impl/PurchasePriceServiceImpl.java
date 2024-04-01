@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -29,10 +30,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.ImportPurchasePriceExcelDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceExportExcelDTO;
-import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
-import com.erp.model.scm.entity.PurchasePriceDetailEntity;
-import com.erp.model.scm.entity.PurchasePriceEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchasePriceTabFlagEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -57,6 +55,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.hibernate.validator.constraints.EAN;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -127,6 +126,12 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Resource
     private PurchasePriceChangeDetailService purchasePriceChangeDetailService;
 
+    @Resource
+    private KingdeePaymentConditionService kingdeePaymentConditionService;
+
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     /**
      * 添加采购价目表
      *
@@ -149,7 +154,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, purchasePrice);
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGJM, BusinessNoTypeEnum.CODE_CGJM.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGJM, BusinessNoTypeEnum.CODE_CGJM.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGJM);
         purchasePrice.setCode(code);
         purchasePrice.setId(id);
         String pricingUserId = dto.getPricingUserId();
@@ -244,9 +250,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         viewDTO.setSupplierContactName(supplierDTO.getPerson());
         viewDTO.setContactTelNumber(supplierDTO.getTelNumber());
 
+        String paymentConditionCode = supplierDTO.getPaymentCondition();
+
         //付款条件
-        List<DictBasicDTO.ViewDTO> paymentConditionList = sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
-        String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getValue().equals(supplierDTO.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getByCode(paymentConditionCode);
+        String paymentConditionName = paymentCondition != null ? paymentCondition.getName() :"";
         viewDTO.setPaymentConditionName(paymentConditionName);
         return viewDTO;
     }
@@ -891,7 +899,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             // 当该新增的主单有明细时才新增
             if(CollUtil.isNotEmpty(addItemList)) {
                 //生成单号
-                String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGJM, BusinessNoTypeEnum.CODE_CGJM.getCode()));
+//                String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGJM, BusinessNoTypeEnum.CODE_CGJM.getCode()));
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGJM);
                 purchasePriceEntity.setCode(code);
                 String id = IdWorker.getIdStr();
                 purchasePriceEntity.setId(id);

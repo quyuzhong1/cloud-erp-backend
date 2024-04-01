@@ -130,4 +130,17 @@ public interface ShopAuthService extends SuperService<ShopAuthEntity> {
      * @return java.lang.Boolean
      **/
     Boolean updateRefreshTokenError(String shopAuthId, String msg);
+    void refreshToken(String shopAuthId, String accessToken, String refreshToken, Integer expiresIn);
+
+    /**
+     * 批量获取授权信息
+     */
+    List<ShopAuthEntity> listShopAuthByShopIds(List<String> shopIdList);
+
+    /**
+     * 批量更新店铺授权信息
+     *
+     */
+    Boolean batchUpdateShopAuthById(List<ShopAuthEntity> shopAuthEntity);
+
 }
