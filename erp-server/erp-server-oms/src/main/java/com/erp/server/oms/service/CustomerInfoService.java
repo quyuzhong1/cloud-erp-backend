@@ -356,4 +356,13 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * 根据客户名称list获取客户详情list
      */
     List<CustomerDTO.ReceiveInfoDTO> listDTOByNameList(List<String> customerNameList);
+
+    /**
+     * 根据客户id查询店铺负责人和部门
+     * @Author Luo_WG
+     * @Date 2024/4/1 15:20
+     * @param codeList
+     * @return java.util.List<com.erp.model.oms.dto.CustomerDTO.SellerUserDeptDTO>
+     **/
+    List<CustomerDTO.SellerUserDeptDTO> listSellerUserDepByCodes(List<String> codeList);
 }
