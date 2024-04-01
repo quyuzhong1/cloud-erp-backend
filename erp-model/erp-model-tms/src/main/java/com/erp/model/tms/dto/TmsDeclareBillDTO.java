@@ -766,13 +766,13 @@ public class TmsDeclareBillDTO implements Serializable {
          * 是否合并
          */
         @ExcelIgnore
-        private boolean isMerged;
+        private Boolean isMerged = Boolean.FALSE;
 
         /**
          * 是否作废
          */
         @ExcelIgnore
-        private boolean isInvalid;
+        private Boolean isInvalid= Boolean.FALSE;
     }
 
     /**

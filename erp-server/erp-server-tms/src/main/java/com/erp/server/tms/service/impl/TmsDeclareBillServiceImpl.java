@@ -303,7 +303,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             sourceCodeList.addAll(mergedSourceCodeList);
             sourceCodeList = sourceCodeList.stream().distinct().collect(Collectors.toList());
             v.setSourceCodeList(sourceCodeList);
-            v.setInvalid(v.getDeclareStatus().equals(DeclareStatusEnum.INVALID.getCode()));
+            v.setIsInvalid(v.getDeclareStatus().equals(DeclareStatusEnum.INVALID.getCode()));
         });
     }
 
