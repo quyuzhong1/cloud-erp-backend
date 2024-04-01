@@ -34,6 +34,8 @@
         is_deleted,
         logistics_supplier_id,
         logistics_supplier_name,
+        logistics_channel_id,
+        logistics_channel_name,
         is_must_package,
         enable_package_time,
         is_must_transfer,
@@ -47,8 +49,7 @@
         select
           <include refid="Base_Column_List" />
         from setting_forecast
-        WHERE logistics_supplier_id=
-        (SELECT main_id FROM logistics_channel WHERE id=#{logisticsChannelId} AND is_deleted=FALSE)
+        WHERE is_deleted = false and logistics_channel_id = #{logisticsChannelId}
         AND is_deleted=FALSE  LIMIT 1
     </select>
 
