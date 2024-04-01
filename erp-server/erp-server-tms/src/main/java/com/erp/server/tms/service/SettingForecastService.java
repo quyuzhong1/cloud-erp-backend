@@ -1,12 +1,10 @@
 package com.erp.server.tms.service;
 
 import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.validator.ValidList;
+import com.common.business.service.SuperService;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.entity.SettingForecastEntity;
-import com.common.business.service.SuperService;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -91,4 +89,14 @@ public interface SettingForecastService extends SuperService<SettingForecastEnti
      * @return
      */
     SettingForecastEntity getSettingForecastByLogisticsSupplierId(String logisticsSupplierId);
+
+    /**
+     * @description: 物流渠道id
+     * @author Will
+     * @date: 2024/4/1 12:18
+     * @param logisticsChannelIdList
+     * @return List<SettingForecastEntity>
+     */
+    List<SettingForecastEntity> listByLogisticsChannelIdList (List<String> logisticsChannelIdList);
+
 }

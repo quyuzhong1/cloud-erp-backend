@@ -5,6 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.enums.PackageStatusEnum;
@@ -240,6 +241,17 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
         return this.lambdaQuery().eq(SettingForecastEntity::getLogisticsSupplierId, logisticsSupplierId).last("LIMIT 1").one();
     }
 
+    /**
+     * 根据渠道id查询
+     */
+    @Override
+    public List<SettingForecastEntity> listByLogisticsChannelIdList (List<String> logisticsChannelIdList) {
+        if (CollectionUtils.isEmpty(logisticsChannelIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return this.lambdaQuery().in(SettingForecastEntity::getLogisticsChannelId,logisticsChannelIdList).list();
+    }
+
     private SettingForecastDTO.SaveOrUpdateDTO getSaveOrUpdateByDb(SettingForecastEntity entity) {
         SettingForecastDTO.SaveOrUpdateDTO dto = new SettingForecastDTO.SaveOrUpdateDTO();
         dto.setId(entity.getId());
@@ -273,8 +285,25 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
         List<String> logisticsChannelIdList = list.stream().map(SettingForecastEntity::getLogisticsChannelId).distinct().collect(Collectors.toList());
         List<LogisticsChannelEntity> logisticsChannelList = logisticsChannelService.listByIds(logisticsChannelIdList);
 
+        //根据渠道查询
+
+        List<SettingForecastEntity> settingForecastList = this.listByLogisticsChannelIdList(logisticsChannelIdList);
+
         List<TransferLogisticsSupplierDTO.AuthDTO> transferLogisticsSupplierList = CollectionUtils.isNotEmpty(transferSupplierIdList) ? transferLogisticsSupplierService.listAuthByMainIds(transferSupplierIdList) : Collections.emptyList();
         for (SettingForecastEntity item : list) {
+            //渠道验证
+            if (StrUtil.isNotBlank(item.getLogisticsChannelId())) {
+                //对应渠道
+                String logisticsChannelName = logisticsChannelList.stream().filter(obj -> StrUtil.equals(obj.getId(), item.getLogisticsChannelId())).findFirst().map(LogisticsChannelEntity::getName).orElse("");
+                item.setLogisticsChannelName(logisticsChannelName);
+
+                //验证渠道是否已使用
+                long count = settingForecastList.stream().filter(obj -> StrUtil.equals(obj.getLogisticsChannelId(), item.getLogisticsChannelId()) && !StrUtil.equals(obj.getId(), item.getId())).count();
+                if (count > 0) {
+                    throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_EXIST,logisticsChannelName);
+                }
+            }
+
             String logisticsSupplierId = item.getLogisticsSupplierId();
             String logisticsSupplierName = logisticsSupplierList.stream().filter(l -> l.getId().equals(logisticsSupplierId)).
                     findFirst().map(LogisticsSupplierEntity::getSupplierName).orElse("");
@@ -289,9 +318,6 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
             if (Objects.isNull(authDTO)) {
                 throw new ServiceException(logisticsSupplierName + " 对应的中转物流商不存在");
             }
-            //对应渠道
-            String logisticsChannelName = logisticsChannelList.stream().filter(obj -> StrUtil.equals(obj.getId(), item.getLogisticsChannelId())).findFirst().map(LogisticsChannelEntity::getName).orElse("");
-            item.setLogisticsChannelName(logisticsChannelName);
 
             String authStatus = authDTO.getAuthStatus();
             String already = TransferLogisticsAuthStatusEnum.ALREADY.getCode();

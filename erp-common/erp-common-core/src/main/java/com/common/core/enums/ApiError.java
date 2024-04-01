@@ -1203,6 +1203,8 @@ public enum ApiError implements Serializable {
     PRINT_WAYBILL_ERROR(94028,"调用第三方接口打印异常，异常原因：{}"),
     ERROR_CHANNEL_QUOTE(94029,"该渠道已被引用,无法删除"),
     ERROR_LOGISTICS_BILL_COST_RECONCILIATION_STATUS(94030,"已确认和已作废不支持自发货费用单状态变更"),
+    ERROR_LOGISTICS_CHANNEL_EXIST(94031,"渠道【{}】已被使用，不支持重复选择"),
+
 
     /**
      * SRM 错误
