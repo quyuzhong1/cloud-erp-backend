@@ -237,10 +237,10 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         detailDTO.setPlatformLineNumber("");
 
         // 平台sku编号
-        detailDTO.setPlatformSkuNo(orderItemsBean.getItem().getParentItemId());
+        detailDTO.setPlatformSkuNo(orderItemsBean.getItem().getSellerSku());
 
         //平台产品id
-        detailDTO.setPlatformSpuNo(orderItemsBean.getItem().getFid());
+        detailDTO.setPlatformSpuNo(orderItemsBean.getItem().getParentItemId());
 
         // 库存sku编号
         detailDTO.setWarehouseName("");
