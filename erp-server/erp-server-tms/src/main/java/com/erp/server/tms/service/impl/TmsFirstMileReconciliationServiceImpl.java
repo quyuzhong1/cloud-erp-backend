@@ -42,6 +42,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -146,7 +147,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         searchParam.setPermissionSql(param.getPermissionSql());
         List<TmsFirstMileReconciliationDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
-        if (CollUtil.isEmpty(list)) {
+        if (!CollUtil.isEmpty(list)) {
             list.forEach(obj -> obj.setTabFlagName(ApproveStatusEnum.getName(obj.getTabFlag())));
         }
         // 获取状态列表

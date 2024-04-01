@@ -166,6 +166,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         return new PagingVO<>(pageData);
     }
 
+    @Override
+    public void exportList(TmsFirstMileReconciliationDetailDTO.ExportDTO dto, HttpServletResponse response) {
+
+    }
+
     private void fillWaitReconciliationPaging(List<TmsFirstMileReconciliationDetailDTO.ListDTO> records) {
         // 统计预计费用
         List<String> logisticsBillIds = records.stream()

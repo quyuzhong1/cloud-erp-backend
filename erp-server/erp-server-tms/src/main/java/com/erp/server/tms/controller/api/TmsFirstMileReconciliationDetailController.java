@@ -16,6 +16,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
+import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.erp.server.tms.query.TmsB2cDeclareReconciliationDetailQueryHandler;
@@ -157,6 +158,24 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
     @WebAdvanceQuery(handler = TmsB2cDeclareReconciliationDetailQueryHandler.class)
     public ApiResult<PagingVO<TmsFirstMileReconciliationDetailDTO.ListDTO>> waitPaging(@RequestBody @Validated PagingDTO<TmsFirstMileReconciliationDetailDTO.PagingParamDTO> dto) {
         return success(tmsFirstMileReconciliationDetailService.waitReconciliationPaging(dto));
+    }
+
+    /**
+     * 导出Excel数据
+     *
+     * @param dto DTO
+     * @author Jim
+     * {@code @date:}2024-03-25
+     */
+    @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFirstMileReconciliationDetail:export",
+            tableAlias = ""
+    )
+    @LogAction(value = LogActionEnum.EXPORT, desc = "头程对账单导出Excel数据")
+    public void exportList(@RequestBody @Validated TmsFirstMileReconciliationDetailDTO.ExportDTO dto, HttpServletResponse response) {
+        tmsFirstMileReconciliationDetailService.exportList(dto, response);
     }
 
 }
