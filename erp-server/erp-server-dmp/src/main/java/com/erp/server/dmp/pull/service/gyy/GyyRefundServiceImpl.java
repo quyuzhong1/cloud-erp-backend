@@ -105,7 +105,9 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
         }
         List<GyyRefundEntity> insertList = new ArrayList<>();
         List<GyyRefundEntity> pushToMqList = new ArrayList<>();
-        for (GyyRefundEntity entity : gyyRefundEntityList) {
+        //去重
+        List<GyyRefundEntity> gyyRefundEntities = gyyRefundEntityList.stream().distinct().collect(Collectors.toList());
+        for (GyyRefundEntity entity : gyyRefundEntities) {
             GyyRefundDTO orderMongoDTO = new GyyRefundDTO(entity.getCode(), entity.getRefundCode());
             List<GyyRefundEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_REFUND, GyyRefundEntity.class);
             if(CollectionUtil.isEmpty(mongoData)){
