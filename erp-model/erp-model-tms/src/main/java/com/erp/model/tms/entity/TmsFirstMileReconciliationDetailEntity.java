@@ -9,12 +9,9 @@ import java.time.LocalDate;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 
-import java.io.Serializable;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -137,20 +134,20 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
     @TableField("billing_weight_unit")
     private String billingWeightUnit;
     /**
-     * 实际物流运费用
+     * 运费用
      */
     @TableField("actual_shipping_cost")
-    private BigDecimal actualShippingCost;
+    private BigDecimal shippingCost;
     /**
-     * 实际报关费用
+     * 报关费用
      */
     @TableField("actual_declare_cost")
-    private BigDecimal actualDeclareCost;
+    private BigDecimal declareCost;
     /**
-     * 实际其他费用
+     * 其他费用
      */
     @TableField("actual_other_cost")
-    private BigDecimal actualOtherCost;
+    private BigDecimal otherCost;
     /**
      * 备注
      */

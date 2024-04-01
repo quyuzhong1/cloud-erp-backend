@@ -6,8 +6,10 @@ import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -79,9 +81,17 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
     /**
      * 导出
      *
-     * @return ExportDTO dto
      * @author Jim
      * @date: 2024-03-25
      */
     void exportList(TmsFirstMileReconciliationDetailDTO.ExportDTO dto, HttpServletResponse response);
+
+
+    /**
+     * 通过
+     *
+     * @author Jim
+     * @date: 2024-03-25
+     */
+    List<TmsFirstMileReconciliationDetailEntity> listByMainIds(List<String> mainIds);
 }

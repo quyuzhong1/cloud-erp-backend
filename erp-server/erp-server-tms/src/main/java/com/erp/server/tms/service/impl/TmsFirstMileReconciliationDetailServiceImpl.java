@@ -18,6 +18,7 @@ import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsCostDetailEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
@@ -26,6 +27,7 @@ import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,6 +59,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     private OperateLogService operateLogService;
     @Resource
     private CommonService commonService;
+    @Lazy
     @Resource
     private TmsFirstMileLogisticService tmsFirstMileLogisticService;
     @Resource
@@ -129,7 +132,12 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     }
 
     private void fillList(List<TmsFirstMileReconciliationDetailDTO.ListDTO> records) {
+        // 查询
 
+        for (TmsFirstMileReconciliationDetailDTO.ListDTO record : records) {
+
+
+        }
     }
 
     @Override
@@ -169,6 +177,13 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     @Override
     public void exportList(TmsFirstMileReconciliationDetailDTO.ExportDTO dto, HttpServletResponse response) {
 
+    }
+
+    @Override
+    public List<TmsFirstMileReconciliationDetailEntity> listByMainIds(List<String> mainIds) {
+        return lambdaQuery()
+                .in(TmsFirstMileReconciliationDetailEntity::getMainId, mainIds)
+                .list();
     }
 
     private void fillWaitReconciliationPaging(List<TmsFirstMileReconciliationDetailDTO.ListDTO> records) {

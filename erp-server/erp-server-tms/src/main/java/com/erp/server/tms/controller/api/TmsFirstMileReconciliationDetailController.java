@@ -20,6 +20,7 @@ import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.erp.server.tms.query.TmsB2cDeclareReconciliationDetailQueryHandler;
+import com.erp.server.tms.query.TmsFirstMileReconciliationDetailQueryHandler;
 import com.erp.server.tms.service.TmsFirstMileReconciliationDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -75,7 +76,7 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
             menuCode = "tms:tmsFirstMileReconciliationDetail:paging",
             tableAlias = "tfmrd"
     )
-    @WebAdvanceQuery(handler = TmsB2cDeclareReconciliationDetailQueryHandler.class)
+    @WebAdvanceQuery(handler = TmsFirstMileReconciliationDetailQueryHandler.class)
     public ApiResult<PagingVO<TmsFirstMileReconciliationDetailDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<TmsFirstMileReconciliationDetailDTO.PagingParamDTO> dto) {
         return success(tmsFirstMileReconciliationDetailService.paging(dto));
     }
