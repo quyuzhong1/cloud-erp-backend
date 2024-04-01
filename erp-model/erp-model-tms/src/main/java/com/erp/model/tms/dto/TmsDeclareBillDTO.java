@@ -766,13 +766,13 @@ public class TmsDeclareBillDTO implements Serializable {
          * 是否合并
          */
         @ExcelIgnore
-        private boolean isMerged;
+        private Boolean isMerged = Boolean.FALSE;
 
         /**
          * 是否作废
          */
         @ExcelIgnore
-        private boolean isInvalid;
+        private Boolean isInvalid= Boolean.FALSE;
     }
 
     /**
@@ -914,7 +914,7 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          * 业务code（发货单code或销售出库单code）
          */
-        private String sourceCode;
+        private List<String> sourceCodeList;
 
         /**
          * 预录入编号
