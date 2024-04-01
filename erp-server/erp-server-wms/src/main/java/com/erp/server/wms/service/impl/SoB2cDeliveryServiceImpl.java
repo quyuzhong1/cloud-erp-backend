@@ -916,6 +916,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(record.getSourceId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                 record.setIsIntercept(soB2cEntity.getIsIntercept());
+                record.setPackageStatus(soB2cEntity.getPackageStatus());
+                record.setTransferStatus(soB2cEntity.getTransferStatus());
             }
             //平台名称
             record.setDictPlatformName(PlatformDictEnum.getByCode(record.getDictPlatform()).getName());
@@ -930,8 +932,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 record.setProductName(skuVO.getSkuName());
                 record.setWarehouseLocation(skuVO.getWarehouseLocation());
             }
-            record.setPackageStatus(soB2cEntity.getPackageStatus());
-            record.setTransferStatus(soB2cEntity.getTransferStatus());
         }
     }
 
