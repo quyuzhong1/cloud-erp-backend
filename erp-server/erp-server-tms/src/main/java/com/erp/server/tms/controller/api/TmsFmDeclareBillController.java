@@ -118,7 +118,7 @@ public class TmsFmDeclareBillController extends BaseController {
         serviceClass = TmsDeclareBillService.class,
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated TmsDeclareBillDTO.UpdateDTO dto) {
-        tmsDeclareBillService.update(dto);
+        tmsDeclareBillService.update(dto,SourceTypeEnum.FM_DECLARE_BILL);
         return success();
     }
 

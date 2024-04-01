@@ -100,4 +100,7 @@ public interface SoOutstockFeign {
 
     @PostMapping("feign/soOutstock/logisticStatistics")
     List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(@RequestBody FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq);
+
+    @PostMapping("feign/soOutstock/updateStatus")
+    Boolean updateStatus(@RequestBody TmsDeclareBillDTO.UpdateStatusDTO dto);
 }

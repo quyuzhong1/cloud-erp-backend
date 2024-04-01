@@ -158,6 +158,16 @@ public class SoOutstockFeignController {
     List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(@RequestBody FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq) {
         return soOutstockService.logisticStatistics(deliveryStaticsReq);
     }
+
+
+    /**
+     * 更新状态
+     * @return
+     */
+    @PostMapping("/updateStatus")
+    Boolean updateStatus(@RequestBody TmsDeclareBillDTO.UpdateStatusDTO dto) {
+        return soOutstockService.updateStatus(dto);
+    }
 }
 
 

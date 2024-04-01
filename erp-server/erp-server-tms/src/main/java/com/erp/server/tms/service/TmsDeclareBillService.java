@@ -27,7 +27,7 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
     * @param dto
     * @return
     */
-    Boolean update(TmsDeclareBillDTO.UpdateDTO dto);
+    Boolean update(TmsDeclareBillDTO.UpdateDTO dto,SourceTypeEnum sourceTypeEnum);
 
 
     List<TmsDeclareBillDTO.TabListDTO> tabList(SourceTypeEnum sourceTypeEnum);
@@ -68,4 +68,6 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
     List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateSoOut(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
 
     TmsDeclareBillDTO.StatisticsVO statisticsBySoOut();
+
+    Boolean addB2BDeclare(TmsDeclareBillDTO.AddDTO dto);
 }

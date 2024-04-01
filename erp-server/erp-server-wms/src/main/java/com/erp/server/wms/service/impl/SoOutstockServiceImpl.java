@@ -2830,6 +2830,20 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return baseMapper.logisticStatistics(deliveryStaticsReq);
     }
 
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean updateStatus(TmsDeclareBillDTO.UpdateStatusDTO dto) {
+        if(StringUtils.isBlank(dto.getDeclareStatus()) && StringUtils.isBlank(dto.getLogisticsStatus())){
+            return false;
+        }
+        return this.lambdaUpdate()
+                .in(SoOutstockEntity :: getId,dto.getIds())
+                .set(StringUtils.isNotBlank(dto.getDeclareStatus()),SoOutstockEntity::getDeclareStatus,dto.getDeclareStatus())
+                .update();
+
+    }
+
     /**
      * 根据单号查询出库单
      * @param codes

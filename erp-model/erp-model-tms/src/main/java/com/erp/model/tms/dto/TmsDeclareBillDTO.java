@@ -161,11 +161,6 @@ public class TmsDeclareBillDTO implements Serializable {
         private String logisticsSupplierName;
 
         /**
-         * 提运单号
-         */
-        private String transportNo;
-
-        /**
          * 总箱数
          */
         private Integer boxQty;
@@ -1186,6 +1181,26 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private List<PackingDTO> packingDTOList;
 
+    }
+
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateStatusDTO {
+        @NotNull(message = "ids不能为空")
+        private List<String> ids;
+        /**
+         * 物流单状态
+         */
+        private String logisticsStatus;
+
+        /**
+         * 报关单状态
+         */
+        private String declareStatus;
     }
 
     /**

@@ -83,7 +83,7 @@ public class TmsB2BDeclareBillController extends BaseController {
     @GetMapping("/statistics")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "tms:tmsFmDeclareBill:paging",
+            menuCode = "tms:tmsB2BDeclareBill:paging",
             tableAlias = "db"
     )
     public ApiResult<TmsDeclareBillDTO.StatisticsVO> statistics() {
@@ -99,9 +99,8 @@ public class TmsB2BDeclareBillController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "B2B报关单新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated TmsDeclareBillDTO.AddDTO dto) {
-//        return success(tmsDeclareBillService.add(dto));
-        return null;
+    public ApiResult<Boolean> add(@RequestBody @Validated TmsDeclareBillDTO.AddDTO dto) {
+        return success(tmsDeclareBillService.addB2BDeclare(dto));
     }
 
     /**
@@ -119,7 +118,7 @@ public class TmsB2BDeclareBillController extends BaseController {
         serviceClass = TmsDeclareBillService.class,
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated TmsDeclareBillDTO.UpdateDTO dto) {
-        tmsDeclareBillService.update(dto);
+        tmsDeclareBillService.update(dto,SourceTypeEnum.B2B_DECLARE_BILL);
         return success();
     }
 
