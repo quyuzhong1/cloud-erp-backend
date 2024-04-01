@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -15,6 +16,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SalesDataReportEnum;
 import com.erp.model.dmp.vo.CleanAmountAfterVO;
 import com.erp.model.dmp.vo.SyncDataReportVO;
+import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -24,17 +26,16 @@ import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.units.qual.C;
-import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -61,6 +62,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
     @Resource
     private CustomerFeign customerFeign;
+
 
     /**
      * 添加订单信息
@@ -214,26 +216,38 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 .valueOf(20000));// （单位：毫秒）
         System.setProperty("sun.net.client.defaultReadTimeout", String
                 .valueOf(20000)); // （单位：毫秒）
-        List<DmpOrderInfoEntity> list = lambdaQuery()
-                .in(DmpOrderInfoEntity::getCleanState, new ArrayList<>(Arrays.asList(0, 1)))
-                .and(wrapper ->
-                        wrapper.eq(DmpOrderInfoEntity::getChargeId, "")
-                                .or().isNull(DmpOrderInfoEntity::getDeliveryTime)
-                                .or().eq(DmpOrderInfoEntity::getDeptId, "")
-                                .or().eq(DmpOrderInfoEntity::getSite, "")
-                )
-                .orderByAsc(DmpOrderInfoEntity::getRetryCount, DmpOrderInfoEntity::getId)
-                .last("limit " + pageSize)
-                .list();
+        List<DmpOrderInfoEntity> list = new ArrayList<>();
+        try {
+            list = lambdaQuery()
+                    .in(DmpOrderInfoEntity::getCleanState, new ArrayList<>(Arrays.asList(0, 1)))
+                    .and(wrapper ->
+                            wrapper.eq(DmpOrderInfoEntity::getChargeId, "")
+                                    .or().isNull(DmpOrderInfoEntity::getDeliveryTime)
+                                    .or().eq(DmpOrderInfoEntity::getDeptId, "")
+                                    .or().eq(DmpOrderInfoEntity::getSite, "")
+                    )
+                    .orderByAsc(DmpOrderInfoEntity::getRetryCount, DmpOrderInfoEntity::getId)
+                    .last("limit " + pageSize)
+                    .list();
+        } catch (Exception e) {
+            XxlJobHelper.log("查询需要清洗的数据时报错， message={}", e.getMessage());
+        }
+
         if (CollectionUtil.isEmpty(list)) {
             XxlJobHelper.log("清洗订单数据 cleanOrder 需要清洗数据为空 pageSize={}", pageSize);
             return;
         }
+
+        //根据店铺编码查询ERP客户的负责人和部门
+        List<String> shopNoList = list.stream().filter(req -> PlatformEnum.KINGDEE.getDesc().equals(req.getPlatformSign())).map(req -> req.getShopNo()).collect(Collectors.toList());
+        List<CustomerDTO.SellerUserDeptDTO> sellerUserDeptDTOS = customerFeign.listSellerUserDepByCodes(shopNoList);
+
+
         List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
         XxlJobHelper.log("userDeptList==> {}", JSONUtil.toJsonStr(userDeptList));
         list.parallelStream().forEach(dmpOrderInfoEntity -> {
             try {
-                this.cleanDmpOrderInfo(userDeptList, dmpOrderInfoEntity);
+                this.cleanDmpOrderInfo(userDeptList, dmpOrderInfoEntity, sellerUserDeptDTOS);
                 XxlJobHelper.log("update( dmpOrderInfoEntity={})完成", JSONUtil.toJsonStr(dmpOrderInfoEntity));
             } catch (Exception e) {
                 XxlJobHelper.log("update( dmpOrderInfoEntity={})失败====》", JSONUtil.toJsonStr(dmpOrderInfoEntity));
@@ -243,43 +257,56 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void cleanDmpOrderInfo(List<SysUserDeptDTO> userDeptList, DmpOrderInfoEntity dmpOrderInfoEntity) {
+    public void cleanDmpOrderInfo(List<SysUserDeptDTO> userDeptList, DmpOrderInfoEntity dmpOrderInfoEntity, List<CustomerDTO.SellerUserDeptDTO> sellerUserDeptDTOS) {
         LambdaUpdateWrapper<DmpOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(DmpOrderInfoEntity::getRetryCount, dmpOrderInfoEntity.getRetryCount() + 1);
         boolean deliveryTimeTag = false;
         if (0 == dmpOrderInfoEntity.getCleanState()) {
-            //查询店铺信息获取'负责人','站点信息'同步到订单
-            DmpShopInfoEntity shopByShopNo = dmpShopInfoService.getShopByShopNo(dmpOrderInfoEntity.getShopNo());
-            if (null != shopByShopNo) {
-                if (StringUtils.isNotBlank(shopByShopNo.getSite())) {
-                    updateWrapper.set(DmpOrderInfoEntity::getSite, shopByShopNo.getSite());
+            if (PlatformEnum.KINGDEE.getDesc().equals(dmpOrderInfoEntity.getPlatformSign())) {
+                CustomerDTO.SellerUserDeptDTO sellerUserDeptDTO = sellerUserDeptDTOS.stream().filter(req -> req.getCode().equals(dmpOrderInfoEntity.getShopNo())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(sellerUserDeptDTO)) {
+                    updateWrapper.set(DmpOrderInfoEntity::getChargeId, sellerUserDeptDTO.getSellerId());
+                    updateWrapper.set(DmpOrderInfoEntity::getChargeName, sellerUserDeptDTO.getSellerName());
+                    updateWrapper.set(DmpOrderInfoEntity::getDeptId, sellerUserDeptDTO.getDeptId());
+                    updateWrapper.set(DmpOrderInfoEntity::getDeptName, sellerUserDeptDTO.getDeptName());
                 }
-                DmpShopChangeLogEntity shopChargeName = dmpShopChangeLogService.getShopChargeName(shopByShopNo.getId(), dmpOrderInfoEntity.getPlatformCreateTime());
-                if (null != shopChargeName && StringUtils.isNotBlank(shopChargeName.getChargeId())) {
-                    if (!(Objects.equals(shopChargeName.getChargeId(), dmpOrderInfoEntity.getChargeId()) && Objects.equals(shopChargeName.getChargeName(), dmpOrderInfoEntity.getChargeName()))) {
-                        updateWrapper.set(DmpOrderInfoEntity::getChargeId, shopChargeName.getChargeId());
-                        updateWrapper.set(DmpOrderInfoEntity::getChargeName, shopChargeName.getChargeName());
+            } else {
+                //查询店铺信息获取'负责人','站点信息'同步到订单
+                DmpShopInfoEntity shopByShopNo = dmpShopInfoService.getShopByShopNo(dmpOrderInfoEntity.getShopNo());
+                if (null != shopByShopNo) {
+                    if (StringUtils.isNotBlank(shopByShopNo.getSite())) {
+                        updateWrapper.set(DmpOrderInfoEntity::getSite, shopByShopNo.getSite());
                     }
-                } else if (StringUtils.isNotBlank(shopByShopNo.getChargeId())) {
-                    // 无变更日志时使用当前负责人
-                    if (!(Objects.equals(shopByShopNo.getChargeId(), dmpOrderInfoEntity.getChargeId()) && Objects.equals(shopByShopNo.getChargeName(), dmpOrderInfoEntity.getChargeName()))) {
-                        updateWrapper.set(DmpOrderInfoEntity::getChargeId, shopByShopNo.getChargeId());
-                        updateWrapper.set(DmpOrderInfoEntity::getChargeName, shopByShopNo.getChargeName());
+                    DmpShopChangeLogEntity shopChargeName = dmpShopChangeLogService.getShopChargeName(shopByShopNo.getId(), dmpOrderInfoEntity.getPlatformCreateTime());
+                    if (null != shopChargeName && StringUtils.isNotBlank(shopChargeName.getChargeId())) {
+                        if (!(Objects.equals(shopChargeName.getChargeId(), dmpOrderInfoEntity.getChargeId()) && Objects.equals(shopChargeName.getChargeName(), dmpOrderInfoEntity.getChargeName()))) {
+                            updateWrapper.set(DmpOrderInfoEntity::getChargeId, shopChargeName.getChargeId());
+                            updateWrapper.set(DmpOrderInfoEntity::getChargeName, shopChargeName.getChargeName());
+                        }
+                    } else if (StringUtils.isNotBlank(shopByShopNo.getChargeId())) {
+                        // 无变更日志时使用当前负责人
+                        if (!(Objects.equals(shopByShopNo.getChargeId(), dmpOrderInfoEntity.getChargeId()) && Objects.equals(shopByShopNo.getChargeName(), dmpOrderInfoEntity.getChargeName()))) {
+                            updateWrapper.set(DmpOrderInfoEntity::getChargeId, shopByShopNo.getChargeId());
+                            updateWrapper.set(DmpOrderInfoEntity::getChargeName, shopByShopNo.getChargeName());
+                        }
+                    }
+                }
+
+                //根据负责人获取部门信息，同步到订单
+                if (StringUtils.isNotBlank(dmpOrderInfoEntity.getShopNo())) {
+                    DmpShopInfoDTO dmpShopInfoDTO = dmpShopInfoService.queryShopByPlatformList(dmpOrderInfoEntity.getShopNo(), dmpOrderInfoEntity.getPlatformSign(), userDeptList);
+                    if (dmpShopInfoDTO != null && StringUtils.isNotBlank(dmpShopInfoDTO.getDeptId()) && StringUtils.isNotBlank(dmpShopInfoDTO.getDeptName())) {
+                        if (!(Objects.equals(dmpShopInfoDTO.getDeptId(), dmpOrderInfoEntity.getDeptId()) && Objects.equals(dmpShopInfoDTO.getDeptName(), dmpOrderInfoEntity.getDeptName()))) {
+                            updateWrapper.set(DmpOrderInfoEntity::getDeptId, dmpShopInfoDTO.getDeptId());
+                            updateWrapper.set(DmpOrderInfoEntity::getDeptName, dmpShopInfoDTO.getDeptName());
+                        }
                     }
                 }
             }
 
-            //根据负责人获取部门信息，同步到订单
-            if (StringUtils.isNotBlank(dmpOrderInfoEntity.getShopNo())) {
-                DmpShopInfoDTO dmpShopInfoDTO = dmpShopInfoService.queryShopByPlatformList(dmpOrderInfoEntity.getShopNo(), dmpOrderInfoEntity.getPlatformSign(), userDeptList);
-                if (dmpShopInfoDTO != null && StringUtils.isNotBlank(dmpShopInfoDTO.getDeptId()) && StringUtils.isNotBlank(dmpShopInfoDTO.getDeptName())) {
-                    if (!(Objects.equals(dmpShopInfoDTO.getDeptId(), dmpOrderInfoEntity.getDeptId()) && Objects.equals(dmpShopInfoDTO.getDeptName(), dmpOrderInfoEntity.getDeptName()))) {
-                        updateWrapper.set(DmpOrderInfoEntity::getDeptId, dmpShopInfoDTO.getDeptId());
-                        updateWrapper.set(DmpOrderInfoEntity::getDeptName, dmpShopInfoDTO.getDeptName());
-                    }
-                }
-            }
- /*           //查询订单商品明细，根据sku查询sku信息，获取'类别'、'品牌' 同步到商品信息
+
+
+            /*           //查询订单商品明细，根据sku查询sku信息，获取'类别'、'品牌' 同步到商品信息
             List<DmpOrderItemEntity> itemEntityList = dmpOrderItemService.getByOrderId(dmpOrderInfoEntity.getId());
             for (DmpOrderItemEntity dmpOrderItemEntity : itemEntityList) {
                 if (StringUtils.isNotBlank(dmpOrderItemEntity.getSkuNo())) {
