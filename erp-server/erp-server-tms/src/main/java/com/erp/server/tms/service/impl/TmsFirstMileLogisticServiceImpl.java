@@ -685,6 +685,10 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"尚未填写渠道信息，请填写后更新"));
                 continue;
             }
+            if(StringUtils.isBlank(logisticsBillEntity.getCounterNo())){
+                batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"尚未填写柜号，请填写后更新"));
+                continue;
+            }
 
             if(statusEnum == FmLogisticTrackStatusEnum.SIGN && StringUtils.isBlank(logisticsBillEntity.getTransportNo())){
                 batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"尚未物流跟踪号，请填写后更新"));
@@ -709,7 +713,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
             logisticsTrackEntity.setStatus(dto.getLogisticsStatus());
             logisticsTrackEntity.setTrackNo(logisticsBillEntity.getCounterNo());
-            logisticsTrackEntity.setTrackTime(dto.getTime());
+            logisticsTrackEntity.setTrackTime(Objects.isNull(dto.getTime())?LocalDateTime.now():dto.getTime());
             logisticsTrackEntity.setContent(StringUtils.isBlank(dto.getLogisticsTrack())?"":dto.getLogisticsTrack());
             addTrackList.add(logisticsTrackEntity);
 

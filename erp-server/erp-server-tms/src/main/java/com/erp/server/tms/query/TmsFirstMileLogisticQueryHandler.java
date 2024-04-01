@@ -70,7 +70,7 @@ public class TmsFirstMileLogisticQueryHandler extends AbstractQueryHandler {
         }
 
         if(field.equals("signTime")){
-            return " exists (SELECT 1 from  logistics_track lt where lt.is_deleted = false and lt.status = 'sign' and lt.track_no = lbd.track_no and "+compareCodeSplicingValueSql+" ) ";
+            return " exists (SELECT 1 from  logistics_track lt where lt.is_deleted = false and lt.status = 'sign' and lt.track_no = lbd.track_no AND lt.track_time = (select max(track_time) from logistics_track b where b.track_no = lbd.track_no and b.is_deleted = false) and lt.track_time "+compareCodeSplicingValueSql+" ) ";
         }
 
         if(field.equals("warn")){
@@ -84,6 +84,9 @@ public class TmsFirstMileLogisticQueryHandler extends AbstractQueryHandler {
             }
             if(value.equals("normal")){
                 ids = list.stream().filter(v->v.getWarnHour() > 72).map(TmsFirstMileLogisticDTO.PagingVO::getId).collect(Collectors.toList());
+            }
+            if(CollectionUtils.isEmpty(ids)){
+                return this.getQueryEmptySql();
             }
             super.buildSplicingSQLDTO("lb.id",QueryConditionEnum.IN_LIST,ids,QueryDataTypeEnum.STRING);
         }
