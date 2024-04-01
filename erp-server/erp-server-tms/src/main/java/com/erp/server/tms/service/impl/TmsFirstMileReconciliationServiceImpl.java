@@ -24,13 +24,16 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
+import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.tms.mapper.TmsFirstMileReconciliationMapper;
 import com.erp.server.tms.service.CommonService;
 import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.TmsFirstMileReconciliationDetailService;
 import com.erp.server.tms.service.TmsFirstMileReconciliationService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -41,8 +44,8 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -66,6 +69,8 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     private WorkflowFeign workflowFeign;
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -478,6 +483,13 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         if (CollUtil.isEmpty(list)) {
             return;
         }
+        List<String> mainIds = list.stream().map(TmsFirstMileReconciliationDTO.ListDTO::getId).collect(Collectors.toList());
+        // 明细费用
+        List<TmsFirstMileReconciliationDetailEntity> detailEntity = tmsFirstMileReconciliationDetailService.listByMainIds(mainIds);
+        Map<String, List<TmsFirstMileReconciliationDetailEntity>> detailGroupMap = detailEntity
+                .stream()
+                .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailEntity::getMainId));
+
 
         //币别信息
         List<String> currencyIdList = list.stream().map(TmsFirstMileReconciliationDTO.ListDTO::getCurrency).collect(Collectors.toList());
@@ -485,6 +497,46 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 
         // 属性赋值
         for (TmsFirstMileReconciliationDTO.ListDTO data : list) {
+            // 费用类型
+            List<TmsFirstMileReconciliationDetailEntity> costList = detailGroupMap.get(data.getId());
+            if (!CollectionUtils.isEmpty(costList)){
+                Map<String, List<TmsFirstMileReconciliationDetailEntity>> typeCostMap = costList
+                        .stream()
+                        .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailEntity::getType));
+                // 实际
+                List<TmsFirstMileReconciliationDetailEntity> actualList = typeCostMap.getOrDefault(DetailReconciliationTypeEnum.ACTUAL.getCode(), Collections.emptyList());
+
+                // 实际物流费用
+                BigDecimal shippingValue = actualList.stream()
+                        .map(TmsFirstMileReconciliationDetailEntity::getShippingCost)
+                        .reduce(BigDecimal::add)
+                        .orElse(BigDecimal.ZERO);
+                data.setActualShippingCost(shippingValue);
+
+                // 实际报关费用
+                BigDecimal declareValue = actualList.stream()
+                        .map(TmsFirstMileReconciliationDetailEntity::getDeclareCost).reduce(BigDecimal::add)
+                        .orElse(BigDecimal.ZERO);
+                data.setActualDeclareCost(declareValue);
+
+                // 实际其他费用
+                BigDecimal otherValue = actualList.stream()
+                        .map(TmsFirstMileReconciliationDetailEntity::getOtherCost).reduce(BigDecimal::add)
+                        .orElse(BigDecimal.ZERO);
+                data.setActualOtherCost(otherValue);
+
+                // 实际重量
+                BigDecimal billWeightValue = actualList.stream()
+                        .map(TmsFirstMileReconciliationDetailEntity::getBillingWeight).reduce(BigDecimal::add)
+                        .orElse(BigDecimal.ZERO);
+                data.setActualBillingWeight(billWeightValue);
+
+                String weightUnit = actualList.stream()
+                        .map(TmsFirstMileReconciliationDetailEntity::getActualWeightUnit)
+                        .findFirst()
+                        .orElse("");
+                data.setActualWeightUnit(weightUnit);
+            }
             //审核状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             //对账周期
@@ -497,6 +549,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                     .flatMap(obj -> Optional.ofNullable(obj.getSymbol()))
                     .orElse("");
             data.setCurrencySymbol(currencySymbol);
+
         }
     }
 
