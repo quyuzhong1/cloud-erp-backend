@@ -277,6 +277,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                     if (StringUtils.isNotBlank(shopByShopNo.getSite())) {
                         updateWrapper.set(DmpOrderInfoEntity::getSite, shopByShopNo.getSite());
                     }
+
                     DmpShopChangeLogEntity shopChargeName = dmpShopChangeLogService.getShopChargeName(shopByShopNo.getId(), dmpOrderInfoEntity.getPlatformCreateTime());
                     if (null != shopChargeName && StringUtils.isNotBlank(shopChargeName.getChargeId())) {
                         if (!(Objects.equals(shopChargeName.getChargeId(), dmpOrderInfoEntity.getChargeId()) && Objects.equals(shopChargeName.getChargeName(), dmpOrderInfoEntity.getChargeName()))) {

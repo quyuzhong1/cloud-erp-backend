@@ -923,9 +923,4 @@ public class CustomerDTO implements Serializable {
         private String deptName;
     }
 
-
-
-
-
-
 }
