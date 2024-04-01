@@ -2200,7 +2200,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
             //异常分类名称
             record.setUnusualTypeName(PoReturnUnusualTypeEnum.getName(record.getUnusualType()));
-
+            //退货方式名称
+            record.setReturnModeName(ReturnModeEnum.getName(record.getReturnMode()));
             //产品信息
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(record.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             record.setProductName(productDetailEntity.getName());

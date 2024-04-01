@@ -1225,6 +1225,16 @@ public class PurchaseReturnOrderDTO {
         private String confirmStatusName;
 
         /**
+         * 退货方式
+         */
+        private String returnMode;
+
+        /**
+         * 退货方式名称
+         */
+        private String returnModeName;
+
+        /**
          * skuId
          */
         private String skuId;
