@@ -62,24 +62,24 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
     }
 
 
-    /**
-     * 分页查询
-     *
-     * @param dto DTO
-     * @return ApiResult<String>
-     * @author Jim
-     * {@code @date:} 2024-03-25
-     */
-    @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:tmsFirstMileReconciliationDetail:paging",
-            tableAlias = "tfmrd"
-    )
-    @WebAdvanceQuery(handler = TmsFirstMileReconciliationDetailQueryHandler.class)
-    public ApiResult<PagingVO<TmsFirstMileReconciliationDetailDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<TmsFirstMileReconciliationDetailDTO.PagingParamDTO> dto) {
-        return success(tmsFirstMileReconciliationDetailService.paging(dto));
-    }
+//    /**
+//     * 分页查询
+//     *
+//     * @param dto DTO
+//     * @return ApiResult<String>
+//     * @author Jim
+//     * {@code @date:} 2024-03-25
+//     */
+//    @PostMapping("/paging")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "tms:tmsFirstMileReconciliationDetail:paging",
+//            tableAlias = "tfmrd"
+//    )
+//    @WebAdvanceQuery(handler = TmsFirstMileReconciliationDetailQueryHandler.class)
+//    public ApiResult<PagingVO<TmsFirstMileReconciliationDetailDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<TmsFirstMileReconciliationDetailDTO.PagingParamDTO> dto) {
+//        return success(tmsFirstMileReconciliationDetailService.paging(dto));
+//    }
 
     /**
      * 更新对账状态

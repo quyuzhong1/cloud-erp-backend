@@ -186,17 +186,17 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         /**
          * 物流运费用【预计物流费用】
          */
-        private BigDecimal actualShippingCost;
+        private BigDecimal shippingCost;
 
         /**
          * 报关费用【预计报关费用】
          */
-        private BigDecimal actualDeclareCost;
+        private BigDecimal declareCost;
 
         /**
          * 其他费用【预计其他费用】
          */
-        private BigDecimal actualOtherCost;
+        private BigDecimal otherCost;
 
         /**
          * 备注

@@ -598,7 +598,6 @@
                lb.source_id as relationId,
                lb.id as sourceId,
                lbc.transport_no as businessNo,
-               lb.track_no as counterNo,
                lb.outstock_id as outstockId,
                lb.outstock_code as outstockCode,
                lbd.track_status as logisticsStatus,
@@ -613,6 +612,7 @@
                lbc.weight_unit as weightUnit,
                lbc.currency as  currency,
                lb.order_time as orderTime,
+               lbd.track_no as trackNo,
                lbd.sign_time as signTime
         from
             logistics_bill lb

@@ -15,19 +15,27 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
+import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
+import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.tms.mapper.TmsFirstMileReconciliationMapper;
@@ -46,7 +54,9 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -71,6 +81,10 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     private SysUserFeign sysUserFeign;
     @Resource
     private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
+    @Resource
+    private SysDictFeign sysDictFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -432,6 +446,43 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
         //对账周期
         data.setCycle(StrUtil.format("{}-{}", data.getStartDate(), data.getEndDate()));
+
+        // 明细数据
+        List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listByMainIds(Collections.singletonList(data.getId()));
+
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> viewDTOList = BeanMapperUtils.copyList(TmsFirstMileReconciliationDetailDTO.ListDTO.class, detailEntityList);
+        //店铺信息
+        List<String> shopIdList = viewDTOList.stream()
+                .map(TmsFirstMileReconciliationDetailDTO.ListDTO::getShopId)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> shopMap = shopInfoFeign.listShopInfoByIds(shopIdList)
+                .stream()
+                .collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
+        //国家信息
+        List<String> countryIdList = viewDTOList.stream()
+                .flatMap(route -> Stream.of(route.getFromCountry(), route.getToCountry()))
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> countryMap = sysDictFeign.listCountryByIds(countryIdList)
+                .stream()
+                .collect(Collectors.toMap(BaseEntity::getId, DictCountryEntity::getNameCn));
+
+        //币别信息
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Collections.singletonList(data.getCurrency()));
+
+        for (TmsFirstMileReconciliationDetailDTO.ListDTO viewDTO : viewDTOList) {
+            //店铺名称
+            viewDTO.setShopName(shopMap.getOrDefault(viewDTO.getShopId(), ""));
+            //国家名称
+            viewDTO.setFromCountry(countryMap.getOrDefault(viewDTO.getFromCountry(), ""));
+            viewDTO.setToCountry(countryMap.getOrDefault(viewDTO.getToCountry(), ""));
+
+            viewDTO.setType(DetailReconciliationTypeEnum.getNameByCode(viewDTO.getType()));
+
+            viewDTO.setTransportStatusName("");
+        }
+        data.setDetailList(viewDTOList);
 
     }
 

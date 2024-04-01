@@ -322,6 +322,10 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          */
         private String reason;
 
+        /**
+         * 明细列表
+         */
+        private List<TmsFirstMileReconciliationDetailDTO.ListDTO> detailList;
 
     }
 
