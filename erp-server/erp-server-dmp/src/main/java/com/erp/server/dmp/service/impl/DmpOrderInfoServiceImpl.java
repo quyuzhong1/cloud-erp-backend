@@ -216,17 +216,23 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 .valueOf(20000));// （单位：毫秒）
         System.setProperty("sun.net.client.defaultReadTimeout", String
                 .valueOf(20000)); // （单位：毫秒）
-        List<DmpOrderInfoEntity> list = lambdaQuery()
-                .in(DmpOrderInfoEntity::getCleanState, new ArrayList<>(Arrays.asList(0, 1)))
-                .and(wrapper ->
-                        wrapper.eq(DmpOrderInfoEntity::getChargeId, "")
-                                .or().isNull(DmpOrderInfoEntity::getDeliveryTime)
-                                .or().eq(DmpOrderInfoEntity::getDeptId, "")
-                                .or().eq(DmpOrderInfoEntity::getSite, "")
-                )
-                .orderByAsc(DmpOrderInfoEntity::getRetryCount, DmpOrderInfoEntity::getId)
-                .last("limit " + pageSize)
-                .list();
+        List<DmpOrderInfoEntity> list = new ArrayList<>();
+        try {
+            list = lambdaQuery()
+                    .in(DmpOrderInfoEntity::getCleanState, new ArrayList<>(Arrays.asList(0, 1)))
+                    .and(wrapper ->
+                            wrapper.eq(DmpOrderInfoEntity::getChargeId, "")
+                                    .or().isNull(DmpOrderInfoEntity::getDeliveryTime)
+                                    .or().eq(DmpOrderInfoEntity::getDeptId, "")
+                                    .or().eq(DmpOrderInfoEntity::getSite, "")
+                    )
+                    .orderByAsc(DmpOrderInfoEntity::getRetryCount, DmpOrderInfoEntity::getId)
+                    .last("limit " + pageSize)
+                    .list();
+        } catch (Exception e) {
+            XxlJobHelper.log("查询需要清洗的数据时报错， message={}", e.getMessage());
+        }
+
         if (CollectionUtil.isEmpty(list)) {
             XxlJobHelper.log("清洗订单数据 cleanOrder 需要清洗数据为空 pageSize={}", pageSize);
             return;
@@ -257,7 +263,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         boolean deliveryTimeTag = false;
         if (0 == dmpOrderInfoEntity.getCleanState()) {
             if (PlatformEnum.KINGDEE.getDesc().equals(dmpOrderInfoEntity.getPlatformSign())) {
-                B2BHandleDept(userDeptList, dmpOrderInfoEntity, updateWrapper);
                 CustomerDTO.SellerUserDeptDTO sellerUserDeptDTO = sellerUserDeptDTOS.stream().filter(req -> req.getCode().equals(dmpOrderInfoEntity.getShopNo())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(sellerUserDeptDTO)) {
                     updateWrapper.set(DmpOrderInfoEntity::getChargeId, sellerUserDeptDTO.getSellerId());
@@ -338,16 +343,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         updateWrapper.set(deliveryTimeTag, DmpOrderInfoEntity::getCleanState, dmpOrderInfoEntity.getCleanState() + 1);
         updateWrapper.eq(DmpOrderInfoEntity::getId, dmpOrderInfoEntity.getId());
         this.update(updateWrapper);
-    }
-
-    //B2C处理用户负责人和部门
-    private void B2BHandleDept(List<SysUserDeptDTO> userDeptList, DmpOrderInfoEntity dmpOrderInfoEntity, LambdaUpdateWrapper<DmpOrderInfoEntity> updateWrapper) {
-
-    }
-
-    //B2C处理用户负责人和部门
-    private void B2CHandleDept(List<SysUserDeptDTO> userDeptList, DmpOrderInfoEntity dmpOrderInfoEntity, LambdaUpdateWrapper<DmpOrderInfoEntity> updateWrapper) {
-
     }
 
     @Override
