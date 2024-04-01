@@ -216,6 +216,7 @@ public class TmsB2BDeclareBillController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2B报关单")
     @WebAdvanceQuery
     public ApiResult export(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
+        pagingParamDTO.setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
         tmsDeclareBillService.export(pagingParamDTO,response);
         return success();
     }
@@ -227,6 +228,7 @@ public class TmsB2BDeclareBillController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2B报关单报关信息")
     @WebAdvanceQuery
     public ApiResult exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
+        pagingParamDTO.setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
         tmsDeclareBillService.exportDeclare(pagingParamDTO,response);
         return success();
     }
