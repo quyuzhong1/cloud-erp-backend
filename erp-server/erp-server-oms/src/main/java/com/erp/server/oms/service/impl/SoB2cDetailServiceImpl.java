@@ -300,7 +300,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             // 映射关系
             List<ListingInfoWithSkuMappingDTO> mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailDTO.getPlatformSkuNo());
             // 检查和获取映射关系
-            ListingInfoWithSkuMappingDTO mappingDTO = this.checkAndMappingDTO(mappingDTOList, detailDTO.getPlatformSpuNo());
+            ListingInfoWithSkuMappingDTO mappingDTO = this.checkAndMappingDTO(mappingDTOList, detailDTO.getPlatformSpuNo(), mainEntity.getDictPlatform());
             String skuId = "";
             String skuNO= "";
             String imageUrl= "";
@@ -375,7 +375,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
      * 检查或获取映射关系
      */
     @Override
-    public ListingInfoWithSkuMappingDTO checkAndMappingDTO(List<ListingInfoWithSkuMappingDTO> mappingDTOList, String platformSpuNo) {
+    public ListingInfoWithSkuMappingDTO checkAndMappingDTO(List<ListingInfoWithSkuMappingDTO> mappingDTOList, String platformSpuNo, String dictPlatform) {
         if (CollectionUtils.isEmpty(mappingDTOList)) {
             return null;
         }
@@ -383,7 +383,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             return mappingDTOList.get(0);
         }
         // 兼容速卖通多个平台SKU
-        if (StringUtils.isBlank(platformSpuNo)){
+        if (StringUtils.isBlank(platformSpuNo) && PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)){
             throw new ServiceException("来源平台SPU为空");
         }
         // 查询相同SPU记录
