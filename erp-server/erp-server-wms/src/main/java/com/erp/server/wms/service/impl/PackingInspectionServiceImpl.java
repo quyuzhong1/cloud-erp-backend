@@ -8,6 +8,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -194,12 +195,18 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         viewDTO.setOrderUploadStatus(declareDetailEntity.getOrderUploadStatus());
 
         //直接出库
-        if (CollectionUtils.isEmpty(viewDTO.getWaitScanSkuList()) && dto.getIsAutoOut()) {
+        if (CollectionUtils.isEmpty(viewDTO.getWaitScanSkuList()) && dto.getIsAutoOut()  && entity.getIsInspection()) {
             //如果是待上传或上传失败则直接返回
             if (StrUtil.equals(soB2cEntity.getTransferStatus(), TransferStatusEnum.NOT.getCode()) || StrUtil.equals(declareDetailEntity.getOrderUploadStatus(), TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
                     StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
                 return viewDTO;
             }
+            //将发货状态更新为已发货
+            entity.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            if (!soB2cDeliveryService.updateById(entity)) {
+                throw new ServiceException("发货单更新失败");
+            }
+            soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()),SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             //出库
             soB2cDeliveryService.generateB2cSoOutstock(entity);
         }
