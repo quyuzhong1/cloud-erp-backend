@@ -292,4 +292,12 @@ public class TmsFirstMileLogisticController extends BaseController {
     public ApiResult<BigDecimal> calculateShippingCost(@RequestBody @Valid TmsFirstMileLogisticDTO.CalculateShippingCostDTO dto){
         return success(tmsFirstMileLogisticService.calculateShippingCost(dto));
     }
+
+    /**
+     * 物流单对应待提交的对账单列表
+     */
+    @PostMapping("/waitSubmitReconciliation")
+    public ApiResult<List<TmsFirstMileLogisticDTO.WaitSubmitListDTO>> waitSubmitReconciliation(@RequestBody @Valid BaseIdsDTO.IdsDTO dto){
+        return success(tmsFirstMileLogisticService.waitSubmitReconciliation(dto));
+    }
 }

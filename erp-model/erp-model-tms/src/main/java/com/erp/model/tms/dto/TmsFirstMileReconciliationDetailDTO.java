@@ -79,9 +79,14 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private String sourceType;
 
         /**
-         * 来源编码
+         * 来源编码(物流单号)
          */
         private String sourceCode;
+
+        /**
+         * 关联单号(物流跟踪号关联的货件单号)
+         */
+        private String relationCode;
 
         /**
          * 物流跟踪号
@@ -89,7 +94,7 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private String trackNo;
 
         /**
-         * 货件/计划单号
+         * 货件/计划单号【业务单号】
          */
         private String businessCode;
 
@@ -119,6 +124,16 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private LocalDate receiveDate;
 
         /**
+         * 运输状态
+         */
+        private String transportStatus;
+
+        /**
+         * 运输状态名称
+         */
+        private String transportStatusName;
+
+        /**
          * 计费方式
          */
         private String billingMethod;
@@ -139,12 +154,12 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private BigDecimal totalLogisticsCost;
 
         /**
-         * 实际重量
+         * 实际重量【箱包装重量】
          */
         private BigDecimal actualWeight;
 
         /**
-         * 实际重量单位
+         * 实际重量单位【箱包装重量单位】
          */
         private String actualWeightUnit;
 
@@ -169,17 +184,17 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private String billingWeightUnit;
 
         /**
-         * 实际物流运费用
+         * 物流运费用【预计物流费用】
          */
         private BigDecimal actualShippingCost;
 
         /**
-         * 实际报关费用
+         * 报关费用【预计报关费用】
          */
         private BigDecimal actualDeclareCost;
 
         /**
-         * 实际其他费用
+         * 其他费用【预计其他费用】
          */
         private BigDecimal actualOtherCost;
 
@@ -677,171 +692,6 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private String confirmUserName;
 
 
-    }
-
-    /**
-     * 待对账列表
-     */
-    @Data
-    @NoArgsConstructor
-    public static class WaitListDTO {
-
-        /**
-         * 运输状态
-         */
-        private String transportStatus;
-
-        // 箱包装重量?
-
-        /**
-         * 主键id(null)
-         */
-        private String id;
-
-        /**
-         * 主表id
-         */
-        private String mainId;
-
-        /**
-         * 来源id
-         */
-        private String sourceId;
-
-        /**
-         * 来源类型
-         */
-        private String sourceType;
-
-        /**
-         * 来源编码
-         */
-        private String sourceCode;
-
-        /**
-         * 物流跟踪号
-         */
-        private String trackNo;
-
-        /**
-         * 货件/计划单号
-         */
-        private String businessCode;
-
-        /**
-         * 店铺ID
-         */
-        private String shopId;
-
-        /**
-         * 店铺名称
-         */
-        private String shopName;
-
-        /**
-         * 发货国家代号
-         */
-        private String fromCountry;
-
-        /**
-         * 发货国家代号
-         */
-        private String toCountry;
-
-        /**
-         * 签收日期
-         */
-        private LocalDate receiveDate;
-
-        /**
-         * 计费方式
-         */
-        private String billingMethod;
-
-        /**
-         * 计费方式名称
-         */
-        private String billingMethodName;
-
-        /**
-         * 类型(对账类型)
-         */
-        private String type;
-
-        /**
-         * 总物流费用
-         */
-        private BigDecimal totalLogisticsCost;
-
-        /**
-         * 实际重量
-         */
-        private BigDecimal actualWeight;
-
-        /**
-         * 实际重量单位
-         */
-        private String actualWeightUnit;
-
-        /**
-         * 体积重
-         */
-        private BigDecimal volumeWeight;
-
-        /**
-         * 体积重单位
-         */
-        private String volumeWeightUnit;
-
-        /**
-         * 计费重
-         */
-        private BigDecimal billingWeight;
-
-        /**
-         * 计费重单位
-         */
-        private String billingWeightUnit;
-
-        /**
-         * 实际物流运费用
-         */
-        private BigDecimal actualShippingCost;
-
-        /**
-         * 实际报关费用
-         */
-        private BigDecimal actualDeclareCost;
-
-        /**
-         * 实际其他费用
-         */
-        private BigDecimal actualOtherCost;
-
-        /**
-         * 备注
-         */
-        private String remark;
-
-        /**
-         * 对账状态
-         */
-        private String status;
-
-        /**
-         * 确认时间
-         */
-        private LocalDate confirmDate;
-
-        /**
-         * 确认人id
-         */
-        private String confirmUserId;
-
-        /**
-         * 确认人名称
-         */
-        private String confirmUserName;
     }
 
 }

@@ -72,6 +72,8 @@ public class TmsCostDetailEntity extends BaseEntity<TmsCostDetailEntity> {
 
     public static final String CFG_COST_ID = "cfg_cost_id";
 
+    public static final String TYPE = "type";
+
     @Override
     public Serializable pkVal() {
         return null;

@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -148,6 +149,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Resource
     private FsService fsService;
+
+    @Resource
+    private TmsFirstMileReconciliationService tmsFirstMileReconciliationService;
 
     @Resource
     @Lazy
@@ -898,6 +902,20 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         sendMessage.setContentMap(contentMap);
         //发送消息
         fsService.sendMessage(sendMessage);
+    }
+
+    @Override
+    public List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> waitSubmitReconciliation(BaseIdsDTO.IdsDTO dto) {
+        return tmsFirstMileReconciliationService.listByApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+    }
+
+    @Override
+    public IPage<TmsFirstMileReconciliationDetailDTO.ListDTO> waitReconciliationPaging(Page<?> query, TmsFirstMileReconciliationDetailDTO.PagingParamDTO params) {
+        return this.baseMapper.waitReconciliationPaging(query, params,
+                OrderTypeEnum.FIRST_MILE.getCode(),
+                ReconciliationStatusEnum.TO_BE_GENERATED.getCode(),
+                FmLogisticTrackStatusEnum.SIGN.getCode()
+        );
     }
 
     @Override

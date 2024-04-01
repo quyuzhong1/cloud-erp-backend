@@ -17,7 +17,6 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
-import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.erp.server.tms.query.TmsB2cDeclareReconciliationDetailQueryHandler;
 import com.erp.server.tms.service.TmsFirstMileReconciliationDetailService;
@@ -156,8 +155,8 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
             tableAlias = "tfmrd"
     )
     @WebAdvanceQuery(handler = TmsB2cDeclareReconciliationDetailQueryHandler.class)
-    public ApiResult<PagingVO<TmsFirstMileReconciliationDetailDTO.WaitListDTO>> waitPaging(@RequestBody @Validated PagingDTO<TmsFirstMileReconciliationDetailDTO.PagingParamDTO> dto) {
-        return success(tmsFirstMileReconciliationDetailService.waitPaging(dto));
+    public ApiResult<PagingVO<TmsFirstMileReconciliationDetailDTO.ListDTO>> waitPaging(@RequestBody @Validated PagingDTO<TmsFirstMileReconciliationDetailDTO.PagingParamDTO> dto) {
+        return success(tmsFirstMileReconciliationDetailService.waitReconciliationPaging(dto));
     }
 
 }

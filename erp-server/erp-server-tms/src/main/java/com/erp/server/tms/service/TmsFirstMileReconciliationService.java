@@ -1,5 +1,6 @@
 package com.erp.server.tms.service;
 
+import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -156,4 +157,8 @@ public interface TmsFirstMileReconciliationService extends SuperService<TmsFirst
      */
     Boolean approveEnd(ApproveOneDTO dto, TmsFirstMileReconciliationEntity entity);
 
+    /**
+     * 根据审核状态查询单据
+     */
+    List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> listByApproveStatus(String status);
 }

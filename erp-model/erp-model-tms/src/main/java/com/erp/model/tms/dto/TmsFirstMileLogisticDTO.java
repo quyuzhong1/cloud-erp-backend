@@ -1445,4 +1445,40 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private BigDecimal costDiff;
 
     }
+
+
+    /**
+     * 物流单对应待提交的对账单
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WaitSubmitListDTO {
+
+        /**
+         * 对账单id
+         */
+        private String id;
+
+        /**
+         * 对账单单号
+         */
+        private String code;
+
+        /**
+         * 对账开始日期
+         */
+        private LocalDate startDate;
+
+        /**
+         * 对账结束日期
+         */
+        private LocalDate endDate;
+
+        /**
+         * 对账周期
+         */
+        private String cycle;
+    }
+
 }

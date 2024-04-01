@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
+import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -93,4 +94,12 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
     List<TmsFirstMileLogisticDTO.ExportCostDTO> firstMileFeeCostExport(@Param("params") TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO);
 
     List<TmsFirstMileLogisticDTO.PagingVO> hasWarnPaging(@Param("params") TmsFirstMileLogisticDTO.PagingParamDTO dto);
+
+    IPage<TmsFirstMileReconciliationDetailDTO.ListDTO> waitReconciliationPaging(Page<?> query,
+                                                                                @Param("params") TmsFirstMileReconciliationDetailDTO.PagingParamDTO params,
+                                                                                @Param("orderType") String orderType,
+                                                                                @Param("reconciliationStatus") String reconciliationStatus,
+                                                                                @Param("trackStatus") String trackStatus
+
+    );
 }

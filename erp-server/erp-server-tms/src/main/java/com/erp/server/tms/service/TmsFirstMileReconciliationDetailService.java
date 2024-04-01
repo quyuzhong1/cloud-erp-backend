@@ -74,5 +74,5 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      * @author Jim
      * @date: 2024-03-25
      */
-    PagingVO<TmsFirstMileReconciliationDetailDTO.WaitListDTO> waitPaging(PagingDTO<TmsFirstMileReconciliationDetailDTO.PagingParamDTO> dto);
+    PagingVO<TmsFirstMileReconciliationDetailDTO.ListDTO> waitReconciliationPaging(PagingDTO<TmsFirstMileReconciliationDetailDTO.PagingParamDTO> dto);
 }

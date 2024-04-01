@@ -1,55 +1,49 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
-
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
-import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
-import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.tms.mapper.TmsFirstMileReconciliationMapper;
-import com.erp.server.tms.service.TmsFirstMileReconciliationService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
-
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.annotation.Resource;
-import java.util.stream.Collectors;
-import java.util.*;
-import com.common.core.utils.*;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.StrUtils;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
+import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.tms.mapper.TmsFirstMileReconciliationMapper;
+import com.erp.server.tms.service.CommonService;
+import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.TmsFirstMileReconciliationService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.*;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 头程对账单 服务实现类
@@ -88,12 +82,12 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         String code = docNoGenHelper.generateCode(null);
         tmsFirstMileReconciliationEntity.setCode(code);
         boolean save = super.save(tmsFirstMileReconciliationEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("头程对账单保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "头程对账单" , tmsFirstMileReconciliationEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "头程对账单", tmsFirstMileReconciliationEntity.getCode());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, tmsFirstMileReconciliationEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -102,31 +96,31 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(TmsFirstMileReconciliationDTO.UpdateDTO updateDTO) {
         TmsFirstMileReconciliationEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "头程对账单"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "头程对账单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
-        TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity =  BeanMapperUtils.map(TmsFirstMileReconciliationEntity.class, updateDTO);
+        TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = BeanMapperUtils.map(TmsFirstMileReconciliationEntity.class, updateDTO);
 
         // 数据处理
         handleData(tmsFirstMileReconciliationEntity);
         log.info("编辑 开始修改头程对账单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(tmsFirstMileReconciliationEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("头程对账单保存失败");
         }
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录头程对账单日志数据，单号：【{}】", tmsFirstMileReconciliationEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), tmsFirstMileReconciliationEntity.getCode(), "头程对账单");
+        log.info("编辑 开始记录头程对账单日志数据，单号：【{}】", tmsFirstMileReconciliationEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), tmsFirstMileReconciliationEntity.getCode(), "头程对账单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, tmsFirstMileReconciliationEntity, null, tmsFirstMileReconciliationEntity.getId(), msg);
         return Boolean.TRUE;
@@ -138,8 +132,8 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page<?> query = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<TmsFirstMileReconciliationDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
-           return new PagingVO<>(pageData);
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO<>(pageData);
         }
         // 数据处理
         fillList(pageData.getRecords());
@@ -160,8 +154,8 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(TmsFirstMileReconciliationDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-                list.add(new TmsFirstMileReconciliationDTO.TabListDTO(status,ApproveStatusEnum.getName(status), 0));
+            if (!existStatusList.contains(status)) {
+                list.add(new TmsFirstMileReconciliationDTO.TabListDTO(status, ApproveStatusEnum.getName(status), 0));
             }
         });
         return list;
@@ -170,8 +164,8 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     @Override
     public void exportList(TmsFirstMileReconciliationDTO.ExportDTO param, HttpServletResponse response) {
         List<TmsFirstMileReconciliationDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
+        if (CollUtil.isEmpty(list)) {
+            return;
         }
         // 数据处理
         fillList(list);
@@ -238,12 +232,12 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     @Override
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
-        if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
+        if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
             throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
         }
         TmsFirstMileReconciliationEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
-        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
         // 调用流程审核
@@ -257,10 +251,11 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     }
 
     /**
-    * 审核流程处理
-    * @param entity
-    * @param dto
-    */
+     * 审核流程处理
+     *
+     * @param entity
+     * @param dto
+     */
     private void approveProcess(TmsFirstMileReconciliationEntity entity, ApproveOneDTO dto) {
         LoginUser userInfo = commonService.getUserInfo();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
@@ -332,8 +327,8 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     }
 
     /**
-    * 撤销
-    */
+     * 撤销
+     */
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -344,7 +339,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
             throw new ServiceException(ApiError.ERROR_98007);
         }
         // TODO 撤销流程
-        log.info("撤销 开始撤销流程，id：【{}】",id);
+        log.info("撤销 开始撤销流程，id：【{}】", id);
 
         log.info("撤销 开始修改头程对账单状态，id：【{}】", id);
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -376,22 +371,25 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         return Boolean.TRUE;
     }
 
+
+
     @Override
     public TmsFirstMileReconciliationDTO.ViewDTO view(String id) {
-        TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到头程对账单数据"));
+        TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到头程对账单数据"));
         TmsFirstMileReconciliationDTO.ViewDTO data = BeanMapperUtils.map(TmsFirstMileReconciliationDTO.ViewDTO.class, tmsFirstMileReconciliationEntity);
         // 数据填充处理
         fillOne(data);
         // 明细数据额外分页
         return data;
     }
+
     /**
-    * 启动流程
-    *
-    * @param entity
-    * @return void
-    * @Date 2023/7/4 10:07
-    **/
+     * 启动流程
+     *
+     * @param entity
+     * @return void
+     * @Date 2023/7/4 10:07
+     **/
 
     public void startProcess(TmsFirstMileReconciliationEntity entity) {
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
@@ -407,11 +405,12 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
             throw new ServiceException(result.getMsg());
         }
     }
+
     private void fillOne(TmsFirstMileReconciliationDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
-        if (StringUtils.isNotBlank(data.getCurrency())){
+        if (StringUtils.isNotBlank(data.getCurrency())) {
             List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Collections.singletonList(data.getCurrency()));
             //币别符号
             String currencySymbol = currencyList
@@ -426,55 +425,57 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         //审核状态名称
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
         //对账周期
-        data.setCycle(StrUtil.format("{}-{}",data.getStartDate(),data.getEndDate()));
+        data.setCycle(StrUtil.format("{}-{}", data.getStartDate(), data.getEndDate()));
 
     }
 
     /**
-    * 审核更新审核信息
-    * @param id
-    * @param approveStatus
-    */
+     * 审核更新审核信息
+     *
+     * @param id
+     * @param approveStatus
+     */
     public void updateForApprove(String id, String approveStatus) {
         //当前登录人
         LoginUser userInfo = commonService.getUserInfo();
         this.lambdaUpdate().eq(TmsFirstMileReconciliationEntity::getId, id)
-            .set(TmsFirstMileReconciliationEntity::getApproveUserId, userInfo.getUid())
-            .set(TmsFirstMileReconciliationEntity::getApproveUserName, userInfo.getUserName())
-            .set(TmsFirstMileReconciliationEntity::getApproveStatus, approveStatus)
-            .update(new TmsFirstMileReconciliationEntity());
-     }
-
-    /**
-    * 反审核更新审核信息
-    * @param id
-    * @param approveStatus
-    */
-    @Transactional(rollbackFor = Exception.class)
-    public void updateForDisApprove(String id, String approveStatus) {
-        this.lambdaUpdate().eq(TmsFirstMileReconciliationEntity::getId, id)
-            .set(TmsFirstMileReconciliationEntity::getApproveUserId, "")
-            .set(TmsFirstMileReconciliationEntity::getApproveUserName, "")
-            .set(TmsFirstMileReconciliationEntity::getApproveStatus, approveStatus)
-            .update(new TmsFirstMileReconciliationEntity());
-        }
-
-    /**
-    * 更新审核状态
-    */
-    @Transactional(rollbackFor = Exception.class)
-    public void updateApproveStatus(String id, String approveStatus) {
-        lambdaUpdate().eq(TmsFirstMileReconciliationEntity::getId, id)
-        .set(TmsFirstMileReconciliationEntity::getApproveStatus, approveStatus)
-        .update(new TmsFirstMileReconciliationEntity());
+                .set(TmsFirstMileReconciliationEntity::getApproveUserId, userInfo.getUid())
+                .set(TmsFirstMileReconciliationEntity::getApproveUserName, userInfo.getUserName())
+                .set(TmsFirstMileReconciliationEntity::getApproveStatus, approveStatus)
+                .update(new TmsFirstMileReconciliationEntity());
     }
 
     /**
-    * 分页查询、导出 数据处理
-    */
+     * 反审核更新审核信息
+     *
+     * @param id
+     * @param approveStatus
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateForDisApprove(String id, String approveStatus) {
+        this.lambdaUpdate().eq(TmsFirstMileReconciliationEntity::getId, id)
+                .set(TmsFirstMileReconciliationEntity::getApproveUserId, "")
+                .set(TmsFirstMileReconciliationEntity::getApproveUserName, "")
+                .set(TmsFirstMileReconciliationEntity::getApproveStatus, approveStatus)
+                .update(new TmsFirstMileReconciliationEntity());
+    }
+
+    /**
+     * 更新审核状态
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateApproveStatus(String id, String approveStatus) {
+        lambdaUpdate().eq(TmsFirstMileReconciliationEntity::getId, id)
+                .set(TmsFirstMileReconciliationEntity::getApproveStatus, approveStatus)
+                .update(new TmsFirstMileReconciliationEntity());
+    }
+
+    /**
+     * 分页查询、导出 数据处理
+     */
     private void fillList(List<TmsFirstMileReconciliationDTO.ListDTO> list) {
-        if(CollUtil.isEmpty(list)) {
-           return;
+        if (CollUtil.isEmpty(list)) {
+            return;
         }
 
         //币别信息
@@ -482,11 +483,11 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
 
         // 属性赋值
-        for(TmsFirstMileReconciliationDTO.ListDTO data : list) {
+        for (TmsFirstMileReconciliationDTO.ListDTO data : list) {
             //审核状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             //对账周期
-            data.setCycle(StrUtil.format("{}-{}",data.getStartDate(),data.getEndDate()));
+            data.setCycle(StrUtil.format("{}-{}", data.getStartDate(), data.getEndDate()));
             //币别符号
             String currencySymbol = currencyList
                     .stream()
@@ -497,21 +498,41 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
             data.setCurrencySymbol(currencySymbol);
         }
     }
+
     /**
-    * 分页查询、导出 数据处理
-    */
+     * 分页查询、导出 数据处理
+     */
     private void validateSubmit(TmsFirstMileReconciliationEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
-        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+        if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         return;
     }
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity) {
-    // TODO 验证数据 & 数据赋值
+        // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> listByApproveStatus(String status) {
+        List<TmsFirstMileReconciliationEntity> list = lambdaQuery()
+                .eq(TmsFirstMileReconciliationEntity::getApproveStatus, status)
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        return list.stream()
+                .map(e -> new TmsFirstMileLogisticDTO.WaitSubmitListDTO(
+                        e.getId(),
+                        e.getCode(),
+                        e.getStartDate(),
+                        e.getEndDate(),
+                        StrUtil.format("{}-{}", e.getStartDate(), e.getEndDate())
+                )).collect(Collectors.toList());
+
     }
 }

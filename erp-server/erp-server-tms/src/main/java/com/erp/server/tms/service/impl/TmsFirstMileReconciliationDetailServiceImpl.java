@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -10,19 +11,21 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
+import com.erp.model.tms.entity.TmsCostDetailEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
+import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
 import com.erp.server.tms.mapper.TmsFirstMileReconciliationDetailMapper;
-import com.erp.server.tms.service.TmsFirstMileReconciliationDetailService;
+import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -53,7 +57,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     private OperateLogService operateLogService;
     @Resource
     private CommonService commonService;
-
+    @Resource
+    private TmsFirstMileLogisticService tmsFirstMileLogisticService;
+    @Resource
+    private TmsCostDetailService tmsCostDetailService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -113,7 +120,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page<?> query = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<TmsFirstMileReconciliationDetailDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
+        if (CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO<>(pageData);
         }
         // 数据处理
@@ -132,11 +139,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         if (!StrUtil.equals(entity.getStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())) {
             throw new ServiceException("只有待对账数据支持更新对账");
         }
-        lambdaUpdate().eq(TmsFirstMileReconciliationDetailEntity::getId,id)
-                .set(TmsFirstMileReconciliationDetailEntity::getStatus,status)
+        lambdaUpdate().eq(TmsFirstMileReconciliationDetailEntity::getId, id)
+                .set(TmsFirstMileReconciliationDetailEntity::getStatus, status)
                 .update();
         // 记录主单操作日志
-        operateLogService.addModuleOperateLog(StrUtil.format("头程对账单【{}】更新状态为【{}】",entity.getSourceCode(), TmsB2cDeclareReconciliationStatusEnum.getName(status)), ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), entity.getId(), "更新状态操作");
+        operateLogService.addModuleOperateLog(StrUtil.format("头程对账单【{}】更新状态为【{}】", entity.getSourceCode(), TmsB2cDeclareReconciliationStatusEnum.getName(status)), ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), entity.getId(), "更新状态操作");
         return BatchResultDTO.success(entity.getId(), entity.getSourceCode(), OperationTypeEnum.UPDATE_STATUS);
     }
 
@@ -146,8 +153,35 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     }
 
     @Override
-    public PagingVO<TmsFirstMileReconciliationDetailDTO.WaitListDTO> waitPaging(PagingDTO<TmsFirstMileReconciliationDetailDTO.PagingParamDTO> dto) {
-        return null;
+    public PagingVO<TmsFirstMileReconciliationDetailDTO.ListDTO> waitReconciliationPaging(PagingDTO<TmsFirstMileReconciliationDetailDTO.PagingParamDTO> pagingParamDTO) {
+        // 查询已签收（待对账）
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page<?> query = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<TmsFirstMileReconciliationDetailDTO.ListDTO> pageData = tmsFirstMileLogisticService.waitReconciliationPaging(query, pagingParamDTO.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO<>(pageData);
+        }
+        // 数据处理
+        fillWaitReconciliationPaging(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
+
+    private void fillWaitReconciliationPaging(List<TmsFirstMileReconciliationDetailDTO.ListDTO> records) {
+        // 统计预计费用
+        List<String> logisticsBillIds = records.stream()
+                .map(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId)
+                .distinct()
+                .collect(Collectors.toList());
+        List<TmsCostDetailEntity> costList = tmsCostDetailService.query()
+                .select("SUM(COALESCE(cost_value,0)) as cost_value", TmsCostDetailEntity.MAIN_ID, TmsCostDetailEntity.CFG_COST_ID)
+                .eq(TmsCostDetailEntity.TYPE, LogisticsBillCostTypeEnum.ESTIMATED.getCode())
+                .in(TmsCostDetailEntity.MAIN_ID, logisticsBillIds)
+                .groupBy(TmsCostDetailEntity.MAIN_ID, TmsCostDetailEntity.CFG_COST_ID)
+                .list();
+        for (TmsFirstMileReconciliationDetailDTO.ListDTO record : records) {
+
+        }
+
     }
 
 
