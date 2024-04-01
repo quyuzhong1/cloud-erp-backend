@@ -265,6 +265,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             if (PlatformEnum.KINGDEE.getDesc().equals(dmpOrderInfoEntity.getPlatformSign())) {
                 CustomerDTO.SellerUserDeptDTO sellerUserDeptDTO = sellerUserDeptDTOS.stream().filter(req -> req.getCode().equals(dmpOrderInfoEntity.getShopNo())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(sellerUserDeptDTO)) {
+                    updateWrapper.set(DmpOrderInfoEntity::getSite, "CN");
                     updateWrapper.set(DmpOrderInfoEntity::getChargeId, sellerUserDeptDTO.getSellerId());
                     updateWrapper.set(DmpOrderInfoEntity::getChargeName, sellerUserDeptDTO.getSellerName());
                     updateWrapper.set(DmpOrderInfoEntity::getDeptId, sellerUserDeptDTO.getDeptId());
