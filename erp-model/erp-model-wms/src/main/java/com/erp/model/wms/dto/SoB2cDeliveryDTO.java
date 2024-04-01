@@ -1,22 +1,21 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.base.SortDTO;
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
-import com.common.business.dto.base.SortDTO;
-import com.common.core.anno.StateEnumValue;
-import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
-import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import org.springframework.validation.annotation.Validated;
-
-import java.io.Serializable;
 import java.util.List;
-import javax.validation.Valid;
-import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -447,6 +446,17 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 发货时间【可排序】
          */
         private LocalDateTime deliveryTime;
+
+        /**
+         * 组包状态  not 不需要  wait 待组包   already 已经组包
+         *
+         */
+        private String packageStatus;
+        /**
+         * 中转状态 not 不需要  wait 待中转   already 已经中转
+         */
+        private String transferStatus;
+
 
     }
     /**
