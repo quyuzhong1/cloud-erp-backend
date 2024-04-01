@@ -2550,9 +2550,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             updatePackingStatus(dto.getId(), PackingStatusEnum.PACKING.getCode());
             //如果装箱完成自动生成报关单
 
-            TmsDeclareBillDTO.AddDTO addDTO = new TmsDeclareBillDTO.AddDTO();
+     /*       TmsDeclareBillDTO.AddDTO addDTO = new TmsDeclareBillDTO.AddDTO();
             addDTO.set
-            tmsDeclareBillFeign.add()
+            tmsDeclareBillFeign.add()*/
         } else {
             updatePackingStatus(dto.getId(), PackingStatusEnum.NOT_PACKING.getCode());
         }
