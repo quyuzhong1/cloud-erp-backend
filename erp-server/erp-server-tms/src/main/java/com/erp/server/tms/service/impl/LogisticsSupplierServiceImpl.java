@@ -18,7 +18,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
@@ -411,6 +410,11 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         }
 
         return list;
+    }
+
+    @Override
+    public List<LogisticsSupplierDTO.LogisticsSupplierListDTO> listLogisticsChannel(List<String> logisticsSupplierIdList) {
+        return baseMapper.listLogisticsChannel(logisticsSupplierIdList);
     }
 
 

@@ -1,9 +1,7 @@
 package com.erp.model.tms.dto;
 
 import com.common.business.dto.base.SortDTO;
-import com.erp.model.oms.dto.CfgConditionDTO;
 import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -416,4 +414,46 @@ public class LogisticsSupplierDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsSupplierListDTO{
+        /**
+         * 物流商id
+         */
+        private String logisticsSupplierId;
+        /**
+         * 物流商名称
+         */
+        private String logisticsSupplierName;
+
+        /**
+         * 禁用
+         */
+        private Boolean disabled;
+
+        /**
+         * 渠道信息
+         */
+        private List<LogisticsChannelListDTO> channelList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsChannelListDTO{
+
+        /**
+         * 渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 渠道名称
+         */
+        private String logisticsChannelName;
+
+        /**
+         * 禁用
+         */
+        private Boolean disabled;
+    }
 }

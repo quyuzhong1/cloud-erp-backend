@@ -20,6 +20,19 @@
         <result column="auth_time" property="authTime"/>
     </resultMap>
 
+    <!-- 根据物流商id查渠道 -->
+    <resultMap id="listChannelMap" type="com.erp.model.tms.dto.LogisticsSupplierDTO$LogisticsSupplierListDTO">
+        <id column="logisticsSupplierId" property="logisticsSupplierId"/>
+        <result column="logisticsSupplierName" property="logisticsSupplierName"/>
+        <result column="disabled" property="disabled"/>
+        <collection property="channelList" ofType="com.erp.model.tms.dto.LogisticsSupplierDTO$LogisticsChannelListDTO">
+            <id column="logisticsChannelId" property="logisticsChannelId"/>
+            <result column="logisticsChannelName" property="logisticsChannelName"/>
+            <result column="disabled" property="disabled"/>
+        </collection>
+    </resultMap>
+
+
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         id
@@ -206,6 +219,25 @@
         LEFT JOIN logistics_auth la
         ON ls.id=la.main_id and la.is_deleted=false
         where la.is_deleted=false AND ls.id=#{id}
+    </select>
+
+    <!-- 根据物流商查询渠道 -->
+    <select id="listLogisticsChannel" resultMap="listChannelMap">
+        select
+               ls.id as logisticsSupplierId,
+               ls.supplier_name as logisticsSupplierName,
+               ls.disabled,
+               lc.id as logisticsChannelId,
+               lc.name as logisticsChannelName,
+               lc.disabled
+        from logistics_supplier ls
+        inner join logistics_channel lc on ls.id = lc.main_id and lc.is_deleted = false
+        <where>
+            ls.is_deleted = false and ls.id in
+            <foreach collection="logisticsSupplierIdList" separator="," item="item" open="(" close=")">
+                #{item}
+            </foreach>
+        </where>
     </select>
 
 

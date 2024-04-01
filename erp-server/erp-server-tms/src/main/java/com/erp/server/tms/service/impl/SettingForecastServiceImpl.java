@@ -1,12 +1,12 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.business.validator.ValidList;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.tms.dto.SettingForecastDTO;
@@ -19,7 +19,6 @@ import com.erp.server.tms.mapper.SettingForecastMapper;
 import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.LogisticsSupplierService;
 import com.erp.server.tms.service.SettingForecastService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.TransferLogisticsSupplierService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -245,6 +244,7 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
         SettingForecastDTO.SaveOrUpdateDTO dto = new SettingForecastDTO.SaveOrUpdateDTO();
         dto.setId(entity.getId());
         dto.setLogisticsSupplierId(entity.getLogisticsSupplierId());
+        dto.setLogisticsChannelId(entity.getLogisticsChannelId());
         dto.setIsMustPackage(entity.getIsMustPackage());
         dto.setIsMustTransfer(entity.getIsMustTransfer());
         dto.setEnablePackageTime(entity.getEnablePackageTime());
@@ -269,6 +269,10 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
         List<String> transferSupplierIdList = list.stream().map(SettingForecastEntity::getTransferLogisticsSupplierId).collect(Collectors.toList());
         List<LogisticsSupplierEntity> logisticsSupplierList = CollectionUtils.isNotEmpty(logisticsSupplierIdList) ? logisticsSupplierService.listByIds(logisticsSupplierIdList) : Collections.emptyList();
 
+        //渠道ids
+        List<String> logisticsChannelIdList = list.stream().map(SettingForecastEntity::getLogisticsChannelId).distinct().collect(Collectors.toList());
+        List<LogisticsChannelEntity> logisticsChannelList = logisticsChannelService.listByIds(logisticsChannelIdList);
+
         List<TransferLogisticsSupplierDTO.AuthDTO> transferLogisticsSupplierList = CollectionUtils.isNotEmpty(transferSupplierIdList) ? transferLogisticsSupplierService.listAuthByMainIds(transferSupplierIdList) : Collections.emptyList();
         for (SettingForecastEntity item : list) {
             String logisticsSupplierId = item.getLogisticsSupplierId();
@@ -285,6 +289,10 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
             if (Objects.isNull(authDTO)) {
                 throw new ServiceException(logisticsSupplierName + " 对应的中转物流商不存在");
             }
+            //对应渠道
+            String logisticsChannelName = logisticsChannelList.stream().filter(obj -> StrUtil.equals(obj.getId(), item.getLogisticsChannelId())).findFirst().map(LogisticsChannelEntity::getName).orElse("");
+            item.setLogisticsChannelName(logisticsChannelName);
+
             String authStatus = authDTO.getAuthStatus();
             String already = TransferLogisticsAuthStatusEnum.ALREADY.getCode();
             String supplierName = authDTO.getSupplierName();

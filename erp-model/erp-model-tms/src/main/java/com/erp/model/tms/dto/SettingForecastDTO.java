@@ -1,17 +1,13 @@
 package com.erp.model.tms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -44,6 +40,16 @@ public class SettingForecastDTO implements Serializable {
          * 物流商
          */
         private String logisticsSupplierName;
+
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 物流渠道名称
+         */
+        private String logisticsChannelName;
 
         /**
          * 是否强制组包 true 是
@@ -88,6 +94,11 @@ public class SettingForecastDTO implements Serializable {
 
         @NotBlank(message = "物流商不能为空")
         private String logisticsSupplierId;
+
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
 
         /**
          * 是否强制组包 不能为空
