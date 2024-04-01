@@ -6,6 +6,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.KingdeeUserRefPostDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 金蝶员工任岗表 服务类
@@ -93,5 +95,8 @@ public interface KingdeeUserRefPostService extends SuperService<KingdeeUserRefPo
      */
     KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePost(KingdeePostDTO.FindUserKingdeePostInfoDTO dto);
 
-
+    /**
+     * 根据人员获取部门列表
+     */
+    KingdeeUserRefPostEntity getDeptByUserId(String userId);
 }
