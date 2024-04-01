@@ -3,8 +3,6 @@ package com.erp.model.oms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.core.anno.StateEnumValue;
-import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,7 +11,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -895,6 +892,35 @@ public class CustomerDTO implements Serializable {
          * 数量
          */
         private Integer count;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SellerUserDeptDTO {
+        /**
+         * 客户编码
+         */
+        private String code;
+        /**
+         * 销售员id
+         */
+        private String sellerId;
+
+        /**
+         * 销售员名称
+         */
+        private String sellerName;
+
+        /**
+         * 销售员部门id
+         */
+        private String deptId;
+
+        /**
+         * 销售员部门名称
+         */
+        private String deptName;
     }
 
 
