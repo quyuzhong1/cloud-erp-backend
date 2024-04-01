@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -50,14 +51,13 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.model.tms.dto.LogisticsBillDTO;
-import com.erp.model.tms.dto.LogisticsBillDetailDTO;
-import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.dto.*;
+import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
-import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.WmsCartonDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
@@ -75,6 +75,7 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -90,9 +91,9 @@ import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.BeanUtils;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.beans.BeanUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -205,6 +206,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private WmsCartonDetailService wmsCartonDetailService;
 
+    @Resource
+    private TmsDeclareBillFeign tmsDeclareBillFeign;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -941,6 +944,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String code = b2cList.stream().map(SoOutstockEntity::getCode).collect(Collectors.joining(","));
             throw new ServiceException(ApiError.B2C_SO_OUTSTOCK_NOT_DIS_APPROVE, code);
         }
+
+
+        //下游单据【报关单】生成后不可操作反审核：报关单[单号]已生成不可操作反审核
+        List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(ids);
+        if (CollectionUtil.isNotEmpty(tmsDeclareBillEntities)) {
+            throw new ServiceException(ApiError.TMS_DECLARE_BILL_EXISTS, tmsDeclareBillEntities.get(0).getCode());
+        }
+
         //审核通过
         //待提交
         if (!isPushKingDee) {
@@ -2537,6 +2548,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<SoOutstockDTO.GroupSkuDTO> groupSkuDTOList = groupSkuList.stream().filter(req -> req.getWaitPackQty() > 0).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(groupSkuDTOList)) {
             updatePackingStatus(dto.getId(), PackingStatusEnum.PACKING.getCode());
+            //如果装箱完成自动生成报关单
+
+            TmsDeclareBillDTO.AddDTO addDTO = new TmsDeclareBillDTO.AddDTO();
+            addDTO.set
+            tmsDeclareBillFeign.add()
         } else {
             updatePackingStatus(dto.getId(), PackingStatusEnum.NOT_PACKING.getCode());
         }

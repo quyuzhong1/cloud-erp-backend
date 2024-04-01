@@ -1,7 +1,7 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
@@ -12,7 +12,6 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -48,7 +47,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     List<SoOutstockEntity> listBySoIds(@RequestBody List<String> soIds);
 
     /**
-     * 添加销售出库单
+     * 添加销售出库单a
      * @author yl
      * @date 2023-05-19 9:50
      * @param dto

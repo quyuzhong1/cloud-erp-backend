@@ -382,7 +382,7 @@ public class WmsCartonDTO implements Serializable {
         /**
          * 装箱信息
          */
-        private List<WmsCartonDTO.ViewDTO> firstMileCartonList;
+        private List<WmsCartonDTO.ViewDTO> wmsCartonList;
     }
 
     @Data

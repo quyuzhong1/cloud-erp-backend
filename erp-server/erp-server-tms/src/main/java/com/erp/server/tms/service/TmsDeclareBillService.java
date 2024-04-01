@@ -55,4 +55,13 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
     List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto);
 
     Boolean addFmDeclare(TmsDeclareBillDTO.AddDTO dto);
+
+    /**
+     * 根据来源id查询报关单
+     * @Author Luo_WG
+     * @Date 2024/4/1 12:05
+     * @param sourceIds
+     * @return java.util.List<com.erp.model.tms.entity.TmsDeclareBillEntity>
+     **/
+    List<TmsDeclareBillEntity> listBySourceIds(List<String> sourceIds);
 }

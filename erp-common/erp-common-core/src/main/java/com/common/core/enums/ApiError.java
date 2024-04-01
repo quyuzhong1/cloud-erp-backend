@@ -977,6 +977,7 @@ public enum ApiError implements Serializable {
     NOT_PACKAGE_NO_APPROVE(92133,"单号{}尚未完成装箱信息，请完成后审核"),
     TMS_FIRST_MILE_LOGISTIC_EXISTS(92134,"物流单【{}】已生成，不可反审核"),
     B2B_ORDER_IS_PACK(92135,"只允许B2B订单装箱"),
+    TMS_DECLARE_BILL_EXISTS(92136,"报关单【{}】已生成，不可反审核"),
 
 
 

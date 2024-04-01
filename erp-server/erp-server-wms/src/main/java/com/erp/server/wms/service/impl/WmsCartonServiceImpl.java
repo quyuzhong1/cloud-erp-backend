@@ -120,12 +120,12 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<FirstMileCartonMapper
     public WmsCartonDTO.WmsCartonView getCartonViewBySourceId(String sourceId) {
         WmsCartonDTO.WmsCartonView view = new WmsCartonDTO.WmsCartonView();
         //查询箱规信息
-        List<WmsCartonEntity> firstMileCartonEntities = this.listBySourceIds(Arrays.asList(sourceId));
-        List<WmsCartonDTO.ViewDTO> firstMileCartonList = BeanMapper.copyList(firstMileCartonEntities, WmsCartonDTO.ViewDTO.class);
-        view.setFirstMileCartonList(firstMileCartonList);
+        List<WmsCartonEntity> wmsCartonEntities = this.listBySourceIds(Arrays.asList(sourceId));
+        List<WmsCartonDTO.ViewDTO> wmsCartonList = BeanMapper.copyList(wmsCartonEntities, WmsCartonDTO.ViewDTO.class);
+        view.setWmsCartonList(wmsCartonList);
 
         //查询箱规包含的产品信息
-        for (WmsCartonDTO.ViewDTO viewDTO : firstMileCartonList) {
+        for (WmsCartonDTO.ViewDTO viewDTO : wmsCartonList) {
 
             //根据主表id分组sku查询发货及待装箱数
             List<WmsCartonDTO.PackDateDTO> packDateDTOS = this.listPackDateBySourceId(sourceId);

@@ -45,6 +45,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.entity.*;
@@ -56,6 +57,7 @@ import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
@@ -150,6 +152,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private TmsFirstMileLogisticFeign tmsFirstMileLogisticFeign;
     @Resource
     private LogisticsFeign logisticsFeign;
+    @Resource
+    private TmsDeclareBillFeign tmsDeclareBillFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -603,6 +607,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<LogisticsBillEntity> tmsFirstMileLogisticEntities = tmsFirstMileLogisticFeign.listBySourceIds(Arrays.asList(entity.getId()));
         if (CollectionUtil.isNotEmpty(tmsFirstMileLogisticEntities)) {
             throw new ServiceException(ApiError.TMS_FIRST_MILE_LOGISTIC_EXISTS, tmsFirstMileLogisticEntities.get(0).getTransportNo());
+        }
+        List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Arrays.asList(entity.getId()));
+        if (CollectionUtil.isNotEmpty(tmsDeclareBillEntities)) {
+            throw new ServiceException(ApiError.TMS_DECLARE_BILL_EXISTS, tmsDeclareBillEntities.get(0).getCode());
         }
 
         return true;
