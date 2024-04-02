@@ -1,9 +1,10 @@
 package com.erp.server.tms.service;
-import com.common.business.vo.PagingVO;
-import com.erp.model.tms.entity.LogisticsSupplierEntity;
-import com.common.business.service.SuperService;
+
 import com.common.business.dto.base.*;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.entity.LogisticsSupplierEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -116,4 +117,12 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      *@date 2023-12-05
      */
     List<BaseChildDTO.ListChildTreeDTO> tree();
+    /**
+     * @description: 查询渠道
+     * @author Will
+     * @date: 2024/4/1 11:17
+     * @param logisticsSupplierIdList
+     * @return List<LogisticsSupplierListDTO>
+     */
+    List<LogisticsSupplierDTO.LogisticsSupplierListDTO> listLogisticsChannel(List<String> logisticsSupplierIdList);
 }

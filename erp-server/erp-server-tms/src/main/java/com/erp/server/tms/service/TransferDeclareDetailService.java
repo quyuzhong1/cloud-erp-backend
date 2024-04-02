@@ -106,4 +106,12 @@ public interface TransferDeclareDetailService extends SuperService<TransferDecla
      * @return java.lang.Boolean
      **/
     Boolean updateOutstockStatus(TransferDeclareDTO.UpdateOutstockStatusDTO dto);
+    /**
+     * @description: 根据物流渠道id集合查询
+     * @author Will
+     * @date: 2024/4/1 12:32
+     * @param logisticsChannelIdList
+     * @return List<TransferDeclareDetailEntity>
+     */
+    List<TransferDeclareDetailEntity> listByLogisticsChannelIdList(List<String> logisticsChannelIdList);
 }

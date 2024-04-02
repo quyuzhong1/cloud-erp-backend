@@ -1,13 +1,13 @@
 package com.erp.server.wms.service;
+
 import cn.hutool.core.date.DateTime;
-import com.common.business.validator.ValidList;
-import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.PackageForecastDetailDTO;
-import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.entity.PackageForecastEntity;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.PackageForecastDTO;
+import com.erp.model.wms.entity.PackageForecastEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -133,4 +133,5 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
      * @param alExpressHandoverBase
      */
     void queryAliExpressInfo(PackageForecastEntity packageForecastEntity, PackageForecastDTO.AlExpressHandoverBaseDTO alExpressHandoverBase);
+
 }

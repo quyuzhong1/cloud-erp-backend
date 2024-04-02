@@ -91,5 +91,18 @@ public class WeightingOutboundDTO implements Serializable {
          * 称重单位
          */
         private String weightUnit;
+
+
+        /**
+         * 中转状态
+         * not 不需要  wait 待中转   already 已经中转
+         */
+        private String transferStatus;
+
+        /**
+         * 上传状态（订单）dict_basic：type=transferDeclareUploadStatus
+         * enum:TransferDeclareUploadStatusEnum,waitUpload待上传,uploadFailure上传失败,uploadSuccess上传成功
+         */
+        private String orderUploadStatus;
     }
 }

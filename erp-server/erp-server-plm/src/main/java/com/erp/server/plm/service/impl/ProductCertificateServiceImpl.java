@@ -14,6 +14,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.dto.AttachmentDTO;
 import com.erp.model.plm.dto.ProductCertificateDTO;
 import com.erp.model.plm.dto.ProductCertificateShowDTO;
@@ -22,6 +23,7 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.enums.ProductCertificateProjectEnum;
 import com.erp.model.plm.enums.ProductCertificateTypeEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.plm.listener.ProductCertificateExcelListener;
 import com.erp.server.plm.mapper.ProductCertificateMapper;
 import com.erp.server.plm.service.*;
@@ -70,6 +72,9 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @Override
     public PagingVO<ProductCertificateDTO.ListDTO> paging(PagingDTO<ProductCertificateDTO.SearchParamDTO> pagingDTO) {
@@ -429,10 +434,13 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             if (ObjectUtil.isEmpty(productDetailEntity)) {
                 errorMsgList.add("系统中未找到SKU");
             }
+            //配置信息
+            Map<SettingEnum, String> cfgSettingList = dmpTaskFeign.getCfgSettingList(SettingEnum.URL_CHANGE);
+
             String pathUrl = excelDTO.getPathUrl();
             MultipartFile multipartFile = null;
             try {
-                multipartFile = getMulFileByPath(pathUrl);
+                multipartFile = getMulFileByPath(pathUrl,cfgSettingList);
             } catch (Exception e) {
                 errorMsgList.add("文件路径下未找到文件");
             }
@@ -473,7 +481,12 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     /**
      * 获取MultipartFile
      */
-    private static MultipartFile getMulFileByPath(String filePath) {
+    private static MultipartFile getMulFileByPath(String filePath,Map<SettingEnum, String> cfgSettingMap) {
+        //查询配置进行转换
+        if (ObjectUtil.isNotEmpty(cfgSettingMap) && StrUtil.isNotBlank(cfgSettingMap.get(SettingEnum.PLM_PRODUCT_CERTIFICATE_IMPORT_URL))) {
+            List<String> urlList = Arrays.stream(cfgSettingMap.get(SettingEnum.PLM_PRODUCT_CERTIFICATE_IMPORT_URL).split(",")).collect(Collectors.toList());
+            filePath = filePath.replace(urlList.get(0), urlList.get(1));
+        }
         try {
            String fileUrl = filePath.replace(" ","%20");
 
@@ -764,7 +777,6 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         if (CollectionUtils.isEmpty(resultList)) {
             return;
         }
-
 
         HashMap<String,File> map = new HashMap<>();
         List<PlmAttachmentEntity> attachmentList = new ArrayList<>();

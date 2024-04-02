@@ -2,29 +2,22 @@ package com.erp.server.tms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.LogisticsAddressDTO;
-import com.erp.model.tms.dto.ShippingTemplateDTO;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
-import com.erp.server.tms.service.LogisticsChannelService;
+import com.erp.server.tms.service.LogisticsSupplierService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.LogisticsSupplierService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.tms.dto.LogisticsSupplierDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
@@ -224,4 +217,16 @@ public class LogisticsSupplierController extends BaseController {
     }
 
 
+    /**
+     * 物流渠道列表
+     * @author Will
+     * @date: 2024/4/1 11:12
+     * @param dto
+     * @return ApiResult<List<LogisticsSupplierListDTO>>
+     */
+    @PostMapping("/listLogisticsChannel")
+    public ApiResult<List<LogisticsSupplierDTO.LogisticsSupplierListDTO>> listLogisticsChannel(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<LogisticsSupplierDTO.LogisticsSupplierListDTO> list = logisticsSupplierService.listLogisticsChannel(dto.getIds());
+        return success(list);
+    }
 }

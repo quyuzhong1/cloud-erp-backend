@@ -1,11 +1,10 @@
 package com.erp.server.wms.controller.feign;
 
 import com.common.business.validator.ValidList;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.PackageForecastDTO;
+import com.erp.model.wms.entity.PackageForecastDetailEntity;
+import com.erp.server.wms.service.PackageForecastDetailService;
 import com.erp.server.wms.service.PackageForecastService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -15,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * @author Lambda
@@ -31,6 +31,8 @@ public class PackageForecastFeignController extends BaseController {
     @Resource
     private PackageForecastService packageForecastService;
 
+    @Resource
+    private PackageForecastDetailService packageForecastDetailService;
 
     /**
      * 添加组包
@@ -52,4 +54,16 @@ public class PackageForecastFeignController extends BaseController {
         return Boolean.TRUE;
     }
 
+
+    /**
+     * @description: 根据销售订单id集合查询
+     * @author Will
+     * @date: 2024/4/1 14:52
+     * @param soIdList
+     * @return List<PackageForecastDetailEntity>
+     */
+    @PostMapping("/listBySoIdList")
+    public List<PackageForecastDetailEntity> listBySoIdList(@RequestBody List<String> soIdList){
+        return packageForecastDetailService.listBySoIdList(soIdList);
+    }
 }
