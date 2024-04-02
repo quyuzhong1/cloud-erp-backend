@@ -165,6 +165,21 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private String type;
 
         /**
+         * 类型名称(对账类型)
+         */
+        private String typeName;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+        /**
          * 总物流费用
          */
         private BigDecimal totalLogisticsCost;
@@ -253,11 +268,6 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 创建人ID
          */
         private String createUserId;
-
-        /**
-         * 费用列表
-         */
-        private List<CostInfoDTO> costList;
     }
 
     @Data
@@ -323,6 +333,8 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          */
         private String mainId;
     }
+
+
 
 
     @Data

@@ -40,7 +40,7 @@ public class TmsFirstMileReconciliationEntity extends BaseEntity<TmsFirstMileRec
      * 审核状态
      */
     @TableField("approve_status")
-    private ApproveStatusEnum approveStatus;
+    private String approveStatus;
     /**
      * 审核人id
      */
@@ -62,7 +62,7 @@ public class TmsFirstMileReconciliationEntity extends BaseEntity<TmsFirstMileRec
     @TableField("submit_date")
     private LocalDate submitDate;
     /**
-     * 提交日期
+     * 审核日期
      */
     @TableField("approve_date")
     private LocalDate approveDate;

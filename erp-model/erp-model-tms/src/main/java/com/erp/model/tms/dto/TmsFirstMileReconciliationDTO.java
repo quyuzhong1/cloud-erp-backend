@@ -268,7 +268,7 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
         private LocalDate submitDate;
 
         /**
-         * 提交日期
+         * 审核日期
          */
         private LocalDate approveDate;
 

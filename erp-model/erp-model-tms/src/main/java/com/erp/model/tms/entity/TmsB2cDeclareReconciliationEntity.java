@@ -59,7 +59,7 @@ public class TmsB2cDeclareReconciliationEntity extends BaseEntity<TmsB2cDeclareR
     @TableField(value = "submit_date",updateStrategy = FieldStrategy.IGNORED)
     private LocalDate submitDate;
     /**
-    * 提交日期
+    * 审核日期
     */
     @TableField(value = "approve_date",updateStrategy = FieldStrategy.IGNORED)
     private LocalDate approveDate;

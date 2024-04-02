@@ -44,7 +44,7 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
     @TableField("source_type")
     private String sourceType;
     /**
-     * 来源编码
+     * 来源编码(货件/计划单号)
      */
     @TableField("source_code")
     private String sourceCode;
@@ -54,10 +54,15 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
     @TableField("track_no")
     private String trackNo;
     /**
-     * 货件/计划单号
+     * 运输状态
      */
-    @TableField("business_code")
-    private String businessCode;
+    @TableField("transport_status")
+    private String transportStatus;
+    /**
+     * 关联单号
+     */
+    @TableField("relation_code")
+    private String relationCode;
     /**
      * 店铺ID
      */
@@ -93,6 +98,11 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
      */
     @TableField("billing_method_name")
     private String billingMethodName;
+    /**
+     * 物流渠道id
+     */
+    @TableField("logistics_channel_id")
+    private String logisticsChannelId;
     /**
      * 类型(对账类型)
      */
@@ -185,7 +195,7 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
 
     public static final String TRACK_NO = "track_no";
 
-    public static final String BUSINESS_CODE = "business_code";
+    public static final String RELATION_CODE = "relation_code";
 
     public static final String SHOP_ID = "shop_id";
 

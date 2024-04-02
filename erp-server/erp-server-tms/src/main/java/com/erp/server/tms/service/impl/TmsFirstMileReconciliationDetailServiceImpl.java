@@ -14,6 +14,8 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.entity.BaseEntity;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -146,9 +148,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
     private void fillList(List<TmsFirstMileReconciliationDetailDTO.ListDTO> records) {
         // 查询
-
         for (TmsFirstMileReconciliationDetailDTO.ListDTO record : records) {
-
 
         }
     }
@@ -169,7 +169,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     }
 
     @Override
-    public TmsFirstMileReconciliationDetailDTO.ImportDTO importFile(TmsB2cDeclareReconciliationDetailDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+    public TmsFirstMileReconciliationDetailDTO.ImportDTO importFile(TmsFirstMileReconciliationDetailDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
         return null;
     }
 
@@ -188,8 +188,25 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     }
 
     @Override
-    public void exportList(TmsFirstMileReconciliationDetailDTO.ExportDTO dto, HttpServletResponse response) {
+    public void exportList(TmsFirstMileReconciliationDetailDTO.ExportDTO param, HttpServletResponse response) {
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> list = this.baseMapper.listExport(param);
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 数据处理
+        fillList(list);
 
+        // 导出数据
+        String excelPath = "excel/tmsFirstMileReconciliationDetail.xlsx";
+        String name = "头程对账单明细导出";
+        try {
+            new ExcelPrintUtils().patchExport(list,
+                    response,
+                    StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
+                    excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
     }
 
     @Override
@@ -231,7 +248,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     .collect(Collectors.toMap(BaseEntity::getId, DictCountryEntity::getNameCn));
         }
         // 头程物流费用配置
-        List<TmsCfgCostDTO.DropDownDTO> cfgCostList = tmsCfgCostService.listDropDown(new TmsCfgCostDTO.DropDownParamDTO(DictCostAttributionEnum.FIRST_MILE.getCode()));
+        List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listByCostAttribution(DictCostAttributionEnum.FIRST_MILE.getCode());
+        Map<String, List<TmsCfgCostEntity>> tmsCfgCostGroupMap = tmsCfgCostList
+                .stream()
+                .collect(Collectors.groupingBy(TmsCfgCostEntity::getDictCostCategory));
 
         for (TmsFirstMileReconciliationDetailDTO.ListDTO record : records) {
             record.setSourceType(SourceTypeEnum.LOGISTICS_BILL.getCode());
@@ -268,10 +288,29 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     .collect(Collectors.groupingBy(TmsCostDetailEntity::getCfgCostId,
                             Collectors.reducing(BigDecimal.ZERO, TmsCostDetailEntity::getCostValue, BigDecimal::add)));
 
-            List<TmsFirstMileReconciliationDetailDTO.CostInfoDTO> curCostListDTO = cfgCostList.stream()
-                    .map(e -> new TmsFirstMileReconciliationDetailDTO.CostInfoDTO(e.getId(), e.getCostName(), costIdSumMap.getOrDefault(e.getId(), BigDecimal.ZERO)))
-                    .collect(Collectors.toList());
-            record.setCostList(curCostListDTO);
+            // 物流运费
+            List<TmsCfgCostEntity> shippingCostList = tmsCfgCostGroupMap.getOrDefault(DictCostCategoryEnum.SHIPPING_COST.getCode(), Collections.emptyList());
+            BigDecimal shippingCost = shippingCostList.stream()
+                    .map(e -> costIdSumMap.getOrDefault(e.getId(), BigDecimal.ZERO))
+                    .reduce(BigDecimal::add)
+                    .orElse(BigDecimal.ZERO);
+            record.setShippingCost(shippingCost);
+
+            // 报关费
+            List<TmsCfgCostEntity> declareCostList = tmsCfgCostGroupMap.getOrDefault(DictCostCategoryEnum.DECLARE_COST.getCode(), Collections.emptyList());
+            BigDecimal declareCost = declareCostList.stream()
+                    .map(e -> costIdSumMap.getOrDefault(e.getId(), BigDecimal.ZERO))
+                    .reduce(BigDecimal::add)
+                    .orElse(BigDecimal.ZERO);
+            record.setDeclareCost(declareCost);
+
+            // 其他费用
+            List<TmsCfgCostEntity> otherCostList = tmsCfgCostGroupMap.getOrDefault(DictCostCategoryEnum.OTHER_COST.getCode(), Collections.emptyList());
+            BigDecimal otherCost = otherCostList.stream()
+                    .map(e -> costIdSumMap.getOrDefault(e.getId(), BigDecimal.ZERO))
+                    .reduce(BigDecimal::add)
+                    .orElse(BigDecimal.ZERO);
+            record.setOtherCost(otherCost);
 
             // 合计费用
             BigDecimal totalCost = costIdSumMap.values().stream().reduce(BigDecimal::add).orElse(BigDecimal.ZERO);

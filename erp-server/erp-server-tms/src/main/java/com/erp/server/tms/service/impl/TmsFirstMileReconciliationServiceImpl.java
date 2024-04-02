@@ -54,6 +54,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Function;
@@ -126,7 +127,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         TmsFirstMileReconciliationEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "头程对账单"));
         // 待提交和审核不通过允许修改
-        if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
+        if (!ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(old.getApproveStatus()))) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
         TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = BeanMapperUtils.map(TmsFirstMileReconciliationEntity.class, updateDTO);
@@ -193,13 +194,13 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         fillList(list);
 
         // 导出数据
-        StringBuffer sb = new StringBuffer();
         String excelPath = "excel/tmsFirstMileReconciliation.xlsx";
         String name = "头程对账单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
         try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+            new ExcelPrintUtils().patchExport(list,
+                    response,
+                    StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
+                    excelPath);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
@@ -432,10 +433,13 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        String currencySymbol = "";
+        String currency = "";
         if (StringUtils.isNotBlank(data.getCurrency())) {
+            currency = data.getCurrency();
             List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Collections.singletonList(data.getCurrency()));
             //币别符号
-            String currencySymbol = currencyList
+            currencySymbol = currencyList
                     .stream()
                     .filter(obj -> StrUtil.equals(obj.getId(), data.getCurrency()))
                     .findFirst()
@@ -474,16 +478,13 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                     .collect(Collectors.toMap(BaseEntity::getId, DictCountryEntity::getNameCn));
         }
 
-        //币别信息
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Collections.singletonList(data.getCurrency()));
-
         for (TmsFirstMileReconciliationDetailDTO.ListDTO viewDTO : viewDTOList) {
             //店铺名称
             viewDTO.setShopName(shopMap.getOrDefault(viewDTO.getShopId(), ""));
             //国家名称
-            viewDTO.setFromCountry(countryMap.getOrDefault(viewDTO.getFromCountry(), ""));
-            viewDTO.setToCountry(countryMap.getOrDefault(viewDTO.getToCountry(), ""));
-            viewDTO.setType(DetailReconciliationTypeEnum.getNameByCode(viewDTO.getType()));
+            viewDTO.setFromCountryName(countryMap.getOrDefault(viewDTO.getFromCountry(), ""));
+            viewDTO.setToCountryName(countryMap.getOrDefault(viewDTO.getToCountry(), ""));
+            viewDTO.setTypeName(DetailReconciliationTypeEnum.getNameByCode(viewDTO.getType()));
 
             // 运输状态
             FmLogisticTrackStatusEnum statusEnum = FmLogisticTrackStatusEnum.getNameByCode(viewDTO.getTransportStatus());
@@ -491,6 +492,11 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 
             // 对账状态
             viewDTO.setStatusName(TmsB2cDeclareReconciliationStatusEnum.getName(viewDTO.getStatus()));
+            // 明细币别
+            viewDTO.setCurrencySymbol(currencySymbol);
+            viewDTO.setCurrency(currency);
+            // 来源单号=业务单号
+            viewDTO.setBusinessCode(viewDTO.getSourceCode());
         }
         data.setDetailList(viewDTOList);
 
@@ -619,7 +625,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
      */
     private void validateSubmit(TmsFirstMileReconciliationEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
-        if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+        if (!ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getApproveStatus()))) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         return;
