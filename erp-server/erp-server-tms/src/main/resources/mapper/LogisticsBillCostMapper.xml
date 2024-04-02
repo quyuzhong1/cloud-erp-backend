@@ -286,6 +286,26 @@
         </if>
         lbc.id desc
     </select>
+    <select id="listBillCostByOutstockIds" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$OutStockDTO">
+        SELECT
+            bill.outstock_id AS outstockId,
+            bill.outstock_code AS outstockCode,
+            bill.transport_no,
+            COST.reconciliation_status,
+            COST.track_no
+        FROM
+            logistics_bill AS bill
+                LEFT JOIN logistics_bill_cost AS COST ON bill.ID = COST.logistics_bill_id
+                AND COST.is_deleted = FALSE
+        WHERE
+            bill.is_deleted = FALSE
+        <if test="ids != null and ids.size > 0">
+            AND bill.outstock_id IN
+            <foreach collection="ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 
 
 </mapper>

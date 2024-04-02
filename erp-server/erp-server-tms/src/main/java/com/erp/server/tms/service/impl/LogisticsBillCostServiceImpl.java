@@ -294,6 +294,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return this.updateById(entity);
     }
 
+    @Override
+    public List<LogisticsBillCostDTO.OutStockDTO> listBillCostByOutstockIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listBillCostByOutstockIds(ids);
+    }
+
     /**
      * @description: 根据物流单id集合查询
      * @author Will

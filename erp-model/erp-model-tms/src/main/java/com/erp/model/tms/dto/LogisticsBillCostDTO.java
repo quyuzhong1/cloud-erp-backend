@@ -494,5 +494,28 @@ public class LogisticsBillCostDTO implements Serializable {
         private String reconciliationStatus;
 
     }
-
+    @Data
+    @NoArgsConstructor
+    public class OutStockDTO {
+        /**
+         * 销售出库单id
+         */
+        private String outstockId;
+        /**
+         * 销售出库单编码
+         */
+        private String outstockCode;
+        /**
+         * 运输编号
+         */
+        private String transportNo;
+        /**
+         * 对账状态
+         */
+        private String reconciliationStatus;
+        /**
+         * 物流单号
+         */
+        private String trackNo;
+    }
 }
