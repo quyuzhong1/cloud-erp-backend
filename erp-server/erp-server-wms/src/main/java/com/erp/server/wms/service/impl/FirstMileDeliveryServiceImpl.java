@@ -1772,21 +1772,31 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             return false;
         }
         List<FirstMileDeliveryEntity> deliveryEntities = this.listByIds(dto.getIds());
-        List<FirstMileDeliveryEntity> deliveryEntityList = deliveryEntities.stream().filter(req -> WmsDeclareStatusEnum.FINISH.getCode().equals(req.getDeclareStatus().getCode())).collect(Collectors.toList());
-        if (CollectionUtil.isNotEmpty(deliveryEntityList)) {
-            throw new ServiceException(ApiError.BILL_IS_GENERATE_DECLARE, deliveryEntityList.get(0).getCode());
-        }
+
         List<FirstMileDeliveryEntity> deliveryEntityLogisticsStatusList = deliveryEntities.stream().filter(req -> FmDeliveryLogisticsStatusEnum.FINISH.getCode().equals(req.getLogisticsStatus().getCode())).collect(Collectors.toList());
-        if (CollectionUtil.isNotEmpty(deliveryEntityLogisticsStatusList)) {
-            throw new ServiceException(ApiError.BILL_IS_GENERATE_LOGISTICS, deliveryEntityLogisticsStatusList.get(0).getCode());
-        }
+
 
         for (String billType : dto.getBillTypes()) {
-            lambdaUpdate()
-                    .set(FmDeliveryBillTypeEnum.DECLARE.getCode().equals(billType), FirstMileDeliveryEntity::getDeclareStatus, WmsDeclareStatusEnum.NONE.getCode())
-                    .set(FmDeliveryBillTypeEnum.LOGISTICS.getCode().equals(billType), FirstMileDeliveryEntity::getLogisticsStatus, FmDeliveryLogisticsStatusEnum.NONE.getCode())
-                    .in(FirstMileDeliveryEntity::getId, dto.getIds())
-                    .update();
+            if (FmDeliveryBillTypeEnum.DECLARE.getCode().equals(billType)) {
+                List<FirstMileDeliveryEntity> deliveryEntityList = deliveryEntities.stream().filter(req -> WmsDeclareStatusEnum.FINISH.getCode().equals(req.getDeclareStatus().getCode())).collect(Collectors.toList());
+                if (CollectionUtil.isNotEmpty(deliveryEntityList)) {
+                    throw new ServiceException(ApiError.BILL_IS_GENERATE_DECLARE, deliveryEntityList.get(0).getCode());
+                }
+                lambdaUpdate()
+                        .set(FmDeliveryBillTypeEnum.DECLARE.getCode().equals(billType), FirstMileDeliveryEntity::getDeclareStatus, WmsDeclareStatusEnum.NONE.getCode())
+                        .in(FirstMileDeliveryEntity::getId, dto.getIds())
+                        .update();
+            }
+
+            if (FmDeliveryBillTypeEnum.LOGISTICS.getCode().equals(billType)) {
+                if (CollectionUtil.isNotEmpty(deliveryEntityLogisticsStatusList)) {
+                    throw new ServiceException(ApiError.BILL_IS_GENERATE_LOGISTICS, deliveryEntityLogisticsStatusList.get(0).getCode());
+                }
+                lambdaUpdate()
+                        .set(FmDeliveryBillTypeEnum.LOGISTICS.getCode().equals(billType), FirstMileDeliveryEntity::getLogisticsStatus, FmDeliveryLogisticsStatusEnum.NONE.getCode())
+                        .in(FirstMileDeliveryEntity::getId, dto.getIds())
+                        .update();
+            }
         }
         return Boolean.TRUE;
     }
