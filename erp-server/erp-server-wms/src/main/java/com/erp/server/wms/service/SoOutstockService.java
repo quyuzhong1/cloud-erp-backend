@@ -492,4 +492,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq);
 
     Boolean updateStatus(TmsDeclareBillDTO.UpdateStatusDTO dto);
+
+    List<SoOutstockEntity> listByCodes(List<String> codes);
 }

@@ -59,7 +59,7 @@
         fmc.box_spec_no
         FROM wms_carton fmc
         INNER JOIN wms_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
-        LEFT JOIN first_mile_delivery_detail fmdd ON fmdd.source_detail_id = fmcd.source_id AND fmdd.sku_id = fmcd.sku_id AND
+        LEFT JOIN first_mile_delivery_detail fmdd ON fmdd.main_id = fmcd.source_id AND fmdd.sku_id = fmcd.sku_id AND
         fmdd.is_deleted = FALSE
         WHERE fmc.is_deleted = FALSE
         <if test="sourceId != null and sourceId != ''">

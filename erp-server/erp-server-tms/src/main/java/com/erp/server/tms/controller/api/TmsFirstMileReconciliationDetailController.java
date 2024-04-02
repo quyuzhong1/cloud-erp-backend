@@ -55,11 +55,11 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
      * @author Jim
      * {@code @date:} 2024-03-25
      */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "头程对账单明细新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated TmsFirstMileReconciliationDetailDTO.AddDTO dto) {
-        return success(tmsFirstMileReconciliationDetailService.add(dto));
-    }
+//    @PostMapping("/add")
+//    @LogAction(value = LogActionEnum.INSERT, desc = "头程对账单明细新增")
+//    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated TmsFirstMileReconciliationDetailDTO.AddDTO dto) {
+//        return success(tmsFirstMileReconciliationDetailService.add(dto));
+//    }
 
 
 //    /**

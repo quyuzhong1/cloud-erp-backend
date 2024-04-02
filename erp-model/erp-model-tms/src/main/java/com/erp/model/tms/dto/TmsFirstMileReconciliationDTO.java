@@ -344,13 +344,19 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDTO{
 
         /**
          * 主键id
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 明细id集合
+         */
+        @NotEmpty(message = "明细不能为空")
+        private List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList;
 
     }
 
@@ -386,42 +392,36 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
         /**
          * 物流商Id
          */
-        @NotBlank(message = "物流商Id不能为空")
         @Size(max = 19, message = "物流商Id最大长度不能超过19位")
         private String logisticsSupplierId;
 
         /**
          * 物流商名称
          */
-        @NotBlank(message = "物流商名称不能为空")
         @Size(max = 100, message = "物流商名称最大长度不能超过100位")
         private String logisticsSupplierName;
 
         /**
          * 币别
          */
-        @NotBlank(message = "币别不能为空")
         @Size(max = 32, message = "币别最大长度不能超过32位")
         private String currency;
 
         /**
          * 汇率
          */
-        @NotNull(message = "汇率不能为空")
         @Digits(integer = 12, fraction = 4, message = "汇率整数位不能超过12位，小数位不能超过4位")
         private BigDecimal exchangeRate;
 
         /**
          * 费用合计
          */
-        @NotNull(message = "费用合计不能为空")
         @Digits(integer = 12, fraction = 4, message = "费用合计整数位不能超过12位，小数位不能超过4位")
         private BigDecimal totalCost;
 
         /**
          * 审核不通过原因
          */
-        @Size(max = 255, message = "审核不通过原因最大长度不能超过255位")
         private String reason;
 
 

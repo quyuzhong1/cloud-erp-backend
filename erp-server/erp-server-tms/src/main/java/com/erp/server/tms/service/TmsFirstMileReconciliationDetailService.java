@@ -94,4 +94,12 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      * @date: 2024-03-25
      */
     List<TmsFirstMileReconciliationDetailEntity> listByMainIds(List<String> mainIds);
+
+    /**
+     * 更新
+     *
+     * @author Jim
+     * @date: 2024-03-25
+     */
+    Boolean update(List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList, String mainId);
 }

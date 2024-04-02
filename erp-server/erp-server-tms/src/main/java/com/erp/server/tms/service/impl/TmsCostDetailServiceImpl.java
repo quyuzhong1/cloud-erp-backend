@@ -12,6 +12,7 @@ import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.TmsCostDetailEntity;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
+import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.mapper.TmsCostDetailMapper;
 import com.erp.server.tms.service.LogisticsBillCostService;
@@ -164,6 +165,16 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
             return;
         }
         lambdaUpdate().in(TmsCostDetailEntity::getMainId,mainIdList).remove();
+    }
+
+    @Override
+    public List<TmsCostDetailEntity> sumCostByMainIdAndCostId(String logisticsBillCostType, List<String> logisticsBillIds) {
+        return this.query()
+                .select("SUM(COALESCE(cost_value,0)) as cost_value", TmsCostDetailEntity.MAIN_ID, TmsCostDetailEntity.CFG_COST_ID)
+                .eq(TmsCostDetailEntity.TYPE, LogisticsBillCostTypeEnum.ESTIMATED.getCode())
+                .in(TmsCostDetailEntity.MAIN_ID, logisticsBillIds)
+                .groupBy(TmsCostDetailEntity.MAIN_ID, TmsCostDetailEntity.CFG_COST_ID)
+                .list();
     }
 
 
