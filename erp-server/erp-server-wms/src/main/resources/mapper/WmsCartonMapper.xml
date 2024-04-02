@@ -53,7 +53,7 @@
         fmcd.carton_id,
         fmcd.sku_id,
         fmcd.sku_no,
-        SUM(fmdd.delivery_qty) AS deliveryQty,
+        CASE WHEN SUM(fmdd.delivery_qty) IS NULL THEN 0 ELSE SUM(fmdd.delivery_qty) END AS deliveryQty,
         SUM(fmcd.pack_qty) AS packQty,
         SUM(fmc.box_qty) AS boxQty,
         fmc.box_spec_no

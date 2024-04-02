@@ -1469,8 +1469,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             //新增装箱信息
             wmsCartonService.add(addDTO, dto.getId(), SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
         }
-        //根据主表id分组sku查询打包数量是否超过发货数量
-        wmsCartonService.packQtyCheck(dto.getId());
 
         //根据主表id分组sku查询发货及待装箱数
         List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuList = firstMileDeliveryDetailService.listGroupSkuByMainId(dto.getId());
