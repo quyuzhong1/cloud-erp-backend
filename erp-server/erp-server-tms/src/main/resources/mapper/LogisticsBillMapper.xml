@@ -418,6 +418,7 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
+        order by lb.create_time desc
     </select>
     <select id="firstMileView" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$ViewDTO">
         SELECT lb.id,
@@ -600,6 +601,7 @@
                lbc.transport_no as relationCode,
                lb.outstock_id as outstockId,
                lb.outstock_code as businessCode,
+               lb.remark as remark,
                lbd.track_status as transportStatus,
                lbc.reconciliation_status as reconciliationStatus,
                lb.shipping_method as shippingMethod,
@@ -645,6 +647,58 @@
                 </foreach>
             </if>
             lb.id desc
+        </where>
+    </select>
+
+    <select id="waitReconciliationList" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO$ListDTO">
+        SELECT
+            lb.shop_id as shopId,
+            lb.shop_name as shopName,
+            lb.source_code as sourceCode,
+            lb.source_id as relationId,
+            lb.id as sourceId,
+            lbc.transport_no as relationCode,
+            lb.outstock_id as outstockId,
+            lb.outstock_code as businessCode,
+            lbd.track_status as transportStatus,
+            lbc.reconciliation_status as reconciliationStatus,
+            lb.shipping_method as shippingMethod,
+            lb.channel_id as logisticsChannelId,
+            lb.logistics_supplier_id as logisticsSupplierId,
+            lb.to_country as toCountry,
+            lbc.logistics_bill_id as logisticBillId,
+            lbc.actual_weight as actualWeight,
+            lbc.volume_weight as volumeWeight,
+            lbc.billing_weight_logistics as billingWeight,
+            lbc.weight_unit as actualWeightUnit,
+            lbc.currency as currency,
+            lb.order_time as orderTime,
+            lbd.track_no as trackNo,
+            lbd.sign_time as receiveDate
+        from
+        logistics_bill lb
+        inner join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id
+        inner join logistics_bill_detail lbd on lbd.main_id = lb.id
+        inner join logistics_channel lc on lc.id = lb.channel_id and lc.is_deleted = false
+        <where>
+            and lb.is_deleted =false
+            and lbc.is_deleted = false
+            and lbd.is_deleted = false
+            <if test="orderType!=null and orderType!=''">
+                and lb.order_type = #{orderType}
+            </if>
+            <if test="reconciliationStatus!=null and reconciliationStatus!=''">
+                and lbc.reconciliation_status = #{reconciliationStatus}
+            </if>
+            <if test="trackStatus!=null and trackStatus!=''">
+                and lbd.track_status = #{trackStatus}
+            </if>
+            <if test="mainIds != null and mainIds.size() > 0 ">
+                and lb.id in
+                <foreach collection="mainIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
         </where>
     </select>
 </mapper>

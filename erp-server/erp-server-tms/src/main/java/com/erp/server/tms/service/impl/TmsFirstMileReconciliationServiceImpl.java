@@ -30,6 +30,7 @@ import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
+import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
@@ -135,17 +136,18 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         // 数据处理
         handleData(tmsFirstMileReconciliationEntity);
         log.info("编辑 开始修改头程对账单数据，单号：【{}】", old.getCode());
-        boolean save = super.updateById(tmsFirstMileReconciliationEntity);
-        if (!save) {
-            throw new ServiceException("头程对账单保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+//        boolean save = super.updateById(tmsFirstMileReconciliationEntity);
+//        if (!save) {
+//            throw new ServiceException("头程对账单保存失败");
+//        }
+        // 修改明细数据（包含增删改）
+        tmsFirstMileReconciliationDetailService.update(updateDTO.getDetailList(), old.getId());
 
         // 记录主单操作日志
         log.info("编辑 开始记录头程对账单日志数据，单号：【{}】", tmsFirstMileReconciliationEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), tmsFirstMileReconciliationEntity.getCode(), "头程对账单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, tmsFirstMileReconciliationEntity, null, tmsFirstMileReconciliationEntity.getId(), msg);
+        // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLogByObj(old, tmsFirstMileReconciliationEntity, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), tmsFirstMileReconciliationEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -635,7 +637,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
      * 新增修改处理数据
      */
     private void handleData(TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity) {
-        // TODO 验证数据 & 数据赋值
+        // 验证数据 & 数据赋值
     }
 
     @Override

@@ -5,6 +5,8 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Arrays;
+
 /**
  * @description: 报关对账
  * @author Will
@@ -54,6 +56,13 @@ public enum TmsB2cDeclareReconciliationStatusEnum implements EnumMessage {
             }
         }
         return "";
+    }
+
+    public static TmsB2cDeclareReconciliationStatusEnum getByCode(String code) {
+        return Arrays.stream(TmsB2cDeclareReconciliationStatusEnum.values())
+                .filter(e -> e.getCode().equals(code))
+                .findFirst()
+                .orElse(null);
     }
 }
 

@@ -248,13 +248,14 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             costAddDTO.setActualWeight(actualWeight);
             //设置预估体积重 = 长宽高/材积
-            ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(addDTO.getLogisticsChannelId());
-            if(Objects.nonNull(shippingTemplateEntity) && shippingTemplateEntity.getVolumeSetting() > 0){
-                BigDecimal totalSize = packingDTOList.stream()
-                        .map(WmsCartonDetailDTO.ListPackingDetailDTO::getMultiplySize)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-                costAddDTO.setActualWeight(actualWeight);
-                costAddDTO.setVolumeWeight(totalSize.divide(BigDecimal.valueOf(shippingTemplateEntity.getVolumeSetting()),4, RoundingMode.HALF_UP));
+            if(StringUtils.isNotBlank(addDTO.getLogisticsChannelId())){
+                ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(addDTO.getLogisticsChannelId());
+                if(Objects.nonNull(shippingTemplateEntity) && shippingTemplateEntity.getVolumeSetting() > 0){
+                    BigDecimal totalSize = packingDTOList.stream()
+                            .map(WmsCartonDetailDTO.ListPackingDetailDTO::getMultiplySize)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    costAddDTO.setVolumeWeight(totalSize.divide(BigDecimal.valueOf(shippingTemplateEntity.getVolumeSetting()),4, RoundingMode.HALF_UP));
+                }
             }
         }
         costAddDTO.setCurrency(addDTO.getCurrency());
@@ -277,14 +278,15 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                     .map(BigDecimal::new)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             costUpdateDTO.setActualWeight(actualWeight);
-            //设置预估体积重 = 长宽高/材积
-            ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(updateDTO.getLogisticsChannelId());
-            if(Objects.nonNull(shippingTemplateEntity) && shippingTemplateEntity.getVolumeSetting() > 0){
-                BigDecimal totalSize = packingDTOList.stream()
-                        .map(WmsCartonDetailDTO.ListPackingDetailDTO::getMultiplySize)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-                costUpdateDTO.setActualWeight(actualWeight);
-                costUpdateDTO.setVolumeWeight(totalSize.divide(BigDecimal.valueOf(shippingTemplateEntity.getVolumeSetting()),4, RoundingMode.HALF_UP));
+            if(StringUtils.isNotBlank(updateDTO.getLogisticsChannelId())){
+                //设置预估体积重 = 长宽高/材积
+                ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(updateDTO.getLogisticsChannelId());
+                if(Objects.nonNull(shippingTemplateEntity) && shippingTemplateEntity.getVolumeSetting() > 0){
+                    BigDecimal totalSize = packingDTOList.stream()
+                            .map(WmsCartonDetailDTO.ListPackingDetailDTO::getMultiplySize)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    costUpdateDTO.setVolumeWeight(totalSize.divide(BigDecimal.valueOf(shippingTemplateEntity.getVolumeSetting()),4, RoundingMode.HALF_UP));
+                }
             }
         }
         costUpdateDTO.setCurrency(updateDTO.getCurrency());
@@ -958,9 +960,18 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     public IPage<TmsFirstMileReconciliationDetailDTO.ListDTO> waitReconciliationPaging(Page<?> query, TmsFirstMileReconciliationDetailDTO.PagingParamDTO params) {
         return this.baseMapper.waitReconciliationPaging(query, params,
                 OrderTypeEnum.FIRST_MILE.getCode(),
-                ReconciliationStatusEnum.TO_BE_GENERATED.getCode(),
+                "",
                 FmLogisticTrackStatusEnum.SIGN.getCode()
         );
+    }
+
+    @Override
+    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> listByMainIds(List<String> logisticsBillIds) {
+        return this.baseMapper.waitReconciliationList(
+                OrderTypeEnum.FIRST_MILE.getCode(),
+                "",
+                "",
+                logisticsBillIds);
     }
 
     @Override
