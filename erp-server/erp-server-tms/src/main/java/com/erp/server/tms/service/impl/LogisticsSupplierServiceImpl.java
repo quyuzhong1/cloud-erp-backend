@@ -414,7 +414,23 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
 
     @Override
     public List<LogisticsSupplierDTO.LogisticsSupplierListDTO> listLogisticsChannel(List<String> logisticsSupplierIdList) {
-        return baseMapper.listLogisticsChannel(logisticsSupplierIdList);
+        List<LogisticsSupplierDTO.LogisticsSupplierListDTO> resultList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(logisticsSupplierIdList)) {
+            return resultList;
+        }
+        List<LogisticsSupplierDTO.LogisticsSupplierListDTO> list = baseMapper.listLogisticsChannel(logisticsSupplierIdList);
+
+        for (String  logisticsSupplierId: logisticsSupplierIdList) {
+            LogisticsSupplierDTO.LogisticsSupplierListDTO resultDTO = new LogisticsSupplierDTO.LogisticsSupplierListDTO();
+            //相同物流商直接赋值
+            LogisticsSupplierDTO.LogisticsSupplierListDTO logisticsSupplierListDTO = list.stream().filter(obj -> StrUtil.equals(obj.getLogisticsSupplierId(), logisticsSupplierId)).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(logisticsSupplierListDTO)) {
+                BeanMapperUtils.copy(logisticsSupplierListDTO,resultDTO);
+            }
+            resultDTO.setLogisticsSupplierId(logisticsSupplierId);
+            resultList.add(resultDTO);
+        }
+        return resultList;
     }
 
 
