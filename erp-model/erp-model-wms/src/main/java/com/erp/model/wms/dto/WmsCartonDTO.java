@@ -36,9 +36,9 @@ public class WmsCartonDTO implements Serializable {
         private String  id;
 
         /**
-        * 主表id
+        * 来源id
         */
-        private String mainId;
+        private String sourceId;
 
         /**
         * 箱规编号

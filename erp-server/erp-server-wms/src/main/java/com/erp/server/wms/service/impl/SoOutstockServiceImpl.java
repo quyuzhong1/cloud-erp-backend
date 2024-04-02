@@ -55,7 +55,7 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
-import com.erp.model.tms.enums.TransferOutstockStatusEnum;
+import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -2511,6 +2511,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional
     public Boolean packingSave(WmsCartonDTO.WmsCartonAdd dto) {
         //待审核的数据可以上传装箱数据
         SoOutstockEntity entity = this.getById(dto.getId());
@@ -2554,9 +2555,17 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             updatePackingStatus(dto.getId(), PackingStatusEnum.PACKING.getCode());
             //如果装箱完成自动生成报关单
 
-     /*       TmsDeclareBillDTO.AddDTO addDTO = new TmsDeclareBillDTO.AddDTO();
-            addDTO.set
-            tmsDeclareBillFeign.add()*/
+            TmsDeclareBillDTO.AddDTO addDTO = new TmsDeclareBillDTO.AddDTO();
+            addDTO.setSourceId(entity.getId());
+            addDTO.setDeclareType(DeclareDeclareTypeEnum.INDEPENDENT.getCode());
+            addDTO.setReceiverName("香港唯迹");
+            addDTO.setDictSupervisionMethod(DeclareSupervisionMethodEnum.COMMONLY.getCode());
+            addDTO.setDictNatureLevy(DeclareNatureLevyEnum.COMMONLY.getCode());
+            addDTO.setToArea(entity.getCountry());
+            addDTO.setToPort(entity.getCountry());
+            addDTO.setDictPackType(DeclarePackTypeEnum.CARTON.getCode());
+            addDTO.setDictTransactionMethod(DeclareTransactionMethodEnum.EXW.getCode());
+            tmsDeclareBillFeign.add(addDTO);
         } else {
             updatePackingStatus(dto.getId(), PackingStatusEnum.NOT_PACKING.getCode());
         }
