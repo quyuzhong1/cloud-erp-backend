@@ -978,7 +978,8 @@ public enum ApiError implements Serializable {
     TMS_FIRST_MILE_LOGISTIC_EXISTS(92134,"物流单【{}】已生成，不可反审核"),
     B2B_ORDER_IS_PACK(92135,"只允许B2B订单装箱"),
     TMS_DECLARE_BILL_EXISTS(92136,"报关单【{}】已生成，不可反审核"),
-
+    BILL_IS_GENERATE_DECLARE(92137,"单据【{}】报关状态已生成，不可修改为无需生成"),
+    BILL_IS_GENERATE_LOGISTICS(92137,"单据【{}】物流状态已生成，不可修改为无需生成"),
 
 
 
