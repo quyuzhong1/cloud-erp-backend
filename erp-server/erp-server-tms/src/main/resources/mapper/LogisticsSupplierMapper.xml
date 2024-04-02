@@ -28,7 +28,7 @@
         <collection property="channelList" ofType="com.erp.model.tms.dto.LogisticsSupplierDTO$LogisticsChannelListDTO">
             <id column="logisticsChannelId" property="logisticsChannelId"/>
             <result column="logisticsChannelName" property="logisticsChannelName"/>
-            <result column="disabled" property="disabled"/>
+            <result column="channelDisabled" property="disabled"/>
         </collection>
     </resultMap>
 
@@ -229,7 +229,7 @@
                ls.disabled,
                lc.id as logisticsChannelId,
                lc.name as logisticsChannelName,
-               lc.disabled
+               lc.disabled as channelDisabled
         from logistics_supplier ls
         inner join logistics_channel lc on ls.id = lc.main_id and lc.is_deleted = false
         <where>
