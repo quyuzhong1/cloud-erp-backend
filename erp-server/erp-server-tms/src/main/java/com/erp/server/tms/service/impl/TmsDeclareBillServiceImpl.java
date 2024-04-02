@@ -407,9 +407,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         viewDTO.setDictPackTypeName(dictBasicEntityList.stream().filter(v->v.getType().equals(DictBasicEnum.DECLARE_PACK_TYPE.getType())&&v.getCode().equals(viewDTO.getDictPackType())).map(DictBasicEntity::getName).findFirst().orElse(""));
         viewDTO.setDictTransactionMethodName(dictBasicEntityList.stream().filter(v->v.getType().equals(DictBasicEnum.DECLARE_TRANSACTION_METHOD.getType())&&v.getCode().equals(viewDTO.getDictTransactionMethod())).map(DictBasicEntity::getName).findFirst().orElse(""));
         //处理发货人
-        SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(viewDTO.getSenderId());
-        if(Objects.nonNull(sysAccountingCompanyEntity)){
-            viewDTO.setSenderName(sysAccountingCompanyEntity.getCompanyName());
+        if(StringUtils.isNotBlank(viewDTO.getSenderId())){
+            SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(viewDTO.getSenderId());
+            if(Objects.nonNull(sysAccountingCompanyEntity)){
+                viewDTO.setSenderName(sysAccountingCompanyEntity.getCompanyName());
+            }
         }
     }
 
