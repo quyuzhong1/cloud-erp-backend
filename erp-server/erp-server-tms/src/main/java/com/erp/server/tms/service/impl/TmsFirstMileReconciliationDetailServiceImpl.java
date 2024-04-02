@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
@@ -186,12 +187,15 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
     @Override
     public void exportList(TmsFirstMileReconciliationDetailDTO.ExportDTO param, HttpServletResponse response) {
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> list = this.baseMapper.listExport(param);
+        List<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> list = this.baseMapper.listExport(param);
         if (CollUtil.isEmpty(list)) {
             return;
         }
-        // 数据处理
-        fillList(list);
+        // 明细数据处理
+        fillWaitReconciliationList(list);
+
+        // 主数据处理
+        fillMainInfo(list);
 
         // 导出数据
         String excelPath = "excel/tmsFirstMileReconciliationDetail.xlsx";
@@ -203,6 +207,13 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     excelPath);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
+        }
+    }
+
+    private void fillMainInfo(List<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> list) {
+        for (TmsFirstMileReconciliationDetailDTO.ExportDetailDTO data : list) {
+            //审核状态名称
+            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
         }
     }
 
@@ -303,7 +314,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         );
     }
 
-    private void fillWaitReconciliationList(List<TmsFirstMileReconciliationDetailDTO.ListDTO> records) {
+    private void fillWaitReconciliationList(List<? extends TmsFirstMileReconciliationDetailDTO.ListDTO> records) {
         // 统计预计费用
         List<String> logisticsBillIds = records.stream()
                 .map(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId)
@@ -339,7 +350,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             record.setSourceType(SourceTypeEnum.LOGISTICS_BILL.getCode());
             // 出库单号=发货单号
             // 待对账类型都是预估
-            record.setType(DetailReconciliationTypeEnum.ESTIMATED.getCode());
+            if (null == record.getType()){
+                record.setType(DetailReconciliationTypeEnum.ESTIMATED.getCode());
+            }
+            record.setTypeName(DetailReconciliationTypeEnum.getNameByCode(record.getType()));
             // 补充单位
             if (StringUtils.isBlank(record.getVolumeWeightUnit())) {
                 record.setVolumeWeightUnit(record.getActualWeightUnit());
@@ -352,6 +366,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             FmLogisticTrackStatusEnum statusEnum = FmLogisticTrackStatusEnum.getNameByCode(record.getTransportStatus());
             record.setTransportStatusName(null == statusEnum ? "" : statusEnum.getName());
             // 计费方式
+            /// TODO 历史还是当前
             List<ShippingTemplateEntity> shippingTemplateList = templateMap.get(record.getLogisticsChannelId());
             if (!CollectionUtils.isEmpty(shippingTemplateList)) {
                 ShippingTemplateEntity shippingTemplateEntity = shippingTemplateList.stream().findFirst().orElse(null);

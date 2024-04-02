@@ -56,8 +56,102 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
      * 列表
      */
     @Data
+    @EqualsAndHashCode(callSuper = true)
     @NoArgsConstructor
-    public static class ListDTO {
+    public static class ExportDetailDTO extends ListDTO {
+
+        /**
+         * 主表id
+         */
+        private String id;
+
+        /**
+         * 对账单号【可排序】
+         */
+        private String code;
+
+        /**
+         * 审核状态【可排序】
+         */
+        private String approveStatus;
+
+        /**
+         * 审核名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 审核人id【可排序】
+         */
+        private String approveUserId;
+
+        /**
+         * 审核人名称【可排序】
+         */
+        private String approveUserName;
+
+        /**
+         * 生成对账日期【可排序】
+         */
+        private LocalDate reconciliationDate;
+
+        /**
+         * 提交日期【可排序】
+         */
+        private LocalDate submitDate;
+
+        /**
+         * 审核日期【可排序】
+         */
+        private LocalDate approveDate;
+
+        /**
+         * 对账开始日期【可排序】
+         */
+        private LocalDate startDate;
+
+        /**
+         * 对账结束日期【可排序】
+         */
+        private LocalDate endDate;
+
+        /**
+         * 对账周期
+         */
+        private String cycle;
+
+        /**
+         * 物流商Id【可排序】
+         */
+        private String logisticsSupplierId;
+
+        /**
+         * 物流商名称【可排序】
+         */
+        private String logisticsSupplierName;
+
+        /**
+         * 币别【可排序】
+         */
+        private String currency;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+    }
+
+    /**
+     * 列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO implements Serializable{
 
         /**
          * 主键id

@@ -21,6 +21,7 @@ import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.erp.server.tms.query.TmsB2cDeclareReconciliationDetailQueryHandler;
 import com.erp.server.tms.query.TmsFirstMileReconciliationDetailQueryHandler;
+import com.erp.server.tms.query.TmsFirstMileReconciliationQueryHandler;
 import com.erp.server.tms.service.TmsFirstMileReconciliationDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -172,7 +173,7 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:tmsFirstMileReconciliationDetail:export",
-            tableAlias = ""
+            tableAlias = "tfmrd"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "头程对账单导出Excel数据")
     public void exportList(@RequestBody @Validated TmsFirstMileReconciliationDetailDTO.ExportDTO dto, HttpServletResponse response) {

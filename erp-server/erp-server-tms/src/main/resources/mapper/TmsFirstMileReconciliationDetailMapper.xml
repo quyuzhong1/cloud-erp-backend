@@ -145,24 +145,27 @@
         </where>
     </select>
 
-    <select id="listExport" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO$ListDTO">
+    <select id="listExport" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO$ExportDetailDTO">
         select
-        <include refid="Base_Column_List" />
+        tfmr.code,
+        tfmr.approve_status,
+        tfmr.approve_user_id,
+        tfmr.approve_user_name,
+        tfmr.reconciliation_date,
+        tfmr.submit_date,
+        tfmr.approve_date,
+        tfmr.start_date,
+        tfmr.end_date,
+        tfmr.logistics_supplier_id,
+        tfmr.logistics_supplier_name,
+        tfmr.currency,
+        tfmr.exchange_rate,
+          tfmrd.*
         from tms_first_mile_reconciliation_detail tfmrd
+        left join tms_first_mile_reconciliation tfmr on tfmrd.main_id = tfmr.id
         <where>
-            ${params.sqlMap.default}
-            and tfmrd.is_deleted = false
-            <!--权限-->
-            <if test="params.permissionSql!=null and params.permissionSql!=''">
-                ${params.permissionSql}
-            </if>
-            ORDER BY
-            <if test="params.sortList != null and params.sortList.size > 0">
-                <foreach collection="params.sortList" item="item" separator="," close=",">
-                    ${item.field} ${item.sort}
-                </foreach>
-            </if>
-            tfmrd.id desc
+            tfmrd.is_deleted = false and tfmrd.main_id = #{params.mainId}
+            order by tfmrd.id desc
         </where>
     </select>
 </mapper>

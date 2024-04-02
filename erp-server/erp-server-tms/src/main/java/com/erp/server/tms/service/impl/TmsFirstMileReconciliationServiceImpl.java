@@ -262,15 +262,15 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         }
         TmsFirstMileReconciliationEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "头程对账单", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
+        // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -285,8 +285,8 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         LoginUser userInfo = commonService.getUserInfo();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        // 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
+        approveDTO.setBusinessKey(ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -310,15 +310,15 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         TmsFirstMileReconciliationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到头程对账单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
+        // 检查是否有下推单据（如果支持下推的话）明细数据
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "头程对账单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
+        // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -327,7 +327,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // TODO 下游盘点计划单反审核
+        // 下游盘点计划单反审核
         return true;
     }
 
@@ -339,7 +339,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
+        // 删除明细数据（如果有明细数据的话）
 
         // 删除主单数据
         log.info("删除 开始删除头程对账单主单数据，id：【{}】", id);
@@ -347,7 +347,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         // 删除日志数据
         log.info("删除 开始删除头程对账单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "头程对账单");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除头程对账单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), entity.getCode(), "删除头程对账单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
@@ -391,7 +391,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
+        // 明细数据处理 上下游数据处理
 
         return Boolean.TRUE;
     }
@@ -420,8 +420,8 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        //此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
+        startDTO.setBusinessKey(ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(commonService.getUserInfo().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
@@ -548,7 +548,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     /**
      * 分页查询、导出 数据处理
      */
-    private void fillList(List<TmsFirstMileReconciliationDTO.ListDTO> list) {
+    private void fillList(List<? extends TmsFirstMileReconciliationDTO.ListDTO> list) {
         if (CollUtil.isEmpty(list)) {
             return;
         }
