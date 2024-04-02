@@ -63,6 +63,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Resource
     private CustomerFeign customerFeign;
 
+    private static Integer pageNumber = 1;
 
     /**
      * 添加订单信息
@@ -227,13 +228,14 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                                     .or().eq(DmpOrderInfoEntity::getSite, "")
                     )
                     .orderByAsc(DmpOrderInfoEntity::getRetryCount, DmpOrderInfoEntity::getId)
-                    .last("limit " + pageSize)
+                    .last("LIMIT " + pageSize + " OFFSET " + (pageNumber-1) * 20)
                     .list();
         } catch (Exception e) {
             XxlJobHelper.log("查询需要清洗的数据时报错， message={}", e.getMessage());
         }
 
         if (CollectionUtil.isEmpty(list)) {
+            pageNumber = 1;
             XxlJobHelper.log("清洗订单数据 cleanOrder 需要清洗数据为空 pageSize={}", pageSize);
             return;
         }
