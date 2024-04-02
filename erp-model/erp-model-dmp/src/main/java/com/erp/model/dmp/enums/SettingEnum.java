@@ -15,6 +15,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public enum SettingEnum {
 
+    //PLM
+    PLM_PRODUCT_CERTIFICATE_IMPORT_URL("plm_product_certificate_import_url", SettingEnum.URL_CHANGE,"导入url变更"),
+
     CLEAN_JOB_DELAY_MINUTE("clean_job_delay_minute", SettingEnum.DATA_CLEAN,"清洗第三方erp数据任务延迟时间"),
     KD_TO_MB_TRANSFER_DIRECT_WAREHOUSE_CODE("kd_to_mb_transfer_direct_warehouse_code", SettingEnum.CROSS_PLATFORM_DOC_CONVERSION,"金蝶直接调拨单同步库存到马帮仓库编码"),
     ERP_TO_MB_WAREHOUSE_NAME("erp_to_mb_warehouse_name", SettingEnum.ERP_TO_MB_DIRECT_TRANSFER,"ERP直接调拨单同步到马帮，仓库编码"),
@@ -57,6 +60,12 @@ public enum SettingEnum {
     private String type;
 
     private String value;
+
+    /**
+     * url变更
+     */
+    public static final String URL_CHANGE = "url_change";
+
     /**
      * 数据清洗类型
      */
