@@ -16,6 +16,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -117,6 +118,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     @Autowired
     private TmsCfgCostService tmsCfgCostService;
+
+    @Autowired
+    private LogisticsBillService logisticsBillService;
+
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -781,7 +786,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 addDTO.setCostDetailList(Arrays.asList(costDetailAddDTO));
             }
         }
-        addDTO.setCurrency(ObjectUtil.isNotEmpty(shippingTemplateEntity) ? shippingTemplateEntity.getCurrency() : "");
+        addDTO.setCurrency(ObjectUtil.isNotEmpty(shippingTemplateEntity) ? shippingTemplateEntity.getCurrency() : CurrencyEnum.CNY.getCurrencyCode());
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
         addDTO.setTransportNo(logisticsBillEntity.getTransportNo());
         addDTO.setChannelId(logisticsBillEntity.getChannelId());
@@ -974,6 +979,16 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         if(CollectionUtils.isNotEmpty(addDetailEntityList)){
             logisticsBillDetailService.saveBatch(addDetailEntityList);
+
+            //新增物流费用
+            for (LogisticsBillEntity billEntity: logisticsBillEntityList) {
+                List<LogisticsBillDetailEntity> detailList = addDetailEntityList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), billEntity.getId())).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(detailList)) {
+                    continue;
+                }
+                //新增物流费用单
+                logisticsBillService.addLogisticsBillCost(billEntity, detailList);
+            }
         }
         return batchResultDTOList;
     }
