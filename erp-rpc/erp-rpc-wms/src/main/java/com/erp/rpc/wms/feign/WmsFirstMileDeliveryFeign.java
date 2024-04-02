@@ -41,6 +41,11 @@ public interface WmsFirstMileDeliveryFeign {
     List<FirstMileDeliveryEntity> advanceQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer);
 
     /**
+     * 高级查询发货单
+     */
+    @PostMapping("/feign/firstMileDelivery/listByIds")
+    List<FirstMileDeliveryEntity> listByIds(@RequestBody List<String> ids);
+    /**
      * 查询可以生成报关单的发货单
      */
     @PostMapping("/feign/firstMileDelivery/getCanGenerateDeclare")

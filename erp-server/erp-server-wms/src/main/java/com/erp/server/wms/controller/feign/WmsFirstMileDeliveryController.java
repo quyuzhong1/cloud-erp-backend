@@ -6,12 +6,14 @@ import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.server.wms.service.FirstMileDeliveryService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -69,5 +71,15 @@ public class WmsFirstMileDeliveryController {
     @PostMapping("/getCanGenerateDeclare")
     public List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeclare(@RequestBody TmsDeclareBillDTO.QuerySourceDTO dto) {
         return firstMileDeliveryService.getCanGenerateDeclare(dto);
+    }
+    /**
+     * 查询可以生成报关单的发货单
+     **/
+    @PostMapping("/listByIds")
+    List<FirstMileDeliveryEntity> listByIds(@RequestBody List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
+            return new ArrayList<>();
+        }
+        return firstMileDeliveryService.listByIds(ids);
     }
 }

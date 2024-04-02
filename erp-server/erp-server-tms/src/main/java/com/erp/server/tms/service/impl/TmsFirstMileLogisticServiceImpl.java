@@ -46,6 +46,7 @@ import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -181,16 +182,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(generateLogisticDTO == null){
             throw new ServiceException("发货单不存在或者未装箱或已生成物流单");
         }
-//        if(Objects.isNull(addDTO.getLogisticsOrderTime())){
-//            addDTO.setLogisticsOrderTime(LocalDateTime.now());
-//        }
-        LocalDateTime shipTime = sailingService.calculateShipTime(addDTO.getLogisticsChannelId(),LocalDateTime.now());
+
         //新增物流单
         LogisticsBillEntity tmsFirstMileLogisticEntity = FmLogisticsConverter.INSTANCE.addLogisticsBill(generateLogisticDTO,addDTO);
         if(StringUtils.isBlank(tmsFirstMileLogisticEntity.getRemark())){
             tmsFirstMileLogisticEntity.setRemark(generateLogisticDTO.getRemark());
         }
-        tmsFirstMileLogisticEntity.setShipTime(shipTime);
         log.info("开始新增头程物流单");
         boolean save = super.save(tmsFirstMileLogisticEntity);
         if(!save) {
@@ -630,11 +627,13 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         timeInfoDTO.setLogisticOrderTime(dto.getOrderTime());
         timeInfoDTO.setShipTime(dto.getShipTime());
         timeInfoDTO.setSignTime(dto.getSignTime());
-        LogisticsTrackDTO.ViewDTO viewDTO = logisticsTrackService.listByTrackNo(dto.getCounterNo());
-        timeInfoDTO.setTrackingTime(viewDTO.getList().stream().filter(v->v.getStatus().equals(FmLogisticTrackStatusEnum.TRACK_ING.getCode())).findFirst().orElse(new LogisticsTrackDTO.ListDTO()).getTrackTime());
-        timeInfoDTO.setArrivedTime(viewDTO.getList().stream().filter(v->v.getStatus().equals(FmLogisticTrackStatusEnum.ARRIVED.getCode())).findFirst().orElse(new LogisticsTrackDTO.ListDTO()).getTrackTime());
-        dto.setTimeLineList(FmTimeLineEnum.convertToViewList(timeInfoDTO));
+        if(StringUtils.isNotBlank(dto.getCounterNo())){
+            LogisticsTrackDTO.ViewDTO viewDTO = logisticsTrackService.listByTrackNo(dto.getCounterNo());
+            timeInfoDTO.setTrackingTime(viewDTO.getList().stream().filter(v->v.getStatus().equals(FmLogisticTrackStatusEnum.TRACK_ING.getCode())).findFirst().orElse(new LogisticsTrackDTO.ListDTO()).getTrackTime());
+            timeInfoDTO.setArrivedTime(viewDTO.getList().stream().filter(v->v.getStatus().equals(FmLogisticTrackStatusEnum.ARRIVED.getCode())).findFirst().orElse(new LogisticsTrackDTO.ListDTO()).getTrackTime());
 
+        }
+        dto.setTimeLineList(FmTimeLineEnum.convertToViewList(timeInfoDTO));
     }
 
     @Override
@@ -705,6 +704,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(statusEnum != FmLogisticTrackStatusEnum.WAIT_ORDER && Objects.isNull(dto.getTime())){
             throw new ServiceException("时间不能为空");
         }
+        List<String> outIds = logisticsBillEntityList.stream().map(LogisticsBillEntity::getOutstockId).collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(outIds);
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         List<LogisticsBillDetailEntity> allDetailList = logisticsBillDetailService.listByMainIds(dto.getIds());
         List<LogisticsBillCostEntity> allCostList = logisticsBillCostService.listByLogisticsBillIdList(dto.getIds());
@@ -737,7 +738,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
 
             if(statusEnum == FmLogisticTrackStatusEnum.SIGN && StringUtils.isBlank(logisticsBillEntity.getTransportNo())){
-                batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"尚未物流跟踪号，请填写后更新"));
+                batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"尚未填写物流跟踪号，请填写后更新"));
                 continue;
             }
             FmLogisticTrackStatusEnum nowStatusEnum = EnumMessage.getByCode(FmLogisticTrackStatusEnum.class,(detailEntityList.get(0).getTrackStatus()));
@@ -755,8 +756,20 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),StrUtil.format("{}状态不能更新为已下单",Objects.isNull(nowStatusEnum)?"":nowStatusEnum.getName())));
                 continue;
             }
-
+            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(v->v.getId().equals(logisticsBillEntity.getOutstockId())).findFirst().orElse(null);
+            if(Objects.isNull(firstMileDeliveryEntity)){
+                batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"未找到对应的发货单"));
+                continue;
+            }
+            if(!firstMileDeliveryEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && (statusEnum == FmLogisticTrackStatusEnum.TRACK_ING || statusEnum == FmLogisticTrackStatusEnum.ARRIVED ||statusEnum == FmLogisticTrackStatusEnum.SIGN )){
+                batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),StrUtil.format("关联单据{}尚未审核通过无法提交",firstMileDeliveryEntity.getCode())));
+                continue;
+            }
+            logisticsBillEntity.setDeliveryTime(firstMileDeliveryEntity.getApproveTime());
             detailEntityList.forEach(v->{
+                if(statusEnum == FmLogisticTrackStatusEnum.SIGN){
+                    v.setSignTime(dto.getTime());
+                }
                 v.setTrackStatus(dto.getLogisticsStatus());
             });
             updateDetailList.addAll(detailEntityList);
@@ -767,9 +780,11 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             logisticsTrackEntity.setTrackTime(Objects.isNull(dto.getTime())?LocalDateTime.now():dto.getTime());
             logisticsTrackEntity.setContent(StringUtils.isBlank(dto.getLogisticsTrack())?"":dto.getLogisticsTrack());
             addTrackList.add(logisticsTrackEntity);
-
+            //如果状态为已下单，更新开船时间
             if(statusEnum == FmLogisticTrackStatusEnum.ORDERED){
                 logisticsBillEntity.setOrderTime(dto.getTime());
+                LocalDateTime shipTime = sailingService.calculateShipTime(logisticsBillEntity.getChannelId(),dto.getTime());
+                logisticsBillEntity.setShipTime(shipTime);
             }
 
             updateBillList.add(logisticsBillEntity);
