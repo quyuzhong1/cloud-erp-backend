@@ -274,7 +274,7 @@ public class FsService {
      * @author yl
      * @date 2022-11-18 12:31
      */
-    public Map<String, Object> getCardMessageMap(String messageContent, String productContent, String url) {
+    public Map<String, Object> getCardMessageMap(String messageContent, String productContent, String url,Boolean isPress) {
         Map<String, Object> cardMap = new LinkedHashMap<>();
         Map<String, Boolean> configMap = new HashMap<>();
         configMap.put("wide_screen_mode", true);
@@ -298,24 +298,26 @@ public class FsService {
         fieldMapList.add(fieldMap);
         fieldAllMap.put("fields", fieldMapList);
         elements.add(fieldAllMap);
-        Map<String, Object> actionAllMap = new LinkedHashMap<>();
-        actionAllMap.put("tag", "action");
-        actionAllMap.put("layout", "bisected");
-        List<Map> actionList = new ArrayList<>();
-        Map<String, Object> actionMap = new LinkedHashMap<>();
-        actionMap.put("tag", "button");
-        actionMap.put("url", url);
-        actionMap.put("type", "primary");
-        Map<String, Object> actionTextMap = new HashMap<>();
-        actionTextMap.put("tag", "plain_text");
-        actionTextMap.put("content", "查看详情");
-        actionMap.put("text", actionTextMap);
-        Map<String, Object> actionValueMap = new HashMap<>();
-        actionValueMap.put("chosen", "approve");
-        actionMap.put("value", actionValueMap);
-        actionList.add(actionMap);
-        actionAllMap.put("actions", actionList);
-        elements.add(actionAllMap);
+        if(isPress){
+            Map<String, Object> actionAllMap = new LinkedHashMap<>();
+            actionAllMap.put("tag", "action");
+            actionAllMap.put("layout", "bisected");
+            List<Map> actionList = new ArrayList<>();
+            Map<String, Object> actionMap = new LinkedHashMap<>();
+            actionMap.put("tag", "button");
+            actionMap.put("url", url);
+            actionMap.put("type", "primary");
+            Map<String, Object> actionTextMap = new HashMap<>();
+            actionTextMap.put("tag", "plain_text");
+            actionTextMap.put("content", "查看详情");
+            actionMap.put("text", actionTextMap);
+            Map<String, Object> actionValueMap = new HashMap<>();
+            actionValueMap.put("chosen", "approve");
+            actionMap.put("value", actionValueMap);
+            actionList.add(actionMap);
+            actionAllMap.put("actions", actionList);
+            elements.add(actionAllMap);
+        }
         cardMap.put("elements", elements);
         return cardMap;
     }

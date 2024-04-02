@@ -136,7 +136,7 @@ public class FmLogisticWarnJob {
             return;
         }
         sendMessage.setUnionIds(unionIds);
-        Map contentMap = fsService.getCardMessageMap(titleContent , messageContent, fsAppUrl);
+        Map contentMap = fsService.getCardMessageMap(titleContent , messageContent, fsAppUrl,false);
         sendMessage.setContentMap(contentMap);
         //发送消息
         fsService.sendMessage(sendMessage);
@@ -185,7 +185,7 @@ public class FmLogisticWarnJob {
             return;
         }
         sendMessage.setUnionIds(unionIds);
-        Map contentMap = fsService.getCardMessageMap(titleContent , messageContent, fsAppUrl);
+        Map contentMap = fsService.getCardMessageMap(titleContent , messageContent, fsAppUrl,false);
         sendMessage.setContentMap(contentMap);
         //发送消息
         fsService.sendMessage(sendMessage);

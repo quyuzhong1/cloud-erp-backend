@@ -875,6 +875,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(dto.getLogisticsChannelId());
         List<TmsFirstMileLogisticDTO.MsgDTO> msgDTOList = new ArrayList<>();
         for(LogisticsBillEntity logisticsBillEntity : logisticsBillEntityList){
+            String oldChannelId = logisticsBillEntity.getChannelId();
             LogisticsBillDetailEntity detailEntity = detailList.stream().filter(v->v.getMainId().equals(logisticsBillEntity.getId())).findFirst().orElse(null);
             if(Objects.nonNull(detailEntity) && !(detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.WAIT_ORDER.getCode()) || detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.ORDERED.getCode()))){
                 resultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getCounterNo(),"只有待下单和已下单状态支持更改物流信息"));
@@ -904,7 +905,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 updateCostList.add(logisticsBillCostEntity);
             }
             //设置消息发送
-            if(Objects.nonNull(detailEntity) && detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.ORDERED.getCode())){
+            if(Objects.nonNull(detailEntity) && detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.ORDERED.getCode()) && !oldChannelId.equals(dto.getLogisticsChannelId())){
                 TmsFirstMileLogisticDTO.MsgDTO msgDTO = new TmsFirstMileLogisticDTO.MsgDTO();
                 ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(v->v.getId().equals(logisticsBillEntity.getShopId())).findFirst().orElse(null);
                 if(Objects.nonNull(shopInfoEntity) && StringUtils.isNotBlank(shopInfoEntity.getChargeId())){
@@ -968,13 +969,15 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
         //过滤出有飞书配置的用户
         List<String> finalSendUserIds = sendUserIds;
+
         unionIdList =  unionIdList.stream().filter(u -> finalSendUserIds.contains(u.getUserId())).collect(Collectors.toList());
         List<String> unionIds = unionIdList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+        unionIds = Arrays.asList("on_aa37795c861f338819fe466bc1127c1b");
         if(CollectionUtils.isEmpty(unionIds)){
             return;
         }
         sendMessage.setUnionIds(unionIds);
-        Map contentMap = fsService.getCardMessageMap(titleContent , messageContent, fsAppUrl);
+        Map contentMap = fsService.getCardMessageMap(titleContent , messageContent, fsAppUrl,false);
         sendMessage.setContentMap(contentMap);
         //发送消息
         fsService.sendMessage(sendMessage);
