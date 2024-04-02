@@ -3,6 +3,7 @@ package com.erp.server.wms.convert;
 
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.PackingExcelDTO;
+import com.erp.model.wms.dto.excel.SoOutstockPackingExcelDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import org.mapstruct.Mapper;
@@ -47,4 +48,13 @@ public interface FirstMileDeliveryConverter {
     })
     WmsCartonDetailDTO.AddDTO importToPackingSku(PackingExcelDTO data);
     List<WmsCartonDetailDTO.AddDTO> importToPackingSku(List<PackingExcelDTO> data);
+
+
+    @Mappings({
+            @Mapping(target = "skuId", source = "skuId"),
+            @Mapping(target = "skuNo", source = "sku"),
+            @Mapping(target = "packQty", source = "singleBoxQuantity"),
+    })
+    WmsCartonDetailDTO.AddDTO importToSoOutstockPackingSku(SoOutstockPackingExcelDTO data);
+    List<WmsCartonDetailDTO.AddDTO> importToSoOutstockPackingSku(List<SoOutstockPackingExcelDTO> data);
 }
