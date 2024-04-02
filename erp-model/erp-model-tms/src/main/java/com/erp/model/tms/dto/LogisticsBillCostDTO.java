@@ -496,7 +496,7 @@ public class LogisticsBillCostDTO implements Serializable {
     }
     @Data
     @NoArgsConstructor
-    public class OutStockDTO {
+    public static class OutStockDTO {
         /**
          * 销售出库单id
          */
