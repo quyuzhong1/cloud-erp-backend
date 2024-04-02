@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -98,6 +99,7 @@ public class SettingForecastDTO implements Serializable {
         /**
          * 物流渠道id集合
          */
+        @NotEmpty(message = "物流渠道不能为空")
         private List<String> logisticsChannelIdList;
 
         /**
