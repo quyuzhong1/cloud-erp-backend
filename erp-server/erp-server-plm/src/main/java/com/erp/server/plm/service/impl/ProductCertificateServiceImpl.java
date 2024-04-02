@@ -434,10 +434,13 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             if (ObjectUtil.isEmpty(productDetailEntity)) {
                 errorMsgList.add("系统中未找到SKU");
             }
+            //配置信息
+            Map<SettingEnum, String> cfgSettingList = dmpTaskFeign.getCfgSettingList(SettingEnum.URL_CHANGE);
+
             String pathUrl = excelDTO.getPathUrl();
             MultipartFile multipartFile = null;
             try {
-                multipartFile = getMulFileByPath(pathUrl);
+                multipartFile = getMulFileByPath(pathUrl,cfgSettingList);
             } catch (Exception e) {
                 errorMsgList.add("文件路径下未找到文件");
             }
@@ -478,14 +481,12 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     /**
      * 获取MultipartFile
      */
-    private static MultipartFile getMulFileByPath(String filePath) {
-        //配置信息
-        Map<SettingEnum, String> cfgSettingList = dmpTaskFeign.getCfgSettingList(SettingEnum.URL_CHANGE);
-        if (ObjectUtil.isNotEmpty(cfgSettingList)) {
-            List<String> urlList = Arrays.stream(cfgSettingList.get(0).split(",")).collect(Collectors.toList());
+    private static MultipartFile getMulFileByPath(String filePath,Map<SettingEnum, String> cfgSettingMap) {
+        //查询配置进行转换
+        if (ObjectUtil.isNotEmpty(cfgSettingMap) && StrUtil.isNotBlank(cfgSettingMap.get(SettingEnum.PLM_PRODUCT_CERTIFICATE_IMPORT_URL))) {
+            List<String> urlList = Arrays.stream(cfgSettingMap.get(SettingEnum.PLM_PRODUCT_CERTIFICATE_IMPORT_URL).split(",")).collect(Collectors.toList());
             filePath = filePath.replace(urlList.get(0), urlList.get(1));
         }
-
         try {
            String fileUrl = filePath.replace(" ","%20");
 
@@ -527,6 +528,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             throw new ServiceException("未能获取文件");
         }
     }
+
 
     @Override
     public Boolean exportExcel(ProductCertificateDTO.ExportParamDTO params, HttpServletResponse response) {
