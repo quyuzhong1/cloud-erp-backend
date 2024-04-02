@@ -119,4 +119,12 @@ public interface CfgReconciliationFieldService extends SuperService<CfgReconcili
      * @return List<CfgReconciliationFieldDTO.ErpFieldViewDTO>
      */
     List<CfgReconciliationFieldDTO.ErpFieldViewDTO> getByReconciliationType(String reconciliationType);
+    /**
+     * @description: 根据费用配置id集合
+     * @author Will
+     * @date: 2024/4/2 16:18
+     * @param cfgCostIdList
+     * @return List<CfgReconciliationFieldEntity>
+     */
+    List<CfgReconciliationFieldEntity> listByCfgCostIdList(List<String> cfgCostIdList);
 }

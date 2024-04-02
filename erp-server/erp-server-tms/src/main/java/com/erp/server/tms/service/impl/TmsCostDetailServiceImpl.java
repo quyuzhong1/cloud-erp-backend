@@ -177,6 +177,14 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
                 .list();
     }
 
+    @Override
+    public List<TmsCostDetailEntity> listByCfgCostIdList(List<String> cfgCostIdList) {
+        if(CollectionUtils.isEmpty(cfgCostIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(TmsCostDetailEntity::getCfgCostId,cfgCostIdList).list();
+    }
+
 
     /**
     * 新增修改处理数据

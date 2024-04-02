@@ -17,14 +17,13 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.TmsCfgCostDTO;
+import com.erp.model.tms.entity.CfgReconciliationFieldEntity;
 import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
+import com.erp.model.tms.entity.TmsCostDetailEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.server.tms.mapper.TmsCfgCostMapper;
-import com.erp.server.tms.service.CommonService;
-import com.erp.server.tms.service.DictBasicService;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.TmsCfgCostService;
+import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +54,12 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
 
     @Autowired
     private DictBasicService dictBasicService;
+
+    @Autowired
+    private CfgReconciliationFieldService cfgReconciliationFieldService;
+
+    @Autowired
+    private TmsCostDetailService tmsCostDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -125,6 +130,18 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
     @Override
     public BatchResultDTO delete(String id) {
         TmsCfgCostEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到费用管理数据"));
+
+        //校验对账字段是否引用
+        List<CfgReconciliationFieldEntity> cfgReconciliationFieldList = cfgReconciliationFieldService.listByCfgCostIdList(Arrays.asList(id));
+        if (CollectionUtil.isNotEmpty(cfgReconciliationFieldList)) {
+            throw new ServiceException("费用已被对账单字段配置使用不支持删除");
+        }
+        //校验物流费用是否引用
+        List<TmsCostDetailEntity> tmsCostDetailList = tmsCostDetailService.listByCfgCostIdList(Arrays.asList(id));
+        if (CollectionUtil.isNotEmpty(tmsCostDetailList)) {
+            throw new ServiceException("费用已被物流单使用不支持删除");
+        }
+
         // 删除主单数据
         log.info("删除 开始删除费用管理数据，id：【{}】", id);
         this.removeById(id);

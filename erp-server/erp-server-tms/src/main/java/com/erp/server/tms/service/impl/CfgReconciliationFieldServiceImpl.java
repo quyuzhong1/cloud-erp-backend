@@ -317,6 +317,14 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         return resultList;
     }
 
+    @Override
+    public List<CfgReconciliationFieldEntity> listByCfgCostIdList(List<String> cfgCostIdList) {
+        if (CollectionUtils.isEmpty(cfgCostIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(CfgReconciliationFieldEntity::getSourceId,cfgCostIdList).list();
+    }
+
     private void handleImportCfgReconciliationFieldFile(List<CfgReconciliationFieldImportExcelDTO> successList, List<CfgReconciliationFieldImportExcelDTO> errorList) {
         if (CollectionUtils.isEmpty(successList)) {
             return;

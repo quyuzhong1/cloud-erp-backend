@@ -4,7 +4,6 @@ import com.common.business.service.SuperService;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.entity.TmsCostDetailEntity;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
-import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
 
 import java.util.List;
 
@@ -74,4 +73,12 @@ public interface TmsCostDetailService extends SuperService<TmsCostDetailEntity> 
      * 根据主表id和配置id统计每个配置id的费用
      */
     List<TmsCostDetailEntity> sumCostByMainIdAndCostId(String logisticsBillCostType, List<String> logisticsBillIds);
+    /**
+     * @description: 根据费用配置id集合查询
+     * @author Will
+     * @date: 2024/4/2 16:31
+     * @param cfgCostIdList 
+     * @return List<TmsCostDetailEntity> 
+     */
+    List<TmsCostDetailEntity> listByCfgCostIdList(List<String> cfgCostIdList);
 }
