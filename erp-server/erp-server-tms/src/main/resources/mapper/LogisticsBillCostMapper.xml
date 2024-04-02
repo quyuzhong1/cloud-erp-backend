@@ -288,19 +288,19 @@
     </select>
     <select id="listBillCostByOutstockIds" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$OutStockDTO">
         SELECT
-            bill.outstock_id AS outstockId,
-            bill.outstock_code AS outstockCode,
-            bill.transport_no,
-            COST.reconciliation_status,
-            COST.track_no
+            b.outstock_id AS outstockId,
+            b.outstock_code AS outstockCode,
+            b.transport_no AS transportNo,
+            c.reconciliation_status AS reconciliationStatus,
+            c.track_no AS trackNo
         FROM
-            logistics_bill AS bill
-                LEFT JOIN logistics_bill_cost AS COST ON bill.ID = COST.logistics_bill_id
-                AND COST.is_deleted = FALSE
+            logistics_bill AS b
+                LEFT JOIN logistics_bill_cost AS c ON b.ID = c.logistics_bill_id
+                AND c.is_deleted = FALSE
         WHERE
-            bill.is_deleted = FALSE
+            b.is_deleted = FALSE
         <if test="ids != null and ids.size > 0">
-            AND bill.outstock_id IN
+            AND b.outstock_id IN
             <foreach collection="ids" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
