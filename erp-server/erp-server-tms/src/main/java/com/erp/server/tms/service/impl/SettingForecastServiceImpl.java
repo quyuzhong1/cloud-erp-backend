@@ -5,22 +5,20 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
+import com.erp.model.tms.dto.SettingForecastChannelDTO;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
+import com.erp.model.tms.entity.SettingForecastChannelEntity;
 import com.erp.model.tms.entity.SettingForecastEntity;
 import com.erp.model.tms.enums.TransferLogisticsAuthStatusEnum;
 import com.erp.server.tms.mapper.SettingForecastMapper;
-import com.erp.server.tms.service.LogisticsChannelService;
-import com.erp.server.tms.service.LogisticsSupplierService;
-import com.erp.server.tms.service.SettingForecastService;
-import com.erp.server.tms.service.TransferLogisticsSupplierService;
+import com.erp.server.tms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -29,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -54,19 +53,27 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
     @Resource
     private LogisticsChannelService logisticsChannelService;
 
+    @Resource
+    private SettingForecastChannelService settingForecastChannelService;
+
+
     @Override
     public List<SettingForecastDTO.ListDTO> listAll() {
         List<SettingForecastEntity> list = this.list();
         List<SettingForecastDTO.ListDTO> resultList = BeanMapperUtils.copyList(SettingForecastDTO.ListDTO.class, list);
+        //数据处理
+        handleListData(resultList);
         return resultList;
     }
+
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean addOrUpdate(List<SettingForecastDTO.SaveOrUpdateDTO> list) {
         List<SettingForecastEntity> dbList = this.list();
         if (CollectionUtils.isEmpty(list) && CollectionUtils.isNotEmpty(dbList)) {
-            this.removeByIds(dbList.stream().map(SettingForecastEntity::getId).collect(Collectors.toList()));
+            this.delete(dbList.stream().map(SettingForecastEntity::getId).collect(Collectors.toList()));
             return true;
         }
         List<SettingForecastEntity> saveOrUpdateList = BeanMapperUtils.copyList(SettingForecastEntity.class, list);
@@ -76,16 +83,27 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
 
         List<String> deleteIdList = getDeleteIds(pairList, dbList);
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
-            this.removeByIds(deleteIdList);
+            this.delete(deleteIdList);
         }
         // 数据处理
-        return this.saveOrUpdateBatch(saveOrUpdateList);
+        boolean save = this.saveOrUpdateBatch(saveOrUpdateList);
+        if (!save) {
+            throw new ServiceException("保存失败！");
+        }
+        //新增渠道
+        List<SettingForecastChannelDTO.AddDTO> addDTOList = saveOrUpdateList.stream().filter(obj -> CollectionUtils.isNotEmpty(obj.getLogisticsChannelIdList())).map(obj -> new SettingForecastChannelDTO.AddDTO(obj.getId(), obj.getLogisticsChannelIdList())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(addDTOList)) {
+            settingForecastChannelService.add(addDTOList);
+        }
+        return save;
     }
 
     @Override
     public Boolean delete(List<String> idList) {
         List<String> deleteIdList = idList.stream().filter(id -> StringUtils.isNotBlank(id)).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
+            //删除渠道
+            settingForecastChannelService.deleteByMainIdList(deleteIdList);
             return this.removeByIds(deleteIdList);
         }
         return Boolean.TRUE;
@@ -241,27 +259,22 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
         return this.lambdaQuery().eq(SettingForecastEntity::getLogisticsSupplierId, logisticsSupplierId).last("LIMIT 1").one();
     }
 
-    /**
-     * 根据渠道id查询
-     */
-    @Override
-    public List<SettingForecastEntity> listByLogisticsChannelIdList (List<String> logisticsChannelIdList) {
-        if (CollectionUtils.isEmpty(logisticsChannelIdList)) {
-            return Collections.EMPTY_LIST;
-        }
-        return this.lambdaQuery().in(SettingForecastEntity::getLogisticsChannelId,logisticsChannelIdList).list();
-    }
 
     private SettingForecastDTO.SaveOrUpdateDTO getSaveOrUpdateByDb(SettingForecastEntity entity) {
         SettingForecastDTO.SaveOrUpdateDTO dto = new SettingForecastDTO.SaveOrUpdateDTO();
         dto.setId(entity.getId());
         dto.setLogisticsSupplierId(entity.getLogisticsSupplierId());
-        dto.setLogisticsChannelId(entity.getLogisticsChannelId());
         dto.setIsMustPackage(entity.getIsMustPackage());
         dto.setIsMustTransfer(entity.getIsMustTransfer());
         dto.setEnablePackageTime(entity.getEnablePackageTime());
         dto.setEnableTransferTime(entity.getEnableTransferTime());
         dto.setTransferLogisticsSupplierId(entity.getTransferLogisticsSupplierId());
+
+        List<SettingForecastChannelEntity> settingForecastChannelList = settingForecastChannelService.listByMainIdList(Arrays.asList(dto.getId()));
+        //渠道id集合
+        List<String> logisticsChannelIdList = settingForecastChannelList.stream().filter(obj -> StrUtil.equals(dto.getId(), obj.getMainId()))
+                .map(SettingForecastChannelEntity::getLogisticsChannelId).collect(Collectors.toList());
+        dto.setLogisticsChannelIdList(logisticsChannelIdList);
         return dto;
     }
 
@@ -281,29 +294,8 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
         List<String> transferSupplierIdList = list.stream().map(SettingForecastEntity::getTransferLogisticsSupplierId).collect(Collectors.toList());
         List<LogisticsSupplierEntity> logisticsSupplierList = CollectionUtils.isNotEmpty(logisticsSupplierIdList) ? logisticsSupplierService.listByIds(logisticsSupplierIdList) : Collections.emptyList();
 
-        //渠道ids
-        List<String> logisticsChannelIdList = list.stream().map(SettingForecastEntity::getLogisticsChannelId).distinct().collect(Collectors.toList());
-        List<LogisticsChannelEntity> logisticsChannelList = logisticsChannelService.listByIds(logisticsChannelIdList);
-
-        //根据渠道查询
-
-        List<SettingForecastEntity> settingForecastList = this.listByLogisticsChannelIdList(logisticsChannelIdList);
-
         List<TransferLogisticsSupplierDTO.AuthDTO> transferLogisticsSupplierList = CollectionUtils.isNotEmpty(transferSupplierIdList) ? transferLogisticsSupplierService.listAuthByMainIds(transferSupplierIdList) : Collections.emptyList();
         for (SettingForecastEntity item : list) {
-            //渠道验证
-            if (StrUtil.isNotBlank(item.getLogisticsChannelId())) {
-                //对应渠道
-                String logisticsChannelName = logisticsChannelList.stream().filter(obj -> StrUtil.equals(obj.getId(), item.getLogisticsChannelId())).findFirst().map(LogisticsChannelEntity::getName).orElse("");
-                item.setLogisticsChannelName(logisticsChannelName);
-
-                //验证渠道是否已使用
-                long count = settingForecastList.stream().filter(obj -> StrUtil.equals(obj.getLogisticsChannelId(), item.getLogisticsChannelId()) && !StrUtil.equals(obj.getId(), item.getId())).count();
-                if (count > 0) {
-                    throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_EXIST,logisticsChannelName);
-                }
-            }
-
             String logisticsSupplierId = item.getLogisticsSupplierId();
             String logisticsSupplierName = logisticsSupplierList.stream().filter(l -> l.getId().equals(logisticsSupplierId)).
                     findFirst().map(LogisticsSupplierEntity::getSupplierName).orElse("");
@@ -340,5 +332,28 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
 
     }
 
+    /**
+     * @description: 列表数据处理
+     * @author Will
+     * @date: 2024/4/2 15:31
+     * @param resultList
+     */
+    private void handleListData (List<SettingForecastDTO.ListDTO> resultList) {
+        if (CollectionUtils.isEmpty(resultList)) {
+            return;
+        }
+        List<String> mainIdList = resultList.stream().map(SettingForecastDTO.ListDTO::getId).collect(Collectors.toList());
+        List<SettingForecastChannelEntity> settingForecastChannelList = settingForecastChannelService.listByMainIdList(mainIdList);
 
+        for (SettingForecastDTO.ListDTO listDTO : resultList) {
+            //渠道id集合
+            List<String> logisticsChannelIdList = settingForecastChannelList.stream().filter(obj -> StrUtil.equals(listDTO.getId(), obj.getMainId()))
+                    .map(SettingForecastChannelEntity::getLogisticsChannelId).collect(Collectors.toList());
+            listDTO.setLogisticsChannelIdList(logisticsChannelIdList);
+            //渠道名称集合
+            List<String> logisticsChannelNameList = settingForecastChannelList.stream().filter(obj -> StrUtil.equals(listDTO.getId(), obj.getMainId()))
+                    .map(SettingForecastChannelEntity::getLogisticsChannelName).collect(Collectors.toList());
+            listDTO.setLogisticsChannelNameList(logisticsChannelNameList);
+        }
+    }
 }

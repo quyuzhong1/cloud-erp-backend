@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -36,19 +37,6 @@ public class SettingForecastEntity extends BaseEntity<SettingForecastEntity> {
      */
     @TableField("logistics_supplier_name")
     private String logisticsSupplierName;
-
-    /**
-     * 物流渠道id
-     */
-    @TableField("logistics_channel_id")
-    private String logisticsChannelId;
-
-    /**
-     * 物流渠道名称
-     */
-    @TableField("logistics_channel_name")
-    private String logisticsChannelName;
-
 
     /**
      * 是否强制组包 true 
@@ -93,6 +81,12 @@ public class SettingForecastEntity extends BaseEntity<SettingForecastEntity> {
     @TableField("transfer_logistics_supplier_name")
     private String transferLogisticsSupplierName;
 
+
+    /**
+     * 物流渠道id集合
+     */
+    @TableField(exist = false)
+    private List<String> logisticsChannelIdList;
 
     public static final String LOGISTICS_SUPPLIER_ID = "logistics_supplier_id";
 

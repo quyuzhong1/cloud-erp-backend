@@ -90,13 +90,4 @@ public interface SettingForecastService extends SuperService<SettingForecastEnti
      */
     SettingForecastEntity getSettingForecastByLogisticsSupplierId(String logisticsSupplierId);
 
-    /**
-     * @description: 物流渠道id
-     * @author Will
-     * @date: 2024/4/1 12:18
-     * @param logisticsChannelIdList
-     * @return List<SettingForecastEntity>
-     */
-    List<SettingForecastEntity> listByLogisticsChannelIdList (List<String> logisticsChannelIdList);
-
 }

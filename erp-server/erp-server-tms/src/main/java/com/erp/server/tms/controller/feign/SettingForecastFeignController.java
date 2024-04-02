@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 /**
  * @author Lambda
@@ -61,16 +60,4 @@ public class SettingForecastFeignController {
         return settingForecastService.getByLogisticsSupplier(dto);
     }
 
-    /**
-     * 根据物流渠道id集合查询
-     * @author Will
-     * @date: 2024/4/1 12:21
-     * @param logisticsChannelIdList
-     * @return List<SettingForecastEntity>
-     */
-    @PostMapping("/listByLogisticsChannelIdList")
-    public List<SettingForecastEntity> listByLogisticsChannelIdList(@RequestBody List<String> logisticsChannelIdList) {
-        List<SettingForecastEntity> list = settingForecastService.listByLogisticsChannelIdList(logisticsChannelIdList);
-        return list;
-    }
 }

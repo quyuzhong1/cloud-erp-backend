@@ -42,14 +42,14 @@ public class SettingForecastDTO implements Serializable {
         private String logisticsSupplierName;
 
         /**
-         * 物流渠道id
+         * 物流渠道id集合
          */
-        private String logisticsChannelId;
+        private List<String> logisticsChannelIdList;
 
         /**
-         * 物流渠道名称
+         * 物流渠道集合名称
          */
-        private String logisticsChannelName;
+        private List<String> logisticsChannelNameList;
 
         /**
          * 是否强制组包 true 是
@@ -96,9 +96,9 @@ public class SettingForecastDTO implements Serializable {
         private String logisticsSupplierId;
 
         /**
-         * 物流渠道id
+         * 物流渠道id集合
          */
-        private String logisticsChannelId;
+        private List<String> logisticsChannelIdList;
 
         /**
          * 是否强制组包 不能为空
