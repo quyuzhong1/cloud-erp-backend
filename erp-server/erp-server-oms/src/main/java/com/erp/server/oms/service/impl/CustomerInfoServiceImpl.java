@@ -1821,6 +1821,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
         for (CustomerInfoEntity entity : list) {
             CustomerDTO.SellerUserDeptDTO sellerUserDeptDTO = new CustomerDTO.SellerUserDeptDTO();
+            sellerUserDeptDTO.setCountryId(entity.getCountryId());
             //客户编码
             sellerUserDeptDTO.setCode(entity.getCode());
             //负责人id
