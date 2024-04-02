@@ -944,7 +944,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         for (SoOutstockDTO.GroupSkuDTO groupSkuDTO : list) {
             //待装箱数量=发货数量-已装箱数量
             int usePackQty = packingQtyDTOS.stream()
-                    .filter(req -> req.getSkuId().equals(groupSkuDTO.getId())
+                    .filter(req -> req.getSourceId().equals(groupSkuDTO.getId())
                             && req.getSkuId().equals(groupSkuDTO.getSkuId()))
                     .mapToInt(req -> req.getUsePackQty()).sum();
             groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - usePackQty);
