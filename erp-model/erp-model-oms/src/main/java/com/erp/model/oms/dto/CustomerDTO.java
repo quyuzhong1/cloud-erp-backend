@@ -903,6 +903,10 @@ public class CustomerDTO implements Serializable {
          */
         private String code;
         /**
+         * 国家
+         */
+        private String countryId;
+        /**
          * 销售员id
          */
         private String sellerId;
