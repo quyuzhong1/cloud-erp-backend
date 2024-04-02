@@ -1183,7 +1183,7 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         /**
          * 预估合计费用
          */
-        private BigDecimal estimatedFee;
+        private BigDecimal totalEstimatedFee;
 
         /**
         * 实际重量

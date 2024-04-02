@@ -48,6 +48,7 @@ import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.PackingStatusEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -77,6 +78,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -128,6 +130,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Resource
     private ShopInfoFeign shopInfoFeign;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @Resource
     private LogisticsTrackService logisticsTrackService;
@@ -531,7 +536,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         dto.setLogisticsStatusName(EnumMessage.getNameByCode(FmLogisticTrackStatusEnum.class,dto.getLogisticsStatus()));
         dto.setShippingMethodName(EnumMessage.getNameByCode(LogisticsMethodEnum.class,dto.getShippingMethod()));
         dto.setCurrencySymbol(CurrencyEnum.getSymbolByCode(dto.getCurrency()));
-
         //处理渠道相关
         TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO canGenerateDeliveryDTO = new TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO();
         canGenerateDeliveryDTO.setLogisticsChannelId(dto.getLogisticsChannelId());
@@ -589,7 +593,18 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(Objects.nonNull(logisticsBillCostEntity)){
             List<TmsCostDetailDTO.CostCompareDTO> costCompareDTOList = logisticsBillCostDetailService.getCostCompareListById(logisticsBillCostEntity.getId());
             dto.setLogisticFeeList( BeanUtil.copyToList(costCompareDTOList,TmsFirstMileLogisticDTO.FeeViewDTO.class));
+            BigDecimal totalEstimatedFee = costCompareDTOList.stream().map(TmsCostDetailDTO.CostCompareDTO::getEstimatedFee).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+            if(dto.getCurrency().equals(CurrencyEnum.CNY.getCurrencyCode())){
+                dto.setTotalEstimatedFee(totalEstimatedFee);
+            }else{
+                //查询汇率
+                BigDecimal rate = dmpTaskFeign.getRate(logisticsBillCostEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), dto.getCurrency());
+                if(Objects.nonNull(rate)){
+                    dto.setTotalEstimatedFee(totalEstimatedFee.multiply(rate));
+                }
+            }
         }
+
         //处理时间线
         TmsFirstMileLogisticDTO.TimeInfoDTO timeInfoDTO = new TmsFirstMileLogisticDTO.TimeInfoDTO();
         timeInfoDTO.setApproveTime(CollectionUtils.isNotEmpty(generateLogisticDTO)?generateLogisticDTO.get(0).getApproveTime():null);
