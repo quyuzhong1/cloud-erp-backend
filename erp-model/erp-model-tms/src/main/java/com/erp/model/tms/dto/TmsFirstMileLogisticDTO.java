@@ -1330,19 +1330,16 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         /**
         * 运输方式
         */
-        @NotBlank(message = "运输方式不能为空")
         private String shippingMethod;
 
         /**
         * 物流商id
         */
-        @NotBlank(message = "物流商id不能为空")
         private String logisticsSupplierId;
 
         /**
         * 物流渠道Id
         */
-        @NotBlank(message = "物流渠道Id不能为空")
         private String logisticsChannelId;
 
         /**
