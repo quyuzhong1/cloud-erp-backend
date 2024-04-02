@@ -529,7 +529,6 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         }
     }
 
-
     @Override
     public Boolean exportExcel(ProductCertificateDTO.ExportParamDTO params, HttpServletResponse response) {
         List<ProductCertificateDTO.ListDTO> records = this.baseMapper.exportExcel(params);
