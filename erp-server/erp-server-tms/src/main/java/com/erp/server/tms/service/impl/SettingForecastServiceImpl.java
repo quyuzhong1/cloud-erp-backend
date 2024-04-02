@@ -287,9 +287,7 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
     private void handleData(List<SettingForecastEntity> list) {
         //物流商ids
         List<String> logisticsSupplierIdList = list.stream().map(SettingForecastEntity::getLogisticsSupplierId).distinct().collect(Collectors.toList());
-        if (list.size() != logisticsSupplierIdList.size()) {
-            throw new ServiceException("存在重复的物流商");
-        }
+
         //中转商ids
         List<String> transferSupplierIdList = list.stream().map(SettingForecastEntity::getTransferLogisticsSupplierId).collect(Collectors.toList());
         List<LogisticsSupplierEntity> logisticsSupplierList = CollectionUtils.isNotEmpty(logisticsSupplierIdList) ? logisticsSupplierService.listByIds(logisticsSupplierIdList) : Collections.emptyList();
