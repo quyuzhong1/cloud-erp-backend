@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.entity.TmsCostDetailEntity;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
+import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
 
 import java.util.List;
 
@@ -68,4 +69,9 @@ public interface TmsCostDetailService extends SuperService<TmsCostDetailEntity> 
      * @param mainIdList
      */
     void deleteByMainIdList(List<String> mainIdList);
+
+    /**
+     * 根据主表id和配置id统计每个配置id的费用
+     */
+    List<TmsCostDetailEntity> sumCostByMainIdAndCostId(String logisticsBillCostType, List<String> logisticsBillIds);
 }

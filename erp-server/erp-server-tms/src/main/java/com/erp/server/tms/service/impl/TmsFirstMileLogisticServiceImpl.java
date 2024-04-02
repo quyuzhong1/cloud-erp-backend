@@ -960,9 +960,18 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     public IPage<TmsFirstMileReconciliationDetailDTO.ListDTO> waitReconciliationPaging(Page<?> query, TmsFirstMileReconciliationDetailDTO.PagingParamDTO params) {
         return this.baseMapper.waitReconciliationPaging(query, params,
                 OrderTypeEnum.FIRST_MILE.getCode(),
-                ReconciliationStatusEnum.TO_BE_GENERATED.getCode(),
+                "",
                 FmLogisticTrackStatusEnum.SIGN.getCode()
         );
+    }
+
+    @Override
+    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> listByMainIds(List<String> logisticsBillIds) {
+        return this.baseMapper.waitReconciliationList(
+                OrderTypeEnum.FIRST_MILE.getCode(),
+                "",
+                "",
+                logisticsBillIds);
     }
 
     @Override

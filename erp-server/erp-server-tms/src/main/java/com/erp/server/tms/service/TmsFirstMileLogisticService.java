@@ -109,4 +109,9 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
      * 待对账物流单(分页)
      */
     IPage<TmsFirstMileReconciliationDetailDTO.ListDTO> waitReconciliationPaging(Page<?> query, TmsFirstMileReconciliationDetailDTO.PagingParamDTO params);
+
+    /**
+     * 根据物流单ID分组查询物流单信息
+     */
+    List<TmsFirstMileReconciliationDetailDTO.ListDTO> listByMainIds(List<String> logisticsBillIds);
 }
