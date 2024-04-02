@@ -312,7 +312,6 @@ public class WmsCartonDTO implements Serializable {
      * 装箱信息
      */
     @Data
-    @NoArgsConstructor
     public static class PackDateDTO {
         /**
          * 来源id
