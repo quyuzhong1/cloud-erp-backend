@@ -24,5 +24,5 @@ public interface TmsFirstMileReconciliationDetailMapper extends BaseMapper<TmsFi
 
     IPage<TmsFirstMileReconciliationDetailDTO.ListDTO> paging(Page<?> query, @Param("params") TmsFirstMileReconciliationDetailDTO.PagingParamDTO params);
 
-    List<TmsFirstMileReconciliationDetailDTO.ListDTO> listExport(@Param("params") TmsFirstMileReconciliationDetailDTO.ExportDTO param);
+    List<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> listExport(@Param("params") TmsFirstMileReconciliationDetailDTO.ExportDTO param);
 }

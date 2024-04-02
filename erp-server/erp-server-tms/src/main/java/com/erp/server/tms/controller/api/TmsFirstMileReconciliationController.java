@@ -328,9 +328,10 @@ public class TmsFirstMileReconciliationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:tmsFirstMileReconciliation:export",
-            tableAlias = ""
+            tableAlias = "tfmr"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "头程对账单导出Excel数据")
+    @WebAdvanceQuery(handler = TmsFirstMileReconciliationQueryHandler.class)
     public void exportList(@RequestBody @Validated TmsFirstMileReconciliationDTO.ExportDTO dto, HttpServletResponse response) {
         tmsFirstMileReconciliationService.exportList(dto, response);
     }

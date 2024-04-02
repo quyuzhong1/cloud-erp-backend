@@ -9,7 +9,6 @@ public class TmsFirstMileReconciliationDetailQueryHandler extends AbstractQueryH
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-
         return null;
     }
 }
