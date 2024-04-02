@@ -993,6 +993,11 @@ public class TmsDeclareBillDTO implements Serializable {
         private List<String> sourceCodeList;
 
         /**
+         * 提运单号
+         */
+        private String transportNo;
+
+        /**
          * 预录入编号
          */
         private String preInputNo;
