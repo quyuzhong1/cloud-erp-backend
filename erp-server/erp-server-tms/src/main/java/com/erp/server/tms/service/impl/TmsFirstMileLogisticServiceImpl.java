@@ -159,8 +159,17 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     private TmsFirstMileReconciliationService tmsFirstMileReconciliationService;
 
     @Resource
+    private TmsCfgCostService tmsCfgCostService;
+
+    @Resource
     @Lazy
     private TmsFirstMileLogisticService service;
+
+    @Resource
+    private ShippingCalculationService shippingCalculationService;
+
+    @Resource
+    private ShippingTemplateRuleService shippingTemplateRuleService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -209,11 +218,21 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         costAddDTO.setLogisticsBillDetailId(billDetailEntity.getId());
         costAddDTO.setTrackNo(tmsFirstMileLogisticEntity.getCounterNo());
         //物流费用单明细
+        List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listCostAttributionAndCategory(DictCostAttributionEnum.FIRST_MILE.getCode(), DictCostCategoryEnum.SHIPPING_COST.getCode());
+        TmsCfgCostEntity defaultCost = new TmsCfgCostEntity();
+        if(CollectionUtils.isNotEmpty(tmsCfgCostList)){
+            defaultCost = tmsCfgCostList.get(0);
+        }
         List<TmsFirstMileLogisticDTO.LogisticFee> logisticFeeList = addDTO.getLogisticFeeList();
         List<TmsCostDetailDTO.AddDTO> costDetailList = new ArrayList<>();
         for (TmsFirstMileLogisticDTO.LogisticFee logisticFee : logisticFeeList) {
+            BigDecimal fee = logisticFee.getEstimatedFee();
+            if(logisticFee.getCfgCostId().equals(defaultCost.getId()) && Objects.isNull(fee)){
+                //TODO 如果是物流运费并且预估为空，则计算运费模板的费用
+//                fee =
+            }
             TmsCostDetailDTO.AddDTO dto = new TmsCostDetailDTO.AddDTO();
-            dto.setCostValue(logisticFee.getEstimatedFee());
+            dto.setCostValue(fee);
             dto.setCfgCostId(logisticFee.getCfgCostId());
             dto.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
             costDetailList.add(dto);
@@ -1320,6 +1339,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(logisticDTO.getSourceType().equals(SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode()) && !ShippingTemplateTypeEnum.ENUM_COUNTRY.getCode().equals(shippingTemplateEntity.getType())){
             throw new ServiceException("海外仓发货单不支持非国家类型模板计算");
         }
+
         BigDecimal totalWeight = packingDetailDTOList.stream()
                 .map(WmsCartonDetailDTO.ListPackingDetailDTO::getPackageWeight)
                 .map(BigDecimal::new)
@@ -1327,13 +1347,31 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(totalWeight.compareTo(BigDecimal.ZERO) == 0){
             return BigDecimal.ZERO;
         }
-        ShippingTemplateDTO.TrialCalculationParamDTO trialCalculationParamDTO = new ShippingTemplateDTO.TrialCalculationParamDTO();
-        trialCalculationParamDTO.setId(shippingTemplateEntity.getId());
-        trialCalculationParamDTO.setFromCountry("CN");
-        trialCalculationParamDTO.setWeight(totalWeight);
-        trialCalculationParamDTO.setToWarehouseName(logisticDTO.getToWarehouseName());
-        trialCalculationParamDTO.setToCountry(logisticDTO.getToCountry());
-        return shippingTemplateService.trialCalculation(trialCalculationParamDTO);
+
+        ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
+        viewParamDTO.setMainId(shippingTemplateEntity.getId());
+        viewParamDTO.setFromCountry("CN");
+        if(logisticDTO.getSourceType().equals(SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode())){
+            viewParamDTO.setToCountry(logisticDTO.getToCountry());
+        }
+        if(logisticDTO.getSourceType().equals(SourceTypeEnum.FBA_SHIPMENT.getCode())){
+            viewParamDTO.setToWarehouseName(logisticDTO.getToWarehouseName());
+        }
+        viewParamDTO.setWeight(totalWeight);
+        ShippingTemplateRuleEntity shippingTemplateRuleEntity = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
+        if(Objects.isNull(shippingTemplateRuleEntity)){
+            throw new ServiceException("运费模板规则为空");
+        }
+
+//        ShippingTemplateDTO.TrialCalculationParamDTO trialCalculationParamDTO = new ShippingTemplateDTO.TrialCalculationParamDTO();
+//        trialCalculationParamDTO.setId(shippingTemplateEntity.getId());
+//        trialCalculationParamDTO.setFromCountry("CN");
+//        trialCalculationParamDTO.setWeight(totalWeight);
+//        trialCalculationParamDTO.setToWarehouseName(logisticDTO.getToWarehouseName());
+//        trialCalculationParamDTO.setToCountry(logisticDTO.getToCountry());
+//        return shippingTemplateService.trialCalculation(trialCalculationParamDTO);
+
+        return shippingCalculationService.calculationFinalShippingCost(shippingTemplateEntity,shippingTemplateRuleEntity,totalWeight).getTotalShippingCost();
     }
 
 }
