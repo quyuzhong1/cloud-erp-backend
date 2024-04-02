@@ -920,7 +920,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                         && ReconciliationStatusEnum.CONFIRMED.getCode().equals(e.getReconciliationStatus()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(outStockDTOList)){
-            String code = outStockDTOList.stream().map(LogisticsBillCostDTO.OutStockDTO::getOutstockCode).collect(Collectors.joining(","));
+            String code = outStockDTOList.stream().map(LogisticsBillCostDTO.OutStockDTO::getOutstockCode).distinct().collect(Collectors.joining(","));
             throw new ServiceException(ApiError.ERROR_SO_OUTSTOCK_BILL_COST_NOT_DIS_APPROVE, code);
         }
         //待提交
