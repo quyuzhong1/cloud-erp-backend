@@ -260,13 +260,6 @@ public class TmsFirstMileLogisticController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-//    /**
-//     * 查询历史轨迹
-//     */
-//    @GetMapping("/getHistoryTrack")
-//    public ApiResult<TmsFirstMileLogisticDTO.HistoryTrackDTO> getHistoryTrack(@RequestParam("id") String id) {
-//        return success(tmsFirstMileLogisticService.getHistoryTrack(id));
-//    }
 
     /**
      * 查询符合生成条件的发货单

@@ -3,7 +3,6 @@ package com.erp.server.tms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -15,8 +14,9 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
-import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.model.wms.enums.PackingStatusEnum;
+import com.erp.model.wms.enums.WmsDeclareStatusEnum;
+import com.erp.server.tms.query.TmsB2BDeclareQueryHandler;
 import com.erp.server.tms.service.TmsDeclareBillService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -62,7 +62,7 @@ public class TmsB2BDeclareBillController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:tmsB2BDeclareBill:paging",
@@ -214,7 +214,7 @@ public class TmsB2BDeclareBillController extends BaseController {
      */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2B报关单")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
     public ApiResult export(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
         pagingParamDTO.setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
         tmsDeclareBillService.export(pagingParamDTO,response);
@@ -226,7 +226,7 @@ public class TmsB2BDeclareBillController extends BaseController {
      */
     @PostMapping("/exportDeclare")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2B报关单报关信息")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
     public ApiResult exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
         pagingParamDTO.setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
         tmsDeclareBillService.exportDeclare(pagingParamDTO,response);

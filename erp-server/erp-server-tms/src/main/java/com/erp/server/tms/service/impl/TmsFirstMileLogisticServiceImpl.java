@@ -829,6 +829,15 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 resultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getCounterNo(),"只有待下单和已下单状态支持更改物流信息"));
                 continue;
             }
+            LogisticsBillCostEntity logisticsBillCostEntity = costList.stream().filter(v->v.getLogisticsBillId().equals(logisticsBillEntity.getId())).findFirst().orElse(null);
+            if(Objects.isNull(logisticsBillCostEntity)){
+                resultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"物流费用为空"));
+                continue;
+            }
+            if(!(logisticsBillCostEntity.getReconciliationStatus().equals(ReconciliationStatusEnum.INVALID.getCode()) ||logisticsBillCostEntity.getReconciliationStatus().equals(ReconciliationStatusEnum.TO_BE_GENERATED.getCode()))){
+                resultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"已生成对账单，不能更新物流状态"));
+                continue;
+            }
             logisticsBillEntity.setShippingMethod(dto.getShippingMethod());
             logisticsBillEntity.setChannelId(dto.getLogisticsChannelId());
             logisticsBillEntity.setLogisticsSupplierId(dto.getLogisticsSupplierId());
@@ -837,14 +846,11 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             FirstMileDeliveryDTO.GenerateLogisticDTO deliveryLogisticDto = generateLogisticDTOList.stream().filter(v->v.getOutstockId().equals(logisticsBillEntity.getOutstockId())).findFirst().orElse(null);
             if(Objects.nonNull(deliveryLogisticDto) && CollectionUtils.isNotEmpty(deliveryLogisticDto.getPackingDTOList()) && Objects.nonNull(shippingTemplateEntity)
                     && shippingTemplateEntity.getVolumeSetting()!= null && shippingTemplateEntity.getVolumeSetting() > 0){
-                LogisticsBillCostEntity logisticsBillCostEntity = costList.stream().filter(v->v.getLogisticsBillId().equals(logisticsBillEntity.getId())).findFirst().orElse(null);
-                if(Objects.nonNull(logisticsBillCostEntity)){
-                    BigDecimal totalSize = deliveryLogisticDto.getPackingDTOList().stream()
-                            .map(WmsCartonDetailDTO.ListPackingDetailDTO::getMultiplySize)
-                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-                    logisticsBillCostEntity.setVolumeWeight(totalSize.divide(BigDecimal.valueOf(shippingTemplateEntity.getVolumeSetting()),4, RoundingMode.HALF_UP));
-                    updateCostList.add(logisticsBillCostEntity);
-                }
+                BigDecimal totalSize = deliveryLogisticDto.getPackingDTOList().stream()
+                        .map(WmsCartonDetailDTO.ListPackingDetailDTO::getMultiplySize)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                logisticsBillCostEntity.setVolumeWeight(totalSize.divide(BigDecimal.valueOf(shippingTemplateEntity.getVolumeSetting()),4, RoundingMode.HALF_UP));
+                updateCostList.add(logisticsBillCostEntity);
             }
             //设置消息发送
             if(Objects.nonNull(detailEntity) && detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.ORDERED.getCode())){
