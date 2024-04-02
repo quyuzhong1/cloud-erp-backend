@@ -1,8 +1,9 @@
 package com.erp.model.dmp.kingdee;
 
-import cn.hutool.core.annotation.Alias;
+import com.alibaba.fastjson.annotation.JSONField;
 import com.common.business.dto.CleanBaseDTO;
 import com.erp.model.dmp.kingdee.item.KingdeeReturnOrderItemEntity;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -16,67 +17,98 @@ import java.util.List;
 public class KingdeeReturnOrderEntity extends CleanBaseDTO {
 
     private String _id;
-    @Alias("FID")
+    @JSONField(name = "FID")
+    @JsonProperty("FID")
     private String fId;
-    @Alias("FBillTypeID")
+    @JSONField(name = "FBillTypeID")
+    @JsonProperty("FBillTypeID.FNumber")
     private String fBillTypeID;
-    @Alias("FBillTypeID.FName")
+    @JSONField(name = "FBillTypeID.FName")
+    @JsonProperty("FBillTypeID.FNumber")
     private String fBillTypeName;
-    @Alias("FBillTypeID.FNumber")
+    @JSONField(name = "FBillTypeID.FNumber")
+    @JsonProperty("FBillTypeID.FNumber")
     private String fBillTypeCode;
-    @Alias("FBillNo")
+    @JSONField(name = "FBillNo")
+    @JsonProperty("FBillNo")
     private String fBillNo;
-    @Alias("FDate")
+    @JSONField(name = "FDate")
+    @JsonProperty("FDate")
     private String fDate;
-    @Alias("FDocumentStatus")
+    @JSONField(name = "FDocumentStatus")
+    @JsonProperty("FDocumentStatus")
     private String fDocumentStatus;
-    @Alias("FSaleOrgId")
+    @JSONField(name = "FSaleOrgId")
+    @JsonProperty("FSaleOrgId")
     private String fSaleOrgId;
-    @Alias("FSaleOrgId.FName")
+    @JSONField(name = "FSaleOrgId.FName")
+    @JsonProperty("FSaleOrgId.FName")
     private String fSaleOrgName;
-    @Alias("FRetcustId.FName")
+    @JSONField(name = "FRetcustId.FName")
+    @JsonProperty("FRetcustId.FName")
     private String fRetcustName;
-    @Alias("FRetcustId.FNumber")
+    @JSONField(name = "FRetcustId.FNumber")
+    @JsonProperty("FRetcustId.FNumber")
     private String FRetcustNumber;
-    @Alias("FSalesManId")
+    @JSONField(name = "FSalesManId")
+    @JsonProperty("FSalesManId")
     private String fSalesManId;
-    @Alias("FSalesManId.FName")
+    @JSONField(name = "FSalesManId.FName")
+    @JsonProperty("FSalesManId.FName")
     private String fSalesManName;
-    @Alias("FCreateDate")
+    @JSONField(name = "FCreateDate")
+    @JsonProperty("FCreateDate")
     private String fCreateDate;
-    @Alias("FModifyDate")
+    @JSONField(name = "FModifyDate")
+    @JsonProperty("FModifyDate")
     private String fModifyDate;
-    @Alias("FCancelStatus")
+    @JSONField(name = "FCancelStatus")
+    @JsonProperty("FCancelStatus")
     private String fCancelStatus;
-    @Alias("FReceiverCountry")
+    @JSONField(name = "FReceiverCountry")
+    @JsonProperty("FReceiverCountry")
     private String fReceiverCountry;
-    @Alias("FLinkMan")
+    @JSONField(name = "FLinkMan")
+    @JsonProperty("FLinkMan")
     private String fLinkMan;
-    @Alias("FExchangeRate")
+    @JSONField(name = "FExchangeRate")
+    @JsonProperty("FExchangeRate")
     private BigDecimal fExchangeRate;
-    @Alias("FApproveDate")
+    @JSONField(name = "FApproveDate")
+    @JsonProperty("FApproveDate")
     private String fApproveDate;
-    @Alias("FBussinessType")
+    @JSONField(name = "FBussinessType")
+    @JsonProperty("FBussinessType")
     private String fBussinessType;
-    @Alias("FOwnerTypeIdHead")
+    @JSONField(name = "FOwnerTypeIdHead")
+    @JsonProperty("FOwnerTypeIdHead")
     private String fOwnerTypeIdHead;
-    @Alias("FSettleCurrId.FCode")
+    @JSONField(name = "FSettleCurrId.FCode")
+    @JsonProperty("FSettleCurrId.FCode")
     private String fSettleCurrCode;
-    @Alias("FDelTime")
+    @JSONField(name = "FDelTime")
+    @JsonProperty("FDelTime")
     private String FDelTime;
-    @Alias("FHeadNote")
+    @JSONField(name = "FHeadNote")
+    @JsonProperty("FHeadNote")
     private String FHeadNote;
-    @Alias("FReturnReason")
+    @JSONField(name = "FReturnReason")
+    @JsonProperty("FReturnReason")
     private String fReturnReason;
-    @Alias("FSaledeptid.FNumber")
+    @JSONField(name = "FSaledeptid.FNumber")
+    @JsonProperty("FSaledeptid.FNumber")
     private String fSaledeptNumber;
-    @Alias("FSaledeptid.FName")
+    @JSONField(name = "FSaledeptid.FName")
+    @JsonProperty("FSaledeptid.FName")
     private String fSaledeptName;
-    @Alias("F_ULZ_data_sources")
+    @JSONField(name = "F_ULZ_data_sources")
+    @JsonProperty("F_ULZ_data_sources")
     private String fULZDataSources;
-    @Alias("FISGENFORIOS")
+    @JSONField(name = "FISGENFORIOS")
+    @JsonProperty("FISGENFORIOS")
     private Boolean fIsGenForIos;
-    @Alias("FETHIRDBILLNO")
+    @JSONField(name = "FETHIRDBILLNO")
+    @JsonProperty("FETHIRDBILLNO")
     private String fEThirdBillNo;
 
     private List<KingdeeReturnOrderItemEntity> itemEntityList;

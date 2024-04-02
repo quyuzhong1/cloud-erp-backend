@@ -80,8 +80,9 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         log.info("拉取管易销售订单列表数据 gyyDeliveryDetailEntityList.size = {} ", gyyOrderEntityList.size());
         XxlJobHelper.log("拉取管易销售订单列表数据 gyyDeliveryDetailEntityList.size = {} ", gyyOrderEntityList.size());
         // 对数据进行检查类，需要新增和更新数据
+        List<GyyOrderEntity> gyyOrderEntities = gyyOrderEntityList.stream().distinct().collect(Collectors.toList());
         List<GyyOrderEntity> insertList = new ArrayList<>();
-        for (GyyOrderEntity gyyOrderEntity : gyyOrderEntityList) {
+        for (GyyOrderEntity gyyOrderEntity : gyyOrderEntities) {
             OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByCode(gyyOrderEntity.getCode());
             gyyOrderEntity.setDownloadStatus(0);
             gyyOrderEntity.setApiCode(dto.getPlatformApiEnum().getTaskName());
@@ -306,6 +307,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         if (CollectionUtil.isEmpty(dmpOrderItemEntities)){
             return null;
         }
+        dmpOrderInfoEntity.setSite("CN");
         dmpOrderInfoEntity.setItemList(dmpOrderItemEntities);
         return dmpOrderInfoEntity;
     }

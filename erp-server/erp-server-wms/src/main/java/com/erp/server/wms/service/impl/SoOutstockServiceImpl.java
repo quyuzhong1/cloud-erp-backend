@@ -178,7 +178,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private StocktakingProfitLossService stocktakingProfitLossService;
 
-
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
         return lambdaQuery().eq(SoOutstockEntity::getInvalidStatus, Boolean.FALSE)
@@ -538,6 +537,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (!ingStatus.equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+
 
         // 调用流程审核
         approveProcess(entity, dto);
@@ -909,6 +909,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String code = b2cList.stream().map(SoOutstockEntity::getCode).collect(Collectors.joining(","));
             throw new ServiceException(ApiError.B2C_SO_OUTSTOCK_NOT_DIS_APPROVE, code);
         }
+
+
+
         //审核通过
         // 增加 出库单关联的自发货费用单据已确认状态下，不允许出库单反审核
         List<LogisticsBillCostDTO.OutStockDTO> outStockDTOS = logisticsBillFeign.listBillCostByOutstockIds(ids);
@@ -1768,7 +1771,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> receiveAddressId = soInfoEntities.stream().map(SoInfoEntity::getReceiveAddressId).collect(Collectors.toList());
         List<CustomerAddressEntity> customerAddressEntities = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(receiveAddressId)) {
-            customerAddressEntities.addAll(customerFeign.ListCustomerAddressByIds(receiveAddressId));
+            customerAddressEntities.addAll(customerFeign.listCustomerAddressByIds(receiveAddressId));
         }
         for (SoOutstockEntity soOutstockEntity : soOutstockEntities) {
             //根据客户id获取客户信息
@@ -2463,4 +2466,5 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
     }
+
 }
