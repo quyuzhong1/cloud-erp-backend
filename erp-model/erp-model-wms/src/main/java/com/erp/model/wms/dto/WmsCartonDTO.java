@@ -361,6 +361,11 @@ public class WmsCartonDTO implements Serializable {
          * 箱数
          */
         private Integer boxQty;
+
+
+        public PackDateDTO() {
+            this.deliveryQty = 0;
+        }
     }
 
     /**
