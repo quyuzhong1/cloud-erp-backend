@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
-@PlatformType(PlatformDictEnum.TikTok)
+@PlatformType(PlatformDictEnum.TIK_TOK)
 @BusinessType(BusinessTypeEnum.ORDER)
 public class TikTokOrderHandler extends AbstractOrderHandler<TikTokOrderDTO, PlatformOrderDTO> {
     @Resource
