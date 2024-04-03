@@ -55,13 +55,13 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
     List<LogisticsBillEntity> listByOutstockIds(List<String> outstockIds);
 
 
-    List<TmsFirstMileLogisticDTO.TabListDTO> tabList();
+    List<TmsFirstMileLogisticDTO.TabListDTO> tabList(TmsFirstMileLogisticDTO.PagingParamDTO dto);
 
     PagingVO<TmsFirstMileLogisticDTO.PagingVO> paging(PagingDTO<TmsFirstMileLogisticDTO.PagingParamDTO> dto);
 
     List<TmsFirstMileLogisticDTO.PagingVO> hasWarnPaging(TmsFirstMileLogisticDTO.PagingParamDTO dto);
 
-    TmsFirstMileLogisticDTO.StatisticsVO statistics();
+    TmsFirstMileLogisticDTO.StatisticsVO statistics(TmsFirstMileLogisticDTO.PagingParamDTO dto);
 
     TmsFirstMileLogisticDTO.ViewDTO view(String id);
 

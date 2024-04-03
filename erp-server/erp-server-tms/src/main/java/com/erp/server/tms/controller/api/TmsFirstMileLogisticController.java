@@ -1,8 +1,10 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -53,8 +55,13 @@ public class TmsFirstMileLogisticController extends BaseController {
      * @return ApiResult<String>
      */
     @GetMapping("/tabList")
-    public ApiResult<List<TmsFirstMileLogisticDTO.TabListDTO>> tabList() {
-        return success(tmsFirstMileLogisticService.tabList());
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFirstMileLogistic:paging",
+            tableAlias = "lb"
+    )
+    public ApiResult<List<TmsFirstMileLogisticDTO.TabListDTO>> tabList(TmsFirstMileLogisticDTO.PagingParamDTO dto) {
+        return success(tmsFirstMileLogisticService.tabList(dto));
     }
 
     /**
@@ -66,6 +73,11 @@ public class TmsFirstMileLogisticController extends BaseController {
      */
     @PostMapping("/paging")
     @WebAdvanceQuery(handler = TmsFirstMileLogisticQueryHandler.class)
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFirstMileLogistic:paging",
+            tableAlias = "lb"
+    )
     public ApiResult<PagingVO<TmsFirstMileLogisticDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<TmsFirstMileLogisticDTO.PagingParamDTO> dto) {
         PagingVO<TmsFirstMileLogisticDTO.PagingVO> pagingVO = tmsFirstMileLogisticService.paging(dto);
         return success(pagingVO);
@@ -78,8 +90,13 @@ public class TmsFirstMileLogisticController extends BaseController {
      * @return ApiResult<String>
      */
     @GetMapping("/statistics")
-    public ApiResult<TmsFirstMileLogisticDTO.StatisticsVO> statistics() {
-        return success(tmsFirstMileLogisticService.statistics());
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFirstMileLogistic:paging",
+            tableAlias = "lb"
+    )
+    public ApiResult<TmsFirstMileLogisticDTO.StatisticsVO> statistics(TmsFirstMileLogisticDTO.PagingParamDTO dto) {
+        return success(tmsFirstMileLogisticService.statistics(dto));
     }
 
     /**
@@ -89,6 +106,11 @@ public class TmsFirstMileLogisticController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/add")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFirstMileLogistic:add",
+            serviceClass = TmsFirstMileLogisticService.class,
+            keyIdName = "id")
     @LogAction(value = LogActionEnum.INSERT, desc = "头程物流单新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Valid TmsFirstMileLogisticDTO.AddDTO dto) {
         return success(tmsFirstMileLogisticService.add(dto));
@@ -101,6 +123,11 @@ public class TmsFirstMileLogisticController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFirstMileLogistic:update",
+            serviceClass = TmsFirstMileLogisticService.class,
+            keyIdName = "id")
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程物流单更新")
     public ApiResult<Boolean> update(@RequestBody @Valid TmsFirstMileLogisticDTO.UpdateDTO dto) {
         return success(tmsFirstMileLogisticService.update(dto));
@@ -125,6 +152,11 @@ public class TmsFirstMileLogisticController extends BaseController {
      */
     @PostMapping("/updateLogisticsStatus")
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程物流单更新物流状态")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFirstMileLogistic:update",
+            serviceClass = TmsFirstMileLogisticService.class,
+            keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> updateLogisticsStatus(@RequestBody @Valid TmsFirstMileLogisticDTO.UpdateLogisticsStatusDTO dto) {
         List<BatchResultDTO> resultDTOS = tmsFirstMileLogisticService.updateLogisticsStatus(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -138,6 +170,11 @@ public class TmsFirstMileLogisticController extends BaseController {
      */
     @PostMapping("/updateRemark")
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程物流单更新备注")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFirstMileLogistic:update",
+            serviceClass = TmsFirstMileLogisticService.class,
+            keyIdName = "id")
     public ApiResult<Boolean> updateRemark(@RequestBody @Valid TmsFirstMileLogisticDTO.UpdateRemarkDTO dto) {
         return success(tmsFirstMileLogisticService.updateRemark(dto));
     }
@@ -150,6 +187,11 @@ public class TmsFirstMileLogisticController extends BaseController {
      */
     @PostMapping("/updateInvoicesStatus")
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程物流单更新发票状态")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFirstMileLogistic:update",
+            serviceClass = TmsFirstMileLogisticService.class,
+            keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> updateInvoicesStatus(@RequestBody @Valid TmsFirstMileLogisticDTO.UpdateInvoicesStatusDTO dto) {
         List<BatchResultDTO> resultDTOS = tmsFirstMileLogisticService.updateInvoicesStatus(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -175,6 +217,11 @@ public class TmsFirstMileLogisticController extends BaseController {
      */
     @PostMapping("/updateChannel")
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程物流单更新渠道")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFirstMileLogistic:update",
+            serviceClass = TmsFirstMileLogisticService.class,
+            keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> updateChannel(@RequestBody @Valid TmsFirstMileLogisticDTO.UpdateChannelDTO dto) {
         List<BatchResultDTO> resultDTOS = tmsFirstMileLogisticService.updateChannel(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -255,6 +302,11 @@ public class TmsFirstMileLogisticController extends BaseController {
      */
     @PostMapping("/delete")
     @LogAction(value = LogActionEnum.DELETE, desc = "删除头程物流单")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFirstMileLogistic:delete",
+            serviceClass = TmsFirstMileLogisticService.class,
+            keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = tmsFirstMileLogisticService.delete(dto.getIds());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);

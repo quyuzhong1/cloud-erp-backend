@@ -44,6 +44,8 @@ public class FirstMileDeliveryDTO implements Serializable {
         private String status;
 
         private String orderType;
+
+        private String permissionSql;
     }
 
     /**

@@ -263,21 +263,25 @@
     </select>
     <select id="logisticStatistics"
             resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$LogisticStatisticsDTO">
-        SELECT  EXTRACT(year FROM approve_time),  EXTRACT(month FROM approve_time) as month,
+        SELECT  EXTRACT(year FROM md.approve_time),  EXTRACT(month FROM md.approve_time) as month,
                 count(1)
-        from first_mile_delivery
-        where is_deleted = false
+        from first_mile_delivery md
+        where md.is_deleted = false
         <if test="status != null and status != ''">
-            and  approve_status = #{status}
+            and  md.approve_status = #{status}
         </if>
         <if test="beginDate != null">
-            and approve_time >= #{beginDate}
+            and md.approve_time >= #{beginDate}
         </if>
         <if test="endDate != null ">
-            and approve_time <![CDATA[<=]]>  #{endDate}
+            and md.approve_time <![CDATA[<=]]>  #{endDate}
         </if>
-        group by EXTRACT(month FROM approve_time), EXTRACT(year FROM approve_time)
-        order by  EXTRACT(year FROM approve_time), EXTRACT(month FROM approve_time)
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        group by EXTRACT(month FROM md.approve_time), EXTRACT(year FROM md.approve_time)
+        order by  EXTRACT(year FROM md.approve_time), EXTRACT(month FROM md.approve_time)
     </select>
     <select id="advanceQuery" resultType="com.erp.model.wms.entity.FirstMileDeliveryEntity">
         select

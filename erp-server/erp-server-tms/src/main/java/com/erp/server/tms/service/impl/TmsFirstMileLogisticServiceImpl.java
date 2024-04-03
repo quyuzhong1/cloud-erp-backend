@@ -428,8 +428,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         return lambdaQuery().in(LogisticsBillEntity::getOutstockId, outstockIds).list();
     }
     @Override
-    public List<TmsFirstMileLogisticDTO.TabListDTO> tabList() {
-        List<TmsFirstMileLogisticDTO.TabListDTO> tabList = baseMapper.firstMileTabList(OrderTypeEnum.FIRST_MILE.getCode());
+    public List<TmsFirstMileLogisticDTO.TabListDTO> tabList(TmsFirstMileLogisticDTO.PagingParamDTO dto) {
+        List<TmsFirstMileLogisticDTO.TabListDTO> tabList = baseMapper.firstMileTabList(OrderTypeEnum.FIRST_MILE.getCode(),dto.getPermissionSql());
         List<TmsFirstMileLogisticDTO.TabListDTO> result = new ArrayList<>();
         for(FmLogisticTrackStatusEnum logisticTrackStatusEnum : FmLogisticTrackStatusEnum.values()){
             TmsFirstMileLogisticDTO.TabListDTO tabListDTO = new TmsFirstMileLogisticDTO.TabListDTO();
@@ -644,7 +644,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
 
     @Override
-    public TmsFirstMileLogisticDTO.StatisticsVO statistics() {
+    public TmsFirstMileLogisticDTO.StatisticsVO statistics(TmsFirstMileLogisticDTO.PagingParamDTO dto) {
         TmsFirstMileLogisticDTO.StatisticsVO statisticsResult = new TmsFirstMileLogisticDTO.StatisticsVO();
         //发货统计
         TmsFirstMileLogisticDTO.StatisticsVO.DeliveryStatistics deliveryStatistics = new TmsFirstMileLogisticDTO.StatisticsVO.DeliveryStatistics();
@@ -661,15 +661,15 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 .logisticStatusList(FmLogisticTrackStatusEnum.getStatusNotWaitOrder())
                 .orderType(OrderTypeEnum.FIRST_MILE.getCode())
                 .build();
-        List<TmsFirstMileLogisticDTO.LogisticStatisticsDTO> logisticStatisticsDTOList = baseMapper.statistics(logisticStatisticsReq);
+        List<TmsFirstMileLogisticDTO.LogisticStatisticsDTO> logisticStatisticsDTOList = baseMapper.statistics(logisticStatisticsReq,dto.getPermissionSql());
         deliveryStatistics.setLastMonthOrder(!logisticStatisticsDTOList.isEmpty() ?logisticStatisticsDTOList.get(0).getCount():0);
         deliveryStatistics.setThisMonthOrder(logisticStatisticsDTOList.size()>1?logisticStatisticsDTOList.get(1).getCount():0);
         statisticsResult.setDeliveryStatistics(deliveryStatistics);
         //对账统计
-        TmsFirstMileLogisticDTO.StatisticsVO.ReconciliationStatistics reconciliationStatistics = baseMapper.reconciliationStatistics(OrderTypeEnum.FIRST_MILE.getCode());
+        TmsFirstMileLogisticDTO.StatisticsVO.ReconciliationStatistics reconciliationStatistics = baseMapper.reconciliationStatistics(OrderTypeEnum.FIRST_MILE.getCode(),dto.getPermissionSql());
         statisticsResult.setReconciliationStatistics(reconciliationStatistics);
         //超期统计
-        List<TmsFirstMileLogisticDTO.OverdueDTO> overdueList = baseMapper.overdueStatistics(OrderTypeEnum.FIRST_MILE.getCode());
+        List<TmsFirstMileLogisticDTO.OverdueDTO> overdueList = baseMapper.overdueStatistics(OrderTypeEnum.FIRST_MILE.getCode(),dto.getPermissionSql());
         overdueList.forEach(v->{
             //判断是否是数字，不是数字忽略
             String regex = "\\d*[1-9]+\\d*";

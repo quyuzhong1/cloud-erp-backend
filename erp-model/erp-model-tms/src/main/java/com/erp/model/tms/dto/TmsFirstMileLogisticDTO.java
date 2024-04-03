@@ -10,6 +10,7 @@ import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.*;
 import net.sf.cglib.core.Local;
@@ -363,7 +364,7 @@ public class TmsFirstMileLogisticDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateLogisticsStatusDTO {
+    public static class UpdateLogisticsStatusDTO extends PermissionsDTO {
 
         /**
          * id集合
