@@ -8,7 +8,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
-import com.common.core.utils.OkHttpUtils;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -74,14 +73,11 @@ public class TikTokSdkClientService {
         headerMap.put("accept", "application/json");
 
         //发起POST请求
-        String bodyStr = OkHttpUtils.doPost(baseUrl, params, headerMap);
-
-        //拉取数据
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(bodyStr, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.POST);
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.POST);
         if (!Objects.equals(apiResult.getCode(), 200)) {
-            log.error("调用url={},入参params={}, TikTok授权失败，返回值 responseMap={}", bodyStr, params.toString(), JSONUtil.toJsonStr(apiResult));
+            log.error("调用url={},入参params={}, TikTok授权失败，返回值 responseMap={}", baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult));
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok授权失败，返回值 responseMap={}",
-                    bodyStr, params.toString(), JSONUtil.toJsonStr(apiResult)));
+                    baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
         }
         //解析数据
         PlatformTikTokTokenDTO tikTokTokenDTO = null;
@@ -92,7 +88,7 @@ public class TikTokSdkClientService {
         }
 
         if (StringUtil.isBlank(tikTokTokenDTO.getData().getAccessToken())) {
-            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.TIK_TOK.getName(), bodyStr);
+            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.TIK_TOK.getName(), JSONUtil.toJsonStr(apiResult));
         }
 
         //返回token实体
@@ -116,14 +112,11 @@ public class TikTokSdkClientService {
         headerMap.put("accept", "application/json");
 
         //发起POST请求
-        String bodyStr = OkHttpUtils.doPost(baseUrl, params, headerMap);
-
-        //拉取数据
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(bodyStr, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.POST);
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.POST);
         if (!Objects.equals(apiResult.getCode(), 200)) {
-            log.error("调用url={},入参params={}, TikTok刷新token失败，返回值 responseMap={}", bodyStr, params.toString(), JSONUtil.toJsonStr(apiResult));
+            log.error("调用url={},入参params={}, TikTok刷新token失败，返回值 responseMap={}", baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult));
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok刷新token失败，返回值 responseMap={}",
-                    bodyStr, params.toString(), JSONUtil.toJsonStr(apiResult)));
+                    baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
         }
         //解析数据
         PlatformTikTokTokenDTO tikTokTokenDTO = null;
@@ -134,7 +127,7 @@ public class TikTokSdkClientService {
         }
 
         if (StringUtil.isBlank(tikTokTokenDTO.getData().getAccessToken())) {
-            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.TIK_TOK.getName(), bodyStr);
+            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.TIK_TOK.getName(), JSONUtil.toJsonStr(apiResult));
         }
 
         //返回token实体

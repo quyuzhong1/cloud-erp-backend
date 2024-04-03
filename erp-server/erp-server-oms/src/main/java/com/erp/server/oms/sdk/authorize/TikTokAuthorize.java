@@ -106,7 +106,7 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         // 进行 Base64 编码
         String state = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
         // 缓存state
-        String key = StrUtil.format(RedisCacheConstants.AUTH_TIKTOK_STATE, state);
+        String key = StrUtil.format(RedisCacheConstants.AUTH_TIKTOK_STATE, PlatformDictEnum.TIK_TOK.getCode() + state);
 
         redisUtil.set(key, shopInfo.getId(), RedisCacheConstants.THIRD_PARTY_AUTH_EXPIRATION);
 
@@ -114,7 +114,7 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         String shopAuthorizeUrl = "";
         if (ObjectUtil.isNotEmpty(cfgAppClient)) {
             //https://services.tiktokshop.com/open/authorize?service_id=7348713406587684614&state=%s
-            shopAuthorizeUrl = String.format(cfgAppClient.getUrl(), state);
+            shopAuthorizeUrl = String.format(cfgAppClient.getUrl(), PlatformDictEnum.TIK_TOK.getCode()+state);
         }
         return shopAuthorizeUrl;
     }
