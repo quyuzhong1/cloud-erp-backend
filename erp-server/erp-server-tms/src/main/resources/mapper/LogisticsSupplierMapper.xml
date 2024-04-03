@@ -238,6 +238,7 @@
                 #{item}
             </foreach>
         </where>
+        order by lc.disabled
     </select>
 
 
