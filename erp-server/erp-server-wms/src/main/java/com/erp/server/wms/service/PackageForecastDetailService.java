@@ -1,9 +1,8 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.dto.PackageForecastDTO;
-import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
+import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.PackageForecastEntity;
 
 import java.util.List;
@@ -56,4 +55,13 @@ public interface PackageForecastDetailService extends SuperService<PackageForeca
      * @param status
      */
     void updateStatusByOrderCode(String orderCode, String status);
+
+    /**
+     * @description: 根据销售订单id集合查询
+     * @author Will
+     * @date: 2024/4/1 14:52
+     * @param soIdList
+     * @return List<PackageForecastDetailEntity>
+     */
+    List<PackageForecastDetailEntity> listBySoIdList(List<String> soIdList);
 }

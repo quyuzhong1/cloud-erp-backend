@@ -255,7 +255,8 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         List<Map<String, Object>> resultAll = new ArrayList<>();
         while (dataSign) {
             //"StartRow\":0,"+// 分页取数开始行索引，从0开始，例如每页10行数据，第2页开始是10，第3页开始是20
-            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName());
+//            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName());
+            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
             List<Map<String, Object>> result = kingdeeApiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, 0);
             log.info("获取金蝶退货数据第[{}]页 有{}条记录", pageIndex, pageSize);
             if (result.size() < pageSize){
@@ -268,11 +269,11 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
             pageIndex++;
         }
         List<KingdeeReturnOrderEntity> entityList = resultAll.stream().map(entity ->
-                BeanUtil.toBean(entity, KingdeeReturnOrderEntity.class)).distinct()
+                JSONObject.parseObject(JSONObject.toJSONString(entity), KingdeeReturnOrderEntity.class)).distinct()
                 .collect(Collectors.toList());
 
         Map<String, List<KingdeeReturnOrderItemEntity>> itemMap = resultAll.stream().map(entity ->
-                BeanUtil.toBean(entity, KingdeeReturnOrderItemEntity.class))
+                        JSONObject.parseObject(JSONObject.toJSONString(entity), KingdeeReturnOrderItemEntity.class))
                 .collect(Collectors.groupingBy(KingdeeReturnOrderItemEntity::getFBillNo));
         entityList.stream().peek(m -> m.setItemEntityList(itemMap.get( m.getFBillNo())))
                 .distinct()

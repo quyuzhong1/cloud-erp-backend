@@ -5,6 +5,7 @@ import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.enums.SalesDataReportEnum;
 import com.erp.model.dmp.vo.CleanAmountAfterVO;
 import com.erp.model.dmp.vo.SyncDataReportVO;
+import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 
 import java.util.List;
@@ -94,7 +95,7 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @param userDeptList
      * @param dmpOrderInfoEntity
      */
-    void cleanDmpOrderInfo(List<SysUserDeptDTO> userDeptList, DmpOrderInfoEntity dmpOrderInfoEntity);
+    void cleanDmpOrderInfo(List<SysUserDeptDTO> userDeptList, DmpOrderInfoEntity dmpOrderInfoEntity, List<CustomerDTO.SellerUserDeptDTO> sellerUserDeptDTOS);
 
     /**
      * 获取需要清理订单列表

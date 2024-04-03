@@ -121,8 +121,8 @@ public class KingdeePullServiceTest {
         jobTaskDTO.setApiName("获取订单列表");
         jobTaskDTO.setId("30");
         jobTaskDTO.setIntervalTime(1800);
-        jobTaskDTO.setLastTime(LocalDateTime.parse("2024-02-27 17:40:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        jobTaskDTO.setNextTime(LocalDateTime.parse("2024-02-27 17:50:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setLastTime(LocalDateTime.parse("2024-04-01 17:40:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setNextTime(LocalDateTime.parse("2024-04-02 17:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         jobTaskDTO.setDictPlatform("KINGDEE_PULL_DATA_TASK");
         jobTaskDTO.setStatus(1);
         RequestDTO requestDTO = new RequestDTO();

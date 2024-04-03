@@ -307,6 +307,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         if (CollectionUtil.isEmpty(dmpOrderItemEntities)){
             return null;
         }
+        dmpOrderInfoEntity.setSite("CN");
         dmpOrderInfoEntity.setItemList(dmpOrderItemEntities);
         return dmpOrderInfoEntity;
     }

@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -12,7 +13,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -36,7 +36,6 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.vo.CustomerInfoVO;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -45,7 +44,6 @@ import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.server.oms.constant.OmsConstant;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
 import com.erp.server.oms.service.*;
@@ -59,7 +57,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.checkerframework.checker.units.qual.K;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -1807,5 +1804,40 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             List<CustomerInfoEntity> updateList = list.stream().filter(obj -> updateIdList.contains(obj.getId())).collect(Collectors.toList());
             approveEnd(dto, updateList);
         }
+    }
+
+    @Override
+    public List<CustomerDTO.SellerUserDeptDTO> listSellerUserDepByCodes(List<String> codeList) {
+        if (CollectionUtil.isEmpty(codeList)) {
+            return Collections.emptyList();
+        }
+        List<CustomerDTO.SellerUserDeptDTO> resultList = new ArrayList<>();
+        List<CustomerInfoEntity> list = lambdaQuery().in(CustomerInfoEntity::getCode, codeList).list();
+
+        //获取负责人id
+        List<String> sellerIdList = list.stream().map(req -> req.getSellerId()).distinct().collect(Collectors.toList());
+        //查询负责人部门
+        List<SysDepartmentUserNumberDTO> sysDepartmentUserNumberDTOS = sysUserFeign.listDeptUserByUserIdList(sellerIdList);
+
+        for (CustomerInfoEntity entity : list) {
+            CustomerDTO.SellerUserDeptDTO sellerUserDeptDTO = new CustomerDTO.SellerUserDeptDTO();
+            sellerUserDeptDTO.setCountryId(entity.getCountryId());
+            //客户编码
+            sellerUserDeptDTO.setCode(entity.getCode());
+            //负责人id
+            sellerUserDeptDTO.setSellerId(entity.getSellerId());
+            //负责人名称
+            sellerUserDeptDTO.setSellerName(entity.getSellerName());
+            //查询负责人部门
+            SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysDepartmentUserNumberDTOS.stream().filter(req -> entity.getSellerId().equals(req.getUserId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(sysDepartmentUserNumberDTO)) {
+                //负责人部门id
+                sellerUserDeptDTO.setDeptId(sysDepartmentUserNumberDTO.getDepartmentId());
+                //负责人部门名称
+                sellerUserDeptDTO.setDeptName(sysDepartmentUserNumberDTO.getDepartmentName());
+            }
+            resultList.add(sellerUserDeptDTO);
+        }
+        return resultList;
     }
 }

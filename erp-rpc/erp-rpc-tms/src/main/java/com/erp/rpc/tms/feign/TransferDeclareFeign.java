@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
+
 @FeignClient(name = "erp-tms", contextId = "transferDeclare")
 public interface TransferDeclareFeign {
 
@@ -41,4 +43,15 @@ public interface TransferDeclareFeign {
      **/
     @PostMapping("/feign/transferDeclare/updateOutstockStatus")
     Boolean updateOutstockStatus(@RequestBody TransferDeclareDTO.UpdateOutstockStatusDTO dto);
+
+
+    /**
+     * @description: 根据物流渠道id查询
+     * @author Will
+     * @date: 2024/4/1 12:31
+     * @param logisticsChannelIdList
+     * @return List<TransferDeclareDetailEntity>
+     */
+    @PostMapping("/feign/transferDeclare/listByLogisticsChannelIdList")
+    List<TransferDeclareDetailEntity> listByLogisticsChannelIdList(@RequestBody List<String> logisticsChannelIdList);
 }
