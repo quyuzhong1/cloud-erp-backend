@@ -169,9 +169,12 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
 
     @Override
     public List<TmsCostDetailEntity> sumCostByMainIdAndCostId(String logisticsBillCostType, List<String> logisticsBillIds) {
+        if (CollectionUtils.isEmpty(logisticsBillIds)){
+            return Collections.emptyList();
+        }
         return this.query()
                 .select("SUM(COALESCE(cost_value,0)) as cost_value", TmsCostDetailEntity.MAIN_ID, TmsCostDetailEntity.CFG_COST_ID)
-                .eq(TmsCostDetailEntity.TYPE, LogisticsBillCostTypeEnum.ESTIMATED.getCode())
+                .eq(TmsCostDetailEntity.TYPE, logisticsBillCostType)
                 .in(TmsCostDetailEntity.MAIN_ID, logisticsBillIds)
                 .groupBy(TmsCostDetailEntity.MAIN_ID, TmsCostDetailEntity.CFG_COST_ID)
                 .list();
