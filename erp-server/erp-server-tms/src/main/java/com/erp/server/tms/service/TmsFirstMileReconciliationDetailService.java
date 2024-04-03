@@ -108,4 +108,13 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      * @date: 2024-03-25
      */
     void fillDetailList(List<TmsFirstMileReconciliationDetailDTO.ListDTO> viewDTOList, String currency, String currencySymbol);
+
+    /**
+     * 根据来源IDS返回:预估/实际/差异
+     *
+     * @author Jim
+     * @date: 2024-03-25
+     */
+    List<TmsFirstMileReconciliationDetailDTO.ListDTO> addWaitReconciliation(List<String> sourceIds);
+
 }

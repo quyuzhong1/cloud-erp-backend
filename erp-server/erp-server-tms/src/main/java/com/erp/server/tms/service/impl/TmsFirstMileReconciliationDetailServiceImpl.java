@@ -352,6 +352,46 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         }
     }
 
+    @Override
+    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> addWaitReconciliation(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)){
+            return Collections.emptyList();
+        }
+        // 查询已签收（待对账）
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceList = tmsFirstMileLogisticService.listByMainIds(sourceIds);
+        if (CollectionUtils.isEmpty(sourceList)){
+            return Collections.emptyList();
+        }
+        // 只显示已签收未生成对账单
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceFilterList = sourceList.stream()
+                .filter(e -> e.getReconciliationStatus().equalsIgnoreCase(ReconciliationStatusEnum.TO_BE_GENERATED.getCode()) && e.getTransportStatus().equalsIgnoreCase(FmLogisticTrackStatusEnum.SIGN.getCode()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(sourceFilterList)){
+            return Collections.emptyList();
+        }
+        // 数据处理
+        fillWaitReconciliationList(sourceFilterList);
+
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> resultList = new LinkedList<>();
+        // 生成差异和对比数据
+        for (TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO : sourceFilterList) {
+            // 实际
+            TmsFirstMileReconciliationDetailDTO.ListDTO actualListDTO = new TmsFirstMileReconciliationDetailDTO.ListDTO();
+            BeanUtils.copyProperties(sourceListDTO, actualListDTO);
+            actualListDTO.setType(DetailReconciliationTypeEnum.ACTUAL.getCode());
+            actualListDTO.setTypeName(DetailReconciliationTypeEnum.ACTUAL.getName());
+
+            // 差异
+            TmsFirstMileReconciliationDetailDTO.ListDTO diffListDTO = new TmsFirstMileReconciliationDetailDTO.ListDTO();
+            BeanUtils.copyProperties(sourceListDTO, diffListDTO);
+            diffListDTO.setType(DetailReconciliationTypeEnum.DIFF.getCode());
+            diffListDTO.setTypeName(DetailReconciliationTypeEnum.DIFF.getName());
+            // 添加道结果
+            resultList.addAll(Arrays.asList(sourceListDTO, actualListDTO, diffListDTO));
+        }
+        return resultList;
+    }
+
     private List<String> getDeleteIds(List<TmsFirstMileReconciliationDetailEntity> newList, List<TmsFirstMileReconciliationDetailEntity> oldList) {
         List<String> newIds = newList.stream()
                 .map(TmsFirstMileReconciliationDetailEntity::getId)
