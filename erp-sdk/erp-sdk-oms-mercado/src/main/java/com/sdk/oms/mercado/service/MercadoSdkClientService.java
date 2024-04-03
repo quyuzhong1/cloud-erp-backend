@@ -127,7 +127,9 @@ public class MercadoSdkClientService {
             tokenDTO = JSONUtil.toBean(bodyStr, PlatformMercadoTokenDTO.class);
 //            log.info(String.format("::::: 美客多授权 ::::: 请求地址 => %s, 平台返回值 => %s ", baseUrl, tokenDTO));
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
+            log.error("调用url={},入参params={}, 美客多授权失败，返回值 responseMap={}, 错误信息={}", bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr), e.getMessage());
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多授权失败，返回值 responseMap={}, 错误信息={}",
+                    bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr), e.getMessage()));
         }
         if (StringUtil.isBlank(tokenDTO.getAccessToken())) {
             throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
@@ -165,7 +167,9 @@ public class MercadoSdkClientService {
             refreshTokenDTO = JSONUtil.toBean(bodyStr, PlatformMercadoRefreshTokenDTO.class);
 //            log.info(String.format("::::: 美客多刷新token ::::: 请求地址 => %s, 平台返回值 => %s ", baseUrl, refreshTokenDTO));
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
+            log.error("调用url={},入参params={}, 美客多刷新token失败，返回值 responseMap={}, 错误信息={}", bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多刷新token失败，返回值 responseMap={}",
+                    bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr), e.getMessage()));
         }
         if (StringUtil.isBlank(refreshTokenDTO.getAccessToken())) {
             throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
