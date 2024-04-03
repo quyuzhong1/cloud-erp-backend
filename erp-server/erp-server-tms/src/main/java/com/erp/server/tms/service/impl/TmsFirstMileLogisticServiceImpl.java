@@ -980,7 +980,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
         unionIdList =  unionIdList.stream().filter(u -> finalSendUserIds.contains(u.getUserId())).collect(Collectors.toList());
         List<String> unionIds = unionIdList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
-        unionIds = Arrays.asList("on_aa37795c861f338819fe466bc1127c1b");
         if(CollectionUtils.isEmpty(unionIds)){
             return;
         }
