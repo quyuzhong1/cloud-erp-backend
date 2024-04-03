@@ -35,6 +35,7 @@ import com.erp.sdk.oms.amz.spapi.model.tokens.CreateRestrictedDataTokenResponse;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiRateLimitUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -273,7 +274,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
 
 
     @DataIdempotent(keyIdName = "dto.redissonKey", waitTime = 20)
-    public PlatformAmazonOrderDTO downloadAddress(PlatformAmazonOrderDTO dto, JSONObject extendObj) {
+    public PlatformAmazonOrderDTO downloadAddressAndBuyInfo(PlatformAmazonOrderDTO dto, JSONObject extendObj) {
         if ( null != dto.getOrder().getShippingAddress() &&
                 StringUtils.isNotBlank(dto.getOrder().getShippingAddress().getName())){
             // 已有信息不请求
@@ -297,6 +298,25 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
 
         // 修改x-amz-access-token的token
         ordersVoApi.getApiClient().addDefaultHeader(ApiClient.SIGNED_ACCESS_TOKEN_HEADER_NAME, rdtToken);
+
+        // 设置地址
+        Address shippingAddress = downloadAddress(dto, ordersVoApi, limitKey);
+        Order order = dto.getOrder();
+        order.setShippingAddress(shippingAddress);
+
+        // 设置买家信息
+        OrderBuyerInfo buyerInfo = downloadBuyer(dto, ordersVoApi, limitKey);
+        BeanUtils.copyProperties(buyerInfo, order.getBuyerInfo());
+        return dto;
+    }
+
+    private Address downloadAddress(PlatformAmazonOrderDTO dto, OrdersV0Api ordersVoApi, String limitKey) {
+        String key = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.ORDER_ADDRESS.getBusinessTypeName(), dto.getUniqueId());
+        Object resultObj = redisUtil.get(key);
+        if (null != resultObj) {
+            return JSONUtil.toBean(resultObj.toString(), Address.class);
+        }
+        String rateLimitStr;
         try {
             String orderId = dto.getOrder().getAmazonOrderId();
             ApiResponse<GetOrderAddressResponse> orderAddressResp = ordersVoApi.getOrderAddressWithHttpInfo(orderId);
@@ -308,13 +328,38 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
                 BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
             }
-            Address shippingAddress = response.getPayload().getShippingAddress();
-            Order order = dto.getOrder();
-            order.setShippingAddress(shippingAddress);
+            // 结果缓存倒redis(消费完移除)
+            redisUtil.set(key, JSONUtil.toJsonStr(response.getPayload().getShippingAddress()));
+            return response.getPayload().getShippingAddress();
         } catch (Exception e) {
             throw new ServiceException("查询亚马逊订单地址失败："+JSONUtil.toJsonStr(e));
         }
-        return dto;
+    }
+
+    private OrderBuyerInfo downloadBuyer(PlatformAmazonOrderDTO dto, OrdersV0Api ordersVoApi, String limitKey) {
+        String key = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.BUYER_INFO.getBusinessTypeName(), dto.getUniqueId());
+        Object resultObj = redisUtil.get(key);
+        if (null != resultObj) {
+            return JSONUtil.toBean(resultObj.toString(), OrderBuyerInfo.class);
+        }
+        String rateLimitStr;
+        try {
+            String orderId = dto.getOrder().getAmazonOrderId();
+            ApiResponse<GetOrderBuyerInfoResponse> orderBuyerInfoResp = ordersVoApi.getOrderBuyerInfoWithHttpInfo(orderId);
+            List<String> limitArray = orderBuyerInfoResp.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
+            rateLimitStr = limitArray.get(0);
+            GetOrderBuyerInfoResponse response = orderBuyerInfoResp.getData();
+            if (StringUtils.isNotBlank(rateLimitStr)){
+                // 设置动态速率，失效时间=1/limit
+                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+            }
+            // 结果缓存倒redis(消费完移除)
+            redisUtil.set(key, JSONUtil.toJsonStr(response.getPayload()));
+            return response.getPayload();
+        } catch (Exception e) {
+            throw new ServiceException("查询亚马逊订单地址失败："+JSONUtil.toJsonStr(e));
+        }
     }
 
     /**

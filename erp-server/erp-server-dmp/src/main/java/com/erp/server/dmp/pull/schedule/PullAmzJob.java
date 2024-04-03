@@ -13,6 +13,7 @@ import com.common.business.dto.*;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
@@ -119,6 +120,9 @@ public class PullAmzJob {
 
     @Resource
     private CfgAppClientService cfgAppClientService;
+
+    @Resource
+    private RedisUtil redisUtil;
 
     /**
      * 拉取亚马逊任务
@@ -339,7 +343,7 @@ public class PullAmzJob {
                 extentJsonObj.put(AmazonRequestTypeRateLimiterEnum.limitKey, limitKey);
                 dto.setRedissonKey(redissonKey);
                 // 下载和处理地址
-                PlatformAmazonOrderDTO newDto = amazonOrderHandler.downloadAddress(dto, extentJsonObj);
+                PlatformAmazonOrderDTO newDto = amazonOrderHandler.downloadAddressAndBuyInfo(dto, extentJsonObj);
                 newDto.setDownloadStatus(1);
                 newDto.setDownloadAddressStatus(1);
                 newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
@@ -349,6 +353,21 @@ public class PullAmzJob {
                 businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
                 log.info("[拉取亚马逊订单地址任务] 无需要查询的地址,shopId={}", JSONUtil.toJsonStr(shopIds));
                 XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload下载成功, groupId={}, uniqueId={}", key, dto.getUniqueId());
+
+                // 缓存移除结果
+                String addressKey = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.ORDER_ADDRESS.getBusinessTypeName(), dto.getUniqueId());
+                String buyerKey = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.BUYER_INFO.getBusinessTypeName(), dto.getUniqueId());
+                List<String> delKeys = new LinkedList<>();
+                if (redisUtil.hasKey(addressKey)){
+                    delKeys.add(addressKey);
+                }
+                if (redisUtil.hasKey(buyerKey)){
+                    delKeys.add(buyerKey);
+                }
+                if (!delKeys.isEmpty()){
+                    redisUtil.del(delKeys.toArray(new String[0]));
+                }
+
             } catch (Exception e) {
                 // 获取锁异常等重试
                 if (e instanceof InterruptedException) {
