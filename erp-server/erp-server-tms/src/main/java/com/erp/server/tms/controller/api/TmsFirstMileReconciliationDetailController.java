@@ -136,7 +136,7 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
      * @author Jim
      * {@code @date:} 2024-03-25
      */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "导入对账单明细")
+//    @LogAction(value = LogActionEnum.IMPORT, desc = "导入对账单明细")
     @PostMapping("/importFile")
     public ApiResult<TmsFirstMileReconciliationDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated TmsFirstMileReconciliationDetailDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
         TmsFirstMileReconciliationDetailDTO.ImportDTO importDTO = tmsFirstMileReconciliationDetailService.importFile(excelImportDTO, response);

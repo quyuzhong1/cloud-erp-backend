@@ -327,6 +327,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             //国家名称
             viewDTO.setFromCountryName(countryMap.getOrDefault(viewDTO.getFromCountry(), ""));
             viewDTO.setToCountryName(countryMap.getOrDefault(viewDTO.getToCountry(), ""));
+            // 默认预计
+            if (null == viewDTO.getType()){
+                viewDTO.setType(DetailReconciliationTypeEnum.ESTIMATED.getCode());
+            }
             viewDTO.setTypeName(DetailReconciliationTypeEnum.getNameByCode(viewDTO.getType()));
 
             // 运输状态
@@ -634,10 +638,15 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         // 对应物流单(可能未保存)
 
         List<String> trackNoList = successList.stream().map(FirstMileReconciliationStandardExcelDTO::getTrackNo).distinct().collect(Collectors.toList());
+
+
         // 查询原物流单信息
-        Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> sourceLogisticMap = tmsFirstMileLogisticService.listByTrackNoListAndSupplierIds(
-                        trackNoList,
-                        Collections.singletonList(mainEntity.getLogisticsSupplierId()))
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceLogisticList = tmsFirstMileLogisticService.listByTrackNoListAndSupplierIds(
+                trackNoList,
+                Collections.singletonList(mainEntity.getLogisticsSupplierId()));
+        // 补充来源信息
+        this.fillWaitReconciliationList(sourceLogisticList);
+        Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> sourceLogisticMap = sourceLogisticList
                 .stream()
                 .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getTrackNo));
 
@@ -658,7 +667,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> oldDbGroupMap = viewDTOList
                 .stream()
                 .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getTrackNo));
-
 
         //配置信息
         Map<String, CfgReconciliationFieldDTO.ErpFieldDropDownDTO> cfgErpFieldMap = cfgReconciliationFieldService.erpFieldList(Collections.singletonList(DictBasicEnum.CFG_FIRST_MILE_ERP_FIELD.getType()))
