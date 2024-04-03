@@ -274,6 +274,10 @@ public class TmsDeclareBillDTO implements Serializable {
 
         private String id;
         /**
+         * sku
+         */
+        private String sku;
+        /**
          * 关联单号
          */
         private String code;

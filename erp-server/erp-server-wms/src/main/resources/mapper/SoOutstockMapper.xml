@@ -308,7 +308,8 @@
             concat(box_length, '*', fmc.box_width, '*', fmc.box_height) AS boxSize,
             box_length*box_width*box_height as multiplySize,
             fmc.package_weight as packageWeight,
-            fmcb.box_desc as boxDesc
+            fmcb.box_desc as boxDesc,
+        (select string_agg(cd.sku_no , ',') from wms_carton_detail cd where cd.is_deleted = false and cd.carton_id = fmc.id) as sku
         FROM so_outstock so
         INNER JOIN wms_carton fmc ON fmc.source_id = so.id AND fmc.is_deleted = FALSE
         INNER JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
