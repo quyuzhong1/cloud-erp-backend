@@ -470,6 +470,12 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          */
         @NotNull(message = "导入文件不能为空")
         private MultipartFile excelFile;
+
+        /**
+         * 详情主ID
+         */
+        @NotBlank(message = "详情主ID")
+        private String id;
     }
 
     @Data
@@ -479,7 +485,7 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         /**
          * 成功返回数据
          */
-        private List<TmsFirstMileReconciliationDetailDTO.ViewDTO> successList;
+        private List<TmsFirstMileReconciliationDetailDTO.ListDTO> successList;
 
         /**
          * 错误url
