@@ -1274,10 +1274,11 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
         }
 
+        result.setBillingMethod(logisticsChannelEntity.getFeeRule());
+        result.setBillingMethodName(ShippingFeeRuleEnum.getName(logisticsChannelEntity.getFeeRule()));
+
         ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(result.getLogisticsChannelId());
         if(Objects.nonNull(shippingTemplateEntity)){
-            result.setBillingMethod(shippingTemplateEntity.getBillingMethod());
-            result.setBillingMethodName(EnumMessage.getNameByCode(ShippingBillingMethodEnum.class,shippingTemplateEntity.getBillingMethod()));
             result.setVolumeSetting(shippingTemplateEntity.getVolumeSetting());
         }
         if(StringUtils.isNotBlank(dto.getOutstockId()) && Objects.nonNull(shippingTemplateEntity) && shippingTemplateEntity.getVolumeSetting() > 0){
