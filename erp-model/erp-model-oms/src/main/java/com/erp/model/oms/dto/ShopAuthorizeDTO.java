@@ -115,7 +115,7 @@ public class ShopAuthorizeDTO implements Serializable {
             return this;
         }
 
-        // 美客多
+        // TikTok
         if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code) && StrUtil.startWith(this.state, PlatformDictEnum.TIK_TOK.getCode())){
             this.setPlatformCode(PlatformDictEnum.MERCADOLIBRE.getCode());
             return this;
