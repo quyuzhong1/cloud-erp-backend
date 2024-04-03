@@ -514,10 +514,11 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 if(logisticsChannelEntity.getEffectiveTime().equals("0")){
                     continue;
                 }
-                //判断是否是数字，不是数字忽略
+                //判断是否是数字，不是数字的话不计算预警，直接返回中文
                 String regex = "\\d*[1-9]+\\d*";
                 Pattern pattern = Pattern.compile(regex);
                 if(!pattern.matcher(logisticsChannelEntity.getEffectiveTime()).matches()){
+                    pagingVO.setEstimatedTimeDesc(logisticsChannelEntity.getEffectiveTime());
                     continue;
                 }
                 int estimatedDay = Integer.parseInt(logisticsChannelEntity.getEffectiveTime());
@@ -1271,6 +1272,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 //现在单位只有天
                 result.setEstimatedTimeUnit("天");
                 result.setEstimatedTimeDesc(result.getEstimatedDay() + result.getEstimatedTimeUnit());
+            }else{
+                result.setEstimatedTimeDesc(logisticsChannelEntity.getEffectiveTime());
             }
         }
 
