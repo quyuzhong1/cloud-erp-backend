@@ -90,4 +90,11 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     Boolean exportExcel(LogisticsBillCostDTO.ExportExcelParamDTO dto, HttpServletResponse response);
 
     Boolean invalidByLogisticsBillId(String logisticsBillId);
+
+    /**
+     * 根据销售出库单 获取销售出库单自发货费用列表
+     * @param ids
+     * @return
+     */
+    List<LogisticsBillCostDTO.OutStockDTO> listBillCostByOutstockIds(List<String> ids);
 }

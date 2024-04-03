@@ -163,4 +163,12 @@ public interface LogisticsBillFeign {
      */
     @PostMapping("/feign/logisticsBill/listSoOutIdByQuery")
     List<String> listSoOutIdByQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer);
+
+    /**
+     * 根据销售出库单 获取销售出库单自发货费用列表
+     * @param ids
+     * @return
+     */
+    @PostMapping("/feign/logisticsBill/listBillCostByOutstockIds")
+    List<LogisticsBillCostDTO.OutStockDTO> listBillCostByOutstockIds(@RequestBody List<String> ids);
 }
