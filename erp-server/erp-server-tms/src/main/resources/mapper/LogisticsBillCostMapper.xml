@@ -291,8 +291,7 @@
             b.outstock_id AS outstockId,
             b.outstock_code AS outstockCode,
             b.transport_no AS transportNo,
-            c.reconciliation_status AS reconciliationStatus,
-            c.track_no AS trackNo
+            c.reconciliation_status AS reconciliationStatus
         FROM
             logistics_bill AS b
                 LEFT JOIN logistics_bill_cost AS c ON b.ID = c.logistics_bill_id
