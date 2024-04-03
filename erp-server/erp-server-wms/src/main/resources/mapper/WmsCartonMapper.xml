@@ -53,14 +53,12 @@
         fmcd.carton_id,
         fmcd.sku_id,
         fmcd.sku_no,
-        CASE WHEN SUM(fmdd.delivery_qty) IS NULL THEN 0 ELSE SUM(fmdd.delivery_qty) END AS deliveryQty,
         SUM(fmcd.pack_qty) AS packQty,
         SUM(fmc.box_qty) AS boxQty,
-        fmc.box_spec_no
+        fmc.box_spec_no,
+        fmc.source_type
         FROM wms_carton fmc
         INNER JOIN wms_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
-        LEFT JOIN first_mile_delivery_detail fmdd ON fmdd.main_id = fmcd.source_id AND fmdd.sku_id = fmcd.sku_id AND
-        fmdd.is_deleted = FALSE
         WHERE fmc.is_deleted = FALSE
         <if test="sourceId != null and sourceId != ''">
             AND fmcd.source_id = #{sourceId}
@@ -69,6 +67,7 @@
         fmcd.carton_id,
         fmcd.sku_id,
         fmcd.sku_no,
-        fmc.box_spec_no
+        fmc.box_spec_no,
+        fmc.source_type
     </select>
 </mapper>

@@ -436,7 +436,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param dto
      * @return java.lang.Boolean
      **/
-    Boolean packingSave(WmsCartonDTO.WmsCartonAdd dto);
+    String packingSave(WmsCartonDTO.WmsCartonAdd dto);
 
     /**
      * 装箱详情

@@ -1,5 +1,6 @@
 package com.erp.server.tms.controller.feign;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
@@ -40,8 +41,20 @@ public class TmsDeclareBillFeignController {
      * @param addDTO
      * @return com.common.business.dto.base.BaseResultDTO.AddDTO
      **/
-    @PostMapping("/add")
-    public Boolean add(@RequestBody TmsDeclareBillDTO.AddDTO addDTO) {
-        return tmsDeclareBillService.addFmDeclare(addDTO);
+    @PostMapping("/addB2BDeclare")
+    public Boolean addB2BDeclare(@RequestBody TmsDeclareBillDTO.AddDTO addDTO) {
+        return tmsDeclareBillService.addB2BDeclare(addDTO);
+    }
+
+    /**
+     * 删除报关单
+     * @Author Luo_WG
+     * @Date 2024/1/25 18:31
+     * @param dto
+     * @return com.common.business.dto.base.BaseResultDTO.AddDTO
+     **/
+    @PostMapping("/delete")
+    public List<BatchResultDTO> delete(@RequestBody TmsDeclareBillDTO.DeleteDTO dto) {
+        return tmsDeclareBillService.delete(dto);
     }
 }

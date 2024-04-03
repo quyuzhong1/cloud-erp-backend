@@ -1,35 +1,37 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.entity.TmsDeclareBillEntity;
+import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.server.wms.query.SoOutstockQueryHandler;
-import com.erp.server.wms.service.impl.PlatformRetryHandler;
 import com.erp.server.wms.service.SoOutstockService;
+import com.erp.server.wms.service.impl.PlatformRetryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -40,9 +42,9 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -63,6 +65,9 @@ public class SoOutstockController extends BaseController {
 
     @Resource
     private SoB2cFeign soB2cFeign;
+
+    @Resource
+    private TmsDeclareBillFeign tmsDeclareBillFeign;
 
 
     /**
@@ -478,8 +483,32 @@ public class SoOutstockController extends BaseController {
     @PostMapping("/packingSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "头程发货单装箱保存")
     public ApiResult packingSave(@RequestBody @Validated WmsCartonDTO.WmsCartonAdd dto) {
-        Boolean flag = soOutstockService.packingSave(dto);
-        return flag ? success() : failure();
+        String packingStatus = soOutstockService.packingSave(dto);
+
+        if (PackingStatusEnum.PACKING.getCode().equals(packingStatus)) {
+            SoOutstockEntity entity = soOutstockService.getById(dto.getId());
+            //如果装箱完成自动生成报关单
+            TmsDeclareBillDTO.AddDTO addDTO = new TmsDeclareBillDTO.AddDTO();
+            addDTO.setSourceId(entity.getId());
+            addDTO.setDeclareType(DeclareDeclareTypeEnum.INDEPENDENT.getCode());
+            addDTO.setReceiverName("香港唯迹");
+            addDTO.setDictSupervisionMethod(DeclareSupervisionMethodEnum.COMMONLY.getCode());
+            addDTO.setDictNatureLevy(DeclareNatureLevyEnum.COMMONLY.getCode());
+            addDTO.setToArea(entity.getCountry());
+            addDTO.setToPort(entity.getCountry());
+            addDTO.setDictPackType(DeclarePackTypeEnum.CARTON.getCode());
+            addDTO.setDictTransactionMethod(DeclareTransactionMethodEnum.EXW.getCode());
+            tmsDeclareBillFeign.addB2BDeclare(addDTO);
+        } else {
+            List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Arrays.asList(dto.getId()));
+            List<String> ids = tmsDeclareBillEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+            if (CollectionUtil.isNotEmpty(ids)) {
+                TmsDeclareBillDTO.DeleteDTO deleteDTO = new TmsDeclareBillDTO.DeleteDTO();
+                deleteDTO.setIds(ids);
+                tmsDeclareBillFeign.delete(deleteDTO);
+            }
+        }
+        return StringUtils.isNotBlank(packingStatus) ? success() : failure();
     }
 
     /**

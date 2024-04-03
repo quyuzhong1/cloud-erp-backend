@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -11,12 +12,12 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.WmsCartonEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.FirstMileCartonMapper;
-import com.erp.server.wms.service.WmsCartonBillService;
-import com.erp.server.wms.service.WmsCartonDetailService;
-import com.erp.server.wms.service.WmsCartonService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -48,6 +49,10 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<FirstMileCartonMapper
     private WmsCartonBillService wmsCartonBillService;
     @Autowired
     private PlmTaskFeign plmTaskFeign;
+    @Autowired
+    private SoOutstockDetailService soOutstockDetailService;
+    @Autowired
+    private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -124,11 +129,15 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<FirstMileCartonMapper
         List<WmsCartonDTO.ViewDTO> wmsCartonList = BeanMapper.copyList(wmsCartonEntities, WmsCartonDTO.ViewDTO.class);
         view.setWmsCartonList(wmsCartonList);
 
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listByMainIds(Arrays.asList(sourceId));
+        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(sourceId));
+
+
         //查询箱规包含的产品信息
         for (WmsCartonDTO.ViewDTO viewDTO : wmsCartonList) {
-
             //根据主表id分组sku查询发货及待装箱数
             List<WmsCartonDTO.PackDateDTO> packDateDTOS = this.listPackDateBySourceId(sourceId);
+
             List<WmsCartonDTO.PackDateDTO> packDateDTOList = packDateDTOS.stream().filter(req -> req.getBoxSpecNo().equals(viewDTO.getBoxSpecNo())).collect(Collectors.toList());
 
             //查询产品信息
@@ -137,9 +146,17 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<FirstMileCartonMapper
 
             List<WmsCartonDetailDTO.ViewDTO> detailList = BeanMapper.copyList(packDateDTOList, WmsCartonDetailDTO.ViewDTO.class);
             for (WmsCartonDetailDTO.ViewDTO dto : detailList) {
+                Integer deliveryQty = 0;
+                if (SourceTypeEnum.SO_OUTSTOCK.getCode().equals(dto.getSourceType())) {
+                    deliveryQty = soOutstockDetailEntities.stream().mapToInt(req -> req.getActualQty()).sum();
+                }
+                if (SourceTypeEnum.FIRST_MILE_DELIVERY.getCode().equals(dto.getSourceType())) {
+                    deliveryQty = firstMileDeliveryDetailEntities.stream().mapToInt(req -> req.getDeliveryQty()).sum();
+                }
+                dto.setDeliveryQty(deliveryQty);
                 //待装箱数量=发货数量-所有已装箱数量
                 int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).mapToInt(req -> req.getBoxQty() * req.getPackQty()).sum();
-                dto.setWaitPackQty(dto.getDeliveryQty() - packQtySum);
+                dto.setWaitPackQty(deliveryQty - packQtySum);
 
                 //匹配产品信息，设置中文名
                 SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).findFirst().orElse(null);

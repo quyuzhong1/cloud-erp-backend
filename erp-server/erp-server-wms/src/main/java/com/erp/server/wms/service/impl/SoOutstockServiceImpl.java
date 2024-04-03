@@ -80,6 +80,7 @@ import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.listener.SoOutstockPackingExcelListener;
@@ -2513,7 +2514,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional
-    public Boolean packingSave(WmsCartonDTO.WmsCartonAdd dto) {
+    public String packingSave(WmsCartonDTO.WmsCartonAdd dto) {
         //待审核的数据可以上传装箱数据
         SoOutstockEntity entity = this.getById(dto.getId());
         if (!ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
@@ -2543,23 +2544,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<SoOutstockDTO.GroupSkuDTO> groupSkuDTOList = groupSkuList.stream().filter(req -> req.getWaitPackQty() > 0).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(groupSkuDTOList)) {
             updatePackingStatus(dto.getId(), PackingStatusEnum.PACKING.getCode());
-            //如果装箱完成自动生成报关单
-
-            TmsDeclareBillDTO.AddDTO addDTO = new TmsDeclareBillDTO.AddDTO();
-            addDTO.setSourceId(entity.getId());
-            addDTO.setDeclareType(DeclareDeclareTypeEnum.INDEPENDENT.getCode());
-            addDTO.setReceiverName("香港唯迹");
-            addDTO.setDictSupervisionMethod(DeclareSupervisionMethodEnum.COMMONLY.getCode());
-            addDTO.setDictNatureLevy(DeclareNatureLevyEnum.COMMONLY.getCode());
-            addDTO.setToArea(entity.getCountry());
-            addDTO.setToPort(entity.getCountry());
-            addDTO.setDictPackType(DeclarePackTypeEnum.CARTON.getCode());
-            addDTO.setDictTransactionMethod(DeclareTransactionMethodEnum.EXW.getCode());
-            tmsDeclareBillFeign.add(addDTO);
+            return PackingStatusEnum.PACKING.getCode();
         } else {
             updatePackingStatus(dto.getId(), PackingStatusEnum.NOT_PACKING.getCode());
+            return PackingStatusEnum.NOT_PACKING.getCode();
         }
-        return Boolean.TRUE;
     }
 
     @Override
@@ -2690,7 +2679,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     firstMileCartonList.add(addDTO);
                 });
                 dto.setWmsCartonList(firstMileCartonList);
-                if(!this.packingSave(dto)){
+                if(StringUtils.isNotBlank(this.packingSave(dto))){
                     throw new ServiceException("保存装箱信息失败");
                 }
             });

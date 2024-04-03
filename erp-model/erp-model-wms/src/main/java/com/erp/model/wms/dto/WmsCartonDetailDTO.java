@@ -64,6 +64,11 @@ public class WmsCartonDetailDTO implements Serializable {
         * 待装箱数量
         */
         private Integer waitPackQty;
+
+        /**
+        * 来源类型
+        */
+        private String sourceType;
     }
 
     /**

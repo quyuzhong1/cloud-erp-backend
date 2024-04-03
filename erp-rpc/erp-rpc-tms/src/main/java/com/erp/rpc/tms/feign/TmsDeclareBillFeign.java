@@ -1,5 +1,6 @@
 package com.erp.rpc.tms.feign;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -27,6 +28,16 @@ public interface TmsDeclareBillFeign {
      * @param addDTO
      * @return com.common.business.dto.base.BaseResultDTO.AddDTO
      **/
-    @PostMapping("/feign/tmsDeclareBill/add")
-    Boolean add(@RequestBody TmsDeclareBillDTO.AddDTO addDTO);
+    @PostMapping("/feign/tmsDeclareBill/addB2BDeclare")
+    Boolean addB2BDeclare(@RequestBody TmsDeclareBillDTO.AddDTO addDTO);
+
+    /**
+     * 删除报关单
+     * @Author Luo_WG
+     * @Date 2024/1/25 18:31
+     * @param dto
+     * @return com.common.business.dto.base.BaseResultDTO.AddDTO
+     **/
+    @PostMapping("/feign/tmsDeclareBill/delete")
+    List<BatchResultDTO> delete(@RequestBody TmsDeclareBillDTO.DeleteDTO dto);
 }
