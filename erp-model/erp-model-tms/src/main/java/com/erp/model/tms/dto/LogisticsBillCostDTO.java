@@ -79,6 +79,11 @@ public class LogisticsBillCostDTO implements Serializable {
          * 下单时间集合
          */
         private List<LocalDate> orderTimeList;
+
+        /**
+         * 排除的类型
+         */
+        private List<String> excludeOrderTypeList;
     }
 
     /**

@@ -128,6 +128,11 @@ public class LogisticsBillDTO implements Serializable {
          */
         private List<String> trackStatusList;
 
+        /**
+         * 排除的类型
+         */
+        private List<String> excludeOrderTypeList;
+
     }
 
     /**

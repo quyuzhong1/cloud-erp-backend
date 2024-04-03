@@ -112,6 +112,13 @@
                     #{item}
                 </foreach>
             </if>
+            <!--需要排除的订单类型-->
+            <if test="params.excludeOrderTypeList !=null and params.excludeOrderTypeList.size>0">
+                AND lb.order_type not in
+                <foreach collection="params.excludeOrderTypeList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
             <if test="params.shopIdList != null and params.shopIdList.size > 0">
                 and lb.shop_id in
                 <foreach collection="params.shopIdList" item="item" open="(" close=")" separator=",">
