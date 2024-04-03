@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.PlatformAnnotate;
 import com.common.business.constant.RedisCacheConstants;
+import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
@@ -13,10 +14,9 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
-import com.erp.model.oms.dto.CancelAuthorizeDTO;
-import com.erp.model.oms.dto.RefreshShopTokenDTO;
-import com.erp.model.oms.dto.ShopAuthorizeDTO;
-import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
@@ -152,7 +152,6 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         Map<String, String> paramMap = new HashMap<>(4);
         paramMap.put("clientId", cfgAppClient.getClientId());
         paramMap.put("clientSecret", cfgAppClient.getClientSecret());
-        paramMap.put("redirectUri", cfgAppClient.getRedirectUrl());
         paramMap.put("baseUrl", cfgAppClient.getUrl());
         paramMap.put("code", dto.getCode());
 
@@ -171,7 +170,6 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         shopAuth.setRefreshToken(tokenDTO.getRefreshToken());
         shopAuth.setAppClientId(cfgAppClient.getId());
         shopAuth.setExpiresIn(tokenDTO.getAccessTokenExpireIn());
-
         // token 过期时间为7天 ，提前一小时过期
         LocalDateTime localDateTime = LocalDateTime.now().plusDays(7L);
         //提前半小时设置token失效，以免失效了以后才刷新容易出错
@@ -208,11 +206,124 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
 
     @Override
     public Boolean cancelAuthorize(CancelAuthorizeDTO dto) {
-        return null;
+        String shopId = dto.getShopId();
+        ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
+        if (Objects.isNull(shopInfo)) {
+            throw new ServiceException("店铺不存在");
+        }
+        //授权状态
+        String authStatus = shopInfo.getAuthStatus();
+        if (!AuthStatusEnum.ALREADY.getCode().equals(authStatus)) {
+            throw new ServiceException("该店铺未授权,无需取消授权");
+        }
+        shopInfo.setAuthStatus(AuthStatusEnum.CANCEL.getCode());
+        Boolean result = shopInfoService.updateById(shopInfo);
+        if (result) {
+            shopAuthService.removeByShopId(shopId);
+            // 删除授权
+            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(), shopInfo.getDictPlatform()));
+            shopInfo.setIsGenTask(Boolean.FALSE);
+            shopInfoService.updateShopInfoById(shopInfo);
+        }
+        // 移除缓存
+        // platform-token:平台名称:店铺ID
+        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.TIK_TOK.getCode(), shopInfo.getId());
+        Object shopInfoObj = redisUtil.get(tokenKey);
+        if (null != shopInfoObj) {
+            redisUtil.del(tokenKey);
+        }
+        return result;
     }
 
     @Override
     public Boolean refreshToken(RefreshShopTokenDTO dto) {
-        return null;
+        //先获取授权店铺 然后根据授权店铺进行
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        AppClientEnum appClientEnum = AppClientEnum.TIKTOK_ACCESS_TOKEN;
+        findDTO.setBusinessType(appClientEnum.getBusinessType());
+        findDTO.setDictPlatform(appClientEnum.getPlatform());
+        findDTO.setPlatformType(appClientEnum.getPlatformType());
+        CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        if (Objects.isNull(cfgAppClient)) {
+            return Boolean.FALSE;
+        }
+        String clientId = cfgAppClient.getClientId();
+        String baseUrl = cfgAppClient.getUrl();
+        String clientSecret = cfgAppClient.getClientSecret();
+        ShopAuthEntity shopAuthEntity = shopAuthService.getByShopId(dto.getShopId());
+        if (ObjectUtil.isEmpty(shopAuthEntity)) {
+            return Boolean.FALSE;
+        }
+
+        //组装请求实体
+        ShopDTO.RefreshTokenDTO refreshTokenDTO = new ShopDTO.RefreshTokenDTO();
+        refreshTokenDTO.setBaseUrl(baseUrl);
+        refreshTokenDTO.setRefreshToken(shopAuthEntity.getRefreshToken());
+        refreshTokenDTO.setClientId(clientId);
+        refreshTokenDTO.setClientSecret(clientSecret);
+
+        //请求SDK刷新token
+        TokenDTO tokenDTO = null;
+
+        try {
+            tokenDTO = tikTokSdkClientService.refreshToken(refreshTokenDTO);
+        } catch (Exception e) {
+            log.info("::::: TikTok刷新token失败 ::::: 错误信息：" + e.getMessage());
+            //错误3次记录错误信息，不在重试，并且发送预警通知
+            refreshErrorWarn(shopAuthEntity, e);
+        }
+
+        //获取SDK返回的数据
+        String accessToken = tokenDTO.getAccessToken();
+        String refreshToken = tokenDTO.getRefreshToken();
+        // token 过期时间为7天 ，提前一小时过期
+        LocalDateTime localDateTime = LocalDateTime.now().plusDays(7L);
+        //提前半小时设置token失效，以免失效了以后才刷新容易出错
+        LocalDateTime tokenExpireTime = localDateTime.minusMinutes(30);
+
+        //更新店铺token
+        shopAuthService.refreshToken(shopAuthEntity.getId(), accessToken, refreshToken, 7*3600*24, tokenExpireTime);
+
+        TikTokShopInfoDTO shopInfoDTO = new TikTokShopInfoDTO();
+        shopInfoDTO.setId(shopAuthEntity.getShopId());
+        shopInfoDTO.setClientId(cfgAppClient.getClientId());
+        shopInfoDTO.setClientSecret(cfgAppClient.getClientSecret());
+        shopInfoDTO.setBaseUrl(cfgAppClient.getUrl());
+        shopInfoDTO.setName(tokenDTO.getSellerName());
+        shopInfoDTO.setAccessToken(tokenDTO.getAccessToken());
+        shopInfoDTO.setSite(tokenDTO.getSellerBaseRegion());
+
+        //设置缓存
+        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.TIK_TOK.getCode(), dto.getShopId());
+        redisUtil.set(tokenKey, shopInfoDTO, 7*3600*24);
+
+        return Boolean.TRUE;
+    }
+
+    private void refreshErrorWarn(ShopAuthEntity shopAuthEntity, Exception e) {
+        //记录错误次数
+        String refreshTokenKey = StrUtil.format(RedisCacheConstants.REDIS_REFRESH_PLATFORM_TOKEN, PlatformDictEnum.TIK_TOK.getCode(), shopAuthEntity.getShopId());
+        redisUtil.incr(refreshTokenKey, 1);
+
+        //获取错误次数
+        Object refreshTokenNumObj = redisUtil.get(refreshTokenKey);
+        if (ObjectUtil.isNotEmpty(refreshTokenNumObj)) {
+            Integer refreshTokenNum = Integer.valueOf(String.valueOf(refreshTokenNumObj));
+            if (refreshTokenNum >= 3) {
+                //记录刷新失败信息
+                shopAuthService.updateRefreshTokenError(shopAuthEntity.getId(), e.getMessage());
+
+                //预警通知
+                WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+                warnMsgInfo.setBizName(PlatformDictEnum.TIK_TOK.getName());
+                warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
+                warnMsgInfo.setTitle(StrUtil.format("平台【{}】店铺id{}刷新token失败",PlatformDictEnum.TIK_TOK.getName(),shopAuthEntity.getShopId()));
+                warnMsgInfo.setTableName("shop_auth");
+                warnMsgInfo.setTableId(shopAuthEntity.getId());
+                warnMsgInfo.setKeyInfo(e.getMessage());
+                warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+                mqProducerService.sendWarnMsg(warnMsgInfo);
+            }
+        }
     }
 }
