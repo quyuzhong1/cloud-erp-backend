@@ -12,6 +12,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.file.SambaUtil;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.enums.SettingEnum;
@@ -27,20 +28,21 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.plm.listener.ProductCertificateExcelListener;
 import com.erp.server.plm.mapper.ProductCertificateMapper;
 import com.erp.server.plm.service.*;
+import jcifs.smb.NtlmPasswordAuthentication;
+import jcifs.smb.SmbFile;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -481,52 +483,55 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     /**
      * 获取MultipartFile
      */
-    private static MultipartFile getMulFileByPath(String filePath,Map<SettingEnum, String> cfgSettingMap) {
+    private  MultipartFile getMulFileByPath(String filePath,Map<SettingEnum, String> cfgSettingMap) {
         //查询配置进行转换
-        if (ObjectUtil.isNotEmpty(cfgSettingMap) && StrUtil.isNotBlank(cfgSettingMap.get(SettingEnum.PLM_PRODUCT_CERTIFICATE_IMPORT_URL))) {
-            List<String> urlList = Arrays.stream(cfgSettingMap.get(SettingEnum.PLM_PRODUCT_CERTIFICATE_IMPORT_URL).split(",")).collect(Collectors.toList());
-            filePath = filePath.replace(urlList.get(0), urlList.get(1));
+        String urlPath = toFilePath(filePath, cfgSettingMap);
+        if (StrUtil.equals(filePath,urlPath)) {
+            return FileUtil.toMultipartFile(filePath);
         }
+        //配置信息
+        Map<SettingEnum, String> nasUserMap = dmpTaskFeign.getCfgSettingList(SettingEnum.NAS_USERNAME_PWD);
+        if (ObjectUtil.isEmpty(nasUserMap)) {
+            throw new ServiceException("未找到共享文件配置信息");
+        }
+        List<String> nasUserList = Arrays.stream(nasUserMap.get(SettingEnum.PLM_NAS_USERNAME_PWD).split(",")).collect(Collectors.toList());
+        if (nasUserList.size() != 2) {
+            throw new ServiceException("未找到共享文件配置信息");
+        }
+        MultipartFile multipartFile = null;
         try {
-           String fileUrl = filePath.replace(" ","%20");
-
-            // 打开 URL 连接
-            URL url = new URL(fileUrl);
-            URLConnection conn = url.openConnection();
-            // 从连接获取输入流
-            BufferedInputStream inputStream = new BufferedInputStream(conn.getInputStream());
-
-            // 读取输入流中的数据并存储到 ByteArrayOutputStream 中
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            byte[] buffer = new byte[8192];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
-
-            // 关闭输入流
-            inputStream.close();
-
-            // 从 ByteArrayOutputStream 中获取 byte 数组
-            byte[] bytes = outputStream.toByteArray();
-
-            // 关闭 ByteArrayOutputStream
-            outputStream.close();
-
-            // 从文件路径中提取文件名
-            String fileName = "";
-            if (filePath.contains("?")) {
-                 fileName = filePath.substring(filePath.lastIndexOf("/")+1,filePath.lastIndexOf("?"));
-            } else {
-                 fileName = filePath.substring(filePath.lastIndexOf("/")+1);
-            }
-
-            // 创建 MockMultipartFile 对象
-            return new MockMultipartFile(fileName, new ByteArrayInputStream(bytes));
-        } catch (IOException e) {
-            // 捕获异常并抛出自定义的 ServiceException
-            throw new ServiceException("未能获取文件");
+             multipartFile = SambaUtil.toMultipartFile(urlPath, nasUserList.get(0), nasUserList.get(1));
+        } catch (Exception e) {
+           throw new ServiceException("获取共享文件失败");
         }
+        return multipartFile;
+    }
+
+    /**
+     * @description: 格式化url
+     * @author Will
+     * @date: 2024/4/3 15:41
+     * @param filePath
+     * @param cfgSettingMap
+     * @return String
+     */
+    private String toFilePath (String filePath,Map<SettingEnum, String> cfgSettingMap) {
+        if (ObjectUtil.isEmpty(cfgSettingMap)) {
+            return  filePath;
+        }
+        if (StrUtil.isBlank(cfgSettingMap.get(SettingEnum.PLM_PRODUCT_CERTIFICATE_IMPORT_URL))) {
+            return  filePath;
+        }
+        List<String> urlList = Arrays.stream(cfgSettingMap.get(SettingEnum.PLM_PRODUCT_CERTIFICATE_IMPORT_URL).split(",")).collect(Collectors.toList());
+        if (urlList.size() != 2) {
+            return  filePath;
+        }
+        //判断路径是否以正则开头
+        if (!filePath.matches(urlList.get(0).concat(".*"))) {
+            return  filePath;
+        }
+        String removePath = SambaUtil.removePrefix(filePath,urlList.get(0));
+        return  urlList.get(1).concat(removePath);
     }
 
     @Override
@@ -646,6 +651,48 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         }
     }
 
+    public static void main(String[] args) {
+        //String dir = "smb://172.16.100.252/it数字化部";
+        String userName = "sdc-erp";
+        String pwd = "BvuZVUxy4ulbrzsx";
+
+
+        String dir =  "172.16.100.252/it数字化部/雷智服务器使用及维护手册.zip";
+
+/*        boolean exists = false;
+        try {
+            exists = SambaUtil.exists(dir, userName, pwd);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.out.println(exists);*/
+        MultipartFile multipartFile = null;
+        try {
+             multipartFile = SambaUtil.toMultipartFile(dir, userName, pwd);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.out.println(multipartFile);
+        NtlmPasswordAuthentication auth = new NtlmPasswordAuthentication(null, userName, pwd);
+        SmbFile smbFile = null;
+        try {
+            smbFile = new SmbFile(dir);
+            if (smbFile.exists()) {
+                smbFile.connect();
+                if (smbFile.exists()) {
+                    System.out.println("连接成功！");
+                } else {
+                    System.out.println("连接失败！");
+                }
+            } else {
+                System.out.println("共享文件夹不存在！");
+            }
+            System.out.println(smbFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
 
 
     /**

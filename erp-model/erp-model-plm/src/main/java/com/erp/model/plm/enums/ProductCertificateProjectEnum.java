@@ -21,7 +21,7 @@ public enum ProductCertificateProjectEnum implements EnumMessage {
     QC_REPORT("qcReport", "质检报告"),
     SRRC("SRRC", "SRRC"),
     REACH("Reach", "Reach"),
-    TELEC("TELEC", "TEEC"),
+    TELEC("TELEC", "TELEC"),
     OTHER("other", "其他"),
     TRANSPORT_REPORT("transportReport", "运输报告"),
     OTHER_CERTIFICATE("otherCertificate", "其他认证"),
