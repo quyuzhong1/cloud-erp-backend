@@ -15,10 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -835,4 +832,12 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
 
     }
 
+    @Data
+    public static class AddWaitListDTO {
+        /**
+         * 来源ID数组
+         */
+        @NotEmpty( message = "来源ID数组不能为空")
+        private List<@NotBlank(message = "来源ID不能为空") String> sourceIdList;
+    }
 }

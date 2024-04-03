@@ -177,8 +177,8 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
             menuCode = "tms:tmsFirstMileReconciliationDetail:paging",
             tableAlias = "tfmrd"
     )
-    public ApiResult<List<TmsFirstMileReconciliationDetailDTO.ListDTO>> addWaitList(@RequestBody @Validated List<String> sourceIds) {
-        return success(tmsFirstMileReconciliationDetailService.addWaitReconciliation(sourceIds));
+    public ApiResult<List<TmsFirstMileReconciliationDetailDTO.ListDTO>> addWaitList(@RequestBody @Validated TmsFirstMileReconciliationDetailDTO.AddWaitListDTO dto) {
+        return success(tmsFirstMileReconciliationDetailService.addWaitReconciliation(dto.getSourceIdList()));
     }
 
     /**
