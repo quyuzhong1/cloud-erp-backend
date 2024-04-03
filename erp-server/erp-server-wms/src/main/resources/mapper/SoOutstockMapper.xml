@@ -368,6 +368,7 @@
                so.order_type as businessType
             from so_outstock so
         where so.is_deleted = false
+          and so.country != 'CN'
         <if test="params.packingStatus != null and params.packingStatus != ''">
             AND so.packing_status = #{params.packingStatus}
         </if>
