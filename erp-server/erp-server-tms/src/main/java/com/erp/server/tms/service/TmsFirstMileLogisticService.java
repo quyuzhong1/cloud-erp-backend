@@ -11,7 +11,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.*;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -50,10 +49,10 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
      * 根据来源id查询物流单
      * @Author Luo_WG
      * @Date 2024/3/20 10:35
-     * @param sourceIds
+     * @param outstockIds
      * @return List<TmsFirstMileLogisticEntity>
      **/
-    List<LogisticsBillEntity> listBySourceIds(List<String> sourceIds);
+    List<LogisticsBillEntity> listByOutstockIds(List<String> outstockIds);
 
 
     List<TmsFirstMileLogisticDTO.TabListDTO> tabList();

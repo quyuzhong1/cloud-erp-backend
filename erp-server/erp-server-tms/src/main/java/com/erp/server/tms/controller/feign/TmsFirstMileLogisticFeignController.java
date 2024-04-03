@@ -24,11 +24,11 @@ public class TmsFirstMileLogisticFeignController {
      * 根据来源id查询物流单
      * @Author Luo_WG
      * @Date 2024/1/25 18:31
-     * @param sourceIds
+     * @param outstockIds
      * @return com.common.business.dto.base.BaseResultDTO.AddDTO
      **/
-    @PostMapping("/listBySourceIds")
-    public List<LogisticsBillEntity> listBySourceIds(@RequestBody List<String> sourceIds) {
-        return tmsFirstMileLogisticService.listBySourceIds(sourceIds);
+    @PostMapping("/listByOutstockIds")
+    public List<LogisticsBillEntity> listByOutstockIds(@RequestBody List<String> outstockIds) {
+        return tmsFirstMileLogisticService.listByOutstockIds(outstockIds);
     }
 }

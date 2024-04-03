@@ -415,11 +415,11 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
 
     @Override
-    public List<LogisticsBillEntity> listBySourceIds(List<String> sourceIds) {
-        if (CollectionUtil.isEmpty(sourceIds)) {
+    public List<LogisticsBillEntity> listByOutstockIds(List<String> outstockIds) {
+        if (CollectionUtil.isEmpty(outstockIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(LogisticsBillEntity::getSourceId, sourceIds).list();
+        return lambdaQuery().in(LogisticsBillEntity::getOutstockId, outstockIds).list();
     }
     @Override
     public List<TmsFirstMileLogisticDTO.TabListDTO> tabList() {

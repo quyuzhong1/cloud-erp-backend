@@ -14,9 +14,9 @@ public interface TmsFirstMileLogisticFeign {
      * 根据来源id查询物流单
      * @Author Luo_WG
      * @Date 2024/1/25 18:31
-     * @param sourceIds
+     * @param outstockIds
      * @return com.common.business.dto.base.BaseResultDTO.AddDTO
      **/
-    @PostMapping("/feign/tmsFirstMileLogistic/listBySourceIds")
-    List<LogisticsBillEntity> listBySourceIds(@RequestBody List<String> sourceIds);
+    @PostMapping("/feign/tmsFirstMileLogistic/listByOutstockIds")
+    List<LogisticsBillEntity> listByOutstockIds(@RequestBody List<String> outstockIds);
 }
