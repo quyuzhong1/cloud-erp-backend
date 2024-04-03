@@ -166,7 +166,7 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
     /**
      * 确定添加待对账分账列表(提交预估)响应：预估/实际/差异
      *
-     * @param sourceIds 来源ID集合
+     * @param dto 来源ID集合
      * @return ApiResult<List<TmsFirstMileReconciliationDetailDTO.ListDTO>>
      * @author Jim
      * {@code @date:} 2024-03-25

@@ -117,4 +117,5 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      */
     List<TmsFirstMileReconciliationDetailDTO.ListDTO> addWaitReconciliation(List<String> sourceIds);
 
+    String getCurrencySymbol(String currency);
 }
