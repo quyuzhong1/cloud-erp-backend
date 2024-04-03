@@ -126,6 +126,12 @@ public class WmsCartonDetailDTO implements Serializable {
         private String boxDesc;
 
         private BigDecimal multiplySize;
+
+        private BigDecimal length;
+
+        private BigDecimal width;
+
+        private BigDecimal height;
     }
 
 }

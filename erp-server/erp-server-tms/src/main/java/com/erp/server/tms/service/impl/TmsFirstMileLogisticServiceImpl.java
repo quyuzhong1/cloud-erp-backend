@@ -224,9 +224,15 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         List<TmsCostDetailDTO.AddDTO> costDetailList = new ArrayList<>();
         for (TmsFirstMileLogisticDTO.LogisticFee logisticFee : logisticFeeList) {
             BigDecimal fee = logisticFee.getEstimatedFee();
-            if(logisticFee.getCfgCostId().equals(defaultCost.getId()) && Objects.isNull(fee)){
-                //TODO 如果是物流运费并且预估为空，则计算运费模板的费用
-//                fee =
+            if(logisticFee.getCfgCostId().equals(defaultCost.getId()) && Objects.isNull(fee) && StringUtils.isNotBlank(addDTO.getLogisticsChannelId())){
+                try {
+                    TmsFirstMileLogisticDTO.CalculateShippingCostDTO dto = new TmsFirstMileLogisticDTO.CalculateShippingCostDTO();
+                    dto.setChannelId(addDTO.getLogisticsChannelId());
+                    dto.setOutstockId(outstockId);
+                    fee = this.calculateShippingCost(dto);
+                }catch (ServiceException e){
+                    //业务异常不影响这个新增逻辑
+                }
             }
             TmsCostDetailDTO.AddDTO dto = new TmsCostDetailDTO.AddDTO();
             dto.setCostValue(fee);
@@ -1336,6 +1342,11 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     public BigDecimal calculateShippingCost(TmsFirstMileLogisticDTO.CalculateShippingCostDTO dto) {
+        LogisticsChannelEntity channelEntity = logisticsChannelService.getById(dto.getChannelId());
+        if(Objects.isNull(channelEntity)){
+            throw new ServiceException("物流渠道为空");
+        }
+
         ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(dto.getChannelId());
         if(Objects.isNull(shippingTemplateEntity)){
             throw new ServiceException("运费模板为空");
@@ -1380,16 +1391,21 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(Objects.isNull(shippingTemplateRuleEntity)){
             throw new ServiceException("运费模板规则为空");
         }
+        BigDecimal maxLength = packingDetailDTOList.stream()
+                .map(WmsCartonDetailDTO.ListPackingDetailDTO::getLength)
+                .max(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
 
-//        ShippingTemplateDTO.TrialCalculationParamDTO trialCalculationParamDTO = new ShippingTemplateDTO.TrialCalculationParamDTO();
-//        trialCalculationParamDTO.setId(shippingTemplateEntity.getId());
-//        trialCalculationParamDTO.setFromCountry("CN");
-//        trialCalculationParamDTO.setWeight(totalWeight);
-//        trialCalculationParamDTO.setToWarehouseName(logisticDTO.getToWarehouseName());
-//        trialCalculationParamDTO.setToCountry(logisticDTO.getToCountry());
-//        return shippingTemplateService.trialCalculation(trialCalculationParamDTO);
+        BigDecimal maxWidth = packingDetailDTOList.stream()
+                .map(WmsCartonDetailDTO.ListPackingDetailDTO::getWidth)
+                .max(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
 
-        return shippingCalculationService.calculationFinalShippingCost(shippingTemplateEntity,shippingTemplateRuleEntity,totalWeight).getTotalShippingCost();
+        BigDecimal maxHeight = packingDetailDTOList.stream()
+                .map(WmsCartonDetailDTO.ListPackingDetailDTO::getHeight)
+                .max(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
+        return shippingCalculationService.calculationFinalShippingCost(shippingTemplateEntity,shippingTemplateRuleEntity,channelEntity,totalWeight,maxLength,maxWidth,maxHeight).getTotalShippingCost();
     }
 
 }
