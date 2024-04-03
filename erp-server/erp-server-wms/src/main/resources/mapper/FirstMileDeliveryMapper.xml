@@ -185,7 +185,10 @@
             concat(box_length, '*', fmc.box_width, '*', fmc.box_height) AS boxSize,
             box_length*box_width*box_height as multiplySize,
             fmc.package_weight,
-            fmcb.box_desc
+            fmcb.box_desc,
+            fmc.box_length as length,
+            fmc.box_width as width,
+            fmc.box_height as height
         FROM first_mile_delivery fmd
         INNER JOIN wms_carton fmc ON fmc.source_id = fmd.id AND fmc.is_deleted = FALSE
         INNER JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
