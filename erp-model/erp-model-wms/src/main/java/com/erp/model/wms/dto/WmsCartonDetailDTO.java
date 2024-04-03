@@ -108,6 +108,10 @@ public class WmsCartonDetailDTO implements Serializable {
     public static class ListPackingDetailDTO {
         private String id;
         /**
+         * sku
+         */
+        private String sku;
+        /**
          * 箱号
          */
         private String boxNo;

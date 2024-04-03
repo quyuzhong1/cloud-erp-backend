@@ -1226,6 +1226,8 @@ public class TmsFirstMileLogisticDTO implements Serializable {
 
         private String id;
 
+        private String sku;
+
         /**
          * 箱号
          */
