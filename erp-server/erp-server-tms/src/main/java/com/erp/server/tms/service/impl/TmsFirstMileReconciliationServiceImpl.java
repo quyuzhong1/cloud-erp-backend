@@ -85,10 +85,6 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     private SysUserFeign sysUserFeign;
     @Resource
     private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
-    @Resource
-    private ShopInfoFeign shopInfoFeign;
-    @Resource
-    private SysDictFeign sysDictFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -459,47 +455,9 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listByMainIds(Collections.singletonList(data.getId()));
 
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> viewDTOList = BeanMapperUtils.copyList(TmsFirstMileReconciliationDetailDTO.ListDTO.class, detailEntityList);
-        //店铺信息
-        List<String> shopIdList = viewDTOList.stream()
-                .map(TmsFirstMileReconciliationDetailDTO.ListDTO::getShopId)
-                .distinct()
-                .collect(Collectors.toList());
-        Map<String, String> shopMap = shopInfoFeign.listShopInfoByIds(shopIdList)
-                .stream()
-                .collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
-        //国家信息
-        List<String> countryIdList = viewDTOList.stream()
-                .flatMap(route -> Stream.of(route.getFromCountry(), route.getToCountry()))
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        Map<String, String> countryMap = new HashMap<>();
-        if (!CollectionUtils.isEmpty(countryIdList)){
-            countryMap = sysDictFeign.listCountryByIds(countryIdList)
-                    .stream()
-                    .collect(Collectors.toMap(BaseEntity::getId, DictCountryEntity::getNameCn));
-        }
 
-        for (TmsFirstMileReconciliationDetailDTO.ListDTO viewDTO : viewDTOList) {
-            //店铺名称
-            viewDTO.setShopName(shopMap.getOrDefault(viewDTO.getShopId(), ""));
-            //国家名称
-            viewDTO.setFromCountryName(countryMap.getOrDefault(viewDTO.getFromCountry(), ""));
-            viewDTO.setToCountryName(countryMap.getOrDefault(viewDTO.getToCountry(), ""));
-            viewDTO.setTypeName(DetailReconciliationTypeEnum.getNameByCode(viewDTO.getType()));
+        tmsFirstMileReconciliationDetailService.fillDetailList(viewDTOList, currency, currencySymbol);
 
-            // 运输状态
-            FmLogisticTrackStatusEnum statusEnum = FmLogisticTrackStatusEnum.getNameByCode(viewDTO.getTransportStatus());
-            viewDTO.setTransportStatusName(null == statusEnum ? "" : statusEnum.getName());
-
-            // 对账状态
-            viewDTO.setStatusName(TmsB2cDeclareReconciliationStatusEnum.getName(viewDTO.getStatus()));
-            // 明细币别
-            viewDTO.setCurrencySymbol(currencySymbol);
-            viewDTO.setCurrency(currency);
-            // 来源单号=业务单号
-            viewDTO.setBusinessCode(viewDTO.getSourceCode());
-        }
         data.setDetailList(viewDTOList);
 
     }

@@ -1,12 +1,10 @@
 package com.erp.server.tms.service;
 
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
-import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -102,4 +100,12 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      * @date: 2024-03-25
      */
     Boolean update(List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList, String mainId);
+
+    /**
+     * 补充明细信息
+     *
+     * @author Jim
+     * @date: 2024-03-25
+     */
+    void fillDetailList(List<TmsFirstMileReconciliationDetailDTO.ListDTO> viewDTOList, String currency, String currencySymbol);
 }

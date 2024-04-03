@@ -105,6 +105,8 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
     List<TmsFirstMileReconciliationDetailDTO.ListDTO> waitReconciliationList(@Param("orderType") String orderType,
                                                                                 @Param("reconciliationStatus") String reconciliationStatus,
                                                                                 @Param("trackStatus") String trackStatus,
-                                                                                @Param("mainIds") List<String> mainIds
+                                                                                @Param("mainIds") List<String> mainIds,
+                                                                                @Param("trackNoList") List<String> trackNoList,
+                                                                                @Param("logisticsSupplierIdList") List<String> logisticsSupplierIdList
     );
 }

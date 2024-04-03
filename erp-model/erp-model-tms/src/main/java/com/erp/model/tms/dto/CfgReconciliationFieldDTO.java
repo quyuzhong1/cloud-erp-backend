@@ -316,6 +316,10 @@ public class CfgReconciliationFieldDTO implements Serializable {
          * ERP字段来源ID
          */
         private String sourceId;
+        /**
+         * ERP字段来源代号或分类
+         */
+        private String sourceCodeValue;
 
         public String combineUniqueCode(){
             return StrUtil.format("{}_{}", this.sourceType, this.sourceId);

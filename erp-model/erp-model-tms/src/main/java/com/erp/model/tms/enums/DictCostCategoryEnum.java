@@ -1,9 +1,13 @@
 package com.erp.model.tms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
+
+import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * 物流标签类型
@@ -52,6 +56,10 @@ public enum DictCostCategoryEnum implements EnumMessage {
             }
         }
         return "";
+    }
+
+    public static DictCostCategoryEnum getByCode(String code) {
+        return Arrays.stream(DictCostCategoryEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 }
 

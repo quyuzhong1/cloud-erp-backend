@@ -1030,7 +1030,20 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 OrderTypeEnum.FIRST_MILE.getCode(),
                 "",
                 "",
-                logisticsBillIds);
+                logisticsBillIds,
+                null,
+                null);
+    }
+
+    @Override
+    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> listByTrackNoListAndSupplierIds(List<String> trackNoList, List<String> logisticsSupplierIdList) {
+        return this.baseMapper.waitReconciliationList(
+                OrderTypeEnum.FIRST_MILE.getCode(),
+                "",
+                "",
+                null,
+                trackNoList,
+                logisticsSupplierIdList);
     }
 
     @Override

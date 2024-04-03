@@ -224,7 +224,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> resultList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
             resultList = list.stream()
-                    .map(e -> new CfgReconciliationFieldDTO.ErpFieldDropDownDTO(e.getType(), e.getName(), SourceTypeEnum.DICT_BASIC.getCode(), e.getId()))
+                    .map(e -> new CfgReconciliationFieldDTO.ErpFieldDropDownDTO(e.getType(), e.getName(), SourceTypeEnum.DICT_BASIC.getCode(), e.getId(), e.getCode()))
                     .collect(Collectors.toList());
         }
         Map<String, CfgReconciliationTypeEnum> typeMap = Arrays.stream(CfgReconciliationTypeEnum.values())
@@ -248,7 +248,8 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
                                 null == cfgReconciliationTypeEnum ? "" : cfgReconciliationTypeEnum.getCode(),
                                 e.getCostName(),
                                 SourceTypeEnum.TMS_CFG_COST.getCode(),
-                                e.getId()
+                                e.getId(),
+                                e.getDictCostCategory()
                         );
                     }).collect(Collectors.toList());
             resultList.addAll(attrList);
