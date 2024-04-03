@@ -1,5 +1,6 @@
 package com.erp.rpc.tms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "erp-tms", contextId = "logistics")
+@FeignClient(name = "erp-tms", contextId = "logistics",configuration = {FeignErrorDecoder.class})
 public interface LogisticsFeign {
 
     /**
