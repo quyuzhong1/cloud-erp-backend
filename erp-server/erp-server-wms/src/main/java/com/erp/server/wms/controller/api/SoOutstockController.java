@@ -487,18 +487,20 @@ public class SoOutstockController extends BaseController {
 
         if (PackingStatusEnum.PACKING.getCode().equals(packingStatus)) {
             SoOutstockEntity entity = soOutstockService.getById(dto.getId());
-            //如果装箱完成自动生成报关单
-            TmsDeclareBillDTO.AddDTO addDTO = new TmsDeclareBillDTO.AddDTO();
-            addDTO.setSourceId(entity.getId());
-            addDTO.setDeclareType(DeclareDeclareTypeEnum.INDEPENDENT.getCode());
-            addDTO.setReceiverName("香港唯迹");
-            addDTO.setDictSupervisionMethod(DeclareSupervisionMethodEnum.COMMONLY.getCode());
-            addDTO.setDictNatureLevy(DeclareNatureLevyEnum.COMMONLY.getCode());
-            addDTO.setToArea(entity.getCountry());
-            addDTO.setToPort(entity.getCountry());
-            addDTO.setDictPackType(DeclarePackTypeEnum.CARTON.getCode());
-            addDTO.setDictTransactionMethod(DeclareTransactionMethodEnum.EXW.getCode());
-            tmsDeclareBillFeign.addB2BDeclare(addDTO);
+            if (!"CN".equals(entity.getCountry())) {
+                //如果装箱完成自动生成报关单
+                TmsDeclareBillDTO.AddDTO addDTO = new TmsDeclareBillDTO.AddDTO();
+                addDTO.setSourceId(entity.getId());
+                addDTO.setDeclareType(DeclareDeclareTypeEnum.INDEPENDENT.getCode());
+                addDTO.setReceiverName("香港唯迹");
+                addDTO.setDictSupervisionMethod(DeclareSupervisionMethodEnum.COMMONLY.getCode());
+                addDTO.setDictNatureLevy(DeclareNatureLevyEnum.COMMONLY.getCode());
+                addDTO.setToArea(entity.getCountry());
+                addDTO.setToPort(entity.getCountry());
+                addDTO.setDictPackType(DeclarePackTypeEnum.CARTON.getCode());
+                addDTO.setDictTransactionMethod(DeclareTransactionMethodEnum.EXW.getCode());
+                tmsDeclareBillFeign.addB2BDeclare(addDTO);
+            }
         } else {
             List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Arrays.asList(dto.getId()));
             List<String> ids = tmsDeclareBillEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
