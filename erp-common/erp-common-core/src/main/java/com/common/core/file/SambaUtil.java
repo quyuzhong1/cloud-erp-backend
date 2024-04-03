@@ -157,7 +157,7 @@ public class SambaUtil {
      */
     public static MultipartFile toMultipartFile(String filepath, String username, String pwd) throws Exception {
         //字符转义
-        String fileUrl = filepath.replace(" ","%20").replace("\\","/");
+        String fileUrl = filepath.replace("\\","/");
 
         SmbFile smbFile = new SmbFile("smb://" + username + ":" + pwd + "@"
                 + fileUrl);
