@@ -205,12 +205,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private WmsCartonService wmsCartonService;
 
     @Resource
-    private WmsCartonBillService wmsCartonBillService;
-
-    @Resource
-    private WmsCartonDetailService wmsCartonDetailService;
-
-    @Resource
     private TmsDeclareBillFeign tmsDeclareBillFeign;
 
     @Override

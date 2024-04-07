@@ -1057,7 +1057,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
             Map<String,Object> map = new HashMap<>();
             map.put("code",logisticTrackStatusEnum.getCode());
-            map.put("vale",logisticTrackStatusEnum.getName());
+            map.put("value",logisticTrackStatusEnum.getName());
             result.add(map);
         }
         return result;

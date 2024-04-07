@@ -175,11 +175,11 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
         List<DictCountryEntity> sourceCountryList = sysDictFeign.listCountryByIds(sourceCountryIdList);
         Map<String,String> sourceCountryMap = sourceCountryList.stream().collect(Collectors.toMap(DictCountryEntity::getId,DictCountryEntity::getNameCn,(v1,v2)->v1));
         for (ProductDetailDTO.ProductLogisticDTO productLogisticDTO : productLogisticDTOList) {
-            productLogisticDTO.setDeclareUnit(declareUnitMap.get(productLogisticDTO.getDeclareUnit()));
+            productLogisticDTO.setDeclareUnitName(declareUnitMap.get(productLogisticDTO.getDeclareUnit()));
             productLogisticDTO.setDeclareCurrencyName(CurrencyEnum.getNameByCode(productLogisticDTO.getDeclareCurrency()));
             productLogisticDTO.setSourceCountryName(sourceCountryMap.get(productLogisticDTO.getSourceCountry()));
             for(ProductDetailDTO.ProductLogisticDTO child : productLogisticDTO.getChildList()){
-                child.setDeclareUnit(declareUnitMap.get(productLogisticDTO.getDeclareUnit()));
+                child.setDeclareUnitName(declareUnitMap.get(productLogisticDTO.getDeclareUnit()));
                 child.setDeclareCurrencyName(CurrencyEnum.getNameByCode(productLogisticDTO.getDeclareCurrency()));
                 child.setSourceCountryName(sourceCountryMap.get(productLogisticDTO.getSourceCountry()));
             }
