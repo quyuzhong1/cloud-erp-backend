@@ -1,6 +1,5 @@
 package com.sdk.oms.tictok.handler;
 
-import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -46,9 +45,7 @@ public class TikTokOrderHandler extends AbstractOrderHandler<TikTokOrderDTO, Pla
 
     public static void main(String[] args) {
         Map<String, String> queryParams = new HashMap<>();
-        queryParams.put("access_token", "ROW_GzpNXQAAAACj-JAAAriAWjVtF2MrUIFdsyKbmgpFdy5ZKZU7_DcW_ahRpfbkhswwJKnrzfpPj19EPf6OyL_uhPFuQitb3TvgTVppCInACVvzpgcRGcI3K9Zp0hN8V0cL4vJXwjXCOrBuHT-kXLvYPhzjmDJYZA3KcjPmeDpH4EsgaB-YkuAstQ");
         queryParams.put("app_key", "6buinkjt3hmld");
-        queryParams.put("sign", "6b35dab19933ca6ba538c33f04cde9a5171dfb678a05ea8aa75dfb67fcad0c48");
         queryParams.put("timestamp", "1712474227");
         queryParams.put("version", "202309");
         //设置请求头
@@ -59,9 +56,13 @@ public class TikTokOrderHandler extends AbstractOrderHandler<TikTokOrderDTO, Pla
         // 生成签名
         String generatedSign = urlParamsSort(queryParams, "/authorization/202309/shops", headerMap, secret);
         System.out.println("Generated signature: " + generatedSign);
+
+        String testStr = "8ff628de24faf70c24855de4d967fb6a17a47e3f/authorization/202309/shopsapp_key6buinkjt3hmldtimestamp1712474227version2023098ff628de24faf70c24855de4d967fb6a17a47e3f";
+        String testStr2 = "8ff628de24faf70c24855de4d967fb6a17a47e3f/authorization/202309/shopsapp_key6buinkjt3hmldshop_idtimestamp1712474227version202309{}8ff628de24faf70c24855de4d967fb6a17a47e3f";
+
         String sign = generateSHA256(generatedSign, secret);
         System.out.println(sign);
-
+        String str = "/authorization/202309/shopsapp_key6buinkjt3hmldshop_idtimestamp1712474227&version=202309";
     }
 
     /**
@@ -88,10 +89,11 @@ public class TikTokOrderHandler extends AbstractOrderHandler<TikTokOrderDTO, Pla
         }
 
         input.insert(0, path);
+        //        String str = "/authorization/202309/shopsapp_key6buinkjt3hmldshop_idtimestamp1712474227&version=202309";
         // 如果请求标头 content_type 不是 multipart/form-data，则追加到末尾 body
-        if (!"multipart/form-data".equals(headerMap.get("content_type"))) {
+/*        if (!"multipart/form-data".equals(headerMap.get("content-type"))) {
             input.append(JSONUtil.toJsonStr(queries));
-        }
+        }*/
         String finalString = secret + input.toString() + secret;
         return finalString;
     }

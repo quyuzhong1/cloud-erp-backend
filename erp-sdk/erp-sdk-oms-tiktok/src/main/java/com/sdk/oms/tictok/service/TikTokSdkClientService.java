@@ -41,39 +41,38 @@ public class TikTokSdkClientService {
     public static void test () {
         String path = "/authorization/202309/shops";
 
+        String url = "https://open-api.tiktokglobalshop.com";
+
+        String secret = "8ff628de24faf70c24855de4d967fb6a17a47e3f";
+
         // 定义查询参数
         Map<String, String> params = new HashMap<>();
-
         params.put("access_token", "ROW_GzpNXQAAAACj-JAAAriAWjVtF2MrUIFdsyKbmgpFdy5ZKZU7_DcW_ahRpfbkhswwJKnrzfpPj19EPf6OyL_uhPFuQitb3TvgTVppCInACVvzpgcRGcI3K9Zp0hN8V0cL4vJXwjXCOrBuHT-kXLvYPhzjmDJYZA3KcjPmeDpH4EsgaB-YkuAstQ");
         params.put("app_key", "6buinkjt3hmld");
         params.put("shop_id", "");
         params.put("sign", "");
-        //获取时间戳
-        params.put("timestamp", "1712471507");
+        String timestamp = System.currentTimeMillis()/1000 +"";
+        System.out.println(timestamp);
+        params.put("timestamp", "1712485014");
         params.put("version", "202309");
-
-//https://open-api.tiktokglobalshop.com/authorization/202309/shops?app_key=123abc&sign=5361235029d141222525e303d742f9e38aea052d10896d3197ab9d6233730b8c&timestamp=1625484268
-
-//https://open-api.tiktokglobalshop.com/api/shop/get_authorized_shop?app_key=123abc&access_token=aaaaa000-aaa0-aaa0-aaa0-aaaaaaaaa000&sign=5361235029d141222525e303d742f9e38aea052d10896d3197ab9d6233730b8c&timestamp=1625484268&shop_id=36123502970007
-
-
-
-
-        String secret = "8ff628de24faf70c24855de4d967fb6a17a47e3f";
 
         //设置请求头
         Map<String, String> headerMap = new HashMap<>(1);
         headerMap.put("content-type", "application/json");
+        headerMap.put("x-tts-access-token", "ROW_GzpNXQAAAACj-JAAAriAWjVtF2MrUIFdsyKbmgpFdy5ZKZU7_DcW_ahRpfbkhswwJKnrzfpPj19EPf6OyL_uhPFuQitb3TvgTVppCInACVvzpgcRGcI3K9Zp0hN8V0cL4vJXwjXCOrBuHT-kXLvYPhzjmDJYZA3KcjPmeDpH4EsgaB-YkuAstQ");
+        Map<String, String> params2 = new HashMap<>();
+        System.out.println(JSONUtil.toJsonStr(params2));
 
-        String input = urlParamsSort(params, path, headerMap, secret);
+        //请求body,POST请求才有，就是POST的入参
+        Map<String, String> bodyMap = new HashMap<>();
+
+        String input = urlParamsSort(params, path, headerMap, secret, JSONUtil.toJsonStr(bodyMap));
         // 追加请求路径
         String sign = generateSHA256(input, secret);
         System.out.println("追加请求路径后：" + input);
-
+        //加入sign入参
         params.put("sign", sign);
-
-        String url = "https://open-api.tiktokglobalshop.com";
-
+        headerMap.put("sign", "sign");
         //拉取数据
         ApiResult orderResult = HttpCommonUtil.sendOkHttpApiResult(url+path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
         if (!Objects.equals(orderResult.getCode(), 200) && !Objects.equals(orderResult.getCode(), 201)) {
@@ -82,12 +81,12 @@ public class TikTokSdkClientService {
                     url+path, headerMap.toString(), JSONUtil.toJsonStr(orderResult)));
         }
     }
-    private static void urlSplicing(StringBuilder input, String path, Map<String, String> header, String paramStr) {
+    private static void urlSplicing(StringBuilder input, String path, Map<String, String> header, String bodyStr) {
         input.insert(0, path);
 
         // 如果请求标头 content_type 不是 multipart/form-data，则追加到末尾 body
         if (!"multipart/form-data".equals(header.get("content_type"))) {
-            input.append(paramStr);
+            input.append(bodyStr);
         }
     }
 
@@ -96,7 +95,7 @@ public class TikTokSdkClientService {
      * @param queries
      * @return
      */
-    private static String urlParamsSort(Map<String, String> queries, String path, Map<String, String> headerMap, String secret) {
+    private static String urlParamsSort(Map<String, String> queries, String path, Map<String, String> headerMap, String secret, String bodyStr) {
         // 提取除 "sign" 和 "access_token" 之外的所有查询参数
         List<String> keys = new ArrayList<>();
         for (String k : queries.keySet()) {
@@ -115,10 +114,10 @@ public class TikTokSdkClientService {
         }
 
         input.insert(0, path);
-        /*// 如果请求标头 content_type 不是 multipart/form-data，则追加到末尾 body
+        // 如果请求标头 content_type 不是 multipart/form-data，则追加到末尾 body
         if (!"multipart/form-data".equals(headerMap.get("content_type"))) {
-            input.append(JSONUtil.toJsonStr(queries));
-        }*/
+            input.append(JSONUtil.toJsonStr(bodyStr));
+        }
         String finalString = secret + input.toString() + secret;
         return finalString;
     }
