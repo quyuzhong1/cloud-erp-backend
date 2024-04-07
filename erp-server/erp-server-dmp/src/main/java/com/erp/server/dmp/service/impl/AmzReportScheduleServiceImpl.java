@@ -3,6 +3,7 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.constant.BusinessCommonConstants;
+import com.common.business.dto.JobTaskDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonJobParamDTO;
@@ -11,12 +12,14 @@ import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
 import com.erp.model.dmp.enums.ReportScheduleCancelStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.CreateReportScheduleSpecification;
 import com.erp.server.dmp.mapper.AmzReportScheduleMapper;
 import com.erp.server.dmp.service.AmzReportScheduleService;
 import com.erp.server.dmp.service.CfgAmzReportTypeService;
+import com.erp.server.dmp.service.CfgSettingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +30,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,6 +51,8 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
 
     @Resource
     private CfgAmzReportTypeService cfgAmzReportTypeService;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     @Override
     public boolean existByReportScheduleId(String reportScheduleId) {
@@ -91,7 +97,7 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
         // 新增
         if (CollectionUtil.isNotEmpty(notExistReportTypeList)) {
             List<AmzReportScheduleEntity> insertEntityList = notExistReportTypeList.stream()
-                    .filter(e-> e.getCountryList().contains(marketplaceEnum.getCountryCode()))
+                    .filter(e -> e.getCountryList().contains(marketplaceEnum.getCountryCode()))
                     .map(e -> new AmzReportScheduleEntity(e.getReportType(), marketplaceEnum.getMarketplaceId(),
                             dto.getShopId(),
                             e.getPeriod(),
@@ -107,9 +113,9 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
             Map<String, CfgAmzReportTypeEntity> configMap = reportTypeConfiglist
                     .stream()
                     .collect(Collectors.toMap(CfgAmzReportTypeEntity::getReportType, Function.identity()));
-            existEntityList.forEach(e-> {
+            existEntityList.forEach(e -> {
                 CfgAmzReportTypeEntity config = configMap.get(e.getReportType());
-                if (null == config){
+                if (null == config) {
                     throw new ServiceException("报告数据异常：reportType=" + e.getReportType());
                 }
                 boolean disabled = config.getDisabled() || !config.getCountryList().contains(marketplaceEnum.getCountryCode());
@@ -184,7 +190,7 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
         CreateReportScheduleSpecification.PeriodEnum periodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getPeriod());
         OffsetDateTime roundedOffsetDateTime;
         // 是否是全量报告
-        if (config.getIsFullUpdate()){
+        if (config.getIsFullUpdate()) {
             roundedOffsetDateTime = OffsetDateTime.now(ZoneOffset.UTC);
         } else {
             // 之前的时间
@@ -204,7 +210,7 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
 
     @Override
     public List<AmzReportScheduleEntity> findActionList(List<ShopInfoEntity> shopInfoEntityList, List<CfgAmzReportTypeEntity> reportTypeConfigList, AmazonJobParamDTO.ReportJobDTO jobParamDTO, List<String> subscribedTypeList) {
-        List<String> shopIds =  shopInfoEntityList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
+        List<String> shopIds = shopInfoEntityList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
         // (任务参数优选)
         List<String> recordTypeList;
         // (任务参数优选)
@@ -218,7 +224,7 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
             minTime = null;
         }
 
-        return this.listByParams(
+        List<AmzReportScheduleEntity> sourceReportScheduleList = this.listByParams(
                 ReportScheduleSubscribedStatusEnum.ALREADY.getCode(),
                 ReportScheduleCancelStatusEnum.NONE.getCode(),
                 subscribedTypeList,
@@ -226,6 +232,25 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
                 shopIds,
                 minTime
         );
+        if (CollectionUtils.isEmpty(sourceReportScheduleList)) {
+            return Collections.emptyList();
+        }
+        // 根据报告类型延时时间
+        Map<String, Integer> delaySecondMap = cfgSettingService.getApiTaskDelaySecond(SettingEnum.AMZ_REPORT_SCHEDULE_DELAY_SECOND);
+        LocalDateTime finalMinTime = minTime;
+
+        return sourceReportScheduleList.stream().filter(e -> {
+            if (delaySecondMap.isEmpty()) {
+                return true;
+            }
+            Integer delaySecond = delaySecondMap.get(e.getReportType());
+            if (null == delaySecond) {
+                return true;
+            } else {
+                return !e.getFirstNextReportCreationTime().plusSeconds(delaySecond).isAfter(finalMinTime);
+            }
+        }).collect(Collectors.toList());
+
     }
 
     @Override
