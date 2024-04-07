@@ -12,7 +12,7 @@ public class TmsFmDeclareQueryHandler extends AbstractQueryHandler {
         if(field.equals("supplier")){
             return " exists (" +
                     "select 1 from logistics_bill lb where lb.outstock_id = db.source_id " +
-                    "and lb.supplier_id " +compareCodeSplicingValueSql+
+                    "and lb.logistics_supplier_id " +compareCodeSplicingValueSql+
                     " )";
         }
 

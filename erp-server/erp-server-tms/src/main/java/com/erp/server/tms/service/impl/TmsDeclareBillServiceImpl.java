@@ -292,7 +292,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 LogisticsBillEntity logistics = logisticsList.stream().filter(e->e.getOutstockCode().equals(v.getSourceCode())).findFirst().orElse(null);
                 if(logistics!=null){
                     LogisticsSupplierEntity supplier = supplierList.stream().filter(e->e.getId().equals(logistics.getLogisticsSupplierId())).findFirst().orElse(new LogisticsSupplierEntity());
-                    v.setLogisticsSupplierId(supplier.getSupplierId());
+                    v.setLogisticsSupplierId(supplier.getId());
                     v.setLogisticsSupplierName(supplier.getSupplierName());
                 }
                 //发货类型
@@ -304,7 +304,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 LogisticsBillEntity logistics = logisticsList.stream().filter(e->e.getOutstockCode().equals(v.getSourceCode())).findFirst().orElse(null);
                 if(logistics!=null){
                     LogisticsSupplierEntity supplier = supplierList.stream().filter(e->e.getId().equals(logistics.getLogisticsSupplierId())).findFirst().orElse(new LogisticsSupplierEntity());
-                    v.setLogisticsSupplierId(supplier.getSupplierId());
+                    v.setLogisticsSupplierId(supplier.getId());
                     v.setLogisticsSupplierName(supplier.getSupplierName());
                 }
                 //发货类型
