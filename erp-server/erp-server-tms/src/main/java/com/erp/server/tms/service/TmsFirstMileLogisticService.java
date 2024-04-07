@@ -11,11 +11,13 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -119,4 +121,6 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
      * 根据物流跟踪单分组查询物流单信息
      */
     List<TmsFirstMileReconciliationDetailDTO.ListDTO> listByTrackNoListAndSupplierIds(List<String> trackNoList, List<String> logisticsSupplierIdList);
+
+    List<Map<String,Object>> getTrackStatusList();
 }

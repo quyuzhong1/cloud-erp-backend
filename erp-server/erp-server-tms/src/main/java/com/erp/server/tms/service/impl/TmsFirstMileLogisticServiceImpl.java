@@ -431,6 +431,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         List<TmsFirstMileLogisticDTO.TabListDTO> tabList = baseMapper.firstMileTabList(OrderTypeEnum.FIRST_MILE.getCode(),dto.getPermissionSql());
         List<TmsFirstMileLogisticDTO.TabListDTO> result = new ArrayList<>();
         for(FmLogisticTrackStatusEnum logisticTrackStatusEnum : FmLogisticTrackStatusEnum.values()){
+            if(logisticTrackStatusEnum == FmLogisticTrackStatusEnum.EXCEPTION){
+                continue;
+            }
             TmsFirstMileLogisticDTO.TabListDTO tabListDTO = new TmsFirstMileLogisticDTO.TabListDTO();
             tabListDTO.setTabFlag(logisticTrackStatusEnum.getCode());
             tabListDTO.setTabFlagName(logisticTrackStatusEnum.getName());
@@ -1043,6 +1046,21 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 null,
                 trackNoList,
                 logisticsSupplierIdList);
+    }
+
+    @Override
+    public List<Map<String,Object>> getTrackStatusList() {
+        List<Map<String,Object>> result = new ArrayList<>();
+        for(FmLogisticTrackStatusEnum logisticTrackStatusEnum : FmLogisticTrackStatusEnum.values()){
+            if(logisticTrackStatusEnum == FmLogisticTrackStatusEnum.EXCEPTION){
+                continue;
+            }
+            Map<String,Object> map = new HashMap<>();
+            map.put("code",logisticTrackStatusEnum.getCode());
+            map.put("vale",logisticTrackStatusEnum.getName());
+            result.add(map);
+        }
+        return result;
     }
 
     @Override

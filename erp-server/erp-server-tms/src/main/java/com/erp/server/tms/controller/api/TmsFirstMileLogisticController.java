@@ -13,8 +13,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.EnumCacheUtils;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
+import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.server.tms.query.TmsFirstMileLogisticQueryHandler;
 import com.erp.server.tms.schedule.FmLogisticWarnJob;
 import com.erp.server.tms.service.TmsFirstMileLogisticService;
@@ -33,6 +35,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 头程物流单
@@ -344,5 +347,12 @@ public class TmsFirstMileLogisticController extends BaseController {
     @PostMapping("/waitSubmitReconciliation")
     public ApiResult<List<TmsFirstMileLogisticDTO.WaitSubmitListDTO>> waitSubmitReconciliation(@RequestBody @Valid BaseIdsDTO.IdsDTO dto){
         return success(tmsFirstMileLogisticService.waitSubmitReconciliation(dto));
+    }
+    /**
+     * 获取物流单状态（code,value）
+     */
+    @GetMapping("/getTrackStatusList")
+    public ApiResult<List<Map<String,Object>>> getTrackStatusList() {
+        return success(tmsFirstMileLogisticService.getTrackStatusList());
     }
 }
