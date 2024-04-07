@@ -69,7 +69,7 @@ public class FirstMileDeliveryDTO implements Serializable {
         /**
          * 数量
          */
-        private Integer count;
+        private Integer count = 0;
     }
 
 

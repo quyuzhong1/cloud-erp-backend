@@ -68,6 +68,10 @@
         FROM tms_declare_bill db
         where db.is_deleted = false
           and db.type = #{code}
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
         group by db.declare_status
     </select>
     <select id="paging" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$PagingVO">
@@ -111,17 +115,17 @@
         count(1)
         from tms_declare_bill db
         where db.is_deleted = false
-        <if test="declareStatus != null and declareStatus != ''">
-            and  db.declare_status = #{declareStatus}
+        <if test="params.declareStatus != null and params.declareStatus != ''">
+            and  db.declare_status = #{params.declareStatus}
         </if>
-        <if test="type != null and type != ''">
-            and  db.type = #{type}
+        <if test="params.type != null and params.type != ''">
+            and  db.type = #{params.type}
         </if>
-        <if test="beginDate != null">
-            and db.declare_date >= #{beginDate}
+        <if test="params.beginDate != null">
+            and db.declare_date >= #{params.beginDate}
         </if>
-        <if test="endDate != null ">
-            and db.declare_date <![CDATA[<=]]>  #{endDate}
+        <if test="params.endDate != null ">
+            and db.declare_date <![CDATA[<=]]>  #{params.endDate}
         </if>
         <!--权限-->
         <if test="permissionSql!=null and permissionSql!=''">

@@ -5,6 +5,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
@@ -50,8 +51,13 @@ public class TmsB2BDeclareBillController extends BaseController {
      * @return ApiResult<String>
      */
     @GetMapping("/tabList")
-    public ApiResult<List<TmsDeclareBillDTO.TabListDTO>> tabList() {
-        return success(tmsDeclareBillService.tabList(SourceTypeEnum.B2B_DECLARE_BILL));
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:paging",
+            tableAlias = "db"
+    )
+    public ApiResult<List<TmsDeclareBillDTO.TabListDTO>> tabList(PermissionsDTO permissionsDTO) {
+        return success(tmsDeclareBillService.tabList(SourceTypeEnum.B2B_DECLARE_BILL,permissionsDTO));
     }
 
     /**
@@ -86,8 +92,8 @@ public class TmsB2BDeclareBillController extends BaseController {
             menuCode = "tms:tmsB2BDeclareBill:paging",
             tableAlias = "db"
     )
-    public ApiResult<TmsDeclareBillDTO.StatisticsVO> statistics() {
-        return success(tmsDeclareBillService.statisticsBySoOut());
+    public ApiResult<TmsDeclareBillDTO.StatisticsVO> statistics(PermissionsDTO permissionsDTO) {
+        return success(tmsDeclareBillService.statisticsBySoOut(permissionsDTO));
     }
 
     /**

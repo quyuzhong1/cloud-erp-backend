@@ -386,7 +386,7 @@
             resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$LogisticStatisticsDTO">
         SELECT  EXTRACT(year FROM approve_time),  EXTRACT(month FROM approve_time) as month,
         count(1)
-        from so_outstock
+        from so_outstock so
         where is_deleted = false
         <if test="orderType != null and orderType != ''">
             and  order_type = #{orderType}
@@ -399,6 +399,10 @@
         </if>
         <if test="endDate != null ">
             and approve_time <![CDATA[<=]]>  #{endDate}
+        </if>
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
         </if>
         group by EXTRACT(month FROM approve_time), EXTRACT(year FROM approve_time)
         order by  EXTRACT(year FROM approve_time), EXTRACT(month FROM approve_time)

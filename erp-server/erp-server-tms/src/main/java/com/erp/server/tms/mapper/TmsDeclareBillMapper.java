@@ -22,11 +22,11 @@ import java.util.List;
 @Mapper
 public interface TmsDeclareBillMapper extends BaseMapper<TmsDeclareBillEntity> {
 
-    List<TmsDeclareBillDTO.TabListDTO> tabList(String code);
+    List<TmsDeclareBillDTO.TabListDTO> tabList(String code,String permissionSql);
 
     IPage<TmsDeclareBillDTO.PagingVO> paging(Page query,@Param("params") TmsDeclareBillDTO.PagingParamDTO params);
 
-    List<TmsDeclareBillDTO.StatisticsAllDTO> statistics( TmsDeclareBillDTO.StatisticsDTO build);
+    List<TmsDeclareBillDTO.StatisticsAllDTO> statistics(@Param("params") TmsDeclareBillDTO.StatisticsDTO build,String permissionSql);
 
     List<TmsDeclareBillDTO.ExportDTO> exportDeclare(@Param("params") TmsDeclareBillDTO.PagingParamDTO pagingParamDTO);
 }

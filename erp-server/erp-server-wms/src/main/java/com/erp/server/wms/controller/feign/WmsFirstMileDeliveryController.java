@@ -53,7 +53,7 @@ public class WmsFirstMileDeliveryController {
     @PostMapping("/logisticStatistics")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "tms:tmsFirstMileLogistic:paging",
+            menuCode = "wms:fbaDelivery:paging",
             tableAlias = "md"
     )
     public List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(@RequestBody FirstMileDeliveryDTO.StatisticsReq dto){
