@@ -109,6 +109,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -2769,7 +2770,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                         productDetailList.add(productDetail);
                     }
                 }
-                deliveryDTO.setNetWeight(productDetailList.stream().map(TmsDeclareBillDTO.ProductDetail::getNetWeight).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add));
+                deliveryDTO.setNetWeight(productDetailList.stream().filter(v->Objects.nonNull(v.getNetWeight())).map(v->v.getNetWeight().multiply(new BigDecimal(v.getQty())).divide(new BigDecimal(1000),4, RoundingMode.HALF_UP)).reduce(BigDecimal.ZERO, BigDecimal::add));
                 deliveryDTO.setProductDetailList(productDetailList);
             }
 
