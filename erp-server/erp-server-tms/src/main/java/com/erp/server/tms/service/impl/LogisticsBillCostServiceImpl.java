@@ -499,7 +499,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 if (ObjectUtil.isEmpty(tmsCfgCostEntity)) {
                     errorMsgList.add("费用管理未找到该费用名称");
                 } else {
-                   if (!StrUtil.equals(tmsCfgCostEntity.getDictCostAttribution(), DictCostAttributionEnum.SELF_DELIVER.getName())) {
+                   if (!StrUtil.equals(tmsCfgCostEntity.getDictCostAttribution(), DictCostAttributionEnum.SELF_DELIVER.getCode())) {
                        errorMsgList.add("费用归属非自发货不支持导入");
                    }
                 }
