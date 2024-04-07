@@ -210,6 +210,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         for (LogisticsBillDTO.AddDTO addDTO : addDTOList) {
             LogisticsBillEntity saveEntity = new LogisticsBillEntity();
             BeanMapper.copy(addDTO, saveEntity);
+            this.handleData(saveEntity);
             LogisticsBillEntity logisticsBillEntity = billEntityList.stream().filter(req -> req.getSourceId().equals(addDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(logisticsBillEntity)) {
                 saveEntity.setId(logisticsBillEntity.getId());
