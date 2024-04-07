@@ -9,6 +9,7 @@ import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -139,10 +140,12 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DataIdempotent(keyIdName = "dmpPullTaskEntity.redissonKey", waitTime = 30)
     public String saveOrUpdateDmpSyncTask(DmpPullTaskEntity dmpPullTaskEntity) {
         DmpPullTaskEntity found = lambdaQuery()
                 .eq(DmpPullTaskEntity::getSourceType, dmpPullTaskEntity.getSourceType())
                 .eq(DmpPullTaskEntity::getSourceId, dmpPullTaskEntity.getSourceId())
+                .eq(DmpPullTaskEntity::getSourceCode, dmpPullTaskEntity.getSourceCode())
                 .eq(DmpPullTaskEntity::getSourcePlatformName, dmpPullTaskEntity.getSourcePlatformName())
                 .eq(DmpPullTaskEntity::getTargetPlatformName, dmpPullTaskEntity.getTargetPlatformName())
                 .eq(DmpPullTaskEntity::getMqTopic, dmpPullTaskEntity.getMqTopic())
