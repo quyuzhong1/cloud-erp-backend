@@ -112,6 +112,9 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
 
     @Override
     public List<LogisticsBillDetailEntity> listByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.EMPTY_LIST;
+        }
         return lambdaQuery().in(LogisticsBillDetailEntity::getMainId, mainIds).list();
     }
 
