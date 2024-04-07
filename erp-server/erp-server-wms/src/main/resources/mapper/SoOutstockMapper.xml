@@ -388,6 +388,7 @@
         count(1)
         from so_outstock so
         where is_deleted = false
+          and so.declare_status != 'none'
         <if test="orderType != null and orderType != ''">
             and  order_type = #{orderType}
         </if>

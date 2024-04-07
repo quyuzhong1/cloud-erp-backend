@@ -267,6 +267,7 @@
                 count(1)
         from first_mile_delivery md
         where md.is_deleted = false
+          and md.declare_status != 'none'
         <if test="status != null and status != ''">
             and  md.approve_status = #{status}
         </if>
