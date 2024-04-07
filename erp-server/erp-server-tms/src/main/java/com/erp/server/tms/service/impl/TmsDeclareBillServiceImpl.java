@@ -11,6 +11,7 @@ import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -59,6 +60,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -216,8 +218,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
-    public List<TmsDeclareBillDTO.TabListDTO> tabList(SourceTypeEnum sourceTypeEnum) {
-        List<TmsDeclareBillDTO.TabListDTO> tabList = baseMapper.tabList(sourceTypeEnum.getCode());
+    public List<TmsDeclareBillDTO.TabListDTO> tabList(SourceTypeEnum sourceTypeEnum, PermissionsDTO permissionsDTO) {
+        List<TmsDeclareBillDTO.TabListDTO> tabList = baseMapper.tabList(sourceTypeEnum.getCode(),permissionsDTO.getPermissionSql());
         List<TmsDeclareBillDTO.TabListDTO> result = new ArrayList<>();
         for(com.erp.model.tms.enums.DeclareStatusEnum statusEnum : com.erp.model.tms.enums.DeclareStatusEnum.values()){
             TmsDeclareBillDTO.TabListDTO tabListDTO = new TmsDeclareBillDTO.TabListDTO();
@@ -242,24 +244,29 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
-    public TmsDeclareBillDTO.StatisticsVO statisticsByFm() {
+    public TmsDeclareBillDTO.StatisticsVO statisticsByFm(PermissionsDTO permissionsDTO) {
         TmsDeclareBillDTO.StatisticsVO statisticsVO = new TmsDeclareBillDTO.StatisticsVO();
         List<TmsDeclareBillDTO.StatisticsAllDTO> statisticsAllDTOList = this.baseMapper.statistics(TmsDeclareBillDTO.StatisticsDTO.builder()
                         .beginDate(DateUtil.getStartOfMonth(-1))
                         .endDate(DateUtil.getEndOfMonth(0))
                         .declareStatus(com.erp.model.tms.enums.DeclareStatusEnum.DECLARED.getCode())
                         .type(SourceTypeEnum.FM_DECLARE_BILL.getCode())
-                .build());
+                .build(),permissionsDTO.getPermissionSql());
         FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq = new FirstMileDeliveryDTO.StatisticsReq();
         deliveryStaticsReq.setStatus(ApproveStatusEnum.APPROVE.getStatus());
         deliveryStaticsReq.setBeginDate(DateUtil.getStartOfMonth(-1));
         deliveryStaticsReq.setEndDate(DateUtil.getEndOfMonth(0));
-        List<FirstMileDeliveryDTO.LogisticStatisticsDTO> deliveryLogisticDTOList = wmsFirstMileDeliveryFeign.logisticStatistics(deliveryStaticsReq);
-        statisticsVO.setLastMonthDelivery(!deliveryLogisticDTOList.isEmpty() ?deliveryLogisticDTOList.get(0).getCount():0);
-        statisticsVO.setThisMonthDelivery(deliveryLogisticDTOList.size()>1?deliveryLogisticDTOList.get(1).getCount():0);
+        List<FirstMileDeliveryDTO.LogisticStatisticsDTO> deliveryLogisticDTOList;
+        try {
+            deliveryLogisticDTOList = wmsFirstMileDeliveryFeign.logisticStatistics(deliveryStaticsReq);
+        }catch (ServiceException e){
+            deliveryLogisticDTOList = new ArrayList<>();
+        }
+        statisticsVO.setLastMonthDelivery(deliveryLogisticDTOList.stream().filter(v->v.getMonth().equals(LocalDate.now().minusMonths(1).getMonthValue())).findFirst().orElse(new FirstMileDeliveryDTO.LogisticStatisticsDTO()).getCount());
+        statisticsVO.setThisMonthDelivery(deliveryLogisticDTOList.stream().filter(v->v.getMonth().equals(LocalDate.now().getMonthValue())).findFirst().orElse(new FirstMileDeliveryDTO.LogisticStatisticsDTO()).getCount());
 
-        statisticsVO.setLastMonthDeclare(!statisticsAllDTOList.isEmpty() ?statisticsAllDTOList.get(0).getCount():0);
-        statisticsVO.setThisMonthDeclare(statisticsAllDTOList.size()>1?statisticsAllDTOList.get(1).getCount():0);
+        statisticsVO.setLastMonthDeclare(statisticsAllDTOList.stream().filter(v->v.getMonth().equals(LocalDate.now().minusMonths(1).getMonthValue())).findFirst().orElse(new TmsDeclareBillDTO.StatisticsAllDTO()).getCount());
+        statisticsVO.setThisMonthDeclare(statisticsAllDTOList.stream().filter(v->v.getMonth().equals(LocalDate.now().getMonthValue())).findFirst().orElse(new TmsDeclareBillDTO.StatisticsAllDTO()).getCount());
         return statisticsVO;
     }
 
@@ -751,26 +758,30 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
-    public TmsDeclareBillDTO.StatisticsVO statisticsBySoOut() {
+    public TmsDeclareBillDTO.StatisticsVO statisticsBySoOut(PermissionsDTO permissionsDTO) {
         TmsDeclareBillDTO.StatisticsVO statisticsVO = new TmsDeclareBillDTO.StatisticsVO();
         List<TmsDeclareBillDTO.StatisticsAllDTO> statisticsAllDTOList = this.baseMapper.statistics(TmsDeclareBillDTO.StatisticsDTO.builder()
                 .beginDate(DateUtil.getStartOfMonth(-1))
                 .endDate(DateUtil.getEndOfMonth(0))
                 .declareStatus(com.erp.model.tms.enums.DeclareStatusEnum.DECLARED.getCode())
                 .type(SourceTypeEnum.B2B_DECLARE_BILL.getCode())
-                .build());
+                .build(),permissionsDTO.getPermissionSql());
         FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq = new FirstMileDeliveryDTO.StatisticsReq();
         deliveryStaticsReq.setStatus(ApproveStatusEnum.APPROVE.getStatus());
         deliveryStaticsReq.setBeginDate(DateUtil.getStartOfMonth(-1));
         deliveryStaticsReq.setEndDate(DateUtil.getEndOfMonth(0));
         deliveryStaticsReq.setOrderType(OrderTypeEnum.B2B.getCode());
+        List<FirstMileDeliveryDTO.LogisticStatisticsDTO> deliveryLogisticDTOList;
+        try {
+            deliveryLogisticDTOList = soOutstockFeign.logisticStatistics(deliveryStaticsReq);
+        }catch (ServiceException e){
+            deliveryLogisticDTOList = new ArrayList<>();
+        }
+        statisticsVO.setLastMonthDelivery(deliveryLogisticDTOList.stream().filter(v->v.getMonth().equals(LocalDate.now().minusMonths(1).getMonthValue())).findFirst().orElse(new FirstMileDeliveryDTO.LogisticStatisticsDTO()).getCount());
+        statisticsVO.setThisMonthDelivery(deliveryLogisticDTOList.stream().filter(v->v.getMonth().equals(LocalDate.now().getMonthValue())).findFirst().orElse(new FirstMileDeliveryDTO.LogisticStatisticsDTO()).getCount());
 
-        List<FirstMileDeliveryDTO.LogisticStatisticsDTO> deliveryLogisticDTOList = soOutstockFeign.logisticStatistics(deliveryStaticsReq);
-        statisticsVO.setLastMonthDelivery(!deliveryLogisticDTOList.isEmpty() ?deliveryLogisticDTOList.get(0).getCount():0);
-        statisticsVO.setThisMonthDelivery(deliveryLogisticDTOList.size()>1?deliveryLogisticDTOList.get(1).getCount():0);
-
-        statisticsVO.setLastMonthDeclare(!statisticsAllDTOList.isEmpty() ?statisticsAllDTOList.get(0).getCount():0);
-        statisticsVO.setThisMonthDeclare(statisticsAllDTOList.size()>1?statisticsAllDTOList.get(1).getCount():0);
+        statisticsVO.setLastMonthDeclare(statisticsAllDTOList.stream().filter(v->v.getMonth().equals(LocalDate.now().minusMonths(1).getMonthValue())).findFirst().orElse(new TmsDeclareBillDTO.StatisticsAllDTO()).getCount());
+        statisticsVO.setThisMonthDeclare(statisticsAllDTOList.stream().filter(v->v.getMonth().equals(LocalDate.now().getMonthValue())).findFirst().orElse(new TmsDeclareBillDTO.StatisticsAllDTO()).getCount());
         return statisticsVO;
     }
 

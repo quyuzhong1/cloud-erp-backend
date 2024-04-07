@@ -1,7 +1,9 @@
 package com.erp.server.wms.controller.feign;
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -155,6 +157,11 @@ public class SoOutstockFeignController {
      * @return
      */
     @PostMapping("/logisticStatistics")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:so:outstock:paging",
+            tableAlias = "so"
+    )
     List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(@RequestBody FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq) {
         return soOutstockService.logisticStatistics(deliveryStaticsReq);
     }

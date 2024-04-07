@@ -877,7 +877,7 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          * 数量
          */
-        private Integer count;
+        private Integer count = 0;
     }
     /**
      * 列表统计返回结果

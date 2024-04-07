@@ -30,11 +30,11 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
     Boolean update(TmsDeclareBillDTO.UpdateDTO dto,SourceTypeEnum sourceTypeEnum);
 
 
-    List<TmsDeclareBillDTO.TabListDTO> tabList(SourceTypeEnum sourceTypeEnum);
+    List<TmsDeclareBillDTO.TabListDTO> tabList(SourceTypeEnum sourceTypeEnum,PermissionsDTO permissionsDTO);
 
     PagingVO<TmsDeclareBillDTO.PagingVO> paging(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto);
 
-    TmsDeclareBillDTO.StatisticsVO statisticsByFm();
+    TmsDeclareBillDTO.StatisticsVO statisticsByFm(PermissionsDTO permissionsDTO);
 
     List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeliveryOrder(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
 
@@ -67,7 +67,7 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
 
     List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateSoOut(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
 
-    TmsDeclareBillDTO.StatisticsVO statisticsBySoOut();
+    TmsDeclareBillDTO.StatisticsVO statisticsBySoOut(PermissionsDTO permissionsDTO);
 
     Boolean addB2BDeclare(TmsDeclareBillDTO.AddDTO dto);
 }
