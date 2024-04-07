@@ -784,7 +784,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     public List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateSoOut(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO) {
         List<TmsDeclareBillDTO.SoOutDTO> deliveryDTOList = soOutstockFeign.getCanGenerateDeclare(querySourceDTO);
         List<String> sourceCodes = deliveryDTOList.stream().map(TmsDeclareBillDTO.SoOutDTO::getSourceCode).collect(Collectors.toList());
-        List<LogisticsBillEntity> logisticsBillEntityList = logisticService.listByOutstockIdList(sourceCodes);
+        List<LogisticsBillEntity> logisticsBillEntityList = logisticService.listByOutstockCodeList(sourceCodes);
         List<String> supplierIds = logisticsBillEntityList.stream().map(LogisticsBillEntity::getLogisticsSupplierId).distinct().collect(Collectors.toList());
         List<LogisticsSupplierEntity> logisticsSupplierEntityList = new ArrayList<>();
         if(CollectionUtils.isNotEmpty(supplierIds)){
