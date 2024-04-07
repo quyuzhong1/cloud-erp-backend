@@ -789,7 +789,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         addDTO.setCurrency(ObjectUtil.isNotEmpty(shippingTemplateEntity) ? shippingTemplateEntity.getCurrency() : CurrencyEnum.CNY.getCurrencyCode());
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
-        addDTO.setTransportNo(logisticsBillEntity.getTransportNo());
         addDTO.setChannelId(logisticsBillEntity.getChannelId());
 
         for (LogisticsBillDetailEntity detailEntity : list) {

@@ -96,7 +96,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         LogisticsBillCostEntity logisticsBillCostEntity = new LogisticsBillCostEntity();
         BeanMapperUtils.copy(addDTO, logisticsBillCostEntity);
 
-        logisticsBillCostEntity.setTransportNo(addDTO.getTransportNo());
         logisticsBillCostEntity.setChannelId(addDTO.getChannelId());
 
         // 数据处理
@@ -378,6 +377,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     * 新增修改处理数据
     */
     private void handleData(LogisticsBillCostEntity entity) {
+
+        //物流单号
+        LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(entity.getLogisticsBillId());
+        if (ObjectUtil.isNotEmpty(logisticsBillEntity)) {
+            entity.setTransportNo(logisticsBillEntity.getTransportNo());
+        }
 
         //计费重
         BigDecimal billingWeight = MathUtil.compareTo(entity.getActualWeight(),entity.getVolumeWeight()) > MathUtil.ZERO

@@ -287,7 +287,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         }
         costAddDTO.setCurrency(addDTO.getCurrency());
         costAddDTO.setRemark(addDTO.getRemark());
-        costAddDTO.setTransportNo(addDTO.getTransportNo());
         costAddDTO.setChannelId(addDTO.getLogisticsChannelId());
         costAddDTO.setVolumeWeightLogistics(addDTO.getActualVolumeWeight());
         costAddDTO.setWeightLogistics(addDTO.getActualWeight());
