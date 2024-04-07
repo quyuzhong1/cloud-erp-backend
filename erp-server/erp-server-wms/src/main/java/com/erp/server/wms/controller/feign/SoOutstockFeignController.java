@@ -12,9 +12,11 @@ import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.server.wms.service.SoOutstockDetailService;
 import com.erp.server.wms.service.SoOutstockService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -89,6 +91,14 @@ public class SoOutstockFeignController {
         return soOutstockService.listBySoIds(soIds);
     }
 
+
+    @PostMapping("/listByIds")
+    List<SoOutstockEntity> listByIds(@RequestBody List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
+            return new ArrayList<>();
+        }
+        return soOutstockService.listByIds(ids);
+    }
 
     /**
      * 根据销售订单详情ids 获取对应的出库详情

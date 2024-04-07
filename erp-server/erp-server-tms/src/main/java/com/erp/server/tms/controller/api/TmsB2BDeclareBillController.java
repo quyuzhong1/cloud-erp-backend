@@ -163,7 +163,8 @@ public class TmsB2BDeclareBillController extends BaseController {
     @PostMapping("/updateToDeclare")
     @LogAction(value = LogActionEnum.UPDATE, desc = "B2B报关单更新状态为已报关")
     public ApiResult<List<BatchResultDTO>> updateToDeclare(@RequestBody @Validated TmsDeclareBillDTO.UpdateDeclareStatusDTO dto) {
-        return success(tmsDeclareBillService.updateToDeclare(dto));
+        List<BatchResultDTO> resultDTOList = tmsDeclareBillService.updateToDeclare(dto,SourceTypeEnum.B2B_DECLARE_BILL);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
@@ -175,7 +176,8 @@ public class TmsB2BDeclareBillController extends BaseController {
     @PostMapping("/cancelDeclare")
     @LogAction(value = LogActionEnum.UPDATE, desc = "B2B报关单更新状态为取消报关")
     public ApiResult<List<BatchResultDTO>> cancelDeclare(@RequestBody @Validated TmsDeclareBillDTO.UpdateDeclareStatusDTO dto) {
-        return success(tmsDeclareBillService.cancelDeclare(dto));
+        List<BatchResultDTO> resultDTOList = tmsDeclareBillService.cancelDeclare(dto);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
@@ -199,7 +201,8 @@ public class TmsB2BDeclareBillController extends BaseController {
     @PostMapping("/cancelMerge")
     @LogAction(value = LogActionEnum.UPDATE, desc = "B2B报关单取消合并")
     public ApiResult<List<BatchResultDTO>> cancelMerge(@RequestBody @Validated TmsDeclareBillDTO.MergeDeclareDTO dto) {
-        return success(tmsDeclareBillService.cancelMerge(dto));
+        List<BatchResultDTO> resultDTOList = tmsDeclareBillService.cancelMerge(dto);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
@@ -211,7 +214,8 @@ public class TmsB2BDeclareBillController extends BaseController {
     @PostMapping("/delete")
     @LogAction(value = LogActionEnum.UPDATE, desc = "B2B报关单删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated TmsDeclareBillDTO.DeleteDTO dto) {
-        return success(tmsDeclareBillService.delete(dto));
+        List<BatchResultDTO> resultDTOList = tmsDeclareBillService.delete(dto);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
 

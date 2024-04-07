@@ -40,7 +40,7 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
 
     TmsDeclareBillDTO.ViewDTO view(String id);
 
-    List<BatchResultDTO> updateToDeclare(TmsDeclareBillDTO.UpdateDeclareStatusDTO dto);
+    List<BatchResultDTO> updateToDeclare(TmsDeclareBillDTO.UpdateDeclareStatusDTO dto,SourceTypeEnum sourceTypeEnum);
 
     List<BatchResultDTO> cancelDeclare(TmsDeclareBillDTO.UpdateDeclareStatusDTO dto);
 

@@ -47,6 +47,9 @@ public interface SoOutstockFeign {
     @PostMapping("feign/soOutstock/listBySoIds")
     List<SoOutstockEntity> listBySoIds(@RequestBody List<String> soIds);
 
+    @PostMapping("feign/soOutstock/listByIds")
+    List<SoOutstockEntity> listByIds(@RequestBody List<String> ids);
+
     @PostMapping("feign/soOutstock/listDetailBySoDetailIds")
     List<SoOutstockDetailDTO.DeliveryQtyDTO> listDetailBySoDetailIds(List<String> soDetailIds);
 

@@ -35,6 +35,8 @@ import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.PackingStatusEnum;
@@ -424,11 +426,22 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public List<BatchResultDTO> updateToDeclare(TmsDeclareBillDTO.UpdateDeclareStatusDTO dto) {
+    public List<BatchResultDTO> updateToDeclare(TmsDeclareBillDTO.UpdateDeclareStatusDTO dto,SourceTypeEnum sourceTypeEnum) {
         if(Objects.isNull(dto.getDate())){
             throw new ServiceException("报关日期不能为空");
         }
         List<TmsDeclareBillEntity> entityList = this.listByIds(dto.getIds());
+        if(CollectionUtils.isEmpty(entityList)){
+            return new ArrayList<>();
+        }
+        List<String> sourceIds = entityList.stream().map(TmsDeclareBillEntity::getSourceId).collect(Collectors.toList());
+        List<SoOutstockEntity> soOutstockEntityList = new ArrayList<>();
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = new ArrayList<>();
+        if(sourceTypeEnum == SourceTypeEnum.B2B_DECLARE_BILL){
+            soOutstockEntityList = soOutstockFeign.listByIds(sourceIds);
+        }else if (sourceTypeEnum == SourceTypeEnum.FM_DECLARE_BILL){
+            firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(sourceIds);
+        }
         List<TmsDeclareBillEntity> updateList = new ArrayList<>();
         List<BatchResultDTO> resultList = new ArrayList<>();
         for (TmsDeclareBillEntity entity : entityList) {
@@ -436,7 +449,29 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有待报关的单据才能更新成已报关"));
                 continue;
             }
+            if(sourceTypeEnum == SourceTypeEnum.B2B_DECLARE_BILL){
+                SoOutstockEntity soOutstockEntity = soOutstockEntityList.stream().filter(v->v.getId().equals(entity.getSourceId())).findFirst().orElse(null);
+                if(Objects.isNull(soOutstockEntity)){
+                    resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"查询不到来源的出库单"));
+                    continue;
+                }
+                if(!soOutstockEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
+                    resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),StrUtil.format("关联单据{}尚未审核通过无法报关",soOutstockEntity.getCode())));
+                    continue;
+                }
+            }else if (sourceTypeEnum == SourceTypeEnum.FM_DECLARE_BILL){
+                FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(v->v.getId().equals(entity.getSourceId())).findFirst().orElse(null);
+                if(Objects.isNull(firstMileDeliveryEntity)){
+                    resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"查询不到来源的发货单"));
+                    continue;
+                }
+                if(!firstMileDeliveryEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
+                    resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),StrUtil.format("关联单据{}尚未审核通过无法报关",firstMileDeliveryEntity.getCode())));
+                    continue;
+                }
+            }
             entity.setDeclareStatus(com.erp.model.tms.enums.DeclareStatusEnum.DECLARED.getCode());
+            entity.setDeclareDate(dto.getDate());
             updateList.add(entity);
         }
         if(CollectionUtils.isNotEmpty(updateList)){

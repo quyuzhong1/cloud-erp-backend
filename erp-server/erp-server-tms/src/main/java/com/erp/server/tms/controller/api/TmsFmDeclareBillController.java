@@ -163,7 +163,7 @@ public class TmsFmDeclareBillController extends BaseController {
     @PostMapping("/updateToDeclare")
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程报关单更新状态为已报关")
     public ApiResult<List<BatchResultDTO>> updateToDeclare(@RequestBody @Validated TmsDeclareBillDTO.UpdateDeclareStatusDTO dto) {
-        List<BatchResultDTO> resultDTOList = tmsDeclareBillService.updateToDeclare(dto);
+        List<BatchResultDTO> resultDTOList = tmsDeclareBillService.updateToDeclare(dto,SourceTypeEnum.FM_DECLARE_BILL);
         return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
