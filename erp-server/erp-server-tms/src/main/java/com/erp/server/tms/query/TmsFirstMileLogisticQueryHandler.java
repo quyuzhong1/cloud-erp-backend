@@ -31,9 +31,9 @@ public class TmsFirstMileLogisticQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if(field.equals("fromWarehouse") || field.equals("toWarehouse")){
+        if(field.equals("deliveryWarehouse") || field.equals("toWarehouse")){
             String queryField;
-            if(field.equals("fromWarehouse") ){
+            if(field.equals("deliveryWarehouse")){
                 queryField = "fw.id";
             }else{
                 queryField = "tw.id";
