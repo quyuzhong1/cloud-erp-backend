@@ -166,6 +166,9 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
      */
     private  LocalDateTime calculateShipTime(LocalDateTime effectiveTime,Integer sailingInterval, String dateType, Integer startDate, LocalTime startTime, LocalDateTime orderTime) {
         LocalDateTime nextTargetDay;
+        if(effectiveTime.isAfter(orderTime)){
+            return effectiveTime;
+        }
         if(dateType.equals(TmsCfgSailingDateTypeEnum.WEEK.getCode())){
             //判断有效日期的周几与开船周几，如果小于， 则开船日期等于本周的开船日期，如果等于，则开船日期为当天 + 开船时间 如果大于，则下一个开船日期等于本周的开船日期+开船间隔
             // 获取当前时间是星期几
