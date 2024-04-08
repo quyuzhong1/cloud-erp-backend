@@ -298,25 +298,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                 v.setQcGoodQty(qcReceiveResultDTO.getQcGoodQty());
             }
         });
-        //增加汇总列表
-        String code = "合计";
-        int orderQty = 0;
-        int deliveryQty = 0;
-        int giftQty = 0;
-        int receiveQty = 0;
-        int giftReceiveQty = 0;
-        int qcGoodQty = 0;
-        if (CollectionUtils.isNotEmpty(list)){
-            orderQty = list.stream().filter(e -> Objects.nonNull(e.getOrderQty())).mapToInt(DeliveryOrderExportExcelDTO::getOrderQty).sum();
-            deliveryQty = list.stream().filter(e -> Objects.nonNull(e.getDeliveryQty())).mapToInt(DeliveryOrderExportExcelDTO::getDeliveryQty).sum();
-            giftQty = list.stream().filter(e -> Objects.nonNull(e.getGiftQty())).mapToInt(DeliveryOrderExportExcelDTO::getGiftQty).sum();
-            receiveQty = list.stream().filter(e -> Objects.nonNull(e.getReceiveQty())).mapToInt(DeliveryOrderExportExcelDTO::getReceiveQty).sum();
-            giftReceiveQty = list.stream().filter(e -> Objects.nonNull(e.getGiftReceiveQty())).mapToInt(DeliveryOrderExportExcelDTO::getGiftReceiveQty).sum();
-            qcGoodQty = list.stream().filter(e -> Objects.nonNull(e.getQcGoodQty())).mapToInt(DeliveryOrderExportExcelDTO::getQcGoodQty).sum();
-        }
-        list.add(new DeliveryOrderExportExcelDTO().setCode(code).setOrderQty(orderQty).setDeliveryQty(deliveryQty)
-                .setGiftQty(giftQty).setReceiveQty(receiveQty).setGiftReceiveQty(giftReceiveQty).setQcGoodQty(qcGoodQty));
-
         return list;
     }
 

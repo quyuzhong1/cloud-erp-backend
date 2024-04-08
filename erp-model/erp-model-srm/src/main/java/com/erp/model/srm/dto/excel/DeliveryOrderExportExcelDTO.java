@@ -6,7 +6,6 @@ import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.business.utils.LocalDateStringConverter;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -16,7 +15,6 @@ import java.time.LocalDateTime;
  * 发货单导出
  */
 @Data
-@Accessors(chain = true)
 public class DeliveryOrderExportExcelDTO implements Serializable {
 
     @ExcelIgnore
