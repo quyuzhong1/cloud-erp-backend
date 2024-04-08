@@ -1,6 +1,7 @@
 package com.erp.rpc.wms.feign;
 
 import com.erp.model.wms.dto.PackageForecastDTO;
+import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,5 +26,15 @@ public interface PackageForecastFeign {
      */
     @PostMapping("feign/packageForecast/add")
     Boolean add(@RequestBody List<PackageForecastDTO.AddDTO> addList);
+
+    /**
+     * @description: 根据销售订单id集合查询
+     * @author Will
+     * @date: 2024/4/1 14:50
+     * @param soIdList
+     * @return List<PackageForecastDetailEntity>
+     */
+    @PostMapping("feign/packageForecast/listBySoIdList")
+    List<PackageForecastDetailEntity> listBySoIdList(@RequestBody List<String> soIdList);
 
 }

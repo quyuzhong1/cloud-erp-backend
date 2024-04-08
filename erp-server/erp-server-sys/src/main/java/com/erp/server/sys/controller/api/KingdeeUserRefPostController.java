@@ -5,6 +5,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.KingdeePostEntity;
 import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
 import com.erp.server.sys.query.KingdeeOperatorQueryHandler;
@@ -55,7 +56,18 @@ public class KingdeeUserRefPostController extends BaseController {
 
 
 
-
+    /**
+     * 根据人员id查询部门
+     * @author Will
+     * @date: 2023/3/27 12:10
+     * @param userId
+     * @return ApiResult
+     */
+    @GetMapping("/getDeptByUserId")
+    public ApiResult<KingdeeUserRefPostEntity> getDeptByUserId(@RequestParam("userId") String userId) {
+        KingdeeUserRefPostEntity entity = kingdeeUserRefPostService.getDeptByUserId(userId);
+        return success(entity);
+    }
 
     /**
      * 分页查询

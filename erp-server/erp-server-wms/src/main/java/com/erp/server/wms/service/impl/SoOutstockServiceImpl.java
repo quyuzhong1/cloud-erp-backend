@@ -40,15 +40,14 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.model.tms.dto.LogisticsBillDTO;
-import com.erp.model.tms.dto.LogisticsBillDetailDTO;
-import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.dto.*;
+import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -179,7 +178,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private StocktakingProfitLossService stocktakingProfitLossService;
-
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -540,6 +538,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (!ingStatus.equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+
 
         // 调用流程审核
         approveProcess(entity, dto);
@@ -911,7 +910,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String code = b2cList.stream().map(SoOutstockEntity::getCode).collect(Collectors.joining(","));
             throw new ServiceException(ApiError.B2C_SO_OUTSTOCK_NOT_DIS_APPROVE, code);
         }
+
+
+
         //审核通过
+        // 增加 出库单关联的自发货费用单据已确认状态下，不允许出库单反审核
+        List<LogisticsBillCostDTO.OutStockDTO> outStockDTOS = logisticsBillFeign.listBillCostByOutstockIds(ids);
+        List<LogisticsBillCostDTO.OutStockDTO> outStockDTOList = outStockDTOS.stream().filter(e -> StringUtils.isNotEmpty(e.getReconciliationStatus())
+                        && ReconciliationStatusEnum.CONFIRMED.getCode().equals(e.getReconciliationStatus()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(outStockDTOList)){
+            String code = outStockDTOList.stream().map(LogisticsBillCostDTO.OutStockDTO::getOutstockCode).distinct().collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_SO_OUTSTOCK_BILL_COST_NOT_DIS_APPROVE, code);
+        }
         //待提交
         if (!isPushKingDee) {
             list = list.stream().filter(x -> ApproveStatusEnum.APPROVE.equals(x.getApproveStatus())).collect(Collectors.toList());
@@ -1761,7 +1772,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> receiveAddressId = soInfoEntities.stream().map(SoInfoEntity::getReceiveAddressId).collect(Collectors.toList());
         List<CustomerAddressEntity> customerAddressEntities = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(receiveAddressId)) {
-            customerAddressEntities.addAll(customerFeign.ListCustomerAddressByIds(receiveAddressId));
+            customerAddressEntities.addAll(customerFeign.listCustomerAddressByIds(receiveAddressId));
         }
         for (SoOutstockEntity soOutstockEntity : soOutstockEntities) {
             //根据客户id获取客户信息
@@ -2456,4 +2467,5 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
     }
+
 }

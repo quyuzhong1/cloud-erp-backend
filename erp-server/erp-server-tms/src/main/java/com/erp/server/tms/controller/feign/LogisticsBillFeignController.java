@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
@@ -15,6 +16,7 @@ import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
+import com.erp.server.tms.service.LogisticsBillCostService;
 import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsBillService;
 import com.erp.server.tms.service.LogisticsPrintTypeService;
@@ -37,7 +39,8 @@ public class LogisticsBillFeignController {
     private LogisticsBillDetailService logisticsBillDetailService;
     @Resource
     private LogisticsPrintTypeService logisticsPrintTypeService;
-
+    @Resource
+    private LogisticsBillCostService logisticsBillCostService;
     /**
      * 新增物流单
      *
@@ -227,5 +230,15 @@ public class LogisticsBillFeignController {
     @WebAdvanceQuery
     public List<String> listSoOutIdByQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer){
         return logisticsBillService.listSoOutIdByQuery(advanceQueryContainer);
+    }
+
+    /**
+     * 根据销售出库单 获取销售出库单自发货费用列表
+     * @param ids
+     * @return
+     */
+    @PostMapping("/listBillCostByOutstockIds")
+    public List<LogisticsBillCostDTO.OutStockDTO> listBillCostByOutstockIds(@RequestBody List<String> ids){
+        return logisticsBillCostService.listBillCostByOutstockIds(ids);
     }
 }

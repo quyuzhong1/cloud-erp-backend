@@ -1,10 +1,10 @@
 package com.erp.server.tms.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -52,4 +52,12 @@ public interface LogisticsSupplierMapper extends BaseMapper<LogisticsSupplierEnt
      *@date 2023-11-16
      */
     LogisticsSupplierDTO.AuthDTO getLogisticsSupplierAuthById(@Param("id") String id);
+    /**
+     * @description: 查询渠道
+     * @author Will
+     * @date: 2024/4/1 11:19
+     * @param logisticsSupplierIdList
+     * @return List<LogisticsSupplierListDTO>
+     */
+    List<LogisticsSupplierDTO.LogisticsSupplierListDTO> listLogisticsChannel(@Param("logisticsSupplierIdList")List<String> logisticsSupplierIdList);
 }

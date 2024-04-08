@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -57,5 +58,18 @@ public class TransferDeclareFeignController {
     @PostMapping("/updateOutstockStatus")
     public Boolean updateOutstockStatus(@RequestBody TransferDeclareDTO.UpdateOutstockStatusDTO dto) {
         return transferDeclareDetailService.updateOutstockStatus(dto);
+    }
+
+    /**
+     * 根据物流渠道id集合查询
+     * @author Will
+     * @date: 2024/4/1 12:32
+     * @param logisticsChannelIdList
+     * @return List<TransferDeclareDetailEntity>
+     */
+    @PostMapping("/listByLogisticsChannelIdList")
+    public List<TransferDeclareDetailEntity> listByLogisticsChannelIdList(@RequestBody List<String> logisticsChannelIdList) {
+        List<TransferDeclareDetailEntity> list = transferDeclareDetailService.listByLogisticsChannelIdList(logisticsChannelIdList);
+        return list;
     }
 }

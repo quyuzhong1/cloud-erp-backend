@@ -364,4 +364,14 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
         return result;
     }
 
+    @Override
+    public KingdeeUserRefPostEntity getDeptByUserId(String userId) {
+        List<KingdeeUserRefPostEntity> list = lambdaQuery().eq(KingdeeUserRefPostEntity::getErpUserId, userId).list();
+        if (CollectionUtils.isNotEmpty(list)){
+            return list.get(0);
+        }else {
+            return null;
+        }
+    }
+
 }

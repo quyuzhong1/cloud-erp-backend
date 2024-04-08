@@ -210,6 +210,14 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
                 .update();
     }
 
+    @Override
+    public List<TransferDeclareDetailEntity> listByLogisticsChannelIdList(List<String> logisticsChannelIdList) {
+        if (CollectionUtils.isEmpty(logisticsChannelIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(TransferDeclareDetailEntity::getLogisticsChannelId,logisticsChannelIdList).list();
+    }
+
     /**
      * 新增修改处理数据
      */

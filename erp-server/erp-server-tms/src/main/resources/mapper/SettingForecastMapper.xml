@@ -47,9 +47,9 @@
         select
           <include refid="Base_Column_List" />
         from setting_forecast
-        WHERE logistics_supplier_id=
-        (SELECT main_id FROM logistics_channel WHERE id=#{logisticsChannelId} AND is_deleted=FALSE)
-        AND is_deleted=FALSE  LIMIT 1
+        WHERE is_deleted = false and id in (
+            select main_id from  setting_forecast_channel where is_deleted = false and logistics_channel_id = #{logisticsChannelId}
+        )
     </select>
 
 </mapper>

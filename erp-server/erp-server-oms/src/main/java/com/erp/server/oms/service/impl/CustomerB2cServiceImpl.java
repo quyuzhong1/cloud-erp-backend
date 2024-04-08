@@ -1462,9 +1462,10 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             entity.setName(receiverEntity.getName());
             entity.setApproveStatus(ApproveStatusEnum.APPROVE);
             entity.setDisabled(false);
-            if (!updateById(entity)){
-                throw new ServiceException("[CustomerB2cEntity] 更新失败");
-            }
+            updateById(entity);
+//            if (!updateById(entity)){
+//                throw new ServiceException("[CustomerB2cEntity] 更新失败");
+//            }
             return entity;
         }
     }
