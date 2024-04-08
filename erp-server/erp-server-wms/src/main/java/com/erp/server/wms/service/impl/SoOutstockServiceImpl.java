@@ -167,6 +167,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private SoB2cFeign soB2cFeign;
 
     @Resource
+    private ShopInfoFeign shopInfoFeign;
+    
+    @Resource
     private TransferDeclareFeign transferDeclareFeign;
 
     @Resource
@@ -177,10 +180,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private StocktakingProfitLossService stocktakingProfitLossService;
-
-    
-    @Resource
-    private ShopInfoFeign shopInfoFeign;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
