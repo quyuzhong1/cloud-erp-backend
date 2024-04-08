@@ -1,14 +1,18 @@
 package com.erp.server.srm.controller.api;
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.SortParamDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
@@ -22,6 +26,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -71,12 +76,6 @@ public class PurchaseOrderController extends BaseController {
     @WebAdvanceQuery(handler = OrderConfirmQueryHandler.class)
     public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> srmOrderConfirmPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto) {
         dto.getParams().setSupplierId(userService.getSupplierId());
-        if (CollectionUtils.isEmpty(dto.getParams().getSortList())){
-            SortParamDTO sortParamDTO = new SortParamDTO();
-            sortParamDTO.setField("po.approve_time");
-            sortParamDTO.setSort("DESC");
-            dto.getParams().setSortList(Collections.singletonList(sortParamDTO));
-        }
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderFeign.srmOrderConfirmPaging(dto);
         return success(pagingVO);
     }
@@ -119,5 +118,23 @@ public class PurchaseOrderController extends BaseController {
     @GetMapping("/srmOrderView")
     public ApiResult<PurchaseOrderDTO.ViewDTO> srmOrderView(@RequestParam("id") String id) {
         return success(purchaseOrderFeign.srmOrderView(id));
+    }
+
+
+    /**
+     *  导出
+     * @author Will
+     * @date: 2023/3/15 18:23
+     * @param dto
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购订单")
+    @PostMapping(value = "/exportExcel")
+    @WebAdvanceQuery(handler = OrderConfirmQueryHandler.class)
+    public ApiResult exportExcel(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto, HttpServletResponse response) {
+        dto.setSupplierId(userService.getSupplierId());
+        Boolean flag = purchaseOrderFeign.exportSrmExcel(dto, response);
+        return flag == true ? success() : failure();
     }
 }

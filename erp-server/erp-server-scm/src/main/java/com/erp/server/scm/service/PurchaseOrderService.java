@@ -429,4 +429,12 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param response
      */
     Boolean importEndReceiveFile(MultipartFile multipartFile, HttpServletResponse response);
+
+    /**
+     * 导出srm供应商采购订单
+     * @param dto
+     * @param response
+     * @return
+     */
+    Boolean exportSrmExcel(PurchaseOrderDTO.SrmSearchParamDTO dto, HttpServletResponse response);
 }

@@ -15,6 +15,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
@@ -480,5 +481,16 @@ public class PurchaseOrderFeignController {
     public List<PurchaseOrderDTO.ListDTO> generateDeliveryList(@RequestBody PurchaseOrderSrmDTO.GenerateDeliveryParamDTO dto){
         List<PurchaseOrderDTO.ListDTO> list = purchaseOrderService.generateDeliveryList(dto);
         return list;
+    }
+
+    /**
+     * 导出srm供应商采购订单
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping("/exportSrmExcel")
+    public Boolean exportSrmExcel(PurchaseOrderDTO.SrmSearchParamDTO dto, HttpServletResponse response){
+        return purchaseOrderService.exportSrmExcel(dto, response);
     }
 }

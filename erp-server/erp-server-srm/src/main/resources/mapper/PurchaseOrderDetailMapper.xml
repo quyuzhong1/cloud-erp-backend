@@ -163,7 +163,7 @@
             </foreach>
         </if>
         <if test="params.sortList == null or params.sortList.size == 0">
-            pod.plan_delivery_date ASC
+            planDeliveryDate ASC
         </if>
     </select>
 </mapper>

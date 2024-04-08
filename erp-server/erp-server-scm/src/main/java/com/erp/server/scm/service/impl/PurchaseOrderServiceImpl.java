@@ -1458,6 +1458,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             Boolean srmDisabled = supplierList.stream().filter(e -> StrUtil.equals(e.getId(), obj.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSrmDisabled())).orElse(null);
             obj.setSrmDisabled(srmDisabled);
             obj.setSrmDisabledName(Boolean.TRUE.equals(srmDisabled)? "未开启": "已开启");
+            //含税单价
+            obj.setTaxPriceName(obj.getCurrencySymbol() + obj.getTaxPrice());
+            //价税合计
+            obj.setPurchaseAmountName(obj.getCurrencySymbol() + obj.getPurchaseAmount());
         };
 
         if(CollUtil.isNotEmpty(purchaseApplicationIds)) {
@@ -2502,6 +2506,28 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 throw new ServiceException(ApiError.ERROR_95125);
             }
             return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean exportSrmExcel(PurchaseOrderDTO.SrmSearchParamDTO dto, HttpServletResponse response) {
+        List<PurchaseOrderDTO.ListDTO> list = baseMapper.srmPurchaseOrderList(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.TRUE;
+        }
+        //数据处理
+        doOpHandlePurchaseOrder(list);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/SrmPurchaseOrder.xlsx";
+        String name = "采购订单导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_1015);
         }
         return Boolean.TRUE;
     }

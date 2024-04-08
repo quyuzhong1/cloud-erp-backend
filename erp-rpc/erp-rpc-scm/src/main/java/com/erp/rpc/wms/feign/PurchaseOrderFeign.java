@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Set;
 
@@ -88,4 +89,13 @@ public interface PurchaseOrderFeign {
      */
     @PostMapping("/feign/purchaseOrder/generateDeliveryList")
     List<PurchaseOrderDTO.ListDTO> generateDeliveryList(@RequestBody PurchaseOrderSrmDTO.GenerateDeliveryParamDTO dto);
+
+    /**
+     * 导出srm采购订单
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping("/feign/purchaseOrder/exportSrmExcel")
+    Boolean exportSrmExcel(PurchaseOrderDTO.SrmSearchParamDTO dto, HttpServletResponse response);
 }

@@ -552,7 +552,9 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        po.id desc,pod.id asc
+        <if test="params.sortList == null or params.sortList.size == 0">
+            po.approve_time DESC
+        </if>
     </select>
 
     <select id="listPurchaseOrderAutoConfirm" resultType="com.erp.model.scm.dto.PurchaseOrderDetailDTO$PurchaseOrderConfirmDTO">
@@ -581,10 +583,10 @@
         select
             po.id,
             pod.id as purchaseDetailId,
-            po.approve_time,
-            pod.execution_status,
-            pod.confirm_type,
-            po.purchase_org_name,
+            po.approve_time approveTime,
+            pod.execution_status as executionStatus,
+            pod.confirm_type as confirmType,
+            po.purchase_org_name as purchaseOrgName,
             po.type as type,
             po.code,
             pos.supplier_name as supplierName,
@@ -636,7 +638,9 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        po.id desc,pod.id asc
+        <if test="params.sortList == null or params.sortList.size == 0">
+            po.approve_time DESC
+        </if>
     </select>
     <select id="listByDetailIds" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$ListDTO">
         select

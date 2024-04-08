@@ -166,14 +166,17 @@ public class PurchaseOrderDTO implements Serializable {
          * 含税单价[可排序]
          */
         private BigDecimal taxPrice;
-
+        /**
+         * 含税单价【导出使用】
+         */
+        private String taxPriceName;
         /**
          * 税率【可排序】
          */
         private BigDecimal taxRate;
 
         /**
-         * 税率【可排序】
+         * 税率
          */
         private String taxRateStr;
 
@@ -188,9 +191,13 @@ public class PurchaseOrderDTO implements Serializable {
         private Integer purchaseQty;
 
         /**
-         * 采购金额【可排序】
+         * 采购金额/价税合计【可排序】
          */
         private BigDecimal purchaseAmount;
+        /**
+         * 采购金额/价税合计【导出使用】
+         */
+        private String purchaseAmountName;
 
         /**
          * 签收数量/已送货数量/已收货数量（已签收）
