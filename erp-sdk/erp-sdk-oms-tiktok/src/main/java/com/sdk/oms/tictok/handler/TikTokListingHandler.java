@@ -14,6 +14,8 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.sdk.oms.tictok.dto.TikTokListingDTO;
+import com.sdk.oms.tictok.dto.TikTokShopInfoDTO;
+import com.sdk.oms.tictok.dto.tiktok.listing.view.ListingViewDTO;
 import com.sdk.oms.tictok.service.TikTokSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -45,7 +47,7 @@ public class TikTokListingHandler extends AbstractProductHandler<TikTokListingDT
     @Override
     public List<TikTokListingDTO> download(JobTaskDTO data) {
         //  根据店铺ID获取授权
-        TikTokListingDTO shopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(data.getShopId());
+        TikTokShopInfoDTO shopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(data.getShopId());
         if (null == shopInfoDTO) {
 //            log.error("[美客多商品下载]  获取 token 失败: shopId={}", data.getShopId());
             return Collections.emptyList();
@@ -56,7 +58,7 @@ public class TikTokListingHandler extends AbstractProductHandler<TikTokListingDT
 
         // 返回下载源数据
         return resultsBeanList.stream()
-                .map(e -> new MercadoListingDTO(e.getBody(), data))
+                .map(e -> new TikTokListingDTO(e.getData(), data))
                 .collect(Collectors.toList());
     }
 

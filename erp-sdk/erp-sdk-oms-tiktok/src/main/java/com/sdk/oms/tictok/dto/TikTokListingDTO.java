@@ -4,6 +4,7 @@ import com.common.business.dto.CleanBaseDTO;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.PlatformDictEnum;
+import com.sdk.oms.tictok.dto.tiktok.listing.view.DataBean;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -11,19 +12,19 @@ import java.time.ZoneId;
 
 @Data
 public class TikTokListingDTO extends CleanBaseDTO {
-    private String test;
+    private DataBean dataBean;
 
     private String shopId;
 
     /**
      * 初始化
      */
-    public TikTokListingDTO(String test, JobTaskDTO dto) {
-        this.test = test;
+    public TikTokListingDTO(DataBean dataBean, JobTaskDTO dto) {
+        this.dataBean = dataBean;
         this.setIsClean(0);
         this.shopId = dto.getShopId();
         super.setPlatform(PlatformDictEnum.MERCADOLIBRE.getCode());
-        this.setUniqueId(test);
+        this.setUniqueId(dataBean.getFid());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
     }
