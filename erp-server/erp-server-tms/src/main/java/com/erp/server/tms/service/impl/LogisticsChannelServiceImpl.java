@@ -350,6 +350,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public List<BaseDropDownDTO.DisabledDTO> listAll() {
         List<LogisticsChannelEntity> list = this.list();
         List<BaseDropDownDTO.DisabledDTO> resultList = LogisticsChannelConverter.INSTANCE.convertByChannelDown(list);
+        Collections.sort(resultList, Comparator.comparing(BaseDropDownDTO.DisabledDTO::getDisabled));
+
         return resultList;
     }
 
