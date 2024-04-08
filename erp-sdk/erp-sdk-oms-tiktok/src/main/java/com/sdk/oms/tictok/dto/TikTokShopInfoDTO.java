@@ -53,4 +53,9 @@ public class TikTokShopInfoDTO {
      * 店铺站点
      */
     private String site;
+
+    /**
+     * 店铺标识
+     */
+    private String shopCipher;
 }

@@ -1,0 +1,23 @@
+package com.sdk.oms.tictok.dto.tiktok.listing.view;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+
+import java.util.List;
+
+@Data
+public class ProductAttributesBean {
+    /**
+     * id : 100392
+     * name : Occasion
+     * values : [{"id":"1001533","name":"Birthday"}]
+     */
+
+    @JsonProperty("id")
+    private String fid;
+    @JsonProperty("name")
+    private String name;
+    @JsonProperty("values")
+    private List<ValuesBean> values;
+
+}

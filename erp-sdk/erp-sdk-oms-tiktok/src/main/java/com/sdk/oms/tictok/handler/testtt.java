@@ -1,49 +1,17 @@
 package com.sdk.oms.tictok.handler;
 
-import com.common.business.annotation.BusinessType;
-import com.common.business.annotation.PlatformCategoryType;
-import com.common.business.annotation.PlatformType;
-import com.common.business.dto.JobTaskDTO;
-import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.enums.BusinessTypeEnum;
-import com.common.business.enums.PlatformCategoryEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.handler.AbstractOrderHandler;
-import com.common.business.utils.RedisUtil;
-import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.sdk.oms.tictok.dto.TikTokOrderDTO;
-import com.sdk.oms.tictok.service.TikTokSdkClientService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.Resource;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
-@Slf4j
-@Component
-@PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
-@PlatformType(PlatformDictEnum.TIK_TOK)
-@BusinessType(BusinessTypeEnum.ORDER)
-public class TikTokOrderHandler extends AbstractOrderHandler<TikTokOrderDTO, PlatformOrderDTO> {
-    @Resource
-    private DmpTaskFeign dmpTaskFeign;
-    @Resource
-    private RedisUtil redisUtil;
-    @Resource
-    private ShopInfoFeign shopInfoFeign;
-    @Resource
-    private TikTokSdkClientService mercadoSdkClientService;
-
-
+public class testtt {
     public static void main(String[] args) {
         // Replace secret with your app
         String secret = "8ff628de24faf70c24855de4d967fb6a17a47e3f";
@@ -55,16 +23,48 @@ public class TikTokOrderHandler extends AbstractOrderHandler<TikTokOrderDTO, Pla
         System.out.println("timestamp: " + ts);
 
         // Calculate signature
-        String signature = calSign(secret, 1712538227);
+        String signature = calSign(secret, ts);
 
         // Set sign variable
         System.out.println("sign: " + signature);
+
+        // Construct request URL
+        String requestUrl = "https://open-api.tiktokglobalshop.com/authorization/202309/shops";
+        requestUrl += "?app_key=6buinkjt3hmld";
+        requestUrl += "&sign=" + signature;
+        requestUrl += "&timestamp=" + ts;
+        requestUrl += "&version=202309";
+
+        // Send HTTPS POST request
+        try {
+            URL url = new URL(requestUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoOutput(true);
+
+            // Read response
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
+            String inputLine;
+            StringBuilder response = new StringBuilder();
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+
+            // Print response
+            System.out.println("Response: " + response.toString());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static String calSign(String secret, long timestamp) {
         Map<String, String> queryParam = new TreeMap<>(); // Using TreeMap for sorting keys
-        // Populate queryParam map with query parameters
-        // Example: queryParam.put("key", "value");
+        queryParam.put("app_key", "6buinkjt3hmld");
+        queryParam.put("timestamp", String.valueOf(timestamp));
+        queryParam.put("version", "202309");
 
         // Remove "sign" and "access_token" from query parameters
         queryParam.remove("sign");
@@ -75,9 +75,6 @@ public class TikTokOrderHandler extends AbstractOrderHandler<TikTokOrderDTO, Pla
         for (Map.Entry<String, String> entry : queryParam.entrySet()) {
             signstring.append(entry.getKey()).append(entry.getValue());
         }
-
-        // Append body content
-        // Example: signstring.append("body content");
 
         // Append secret again
         signstring.append(secret);
@@ -108,25 +105,4 @@ public class TikTokOrderHandler extends AbstractOrderHandler<TikTokOrderDTO, Pla
         }
         return hexString.toString();
     }
-
-    @Override
-    public List<TikTokOrderDTO> download(JobTaskDTO task) {
-        return null;
-    }
-
-    @Override
-    public List<PlatformOrderDTO> convert(List<TikTokOrderDTO> sourceDataList) {
-        // 包含数据过滤数据 数据转换 数据合并拆分等操作
-        return sourceDataList.stream()
-                // 组装
-                .map(TikTokOrderDTO::convertDTO).collect(Collectors.toList());
-    }
-
-    @Override
-    public String getTargetPlatform() {
-        return PlatformEnum.ERP.getDesc();
-    }
-
-
 }
-
