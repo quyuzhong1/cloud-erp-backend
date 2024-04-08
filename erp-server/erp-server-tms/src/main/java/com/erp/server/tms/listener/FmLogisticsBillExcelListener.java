@@ -1,20 +1,23 @@
 package com.erp.server.tms.listener;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.constant.EnumMessage;
 import com.common.core.entity.BaseEntity;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.tms.dto.excel.FmLogisticsBillExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
+import com.erp.model.tms.enums.ReconciliationStatusEnum;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
-import com.erp.server.tms.service.LogisticsBillDetailService;
-import com.erp.server.tms.service.LogisticsChannelService;
-import com.erp.server.tms.service.LogisticsSupplierService;
-import com.erp.server.tms.service.TmsFirstMileLogisticService;
+import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
+import com.erp.server.tms.service.*;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +37,10 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
     private final LogisticsSupplierService logisticsSupplierService = SpringUtil.getBean(LogisticsSupplierService.class);
 
     private final LogisticsChannelService logisticsChannelService = SpringUtil.getBean(LogisticsChannelService.class);
+
+    private final LogisticsBillCostService logisticsBillCostService = SpringUtil.getBean(LogisticsBillCostService.class);
+
+    private final WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign = SpringUtil.getBean(WmsFirstMileDeliveryFeign.class);
 
     @Getter
     private List<FmLogisticsBillExcelDTO> dataList = new ArrayList<>();
@@ -76,6 +83,9 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
         List<LogisticsBillDetailEntity> logisticsBillDetailEntityList = logisticsBillDetailService.listByMainIds(mainIdList);
         List<LogisticsSupplierEntity> logisticsSupplierEntityList = logisticsSupplierService.listByName(supplierNameList);
         List<LogisticsChannelEntity> logisticsChannelEntityList = logisticsChannelService.listByName(channelNameList);
+        List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostService.listByLogisticsBillIdList(mainIdList);
+        List<String> outIds = logisticsBillEntityList.stream().map(LogisticsBillEntity::getOutstockId).collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(outIds);
         List<LogisticsBillEntity> updateList = new ArrayList<>();
         List<LogisticsBillDetailEntity> updateDetailList = new ArrayList<>();
         List<LogisticsTrackEntity> addTrackList = new ArrayList<>();
@@ -93,6 +103,19 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                 errorList.add(excelDTO);
                 continue;
             }
+            LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostEntityList.stream().filter(v->v.getLogisticsBillId().equals(entity.getId())).findFirst().orElse(null);
+            if(Objects.isNull(logisticsBillCostEntity)){
+                excelDTO.setErrorMsg("物流单费用不存在");
+                errorList.add(excelDTO);
+                continue;
+            }
+
+            if(!(logisticsBillCostEntity.getReconciliationStatus().equals(ReconciliationStatusEnum.INVALID.getCode()) ||logisticsBillCostEntity.getReconciliationStatus().equals(ReconciliationStatusEnum.TO_BE_GENERATED.getCode()))){
+                excelDTO.setErrorMsg("已生成对账单，不能更新信息");
+                errorList.add(excelDTO);
+                continue;
+            }
+            //校验供应商和渠道
             List<String> errorMsgList = new ArrayList<>();
             if(StringUtils.isNotBlank(excelDTO.getSupplierName())){
                 LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntityList.stream().filter(v->v.getSupplierName().equals(excelDTO.getSupplierName())).findFirst().orElse(null);
@@ -110,6 +133,41 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                     entity.setChannelId(logisticsChannelEntity.getId());
                 }
             }
+
+            if(StringUtils.isNotBlank(excelDTO.getLogisticStatusName())){
+                //校验物流状态
+                FmLogisticTrackStatusEnum statusEnum = EnumMessage.getByName(FmLogisticTrackStatusEnum.class,(excelDTO.getLogisticStatusName()));
+                if(statusEnum == FmLogisticTrackStatusEnum.ORDERED && StringUtils.isBlank(entity.getChannelId())){
+                    errorMsgList.add("已下单但尚未填写渠道信息，请填写后更新");
+                }
+                if(statusEnum == FmLogisticTrackStatusEnum.SIGN && StringUtils.isBlank(entity.getTransportNo())){
+                    errorMsgList.add("已签收但无运单号，请填写后更新");
+                }
+                FmLogisticTrackStatusEnum nowStatusEnum = EnumMessage.getByCode(FmLogisticTrackStatusEnum.class,(detailEntity.getTrackStatus()));
+                if(FmLogisticTrackStatusEnum.WAIT_ORDER == nowStatusEnum && FmLogisticTrackStatusEnum.ORDERED != statusEnum){
+                    errorMsgList.add("待下单状态只能更新为已下单");
+                }
+
+                if(FmLogisticTrackStatusEnum.WAIT_ORDER != nowStatusEnum && FmLogisticTrackStatusEnum.WAIT_ORDER == statusEnum){
+                    errorMsgList.add(StrUtil.format("{}状态不能更新为待下单",Objects.isNull(nowStatusEnum)?"":nowStatusEnum.getName()));
+                }
+
+                if(FmLogisticTrackStatusEnum.ORDERED != nowStatusEnum &&  FmLogisticTrackStatusEnum.WAIT_ORDER != nowStatusEnum && FmLogisticTrackStatusEnum.ORDERED == statusEnum){
+                    errorMsgList.add(StrUtil.format(StrUtil.format("{}状态不能更新为已下单",Objects.isNull(nowStatusEnum)?"":nowStatusEnum.getName())));
+                }
+                FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(v->v.getId().equals(entity.getOutstockId())).findFirst().orElse(null);
+                if(Objects.isNull(firstMileDeliveryEntity)){
+                    errorMsgList.add("未找到对应的发货单");
+                }
+                if(!firstMileDeliveryEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && (statusEnum == FmLogisticTrackStatusEnum.TRACK_ING || statusEnum == FmLogisticTrackStatusEnum.ARRIVED ||statusEnum == FmLogisticTrackStatusEnum.SIGN )){
+                    errorMsgList.add(StrUtil.format("关联单据{}尚未审核通过无法提交",firstMileDeliveryEntity.getCode()));
+                }
+
+                if(StringUtils.isBlank(entity.getCounterNo()) && FmLogisticTrackStatusEnum.ORDERED != statusEnum){
+                    errorMsgList.add("尚未填写柜号，请填写后更新");
+                }
+            }
+
             if (!errorMsgList.isEmpty()) {
                 excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(excelDTO);
@@ -138,9 +196,9 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                     if(logisticTrackStatusEnum == FmLogisticTrackStatusEnum.WAIT_ORDER){
                         entity.setOrderTime(null);
                     }else if (logisticTrackStatusEnum == FmLogisticTrackStatusEnum.ORDERED){
-                        if(Objects.nonNull(excelDTO.getStatusTime())){
-                            entity.setOrderTime(excelDTO.getStatusTime());
-                        }
+
+                        entity.setOrderTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
+
                         LogisticsTrackEntity trackEntity = new LogisticsTrackEntity();
                         trackEntity.setTrackNo(entity.getCounterNo());
                         trackEntity.setTrackTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
@@ -156,6 +214,12 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                             trackEntity.setContent(excelDTO.getCurrencyTrack());
                             addTrackList.add(trackEntity);
                         }
+                    }
+                    if (logisticTrackStatusEnum == FmLogisticTrackStatusEnum.SIGN){
+                        detailEntity.setSignTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
+                    }
+                    if(StringUtils.isNotBlank(excelDTO.getCounterNo())){
+                        detailEntity.setTrackNo(excelDTO.getCounterNo());
                     }
                     detailEntity.setTrackStatus(logisticTrackStatusEnum.getCode());
                     updateDetailList.add(detailEntity);

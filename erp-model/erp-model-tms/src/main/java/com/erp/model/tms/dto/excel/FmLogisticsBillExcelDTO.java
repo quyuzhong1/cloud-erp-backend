@@ -18,8 +18,8 @@ public class FmLogisticsBillExcelDTO implements Serializable {
     /**
      * 来源单
      */
-    @ExcelProperty(value = "*发货单")
-    @FieldValid(fieldName = "发货单",isNotBlank = true,maxLength = 32)
+    @ExcelProperty(value = "*来源单")
+    @FieldValid(fieldName = "来源单",isNotBlank = true,maxLength = 32)
     private String outstockCode;
 
     /**
@@ -76,5 +76,6 @@ public class FmLogisticsBillExcelDTO implements Serializable {
     /**
      * 错误信息
      */
+    @ExcelProperty(value = "错误信息")
     private String errorMsg;
 }

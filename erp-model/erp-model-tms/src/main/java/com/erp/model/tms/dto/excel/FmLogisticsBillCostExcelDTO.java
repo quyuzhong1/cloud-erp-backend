@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 @Data
 public class FmLogisticsBillCostExcelDTO implements Serializable {
 
-    @ExcelProperty(value = "发货单")
+    @ExcelProperty(value = "来源单")
     private String outstockCode;
 
     @ExcelProperty(value = "运单号")
@@ -31,5 +31,6 @@ public class FmLogisticsBillCostExcelDTO implements Serializable {
     /**
      * 错误信息
      */
+    @ExcelProperty(value = "错误信息")
     private String errorMsg;
 }

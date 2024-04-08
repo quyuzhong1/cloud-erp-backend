@@ -65,7 +65,7 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
         List<LogisticsBillCostEntity> updateCostList = new ArrayList<>();
         List<TmsCostDetailEntity> updateCostDetailList = new ArrayList<>();
         for (FmLogisticsBillCostExcelDTO excelDTO : dataList) {
-            LogisticsBillEntity entity = logisticsBillEntityList.stream().filter(v->v.getOutstockCode().equals(excelDTO.getOutstockCode())).findFirst().orElse(null);
+            LogisticsBillEntity entity = logisticsBillEntityList.stream().filter(v->v.getOutstockCode().equals(excelDTO.getOutstockCode()) || v.getTransportNo().equals(excelDTO.getTransportNo())).findFirst().orElse(null);
             if(Objects.isNull(entity)){
                 excelDTO.setErrorMsg("未找到物流单");
                 errorList.add(excelDTO);

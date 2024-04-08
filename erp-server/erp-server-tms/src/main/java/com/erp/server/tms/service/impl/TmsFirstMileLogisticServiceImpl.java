@@ -317,8 +317,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         }
         costUpdateDTO.setCurrency(updateDTO.getCurrency());
         costUpdateDTO.setRemark(updateDTO.getRemark());
-        costUpdateDTO.setVolumeWeightLogistics(updateDTO.getActualVolumeWeight());
-        costUpdateDTO.setWeightLogistics(updateDTO.getActualWeight());
+        costUpdateDTO.setVolumeWeightLogistics(Objects.isNull(updateDTO.getActualVolumeWeight())?BigDecimal.ZERO:updateDTO.getActualVolumeWeight());
+        costUpdateDTO.setWeightLogistics(Objects.isNull(updateDTO.getActualWeight())?BigDecimal.ZERO:updateDTO.getActualWeight());
         costUpdateDTO.setId(oldEntity.getId());
         return costUpdateDTO;
     }
@@ -1070,8 +1070,10 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) throws Exception{
+        //物流信息
         FmLogisticsBillExcelListener billListener = new FmLogisticsBillExcelListener();
         EasyExcel.read(excelFile.getInputStream(), FmLogisticsBillExcelDTO.class, billListener).sheet(0).doRead();
+        //物流费用
         FmLogisticsBillCostExcelListener costListener = new FmLogisticsBillCostExcelListener();
         EasyExcel.read(excelFile.getInputStream(), FmLogisticsBillCostExcelDTO.class, costListener).sheet(1).doRead();
         List<FmLogisticsBillExcelDTO> errorBillList = billListener.getErrorList();
