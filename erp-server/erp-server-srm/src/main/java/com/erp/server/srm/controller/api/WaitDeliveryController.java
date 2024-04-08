@@ -79,12 +79,6 @@ public class WaitDeliveryController extends BaseController {
     @WebAdvanceQuery(handler = WaitDeliveryQueryHandler.class)
     public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> srmWaitDeliveryPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto) {
         dto.getParams().setSupplierId(userService.getSupplierId());
-        if (CollectionUtils.isEmpty(dto.getParams().getSortList())){
-            SortParamDTO sortParamDTO = new SortParamDTO();
-            sortParamDTO.setField("pod.plan_delivery_date");
-            sortParamDTO.setSort("ASC");
-            dto.getParams().setSortList(Collections.singletonList(sortParamDTO));
-        }
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderDetailService.srmWaitDeliveryPaging(dto);
         return success(pagingVO);
     }

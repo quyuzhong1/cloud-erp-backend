@@ -68,7 +68,7 @@ public class PurchaseOrderDTO implements Serializable {
         private String typeName;
 
         /**
-         * 采购单号
+         * 采购单号【可排序】
          */
         private String code;
 
