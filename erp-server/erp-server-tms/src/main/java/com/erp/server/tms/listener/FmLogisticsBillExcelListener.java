@@ -78,6 +78,8 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
         List<String> outstockCodeList = dataList.stream().map(FmLogisticsBillExcelDTO::getOutstockCode).collect(Collectors.toList());
         List<String> supplierNameList = dataList.stream().map(FmLogisticsBillExcelDTO::getSupplierName).distinct().collect(Collectors.toList());
         List<String> channelNameList = dataList.stream().map(FmLogisticsBillExcelDTO::getChannelName).distinct().collect(Collectors.toList());
+        List<String> transportNoList = dataList.stream().map(FmLogisticsBillExcelDTO::getTransportNo).distinct().collect(Collectors.toList());
+        List<LogisticsBillEntity> existWithTransportList = tmsFirstMileLogisticService.listByTransportNo(transportNoList);
         List<LogisticsBillEntity> logisticsBillEntityList = tmsFirstMileLogisticService.listByOutstcockCode(outstockCodeList);
         List<String> mainIdList = logisticsBillEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<LogisticsBillDetailEntity> logisticsBillDetailEntityList = logisticsBillDetailService.listByMainIds(mainIdList);
@@ -114,6 +116,14 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                 excelDTO.setErrorMsg("已生成对账单，不能更新信息");
                 errorList.add(excelDTO);
                 continue;
+            }
+            if(StringUtils.isNotBlank(excelDTO.getTransportNo()) && !excelDTO.getTransportNo().equals(entity.getTransportNo())){
+                LogisticsBillEntity existTransportEntity = logisticsBillEntityList.stream().filter(v->v.getTransportNo().equals(excelDTO.getTransportNo())).findFirst().orElse(null);
+                if(Objects.nonNull(existTransportEntity)){
+                    excelDTO.setErrorMsg("运单号已存在，不能修改");
+                    errorList.add(excelDTO);
+                    continue;
+                }
             }
             //校验供应商和渠道
             List<String> errorMsgList = new ArrayList<>();

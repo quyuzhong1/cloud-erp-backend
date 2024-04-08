@@ -189,6 +189,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(StringUtils.isBlank(tmsFirstMileLogisticEntity.getRemark())){
             tmsFirstMileLogisticEntity.setRemark(generateLogisticDTO.getRemark());
         }
+        if(StringUtils.isNotBlank(addDTO.getTransportNo())){
+            List<LogisticsBillEntity> logisticsBillEntityList = this.listByTransportNo(Arrays.asList(addDTO.getTransportNo()));
+            if(CollectionUtils.isNotEmpty(logisticsBillEntityList)){
+                throw new ServiceException("运单号已存在，不能重复新增");
+            }
+        }
         log.info("开始新增头程物流单");
         boolean save = super.save(tmsFirstMileLogisticEntity);
         if(!save) {
@@ -358,6 +364,13 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         }
         LogisticsBillEntity updateFirstMileLogisticEntity = FmLogisticsConverter.INSTANCE.addLogisticsBill(generateLogisticDTO,updateDTO);
         BeanUtil.copyProperties(updateFirstMileLogisticEntity,old, CopyOptions.create().setIgnoreNullValue(true));
+        //校验运单号是否重复
+        if(StringUtils.isNotBlank(updateDTO.getTransportNo()) && !updateDTO.getTransportNo().equals(old.getTransportNo())){
+            List<LogisticsBillEntity> logisticsBillEntityList = this.listByTransportNo(Arrays.asList(updateDTO.getTransportNo()));
+            if(CollectionUtils.isNotEmpty(logisticsBillEntityList)){
+                throw new ServiceException("运单号已存在，修改失败");
+            }
+        }
         boolean save = super.updateById(old);
         if(!save) {
             throw new ServiceException("头程物流单保存失败");
@@ -1363,7 +1376,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if (CollectionUtil.isEmpty(transportNoList)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(LogisticsBillEntity::getTransportNo, transportNoList).list();
+        return lambdaQuery().in(LogisticsBillEntity::getTransportNo, transportNoList).eq(LogisticsBillEntity::getOrderType,OrderTypeEnum.FIRST_MILE.getCode()).list();
     }
 
     @Override
