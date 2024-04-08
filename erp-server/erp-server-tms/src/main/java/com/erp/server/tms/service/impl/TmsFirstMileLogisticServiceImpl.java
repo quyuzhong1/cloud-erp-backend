@@ -4,6 +4,7 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
@@ -13,15 +14,13 @@ import com.alibaba.excel.write.metadata.WriteTable;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.InvoicesStatusEnum;
-import com.common.business.enums.OrderTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
@@ -32,6 +31,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.FmDeliveryLogisticsStatusEnum;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -45,6 +45,7 @@ import com.erp.model.tms.dto.excel.FmLogisticsBillExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.StocktakingPlanDetailDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
@@ -66,6 +67,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -82,6 +84,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -172,6 +175,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Resource
     private ShippingTemplateRuleService shippingTemplateRuleService;
+
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1007,13 +1016,13 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
 
     @Override
-    public List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> waitSubmitReconciliation(BaseIdsDTO.IdsDTO dto) {
+    public List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> waitSubmitReconciliation(List<String> ids) {
         List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> list = tmsFirstMileReconciliationService.listByApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         if (CollectionUtils.isEmpty(list)){
             return list;
         }
         // 校验物理商是否一致
-        List<LogisticsBillEntity> entityList = this.listByIds(dto.getIds());
+        List<LogisticsBillEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(entityList)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "头程物流单");
         }
@@ -1052,13 +1061,13 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
 
     @Override
-    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> listByTrackNoListAndSupplierIds(List<String> trackNoList, List<String> logisticsSupplierIdList) {
+    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> listByTransportNoListAndSupplierIds(List<String> transportNoList, List<String> logisticsSupplierIdList) {
         return this.baseMapper.waitReconciliationList(
                 OrderTypeEnum.FIRST_MILE.getCode(),
                 "",
                 "",
                 null,
-                trackNoList,
+                transportNoList,
                 logisticsSupplierIdList);
     }
 
@@ -1078,8 +1087,111 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO singleGenerateReconciliation(String id, String reconciliationId, List<LocalDate> dateList) {
+        // 校验物理商是否一致
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailList = this.listByMainIds(Collections.singletonList(id));
+        if (CollectionUtils.isEmpty(sourceDetailList)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流单");
+        }
+        boolean notGenerate = sourceDetailList.stream()
+                .anyMatch(e -> !ReconciliationStatusEnum.TO_BE_GENERATED.getCode().equalsIgnoreCase(e.getReconciliationStatus()));
+        if (notGenerate){
+            throw new ServiceException("物流单已生成对账");
+        }
+        boolean notSign = sourceDetailList.stream()
+                .anyMatch(e -> !LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(e.getTransportStatus()));
+        if (notSign){
+            throw new ServiceException("物流单未签收");
+        }
+
+        // 填充信息
+        String currency = sourceDetailList.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getCurrency).findFirst().orElse("");
+        tmsFirstMileReconciliationDetailService.fillDetailList(sourceDetailList, currency, "");
+        TmsFirstMileReconciliationDetailDTO.ListDTO curListDTO = sourceDetailList.stream().findFirst().orElse(null);
+
+        // 查询对账单ID
+        TmsFirstMileReconciliationEntity reconciliationEntity = null;
+        if (StringUtils.isNotBlank(reconciliationId)){
+            reconciliationEntity = tmsFirstMileReconciliationService.getById(reconciliationId);
+            if (null == reconciliationEntity){
+                throw new ServiceException(ApiError.NOT_EXIST_BILL, "对账单");
+            }
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equalsIgnoreCase(reconciliationEntity.getApproveStatus())){
+                throw new ServiceException("对账单不处于待提交");
+            }
+            if (!reconciliationEntity.getCurrency().equalsIgnoreCase(curListDTO.getCurrency())){
+                throw new ServiceException("对账单币种与当前物流单币种不一致");
+            }
+            reconciliationEntity.setUpdateTime(LocalDateTime.now());
+        } else {
+            TmsFirstMileReconciliationDetailDTO.ListDTO listDTO = sourceDetailList.get(0);
+            String logisticsSupplierId =  listDTO.getLogisticsSupplierId();
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCZD);
+            if (CollectionUtils.isEmpty(dateList)){
+                throw new ServiceException("周期日期不能为空");
+            }
+            if (dateList.size() < 2){
+                throw new ServiceException("周期日期不能为空");
+            }
+            LocalDate startDate = dateList.get(0);
+            LocalDate endDate = dateList.get(1);
+            TmsFirstMileReconciliationEntity existEntity = tmsFirstMileReconciliationService.getByGenerate(logisticsSupplierId, startDate, endDate, curListDTO.getCurrency());
+            if (null != existEntity){
+                throw new ServiceException("当前周期和币种的对账单已存在");
+            }
+            reconciliationEntity = new TmsFirstMileReconciliationEntity(code,startDate, endDate, logisticsSupplierId, curListDTO.getCurrency());
+        }
+        // 保存头程对账单
+        tmsFirstMileReconciliationService.saveOrUpdate(reconciliationEntity);
+
+        // 保存明细
+        // 生成实际和差异记录
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> saveListDTO = tmsFirstMileReconciliationDetailService.generateAllTypeDTO(curListDTO);
+        TmsFirstMileReconciliationDTO.UpdateDTO updateDTO = new TmsFirstMileReconciliationDTO.UpdateDTO();
+        updateDTO.setId(reconciliationEntity.getId());
+        List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailDTOList = BeanUtil.copyToList(saveListDTO, TmsFirstMileReconciliationDetailDTO.UpdateDTO.class);
+        updateDTO.setDetailList(detailDTOList);
+        tmsFirstMileReconciliationService.update(updateDTO);
+
+        // 更新已成功对账单
+        this.updateReconciliation(curListDTO.getSourceId(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
+
+        return BatchResultDTO.success(id, id, OperationTypeEnum.ADD);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateReconciliation(String mainId, String status) {
+        boolean update = logisticsBillCostService.lambdaUpdate()
+                .set(LogisticsBillCostEntity::getReconciliationStatus, status)
+                .eq(LogisticsBillCostEntity::getLogisticsBillId, mainId)
+                .update();
+        if (!update){
+            throw new ServiceException("更新对账状态失败");
+        }
+    }
+
+    @Override
     public List<BatchResultDTO> generateReconciliation(TmsFirstMileLogisticDTO.GenerateReconciliationDTO dto) {
-        return null;
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO updateResult;
+            try {
+                updateResult = this.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList());
+            } catch (Exception e) {
+                log.error("头程对账生成失败", e);
+                LogisticsBillEntity entity = this.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    updateResult = BatchResultDTO.fail(id, id, "B物流单不存在, 头程对账生成失败");
+                    resultDTOS.add(updateResult);
+                    continue;
+                }
+                updateResult = BatchResultDTO.fail(id, entity.getId(), e.getMessage());
+            }
+            resultDTOS.add(updateResult);
+        }
+        return resultDTOS;
     }
 
     @Override

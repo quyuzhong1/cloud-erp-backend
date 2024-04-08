@@ -2,7 +2,6 @@ package com.erp.server.tms.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -11,11 +10,11 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -104,7 +103,7 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
     BigDecimal calculateShippingCost(TmsFirstMileLogisticDTO.CalculateShippingCostDTO dto);
     void sendMsgWhenChannelChange(List<String> shopChargeIdList,String titleContent,String messageContent);
 
-    List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> waitSubmitReconciliation(BaseIdsDTO.IdsDTO dto);
+    List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> waitSubmitReconciliation(List<String> ids);
 
     /**
      * 待对账物流单(分页)
@@ -120,7 +119,18 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
     /**
      * 根据物流跟踪单分组查询物流单信息
      */
-    List<TmsFirstMileReconciliationDetailDTO.ListDTO> listByTrackNoListAndSupplierIds(List<String> trackNoList, List<String> logisticsSupplierIdList);
+    List<TmsFirstMileReconciliationDetailDTO.ListDTO> listByTransportNoListAndSupplierIds(List<String> trackNoList, List<String> logisticsSupplierIdList);
 
     List<Map<String,Object>> getTrackStatusList();
+
+
+    /**
+     * 生成物流单
+     */
+    BatchResultDTO singleGenerateReconciliation(String id, String reconciliationId, List<LocalDate> dateList);
+
+    /**
+     * 更新对账状态
+     */
+    void updateReconciliation(String id, String status);
 }

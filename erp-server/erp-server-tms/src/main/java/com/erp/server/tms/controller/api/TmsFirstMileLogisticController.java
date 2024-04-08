@@ -346,7 +346,7 @@ public class TmsFirstMileLogisticController extends BaseController {
      */
     @PostMapping("/waitSubmitReconciliation")
     public ApiResult<List<TmsFirstMileLogisticDTO.WaitSubmitListDTO>> waitSubmitReconciliation(@RequestBody @Valid BaseIdsDTO.IdsDTO dto){
-        return success(tmsFirstMileLogisticService.waitSubmitReconciliation(dto));
+        return success(tmsFirstMileLogisticService.waitSubmitReconciliation(dto.getIds()));
     }
     /**
      * 获取物流单状态（code,value）

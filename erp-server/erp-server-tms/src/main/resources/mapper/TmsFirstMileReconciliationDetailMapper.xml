@@ -16,7 +16,7 @@
        <result column="source_id" property="sourceId" />
        <result column="source_type" property="sourceType" />
        <result column="source_code" property="sourceCode" />
-       <result column="track_no" property="trackNo" />
+       <result column="track_no" property="transportNo" />
        <result column="relation_code" property="relationCode" />
        <result column="shop_id" property="shopId" />
        <result column="shop_name" property="shopName" />

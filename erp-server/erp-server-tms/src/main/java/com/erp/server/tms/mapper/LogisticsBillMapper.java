@@ -106,7 +106,7 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
                                                                                 @Param("reconciliationStatus") String reconciliationStatus,
                                                                                 @Param("trackStatus") String trackStatus,
                                                                                 @Param("mainIds") List<String> mainIds,
-                                                                                @Param("trackNoList") List<String> trackNoList,
+                                                                                @Param("transportNoList") List<String> transportNoList,
                                                                                 @Param("logisticsSupplierIdList") List<String> logisticsSupplierIdList
     );
 }

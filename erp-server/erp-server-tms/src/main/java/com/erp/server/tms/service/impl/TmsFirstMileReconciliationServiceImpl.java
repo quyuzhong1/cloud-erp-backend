@@ -30,6 +30,7 @@ import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
+import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
@@ -42,10 +43,7 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.tms.mapper.TmsFirstMileReconciliationMapper;
-import com.erp.server.tms.service.CommonService;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.TmsFirstMileReconciliationDetailService;
-import com.erp.server.tms.service.TmsFirstMileReconciliationService;
+import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -57,6 +55,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -85,6 +84,8 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     private SysUserFeign sysUserFeign;
     @Resource
     private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -445,6 +446,10 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                     .orElse("");
             data.setCurrencySymbol(currencySymbol);
         }
+        LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(data.getLogisticsSupplierId());
+        if (null != supplierEntity){
+            data.setApproveUserName(supplierEntity.getSupplierName());
+        }
 
         //审核状态名称
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -522,6 +527,10 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         List<String> currencyIdList = list.stream().map(TmsFirstMileReconciliationDTO.ListDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
 
+        List<String> supplierIds = list.stream().map(TmsFirstMileReconciliationDTO.ListDTO::getLogisticsSupplierId).collect(Collectors.toList());
+        // 物流商
+        Map<String, LogisticsSupplierEntity> supplierMap = logisticsSupplierService.mapByIds(supplierIds);
+
         // 属性赋值
         for (TmsFirstMileReconciliationDTO.ListDTO data : list) {
             // 费用类型
@@ -577,6 +586,10 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                     .orElse("");
             data.setCurrencySymbol(currencySymbol);
 
+            LogisticsSupplierEntity supplierEntity = supplierMap.get(data.getLogisticsSupplierId());
+            if (null != supplierEntity){
+                data.setApproveUserName(supplierEntity.getSupplierName());
+            }
         }
     }
 
@@ -617,5 +630,16 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                         e.getLogisticsSupplierName()
                 )).collect(Collectors.toList());
 
+    }
+
+    @Override
+    public TmsFirstMileReconciliationEntity getByGenerate(String logisticsSupplierId, LocalDate startDate, LocalDate endDate, String currency) {
+        return this.lambdaQuery()
+                .eq(TmsFirstMileReconciliationEntity::getLogisticsSupplierId, logisticsSupplierId)
+                .eq(TmsFirstMileReconciliationEntity::getStartDate, startDate)
+                .eq(TmsFirstMileReconciliationEntity::getEndDate, endDate)
+                .eq(TmsFirstMileReconciliationEntity::getCurrency, currency)
+                .last(" LIMIT 1")
+                .one();
     }
 }

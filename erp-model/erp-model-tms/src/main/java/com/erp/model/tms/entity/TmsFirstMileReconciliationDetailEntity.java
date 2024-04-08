@@ -49,10 +49,15 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
     @TableField("source_code")
     private String sourceCode;
     /**
-     * 物流跟踪号
+     * 运输单号
      */
-    @TableField("track_no")
-    private String trackNo;
+    @TableField("transport_no")
+    private String transportNo;
+    /**
+     * 业务编号
+     */
+    @TableField("business_code")
+    private String businessCode;
     /**
      * 运输状态
      */

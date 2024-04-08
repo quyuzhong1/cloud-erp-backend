@@ -13,6 +13,7 @@ import java.io.Serializable;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
 
@@ -27,6 +28,7 @@ import com.common.business.enums.ApproveStatusEnum;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
 @Accessors(chain = true)
 @TableName("tms_first_mile_reconciliation")
 public class TmsFirstMileReconciliationEntity extends BaseEntity<TmsFirstMileReconciliationEntity> {
@@ -138,9 +140,14 @@ public class TmsFirstMileReconciliationEntity extends BaseEntity<TmsFirstMileRec
 
     public static final String REASON = "reason";
 
-    @Override
-    public Serializable pkVal() {
-        return null;
+    public TmsFirstMileReconciliationEntity(String code, LocalDate startDate, LocalDate endDate, String logisticsSupplierId, String currency) {
+        this.code = code;
+        this.approveStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        this.reconciliationDate = LocalDate.now();
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.logisticsSupplierId = logisticsSupplierId;
+        this.logisticsSupplierName = "";
+        this.currency = currency;
     }
-
 }

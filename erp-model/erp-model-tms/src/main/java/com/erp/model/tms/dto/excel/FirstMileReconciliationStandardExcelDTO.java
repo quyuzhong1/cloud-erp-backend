@@ -1,7 +1,6 @@
 package com.erp.model.tms.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
-import com.common.business.enums.UnitEnum;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
@@ -19,11 +18,11 @@ import java.io.Serializable;
 public class FirstMileReconciliationStandardExcelDTO implements Serializable {
 
     /**
-     * 物流跟踪号
+     * 物流运单号
      */
-    @ExcelProperty(value = "*物流跟踪号", index = 0)
-    @FieldValid(fieldName = "物流跟踪号", isNotBlank = true, maxLength = 32)
-    private String trackNo;
+    @ExcelProperty(value = "*物流运单号", index = 0)
+    @FieldValid(fieldName = "物流运单号", isNotBlank = true, maxLength = 32)
+    private String transportNo;
 
     /**
      * 实际实重

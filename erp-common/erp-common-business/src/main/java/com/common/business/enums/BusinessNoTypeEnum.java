@@ -70,6 +70,8 @@ public enum BusinessNoTypeEnum {
     CODE_ZZBG(59, "zzbg","中转报关","ZZBG"),
     CODE_ZB(60, "zb","组包预报","ZB"),
     CODE_BGZD(61, "bgzd","报关账单","BGZD"),
+    CODE_TCZD(62, "tczd","头程账单","TCZD"),
+
     ;
 
 

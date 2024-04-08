@@ -269,7 +269,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         if (!CollectionUtils.isEmpty(deleteIds)) {
             List<TmsFirstMileReconciliationDetailEntity> deleteList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
-            List<Pair<String, String>> pairList = deleteList.stream().map(obj -> new Pair<>(mainId, obj.getTrackNo())).collect(Collectors.toList());
+            List<Pair<String, String>> pairList = deleteList.stream().map(obj -> new Pair<>(mainId, obj.getTransportNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("删除了一个头程对账明细【%s】", ModuleTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode(), pairList, "编辑操作");
             //更新主表id
             if (!CollectionUtils.isEmpty(deleteList)) {
@@ -286,7 +286,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         List<String> billIds = list.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
         // 批量更新物流单状态
         boolean update = logisticsBillCostService.lambdaUpdate()
-                .set(LogisticsBillCostEntity::getReconciliationStatus, ReconciliationStatusEnum.RECONCILED.getCode())
+                .set(LogisticsBillCostEntity::getReconciliationStatus, ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())
                 .in(LogisticsBillCostEntity::getLogisticsBillId, billIds)
                 .update();
         if (!update) {
@@ -320,8 +320,26 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     .stream()
                     .collect(Collectors.toMap(BaseEntity::getId, DictCountryEntity::getNameCn));
         }
+        // 计费方式
+        List<String> channelIds = viewDTOList.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getLogisticsChannelId).distinct().collect(Collectors.toList());
+        List<ShippingTemplateEntity> templateList = shippingTemplateService.getByChannelIds(channelIds);
+        Map<String, List<ShippingTemplateEntity>> templateMap = templateList.stream()
+                .collect(Collectors.groupingBy(ShippingTemplateEntity::getLogisticsChannelId));
 
         for (TmsFirstMileReconciliationDetailDTO.ListDTO viewDTO : viewDTOList) {
+            if (null == viewDTO.getBillingMethod()){
+                // 计费方式
+                /// TODO 历史还是当前
+                List<ShippingTemplateEntity> shippingTemplateList = templateMap.get(viewDTO.getLogisticsChannelId());
+                if (!CollectionUtils.isEmpty(shippingTemplateList)) {
+                    ShippingTemplateEntity shippingTemplateEntity = shippingTemplateList.stream().findFirst().orElse(null);
+                    viewDTO.setBillingMethod(shippingTemplateEntity.getBillingMethod());
+                    viewDTO.setBillingMethodName(EnumMessage.getNameByCode(ShippingBillingMethodEnum.class, shippingTemplateEntity.getBillingMethod()));
+                }
+            }
+            if (StringUtils.isBlank(viewDTO.getSourceType())){
+                viewDTO.setSourceType(SourceTypeEnum.LOGISTICS_BILL.getCode());
+            }
             //店铺名称
             viewDTO.setShopName(shopMap.getOrDefault(viewDTO.getShopId(), ""));
             //国家名称
@@ -341,9 +359,14 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             viewDTO.setStatusName(TmsB2cDeclareReconciliationStatusEnum.getName(viewDTO.getStatus()));
             // 明细币别
             viewDTO.setCurrencySymbol(currencySymbol);
-            viewDTO.setCurrency(currency);
+//            viewDTO.setCurrency(currency);
             // 来源单号=业务单号
-            viewDTO.setBusinessCode(viewDTO.getSourceCode());
+//            viewDTO.setBusinessCode(viewDTO.getSourceCode());
+            // 默认
+            if (null == viewDTO.getStatus()){
+                viewDTO.setStatus(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
+                viewDTO.setStatusName(ReconciliationStatusEnum.TO_BE_CONFIRM.getName());
+            }
         }
     }
 
@@ -381,7 +404,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     /**
      * 根据预计DTO生成：预计, 实际, 差异
      */
-    private List<TmsFirstMileReconciliationDetailDTO.ListDTO> generateAllTypeDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO) {
+    @Override
+    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> generateAllTypeDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO) {
         // 实际
         TmsFirstMileReconciliationDetailDTO.ListDTO actualListDTO = new TmsFirstMileReconciliationDetailDTO.ListDTO();
         BeanUtils.copyProperties(sourceListDTO, actualListDTO);
@@ -450,11 +474,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             if (null == listDTO) {
                 throw new ServiceException("物流单不存在,sourceId=" + entry.getKey());
             }
-//            if (ReconciliationStatusEnum.TO_BE_GENERATED.getCode().equalsIgnoreCase(listDTO.getReconciliationStatus())){
-//                throw new ServiceException("该物流单已生成对账单,物流运单号=" + listDTO.getTrackNo());
-//            }
+            if (!ReconciliationStatusEnum.TO_BE_GENERATED.getCode().equalsIgnoreCase(listDTO.getReconciliationStatus())){
+                throw new ServiceException("该物流单已生成对账单,物流运单号=" + listDTO.getTransportNo());
+            }
             if (!FmLogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(listDTO.getTransportStatus())) {
-                throw new ServiceException("该物流单未签收完成,物流运单号=" + listDTO.getTrackNo());
+                throw new ServiceException("该物流单未签收完成,物流运单号=" + listDTO.getTransportNo());
             }
         }
         // 补充基础信息
@@ -637,18 +661,18 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         String currencySymbol = this.getCurrencySymbol(currency);
         // 对应物流单(可能未保存)
 
-        List<String> trackNoList = successList.stream().map(FirstMileReconciliationStandardExcelDTO::getTrackNo).distinct().collect(Collectors.toList());
+        List<String> transportNoList = successList.stream().map(FirstMileReconciliationStandardExcelDTO::getTransportNo).distinct().collect(Collectors.toList());
 
 
         // 查询原物流单信息
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceLogisticList = tmsFirstMileLogisticService.listByTrackNoListAndSupplierIds(
-                trackNoList,
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceLogisticList = tmsFirstMileLogisticService.listByTransportNoListAndSupplierIds(
+                transportNoList,
                 Collections.singletonList(mainEntity.getLogisticsSupplierId()));
         // 补充来源信息
         this.fillWaitReconciliationList(sourceLogisticList);
         Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> sourceLogisticMap = sourceLogisticList
                 .stream()
-                .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getTrackNo));
+                .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getTransportNo));
 
         // 物流跟踪单
         // 原对数据库账明细信息
@@ -666,7 +690,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         // 按分组Map<物流运单号, 当前明细数组>
         Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> oldDbGroupMap = viewDTOList
                 .stream()
-                .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getTrackNo));
+                .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getTransportNo));
 
         //配置信息
         Map<String, CfgReconciliationFieldDTO.ErpFieldDropDownDTO> cfgErpFieldMap = cfgReconciliationFieldService.erpFieldList(Collections.singletonList(DictBasicEnum.CFG_FIRST_MILE_ERP_FIELD.getType()))
@@ -676,14 +700,14 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
         for (FirstMileReconciliationStandardExcelDTO excelDTO : successList) {
             // 对应物流单
-            List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailDTO = sourceLogisticMap.get(excelDTO.getTrackNo());
+            List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailDTO = sourceLogisticMap.get(excelDTO.getTransportNo());
             if (CollectionUtils.isEmpty(sourceDetailDTO)) {
-                excelDTO.setErrorMsg(StrUtil.format("未找到物流运单号【{}】的物流单", excelDTO.getTrackNo()));
+                excelDTO.setErrorMsg(StrUtil.format("未找到物流运单号【{}】的物流单", excelDTO.getTransportNo()));
                 errorList.add(excelDTO);
                 continue;
             }
 
-            List<TmsFirstMileReconciliationDetailDTO.ListDTO> currentTrackNoList = oldDbGroupMap.get(excelDTO.getTrackNo());
+            List<TmsFirstMileReconciliationDetailDTO.ListDTO> currentTrackNoList = oldDbGroupMap.get(excelDTO.getTransportNo());
             if (CollectionUtils.isEmpty(currentTrackNoList)) {
                 // 生成当前物流单的所有明细
                 currentTrackNoList = sourceDetailDTO.stream()

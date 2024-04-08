@@ -176,14 +176,14 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private String sourceCode;
 
         /**
-         * 关联单号(物流跟踪号关联的货件单号)
+         * 关联单号(物流运输号关联的货件单号)
          */
         private String relationCode;
 
         /**
-         * 物流跟踪号
+         * 运输单号
          */
-        private String trackNo;
+        private String transportNo;
 
         /**
          * 货件/计划单号【业务单号】
@@ -364,6 +364,11 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 物流单对账状态(后台用)
          */
         private String reconciliationStatus;
+
+        /**
+         * 物流商ID(后台用)
+         */
+        private String logisticsSupplierId;
     }
 
     @Data
@@ -523,9 +528,9 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private String sourceCode;
 
         /**
-         * 物流跟踪号
+         * 物流运输号
          */
-        private String trackNo;
+        private String transportNo;
 
         /**
          * 货件/计划单号
@@ -682,16 +687,21 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private String sourceCode;
 
         /**
-         * 物流跟踪号
+         * 物流运输号
          */
-        @Size(max = 19, message = "物流跟踪号最大长度不能超过19位")
-        private String trackNo;
+        @Size(max = 19, message = "物流运输号最大长度不能超过19位")
+        private String transportNo;
 
         /**
          * 货件/计划单号
          */
         @Size(max = 19, message = "货件/计划单号最大长度不能超过19位")
         private String businessCode;
+
+        /**
+         * 关联单号
+         */
+        private String relationCode;
 
         /**
          * 店铺ID
@@ -829,6 +839,20 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         @Size(max = 32, message = "确认人名称最大长度不能超过32位")
         private String confirmUserName;
 
+        /**
+         * 运输状态
+         */
+        private String transportStatus;
+
+        /**
+         * 运输状态名称
+         */
+        private String transportStatusName;
+
+        /**
+         * 渠道商ID
+         */
+        private String logisticsChannelId;
 
     }
 

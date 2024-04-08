@@ -680,7 +680,8 @@
             lb.source_code as sourceCode,
             lb.source_id as relationId,
             lb.id as sourceId,
-            lbc.transport_no as relationCode,
+            lb.transport_no as relationCode,
+            lb.transport_no as transportNo,
             lb.outstock_id as outstockId,
             lb.outstock_code as businessCode,
             lbd.track_status as transportStatus,
@@ -694,6 +695,8 @@
             lbc.volume_weight as volumeWeight,
             lbc.billing_weight_logistics as billingWeight,
             lbc.weight_unit as actualWeightUnit,
+            lbc.weight_unit as volumeWeightUnit,
+            lbc.weight_unit as billingWeightUnit,
             lbc.currency as currency,
             lb.order_time as orderTime,
             lbd.track_no as trackNo,
@@ -722,9 +725,9 @@
                     #{id}
                 </foreach>
             </if>
-            <if test="trackNoList != null and trackNoList.size() > 0 ">
-                and lbd.track_no in
-                <foreach collection="trackNoList" item="trackNo" open="(" separator="," close=")">
+            <if test="transportNoList != null and transportNoList.size() > 0 ">
+                and lb.transport_no in
+                <foreach collection="transportNoList" item="trackNo" open="(" separator="," close=")">
                     #{trackNo}
                 </foreach>
             </if>

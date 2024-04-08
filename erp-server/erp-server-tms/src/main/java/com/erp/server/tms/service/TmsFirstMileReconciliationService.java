@@ -8,6 +8,7 @@ import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.common.business.vo.PagingVO;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -161,4 +162,6 @@ public interface TmsFirstMileReconciliationService extends SuperService<TmsFirst
      * 根据审核状态查询单据
      */
     List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> listByApproveStatus(String status);
+
+    TmsFirstMileReconciliationEntity getByGenerate(String logisticsSupplierId, LocalDate startDate, LocalDate endDate, String currency);
 }
