@@ -9,6 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
+import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 
@@ -639,4 +640,11 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return
      */
     PagingVO<ProductDetailDTO.SkuDTO> listSku(PagingDTO<ProductSkuDTO> pagingDTO);
+
+    /**
+     * 根据SkuIds获取SKU简单信息
+     * @param skuIds
+     * @return
+     */
+    List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(List<String> skuIds);
 }

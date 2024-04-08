@@ -24,6 +24,8 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.plm.vo.SkuInfoSimpleVO;
+import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
@@ -228,9 +230,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
-        List<SkuVO> skuList = new ArrayList<>();
+        List<SkuInfoSimpleVO> skuList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(skuIds)) {
-            skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+            skuList = plmTaskFeign.getSimpleSkuInfoByIds(skuIds);
         }
 
         // 主表更新或保存

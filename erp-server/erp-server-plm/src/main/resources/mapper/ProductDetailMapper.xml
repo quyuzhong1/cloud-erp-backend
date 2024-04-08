@@ -1638,4 +1638,30 @@
                     end , pd.sku_no
         ) sku_detail
     </select>
+
+    <select id="getSimpleSkuInfoByIds" resultType="com.erp.model.plm.vo.SkuInfoSimpleVO">
+        SELECT
+        pd.id AS skuId,
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pd.sku_no,
+        pd.name AS skuName,
+        pd.images_url AS skuImagesUrl,
+        pc.retail_price,
+        ppk.gross_weight,
+        pp.main_supplier as supplierId
+        FROM product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        left join product_pack ppk on pd.id = ppk.sku_id AND ppk.is_deleted = FALSE
+        LEFT JOIN product_cost pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
+        LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
+        WHERE pd.is_deleted = FALSE
+        <if test="skuIds != null and skuIds.size>0">
+            AND pd.id IN
+            <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+    </select>
 </mapper>

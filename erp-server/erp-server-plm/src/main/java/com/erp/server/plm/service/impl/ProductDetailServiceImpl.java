@@ -42,6 +42,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.ProductRefLabelVO;
+import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
@@ -4128,5 +4129,33 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Page<ProductDetailDTO.SkuDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ProductDetailDTO.SkuDTO> pageData=  baseMapper.listSku(query, pagingDTO.getParams());
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.emptyList();
+        }
+        List<SkuInfoSimpleVO> skuList = baseMapper.getSimpleSkuInfoByIds(skuIds);
+        if (CollUtil.isEmpty(skuList)) {
+            return Collections.emptyList();
+        }
+        //供应商信息
+        List<String> supplierIdList = skuList.stream().map(SkuInfoSimpleVO::getSupplierId).collect(Collectors.toList());
+        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+
+        Map<String, List<PurchasePriceDTO.SupplierSkuPrice>> suppelierMap = supplierSkuPriceList
+                .stream()
+                .collect(Collectors.groupingBy(PurchasePriceDTO.SupplierSkuPrice::getSupplierId));
+
+        for (SkuInfoSimpleVO skuVO : skuList) {
+            List<PurchasePriceDTO.SupplierSkuPrice> supplierList = suppelierMap.get(skuVO.getSupplierId());
+            if (CollectionUtils.isNotEmpty(supplierList)){
+                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierList.get(0);
+                //含税价
+                skuVO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
+            }
+        }
+        return skuList;
     }
 }

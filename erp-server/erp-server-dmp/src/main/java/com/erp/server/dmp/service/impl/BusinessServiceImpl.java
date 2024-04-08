@@ -26,6 +26,7 @@ import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpPullTaskService;
 import com.google.common.collect.Lists;
+import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -103,7 +104,7 @@ public class BusinessServiceImpl {
      */
 //    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public <T extends CleanBaseDTO,R extends UniqueDto> void batchPullProcessBusiness(String category, String platform, String business, JobTaskDTO data, PlatformApiEnum platformApiEnum) {
+    public <T extends CleanBaseDTO,R extends UniqueDto> void batchPullProcessBusiness(String category, String platform, String business, JobTaskDTO data, PlatformApiEnum platformApiEnum, Integer batchSendMqSize) {
         IBusinessHandler<T,R> handler = (IBusinessHandler<T,R>) registry.getHandler(category, platform, business);
         if (handler != null) {
             PlatformDataDTO<T, R> platformData = handler.pullHandle(data);
@@ -111,7 +112,7 @@ public class BusinessServiceImpl {
             String targetPlatform = handler.getTargetPlatform();
             Boolean isSendMq = handler.getIsSendMq();
             // 保存mongo 并发送mq
-            List<R> toMqList = batchCompareAndSaveMongo(isSendMq, category, platform, business, targetPlatform, platformData, RocketMqTopic.PLATFORM_PULL_DATA_TOPIC, platformApiEnum);
+            List<R> toMqList = batchCompareAndSaveMongo(isSendMq, category, platform, business, targetPlatform, platformData, RocketMqTopic.PLATFORM_PULL_DATA_TOPIC, platformApiEnum, batchSendMqSize);
         } else {
             // Handle the case when no handler is found
             throw new RuntimeException("No handler found for category: " + category + ", platform: " + platform + ", business: " + business);
@@ -292,7 +293,7 @@ public class BusinessServiceImpl {
         }
     }
 
-    private <R extends UniqueDto, T extends CleanBaseDTO> List<R> batchCompareAndSaveMongo(Boolean isSendMq, String category, String platform, String business, String targetPlatform, PlatformDataDTO<T, R> platformData, String topic, PlatformApiEnum platformApiEnum) {
+    private <R extends UniqueDto, T extends CleanBaseDTO> List<R> batchCompareAndSaveMongo(Boolean isSendMq, String category, String platform, String business, String targetPlatform, PlatformDataDTO<T, R> platformData, String topic, PlatformApiEnum platformApiEnum, Integer batchSendMqSize) {
         // 保存数据到mongodb 并推送到mq
         List<T> sourceData = platformData.getSourceData();
         if(CollectionUtil.isEmpty(sourceData)){
@@ -348,7 +349,7 @@ public class BusinessServiceImpl {
         });
 
         // 分组发送
-        List<List<R>> allMqList = Lists.partition(pushToMqList, 1000);
+        List<List<R>> allMqList = Lists.partition(pushToMqList, batchSendMqSize);
         for (List<R> curMqList : allMqList) {
             // 批量发送mq
             SendResult cleanResult = mqProducerService.sendBachMsg(topic, tag, curMqList);
