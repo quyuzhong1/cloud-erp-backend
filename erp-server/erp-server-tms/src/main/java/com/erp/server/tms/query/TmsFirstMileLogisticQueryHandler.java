@@ -70,6 +70,7 @@ public class TmsFirstMileLogisticQueryHandler extends AbstractQueryHandler {
         }
 
         if(field.equals("signTime")){
+            compareCodeSplicingValueSql = compareCodeSplicingValueSql.replace("signTime","lt.track_time");
             return " exists (SELECT 1 from  logistics_track lt where lt.is_deleted = false and lt.status = 'sign' and lt.track_no = lbd.track_no AND lt.track_time = (select max(track_time) from logistics_track b where b.track_no = lbd.track_no and b.is_deleted = false) and lt.track_time "+compareCodeSplicingValueSql+" ) ";
         }
 
