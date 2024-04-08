@@ -45,6 +45,8 @@ public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
         // 获取请求URL
         String uri = request.getPath().value();
         if(uri.indexOf("/webVersion/sse") != -1) {
+        	HttpHeaders responseHeaders = exchange.getResponse().getHeaders();
+        	responseHeaders.setCacheControl(CacheControl.noCache());
         	return chain.filter(exchange);
         }
         
