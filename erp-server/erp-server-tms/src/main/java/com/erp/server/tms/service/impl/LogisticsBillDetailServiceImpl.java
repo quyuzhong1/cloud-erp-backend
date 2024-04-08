@@ -8,9 +8,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.LogisticsAuthDTO;
-import com.erp.model.tms.dto.LogisticsBillDTO;
-import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
@@ -25,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -148,6 +145,15 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         page.setSize(query.getSize());
         page.setCurrent(query.getCurrent());
         IPage<LogisticsBillDetailEntity> result = baseMapper.getTrackPage(page, query);
+        return new PagingVO<>(result.getRecords(), (int) result.getTotal(), (int) result.getSize(), (int) result.getCurrent());
+    }
+
+    @Override
+    public PagingVO<LogisticsTrackDTO.UpdateTrackDTO> getTrackDtoPage(LogisticsBillDetailQueryDTO query) {
+        Page<LogisticsTrackDTO.UpdateTrackDTO> page = new Page<>();
+        page.setSize(query.getSize());
+        page.setCurrent(query.getCurrent());
+        IPage<LogisticsTrackDTO.UpdateTrackDTO> result = baseMapper.getTrackDtoPage(page, query);
         return new PagingVO<>(result.getRecords(), (int) result.getTotal(), (int) result.getSize(), (int) result.getCurrent());
     }
 
