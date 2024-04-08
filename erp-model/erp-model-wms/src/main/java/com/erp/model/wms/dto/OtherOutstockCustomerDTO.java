@@ -27,12 +27,6 @@ public class OtherOutstockCustomerDTO implements Serializable {
          */
         private String customerId;
 
-
-        /**
-         * 客户code  来源 http://172.16.100.11:3002/project/110/interface/api/31395
-         */
-        private String customerCode;
-
         /**
          * 客户名称
          */
