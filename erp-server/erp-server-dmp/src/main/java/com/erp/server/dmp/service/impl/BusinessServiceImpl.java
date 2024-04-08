@@ -349,17 +349,23 @@ public class BusinessServiceImpl {
         });
 
         // 分组发送
-        List<List<R>> allMqList = Lists.partition(pushToMqList, batchSendMqSize);
-        for (List<R> curMqList : allMqList) {
-            // 批量发送mq
-            SendResult cleanResult = mqProducerService.sendBachMsg(topic, tag, curMqList);
+//        List<List<R>> allMqList = Lists.partition(pushToMqList, batchSendMqSize);
+//        for (List<R> curMqList : allMqList) {
+//            // 批量发送mq
+//            SendResult cleanResult = mqProducerService.sendBachMsg(topic, tag, curMqList);
+//            if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
+//                throw new RuntimeException(StrUtil.format("发送业务模块 MQ数据异常，{}", JSONUtil.toJsonStr(cleanResult)));
+//            }else {
+//                // 批量mongo处理
+//                mongoService.updateIsClearByUniqueIds(allUniqueIds, 1,  tableName, tClass);
+//            }
+//        }
+        pushToMqList.stream().peek(msg->{
+            SendResult cleanResult = mqProducerService.syncClassMsg(topic, tag, msg, msg.getUniqueId());
             if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送业务模块 MQ数据异常，{}", JSONUtil.toJsonStr(cleanResult)));
-            }else {
-                // 批量mongo处理
-                mongoService.updateIsClearByUniqueIds(allUniqueIds, 1,  tableName, tClass);
             }
-        }
+        });
         return pushToMqList;
     }
 }
