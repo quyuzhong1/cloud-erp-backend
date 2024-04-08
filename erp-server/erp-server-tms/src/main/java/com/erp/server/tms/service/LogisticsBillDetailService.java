@@ -2,6 +2,7 @@ package com.erp.server.tms.service;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -78,6 +79,13 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @return
      */
     PagingVO<LogisticsBillDetailEntity> getPage(LogisticsBillDetailQueryDTO query);
+
+    /**
+     *
+     * @param query
+     * @return
+     */
+    PagingVO<LogisticsTrackDTO.UpdateTrackDTO> getTrackDtoPage(LogisticsBillDetailQueryDTO query);
 
     LogisticsBillDetailEntity getDetailByTrackNo(String trackNo);
 
