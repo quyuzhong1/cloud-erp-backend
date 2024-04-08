@@ -496,10 +496,10 @@
         select
             po.id,
             pod.id as purchaseDetailId,
-            po.approve_time,
-            pod.execution_status,
-            pod.confirm_type,
-            po.purchase_org_name,
+            po.approve_time approveTime,
+            pod.execution_status as executionStatus,
+            pod.confirm_type as confirmType,
+            po.purchase_org_name as purchaseOrgName,
             po.type as type,
             po.code,
             pos.supplier_name as supplierName,
@@ -515,7 +515,7 @@
             po.delivery_warehouse_name as deliveryWarehouseName,
             pod.tax_price as taxPrice,
             pod.tax_rate as taxRate,
-            pod.currency_symbol,
+            pod.currency_symbol as currencySymbol,
             pod.purchase_qty as purchaseQty,
             pod.purchase_amount as purchaseAmount,
             pod.remark,
@@ -546,6 +546,13 @@
                 ${params.permissionSql}
             </if>
         </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        po.id desc,pod.id asc
     </select>
 
     <select id="listPurchaseOrderAutoConfirm" resultType="com.erp.model.scm.dto.PurchaseOrderDetailDTO$PurchaseOrderConfirmDTO">
