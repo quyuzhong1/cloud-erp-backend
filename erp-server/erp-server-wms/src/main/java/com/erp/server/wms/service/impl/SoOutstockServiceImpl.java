@@ -178,6 +178,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private StocktakingProfitLossService stocktakingProfitLossService;
 
+    
     @Resource
     private ShopInfoFeign shopInfoFeign;
 

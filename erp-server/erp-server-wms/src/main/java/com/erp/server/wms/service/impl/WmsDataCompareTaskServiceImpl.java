@@ -82,6 +82,7 @@ import com.erp.server.wms.utils.WmsDataCompareUtils.WmsDataCompareExcelDto;
 import com.google.common.collect.Lists;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.UUID;
@@ -462,7 +463,17 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 									}
 									if(StringUtils.isNotBlank(excelValue)) {
 										if(systemField.endsWith("Date") || systemField.endsWith("Time")) {
-											excelValue = DateUtil.format(DateUtil.parse(excelValue), "yyyy-MM-dd");
+											DateTime parse = null;
+											try {
+												parse = DateUtil.parse(excelValue);
+											} catch (Exception e) {
+												try {
+													parse = DateUtil.parse(excelValue, "MM/dd/yyyy");
+												} catch (Exception e1) {
+													throw new ServiceException("日期格式解析错误" + ExceptionUtil.stacktraceToString(e1, 1500));
+												}
+											}
+											excelValue = DateUtil.format(parse, "yyyy-MM-dd");
 										}
 									}
 									method.invoke(compareDTO, excelValue);
