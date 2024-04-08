@@ -2,6 +2,7 @@ package com.erp.server.scm.controller.feign;
 
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -481,16 +482,5 @@ public class PurchaseOrderFeignController {
     public List<PurchaseOrderDTO.ListDTO> generateDeliveryList(@RequestBody PurchaseOrderSrmDTO.GenerateDeliveryParamDTO dto){
         List<PurchaseOrderDTO.ListDTO> list = purchaseOrderService.generateDeliveryList(dto);
         return list;
-    }
-
-    /**
-     * 导出srm供应商采购订单
-     * @param dto
-     * @param response
-     * @return
-     */
-    @PostMapping("/exportSrmExcel")
-    public Boolean exportSrmExcel(PurchaseOrderDTO.SrmSearchParamDTO dto, HttpServletResponse response){
-        return purchaseOrderService.exportSrmExcel(dto, response);
     }
 }

@@ -18,7 +18,9 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.server.scm.query.OrderConfirmQueryHandler;
 import com.erp.server.scm.query.PurchaseOrderQueryHandler;
+import com.erp.server.scm.service.CommonService;
 import com.erp.server.scm.service.PurchaseOrderDetailService;
 import com.erp.server.scm.service.PurchaseOrderService;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +56,8 @@ public class PurchaseOrderController extends BaseController {
 
     @Resource
     private PurchaseOrderDetailService purchaseOrderDetailService;
-
+    @Resource
+    private CommonService commonService;
     /**
      * 分页查询
      * @author Will
@@ -687,5 +690,22 @@ public class PurchaseOrderController extends BaseController {
     public ApiResult importEndReceiveFile(@RequestParam("excelFile") MultipartFile multipartFile, HttpServletResponse response) {
         purchaseOrderService.importEndReceiveFile(multipartFile, response);
         return success();
+    }
+
+    /**
+     *  导出SRM采购订单
+     * @author zdy
+     * @date: 2023/3/15 18:23
+     * @param dto
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出SRM采购订单")
+    @PostMapping(value = "/exportExcel")
+    @WebAdvanceQuery(handler = OrderConfirmQueryHandler.class)
+    public ApiResult exportExcel(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto, HttpServletResponse response) {
+        dto.setSupplierId(commonService.getSupplierId());
+        Boolean flag = purchaseOrderService.exportSrmExcel(dto, response);
+        return flag == true ? success() : failure();
     }
 }

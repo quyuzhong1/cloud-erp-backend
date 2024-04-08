@@ -44,4 +44,10 @@ public interface CommonService {
      * @return List<String>
      */
     List<String> listProcessCurBusinessIds (String businessKey);
+
+    /**
+     * 获取用户关联的供应商id - 用于srm跨服务接口
+     * @return
+     */
+    String getSupplierId();
 }

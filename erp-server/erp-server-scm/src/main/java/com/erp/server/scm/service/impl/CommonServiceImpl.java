@@ -6,9 +6,11 @@ import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.service.CommonService;
+import com.erp.server.scm.service.SupplierUserService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -36,7 +38,8 @@ public class CommonServiceImpl implements CommonService {
 
     @Resource
     private WorkflowFeign workflowFeign;
-
+    @Resource
+    private SupplierUserService supplierUserService;
     @Override
     public LoginUser getUserInfo() {
         String userId = "";
@@ -50,7 +53,32 @@ public class CommonServiceImpl implements CommonService {
         }
         return loginUser;
     }
-
+    /**
+     * 获取当前用户供应商id
+     * @return
+     */
+    @Override
+    public String getSupplierId(){
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        if (Objects.nonNull(loginUser)){
+            String uid = loginUser.getUid();
+            //获取用户关联供应商
+            SupplierUserInfoVO info = supplierUserService.getById(uid);
+            if (Objects.nonNull(info) && StringUtils.isNotEmpty(info.getSupplierId())){
+                //用户是否禁用
+                if (Objects.isNull(info.getUserState()) || 0 == info.getUserState()) {
+                    throw new ServiceException(ApiError.ERROR_9016);
+                }else {
+                    return info.getSupplierId();
+                }
+            }else {
+                //用户未关联供应商
+                throw new ServiceException(ApiError.ERROR_USER_NOT_REL_SUPPLIER);
+            }
+        }else {
+            throw new ServiceException(ApiError.ERROR_403);
+        }
+    }
 
     /**
      * 公共的下载模板

@@ -119,22 +119,4 @@ public class PurchaseOrderController extends BaseController {
     public ApiResult<PurchaseOrderDTO.ViewDTO> srmOrderView(@RequestParam("id") String id) {
         return success(purchaseOrderFeign.srmOrderView(id));
     }
-
-
-    /**
-     *  导出
-     * @author Will
-     * @date: 2023/3/15 18:23
-     * @param dto
-     * @param response
-     * @return ApiResult
-     */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购订单")
-    @PostMapping(value = "/exportExcel")
-    @WebAdvanceQuery(handler = OrderConfirmQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto, HttpServletResponse response) {
-        dto.setSupplierId(userService.getSupplierId());
-        Boolean flag = purchaseOrderFeign.exportSrmExcel(dto, response);
-        return flag == true ? success() : failure();
-    }
 }
