@@ -11,6 +11,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.oms.enums.MercadoOrderLogisticTypeEnum;
 import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.sdk.oms.mercado.dto.mercado.order.OrderItemsBean;
 import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
 import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
@@ -88,10 +89,9 @@ public class MercadoOrderDTO extends CleanBaseDTO {
             // 转换为 LocalDateTime
             LocalDateTime payTime = offsetDateTime.toLocalDateTime();
             orderDTO.setPayTime(payTime);
-
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             //付款方式
             orderDTO.setDictPayMethod(orderBean.getPayments().get(0).getPaymentMethodId());
-
         }
 
         //订单金额
@@ -165,17 +165,13 @@ public class MercadoOrderDTO extends CleanBaseDTO {
             if ("handling".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE_ING.getStatus());
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+
             } else if ("ready_to_ship".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE_ING.getStatus());
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             } else if ("shipped".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-            } else if ("cancelled".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
-                orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-                orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-                orderDTO.setInvalidStatus(Boolean.TRUE);
-                orderDTO.setRemark("平台取消");
             } else if ("delivered".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
@@ -183,14 +179,21 @@ public class MercadoOrderDTO extends CleanBaseDTO {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             }
-
         }
+
 
         if ("invalid".equals(orderBean.getStatus())) {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             orderDTO.setInvalidStatus(Boolean.TRUE);
             orderDTO.setRemark("平台无效订单");
+        } else if ("cancelled".equals(orderBean.getStatus())) {
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+            orderDTO.setInvalidStatus(Boolean.TRUE);
+            orderDTO.setRemark("平台取消");
+        } else if ("paid".equals(orderBean.getStatus())) {
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
         }
 
         // 订单明细
