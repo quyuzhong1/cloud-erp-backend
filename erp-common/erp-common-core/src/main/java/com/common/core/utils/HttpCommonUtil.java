@@ -162,7 +162,6 @@ public class HttpCommonUtil {
             requestBuilder.get();
         }
         requestBuilder.url(url);
-        https://open-api.tiktokglobalshop.com/authorization/202309/shops?access_token=ROW_GzpNXQAAAACj-JAAAriAWjVtF2MrUIFdsyKbmgpFdy5ZKZU7_DcW_ahRpfbkhswwJKnrzfpPj19EPf6OyL_uhPFuQitb3TvgTVppCInACVvzpgcRGcI3K9Zp0hN8V0cL4vJXwjXCOrBuHT-kXLvYPhzjmDJYZA3KcjPmeDpH4EsgaB-YkuAstQ&shop_id=&app_key=6buinkjt3hmld&sign=291508e5ccdd46248ace92c83120c48a68e5d0350e5cc5599ac7d78f2660062f&version=202309&timestamp=1712485014
         try {
             response = doSend(requestBuilder);
             responseString = response.body().string();
