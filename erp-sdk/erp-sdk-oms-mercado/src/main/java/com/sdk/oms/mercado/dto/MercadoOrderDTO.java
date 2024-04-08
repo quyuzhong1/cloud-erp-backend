@@ -163,11 +163,10 @@ public class MercadoOrderDTO extends CleanBaseDTO {
             shipmentViewDTO = orderBean.getShipmentViewDTO();
 
             if ("handling".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
-                orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE_ING.getStatus());
+                orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-
             } else if ("ready_to_ship".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
-                orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE_ING.getStatus());
+                orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             } else if ("shipped".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
@@ -194,6 +193,9 @@ public class MercadoOrderDTO extends CleanBaseDTO {
             orderDTO.setRemark("平台取消");
         } else if ("paid".equals(orderBean.getStatus())) {
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+        } else {
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
         }
 
         // 订单明细
