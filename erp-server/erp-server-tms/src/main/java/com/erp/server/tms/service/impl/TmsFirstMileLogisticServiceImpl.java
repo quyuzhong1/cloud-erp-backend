@@ -771,7 +771,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 continue;
             }
 
-            if(StringUtils.isBlank(logisticsBillEntity.getCounterNo()) && FmLogisticTrackStatusEnum.ORDERED != statusEnum && FmLogisticTrackStatusEnum.WAIT_ORDER != statusEnum){
+            if(StringUtils.isBlank(logisticsBillEntity.getCounterNo()) && FmLogisticTrackStatusEnum.ORDERED != statusEnum){
                 batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"尚未填写柜号，请填写后更新"));
                 continue;
             }
