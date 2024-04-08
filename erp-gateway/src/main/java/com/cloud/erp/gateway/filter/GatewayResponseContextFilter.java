@@ -14,6 +14,7 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.*;
 import org.springframework.http.client.reactive.ClientHttpResponse;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponseDecorator;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserter;
@@ -40,6 +41,13 @@ public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
             log.debug("[ResponseLogFilter]Properties Set Not To Read Response Data");
             return chain.filter(exchange);
         }
+        ServerHttpRequest request = exchange.getRequest();
+        // 获取请求URL
+        String uri = request.getPath().value();
+        if(uri.indexOf("/webVersion/sse") != -1) {
+        	return chain.filter(exchange);
+        }
+        
         ServerHttpResponseDecorator responseDecorator = new ServerHttpResponseDecorator(exchange.getResponse()) {
             @Override
             public Mono<Void> writeWith(Publisher<? extends DataBuffer> body) {
