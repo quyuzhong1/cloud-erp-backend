@@ -1,8 +1,10 @@
 package com.erp.server.dmp.pull.mongo.impl;
 
+import com.common.business.dto.CleanBaseDTO;
 import com.common.core.utils.MapUtil;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.utils.MongoUtil;
+import com.google.common.collect.Lists;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
@@ -255,8 +257,21 @@ public class MongoServiceImpl implements MongoService {
 		bulkOperations.execute();
 	}
 
+	@Override
+	public <T extends CleanBaseDTO> void updateIsClearByUniqueIds(List<String> uniqueIds, Integer isClear, String tableName, Class<T> tClass) {
+		// 按1000个分组
+		List<List<String>> partition = Lists.partition(uniqueIds, 1000);
 
-	public static void main(String[] args) {
-		System.out.println(Date.from(OffsetDateTime.now().toInstant()));
+		for (List<String> curUniqueIds : partition) {
+			// 构建查询条件，查找uniqueId在指定列表内的记录
+			Query query = new Query(Criteria.where("uniqueId").in(curUniqueIds));
+
+			// 构建更新操作，将isClear字段设置为1
+			Update update = new Update().set("isClear", 1);
+
+			// 执行更新操作
+			orderTemplate.updateMulti(query, update, tClass, tableName);
+		}
 	}
+
 }

@@ -133,4 +133,14 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
      * @param syncTaskId
      */
     void sendWarnMsg(String syncTaskId);
+
+    /**
+     * 批量更新或保存
+     */
+    List<DmpPullTaskEntity> batchCheckSaveAndUpdate(List<DmpPullTaskEntity> entityList, String platform, String code, String targetPlatform, String topic, String tag);
+
+    /**
+     * 批量查询
+     */
+    List<DmpPullTaskEntity> findList(String platform, String sourceType, String targetPlatform, String topic, String tag, List<String> sourceIds);
 }

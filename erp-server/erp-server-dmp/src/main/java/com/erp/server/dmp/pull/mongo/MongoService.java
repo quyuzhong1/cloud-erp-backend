@@ -1,6 +1,8 @@
 package com.erp.server.dmp.pull.mongo;
 
+import com.common.business.dto.CleanBaseDTO;
 import com.common.core.utils.MapUtil;
+import jnr.ffi.annotations.In;
 import org.springframework.data.domain.Sort.Direction;
 
 import java.util.List;
@@ -171,4 +173,9 @@ public interface MongoService {
 	 * @throws Exception
 	 */
 	void deleteMongoDataBatch(Object obj,String table)throws Exception;
+
+	/**
+	 * 根据uniqueIds批量更新isClear新据
+	 */
+	<T extends CleanBaseDTO> void updateIsClearByUniqueIds(List<String> uniqueIds, Integer isClear, String finalTableName, Class<T> tClass);
 }
