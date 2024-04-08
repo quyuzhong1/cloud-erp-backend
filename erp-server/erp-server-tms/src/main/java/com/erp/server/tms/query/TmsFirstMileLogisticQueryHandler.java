@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
@@ -77,6 +78,7 @@ public class TmsFirstMileLogisticQueryHandler extends AbstractQueryHandler {
         if(field.equals("warn")){
             List<TmsFirstMileLogisticDTO.PagingVO> list = tmsFirstMileLogisticService.hasWarnPaging(new TmsFirstMileLogisticDTO.PagingParamDTO());
             List<String> ids = new ArrayList<>();
+            list = list.stream().filter(v-> Objects.nonNull(v.getWarnHour())).collect(Collectors.toList());
             if(value.equals("overdue")){
                 ids = list.stream().filter(v->v.getWarnHour() <= 72 && v.getWarnHour() > 0).map(TmsFirstMileLogisticDTO.PagingVO::getId).collect(Collectors.toList());
             }
