@@ -25,6 +25,7 @@ import com.erp.server.dmp.enums.CleanDataTableEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpPullTaskService;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -346,13 +347,17 @@ public class BusinessServiceImpl {
             e.setDmpSyncTaskId(taskId);
         });
 
-        // 批量发送mq
-        SendResult cleanResult = mqProducerService.sendBachMsg(topic, tag, pushToMqList);
-        if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
-            throw new RuntimeException(StrUtil.format("发送业务模块 MQ数据异常，{}", JSONUtil.toJsonStr(cleanResult)));
-        }else {
-            // 批量mongo处理
-            mongoService.updateIsClearByUniqueIds(allUniqueIds, 1,  tableName, tClass);
+        // 分组发送
+        List<List<R>> allMqList = Lists.partition(pushToMqList, 1000);
+        for (List<R> curMqList : allMqList) {
+            // 批量发送mq
+            SendResult cleanResult = mqProducerService.sendBachMsg(topic, tag, curMqList);
+            if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
+                throw new RuntimeException(StrUtil.format("发送业务模块 MQ数据异常，{}", JSONUtil.toJsonStr(cleanResult)));
+            }else {
+                // 批量mongo处理
+                mongoService.updateIsClearByUniqueIds(allUniqueIds, 1,  tableName, tClass);
+            }
         }
         return pushToMqList;
     }
