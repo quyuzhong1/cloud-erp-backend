@@ -78,6 +78,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -655,8 +656,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         deliveryStaticsReq.setBeginDate(DateUtil.getStartOfMonth(-1));
         deliveryStaticsReq.setEndDate(DateUtil.getEndOfMonth(0));
         List<FirstMileDeliveryDTO.LogisticStatisticsDTO> deliveryLogisticDTOList = wmsFirstMileDeliveryFeign.logisticStatistics(deliveryStaticsReq);
-        deliveryStatistics.setLastMonthDelivery(!deliveryLogisticDTOList.isEmpty() ?deliveryLogisticDTOList.get(0).getCount():0);
-        deliveryStatistics.setThisMonthDelivery(deliveryLogisticDTOList.size()>1?deliveryLogisticDTOList.get(1).getCount():0);
+        deliveryStatistics.setLastMonthDelivery(deliveryLogisticDTOList.stream().filter(v->v.getMonth().equals(LocalDate.now().minusMonths(1).getMonthValue())).findFirst().orElse(new FirstMileDeliveryDTO.LogisticStatisticsDTO()).getCount());
+        deliveryStatistics.setThisMonthDelivery(deliveryLogisticDTOList.stream().filter(v->v.getMonth().equals(LocalDate.now().getMonthValue())).findFirst().orElse(new FirstMileDeliveryDTO.LogisticStatisticsDTO()).getCount());
         TmsFirstMileLogisticDTO.LogisticStatisticsReq logisticStatisticsReq = TmsFirstMileLogisticDTO.LogisticStatisticsReq.builder()
                 .beginOrderTime(DateUtil.getStartOfMonth(-1))
                 .endOrderTime(DateUtil.getEndOfMonth(0))
@@ -664,8 +665,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 .orderType(OrderTypeEnum.FIRST_MILE.getCode())
                 .build();
         List<TmsFirstMileLogisticDTO.LogisticStatisticsDTO> logisticStatisticsDTOList = baseMapper.statistics(logisticStatisticsReq,dto.getPermissionSql());
-        deliveryStatistics.setLastMonthOrder(!logisticStatisticsDTOList.isEmpty() ?logisticStatisticsDTOList.get(0).getCount():0);
-        deliveryStatistics.setThisMonthOrder(logisticStatisticsDTOList.size()>1?logisticStatisticsDTOList.get(1).getCount():0);
+        deliveryStatistics.setLastMonthOrder(logisticStatisticsDTOList.stream().filter(v->v.getMonth().equals(LocalDate.now().minusMonths(1).getMonthValue())).findFirst().orElse(new TmsFirstMileLogisticDTO.LogisticStatisticsDTO()).getCount());
+        deliveryStatistics.setThisMonthOrder(logisticStatisticsDTOList.stream().filter(v->v.getMonth().equals(LocalDate.now().getMonthValue())).findFirst().orElse(new TmsFirstMileLogisticDTO.LogisticStatisticsDTO()).getCount());
         statisticsResult.setDeliveryStatistics(deliveryStatistics);
         //对账统计
         TmsFirstMileLogisticDTO.StatisticsVO.ReconciliationStatistics reconciliationStatistics = baseMapper.reconciliationStatistics(OrderTypeEnum.FIRST_MILE.getCode(),dto.getPermissionSql());
