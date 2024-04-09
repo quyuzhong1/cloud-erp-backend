@@ -1464,10 +1464,21 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //删除原装箱信息
         wmsCartonService.deleteCarton(dto.getId());
 
+
+
+
         //新增装箱信息
         for (WmsCartonDTO.AddDTO addDTO : dto.getWmsCartonList()) {
             //新增装箱信息
             wmsCartonService.add(addDTO, dto.getId(), SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
+
+            //根据主表id分组sku查询发货及待装箱数
+            List<WmsCartonDTO.PackDateDTO> packDateDTOS = wmsCartonService.listPackDateBySourceId(dto.getId());
+            List<String> ids = packDateDTOS.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+            List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities = firstMileDeliveryDetailService.listByMainIds(ids);
+
+            //校验打包数量
+            checkDeliveryQty(packDateDTOS, firstMileDeliveryDetailEntities);
         }
 
         //根据主表id分组sku查询发货及待装箱数
@@ -1481,6 +1492,23 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             updatePackingStatus(dto.getId(), PackingStatusEnum.NOT_PACKING.getCode());
         }
         return Boolean.TRUE;
+    }
+
+    /**
+     * 校验打包数量
+     * @param packDateDTOS
+     * @param firstMileDeliveryDetailEntities
+     */
+    private void checkDeliveryQty(List<WmsCartonDTO.PackDateDTO> packDateDTOS, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities) {
+        for (WmsCartonDTO.PackDateDTO packDateDTO : packDateDTOS) {
+            //发货数量
+            int deliveryQty = firstMileDeliveryDetailEntities.stream().filter(req -> req.getMainId().equals(packDateDTO.getId())).mapToInt(req -> req.getDeliveryQty()).sum();
+            //待装箱数量=发货数量-所有已装箱数量
+            int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(packDateDTO.getSkuId())).mapToInt(req -> req.getBoxQty() * req.getPackQty()).sum();
+            if (deliveryQty < packQtySum) {
+                throw new ServiceException(ApiError.PACKING_QTY_NOT_GT_WAIT_PACKING_QTY, packDateDTO.getBoxSpecNo(), packDateDTO.getSkuNo());
+            }
+        }
     }
 
     @Override
