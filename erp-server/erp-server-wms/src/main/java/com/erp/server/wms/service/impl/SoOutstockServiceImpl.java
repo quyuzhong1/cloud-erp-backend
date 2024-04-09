@@ -40,7 +40,6 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -2340,6 +2339,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             if (CollectionUtils.isEmpty(generateSourceDetailList)){
                 log.warn("所有明细已生成销售出库单忽略处理, B2C销售订单={}, 来源明细IDS={}", dto.getPlatformCode(), existSourceDetailIds);
+                String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+                SoB2cErrorDTO.DeleteDetailDTO deleteDTO = new SoB2cErrorDTO.DeleteDetailDTO();
+                deleteDTO.setMainId(soB2cEntity.getId());
+                deleteDTO.setType(type);
+                deleteDTO.setDetailIdList(existSourceDetailIds);
+                soB2cFeign.checkAndDeleteAllError(deleteDTO);
                 return true;
             }
         }
