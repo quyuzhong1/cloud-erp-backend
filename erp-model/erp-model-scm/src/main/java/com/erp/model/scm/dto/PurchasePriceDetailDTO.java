@@ -1,6 +1,5 @@
 package com.erp.model.scm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -477,7 +476,7 @@ public class PurchasePriceDetailDTO implements Serializable {
         /**
          * sku id
          */
-        @Size(max = 50, message = "SKU编号最大50字符")
+        @Size(max = 64, message = "SKU编号最大64字符")
         private String skuNo;
 
         private String productName;
