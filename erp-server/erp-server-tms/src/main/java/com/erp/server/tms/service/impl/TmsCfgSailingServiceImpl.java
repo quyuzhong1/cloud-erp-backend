@@ -157,14 +157,14 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
         if(entity.getEffectiveDate().atStartOfDay().isAfter(orderTime)) {
             return null;
         }
-        return calculateShipTime(entity.getEffectiveDate().atStartOfDay(), entity.getDateValue(), entity.getDateType(), entity.getStartDate(), entity.getStartTime(), orderTime);
+        return calculateShipTime(entity.getEffectiveDate().atStartOfDay(), entity.getDateValue(), entity.getDateType(), entity.getStartDate(), entity.getStartTime(), orderTime,entity.getEndDate(),entity.getEndTime(),true);
     }
 
     /**
      * 获取目标时间下一个开船日
      * @return
      */
-    private  LocalDateTime calculateShipTime(LocalDateTime effectiveTime,Integer sailingInterval, String dateType, Integer startDate, LocalTime startTime, LocalDateTime orderTime) {
+    private  LocalDateTime calculateShipTime(LocalDateTime effectiveTime,Integer sailingInterval, String dateType, Integer startDate, LocalTime startTime, LocalDateTime orderTime, Integer endDate,LocalTime endTime,Boolean isFirst) {
         LocalDateTime nextTargetDay;
         if(effectiveTime.isAfter(orderTime)){
             return effectiveTime;
@@ -178,14 +178,23 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
             if(dayOfWeekValue < startDate){
                 nextTargetDay = effectiveTime.with(TemporalAdjusters.nextOrSame(DayOfWeek.of(startDate)));
             }else {
-                nextTargetDay = effectiveTime.with(TemporalAdjusters.previousOrSame(DayOfWeek.of(startDate))).plusWeeks(sailingInterval);
+                if(isFirst){
+                    nextTargetDay = effectiveTime.with(TemporalAdjusters.nextOrSame(DayOfWeek.of(startDate)));
+                }else{
+                    nextTargetDay = effectiveTime.with(TemporalAdjusters.previousOrSame(DayOfWeek.of(startDate))).plusWeeks(sailingInterval);
+                }
             }
-            //第一次传入的话返回起始日期的开船日，否则需要加上时间间隔
+            //第一次传入的话返回起始日期的开船日，否则需要加上时间间隔，如果下单日期在截单日和开船日之间，则从下一个开船日开始计算
             nextTargetDay = nextTargetDay.with(startTime);
             if(nextTargetDay.isAfter(orderTime)){
-                return nextTargetDay;
+                LocalDateTime endDay = nextTargetDay.with(TemporalAdjusters.previousOrSame(DayOfWeek.of(endDate))).with(endTime);
+                if(orderTime.isAfter(endDay) && isFirst){
+                    return this.calculateShipTime(nextTargetDay.plusWeeks(sailingInterval),sailingInterval,dateType,startDate,startTime,orderTime,  endDate,endTime,  false);
+                }else{
+                    return nextTargetDay;
+                }
             }else{
-                return this.calculateShipTime(nextTargetDay.plusWeeks(sailingInterval),sailingInterval,dateType,startDate,startTime,orderTime);
+                return this.calculateShipTime(nextTargetDay.plusWeeks(sailingInterval),sailingInterval,dateType,startDate,startTime,orderTime,  endDate,endTime,  false);
             }
         }else if (dateType.equals(TmsCfgSailingDateTypeEnum.MONTH.getCode())){
             //逻辑与上面相似
@@ -193,13 +202,22 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
             if (dayOfMonth < startDate) {
                 nextTargetDay = effectiveTime.withDayOfMonth(startDate);
             } else {
-                nextTargetDay = effectiveTime.plusMonths(sailingInterval).withDayOfMonth(startDate);
+                if(isFirst){
+                    nextTargetDay = effectiveTime.withDayOfMonth(startDate);
+                }else{
+                    nextTargetDay = effectiveTime.plusMonths(sailingInterval).withDayOfMonth(startDate);
+                }
             }
             nextTargetDay = nextTargetDay.with(startTime);
             if (nextTargetDay.isAfter(orderTime)) {
-                return nextTargetDay;
+                LocalDateTime endDay = nextTargetDay.withDayOfMonth(endDate).with(endTime);
+                if(orderTime.isAfter(endDay) && isFirst){
+                    return this.calculateShipTime(nextTargetDay.plusMonths(sailingInterval), sailingInterval, dateType, startDate, startTime, orderTime,  endDate,endTime,  false);
+                }else{
+                    return nextTargetDay;
+                }
             } else {
-                return this.calculateShipTime(nextTargetDay.plusMonths(sailingInterval), sailingInterval, dateType, startDate, startTime, orderTime);
+                return this.calculateShipTime(nextTargetDay.plusMonths(sailingInterval), sailingInterval, dateType, startDate, startTime, orderTime,  endDate,endTime,  false);
             }
         }
         return null;
