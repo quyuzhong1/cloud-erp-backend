@@ -47,14 +47,10 @@ public class FirstMileReconciliationConfigExcelListener extends AnalysisEventLis
     }
 
    /**
-    * @description: 每解析一行数据回调一遍
-    * @author Will
-    * @date: 2023/3/7 11:22
-    * @param map 导入信息
-    * @param analysisContext
+    * 每解析一行数据回调一遍
     */
     @Override
-    public void invoke(Map<Integer,String>  map, AnalysisContext analysisContext) {
+    public void invoke(Map<Integer,String> map, AnalysisContext analysisContext) {
         JSONObject excelDTO = new JSONObject(map);
         List<String> errorMsgList = new ArrayList<>();
 
@@ -71,6 +67,9 @@ public class FirstMileReconciliationConfigExcelListener extends AnalysisEventLis
         successList.add(excelDTO);
     }
 
+    public List<JSONObject> getExcelDateList(){
+        return dataList;
+    }
 
     /**
      * 数据全部解析完后删除明细
@@ -82,7 +81,7 @@ public class FirstMileReconciliationConfigExcelListener extends AnalysisEventLis
 
     @Override
     public void invokeHeadMap(Map<Integer,String> map, AnalysisContext analysisContext) {
-        List<String> headList = map.values().stream().map(obj -> obj.toString()).collect(Collectors.toList());
+        List<String> headList = new ArrayList<>(map.values());
         headList.add("错误信息");
         this.headMap = map;
         this.headList = headList;

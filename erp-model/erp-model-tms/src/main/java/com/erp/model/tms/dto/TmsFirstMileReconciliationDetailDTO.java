@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.*;
@@ -369,6 +370,12 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 物流商ID(后台用)
          */
         private String logisticsSupplierId;
+
+
+        /**
+         * 费用明细详情(导入时传递)
+         */
+        private List<TmsCostDetailDTO.UpdateDTO> updateList;
     }
 
     @Data
