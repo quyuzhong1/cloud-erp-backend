@@ -34,6 +34,7 @@ import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DictBasicEnum;
+import com.erp.model.tms.enums.FmDeclareSourceTypeEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
@@ -300,7 +301,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     v.setLogisticsSupplierName(supplier.getSupplierName());
                 }
                 //发货类型
-                v.setBusinessTypeName(SourceTypeEnum.getName(v.getBusinessType()));
+                v.setBusinessTypeName(FmDeclareSourceTypeEnum.getName(v.getBusinessType()));
             });
         }else if (type.equals(SourceTypeEnum.B2B_DECLARE_BILL.getCode())){
             list.forEach(v->{
