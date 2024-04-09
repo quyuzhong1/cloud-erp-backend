@@ -59,7 +59,7 @@
             lbc.reconciliation_status as reconciliationStatus,
             lc.name as channelName,
             lbc.transport_no as transportNo,
-            lbc.track_no as transportNo,
+            lbc.track_no as trackNo,
             lbc.logistics_bill_detail_id,
             lbd.transportStatus,
             lbc.actual_weight as actualWeight,
