@@ -34,5 +34,7 @@ public class TokenDTO {
     private String sellerBaseRegion;
     @SerializedName("user_type")
     private Integer userType;
+    @SerializedName("cipher")
+    private String shopCipher;
 
 }
