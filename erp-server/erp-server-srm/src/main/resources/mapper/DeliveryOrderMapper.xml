@@ -68,6 +68,7 @@
             doe.receive_qty as receiveQty,
             doe.gift_receive_qty as giftReceiveQty,
             doe.qc_good_qty as qcGoodQty,
+            doe.remark,
             do2.customer_name as customerName,
             do2.to_warehouse_name as toWarehouseName,
             do2.print_date as printDate,

@@ -406,6 +406,11 @@ public class DeliveryOrderDTO implements Serializable {
         private Integer qcGoodQty;
 
         /**
+         * 备注明细
+         */
+        private String remark;
+
+        /**
          * 客户名称
          */
         private String customerName;
@@ -658,6 +663,17 @@ public class DeliveryOrderDTO implements Serializable {
         @NotNull(message = "送货数量不能为空")
         @Min(value = 1,message = "送货数量最小值为1")
         private Integer planDeliveryQty;
+
+        /**
+         * 赠品数量
+         */
+        @NotNull(message = "赠品数量不能为空")
+        @Min(value = 0,message = "赠品数量最小值为0")
+        private Integer giftQty;
+        /**
+         * 备注信息
+         */
+        private String remark;
     }
 
     /**
