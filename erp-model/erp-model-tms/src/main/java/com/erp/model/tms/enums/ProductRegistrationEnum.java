@@ -57,7 +57,7 @@ public enum ProductRegistrationEnum {
         BARCODE("自定义条码（barcodeType=1时，必填）", "barcode", "", null, ProductRegistrationEntity::getCustomBarcode, null),
         CURRENCY_CODE("申报币种", "currencyCode", "报关币种", LogisticsProductDTO.ProductDTO::getDeclareCurrency, ProductRegistrationEntity::getCurrency, LogisticsProductDTO.ProductDTO::getDeclareCurrency),
         DECLARED_VALUE("申报价值", "declaredValue", "报关申报价", LogisticsProductDTO.ProductDTO::getDeclarePrice, ProductRegistrationEntity::getDeclarePrice, LogisticsProductDTO.ProductDTO::getDeclarePrice),
-        WEIGHT("产品重量KG", "weight", "毛重（g）", LogisticsProductDTO.ProductDTO::getGrossWeight, v -> Objects.nonNull(v.getGrossWeight()) ? v.getGrossWeight().multiply(BigDecimal.valueOf(1000)) : "", LogisticsProductDTO.ProductDTO::getGrossWeight),
+        WEIGHT("产品重量KG", "weight", "毛重（g）", LogisticsProductDTO.ProductDTO::getGrossWeight, ProductRegistrationEntity::getGrossWeight, LogisticsProductDTO.ProductDTO::getGrossWeight),
         LENGTH("产品长CM", "length", "包装尺寸(cm)-长", LogisticsProductDTO.ProductDTO::getBoxSizeLength, ProductRegistrationEntity::getLength, LogisticsProductDTO.ProductDTO::getBoxSizeLength),
         WIDTH("产品宽CM", "width", "包装尺寸(cm)-宽", LogisticsProductDTO.ProductDTO::getBoxSizeWide, ProductRegistrationEntity::getWidth, LogisticsProductDTO.ProductDTO::getBoxSizeWide),
         HEIGHT("产品高CM", "height", "包装尺寸(cm)-高", LogisticsProductDTO.ProductDTO::getBoxSizeHigh, ProductRegistrationEntity::getHeight, LogisticsProductDTO.ProductDTO::getBoxSizeHigh),
