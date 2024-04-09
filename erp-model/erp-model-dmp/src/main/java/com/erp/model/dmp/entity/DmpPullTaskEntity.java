@@ -1,5 +1,6 @@
 package com.erp.model.dmp.entity;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -7,6 +8,7 @@ import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.UniqueDto;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.entity.BaseEntity;
+import com.common.core.utils.Md5Util;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -171,6 +173,20 @@ public class DmpPullTaskEntity extends BaseEntity<DmpPullTaskEntity> {
     @Override
     public Serializable pkVal() {
         return null;
+    }
+
+    /**
+     * 幂等唯一md5
+     */
+    public String redissonKey(){
+        return Md5Util.md5(StrUtil.format("{}_{}_{}_{}_{}_{}_{}",
+                        this.sourceType,
+                        this.sourceId,
+                        this.sourceCode,
+                        this.sourcePlatformName,
+                        this.targetPlatformName,
+                        this.mqTopic,
+                        this.mqTag));
     }
 
 }

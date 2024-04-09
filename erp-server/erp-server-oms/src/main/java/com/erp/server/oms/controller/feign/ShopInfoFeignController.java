@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -159,6 +160,18 @@ public class ShopInfoFeignController extends BaseController {
      */
     @PostMapping("/getRelatedShopById")
     public List<ShopInfoEntity> getRelatedShopById(@RequestBody ShopInfoEntity shopInfo){
+        return shopInfoService.getRelatedShopById(shopInfo.getPlatformShopCode());
+    }
+
+    /**
+     * 根据店铺ID获取所有同账号的店铺
+     */
+    @GetMapping("feign/shop/getRelatedByShopId")
+    public List<ShopInfoEntity> getRelatedByShopId(@RequestParam("shopId") String shopId){
+        ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
+        if (null == shopInfo){
+            throw new ServiceException("店铺不存在：id=" + shopId);
+        }
         return shopInfoService.getRelatedShopById(shopInfo.getPlatformShopCode());
     }
 }

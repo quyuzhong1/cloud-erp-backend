@@ -44,6 +44,10 @@ public enum SettingEnum {
     WMS_OVERSEAS_INBOUND_STREET("street",SettingEnum.WMS_OVERSEAS_INBOUND, "发货地址"),
     WMS_OVERSEAS_INBOUND_COUNTRY_CODE("country_code",SettingEnum.WMS_OVERSEAS_INBOUND, "国家代号"),
 
+    // 任务相关
+    PLATFORM_API_TASK_DELAY_SECOND("platform_api_task_delay_second", SettingEnum.CFG_TASK, "platform_api_task数据任务请求下次延迟秒数:next_time-秒数(格式json:{api_code}:{延迟秒数})"),
+    AMZ_REPORT_SCHEDULE_DELAY_SECOND("amz_report_schedule_delay_second", SettingEnum.CFG_TASK, "亚马逊数据任务请求下次延迟秒数:next_time-秒数(格式json:{report_type}:{延迟秒数})"),
+
     //同步ERP的b2c订单同步到中台启动时间
     ERP_B2C_TO_DMP_LISTING_DATE("listing_date",SettingEnum.ERP_B2C_TO_DMP, "同步ERP的b2c订单同步到中台启动时间"),
 
@@ -115,6 +119,12 @@ public enum SettingEnum {
      * 亚马逊报告
      */
     public static final String AMAZON_REPORT = "amazon_report";
+
+    /**
+     * 任务相关包括platform_api_task和amz_report_schedule
+     */
+    public static final String CFG_TASK = "cfg_task";
+
 
     SettingEnum(String key, String type, String value) {
         this.key = key;

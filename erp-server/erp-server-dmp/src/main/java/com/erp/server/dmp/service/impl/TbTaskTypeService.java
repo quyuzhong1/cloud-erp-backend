@@ -5,8 +5,10 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.TaskConstant;
 import com.common.business.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.PlatformApiService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -18,7 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +36,8 @@ public class TbTaskTypeService {
     private ShopInfoFeign shopInfoFeign;
     @Resource
     private RedisTemplate redisTemplate;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     private Long timeoutSeconds;
 
@@ -56,10 +62,29 @@ public class TbTaskTypeService {
     public List<JobTaskDTO> getTask() {
         LocalDateTime localTime = LocalDateTime.now();
         // 查询任务列表
-        List<JobTaskDTO> jobTaskDTOList = platformApiTaskService.listApiTask(localTime, "pull");
+        List<JobTaskDTO> sourcejobTaskDTOList = platformApiTaskService.listApiTask(localTime, "pull");
+        // 获取延时配置Map<apiCode, 延时秒数>
+        Map<String, Integer> delayConfgMap = cfgSettingService.getApiTaskDelaySecond(SettingEnum.PLATFORM_API_TASK_DELAY_SECOND);
+        // 过滤小于延时时间的任务
+        List<JobTaskDTO> jobTaskDTOList = sourcejobTaskDTOList.stream()
+                .filter(e -> {
+                    // 执行中跳过校验
+                    if (2 == e.getStatus()){
+                        return true;
+                    }
+                    Integer delaySecond = delayConfgMap.get(e.getApiCode());
+                    if (null == delaySecond){
+                        // 配置不存在跳过
+                        return true;
+                    } else {
+                        // 下次执行时间 + 延时时间 <= 当前时间
+                        return !e.getNextTime().plusSeconds(delaySecond).isAfter(localTime);
+                    }
+                }).collect(Collectors.toList());
+
         // 任务量等于0，任务重新开始,分页设置成0
         if (CollectionUtil.isEmpty(jobTaskDTOList)) {
-            return jobTaskDTOList;
+            return Collections.emptyList();
         }
         // 设置超时恢复状态
         List<JobTaskDTO> inProgressList = jobTaskDTOList.stream()

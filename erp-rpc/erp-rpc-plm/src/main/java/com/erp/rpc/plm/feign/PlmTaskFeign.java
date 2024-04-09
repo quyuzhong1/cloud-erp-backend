@@ -5,9 +5,7 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
-import com.erp.model.plm.vo.ProductRefLabelVO;
-import com.erp.model.plm.vo.ProductVO;
-import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.plm.vo.*;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.apache.ibatis.annotations.Param;
@@ -494,4 +492,10 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/listProductCustomsBySkuIds")
     List<ProductCustomsEntity> listProductCustomsBySkuIds(@RequestBody ProductCustomsSkuDTO dto);
+
+    /**
+     * 根据SkuIds获取SKU简单信息
+     */
+    @PostMapping("feign/product/getSimpleSkuInfoByIds")
+    List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(@RequestBody List<String> skuIds);
 }
