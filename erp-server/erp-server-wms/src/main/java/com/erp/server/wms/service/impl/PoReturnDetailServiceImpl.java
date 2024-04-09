@@ -348,7 +348,13 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
                         if (updateDTO.getReturnQty() > stockInQty) {
                             throw new ServiceException(ApiError.ERROR_99026.code, String.format(ApiError.ERROR_99026.msg, purchaseOrderDetailEntity.getSkuNo()));
                         }
-                        returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && !req.getId().equals(updateDTO.getId())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                        //非质检退货数量
+                        returnQty = purchaseReturnOrderDetailEntities.stream().filter(req ->
+                                        req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId())
+                                        && !ReturnOrderSourceEnum.QC.getCode().equals(req.getSourceType())
+                                        && !req.getId().equals(updateDTO.getId()))
+                                .map(PoReturnDetailEntity::getReturnQty)
+                                .reduce(MathUtil.ZERO, Integer::sum);
                         if (updateDTO.getReturnQty() + returnQty > stockInQty) {
                             throw new ServiceException(ApiError.ERROR_99031.code, String.format(ApiError.ERROR_99031.msg, purchaseOrderDetailEntity.getSkuNo()));
                         }
