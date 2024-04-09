@@ -157,19 +157,25 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
         if(entity.getEffectiveDate().atStartOfDay().isAfter(orderTime)) {
             return null;
         }
-        return calculateShipTime(entity.getEffectiveDate().atStartOfDay(), entity.getDateValue(), entity.getDateType(), entity.getStartDate(), entity.getStartTime(), orderTime,entity.getEndDate(),entity.getEndTime(),true);
+        return calculateShipTime(entity.getEffectiveDate().atStartOfDay(), entity.getDateValue(), entity.getDateType(), entity.getStartDate(), entity.getStartTime(), orderTime,entity.getEndDate(),entity.getEndTime(),true,true);
     }
 
     /**
      * 获取目标时间下一个开船日
+     * 逻辑：获取起始时间开始后的第一个开船日，判断下单日如果在开船日之前并且在接单日之后，则舍弃这个开船日，返回下个开船日，否则返回这个开船日
      * @return
      */
-    private  LocalDateTime calculateShipTime(LocalDateTime effectiveTime,Integer sailingInterval, String dateType, Integer startDate, LocalTime startTime, LocalDateTime orderTime, Integer endDate,LocalTime endTime,Boolean isFirst) {
+    private  LocalDateTime calculateShipTime(LocalDateTime effectiveTime,Integer sailingInterval, String dateType, Integer startDate, LocalTime startTime, LocalDateTime orderTime, Integer endDate,LocalTime endTime,Boolean isFirst,Boolean isNext) {
         LocalDateTime nextTargetDay;
-        if(effectiveTime.isAfter(orderTime)){
-            return effectiveTime;
-        }
         if(dateType.equals(TmsCfgSailingDateTypeEnum.WEEK.getCode())){
+            if(effectiveTime.isAfter(orderTime)){
+                LocalDateTime endDay = effectiveTime.with(TemporalAdjusters.previousOrSame(DayOfWeek.of(endDate))).with(endTime);
+                if(orderTime.isAfter(endDay) && isNext){
+                    return this.calculateShipTime(effectiveTime.plusWeeks(sailingInterval),sailingInterval,dateType,startDate,startTime,orderTime,  endDate,endTime,  false,false);
+                }else{
+                    return effectiveTime;
+                }
+            }
             //判断有效日期的周几与开船周几，如果小于， 则开船日期等于本周的开船日期，如果等于，则开船日期为当天 + 开船时间 如果大于，则下一个开船日期等于本周的开船日期+开船间隔
             // 获取当前时间是星期几
             DayOfWeek dayOfWeek = effectiveTime.getDayOfWeek();
@@ -184,19 +190,27 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
                     nextTargetDay = effectiveTime.with(TemporalAdjusters.previousOrSame(DayOfWeek.of(startDate))).plusWeeks(sailingInterval);
                 }
             }
-            //第一次传入的话返回起始日期的开船日，否则需要加上时间间隔，如果下单日期在截单日和开船日之间，则从下一个开船日开始计算
+            //如果下单日期在截单日和开船日之间，则从下一个开船日开始计算
             nextTargetDay = nextTargetDay.with(startTime);
             if(nextTargetDay.isAfter(orderTime)){
                 LocalDateTime endDay = nextTargetDay.with(TemporalAdjusters.previousOrSame(DayOfWeek.of(endDate))).with(endTime);
-                if(orderTime.isAfter(endDay) && isFirst){
-                    return this.calculateShipTime(nextTargetDay.plusWeeks(sailingInterval),sailingInterval,dateType,startDate,startTime,orderTime,  endDate,endTime,  false);
+                if(orderTime.isAfter(endDay) && isNext){
+                    return this.calculateShipTime(nextTargetDay.plusWeeks(sailingInterval),sailingInterval,dateType,startDate,startTime,orderTime,  endDate,endTime,  false,false);
                 }else{
                     return nextTargetDay;
                 }
             }else{
-                return this.calculateShipTime(nextTargetDay.plusWeeks(sailingInterval),sailingInterval,dateType,startDate,startTime,orderTime,  endDate,endTime,  false);
+                return this.calculateShipTime(nextTargetDay.plusWeeks(sailingInterval),sailingInterval,dateType,startDate,startTime,orderTime,  endDate,endTime,  false,true);
             }
         }else if (dateType.equals(TmsCfgSailingDateTypeEnum.MONTH.getCode())){
+            if(effectiveTime.isAfter(orderTime)){
+                LocalDateTime endDay = effectiveTime.withDayOfMonth(endDate).with(endTime);
+                if(orderTime.isAfter(endDay) && isNext){
+                    return this.calculateShipTime(effectiveTime.plusWeeks(sailingInterval),sailingInterval,dateType,startDate,startTime,orderTime,  endDate,endTime,  false,false);
+                }else{
+                    return effectiveTime;
+                }
+            }
             //逻辑与上面相似
             int dayOfMonth = effectiveTime.getDayOfMonth();
             if (dayOfMonth < startDate) {
@@ -211,13 +225,13 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
             nextTargetDay = nextTargetDay.with(startTime);
             if (nextTargetDay.isAfter(orderTime)) {
                 LocalDateTime endDay = nextTargetDay.withDayOfMonth(endDate).with(endTime);
-                if(orderTime.isAfter(endDay) && isFirst){
-                    return this.calculateShipTime(nextTargetDay.plusMonths(sailingInterval), sailingInterval, dateType, startDate, startTime, orderTime,  endDate,endTime,  false);
+                if(orderTime.isAfter(endDay) && isNext){
+                    return this.calculateShipTime(nextTargetDay.plusMonths(sailingInterval), sailingInterval, dateType, startDate, startTime, orderTime,  endDate,endTime,  false,false);
                 }else{
                     return nextTargetDay;
                 }
             } else {
-                return this.calculateShipTime(nextTargetDay.plusMonths(sailingInterval), sailingInterval, dateType, startDate, startTime, orderTime,  endDate,endTime,  false);
+                return this.calculateShipTime(nextTargetDay.plusMonths(sailingInterval), sailingInterval, dateType, startDate, startTime, orderTime,  endDate,endTime,  false,true);
             }
         }
         return null;
