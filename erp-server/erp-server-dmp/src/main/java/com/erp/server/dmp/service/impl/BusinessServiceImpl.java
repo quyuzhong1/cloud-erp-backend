@@ -103,7 +103,7 @@ public class BusinessServiceImpl {
      * @param platformApiEnum
      */
 //    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
+//    @Transactional(rollbackFor = Exception.class)
     public <T extends CleanBaseDTO,R extends UniqueDto> void batchPullProcessBusiness(String category, String platform, String business, JobTaskDTO data, PlatformApiEnum platformApiEnum, Integer batchSendMqSize) {
         IBusinessHandler<T,R> handler = (IBusinessHandler<T,R>) registry.getHandler(category, platform, business);
         if (handler != null) {
