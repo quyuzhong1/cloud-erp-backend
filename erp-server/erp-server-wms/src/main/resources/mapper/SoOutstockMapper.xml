@@ -40,6 +40,7 @@
         so.sales_org_name AS salesOrgName,
         so.customer_name AS customerName,
         so.country AS countryId,
+        so.track_no AS trackNos,
         sod.id as detailId,
         so.sales_dept_id AS salesDeptId,
         sod.id as detailId,
