@@ -9,10 +9,7 @@ import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractProductHandler;
-import com.common.business.utils.RedisUtil;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.sdk.oms.tictok.dto.TikTokListingDTO;
 import com.sdk.oms.tictok.dto.TikTokShopInfoDTO;
 import com.sdk.oms.tictok.dto.tiktok.listing.view.ListingViewDTO;
@@ -36,12 +33,6 @@ import java.util.stream.Collectors;
 @BusinessType(BusinessTypeEnum.PRODUCT)
 public class TikTokListingHandler extends AbstractProductHandler<TikTokListingDTO, PlatformProductDTO> {
     @Resource
-    private DmpTaskFeign dmpTaskFeign;
-    @Resource
-    private RedisUtil redisUtil;
-    @Resource
-    private ShopInfoFeign shopInfoFeign;
-    @Resource
     private TikTokSdkClientService tikTokSdkClientService;
 
     @Override
@@ -49,13 +40,11 @@ public class TikTokListingHandler extends AbstractProductHandler<TikTokListingDT
         //  根据店铺ID获取授权
         TikTokShopInfoDTO shopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(data.getShopId());
         if (null == shopInfoDTO) {
-//            log.error("[美客多商品下载]  获取 token 失败: shopId={}", data.getShopId());
             return Collections.emptyList();
         }
 
         //发送请求
         List<ListingViewDTO> resultsBeanList = tikTokSdkClientService.sendMercadoGetListing(shopInfoDTO);
-
         // 返回下载源数据
         return resultsBeanList.stream()
                 .map(e -> new TikTokListingDTO(e.getData(), data))

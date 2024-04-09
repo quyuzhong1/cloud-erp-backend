@@ -1,10 +1,12 @@
 package com.sdk.oms.tictok.dto;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.sdk.oms.tictok.dto.tiktok.listing.view.DataBean;
+import jodd.util.StringUtil;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -42,6 +44,53 @@ public class TikTokListingDTO extends CleanBaseDTO {
      */
     private static PlatformProductDTO initPlatformProductDTO(TikTokListingDTO dto) {
 
-        return null;
+        DataBean dataBean = dto.getDataBean();
+        PlatformProductDTO resultDto = new PlatformProductDTO();
+
+        //平台产品id
+        resultDto.setPlatformProductNo(dataBean.getSkus().get(0).getFid());
+        //平台sku
+        resultDto.setPlatformSkuNo(dataBean.getSkus().get(0).getSellerSku());
+        if (ObjectUtil.isNotEmpty(dataBean.getSkus().get(0).getSalesAttributes())) {
+            //产品规格
+            resultDto.setProductSpec(dataBean.getSkus().get(0).getSalesAttributes().get(0).getName() + ":" + dataBean.getSkus().get(0).getSalesAttributes().get(0).getValueName());
+        }
+        // 平台sku名称
+        resultDto.setPlatformSkuName(dataBean.getTitle());
+        // 类型 platform 平台  warehouse 仓库
+        resultDto.setPlatformType("platform");
+
+        // 平台产品名称
+        resultDto.setPlatformProductName(dataBean.getTitle());
+        //图片
+        resultDto.setProductImageUrl(dataBean.getMainImages().get(0).getThumbUrls().get(0));
+        resultDto.setShopId(dto.getShopId());
+        resultDto.setPlatformUpdateTime(LocalDateTime.now());
+
+        //包装信息
+        if (ObjectUtil.isNotEmpty(dataBean.getPackageDimensions())) {
+            String productPacking = "";
+            if (StringUtil.isNotBlank(dataBean.getPackageDimensions().getLength())
+                    && StringUtil.isNotBlank(dataBean.getPackageDimensions().getUnit())) {
+                productPacking = productPacking + dataBean.getPackageDimensions().getLength() + dataBean.getPackageDimensions().getUnit();
+            }
+            if (StringUtil.isNotBlank(dataBean.getPackageDimensions().getWidth())
+                    && StringUtil.isNotBlank(dataBean.getPackageDimensions().getUnit())) {
+                productPacking = productPacking + dataBean.getPackageDimensions().getWidth() + dataBean.getPackageDimensions().getUnit();
+            }
+            if (StringUtil.isNotBlank(dataBean.getPackageDimensions().getHeight())
+                    && StringUtil.isNotBlank(dataBean.getPackageDimensions().getUnit())) {
+                productPacking = productPacking + dataBean.getPackageDimensions().getHeight() + dataBean.getPackageDimensions().getUnit();
+            }
+            resultDto.setProductPacking(productPacking);
+        }
+
+        // 平台类型
+        resultDto.setPlatform(dto.getPlatform());
+        // 唯一ID
+        resultDto.setUniqueId(dto.getUniqueId());
+        // 同步任务ID
+        resultDto.setDmpSyncTaskId(dto.getDmpSyncTaskId());
+        return resultDto;
     }
 }

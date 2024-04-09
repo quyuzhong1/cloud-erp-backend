@@ -3,6 +3,7 @@ package com.sdk.oms.tictok.service;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
+import com.common.business.dto.JobTaskDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.controller.vo.ApiResult;
@@ -23,6 +24,8 @@ import com.sdk.oms.tictok.constant.TikTokConstant;
 import com.sdk.oms.tictok.dto.TikTokShopInfoDTO;
 import com.sdk.oms.tictok.dto.tiktok.listing.ListingDTO;
 import com.sdk.oms.tictok.dto.tiktok.listing.view.ListingViewDTO;
+import com.sdk.oms.tictok.dto.tiktok.listing.view.SkusBean;
+import com.sdk.oms.tictok.dto.tiktok.order.view.OrderViewDTO;
 import com.sdk.oms.tictok.dto.tiktok.shop.ShopsBean;
 import com.sdk.oms.tictok.dto.tiktok.shop.TikTokShopAuthDTO;
 import com.sdk.oms.tictok.dto.tiktok.token.PlatformTikTokTokenDTO;
@@ -35,6 +38,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -71,7 +75,7 @@ public class TikTokSdkClientService {
         String url = paramMap.get("baseUrl");
         String path = "/api/v2/token/get?app_key=%s&auth_code=%s&app_secret=%s&grant_type=authorized_code";
         //https://auth.tiktok-shops.com/api/v2/token/get?app_key=6buinkjt3hmld&auth_code=ROW_fMForwAAAAAnHxxLkmbK6_5EjpV5Fe3TFAZztGCCUNTYS9Ncj5BHOEZr45OmjjjgKLuvsB12opx9yJvUgHadndBbqdRQZes-8GF5gXG22OX5vk6rG_cw1sv8BuS8L7zDkwyjNKQ0ps-9yp0daANK5GtmJ5h7CqVG3MEVumPxZ3FJqzufIygTCg&app_secret=8ff628de24faf70c24855de4d967fb6a17a47e3f&grant_type=authorized_code
-        String baseUrl = String.format(url+path, clientId, authCode, clientSecret);
+        String baseUrl = String.format(url + path, clientId, authCode, clientSecret);
 
         //入参（无）
         Map<String, Object> params = new HashMap<>();
@@ -114,15 +118,15 @@ public class TikTokSdkClientService {
 
     public TikTokShopAuthDTO getAuthorizedShops(Map<String, String> paramMap, String accessToken) {
         String url = paramMap.get("baseUrl");
-        String path = "/authorization/202309/shops";
+        String path = "/authorization/" + TikTokConstant.VERSION + "/shops";
         String clientSecret = paramMap.get("clientSecret");
         String clientId = paramMap.get("clientId");
         // 定义查询参数
         Map<String, Object> params = new HashMap<>();
         params.put("app_key", clientId);
-        Long timestamp = System.currentTimeMillis()/1000;
+        Long timestamp = System.currentTimeMillis() / 1000;
         params.put("timestamp", timestamp);
-        params.put("version", 202309);
+        params.put("version", TikTokConstant.VERSION);
 
         //设置请求头
         Map<String, String> headerMap = new HashMap<>(2);
@@ -136,11 +140,11 @@ public class TikTokSdkClientService {
         params.put("sign", sign);
 
         //拉取数据
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url+path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-            log.error("调用url={},入参params={}, TikTok查询店铺权限失败，返回值 responseMap={}", url+path, params.toString(), JSONUtil.toJsonStr(apiResult));
+            log.error("调用url={},入参params={}, TikTok查询店铺权限失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询店铺权限失败，返回值 responseMap={}",
-                    url+path, headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
+                    url + path, headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
         }
         //解析数据
         TikTokShopAuthDTO tikTokTokenDTO = null;
@@ -153,13 +157,12 @@ public class TikTokSdkClientService {
     }
 
 
-
     public TokenDTO refreshToken(ShopDTO.RefreshTokenDTO refreshTokenDTO) {
 
         //组装授权url
         String path = "/api/v2/token/refresh?app_key=%s&app_secret=%s&refresh_token=%s&grant_type=refresh_token";
         //https://api.mercadolibre.com/oauth/token?grant_type=authorization_code&client_id=%s&client_secret=%s&code=%s&redirect_uri=%s
-        String baseUrl = String.format(refreshTokenDTO.getBaseUrl()+path, refreshTokenDTO.getClientId(), refreshTokenDTO.getClientSecret(), refreshTokenDTO.getRefreshToken());
+        String baseUrl = String.format(refreshTokenDTO.getBaseUrl() + path, refreshTokenDTO.getClientId(), refreshTokenDTO.getClientSecret(), refreshTokenDTO.getRefreshToken());
 
         //入参（无）
         Map<String, Object> params = new HashMap<>();
@@ -194,6 +197,7 @@ public class TikTokSdkClientService {
 
     /**
      * 查询店铺信息
+     *
      * @param shopId
      * @return
      */
@@ -223,7 +227,7 @@ public class TikTokSdkClientService {
             result.setClientSecret(cfgAppClient.getClientSecret());
             result.setId(shopId);
             Map<String, Object> extendData = shopInfoEntity.getExtendData();
-            result.setShopCipher(extendData.get("shopCipher")+"");
+            result.setShopCipher(extendData.get("shopCipher") + "");
             result.setSite(shopInfoEntity.getDictCountryCode());
             if (Objects.nonNull(shopAuthEntity)) {
                 result.setAccessToken(shopAuthEntity.getAccessToken());
@@ -238,6 +242,7 @@ public class TikTokSdkClientService {
 
     /**
      * 发送请求获取指定店铺的sku信息
+     *
      * @param shopInfoDTO
      * @return
      */
@@ -256,9 +261,9 @@ public class TikTokSdkClientService {
 
 
         StringBuffer sb = new StringBuffer();
-        while(true) {
+        while (true) {
             //组装授权url
-            String path = "/product/"+ TikTokConstant.VERSION+"/products/search";
+            String path = "/product/" + TikTokConstant.VERSION + "/products/search";
 
             // 定义查询参数
             Map<String, Object> params = new HashMap<>();
@@ -269,7 +274,7 @@ public class TikTokSdkClientService {
             params.put("shop_cipher", shopInfoDTO.getShopCipher());
             params.put("shop_id", "");
             params.put("sign", "");
-            String timestamp = System.currentTimeMillis()/1000 +"";
+            String timestamp = System.currentTimeMillis() / 1000 + "";
             params.put("timestamp", timestamp);
             params.put("version", TikTokConstant.VERSION);
 
@@ -290,15 +295,15 @@ public class TikTokSdkClientService {
             //组装url
             sb.append(url);
             sb.append(path);
-            sb.append("?access_token="+params.get("access_token")+"");
-            sb.append("&app_key="+params.get("app_key")+"");
-            sb.append("&page_size="+params.get("page_size")+"");
-            sb.append("&page_token="+params.get("page_token")+"");
-            sb.append("&shop_cipher="+params.get("shop_cipher")+"");
-            sb.append("&shop_id="+params.get("shop_id")+"");
-            sb.append("&sign="+params.get("sign")+"");
-            sb.append("&timestamp="+params.get("timestamp")+"");
-            sb.append("&version="+params.get("version")+"");
+            sb.append("?access_token=" + params.get("access_token") + "");
+            sb.append("&app_key=" + params.get("app_key") + "");
+            sb.append("&page_size=" + params.get("page_size") + "");
+            sb.append("&page_token=" + params.get("page_token") + "");
+            sb.append("&shop_cipher=" + params.get("shop_cipher") + "");
+            sb.append("&shop_id=" + params.get("shop_id") + "");
+            sb.append("&sign=" + params.get("sign") + "");
+            sb.append("&timestamp=" + params.get("timestamp") + "");
+            sb.append("&version=" + params.get("version") + "");
 
             //拉取数据
             ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(bodyMap), null, headerMap, RequestMethod.POST);
@@ -315,9 +320,9 @@ public class TikTokSdkClientService {
             try {
                 listingDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), ListingDTO.class);
             } catch (JsonProcessingException e) {
-                log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url+path, params.toString(), JSONUtil.toJsonStr(apiResult));
+                log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-                        url+path, params.toString(), JSONUtil.toJsonStr(apiResult)));
+                        url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
             if (StringUtil.isBlank(listingDTO.getData().getNextPageToken())) {
@@ -342,6 +347,7 @@ public class TikTokSdkClientService {
 
     /**
      * 根据产品id查询产品详情信息
+     *
      * @param productIds
      * @param shopInfoDTO
      * @return
@@ -350,18 +356,93 @@ public class TikTokSdkClientService {
 
         List<ListingViewDTO> resultList = new ArrayList<>();
         String url = TikTokConstant.URL;
-        StringBuffer sb = new StringBuffer();
         for (String productId : productIds) {
             //组装授权url
-            String path = "/product/"+ TikTokConstant.VERSION+"/products/"+ productId+"";
+            String path = "/product/" + TikTokConstant.VERSION + "/products/" + productId + "";
             // 定义查询参数
             Map<String, Object> params = new HashMap<>();
             params.put("access_token", shopInfoDTO.getAccessToken());
             params.put("app_key", shopInfoDTO.getClientId());
             params.put("shop_cipher", shopInfoDTO.getShopCipher());
             params.put("shop_id", "");
+            String timestamp = System.currentTimeMillis() / 1000 + "";
+            params.put("timestamp", timestamp);
+            params.put("version", TikTokConstant.VERSION);
+
+            //设置请求头
+            Map<String, String> headerMap = new HashMap<>();
+            headerMap.put("content-type", "multipart/form-data");
+            headerMap.put("x-tts-access-token", shopInfoDTO.getAccessToken());
+
+            String input = EncryptionUtils.urlParamsSort(params, path, headerMap, shopInfoDTO.getClientSecret(), "");
+            // 追加请求路径获取签名
+            String sign = EncryptionUtils.generateSHA256(input, shopInfoDTO.getClientSecret());
+            //加入sign签名入参
+            params.put("sign", sign);
+
+            //拉取数据
+            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+            if (!Objects.equals(apiResult.getCode(), 200)) {
+                log.error("调用url={},入参params={}, TikTok查询sku数据失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询sku数据失败，返回值 responseMap={}",
+                        url + path, headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
+            }
+
+            //解析数据
+            ObjectMapper objectMapper = new ObjectMapper();
+            ListingViewDTO listingViewDTO = null;
+            try {
+                listingViewDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), ListingViewDTO.class);
+            } catch (JsonProcessingException e) {
+                log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+                        url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
+            }
+
+            for (SkusBean skus : listingViewDTO.getData().getSkus()) {
+                listingViewDTO.getData().setSkus(Arrays.asList(skus));
+                resultList.add(listingViewDTO);
+            }
+        }
+
+        return resultList;
+    }
+
+
+    /**
+     * 发送请求获取指定店铺的订单信息
+     *
+     * @param shopInfoDTO
+     * @return
+     */
+    public List<OrderViewDTO> sendTikTokGetOrder(TikTokShopInfoDTO shopInfoDTO, JobTaskDTO task) {
+
+        List<ListingViewDTO> resultsBeanList = new ArrayList<>();
+
+        //每次最多获取200条
+        Integer pageSize = 100;
+        //分页token
+        String pageToken = "";
+        //平台接口地址
+        String url = TikTokConstant.URL;
+        //服务密钥
+        String secret = shopInfoDTO.getClientSecret();
+
+        StringBuffer sb = new StringBuffer();
+        while (true) {
+            //组装授权url
+            String path = "order/" + TikTokConstant.VERSION + "/orders/search";
+
+            // 定义查询参数
+            Map<String, Object> params = new HashMap<>();
+            params.put("access_token", shopInfoDTO.getAccessToken());
+            params.put("app_key", shopInfoDTO.getClientId());
+            params.put("page_size", pageSize);
+            params.put("page_token", pageToken);
+            params.put("shop_cipher", shopInfoDTO.getShopCipher());
+            params.put("shop_id", "");
             params.put("sign", "");
-            String timestamp = System.currentTimeMillis()/1000 +"";
+            String timestamp = System.currentTimeMillis() / 1000 + "";
             params.put("timestamp", timestamp);
             params.put("version", TikTokConstant.VERSION);
 
@@ -372,23 +453,26 @@ public class TikTokSdkClientService {
 
             //请求body，平台用于计算签名
             Map<String, Object> bodyMap = new HashMap<>();
+            bodyMap.put("update_time_ge", task.getLastTime().toEpochSecond(ZoneOffset.UTC));
 
-            String input = EncryptionUtils.urlParamsSort(params, path, headerMap, shopInfoDTO.getClientSecret(), JSONUtil.toJsonStr(bodyMap));
+            String input = EncryptionUtils.urlParamsSort(params, path, headerMap, secret, JSONUtil.toJsonStr(bodyMap));
             // 追加请求路径获取签名
-            String sign = EncryptionUtils.generateSHA256(input, shopInfoDTO.getClientSecret());
+            String sign = EncryptionUtils.generateSHA256(input, secret);
             //加入sign签名入参
             params.put("sign", sign);
 
             //组装url
             sb.append(url);
             sb.append(path);
-            sb.append("?access_token="+params.get("access_token")+"");
-            sb.append("&app_key="+params.get("app_key")+"");
-            sb.append("&shop_cipher="+params.get("shop_cipher")+"");
-            sb.append("&shop_id="+params.get("shop_id")+"");
-            sb.append("&sign="+params.get("sign")+"");
-            sb.append("&timestamp="+params.get("timestamp")+"");
-            sb.append("&version="+params.get("version")+"");
+            sb.append("?access_token=" + shopInfoDTO.getAccessToken() + "");
+            sb.append("&app_key=" + shopInfoDTO.getClientId() + "");
+            sb.append("&page_size=" + pageSize + "");
+            sb.append("&page_token=" + pageToken + "");
+            sb.append("&shop_cipher=" + shopInfoDTO.getShopCipher() + "");
+            sb.append("&shop_id=");
+            sb.append("&sign=" + sign + "");
+            sb.append("&timestamp=" + timestamp + "");
+            sb.append("&version=" + TikTokConstant.VERSION + "");
 
             //拉取数据
             ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(bodyMap), null, headerMap, RequestMethod.POST);
@@ -398,22 +482,36 @@ public class TikTokSdkClientService {
                         sb.toString(), headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
+
             //解析数据
             ObjectMapper objectMapper = new ObjectMapper();
-            ListingViewDTO listingViewDTO = null;
+            ListingDTO listingDTO = null;
             try {
-                listingViewDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), ListingViewDTO.class);
+                listingDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), ListingDTO.class);
             } catch (JsonProcessingException e) {
-                log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url+path, params.toString(), JSONUtil.toJsonStr(apiResult));
+                log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-                        url+path, params.toString(), JSONUtil.toJsonStr(apiResult)));
+                        url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
-            resultList.add(listingViewDTO);
+            if (StringUtil.isBlank(listingDTO.getData().getNextPageToken())) {
+                break;
+            }
+            pageToken = listingDTO.getData().getNextPageToken();
+            //获取到所有客户的产品id
+            List<String> productIds = listingDTO.getData().getProducts().stream().map(req -> req.getFid()).distinct().collect(Collectors.toList());
+
+            //根据产品id查询产品详情信息
+            List<ListingViewDTO> listingViewDTOS = this.listItemView(productIds, shopInfoDTO);
+            resultsBeanList.addAll(listingViewDTOS);
+
         }
 
-        return resultList;
+        if (CollectionUtils.isEmpty(resultsBeanList)) {
+            return Collections.emptyList();
+        }
+
+        return null;
+
     }
-
-
 }

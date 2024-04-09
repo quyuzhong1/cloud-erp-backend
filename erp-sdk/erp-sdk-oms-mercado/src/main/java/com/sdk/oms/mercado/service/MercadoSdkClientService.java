@@ -308,7 +308,7 @@ public class MercadoSdkClientService {
     }
 
     /**
-     * 发送请求获取指定店铺的sku信息
+     * 发送请求获取指定店铺的订单信息
      * @param shopInfoDTO
      * @return
      */

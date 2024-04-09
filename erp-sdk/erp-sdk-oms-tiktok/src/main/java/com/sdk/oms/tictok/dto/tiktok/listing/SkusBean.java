@@ -1,11 +1,13 @@
 package com.sdk.oms.tictok.dto.tiktok.listing;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SkusBean {
     /**
      * id : 1729591423391532777

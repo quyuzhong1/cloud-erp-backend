@@ -48,6 +48,12 @@ public class EncryptionUtils {
         return finalString;
     }
 
+    /**
+     * 加密获取sign密钥
+     * @param input
+     * @param secret
+     * @return
+     */
     public static String generateSHA256(String input, String secret) {
         try {
             Mac hmacSha256 = Mac.getInstance("HmacSHA256");

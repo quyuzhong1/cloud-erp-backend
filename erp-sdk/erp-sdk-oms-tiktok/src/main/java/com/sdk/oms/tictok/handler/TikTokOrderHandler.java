@@ -14,18 +14,15 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.sdk.oms.tictok.dto.TikTokOrderDTO;
+import com.sdk.oms.tictok.dto.TikTokShopInfoDTO;
+import com.sdk.oms.tictok.dto.tiktok.order.view.OrderViewDTO;
 import com.sdk.oms.tictok.service.TikTokSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -41,77 +38,22 @@ public class TikTokOrderHandler extends AbstractOrderHandler<TikTokOrderDTO, Pla
     @Resource
     private ShopInfoFeign shopInfoFeign;
     @Resource
-    private TikTokSdkClientService mercadoSdkClientService;
-
-
-    public static void main(String[] args) {
-        // Replace secret with your app
-        String secret = "8ff628de24faf70c24855de4d967fb6a17a47e3f";
-
-        // Get timestamp
-        long ts = new Date().getTime() / 1000;
-
-        // Set timestamp variable
-        System.out.println("timestamp: " + ts);
-
-        // Calculate signature
-        String signature = calSign(secret, 1712538227);
-
-        // Set sign variable
-        System.out.println("sign: " + signature);
-    }
-
-    public static String calSign(String secret, long timestamp) {
-        Map<String, String> queryParam = new TreeMap<>(); // Using TreeMap for sorting keys
-        // Populate queryParam map with query parameters
-        // Example: queryParam.put("key", "value");
-
-        // Remove "sign" and "access_token" from query parameters
-        queryParam.remove("sign");
-        queryParam.remove("access_token");
-
-        // Sort query parameters alphabetically
-        StringBuilder signstring = new StringBuilder(secret);
-        for (Map.Entry<String, String> entry : queryParam.entrySet()) {
-            signstring.append(entry.getKey()).append(entry.getValue());
-        }
-
-        // Append body content
-        // Example: signstring.append("body content");
-
-        // Append secret again
-        signstring.append(secret);
-
-        // Calculate HMAC SHA256
-        String sign = "";
-        try {
-            Mac hmacSha256 = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secretKeySpec = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
-            hmacSha256.init(secretKeySpec);
-            byte[] hmacBytes = hmacSha256.doFinal(signstring.toString().getBytes(StandardCharsets.UTF_8));
-            sign = bytesToHex(hmacBytes);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return sign;
-    }
-
-    private static String bytesToHex(byte[] bytes) {
-        StringBuilder hexString = new StringBuilder();
-        for (byte aByte : bytes) {
-            String hex = Integer.toHexString(0xff & aByte);
-            if (hex.length() == 1) {
-                hexString.append('0');
-            }
-            hexString.append(hex);
-        }
-        return hexString.toString();
-    }
+    private TikTokSdkClientService tikTokSdkClientService;
 
     @Override
     public List<TikTokOrderDTO> download(JobTaskDTO task) {
-        return null;
+        //  根据店铺ID获取授权
+        TikTokShopInfoDTO shopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(task.getShopId());
+        if (null == shopInfoDTO) {
+            return Collections.emptyList();
+        }
+
+
+        //发送请求
+        List<OrderViewDTO> orders = tikTokSdkClientService.sendTikTokGetOrder(shopInfoDTO, task);
+
+        // 返回下载源数据
+        return null
     }
 
     @Override

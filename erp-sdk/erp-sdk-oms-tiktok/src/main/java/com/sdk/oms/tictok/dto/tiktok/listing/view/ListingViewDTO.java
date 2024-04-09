@@ -1,10 +1,13 @@
 package com.sdk.oms.tictok.dto.tiktok.listing.view;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ListingViewDTO {
+
 
     /**
      * code : 0
@@ -21,5 +24,4 @@ public class ListingViewDTO {
     private String message;
     @JsonProperty("request_id")
     private String requestId;
-
 }
