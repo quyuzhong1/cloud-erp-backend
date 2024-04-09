@@ -431,12 +431,16 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             listDTO.setCurrencySymbol(currencySymbol);
 
             //预估运费
-            BigDecimal estimatedShippingCost = costList.stream().filter(obj -> StrUtil.equals(DictCostCategoryEnum.SHIPPING_COST.getCode(), obj.getDictCostCategory()) && StrUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ESTIMATED.getCode()))
+            BigDecimal estimatedShippingCost = costList.stream().filter(obj -> StrUtil.equals(obj.getMainId(),listDTO.getId())
+                            && StrUtil.equals(DictCostCategoryEnum.SHIPPING_COST.getCode(), obj.getDictCostCategory())
+                            && StrUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ESTIMATED.getCode()))
                     .map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
             listDTO.setEstimatedShippingCost(estimatedShippingCost);
 
             //实际运费
-            BigDecimal actualShippingCost = costList.stream().filter(obj -> StrUtil.equals(DictCostCategoryEnum.SHIPPING_COST.getCode(), obj.getDictCostCategory()) && StrUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ACTUAL.getCode()))
+            BigDecimal actualShippingCost = costList.stream().filter(obj -> StrUtil.equals(obj.getMainId(),listDTO.getId())
+                            && StrUtil.equals(DictCostCategoryEnum.SHIPPING_COST.getCode(), obj.getDictCostCategory())
+                            && StrUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ACTUAL.getCode()))
                     .map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
             listDTO.setActualShippingCost(actualShippingCost);
 
@@ -444,12 +448,16 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             listDTO.setDiffShippingCost(MathUtil.subtract(actualShippingCost,estimatedShippingCost));
 
             //实际报关费
-            BigDecimal actualDeclareCost = costList.stream().filter(obj -> StrUtil.equals(DictCostCategoryEnum.DECLARE_COST.getCode(), obj.getDictCostCategory()) && StrUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ACTUAL.getCode()))
+            BigDecimal actualDeclareCost = costList.stream().filter(obj -> StrUtil.equals(obj.getMainId(),listDTO.getId())
+                            && StrUtil.equals(DictCostCategoryEnum.DECLARE_COST.getCode(), obj.getDictCostCategory())
+                            && StrUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ACTUAL.getCode()))
                     .map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
             listDTO.setActualDeclareCost(actualDeclareCost);
 
             //实际其他费用
-            BigDecimal actualOtherCost = costList.stream().filter(obj -> StrUtil.equals(DictCostCategoryEnum.OTHER_COST.getCode(), obj.getDictCostCategory()) && StrUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ACTUAL.getCode()))
+            BigDecimal actualOtherCost = costList.stream().filter(obj -> StrUtil.equals(obj.getMainId(),listDTO.getId())
+                            && StrUtil.equals(DictCostCategoryEnum.OTHER_COST.getCode(), obj.getDictCostCategory())
+                            && StrUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ACTUAL.getCode()))
                     .map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
             listDTO.setActualOtherCost(actualOtherCost);
         }
