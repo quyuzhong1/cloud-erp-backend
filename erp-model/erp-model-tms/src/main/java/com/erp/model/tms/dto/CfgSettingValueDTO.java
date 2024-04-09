@@ -81,6 +81,15 @@ public class CfgSettingValueDTO implements Serializable {
          */
         private Boolean isChannelShopCharge;
 
+        /**
+         * 备案通知岗位id集合
+         */
+        private List<String> productRegistrationPostIdList;
+
+        /**
+         * 备案通知抄送人id集合，/api/plm/common/findUserList
+         */
+        private List<String> productRegistrationUserIdList;
     }
 
     /**
