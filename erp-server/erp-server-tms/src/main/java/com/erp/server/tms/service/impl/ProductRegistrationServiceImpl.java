@@ -5,10 +5,12 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -27,14 +29,23 @@ import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.SysPostUserEntity;
+import com.erp.model.sys.vo.FsBatchSendMessageDTO;
+import com.erp.model.sys.vo.ThirdUnionDTO;
+import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.ProductRegistrationDTO;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateProductReq;
+import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
+import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.tms.enums.ProductRegistrationEnum;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysPostFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.sdk.fs.service.FsService;
 import com.erp.server.tms.convert.ProductRegistrationConverter;
 import com.erp.server.tms.handler.TransferLogisticsRegistry;
 import com.erp.server.tms.mapper.ProductRegistrationMapper;
@@ -44,6 +55,9 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -81,11 +95,26 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
     private TransferLogisticsAuthService transferLogisticsAuthService;
 
     @Resource
+    @Lazy
     private ProductRegistrationServiceImpl service;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private CfgSettingService cfgSettingService;
+
+    @Resource
+    private SysPostFeign sysPostFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
+    private FsService fsService;
+
+    @Value("${third.fs.appUrl}")
+    private String fsAppUrl;
 
     @Override
     public List<BatchResultDTO> add(ProductRegistrationDTO.AddDTO addDTO) {
@@ -315,12 +344,16 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                     resultDTOList.add(BatchResultDTO.fail(skuId,productDTO.getSkuNo(),"拉取产品信息时失败"+queryResult.getMsg()));
                 }
             }
+            List<ProductRegistrationEntity> sendMsgList = new ArrayList<>();
             if(CollectionUtils.isNotEmpty(addList)){
                 service.saveBatch(addList);
+                sendMsgList.addAll(addList);
             }
             if(CollectionUtils.isNotEmpty(updateList)){
                 service.updateBatchById(updateList);
+                sendMsgList.addAll(updateList);
             }
+            service.sendMsgWhenNotRegistration(sendMsgList);
         }else{
             //没有传skuId 则全量拉取
             this.pullAllProduct(dto.getDeclareSupplierId());
@@ -433,6 +466,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
             }
         }
         this.batchAddOrUpdate(addList,updateList);
+        service.sendMsgWhenNotRegistration(null);
         return ApiResult.success();
     }
 
@@ -480,6 +514,78 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                 addEntity.getDeclareNameCn().equals(productDTO.getDeclareChineseName()) &&
                 addEntity.getCustomsCode().equals(productDTO.getCustomsCode()) &&
                 addEntity.getDeclareElement().equals(productDTO.getDeclareElement());
+    }
+
+    @Async
+    @Override
+    public void sendMsgWhenNotRegistration(List<ProductRegistrationEntity> sendMsgList){
+        List<ProductRegistrationEntity> list;
+        if(CollectionUtils.isNotEmpty(sendMsgList)){
+            list = sendMsgList;
+        }else{
+            list = this.lambdaQuery().ne(ProductRegistrationEntity::getStatus,ProductRegistrationEnum.StatusEnum.REGISTERED.getCode()).list();
+        }
+        if(CollectionUtils.isEmpty(list)){
+            return;
+        }
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.NOTIC.getCode());
+        if(Objects.isNull(cfgSettingEntity)){
+            return;
+        }
+
+        CfgSettingValueDTO.NoticeDTO noticeDTO = JSONUtil.toBean(cfgSettingEntity.getDataJson(),CfgSettingValueDTO.NoticeDTO.class);
+        if(Objects.isNull(noticeDTO)){
+            return;
+        }
+
+        List<String> sendUserIds = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(noticeDTO.getProductRegistrationUserIdList())){
+            sendUserIds.addAll(noticeDTO.getProductRegistrationUserIdList());
+        }
+        //处理岗位，获取岗位下全部人
+        if(CollectionUtils.isNotEmpty(noticeDTO.getProductRegistrationPostIdList())){
+            //岗位id
+            List<String> postIdList = noticeDTO.getProductRegistrationPostIdList();
+            List<SysPostUserEntity> userEntityList = sysPostFeign.getUserIdByPostIds(postIdList);
+            if(CollectionUtils.isNotEmpty(userEntityList)){
+                sendUserIds.addAll(userEntityList.stream().map(SysPostUserEntity::getUserId).distinct().collect(Collectors.toList()));
+            }
+        }
+
+        //没有需要发送的人员
+        if(CollectionUtils.isEmpty(sendUserIds)){
+            return;
+        }
+        sendUserIds = sendUserIds.stream().distinct().collect(Collectors.toList());
+        //获取飞书的unionid 与用户关系
+        List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+        FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+        //过滤出有飞书配置的用户
+        List<String> finalSendUserIds = sendUserIds;
+        unionIdList =  unionIdList.stream().filter(u -> finalSendUserIds.contains(u.getUserId())).collect(Collectors.toList());
+        List<String> unionIds = unionIdList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(unionIds)){
+            return;
+        }
+        sendMessage.setUnionIds(unionIds);
+        Map<String,List<ProductRegistrationEntity>> map = list.stream().collect(Collectors.groupingBy(ProductRegistrationEntity::getDeclareSupplierName));
+        map.forEach((key,value)->{
+            String titleContent = StrUtil.format("{}存在{}条SKU尚未完成备案，请知悉",key,value.size());
+            String messageContent = "通知类型：备案提醒\n";
+            List<String> skuNoList = value.stream().map(v->v.getSkuNo()).collect(Collectors.toList());
+            int size = skuNoList.size();
+            if(size<=10){
+                messageContent = messageContent + "备案SKU："+ skuNoList;
+            }else{
+                skuNoList = skuNoList.subList(0,10);
+                messageContent =messageContent + "备案SKU："+ skuNoList + "...+"+(size-10);
+            }
+            Map contentMap = fsService.getCardMessageMap(titleContent , messageContent, fsAppUrl,false);
+            sendMessage.setContentMap(contentMap);
+            //发送消息
+            fsService.sendMessage(sendMessage);
+        });
+
     }
 
 }

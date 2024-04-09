@@ -71,4 +71,6 @@ public interface ProductRegistrationService extends SuperService<ProductRegistra
      * @return List<ProductRegistrationEntity>
      */
     List<ProductRegistrationEntity> listBySkuId(String skuId);
+
+    void sendMsgWhenNotRegistration(List<ProductRegistrationEntity> sendMsgList);
 }
