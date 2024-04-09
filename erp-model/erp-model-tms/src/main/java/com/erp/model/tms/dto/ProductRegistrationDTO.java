@@ -103,6 +103,11 @@ public class ProductRegistrationDTO implements Serializable {
          * 拉取信息
          */
         private String pullValue;
+
+        /**
+         * 最新信息
+         */
+        private String latestValue;
     }
 
     /**

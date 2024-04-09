@@ -1574,6 +1574,7 @@
             CASE WHEN split_part(pp.box_size, 'X',2) = '' THEN null ELSE split_part(pp.box_size, 'X',2) END AS boxSizeWide,
              CASE WHEN split_part(pp.box_size, 'X',3) = '' THEN null ELSE split_part(pp.box_size, 'X',3) END AS boxSizeHigh,
             (select value from basic_dict  where is_deleted=false and id=pl.product_property_id LIMIT 1) AS productProperty,
+            (select name from basic_dict  where is_deleted=false and value=pl.declare_unit and type ='declareUnit' LIMIT 1) AS declareUnitName,
             pd.name as cnName,pd.name_en as enName,
             pi.spu_no as spuNo,
             pl.first_qty as firstQty,

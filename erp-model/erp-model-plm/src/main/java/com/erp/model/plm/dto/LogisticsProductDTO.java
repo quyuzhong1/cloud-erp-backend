@@ -1118,6 +1118,10 @@ public class LogisticsProductDTO {
         private String declareUnit;
 
         /**
+         * 报关单位名称
+         */
+        private String declareUnitName;
+        /**
          * 申报要素
          */
         private String declareElement;

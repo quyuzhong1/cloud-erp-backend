@@ -23,6 +23,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.LogisticsProductDTO;
+import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.ProductRegistrationDTO;
@@ -146,6 +147,9 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                 }
             }else{
                 //失败返回原因
+                if(result.getMsg().contains("sku已存在")){
+                    result.setMsg(result.getMsg()+",请通过拉取备案拉取产品");
+                }
                 resultDTOList.add(BatchResultDTO.fail(skuId,productDTO.getSkuNo(),result.getMsg()));
             }
         }
@@ -218,10 +222,20 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
         ProductRegistrationDTO.ViewVO view = BeanMapperUtils.map(ProductRegistrationDTO.ViewVO.class, old);
         view.setDeclarePlatformName(old.getDeclareSupplierName());
         view.setStatusName(EnumMessage.getNameByCode(ProductRegistrationEnum.StatusEnum.class,view.getStatus()));
+        //处理单位
+        List<BasicDictEntity> sysDictBasicEntityList = plmTaskFeign.listDictByType("declareUnit");
+        BasicDictEntity basicDictEntity = sysDictBasicEntityList.stream().filter(v->v.getValue().equals(old.getDeclareUnit())).findFirst().orElse(null);
+        if(basicDictEntity!=null){
+            old.setDeclareUnit(basicDictEntity.getName());
+        }
 
         JSONObject jsonObject = new JSONObject(old.getPushInfo());
         LogisticsProductDTO.ProductDTO ruleDTO = JSONObject.parseObject(jsonObject.toJSONString(),new TypeReference< LogisticsProductDTO.ProductDTO>() {}.getType());
-        view.setDetailList(ProductRegistrationEnum.DetailDescEnum.convertToViewList(ruleDTO,old));
+
+        //最新产品信息
+        List<LogisticsProductDTO.ProductDTO> productDTOList = logisticsProductFeign.listBySkuIdList(Arrays.asList(old.getSkuId()));
+        LogisticsProductDTO.ProductDTO latestDTO = productDTOList.stream().findFirst().orElse(new LogisticsProductDTO.ProductDTO());
+        view.setDetailList(ProductRegistrationEnum.DetailDescEnum.convertToViewList(ruleDTO,old,latestDTO));
         return view;
     }
 
