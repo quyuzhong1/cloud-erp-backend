@@ -18,6 +18,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
@@ -386,24 +387,26 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
             if(Objects.isNull(skuVO)){
                 continue;
             }
-            if(Objects.isNull(existEntity)){
-                entity.setSkuId(skuVO.getSkuId());
-                entity.setLatestTime(LocalDateTime.now());
-                entity.setDeclareCurrencySymbol(skuVO.getDeclareCurrencySymbol());
-                entity.setDeclareSupplierId(transferLogisticsAuthEntity.getMainId());
-                entity.setDeclareSupplierName(transferLogisticsAuthEntity.getName());
-                entity.setProductName(skuVO.getSkuName());
-                entity.setDeclareElement(skuVO.getDeclareElement());
-                addList.add(entity);
-            }else{
-                existEntity.setDeclareCurrencySymbol(skuVO.getDeclareCurrencySymbol());
-                existEntity.setDeclareElement(skuVO.getDeclareElement());
-                BeanUtil.copyProperties(entity,existEntity, CopyOptions.create().setIgnoreNullValue(true));
-                existEntity.setLatestTime(LocalDateTime.now());
-                if(StringUtils.isBlank(existEntity.getProductName())){
-                    existEntity.setProductName(skuVO.getSkuName());
+            //因为保宏拉取批量接口没有返中文名称和申报要素，通过请求单个的接口获取对应信息
+            ApiResult<ProductRegistrationEntity> queryResult = transferLogisticsService.getProductBySku(entity.getSkuNo(),transferLogisticsAuthEntity.getId());
+            if(queryResult.isSuccess()){
+                ProductRegistrationEntity addEntity = queryResult.getData();
+                addEntity.setLatestTime(LocalDateTime.now());
+                addEntity.setDeclareCurrencySymbol(CurrencyEnum.getSymbolByCode(addEntity.getCurrency()));
+                if(Objects.isNull(existEntity)){
+                    addEntity.setSkuId(skuVO.getSkuId());
+                    addEntity.setLatestTime(LocalDateTime.now());
+                    addEntity.setDeclareSupplierId(transferLogisticsAuthEntity.getMainId());
+                    addEntity.setDeclareSupplierName(transferLogisticsAuthEntity.getName());
+                    addList.add(addEntity);
+                }else{
+                    existEntity.setDeclareCurrencySymbol(skuVO.getDeclareCurrencySymbol());
+                    BeanUtil.copyProperties(addEntity,existEntity, CopyOptions.create().setIgnoreNullValue(true));
+                    existEntity.setLatestTime(LocalDateTime.now());
+                    updateList.add(existEntity);
                 }
-                updateList.add(existEntity);
+            }else{
+                log.error("拉取产品信息时失败"+queryResult.getMsg());
             }
         }
         this.batchAddOrUpdate(addList,updateList);

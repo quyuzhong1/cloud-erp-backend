@@ -20,6 +20,7 @@ import com.sdk.tms.baohong.api.product.RecordItemResponse;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import com.sdk.tms.baohong.service.BaoHongService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 

@@ -11,6 +11,9 @@ import lombok.Getter;
 @Getter
 public enum CurrencyEnum {
 
+    //有的第三方接口使用这个
+    RMB("RMB","人民币","¥"),
+
     CNY("CNY","人民币","¥"),
     CNH("CNH","离岸人民币","¥"),
     SKK("SKK","斯洛伐克克朗","Sk"),
@@ -151,7 +154,8 @@ public enum CurrencyEnum {
     ROL("ROL","罗马尼亚列伊","¤"),
     RWF("RWF","卢旺达法郎","¤"),
     SDD("SDD","苏丹第纳尔","¤"),
-    SIT("SIT","斯洛文尼亚托拉尔","¤");
+    SIT("SIT","斯洛文尼亚托拉尔","¤"),
+    ;
 
 
     private String currencyCode;
