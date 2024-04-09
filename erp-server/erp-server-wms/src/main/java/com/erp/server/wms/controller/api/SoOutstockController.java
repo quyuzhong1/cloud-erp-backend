@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -20,7 +21,9 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -28,6 +31,7 @@ import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.tms.feign.CfgSettingFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.server.wms.query.SoOutstockQueryHandler;
 import com.erp.server.wms.service.SoOutstockService;
@@ -68,6 +72,10 @@ public class SoOutstockController extends BaseController {
 
     @Resource
     private TmsDeclareBillFeign tmsDeclareBillFeign;
+
+
+    @Resource
+    private CfgSettingFeign cfgSettingFeign;
 
 
     /**
@@ -487,7 +495,11 @@ public class SoOutstockController extends BaseController {
 
         if (PackingStatusEnum.PACKING.getCode().equals(packingStatus)) {
             SoOutstockEntity entity = soOutstockService.getById(dto.getId());
-            if (!"CN".equals(entity.getCountry())) {
+            CfgSettingEntity cfgSetting = cfgSettingFeign.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
+
+            CfgSettingValueDTO.BillAutoAddDTO billAutoAddDTO = JSONUtil.toBean(cfgSetting.getDataJson(),CfgSettingValueDTO.BillAutoAddDTO.class);
+
+            if (!"CN".equalsIgnoreCase(entity.getCountry()) && billAutoAddDTO.getIsAutoB2BDeclare()) {
                 //如果装箱完成自动生成报关单
                 TmsDeclareBillDTO.AddDTO addDTO = new TmsDeclareBillDTO.AddDTO();
                 addDTO.setSourceId(entity.getId());
