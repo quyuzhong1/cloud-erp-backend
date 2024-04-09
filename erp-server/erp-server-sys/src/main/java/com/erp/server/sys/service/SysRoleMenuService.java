@@ -64,6 +64,13 @@ public interface SysRoleMenuService extends IService<SysRoleMenuEntity> {
      * @return java.util.List<com.erp.model.sys.vo.SysMenuVO>
      **/
     List<SysMenuVO> findLeftMenuAll();
+    /**
+     * 获取左侧菜单所有列表
+     * @Author Luo_WG
+     * @Date 2022/11/1 14:26
+     * @return java.util.List<com.erp.model.sys.vo.SysMenuVO>
+     **/
+    List<SysMenuVO> findLeftMenuAll(Integer type);
 
     Boolean saveRoleMenu(SysRoleMenuDTO dto);
 
