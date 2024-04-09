@@ -131,8 +131,6 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
 
     public static final String BILLING_WEIGHT_LOGISTICS = "billing_weight_logistics";
 
-    public static final String LACTUAL_SHIPPING_COST = "lactual_shipping_cost";
-
     public static final String DIFF_SHIPPING_COST = "diff_shipping_cost";
 
     public static final String CURRENCY = "currency";
