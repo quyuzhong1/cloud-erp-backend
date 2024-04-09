@@ -433,7 +433,10 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         paramDTO.setShopIdList(Collections.singletonList(shopId));
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(platformSkuList);
-        paramDTO.setPlatformSpuNoList(platformSpuList);
+        // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)){
+            paramDTO.setPlatformSpuNoList(platformSpuList);
+        }
         paramDTO.setMatchResult(true);
         paramDTO.setLastExpireDate(platformOrderCreateTime);
         paramDTO.setIsExpire(isExpire);

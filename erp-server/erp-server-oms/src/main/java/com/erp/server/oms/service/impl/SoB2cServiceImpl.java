@@ -6168,7 +6168,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         paramDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(platformSkuList);
-        paramDTO.setPlatformSpuNoList(platformSpuList);
+        // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(entity.getDictPlatform())){
+            paramDTO.setPlatformSpuNoList(platformSpuList);
+        }
         paramDTO.setMatchResult(true);
         paramDTO.setLastExpireDate(entity.getPlatformOrderCreateTime());
 
