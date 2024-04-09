@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -437,4 +438,6 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return
      */
     Boolean exportSrmExcel(PurchaseOrderDTO.SrmSearchParamDTO dto, HttpServletResponse response);
+
+    SupplierUserInfoVO getSrmSupplierUserInfo();
 }

@@ -18,6 +18,7 @@ import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
@@ -50,6 +51,7 @@ import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
+import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
@@ -196,6 +198,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Resource
     private KingdeePaymentConditionService kingdeePaymentConditionService;
 
+    @Resource
+    private SupplierUserService supplierUserService;
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
         PurchaseOrderDTO.SearchParamDTO params = pagingDTO.getParams();
@@ -2531,6 +2535,27 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_1015);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public SupplierUserInfoVO getSrmSupplierUserInfo() {
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        if (Objects.isNull(loginUser)){
+            throw new ServiceException(ApiError.ERROR_403);
+        }
+        String uid = loginUser.getUid();
+        //获取用户关联供应商
+        SupplierUserInfoVO info = supplierUserService.getById(uid);
+        if (Objects.nonNull(info) && org.apache.commons.lang3.StringUtils.isNotEmpty(info.getSupplierId())){
+            //用户是否禁用
+            if (Objects.isNull(info.getUserState()) || 0 == info.getUserState()) {
+                throw new ServiceException(ApiError.ERROR_9016);
+            }
+        }else {
+            //用户未关联供应商
+            throw new ServiceException(ApiError.ERROR_USER_NOT_REL_SUPPLIER);
+        }
+        return info;
     }
 
     /**
