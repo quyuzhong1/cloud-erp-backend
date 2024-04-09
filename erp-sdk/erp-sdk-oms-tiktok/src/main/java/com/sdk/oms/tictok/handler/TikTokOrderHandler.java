@@ -53,7 +53,7 @@ public class TikTokOrderHandler extends AbstractOrderHandler<TikTokOrderDTO, Pla
         List<OrderViewDTO> orders = tikTokSdkClientService.sendTikTokGetOrder(shopInfoDTO, task);
 
         // 返回下载源数据
-        return null
+        return null;
     }
 
     @Override

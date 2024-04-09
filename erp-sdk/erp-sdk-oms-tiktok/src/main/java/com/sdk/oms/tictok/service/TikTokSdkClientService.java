@@ -438,7 +438,7 @@ public class TikTokSdkClientService {
             params.put("access_token", shopInfoDTO.getAccessToken());
             params.put("app_key", shopInfoDTO.getClientId());
             params.put("page_size", pageSize);
-            params.put("page_token", pageToken);
+            params.put("page_size", pageToken);
             params.put("shop_cipher", shopInfoDTO.getShopCipher());
             params.put("shop_id", "");
             params.put("sign", "");
@@ -454,6 +454,7 @@ public class TikTokSdkClientService {
             //请求body，平台用于计算签名
             Map<String, Object> bodyMap = new HashMap<>();
             bodyMap.put("update_time_ge", task.getLastTime().toEpochSecond(ZoneOffset.UTC));
+            bodyMap.put("update_time_lt", task.getNextTime().toEpochSecond(ZoneOffset.UTC));
 
             String input = EncryptionUtils.urlParamsSort(params, path, headerMap, secret, JSONUtil.toJsonStr(bodyMap));
             // 追加请求路径获取签名
@@ -482,7 +483,6 @@ public class TikTokSdkClientService {
                         sb.toString(), headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
-
             //解析数据
             ObjectMapper objectMapper = new ObjectMapper();
             ListingDTO listingDTO = null;
@@ -504,7 +504,6 @@ public class TikTokSdkClientService {
             //根据产品id查询产品详情信息
             List<ListingViewDTO> listingViewDTOS = this.listItemView(productIds, shopInfoDTO);
             resultsBeanList.addAll(listingViewDTOS);
-
         }
 
         if (CollectionUtils.isEmpty(resultsBeanList)) {
