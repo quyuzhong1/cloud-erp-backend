@@ -2523,12 +2523,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         //删除原装箱信息
         wmsCartonService.deleteCarton(dto.getId());
-
         if (CollectionUtils.isNotEmpty(dto.getWmsCartonList())) {
             //新增装箱信息
             for (WmsCartonDTO.AddDTO addDTO : dto.getWmsCartonList()) {
                 //新增装箱信息
                 wmsCartonService.add(addDTO, dto.getId(), SourceTypeEnum.SO_OUTSTOCK.getCode());
+
+                //根据主表id分组sku查询发货及待装箱数
+                List<WmsCartonDTO.PackDateDTO> packDateDTOS = wmsCartonService.listPackDateBySourceId(dto.getId());
+                List<String> ids = packDateDTOS.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+                List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listByMainIds(ids);
+
+                //校验打包数量
+                checkDeliveryQty(packDateDTOS, soOutstockDetailEntities);
             }
         }
 
@@ -2543,6 +2550,23 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         } else {
             updatePackingStatus(dto.getId(), PackingStatusEnum.NOT_PACKING.getCode());
             return PackingStatusEnum.NOT_PACKING.getCode();
+        }
+    }
+
+    /**
+     * 校验打包数量
+     * @param packDateDTOS
+     * @param soOutstockDetailEntities
+     */
+    private void checkDeliveryQty(List<WmsCartonDTO.PackDateDTO> packDateDTOS, List<SoOutstockDetailEntity> soOutstockDetailEntities) {
+        for (WmsCartonDTO.PackDateDTO packDateDTO : packDateDTOS) {
+            //发货数量
+            int deliveryQty = soOutstockDetailEntities.stream().filter(req -> req.getMainId().equals(packDateDTO.getId())).mapToInt(req -> req.getActualQty()).sum();
+            //待装箱数量=发货数量-所有已装箱数量
+            int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(packDateDTO.getSkuId())).mapToInt(req -> req.getBoxQty() * req.getPackQty()).sum();
+            if (deliveryQty < packQtySum) {
+                throw new ServiceException(ApiError.PACKING_QTY_NOT_GT_WAIT_PACKING_QTY, packDateDTO.getBoxSpecNo(), packDateDTO.getSkuNo());
+            }
         }
     }
 

@@ -60,8 +60,6 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<FirstMileCartonMapper
     public void add(WmsCartonDTO.AddDTO addDTO, String sourceId, String sourceType) {
         WmsCartonEntity wmsCartonEntity = new WmsCartonEntity();
         BeanMapperUtils.copy(addDTO, wmsCartonEntity);
-        packQtyCheck(sourceId);
-
 
         // 数据处理
         handleData(wmsCartonEntity, sourceId, sourceType);
