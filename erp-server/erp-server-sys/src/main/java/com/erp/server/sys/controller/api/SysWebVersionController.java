@@ -57,8 +57,7 @@ public class SysWebVersionController extends BaseController implements CommandLi
         return "update web version success";
     }
     
-    @CrossOrigin
-	@GetMapping(value = "/sse" , produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	@RequestMapping(value = "/sse" , produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<String>> getEvents() {
         return Flux.interval(Duration.ofSeconds(2))
                 .map(sequence -> ServerSentEvent.<String> builder()
