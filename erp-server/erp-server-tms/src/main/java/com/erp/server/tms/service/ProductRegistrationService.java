@@ -52,8 +52,6 @@ public interface ProductRegistrationService extends SuperService<ProductRegistra
 
     ProductRegistrationDTO.ViewVO view(String id);
 
-    List<BatchResultDTO> pushFailure(List<String> ids);
-
     List<BatchResultDTO> cancel(List<String> ids);
 
     List<BatchResultDTO> pull(ProductRegistrationDTO.AddDTO dto);

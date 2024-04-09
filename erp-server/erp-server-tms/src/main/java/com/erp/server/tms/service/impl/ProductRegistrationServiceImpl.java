@@ -65,6 +65,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -267,11 +268,6 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
         LogisticsProductDTO.ProductDTO latestDTO = productDTOList.stream().findFirst().orElse(new LogisticsProductDTO.ProductDTO());
         view.setDetailList(ProductRegistrationEnum.DetailDescEnum.convertToViewList(ruleDTO,old,latestDTO));
         return view;
-    }
-
-    @Override
-    public List<BatchResultDTO> pushFailure(List<String> ids) {
-        return null;
     }
 
     @Override
@@ -505,15 +501,19 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
     }
 
     private Boolean judgeEquals(ProductRegistrationEntity addEntity,LogisticsProductDTO.ProductDTO productDTO){
-        return addEntity.getSkuNo().equals(productDTO.getSkuNo()) &&
-                addEntity.getProductName().equals(productDTO.getCnName()) &&
-                addEntity.getProductNameEn().equals(productDTO.getEnName()) &&
-                (addEntity.getCurrency().equals(productDTO.getDeclareCurrency()) || (Objects.nonNull(productDTO.getDeclareCurrency()) &&addEntity.getCurrency().equals("RMB") && productDTO.getDeclareCurrency().equals("CNY")))&&
-                addEntity.getDeclarePrice().equals(productDTO.getDeclarePrice()) &&
+        if(Objects.isNull(addEntity.getGrossWeight())){
+            addEntity.setGrossWeight(BigDecimal.ZERO);
+        }
+        return Objects.equals(addEntity.getSkuNo(), productDTO.getSkuNo()) &&
+                Objects.equals(addEntity.getProductName(), productDTO.getCnName()) &&
+                Objects.equals(addEntity.getProductNameEn(), productDTO.getEnName()) &&
+                (Objects.equals(addEntity.getCurrency(), productDTO.getDeclareCurrency()) || (Objects.equals(productDTO.getDeclareCurrency(), "CNY") && Objects.equals(addEntity.getCurrency(), "RMB"))) &&
+                Objects.equals(addEntity.getDeclarePrice(), productDTO.getDeclarePrice()) &&
                 addEntity.getGrossWeight().compareTo(productDTO.getGrossWeight()) == 0 &&
-                addEntity.getDeclareNameCn().equals(productDTO.getDeclareChineseName()) &&
-                addEntity.getCustomsCode().equals(productDTO.getCustomsCode()) &&
-                addEntity.getDeclareElement().equals(productDTO.getDeclareElement());
+                Objects.equals(addEntity.getDeclareNameCn(), productDTO.getDeclareChineseName()) &&
+                Objects.equals(addEntity.getCustomsCode(), productDTO.getCustomsCode()) &&
+                Objects.equals(addEntity.getDeclareElement(), productDTO.getDeclareElement());
+
     }
 
     @Async
