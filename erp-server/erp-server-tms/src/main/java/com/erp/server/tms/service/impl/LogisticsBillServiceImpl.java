@@ -993,6 +993,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 //            }
             if(StringUtils.isNotBlank(batchUpdateTrackNoDTO.getLogisticsChannelId())){
                 logisticsBillEntity.setChannelId(batchUpdateTrackNoDTO.getLogisticsChannelId());
+                if (CollectionUtils.isNotEmpty(batchUpdateTrackNoDTO.getTrackNoList())){
+                    logisticsBillEntity.setTransportNo(String.join(",", batchUpdateTrackNoDTO.getTrackNoList()));
+                }
                 updateEntityList.add(logisticsBillEntity);
             }
             if(CollectionUtils.isNotEmpty(batchUpdateTrackNoDTO.getTrackNoList())){
