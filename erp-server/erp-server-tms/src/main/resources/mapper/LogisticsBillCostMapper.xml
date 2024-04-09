@@ -18,10 +18,7 @@
        <result column="actual_weight" property="actualWeight" />
        <result column="volume_weight" property="volumeWeight" />
        <result column="billing_weight" property="billingWeight" />
-       <result column="estimated_shipping_cost " property="estimatedShippingCost" />
        <result column="billing_weight_logistics" property="billingWeightLogistics" />
-       <result column="actual_shipping_cost" property="actualShippingCost" />
-       <result column="diff_shipping_cost" property="diffShippingCost" />
        <result column="currency" property="currency" />
        <result column="remark" property="remark" />
     </resultMap>
@@ -62,7 +59,7 @@
             lbc.reconciliation_status as reconciliationStatus,
             lc.name as channelName,
             lbc.transport_no as transportNo,
-            lbc.track_no,
+            lbc.track_no as transportNo,
             lbc.logistics_bill_detail_id,
             lbd.transportStatus,
             lbc.actual_weight as actualWeight,
@@ -103,6 +100,12 @@
             <if test="params.codeList != null and params.codeList.size > 0">
                 and lbc.transport_no in
                 <foreach collection="params.codeList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.trackNoList != null and params.trackNoList.size > 0">
+                and lbc.track_no in
+                <foreach collection="params.trackNoList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>

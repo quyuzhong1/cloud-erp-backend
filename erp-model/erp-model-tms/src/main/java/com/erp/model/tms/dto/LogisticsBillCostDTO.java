@@ -36,6 +36,10 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private List<String> codeList;
         /**
+         * 跟踪单号
+         */
+        private List<String> trackNoList;
+        /**
          * 对账状态 reconciliationStatus字典
          */
         private List<String> reconciliationStatusList;
