@@ -10,11 +10,13 @@ import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
@@ -22,6 +24,7 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +41,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 销售出库单消费服务
@@ -60,6 +64,8 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
     private SoOutstockService soOutstockService;
     @Resource
     private SoB2cFeign soB2cFeign;
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
 
 
     @Override
@@ -109,19 +115,42 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
 //            return ApiResult.success();
 //        }
         // 查询销售订单是否存在?
+        // 忽略店铺
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.getByPlatformCode(
                 Collections.singletonList(dto.getPlatformCode()),
                 dto.getDictPlatform(),
-                dto.getShopId()
+                null
         );
         if (CollectionUtils.isEmpty(soB2cEntityList)){
             log.warn("[亚马逊物流销售消费服务]:B2C销售单不存在：单号={}", dto.getPlatformCode());
             throw new ServiceException("B2C销售单不存在：单号=" + dto.getPlatformCode());
         }
+        SoB2cEntity soB2cEntity = null;
+        // 校验当前店铺
+        if (1 < soB2cEntityList.size()){
+            soB2cEntity = soB2cEntityList.stream()
+                    .filter(e->e.getShopId().equalsIgnoreCase(dto.getShopId()))
+                    .findFirst()
+                    .orElse(null);
+            if (null == soB2cEntity){
+                // 查询相同账号的店铺ID
+                List<ShopInfoEntity> sameAccountShopList = shopInfoFeign.getRelatedByShopId(dto.getShopId());
+                List<String> shopIdList = sameAccountShopList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+                soB2cEntity = soB2cEntityList.stream()
+                        .filter(e-> shopIdList.contains(e.getShopId()))
+                        .findFirst()
+                        .orElse(null);
+            }
+        } else {
+            soB2cEntity = soB2cEntityList.get(0);
+        }
+        if (null == soB2cEntity){
+            log.warn("[亚马逊物流销售消费服务]:配置的B2C销售单不存在：单号={}", dto.getPlatformCode());
+            throw new ServiceException("配置的B2C销售单不存在：单号=" + dto.getPlatformCode());
+        }
+
         // 记录订单数据（独立事务）
         soB2cFeign.checkAndFillBySoOutStock(dto);
-
-        SoB2cEntity soB2cEntity = soB2cEntityList.get(0);
 
         // （独立事务）
 //         表示有仓库为空且是已发货并且是平台仓订单

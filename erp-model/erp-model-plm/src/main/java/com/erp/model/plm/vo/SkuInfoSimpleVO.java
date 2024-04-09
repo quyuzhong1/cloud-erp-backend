@@ -1,5 +1,6 @@
 package com.erp.model.plm.vo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -49,6 +50,11 @@ public class SkuInfoSimpleVO implements Serializable {
      * 实际含税成本
      */
     private BigDecimal actualTaxCost;
+
+    /**
+     * 产品尺寸
+     */
+    private String productSize;
 
 
 }

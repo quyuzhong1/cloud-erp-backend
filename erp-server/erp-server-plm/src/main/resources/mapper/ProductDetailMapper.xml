@@ -1650,6 +1650,7 @@
         pd.images_url AS skuImagesUrl,
         pc.retail_price,
         ppk.gross_weight,
+        ppk.product_size,
         pp.main_supplier as supplierId
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
