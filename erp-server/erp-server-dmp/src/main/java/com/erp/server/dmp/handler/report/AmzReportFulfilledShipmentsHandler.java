@@ -153,7 +153,7 @@ public class AmzReportFulfilledShipmentsHandler extends AmzReportBusinessHandler
             RequestDTO dto = new RequestDTO();
             dto.setJobTaskDTO(jobTaskDTO);
             // 事务处理
-            businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(), jobTaskDTO.getBillType(), jobTaskDTO, dto.getPlatformApiEnum());
+            businessService.batchPullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(), jobTaskDTO.getBillType(), jobTaskDTO, dto.getPlatformApiEnum(), 100);
         }
     }
 

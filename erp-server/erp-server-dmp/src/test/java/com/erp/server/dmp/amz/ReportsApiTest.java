@@ -414,8 +414,8 @@ public class ReportsApiTest {
 //        String shopId = "1734478618723094530";
 //        String reportDocumentId = "amzn1.spdoc.1.4.na.432063e2-6fd9-4f35-99ae-75e9e4e0adee.T11BXPXCLBFLJA.2511";
 //        String shopId = "1739563826220634113";
-        String reportDocumentId = "amzn1.spdoc.1.4.fe.4dc7329b-5531-419a-b544-7354af69538d.T24FP7H4UQD3KD.2511";
-        String shopId = "1735553314990329858";
+        String reportDocumentId = "amzn1.spdoc.1.4.na.7f56031f-5e26-4e35-a045-24bd1a8d2265.T1971HVDFXDIIA.2511";
+        String shopId = "1739494918432231426";
 
 
         // 获取店铺授权信息
@@ -444,6 +444,8 @@ public class ReportsApiTest {
         // group1/M00/00/57/rBBkDGWwx-SAN72WAAAa60JmTIA.TJTK0A
 
         // group1/M00/00/59/rBBkDGXB43OAfWxJAABZFLcZxlY4128.gz
+        // group1/M00/00/6D/rBBkDGYSRXuAI4eCAAdWW7V8-6o7092.gz
+        // group1/M00/00/6D/rBBkDGYTTO2AckgZAAc7_Zx9rpI1023.gz
         System.out.println(fileId);
 
     }

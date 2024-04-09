@@ -1,14 +1,18 @@
 package com.erp.server.dmp.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.server.dmp.mapper.CfgSettingMapper;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.common.business.service.impl.SuperServiceImpl;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -55,5 +59,14 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             return null;
         }
         return entity.getValue();
+    }
+
+    @Override
+    public Map<String, Integer> getApiTaskDelaySecond(SettingEnum settingEnum) {
+        String value = this.getValue(settingEnum);
+        if (StringUtils.isBlank(value)){
+            return Collections.emptyMap();
+        }
+        return JSONUtil.toBean(value, Map.class);
     }
 }

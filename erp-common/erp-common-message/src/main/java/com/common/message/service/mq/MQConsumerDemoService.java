@@ -25,28 +25,28 @@ public class MQConsumerDemoService {
     /**
      * consumeMode = ConsumeMode.ORDERLY  每秒进行一次重试 一直重试
      */
-    @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC, selectorExpression = "tag2", consumerGroup = "tag2_consumer", consumeMode = ConsumeMode.ORDERLY)
-    public class ConsumerSend2 implements RocketMQListener<String> {
-        @Override
-        public void onMessage(String str) {
-            log.info("监听到消息：str={}", str);
-        }
-    }
+//    @Service
+//    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC, selectorExpression = "tag2", consumerGroup = "tag2_consumer", consumeMode = ConsumeMode.ORDERLY)
+//    public class ConsumerSend2 implements RocketMQListener<String> {
+//        @Override
+//        public void onMessage(String str) {
+//            log.info("监听到消息：str={}", str);
+//        }
+//    }
 
     // MessageExt：是一个消息接收通配符，不管发送的是String还是对象，都可接收，当然也可以像上面明确指定类型（我建议还是指定类型较方便）
     /**
      * consumeMode = ConsumeMode.CONCURRENTLY  集群模式 重试16次  默认此模式
      * consumeMode = ConsumeMode.ORDERLY  每秒进行一次重试 一直重试
      */
-    @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC, selectorExpression = "tag1", consumerGroup = "tag1_consumer")
-    public class Consumer implements RocketMQListener<ProducerDto.EntityDto> {
-        @Override
-        public void onMessage(ProducerDto.EntityDto dto) {
-            log.info("监听到消息：msg={}", JSONUtil.toJsonStr(dto));
-        }
-    }
+//    @Service
+//    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC, selectorExpression = "tag1", consumerGroup = "tag1_consumer")
+//    public class Consumer implements RocketMQListener<ProducerDto.EntityDto> {
+//        @Override
+//        public void onMessage(ProducerDto.EntityDto dto) {
+//            log.info("监听到消息：msg={}", JSONUtil.toJsonStr(dto));
+//        }
+//    }
 
 
     @Data

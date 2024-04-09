@@ -526,7 +526,12 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
-        dmpSyncTaskDTO.setParentId(entity.getSoId());
+        // B2C订单不推送到金蝶
+        if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(entity.getOrderType())) {
+            dmpSyncTaskDTO.setParentId("");
+        } else {
+            dmpSyncTaskDTO.setParentId(entity.getSoId());
+        }
         dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
     }
 
