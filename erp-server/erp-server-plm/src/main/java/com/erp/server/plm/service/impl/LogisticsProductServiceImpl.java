@@ -452,11 +452,11 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     }
 
     @Override
-    public List<LogisticsProductDTO.ProductDTO> listLogisticsProduct(List<String> skuIdList) {
-        if (CollectionUtils.isEmpty(skuIdList)) {
+    public List<LogisticsProductDTO.ProductDTO> listLogisticsProduct(List<String> skuIdList,List<String> skuNoList) {
+        if (CollectionUtils.isEmpty(skuIdList) && CollectionUtils.isEmpty(skuNoList)) {
             return Collections.emptyList();
         }
-        List<LogisticsProductDTO.ProductDTO> list = baseMapper.listLogisticsProduct(skuIdList);
+        List<LogisticsProductDTO.ProductDTO> list = baseMapper.listLogisticsProduct(skuIdList,skuNoList);
         String isElectricFlag = ProductConstant.IS_ELECTRIC;
         //属性
         List<String> propertyIdList = list.stream().map(LogisticsProductDTO.ProductDTO::getProductPropertyId).distinct().collect(Collectors.toList());

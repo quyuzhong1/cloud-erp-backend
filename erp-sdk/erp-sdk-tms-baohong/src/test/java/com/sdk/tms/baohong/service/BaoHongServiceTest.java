@@ -65,6 +65,13 @@ public class BaoHongServiceTest {
         BaoHongResponse<ProductRow> response = baoHongService.getProductInfo("2460");
         System.out.println(response);
         System.out.println(response.getData());
+        long now = System.currentTimeMillis();
+        for(int i = 0;i<=800;i++){
+            BaoHongResponse<ProductRow> response2 = baoHongService.getProductInfo("2460");
+            System.out.println(response2);
+        }
+        long end = System.currentTimeMillis();
+        System.out.println(end - now);
     }
 
     @Test

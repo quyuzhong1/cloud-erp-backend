@@ -218,7 +218,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      *@author yl
      *@date 2023-11-27
      */
-    List<LogisticsProductDTO.ProductDTO> listLogisticsProduct(@Param("skuIdList") List<String> skuIdList);
+    List<LogisticsProductDTO.ProductDTO> listLogisticsProduct(@Param("skuIdList") List<String> skuIdList,@Param("skuNoList") List<String> skuNoList);
 
     /**
      * 搜索SKU只带组合信息

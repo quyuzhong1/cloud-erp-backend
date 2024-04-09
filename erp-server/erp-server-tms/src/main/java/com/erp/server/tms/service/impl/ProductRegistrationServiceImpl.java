@@ -295,6 +295,10 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                 if(queryResult.isSuccess()){
                     ProductRegistrationEntity addEntity = queryResult.getData();
                     addEntity.setLatestTime(LocalDateTime.now());
+                    if(addEntity.getStatus().equals(ProductRegistrationEnum.StatusEnum.REGISTERED.getCode()) && !judgeEquals(addEntity,productDTO)){
+                        addEntity.setStatus(ProductRegistrationEnum.StatusEnum.CANCEL.getCode());
+                        addEntity.setFailureReason("报关信息与数大臣ERP不一致，请核实修改");
+                    }
                     if(Objects.isNull(productRegistrationEntity)){
                         addEntity.setSkuId(skuId);
                         addEntity.setDeclareSupplierId(transferLogisticsAuthEntity.getMainId());
@@ -378,35 +382,54 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
         List<String> skuNoList = pullDataList.stream().map(ProductRegistrationEntity::getSkuNo).collect(Collectors.toList());
         //查询现在已存在的
         List<ProductRegistrationEntity> existEntityList = this.listBySkuNoListAndPlatform(skuNoList,declareSupplierId);
-        List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(skuNoList);
+        //产品信息
+        List<LogisticsProductDTO.ProductDTO> productDTOList = logisticsProductFeign.listBySkuNoList(skuNoList);
         List<ProductRegistrationEntity> addList = new ArrayList<>();
         List<ProductRegistrationEntity> updateList = new ArrayList<>();
         for (ProductRegistrationEntity entity : pullDataList) {
             ProductRegistrationEntity existEntity = existEntityList.stream().filter(v -> v.getSkuNo().equals(entity.getSkuNo())).findFirst().orElse(null);
-            SkuVO skuVO = skuVOS.stream().filter(v->v.getSkuNo().equals(entity.getSkuNo())).findFirst().orElse(null);
-            if(Objects.isNull(skuVO)){
+            LogisticsProductDTO.ProductDTO productDTO = productDTOList.stream().filter(v->v.getSkuNo().equals(entity.getSkuNo())).findFirst().orElse(null);
+            if(Objects.isNull(productDTO)){
                 continue;
             }
-            //因为保宏拉取批量接口没有返中文名称和申报要素，通过请求单个的接口获取对应信息
-            ApiResult<ProductRegistrationEntity> queryResult = transferLogisticsService.getProductBySku(entity.getSkuNo(),transferLogisticsAuthEntity.getId());
-            if(queryResult.isSuccess()){
-                ProductRegistrationEntity addEntity = queryResult.getData();
-                addEntity.setLatestTime(LocalDateTime.now());
-                addEntity.setDeclareCurrencySymbol(CurrencyEnum.getSymbolByCode(addEntity.getCurrency()));
-                if(Objects.isNull(existEntity)){
-                    addEntity.setSkuId(skuVO.getSkuId());
+            if((Objects.nonNull(existEntity) && (StringUtils.isBlank(existEntity.getProductName()) ||StringUtils.isBlank(existEntity.getDeclareElement())))
+             || (Objects.isNull(existEntity))){
+                //因为保宏拉取批量接口没有返中文名称和申报要素，通过请求单个的接口获取对应信息
+                ApiResult<ProductRegistrationEntity> queryResult = transferLogisticsService.getProductBySku(entity.getSkuNo(),transferLogisticsAuthEntity.getId());
+                if(queryResult.isSuccess()){
+                    ProductRegistrationEntity addEntity = queryResult.getData();
                     addEntity.setLatestTime(LocalDateTime.now());
+                    addEntity.setDeclareCurrencySymbol(CurrencyEnum.getSymbolByCode(addEntity.getCurrency()));
                     addEntity.setDeclareSupplierId(transferLogisticsAuthEntity.getMainId());
                     addEntity.setDeclareSupplierName(transferLogisticsAuthEntity.getName());
-                    addList.add(addEntity);
+                    addEntity.setSkuId(productDTO.getSkuId());
+                    if(addEntity.getStatus().equals(ProductRegistrationEnum.StatusEnum.REGISTERED.getCode()) && !judgeEquals(addEntity,productDTO)){
+                        addEntity.setStatus(ProductRegistrationEnum.StatusEnum.CANCEL.getCode());
+                        addEntity.setFailureReason("报关信息与数大臣ERP不一致，请核实修改");
+                    }
+                    if(Objects.isNull(existEntity)){
+                        addList.add(addEntity);
+                    }else{
+                        BeanUtil.copyProperties(addEntity,existEntity, CopyOptions.create().setIgnoreNullValue(true));
+                        updateList.add(existEntity);
+                    }
                 }else{
-                    existEntity.setDeclareCurrencySymbol(skuVO.getDeclareCurrencySymbol());
-                    BeanUtil.copyProperties(addEntity,existEntity, CopyOptions.create().setIgnoreNullValue(true));
-                    existEntity.setLatestTime(LocalDateTime.now());
-                    updateList.add(existEntity);
+                    log.error("拉取产品信息时失败"+queryResult.getMsg());
                 }
             }else{
-                log.error("拉取产品信息时失败"+queryResult.getMsg());
+                entity.setLatestTime(LocalDateTime.now());
+                entity.setDeclareCurrencySymbol(CurrencyEnum.getSymbolByCode(entity.getCurrency()));
+                entity.setDeclareSupplierId(transferLogisticsAuthEntity.getMainId());
+                entity.setDeclareSupplierName(transferLogisticsAuthEntity.getName());
+                entity.setSkuId(productDTO.getSkuId());
+                entity.setProductName(existEntity.getProductName());
+                entity.setDeclareElement(existEntity.getDeclareElement());
+                if(entity.getStatus().equals(ProductRegistrationEnum.StatusEnum.REGISTERED.getCode()) && !judgeEquals(entity,productDTO)){
+                    entity.setStatus(ProductRegistrationEnum.StatusEnum.CANCEL.getCode());
+                    entity.setFailureReason("报关信息与数大臣ERP不一致，请核实修改");
+                }
+                BeanUtil.copyProperties(entity, existEntity, CopyOptions.create().setIgnoreNullValue(true));
+                updateList.add(existEntity);
             }
         }
         this.batchAddOrUpdate(addList,updateList);
@@ -447,5 +470,16 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
         });
     }
 
+    private Boolean judgeEquals(ProductRegistrationEntity addEntity,LogisticsProductDTO.ProductDTO productDTO){
+        return addEntity.getSkuNo().equals(productDTO.getSkuNo()) &&
+                addEntity.getProductName().equals(productDTO.getCnName()) &&
+                addEntity.getProductNameEn().equals(productDTO.getEnName()) &&
+                (addEntity.getCurrency().equals(productDTO.getDeclareCurrency()) || (Objects.nonNull(productDTO.getDeclareCurrency()) &&addEntity.getCurrency().equals("RMB") && productDTO.getDeclareCurrency().equals("CNY")))&&
+                addEntity.getDeclarePrice().equals(productDTO.getDeclarePrice()) &&
+                addEntity.getGrossWeight().compareTo(productDTO.getGrossWeight()) == 0 &&
+                addEntity.getDeclareNameCn().equals(productDTO.getDeclareChineseName()) &&
+                addEntity.getCustomsCode().equals(productDTO.getCustomsCode()) &&
+                addEntity.getDeclareElement().equals(productDTO.getDeclareElement());
+    }
 
 }
