@@ -62,7 +62,7 @@ public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
         if(uri.indexOf("/webVersion/sse") != -1) {
         	HttpHeaders responseHeaders = exchange.getResponse().getHeaders();
         	responseHeaders.setCacheControl(CacheControl.noCache());
-        	return chain.filter(exchange);
+//        	return chain.filter(exchange);
         }else if(uri.indexOf("/webVersion/update") != -1) {
         	Flux<ServiceInstance> instances = discoveryClient.getInstances("erp-sys");
         	Mono<List<ServiceInstance>> collectList = instances.collectList();
