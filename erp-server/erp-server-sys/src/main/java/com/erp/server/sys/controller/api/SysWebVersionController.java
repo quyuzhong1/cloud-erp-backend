@@ -20,6 +20,7 @@ import com.erp.model.sys.entity.DictBasicEntity;
 import com.erp.server.sys.service.DictBasicService;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.RandomUtil;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import org.springframework.http.MediaType;
@@ -46,7 +47,10 @@ public class SysWebVersionController extends BaseController implements CommandLi
 	@GetMapping(value = "/update")
     public String update() throws Exception {
     	int count = 0;
-		while(!dealUpdate() && count < 30) {
+		while(!dealUpdate()) {
+			if(count >= 30) {
+				return "update web version fail";
+			}
 			count = count + 1;
 			Thread.sleep(1000);
 		}
@@ -78,6 +82,13 @@ public class SysWebVersionController extends BaseController implements CommandLi
     }
     
     private String getWebVersion() {
+    	int min = 0;
+    	int max = 31;
+    	int randomNumber = RandomUtil.randomInt(min, max);
+    	while(StringUtils.isBlank(webVersion) && min < randomNumber) {
+    		min = min + 1;
+    		for(int i = 0;i < max - randomNumber;i++);
+    	}
     	if(StringUtils.isBlank(webVersion)) {
     		Integer version = 1;
         	Object object = redisUtil.get(WEB_VERSION_REDISKEY);
@@ -104,7 +115,7 @@ public class SysWebVersionController extends BaseController implements CommandLi
         			dictBasicEntity.setValue(version.toString());
         			dictBasicService.save(dictBasicEntity);
         		}
-        		redisUtil.set(WEB_VERSION_REDISKEY, version.toString() , 600);
+        		redisUtil.set(WEB_VERSION_REDISKEY, version.toString() , 120 + randomNumber);
         	}
         	webVersion = version.toString();
     	}

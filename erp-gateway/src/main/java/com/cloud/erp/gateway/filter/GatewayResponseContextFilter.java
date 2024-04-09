@@ -1,9 +1,12 @@
 package com.cloud.erp.gateway.filter;
 
-import com.cloud.erp.gateway.context.GatewayContext;
-import com.cloud.erp.gateway.option.FilterOrderEnum;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Optional;
+
 import org.reactivestreams.Publisher;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.ReactiveDiscoveryClient;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.cloud.gateway.filter.factory.rewrite.CachedBodyOutputMessage;
@@ -12,7 +15,12 @@ import org.springframework.cloud.gateway.support.DefaultClientResponse;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.http.*;
+import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ReactiveHttpOutputMessage;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.client.reactive.ClientHttpResponse;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponseDecorator;
@@ -21,10 +29,14 @@ import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.server.ServerWebExchange;
+
+import com.cloud.erp.gateway.context.GatewayContext;
+import com.cloud.erp.gateway.option.FilterOrderEnum;
+
+import cn.hutool.core.collection.CollUtil;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.Optional;
 
 /**
  * 读取并缓存响应数据
@@ -34,6 +46,9 @@ import java.util.Optional;
 @Slf4j
 public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
 
+	@Autowired
+    private ReactiveDiscoveryClient discoveryClient;
+	
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         GatewayContext gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
@@ -47,6 +62,17 @@ public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
         if(uri.indexOf("/webVersion/sse") != -1) {
         	HttpHeaders responseHeaders = exchange.getResponse().getHeaders();
         	responseHeaders.setCacheControl(CacheControl.noCache());
+        	return chain.filter(exchange);
+        }else if(uri.indexOf("/webVersion/update") != -1) {
+        	Flux<ServiceInstance> instances = discoveryClient.getInstances("erp-sys");
+        	Mono<List<ServiceInstance>> collectList = instances.collectList();
+        	List<ServiceInstance> block = collectList.block();
+        	if(CollUtil.isEmpty(block)) {
+        		try {
+					Thread.sleep(30000);
+				} catch (InterruptedException e) {
+				}
+        	}
         	return chain.filter(exchange);
         }
         
