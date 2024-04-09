@@ -119,7 +119,7 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.getByPlatformCode(
                 Collections.singletonList(dto.getPlatformCode()),
                 dto.getDictPlatform(),
-                null
+                ""
         );
         if (CollectionUtils.isEmpty(soB2cEntityList)){
             log.warn("[亚马逊物流销售消费服务]:B2C销售单不存在：单号={}", dto.getPlatformCode());
