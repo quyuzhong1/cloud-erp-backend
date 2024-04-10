@@ -9,9 +9,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -154,6 +156,17 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
         
         if(!WmsDataCompareUtils.areAllListsEqual(headFieldLists)) {
         	throw new ServiceException("导入的多个文件表头不一致，请检查");
+        }
+        
+        Set<String> fieldSet = new HashSet<>();
+        for(String field : headFieldLists.get(0)) {
+        	if(StringUtils.isBlank(field)) {
+        		throw new ServiceException("导入文件表头含有空值，请检查");
+        	}
+        	if(fieldSet.contains(field.trim())) {
+        		throw new ServiceException("导入文件表头含有重复值，请检查");
+        	}
+        	fieldSet.add(field);
         }
         
 		wmsDataCompareTaskEntity.setImportDataCount(wmsDataCompareExcelDto.getImportDataCount());
