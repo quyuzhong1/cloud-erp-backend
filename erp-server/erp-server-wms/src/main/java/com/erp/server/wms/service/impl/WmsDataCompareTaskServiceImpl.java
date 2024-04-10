@@ -692,6 +692,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				List<WmsDataCompareTempEntity> wmsDataCompareTempEntityList = wmsDataCompareTempService.lambdaQuery().eq(WmsDataCompareTempEntity::getTaskId, id)
 						   .in(WmsDataCompareTempEntity::getCompareResult, Arrays.asList(WmsDataCompareTempCompareResultEnum.EXCEED.getCode() 
 								   , WmsDataCompareTempCompareResultEnum.MISS.getCode() , WmsDataCompareTempCompareResultEnum.DIFF.getCode()))
+						   .orderByAsc(WmsDataCompareTempEntity::getCompareResult)
 						   .list();
 				if(CollUtil.isNotEmpty(wmsDataCompareTempEntityList)) {
 					List<ImportDataMappingDTO> importDataMappingDTOList = JSON.parseArray(wmsDataCompareTaskEntity.getImportDataMapping() , WmsDataComparePlanDTO.ImportDataMappingDTO.class);
