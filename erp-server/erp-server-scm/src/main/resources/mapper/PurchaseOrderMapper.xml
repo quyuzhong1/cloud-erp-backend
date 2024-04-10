@@ -192,9 +192,9 @@
         INNER JOIN purchase_order_detail pod ON pod.purchase_order_id = po.id AND po.is_deleted = FALSE
         LEFT JOIN purchase_order_supplier pos ON pos.purchase_order_id = po."id" AND pod.is_deleted = FALSE
         WHERE pos.is_deleted = FALSE
-        <if test="ids != null and ids.size > 0">
-            AND po.id in
-            <foreach collection="ids" item="item" open="(" close=")" separator=",">
+        <if test="purchaseDetailIdList != null and purchaseDetailIdList.size > 0">
+            AND pod.id in
+            <foreach collection="purchaseDetailIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
@@ -249,9 +249,9 @@
         INNER JOIN purchase_order_supplier pos
         ON pos.purchase_order_id=po.id AND pos.is_deleted=false
         WHERE pod.is_deleted=false
-        AND pod.purchase_order_id
+        AND pod.id
         IN
-        <foreach collection="purchaseOrderIds" item="item" open="(" close=")" separator=",">
+        <foreach collection="purchaseDetailIdList" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
 
