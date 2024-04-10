@@ -56,13 +56,16 @@ public class WmsDataCompareUtils {
 				Workbook workbook = WorkbookFactory.create(inputStream);
 				Sheet sheet = workbook.getSheetAt(0); // 获取第一个工作表
 				int totalRows = sheet.getPhysicalNumberOfRows();
+				Integer headSize = 0; 
 				if(totalRows > 0) {
-					dto.getHeadFieldLists().add(getCellValues(sheet.getRow(0)));
+					List<String> cellValues = getCellValues(sheet.getRow(0) , null);
+					headSize = cellValues.size();
+					dto.getHeadFieldLists().add(cellValues);
 					importDataCount = importDataCount + totalRows - 1; // 获取总行数
 				}
 				if(needHeadAndCount && totalRows > 1) {
 					for(int i = 1; i < totalRows; i++) {
-						dto.getDatas().add(getCellValues(sheet.getRow(i)));
+						dto.getDatas().add(getCellValues(sheet.getRow(i) , headSize));
 					}
 				}
 				
@@ -76,7 +79,7 @@ public class WmsDataCompareUtils {
 		return dto;
 	}
 	
-	private static List<String> getCellValues(Row row){
+	private static List<String> getCellValues(Row row , Integer headSize){
 		List<String> cellValues = new ArrayList<>();
 		int i = 0;
 		for (Cell cell : row) {
@@ -115,6 +118,10 @@ public class WmsDataCompareUtils {
             i = i + 1;
             cellValues.add(cellValue);
         }
+		while(headSize != null && headSize > i) {
+			i = i + 1;
+        	cellValues.add(null);
+		}
 		return cellValues;
 	}
 	
