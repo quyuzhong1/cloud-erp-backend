@@ -3,14 +3,10 @@ package com.sdk.oms.tictok.dto;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.erp.model.oms.enums.MercadoOrderLogisticTypeEnum;
-import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.sdk.oms.tictok.dto.tiktok.order.view.DistrictInfoBean;
 import com.sdk.oms.tictok.dto.tiktok.order.view.LineItemsBean;
@@ -19,11 +15,12 @@ import com.sdk.oms.tictok.dto.tiktok.order.view.OrdersBean;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.thymeleaf.util.NumberUtils;
 
 import java.math.BigDecimal;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -97,12 +94,8 @@ public class TikTokOrderDTO extends CleanBaseDTO {
             orderDTO.setDictPayMethod(ordersBean.getPaymentMethodName());
         }
 
-
-
-
         //买家备注
         orderDTO.setBuyerRemark(ordersBean.getBuyerMessage());
-
 
         // 是否拦截
         orderDTO.setIsIntercept(false);
@@ -118,39 +111,6 @@ public class TikTokOrderDTO extends CleanBaseDTO {
 
         // 来源编码
         orderDTO.setSourceCode("");
-        // 标签json
-        Map<String, String> lableMap = new HashMap<>();
-
-        String logisticType = "";
-        ShipmentViewDTO shipmentViewDTO = new ShipmentViewDTO();
-        if (ObjectUtil.isNotEmpty(orderBean.getShipmentViewDTO())) {
-            shipmentViewDTO = orderBean.getShipmentViewDTO();
-
-            if ("me2".equalsIgnoreCase(shipmentViewDTO.getLogistic().getMode()) && MercadoOrderLogisticTypeEnum.FULFILLMENT.getCode().equalsIgnoreCase(shipmentViewDTO.getLogistic().getType())) {
-                //如果是平台仓，状态审核通过
-                orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
-                lableMap.put("logisticType", shipmentViewDTO.getLogistic().getType());
-                logisticType = OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
-            } else if ("me2".equalsIgnoreCase(shipmentViewDTO.getLogistic().getMode())
-                    && (MercadoOrderLogisticTypeEnum.DROP_OFF.getCode().equals(shipmentViewDTO.getLogistic().getType()) || MercadoOrderLogisticTypeEnum.CROSS_DOCKING.getCode().equalsIgnoreCase(shipmentViewDTO.getLogistic().getType()))
-            ){
-                //中转发货
-                lableMap.put("logisticType", shipmentViewDTO.getLogistic().getType());
-                logisticType = OrderLogisticTypeEnum.TRANSIT_WAREHOUSE.getCode();
-            } else if ("me1".equalsIgnoreCase(shipmentViewDTO.getLogistic().getMode())) {
-                //自发货
-                lableMap.put("logisticType", MercadoOrderLogisticTypeEnum.DEFAULT.getCode());
-                logisticType = OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
-            }
-
-            orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
-            //扩展字段
-            JSONObject extendDataJson = new JSONObject();
-            extendDataJson.put("mode",shipmentViewDTO.getLogistic().getMode());
-            extendDataJson.put("logisticType", shipmentViewDTO.getLogistic().getType());
-            extendDataJson.put("shipmentId", orderBean.getShipping().getFid());
-            orderDTO.setExtendData(extendDataJson.toString());
-        }
 
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         orderDTO.setAbnormalType("");
@@ -158,51 +118,53 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
         orderDTO.setInvalidStatus(Boolean.FALSE);
-        // 订单状态，详情金额汇总
-        if (ObjectUtil.isNotEmpty(orderBean.getShipmentViewDTO())) {
-            shipmentViewDTO = orderBean.getShipmentViewDTO();
 
-            if ("handling".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
-                orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE_ING.getStatus());
-                orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-            } else if ("ready_to_ship".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
-                orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE_ING.getStatus());
-                orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-            } else if ("shipped".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
-                orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
-                orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-            } else if ("cancelled".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
-                orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-                orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-                orderDTO.setInvalidStatus(Boolean.TRUE);
-                orderDTO.setRemark("平台取消");
-            } else if ("delivered".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
-                orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
-                orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-            } else if ("not_delivered".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
-                orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
-                orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-            }
-
-        }
-
-        if ("invalid".equals(orderBean.getStatus())) {
+        if ("ON_HOLD".equalsIgnoreCase(ordersBean.getStatus())) {
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
+            orderDTO.setRemark("ON_HOLD");
+        } else if ("AWAITING_SHIPMENT".equalsIgnoreCase(ordersBean.getStatus())) {
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+            orderDTO.setRemark("");
+        } else if ("AWAITING_COLLECTION".equalsIgnoreCase(ordersBean.getStatus())) {
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+            orderDTO.setRemark("");
+        } else if ("PARTIALLY_SHIPPING".equalsIgnoreCase(ordersBean.getStatus())) {
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+            orderDTO.setRemark("");
+        } else if ("IN_TRANSIT".equalsIgnoreCase(ordersBean.getStatus())) {
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            orderDTO.setRemark("");
+        } else if ("DELIVERED".equalsIgnoreCase(ordersBean.getStatus())) {
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            orderDTO.setRemark("");
+        } else if ("COMPLETED".equalsIgnoreCase(ordersBean.getStatus())) {
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            orderDTO.setRemark("");
+        } else if ("CANCELLED".equalsIgnoreCase(ordersBean.getStatus())) {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             orderDTO.setInvalidStatus(Boolean.TRUE);
-            orderDTO.setRemark("平台无效订单");
+            orderDTO.setRemark("平台取消");
         }
 
+
         // 订单明细
-        List<PlatformOrderDetailDTO> details = parseDetailDto(orderBean);
+        List<PlatformOrderDetailDTO> details = parseDetailDto(ordersBean);
         orderDTO.setDetails(details);
 
         //B2C销售订单买家信息表
-        orderDTO.setReceiver(parseReceiver(orderBean));
+        orderDTO.setReceiver(parseReceiver(ordersBean));
         //B2C销售订单物流信息表
-        orderDTO.setLogisticsList(parseLogistics(orderBean, logisticType));
+        orderDTO.setLogisticsList(parseLogistics(ordersBean));
         //B2C销售订单财务信息表
-        orderDTO.setFinances(parseFinances(orderBean));
+        orderDTO.setFinances(parseFinances(ordersBean));
         // 平台类型
         orderDTO.setPlatform(dto.getPlatform());
         // 唯一ID
@@ -337,7 +299,7 @@ public class TikTokOrderDTO extends CleanBaseDTO {
      * @param ordersBean
      * @return java.util.List<com.common.business.dto.PlatformOrderLogisticsDTO>
      **/
-    private static List<PlatformOrderLogisticsDTO> parseLogistics(OrdersBean ordersBean, String logisticType) {
+    private static List<PlatformOrderLogisticsDTO> parseLogistics(OrdersBean ordersBean) {
         if (ObjectUtil.isEmpty(ordersBean)) {
             return Collections.emptyList();
         }
@@ -359,7 +321,7 @@ public class TikTokOrderDTO extends CleanBaseDTO {
                 .accessoriesCostCurrency("")
                 .actualShippingCurrency("")
                 .estimatedShippingCurrency("")
-                .logisticType(logisticType)
+                .logisticType(ordersBean.getShippingType())
                 .build();
         logisticsDTOS.add(dto);
         return logisticsDTOS;
@@ -369,16 +331,13 @@ public class TikTokOrderDTO extends CleanBaseDTO {
      * 财务信息表
      * @Author Luo_WG
      * @Date 2023/12/4 14:07
-     * @param orderViewDTO
+     * @param ordersBean
      * @return java.util.List<com.common.business.dto.PlatformOrderFinanceDTO>
      **/
-    private static PlatformOrderFinanceDTO parseFinances(OrderViewDTO orderViewDTO) {
-        BigDecimal vatRate = orderViewDTO.getPayments().stream().map(req -> req.getTaxesAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-        BigDecimal shippingCost = orderViewDTO.getPayments().stream().map(req -> req.getShippingCost()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+    private static PlatformOrderFinanceDTO parseFinances(OrdersBean ordersBean) {
         return PlatformOrderFinanceDTO.builder()
-                .currency("")
-                .shippingCost(shippingCost)
-                .vatRate(vatRate)
+                .currency(ordersBean.getPayment().getCurrency())
+                .shippingCost(NumberUtil.toBigDecimal(ordersBean.getPayment().getShippingFee()))
                 .build();
     }
 }

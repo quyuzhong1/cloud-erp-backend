@@ -61,7 +61,7 @@ public class TikTokOrderHandler extends AbstractOrderHandler<TikTokOrderDTO, Pla
     @Override
     public List<PlatformOrderDTO> convert(List<TikTokOrderDTO> sourceDataList) {
         // 包含数据过滤数据 数据转换 数据合并拆分等操作
-        return sourceDataList.stream()
+        return sourceDataList.stream().filter(req -> !"UNPAID".equals(req.getOrderViewDTO().getData().getOrders().get(0).getStatus()))
                 // 组装
                 .map(TikTokOrderDTO::convertDTO).collect(Collectors.toList());
     }
