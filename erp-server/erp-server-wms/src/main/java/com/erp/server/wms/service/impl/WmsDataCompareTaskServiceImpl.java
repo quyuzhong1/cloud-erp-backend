@@ -328,6 +328,13 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				
 				WmsDataCompareUtils.compareExcelIndexList(importDataMappingDTOList, headFieldList);
 				importDataMapping = JSON.toJSONString(importDataMappingDTOList);
+				String emptyHeadIndex = importDataMappingDTOList.stream().filter(i -> i.getHeadIndex() == null).map(ImportDataMappingDTO::getImportField).collect(Collectors.joining("、"));
+				List<String> errMessageList = new ArrayList<>();
+				if(StringUtils.isNotBlank(emptyHeadIndex)) {
+					errMessageList.add("导入数据字段中的【"+ emptyHeadIndex +"】在导入文件表头不存在");
+					setNextViewDTO.setErrMessageList(errMessageList);
+					return setNextViewDTO;
+				}
 				
 				Map<String, Integer> pkValueSameCountMaps = new HashMap<>();
 				List<Integer> excelPkIndexList = importDataMappingDTOList.stream().filter(i -> i.getPkFlag() != null && i.getPkFlag()).map(ImportDataMappingDTO::getHeadIndex).collect(Collectors.toList());
@@ -348,7 +355,6 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					}
 				}
 				
-				List<String> errMessageList = new ArrayList<>();
 				if(pkValueSameCountMaps.size() > 0) {
 					for(Map.Entry<String, Integer> pkValueSameCountMap : pkValueSameCountMaps.entrySet()) {
 						Integer value = pkValueSameCountMap.getValue();
