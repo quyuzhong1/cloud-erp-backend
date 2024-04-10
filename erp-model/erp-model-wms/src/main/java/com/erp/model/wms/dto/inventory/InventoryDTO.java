@@ -14,7 +14,6 @@ import java.util.List;
 
 /**
  * @Classname: InventoryDTO
-
  * @CreateTime: 2023-05-08  18:42
  * @Author: zhangchunlin
  */
@@ -89,8 +88,6 @@ public class InventoryDTO implements Serializable {
         private List<String> skuIdList;
 
 
-
-
         /**
          * 仓库id集合
          */
@@ -103,12 +100,10 @@ public class InventoryDTO implements Serializable {
         private List<String> warehouseLocationList;
 
 
-
         /**
          * 库存组织集合
          */
         private List<String> orgIdList;
-
 
 
     }
@@ -300,6 +295,102 @@ public class InventoryDTO implements Serializable {
          */
         private String diffQty;
 
+    }
+
+    /**
+     * 即时库存勾选导出
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportInvFlowParamDTO {
+
+        /**
+         * 仓库id（勾选导出必传参数）
+         */
+        @NotEmpty(message = "仓库不能为空")
+        private String warehouseId;
+
+        /**
+         * 库存组织id（勾选导出必传参数）
+         */
+        @NotEmpty(message = "库存组织不能为空")
+        private String orgId;
+
+        /**
+         * sku id（勾选导出必传参数）
+         */
+        @NotEmpty(message = "sku不能为空")
+        private String skuId;
+
+    }
+
+    /**
+     * 即时库存查看流水查询条件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportInvFlowSearchParamDTO extends SortDTO {
+        /**
+         * 勾选行数据（仅传该字段，其他字段不要传输）
+         */
+        private List<ExportInvParamDTO> checkData;
+        /**
+         * 仓库id（点击查看流水必传参数）
+         */
+        @NotEmpty(message = "仓库不能为空")
+        private String warehouseId;
+
+        /**
+         * 库存组织id（点击查看流水必传参数）
+         */
+        @NotEmpty(message = "库存组织不能为空")
+        private String orgId;
+
+        /**
+         * sku id（点击查看流水必传参数）
+         */
+        @NotEmpty(message = "sku不能为空")
+        private String skuId;
+
+        /**
+         * 单据编号
+         */
+        private String sourceCode;
+
+        /**
+         * 业务日期范围（单据日期）
+         */
+        private List<LocalDate> dateList;
+
+        /**
+         * 操作类型（对应原型单据状态）  接口地址：/wms/common/enumDropDown?type=InventoryOperationMode
+         */
+        private List<String> operationModeList;
+
+        /**
+         * 库存状态  接口地址：/wms/common/enumDropDown?type=InventoryStatus
+         */
+        private List<String> inventoryStatusList;
+        /**
+         * 仓库id集合
+         */
+        private List<String> warehouseIdList;
+
+        /**
+         * 销售状态集合 接口地址：plm/common/enumDropDown?type=SaleState
+         */
+        private List<Integer> saleStatusList;
+
+        /**
+         * 库存组织集合
+         */
+        private List<String> orgIdList;
+
+        /**
+         * sku id编码集合，不提供给前端使用
+         */
+        @JsonIgnore
+        private List<String> skuIdList;
     }
 
     /**
@@ -590,7 +681,6 @@ public class InventoryDTO implements Serializable {
         private List<LocalDate> billDateList;
 
     }
-
 
 
     /**
@@ -1125,7 +1215,7 @@ public class InventoryDTO implements Serializable {
          */
         private Long todayStockInQty;
 
-        public  PdaHomeInventoryBalanceDTO() {
+        public PdaHomeInventoryBalanceDTO() {
             this.usableQty = 0L;
             this.todayDeliveryQty = 0L;
             this.todayStockInQty = 0L;
