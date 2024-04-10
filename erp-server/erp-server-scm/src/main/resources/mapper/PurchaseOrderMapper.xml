@@ -680,8 +680,8 @@
         left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
         where
         po.is_deleted = false
-        and po.approve_status = 'approve'
-        and po.update_time >=  CURRENT_DATE - INTERVAL '1 day'
+--         and po.approve_status = 'approve'
+--         and po.update_time >=  CURRENT_DATE - INTERVAL '1 day'
 --         and pod.execution_status in ('confirm','delivery')
     </select>
 </mapper>
