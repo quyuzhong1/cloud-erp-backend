@@ -45,15 +45,17 @@ public class TikTokOrderHandler extends AbstractOrderHandler<TikTokOrderDTO, Pla
         //  根据店铺ID获取授权
         TikTokShopInfoDTO shopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(task.getShopId());
         if (null == shopInfoDTO) {
+            log.error("[TikTok订单下载]从缓存中获取美客多 token 失败: shopId={}", task.getShopId());
             return Collections.emptyList();
         }
-
 
         //发送请求
         List<OrderViewDTO> orders = tikTokSdkClientService.sendTikTokGetOrder(shopInfoDTO, task);
 
         // 返回下载源数据
-        return null;
+        return orders.stream()
+                .map(e -> new TikTokOrderDTO(e, task, shopInfoDTO.getId()))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -63,6 +65,7 @@ public class TikTokOrderHandler extends AbstractOrderHandler<TikTokOrderDTO, Pla
                 // 组装
                 .map(TikTokOrderDTO::convertDTO).collect(Collectors.toList());
     }
+
 
     @Override
     public String getTargetPlatform() {
