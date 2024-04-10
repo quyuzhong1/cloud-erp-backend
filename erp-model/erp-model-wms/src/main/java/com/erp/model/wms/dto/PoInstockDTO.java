@@ -680,10 +680,13 @@ public class PoInstockDTO implements Serializable {
          */
         private String returnMode;
         /**
-         * 入库数量/收货数量
+         * 入库数量
          */
         private Integer stockInQty;
-
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
         /**
          * 实退数量
          */

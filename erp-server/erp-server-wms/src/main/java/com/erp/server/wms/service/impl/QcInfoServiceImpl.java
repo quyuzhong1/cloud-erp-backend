@@ -1434,7 +1434,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         stockInSkuList = stockInSkuList.stream().filter(s -> approveStatus.equals(s.getApproveStatus())).collect(Collectors.toList());
-
+        //采购收货
+        List<WarehouseReceiveDetailEntity> receiveDetails = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
@@ -1450,10 +1451,15 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 dto.setDeliveryWarehouseName(purchaseOrder.getDeliveryWarehouseName());
                 dto.setDeliveryWarehouseId(purchaseOrder.getDeliveryWarehouseId());
             }
-            Integer qty = stockInSkuList.stream().filter(s -> s.getSkuId().equals(dto.getSkuId()) &&
+            //入库数量
+            Integer stockInQty = stockInSkuList.stream().filter(s -> s.getSkuId().equals(dto.getSkuId()) &&
                     dto.getPurchaseOrderDetailId().equals(s.getPurchaseOrderDetailId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getStockInQty())).orElse(0);
-            dto.setStockInQty(qty);
+            dto.setStockInQty(stockInQty);
+            //收货数量
+            Integer receiveQty = receiveDetails.stream().filter(s -> s.getSkuId().equals(dto.getSkuId()) &&
+                            dto.getPurchaseOrderDetailId().equals(s.getPurchaseOrderDetailId())).mapToInt(WarehouseReceiveDetailEntity::getReceiveQty).sum();
+            dto.setReceiveQty(receiveQty);
             //币种符号
             PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(dto.getPurchaseOrderDetailId())).findFirst().orElse(null);
             dto.setCurrency(detailEntity.getCurrency());
@@ -1586,8 +1592,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 //                    throw new ServiceException(1, String.format("SKU【%s】实退数量不能大于【%s】", detail.getSkuNo(), receiveQty));
                 }
                 //退货单：质检单下推质检退货单【入库数量改为收货数量】【校验退货数量不能大于已收货数量】【下推新增校验】
-                if (MathUtil.compareTo(detail.getRealityReturnQty(), detail.getStockInQty()) > 0) {
-                    resultDTOS.add(BatchResultDTO.fail(qcInfoEntity.getId(), qcInfoEntity.getCode(), String.format("SKU【%s】实退数量不能大于【%s】", detail.getSkuNo(), detail.getStockInQty())));
+                if (MathUtil.compareTo(detail.getRealityReturnQty(), detail.getReceiveQty()) > 0) {
+                    resultDTOS.add(BatchResultDTO.fail(qcInfoEntity.getId(), qcInfoEntity.getCode(), String.format("SKU【%s】实退数量不能大于【%s】", detail.getSkuNo(), detail.getReceiveQty())));
                     continue;
 //                    throw new ServiceException(1, String.format("SKU【%s】实退数量不能大于【%s】", detail.getSkuNo(), receiveQty));
                 }

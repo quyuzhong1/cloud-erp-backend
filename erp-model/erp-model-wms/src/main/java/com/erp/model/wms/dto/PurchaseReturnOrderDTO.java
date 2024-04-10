@@ -968,6 +968,11 @@ public class PurchaseReturnOrderDTO {
         private Integer stockInQty;
 
         /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+
+        /**
          * 库位名称
          */
         private String warehouseLocation;
