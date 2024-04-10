@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.AddGroup;
@@ -21,6 +22,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.enums.QcReCheckResultEnum;
 import com.erp.server.wms.service.QcInfoService;
 import com.erp.server.wms.service.QcResultService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,6 +32,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -39,6 +42,7 @@ import java.util.Objects;
  * @author lambda
  * @since 2023-04-14
  */
+@Slf4j
 @RestController
 @LogSystemModule("质检单")
 @RequestMapping("/qcBill")
@@ -330,8 +334,16 @@ public class QcInfoController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "下推退货单数据保存")
     @PostMapping("/generatePurchaseReturnOrder")
     public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
-        Boolean flag = qcInfoService.generatePurchaseReturnOrder(dto);
-        return flag ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getList().size());
+        try {
+            resultDTOS = qcInfoService.generatePurchaseReturnOrder(dto.getList());
+        }catch (Exception e){
+            log.error("下推退货单数据保存失败",e);
+            BatchResultDTO resultDTO = BatchResultDTO.fail(dto.getList().get(0).getSourceId(), "", e.getMessage());
+            resultDTOS.add(resultDTO);
+        }
+
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
