@@ -357,7 +357,7 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
         /**
          * 明细id集合
          */
-        @NotEmpty(message = "明细不能为空")
+//        @NotEmpty(message = "明细不能为空")
         private List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList;
 
     }
