@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -38,7 +37,6 @@ import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysPostEntity;
@@ -1351,8 +1349,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
                 //验证退货数量
                 Integer stockInQty = stockInSkuList.stream().filter(s -> s.getSkuId().equals(detail.getSkuId()) &&
-                        detail.getSourceDetailId().equals(s.getPurchaseOrderDetailId())).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getStockInQty())).orElse(0);
+                        detail.getSourceDetailId().equals(s.getPurchaseOrderDetailId()))
+                        .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO,Integer::sum);
                 if (ObjectUtils.isEmpty(stockInQty)) {
                     throw new ServiceException(1, String.format("SKU【%s】未找到对应数量", detail.getSkuNo()));
                 }
