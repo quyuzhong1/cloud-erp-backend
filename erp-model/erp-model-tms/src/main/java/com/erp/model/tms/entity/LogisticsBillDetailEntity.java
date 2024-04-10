@@ -1,16 +1,15 @@
 package com.erp.model.tms.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -83,12 +82,19 @@ public class LogisticsBillDetailEntity extends BaseEntity<LogisticsBillDetailEnt
     @TableField("register_result")
     private String registerResult;
 
+    /**
+     * 平台订单号（track123平台方生成）
+     */
+    @TableField("platform_order_no")
+    private String platformOrderNo;
+
 
     /**
      * 运输状态是否是api 更新 true 是  false 不是
      */
     @TableField("is_api_update")
     private Boolean isApiUpdate;
+
 
     public static final String MAIN_ID = "main_id";
 

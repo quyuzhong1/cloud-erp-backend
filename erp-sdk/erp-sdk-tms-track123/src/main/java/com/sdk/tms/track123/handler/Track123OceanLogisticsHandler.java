@@ -1,5 +1,6 @@
 package com.sdk.tms.track123.handler;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -7,20 +8,21 @@ import com.common.business.dto.JobTaskDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.AbstractLogisticsTrackHandler;
 import com.common.business.vo.PagingVO;
+import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
+import com.erp.model.tms.dto.LogisticsTrackBaseDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
-import com.sdk.tms.track123.dto.PlatformTrack123TrackDTO;
+import com.sdk.tms.track123.dto.PlatformTrack123OceanTrackDTO;
 import com.sdk.tms.track123.dto.PlatformTrackDTO;
 import com.sdk.tms.track123.dto.PlatformTrackDetail;
-import com.sdk.tms.track123.model.request.TrackRequest;
 import com.sdk.tms.track123.model.response.*;
-import com.sdk.tms.track123.service.TrackShipperService;
+import com.sdk.tms.track123.service.TrackShipperOceanService;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -43,19 +45,19 @@ import java.util.stream.Collectors;
 @Component
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.TRACK123)
-@BusinessType(BusinessTypeEnum.GET_TRACK)
-public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<PlatformTrack123TrackDTO, PlatformTrackDTO> {
+@BusinessType(BusinessTypeEnum.GET_OCEAN_TRACK)
+public class Track123OceanLogisticsHandler extends AbstractLogisticsTrackHandler<PlatformTrack123OceanTrackDTO, PlatformTrackDTO> {
     private static long pageSize = 100;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
     private LogisticsBillFeign logisticsBillFeign;
     @Resource
-    private TrackShipperService trackShipperService;
+    private TrackShipperOceanService trackShipperOceanService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public List<PlatformTrack123TrackDTO> download(JobTaskDTO data) {
+    public List<PlatformTrack123OceanTrackDTO> download(JobTaskDTO data) {
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         AppClientEnum appClientEnum = AppClientEnum.TRACK123_AUTHORIZE;
         findDTO.setBusinessType(appClientEnum.getBusinessType());
@@ -78,18 +80,23 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
                 .current(current)
                 .registerStatus(1)
                 .trackEnable(true)
-                .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
+                .transportType(LogisticsTransportTypeEnum.OCEAN.getCode())
                 .build();
-        List<ResponseData> responseDataList = new ArrayList<>();
+        List<OceanResponseData> responseDataList = new ArrayList<>();
         getTrackData(query, responseDataList, cfgAppClient);
-        return responseDataList.stream().map(e -> new PlatformTrack123TrackDTO(e, data)).collect(Collectors.toList());
+        return responseDataList.stream().map(e -> new PlatformTrack123OceanTrackDTO(e, data)).collect(Collectors.toList());
     }
 
-    private void getTrackData(LogisticsBillDetailQueryDTO query, List<ResponseData> responseDataList, CfgAppClientEntity cfgAppClient) {
+
+    private void getTrackData(LogisticsBillDetailQueryDTO query, List<OceanResponseData> responseDataList, CfgAppClientEntity cfgAppClient) {
         PagingVO<LogisticsBillDetailEntity> page = logisticsBillFeign.getLogisticsBillDetails(query);
-        if (Objects.isNull(page) || CollectionUtils.isEmpty(page.getList())) return;
-        ResponseData responseData = processTrackData((List<LogisticsBillDetailEntity>) page.getList(), cfgAppClient);
-        if (Objects.isNull(responseData)) return;
+        if (Objects.isNull(page) || CollectionUtils.isEmpty(page.getList())) {
+            return;
+        }
+        OceanResponseData responseData = processTrackData((List<LogisticsBillDetailEntity>) page.getList(), cfgAppClient);
+        if (Objects.isNull(responseData)) {
+            return;
+        }
         //业务处理
         responseDataList.add(responseData);
         long pages = page.getTotalPage();
@@ -103,16 +110,20 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
         }
     }
 
-    private ResponseData processTrackData(List<LogisticsBillDetailEntity> records, CfgAppClientEntity cfgAppClient) {
+    private OceanResponseData processTrackData(List<LogisticsBillDetailEntity> records, CfgAppClientEntity cfgAppClient) {
         if (CollectionUtils.isNotEmpty(records)) {
+            List<LogisticsTrackBaseDTO.OceanTrackRequestDTO> list = new ArrayList<>();
             String token = cfgAppClient.getClientSecret();
-            TrackRequest trackRequest = TrackRequest.builder()
-                    .trackNos(records.stream().map(LogisticsBillDetailEntity::getTrackNo).collect(Collectors.toList()))
-                    .cursor("")
-                    .queryPageSize(100)
-                    .build();
+            for (LogisticsBillDetailEntity record : records) {
+              LogisticsTrackBaseDTO.OceanTrackRequestDTO oceanTrackRequestDTO = LogisticsTrackBaseDTO.OceanTrackRequestDTO.builder()
+                      .trackingNo(record.getTrackNo())
+                      .orderNo(record.getPlatformOrderNo())
+                      .type(MathUtil.THREE)
+                      .build();
+                list.add(oceanTrackRequestDTO);
+            }
             try {
-                TrackResponse track = trackShipperService.getTrack(token, trackRequest);
+                TrackOceanResponse track = trackShipperOceanService.getTrack(token, list);
                 return track.getData();
             } catch (Exception e) {
                 log.error("获取Track123物流轨迹查询异常：{}", e.getMessage());
@@ -124,38 +135,41 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
     }
 
     @Override
-    public List<PlatformTrackDTO> convert(List<PlatformTrack123TrackDTO> sourceDataList) {
+    public List<PlatformTrackDTO> convert(List<PlatformTrack123OceanTrackDTO> sourceDataList) {
         List<PlatformTrackDTO> resultList = new LinkedList<>();
-        for (PlatformTrack123TrackDTO sourceDto : sourceDataList) {
+        for (PlatformTrack123OceanTrackDTO sourceDto : sourceDataList) {
             //将成功和失败的数据返回
-            TrackInfo accepted = sourceDto.getAccepted();
+            List<OceanTrackInfo> accepted = sourceDto.getAccepted();
             if (Objects.nonNull(accepted)) {
-                if (CollectionUtils.isNotEmpty(accepted.getContent())) {
-                    for (TrackDetail trackDetail : accepted.getContent()) {
-                        PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
-                        acceptedToSaveDto.setTrackNo(trackDetail.getTrackNo());
-                        acceptedToSaveDto.setUniqueId(sourceDto.getUniqueId());
-                        acceptedToSaveDto.setPlatform(sourceDto.getPlatform());
-                        LocalLogisticsInfo localLogisticsInfo = trackDetail.getLocalLogisticsInfo();
-                        if (CollectionUtils.isNotEmpty(localLogisticsInfo.getTrackingDetails())) {
+                for (OceanTrackInfo oceanTrackInfo : accepted) {
+                    OceanContainerInfo carrierInfo = oceanTrackInfo.getCarrierInfo();
+                    PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
+                    acceptedToSaveDto.setTrackNo(oceanTrackInfo.getTrackingNo());
+                    acceptedToSaveDto.setUniqueId(sourceDto.getUniqueId());
+                    acceptedToSaveDto.setPlatform(sourceDto.getPlatform());
+                    if (ObjectUtil.isNotEmpty(carrierInfo)) {
+                        List<OceanTrackingDetail> trackingDetails = carrierInfo.getTrackingDetails();
+                        if (CollectionUtils.isNotEmpty(trackingDetails)) {
                             List<PlatformTrackDetail> details = new ArrayList<>();
-                            for (TrackingDetail trackingDetail : localLogisticsInfo.getTrackingDetails()) {
+                            for (OceanTrackingDetail trackingDetail : trackingDetails) {
                                 PlatformTrackDetail detail = new PlatformTrackDetail();
-                                detail.setTrackNo(trackDetail.getTrackNo());
-                                detail.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));//转换类型
+                                detail.setTrackNo(oceanTrackInfo.getTrackingNo());
+                                //转换类型
+                                detail.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));
                                 LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                                 detail.setTrackTime(eventTime);
-                                detail.setContent(trackingDetail.getEventDetail());
+                                detail.setContent(trackingDetail.getEventDetails());
                                 details.add(detail);
                             }
                             acceptedToSaveDto.setDetails(details);
                             resultList.add(acceptedToSaveDto);
-                        } else if (StringUtils.isNotEmpty(trackDetail.getTransitStatus())) {
+                        } else if (StringUtils.isNotEmpty(carrierInfo.getTransitStatus())) {
                             List<PlatformTrackDetail> details = new ArrayList<>();
                             PlatformTrackDetail detail = new PlatformTrackDetail();
-                            detail.setTrackNo(trackDetail.getTrackNo());
-                            detail.setStatus(convertTrackStatus(trackDetail.getTransitStatus()));//转换类型
-                            LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                            detail.setTrackNo(oceanTrackInfo.getTrackingNo());
+                            //转换类型
+                            detail.setStatus(convertTrackStatus(carrierInfo.getTransitStatus()));
+                            LocalDateTime eventTime = LocalDateTime.parse(oceanTrackInfo.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                             detail.setTrackTime(eventTime);
                             detail.setContent("暂无信息");
                             details.add(detail);
@@ -163,6 +177,7 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
                             resultList.add(acceptedToSaveDto);
                         }
                     }
+
                 }
             }
             if (CollectionUtils.isNotEmpty(sourceDto.getRejected())) {
@@ -239,6 +254,7 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
      * true=发送
      * false=不发送（有其他详情需要额外拉取）
      */
+    @Override
     public Boolean getIsSendMq() {
         return Boolean.TRUE;
     }

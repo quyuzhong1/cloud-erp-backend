@@ -3,10 +3,10 @@ package com.erp.server.tms.schedule;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.LogisticsTransportTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
-import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.server.tms.service.LogisticsBaseService;
 import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.xxl.job.core.biz.model.ReturnT;
@@ -15,7 +15,6 @@ import com.xxl.job.core.handler.annotation.XxlJob;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -40,7 +39,7 @@ public class LogisticsChannelJob {
     private LogisticsBillDetailService logisticsBillDetailService;
 
     /**
-     * 注册物流单号
+     * 注册小包（快递）物流单号
      *
      * @return
      */
@@ -56,6 +55,31 @@ public class LogisticsChannelJob {
                 .current(current)
                 .registerStatus(0)
                 .trackEnable(true)
+                .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
+                .build();
+        getRegisterData(query);
+        XxlJobHelper.log("====结束注册物流单号====");
+        return ReturnT.SUCCESS;
+    }
+
+    /**
+     * 注册头程（海运）物流单号
+     *
+     * @return
+     */
+    @XxlJob("registerOceanLogisticsNumber")
+    public ReturnT registerOceanLogisticsNumber() {
+
+        XxlJobHelper.log("====开始注册物流单号====");
+        long current = 1;
+        //获取物流编号
+        LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
+                .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
+                .size(pageSize)
+                .current(current)
+                .registerStatus(0)
+                .trackEnable(true)
+                .transportType(LogisticsTransportTypeEnum.OCEAN.getCode())
                 .build();
         getRegisterData(query);
         XxlJobHelper.log("====结束注册物流单号====");
@@ -102,7 +126,7 @@ public class LogisticsChannelJob {
         return ReturnT.SUCCESS;
     }
     /**
-     * 同步物流轨迹
+     * 同步小包（快递）物流轨迹
      */
     @XxlJob("synLogisticsTrack")
     public ReturnT synLogisticsTrack() {
@@ -115,6 +139,28 @@ public class LogisticsChannelJob {
                 .current(current)
                 .registerStatus(1)
                 .trackEnable(true)
+                .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
+                .build();
+        getTrackData(query);
+        XxlJobHelper.log("====结束同步物流轨迹====");
+        return ReturnT.SUCCESS;
+    }
+
+    /**
+     * 同步头程（海运）物流轨迹
+     */
+    @XxlJob("synOceanLogisticsTrack")
+    public ReturnT synOceanLogisticsTrack() {
+        XxlJobHelper.log("====开始同步物流轨迹====");
+        long current = 1;
+        //获取物流编号
+        LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
+                .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
+                .size(pageSize)
+                .current(current)
+                .registerStatus(1)
+                .trackEnable(true)
+                .transportType(LogisticsTransportTypeEnum.OCEAN.getCode())
                 .build();
         getTrackData(query);
         XxlJobHelper.log("====结束同步物流轨迹====");
@@ -124,7 +170,7 @@ public class LogisticsChannelJob {
     private void getTrackData(LogisticsBillDetailQueryDTO query) {
         PagingVO<LogisticsTrackDTO.UpdateTrackDTO> page = logisticsBillDetailService.getTrackDtoPage(query);
         //业务处理
-        processTrackData((List<LogisticsTrackDTO.UpdateTrackDTO>) page.getList());
+        processTrackData((List<LogisticsTrackDTO.UpdateTrackDTO>) page.getList(),query.getTransportType());
         long pages = page.getTotalPage();
         if (pages > page.getCurrPage()) {
             //下一页
@@ -139,7 +185,7 @@ public class LogisticsChannelJob {
     private void getRegisterData(LogisticsBillDetailQueryDTO query) {
         PagingVO<LogisticsTrackDTO.UpdateTrackDTO> page = logisticsBillDetailService.getTrackDtoPage(query);
         //业务处理
-        processRegisterData((List<LogisticsTrackDTO.UpdateTrackDTO>) page.getList());
+        processRegisterData((List<LogisticsTrackDTO.UpdateTrackDTO>) page.getList(),query.getTransportType());
         long pages = page.getTotalPage();
         if (pages > page.getCurrPage()) {
             //下一页
@@ -151,15 +197,15 @@ public class LogisticsChannelJob {
         }
     }
 
-    private void processTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records) {
+    private void processTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records,String transportType) {
         if (CollectionUtils.isNotEmpty(records)) {
-            logisticsBaseService.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), records);
+            logisticsBaseService.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), records,transportType);
         }
     }
 
-    private void processRegisterData(List<LogisticsTrackDTO.UpdateTrackDTO> records) {
+    private void processRegisterData(List<LogisticsTrackDTO.UpdateTrackDTO> records,String transportType) {
         if (CollectionUtils.isNotEmpty(records)) {
-            logisticsBaseService.processRegisterData(LogisticsPlatformEnum.TRACK123.getCode(), records);
+            logisticsBaseService.processRegisterData(LogisticsPlatformEnum.TRACK123.getCode(), records,transportType);
         }
     }
 }

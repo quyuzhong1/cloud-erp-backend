@@ -2,23 +2,19 @@ package com.sdk.tms.track123.service;
 
 import cn.hutool.json.JSONUtil;
 import com.common.core.utils.OkHttpUtils;
+import com.erp.model.tms.dto.LogisticsTrackBaseDTO;
 import com.sdk.tms.track123.constant.PathConstants;
-import com.sdk.tms.track123.model.request.RegisterRequest;
-import com.sdk.tms.track123.model.request.TrackRequest;
+import com.sdk.tms.track123.model.request.OceanRegisterRequest;
 import com.sdk.tms.track123.model.response.RegisterResult;
+import com.sdk.tms.track123.model.response.TrackOceanResponse;
 import com.sdk.tms.track123.model.response.TrackResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author zdy
@@ -29,12 +25,12 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-public class TrackShipperService {
+public class TrackShipperOceanService {
     static String url = "https://api.track123.com/gateway/open-api/tk/v2/track/query";
     static String token = "9fa500686633410a84ff0b00daed555e";
 
     public static void main(String[] args) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
-        TrackShipperService trackShipperService = new TrackShipperService();
+        TrackShipperOceanService trackShipperService = new TrackShipperOceanService();
 //        trackShipperService.getCourierList(token);
 
 //        String message = "Hello, World!";
@@ -52,14 +48,13 @@ public class TrackShipperService {
         trackNos.add("304071414818");
         trackNos.add("620372231752");
 
-        TrackRequest orderRequest = TrackRequest.builder()
-                .trackNos(trackNos)
-                .createTimeStart("2021-08-01 00:00:00")
-                .createTimeEnd("2021-09-28 00:00:00")
-                .cursor("")
-                .queryPageSize(100)
+        LogisticsTrackBaseDTO.OceanTrackRequestDTO orderRequest = LogisticsTrackBaseDTO.OceanTrackRequestDTO.builder()
+                .trackingNo("MATS5217756000")
+                .type(3)
+                .orderNo("matson")
                 .build();
-        trackShipperService.getTrack(token, orderRequest);
+        TrackOceanResponse track = trackShipperService.getTrack(token, Arrays.asList(orderRequest));
+        System.out.println(track);
     }
 
     /**
@@ -72,44 +67,28 @@ public class TrackShipperService {
         headers.put("Track123-Api-Secret", token);
         headers.put("timestamp", String.valueOf(timestamp));
 
-        String result = OkHttpUtils.doGet(PathConstants.BASE_URL + PathConstants.GET_COURIER_URL, new LinkedHashMap<>(), headers);
+        String result = OkHttpUtils.doGet(PathConstants.BASE_URL + PathConstants.OCEAN_GET_COURIER_URL, new LinkedHashMap<>(), headers);
         return JSONUtil.toBean(result, TrackResponse.class);
     }
 
-    public TrackResponse getTrack(String token, TrackRequest trackRequest) {
+    public TrackOceanResponse getTrack(String token, List<LogisticsTrackBaseDTO.OceanTrackRequestDTO> oceanTrackRequestList) {
         long timestamp = System.currentTimeMillis();
         Map<String, String> headers = new LinkedHashMap<>();
         headers.put("Content-Type", "application/json;charset=utf-8");
         headers.put("Track123-Api-Secret", token);
         headers.put("timestamp", String.valueOf(timestamp));
-        String result = OkHttpUtils.doPostJsonObject(PathConstants.BASE_URL + PathConstants.GET_TRACK_URL, trackRequest, headers);
-        return JSONUtil.toBean(result, TrackResponse.class);
+        String result = OkHttpUtils.doPostJsonObject(PathConstants.BASE_URL + PathConstants.OCEAN_GET_TRACK_URL, oceanTrackRequestList, headers);
+        return JSONUtil.toBean(result, TrackOceanResponse.class);
     }
 
-    public RegisterResult registerLogisticsNumber(String token, List<RegisterRequest> registerRequests){
+    public RegisterResult registerLogisticsNumber(String token, List<OceanRegisterRequest> registerRequests){
         long timestamp = System.currentTimeMillis();
         Map<String, String> headers = new LinkedHashMap<>();
         headers.put("Content-Type", "application/json;charset=utf-8");
         headers.put("Track123-Api-Secret", token);
         headers.put("timestamp", String.valueOf(timestamp));
-        String result = OkHttpUtils.doPostJsonObject(PathConstants.BASE_URL + PathConstants.REGISTER_LOGISTICS_NUMBER, registerRequests, headers);
+        String result = OkHttpUtils.doPostJsonObject(PathConstants.BASE_URL + PathConstants.OCEAN_REGISTER_LOGISTICS_NUMBER, registerRequests, headers);
         System.out.println(result);
         return JSONUtil.toBean(result, RegisterResult.class);
-    }
-
-    private static byte[] calculateHmacSHA256(String message, String secretKey)
-            throws NoSuchAlgorithmException, InvalidKeyException, UnsupportedEncodingException {
-        Mac mac = Mac.getInstance("HmacSHA256");
-        SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes("UTF-8"), "HmacSHA256");
-        mac.init(secretKeySpec);
-        return mac.doFinal(message.getBytes("UTF-8"));
-    }
-
-    private static String bytesToHex(byte[] bytes) {
-        StringBuilder result = new StringBuilder();
-        for (byte b : bytes) {
-            result.append(String.format("%02x", b));
-        }
-        return result.toString();
     }
 }
