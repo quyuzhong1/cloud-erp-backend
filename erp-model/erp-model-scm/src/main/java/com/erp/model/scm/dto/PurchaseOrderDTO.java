@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
@@ -1292,9 +1293,13 @@ public class PurchaseOrderDTO implements Serializable {
         private Integer sumQty;
 
         /**
-         * 合计金额
+         * 合计未含税金额
          */
         private BigDecimal sumAmount;
+        /**
+         * 合计含税金额
+         */
+        private BigDecimal sumTaxAmount;
     }
     /**
      * 网采合同明细
@@ -1331,9 +1336,23 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private BigDecimal price;
         /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 税率
+         */
+        private String taxRate;
+
+        /**
          * 金额
          */
         private BigDecimal amount;
+        /**
+         * 含税金额
+         */
+        private BigDecimal taxAmount;
         /**
          * 备注
          */

@@ -1900,8 +1900,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         contractDTO.setSupplierName(supplierEntity.getSupplierName());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = purchaseOrderDetailService.listByPurchaseOrderId(purchaseOrderEntity.getId());
         contractDTO.setSumQty(purchaseOrderDetailEntityList.stream().mapToInt(PurchaseOrderDetailEntity::getPurchaseQty).sum());
-        BigDecimal sumAmount = purchaseOrderDetailEntityList.stream().map(PurchaseOrderDetailEntity::getPurchaseAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        contractDTO.setSumAmount(sumAmount);
+        BigDecimal sumTaxAmount = purchaseOrderDetailEntityList.stream().map(PurchaseOrderDetailEntity::getPurchaseAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        contractDTO.setSumTaxAmount(sumTaxAmount);
         List<PurchaseOrderDTO.PurchaseContractDetailDTO> contractDetailList = new ArrayList<>();
         List<String> skuIdList = purchaseOrderDetailEntityList.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
@@ -1915,12 +1915,34 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             detailDTO.setSkuNo(detailEntity.getSkuNo());
             detailDTO.setProductName(skuVO.getSkuName());
             detailDTO.setRemark(detailEntity.getRemark());
-            detailDTO.setQty(detailEntity.getPurchaseQty());
-            detailDTO.setPrice(detailEntity.getTaxPrice());
+            Integer qty = detailEntity.getPurchaseQty();
+            detailDTO.setQty(qty);
+            //含税单价
+            BigDecimal taxPrice = detailEntity.getTaxPrice();
+            detailDTO.setTaxPrice(taxPrice);
+            //0.0900
+            BigDecimal taxRate = detailEntity.getTaxRate();
+            BigDecimal flagTaxRate = BigDecimal.ZERO;
+            if (Objects.nonNull(taxRate)){
+                flagTaxRate = MathUtil.multiply(taxRate, MathUtil.BigDecimal_100).setScale(2);
+            }
+            detailDTO.setTaxRate(flagTaxRate + "%");
+            BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
+            //未税单价
+            BigDecimal price = BigDecimal.ZERO;
+            if (Objects.nonNull(taxPrice)){
+                price = MathUtil.divide(taxPrice, multiplyTax);
+            }
+            //未税金额
+            detailDTO.setAmount(MathUtil.multiply(price, qty));
+            //单位
             detailDTO.setUnit(skuVO.getUnitName());
-            detailDTO.setAmount(detailEntity.getPurchaseAmount());
+            //含税金额
+            detailDTO.setTaxAmount(detailEntity.getPurchaseAmount());
             contractDetailList.add(detailDTO);
         }
+        BigDecimal sumAmount = contractDetailList.stream().map(PurchaseOrderDTO.PurchaseContractDetailDTO::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        contractDTO.setSumAmount(sumAmount);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/purchaseContractExport.xlsx";
         String name = "采购单网采合同";
