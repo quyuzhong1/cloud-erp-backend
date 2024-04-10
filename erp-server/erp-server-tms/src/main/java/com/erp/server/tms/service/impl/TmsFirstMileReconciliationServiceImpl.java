@@ -588,7 +588,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 
             LogisticsSupplierEntity supplierEntity = supplierMap.get(data.getLogisticsSupplierId());
             if (null != supplierEntity){
-                data.setApproveUserName(supplierEntity.getSupplierName());
+                data.setLogisticsSupplierName(supplierEntity.getSupplierName());
             }
         }
     }
