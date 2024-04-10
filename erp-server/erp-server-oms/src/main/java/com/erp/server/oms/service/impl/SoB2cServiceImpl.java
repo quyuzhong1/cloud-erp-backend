@@ -4871,7 +4871,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //沃尔玛
             if (PlatformDictEnum.WALMART.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
                 if ("Cancelled".equals(platformOrderStatus)
-                        || "Refund".equals(platformOrderStatus)) {
+                        || "Refund".equals(platformOrderStatus)
+                ) {
+                    oldEntity.setApproveStatus(oldApproveStatus);
+                    dto.setPayStatus(oldEntity.getPayStatus());
+                    dto.setBillStatus(oldEntity.getBillStatus());
+                }
+            }
+            //TikTok
+            if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+                if ("AWAITING_COLLECTION".equalsIgnoreCase(platformOrderStatus)
+                        || "PARTIALLY_SHIPPING".equalsIgnoreCase(platformOrderStatus)
+                        || "IN_TRANSIT".equalsIgnoreCase(platformOrderStatus)
+                        || "DELIVERED".equalsIgnoreCase(platformOrderStatus)
+                        || "COMPLETED".equalsIgnoreCase(platformOrderStatus)
+                ) {
                     oldEntity.setApproveStatus(oldApproveStatus);
                     dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(oldEntity.getBillStatus());
