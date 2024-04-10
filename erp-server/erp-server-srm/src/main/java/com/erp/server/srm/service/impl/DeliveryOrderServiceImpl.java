@@ -3,6 +3,7 @@ package com.erp.server.srm.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -22,8 +23,10 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
@@ -35,6 +38,7 @@ import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
+import com.erp.model.srm.dto.excel.DeliveryOrderImportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
@@ -54,17 +58,21 @@ import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.srm.convert.DeliveryOrderConverter;
+import com.erp.server.srm.listener.DeliveryExcelListener;
 import com.erp.server.srm.mapper.DeliveryOrderMapper;
 import com.erp.server.srm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
+import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
@@ -624,6 +632,41 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         detailService.updateBatchById(detailEntityList);
 
         return true;
+    }
+
+    @Override
+    public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
+        DeliveryExcelListener excelListenerUtil = new DeliveryExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), DeliveryOrderImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("SRM送货单导入错误！>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        List<DeliveryOrderImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        if (!errorList.isEmpty()) {
+            String fileName = "SRM送货单错误信息";
+            ExcelUtil.export(fileName, "error", errorList, DeliveryOrderImportExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+        return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveImport(List<Pair<DeliveryOrderEntity, List<DeliveryOrderDetailEntity>>> addList) {
+        if(CollectionUtils.isEmpty(addList)){
+            return;
+        }
+        for (Pair<DeliveryOrderEntity, List<DeliveryOrderDetailEntity>> pair : addList) {
+            DeliveryOrderEntity deliveryOrderEntity = pair.getKey();
+            List<DeliveryOrderDetailEntity> detailEntityList = pair.getValue();
+            deliveryOrderEntity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SHD));
+            this.handleData(deliveryOrderEntity,false);
+            this.save(deliveryOrderEntity);
+            detailEntityList.forEach(v->v.setMainId(deliveryOrderEntity.getId()));
+            detailService.saveBatch(detailEntityList);
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)

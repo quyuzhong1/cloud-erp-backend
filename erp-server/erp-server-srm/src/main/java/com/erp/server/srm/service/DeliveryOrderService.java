@@ -7,7 +7,10 @@ import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
+import javafx.util.Pair;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -90,4 +93,8 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
     Boolean unConfirmReceiveStatus(List<String> ids);
 
     Boolean cancelReceive(List<String> ids);
+
+    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
+
+    void saveImport(List<Pair<DeliveryOrderEntity, List<DeliveryOrderDetailEntity>>> addList);
 }
