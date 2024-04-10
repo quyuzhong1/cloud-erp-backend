@@ -257,9 +257,9 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         // 单价
         detailDTO.setPrice(NumberUtil.toBigDecimal(itemsBean.getOriginalPrice()));
         // 币别（原币）
-        detailDTO.setCurrency(orderItemsBean.getCurrencyId());
+        detailDTO.setCurrency(itemsBean.getCurrency());
         // 汇率
-        detailDTO.setExchangeRate(orderItemsBean.getBaseExchangeRate());
+        detailDTO.setExchangeRate(BigDecimal.ZERO);
         // 建议售价（本位币）
         detailDTO.setAdvicePrice(BigDecimal.ZERO);
         // 含税成本（本位币）
