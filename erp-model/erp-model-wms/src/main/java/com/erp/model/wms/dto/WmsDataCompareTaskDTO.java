@@ -290,6 +290,25 @@ public class WmsDataCompareTaskDTO implements Serializable {
             */
             private List<String> errMessageList;
       }
+      
+      /**
+       * 创建
+       */
+       @Data
+       @NoArgsConstructor
+       public static class CreateViewDTO {
+     	  
+     	  /**
+            * 任务编号
+            */
+            private String code;
+
+            /**
+            * 任务名称
+            */
+            private String name;
+           
+       }
 
     @Data
     @NoArgsConstructor

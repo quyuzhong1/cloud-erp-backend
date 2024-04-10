@@ -7,6 +7,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO.CreateViewDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO.SetNextDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO.SetNextViewDTO;
 import com.erp.model.wms.entity.WmsDataCompareTaskEntity;
@@ -35,6 +36,7 @@ public interface WmsDataCompareTaskService extends SuperService<WmsDataCompareTa
 	
 	SetNextViewDTO setNext(SetNextDTO dto);
 
+	CreateViewDTO create(BaseIdDTO dto);
     /**
     * 修改
     * @author shukai
@@ -44,7 +46,7 @@ public interface WmsDataCompareTaskService extends SuperService<WmsDataCompareTa
     */
     Boolean update(WmsDataCompareTaskDTO.UpdateDTO dto);
 
-    void dealParseTask(String id , Map<String, List<List<String>>> allDatasMap);
+    void dealParseTask(String id);
     
     /**
      * 高级查询分页查询

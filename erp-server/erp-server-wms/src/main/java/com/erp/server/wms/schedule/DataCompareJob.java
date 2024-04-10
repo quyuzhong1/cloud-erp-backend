@@ -31,7 +31,7 @@ public class DataCompareJob {
         		.eq(WmsDataCompareTaskEntity::getStatus, WmsDataCompareTaskStatusEnum.DOING.getCode()).select(WmsDataCompareTaskEntity::getId).list();
         if(CollUtil.isNotEmpty(list)) {
         	for(WmsDataCompareTaskEntity l : list) {
-        		wmsDataCompareTaskService.dealParseTask(l.getId() , null);
+        		wmsDataCompareTaskService.dealParseTask(l.getId());
         	}
         }
         return ReturnT.SUCCESS;

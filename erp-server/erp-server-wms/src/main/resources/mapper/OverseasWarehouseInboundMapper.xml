@@ -168,7 +168,7 @@
     </select>
     
     <select id="getDataCompareByCondition" resultType="com.erp.model.wms.dto.WmsDataCompareTaskDTO$OverseasInboundDTO">
-		SELECT g.id,T.source_code,
+		SELECT g.id,T.code source_code,
 			G.sku_no,
 			G.platform_sku_no,
 			T.to_warehouse_name,

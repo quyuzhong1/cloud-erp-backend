@@ -21,6 +21,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO.CreateViewDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO.SetNextViewDTO;
 import com.erp.server.wms.service.WmsDataCompareTaskService;
 
@@ -78,6 +79,18 @@ public class WmsDataCompareTaskController extends BaseController {
      @LogAction(value = LogActionEnum.SUBMIT, desc = "数据对比-对比设置-下一步")
      public ApiResult<SetNextViewDTO> setNext(@RequestBody @Validated WmsDataCompareTaskDTO.SetNextDTO dto) {
     	 return success(wmsDataCompareTaskService.setNext(dto));
+     }
+     
+     /**
+      * 数据对比-校验成功-创建
+      * @author shukai
+      * @date:  2024-03-20
+      * @param dto
+      * @return ApiResult<String>
+      */
+    @PostMapping("/create")
+     public ApiResult<CreateViewDTO> create(@RequestBody @Validated BaseIdDTO dto) {
+    	 return success(wmsDataCompareTaskService.create(dto));
      }
     
     /**
