@@ -72,10 +72,10 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * 下推收货单列表
      * @Author Luo_WG
      * @Date 2023/4/18 18:06
-     * @param ids ids
+     * @param purchaseDetailIdList
      * @return java.util.List<com.erp.model.scm.dto.PurchaseOrderDTO.ViewGenerateReceiveDTO>
      **/
-    List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewGenerateReceive(@Param("ids") List<String> ids);
+    List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewGenerateReceive(@Param("purchaseDetailIdList") List<String> purchaseDetailIdList);
 
     /**
      * 获取订单信息
@@ -90,10 +90,10 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * 根据采购订单id 获取下推数据显示
      * @author yl
      * @date 2023-04-25 9:43
-     * @param ids
+     * @param purchaseDetailIdList
      * @return com.erp.model.wms.dto.PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO
      */
-    List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(@Param("purchaseOrderIds") List<String> ids);
+    List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(@Param("purchaseDetailIdList") List<String> purchaseDetailIdList);
     /**
      * @description: 根据来源明细ids查询
      * @author Will
