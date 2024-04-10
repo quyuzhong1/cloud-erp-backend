@@ -586,4 +586,44 @@ public class TikTokSdkClientService {
         }
         return resultsBeanList;
     }
+
+    /*public void sendTikTokSplitAttributes(TikTokShopInfoDTO tikTokShopInfoDTO) {
+        String url = tikTokShopInfoDTO.getBaseUrl();
+        String path = "/fulfillment/" + TikTokConstant.VERSION + "/orders/split_attributes";
+        String clientSecret = tikTokShopInfoDTO.getClientSecret();
+        String clientId = tikTokShopInfoDTO.getClientId();
+        // 定义查询参数
+        Map<String, Object> params = new HashMap<>();
+        params.put("app_key", clientId);
+        Long timestamp = System.currentTimeMillis() / 1000;
+        params.put("timestamp", timestamp);
+        params.put("version", TikTokConstant.VERSION);
+
+        //设置请求头
+        Map<String, String> headerMap = new HashMap<>(2);
+        headerMap.put("x-tts-access-token", accessToken);
+        headerMap.put("content-type", "multipart/form-data");
+
+        String input = EncryptionUtils.urlParamsSort(params, path, headerMap, clientSecret, "");
+        // 追加请求路径
+        String sign = EncryptionUtils.generateSHA256(input, clientSecret);
+        //加入sign入参
+        params.put("sign", sign);
+
+        //拉取数据
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            log.error("调用url={},入参params={}, TikTok查询店铺权限失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询店铺权限失败，返回值 responseMap={}",
+                    url + path, headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
+        }
+        //解析数据
+        TikTokShopAuthDTO tikTokTokenDTO = null;
+        try {
+            tikTokTokenDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), TikTokShopAuthDTO.class);
+        } catch (Exception e) {
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询店铺权限返回值 responseMap={}，转换成实体错误", apiResult.getData()));
+        }
+        return tikTokTokenDTO;
+    }*/
 }

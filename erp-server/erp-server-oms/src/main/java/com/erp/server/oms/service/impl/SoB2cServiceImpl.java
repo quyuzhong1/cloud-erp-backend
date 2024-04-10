@@ -44,7 +44,6 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
@@ -64,7 +63,10 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -89,6 +91,8 @@ import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.convert.WalmartShipOrderConverter;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.service.*;
+import com.sdk.oms.tictok.dto.TikTokShopInfoDTO;
+import com.sdk.oms.tictok.service.TikTokSdkClientService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -258,6 +262,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private SoOutstockFeign soOutstockFeign;
+
+    @Resource
+    private TikTokSdkClientService tikTokSdkClientService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -3346,6 +3353,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(entity.getDictPlatform())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_MERCADO_NOT_SPLIT, entity.getCode());
+        }
+        if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform())) {
+
+            TikTokShopInfoDTO shopInfoByShopId = tikTokSdkClientService.getShopInfoByShopId(entity.getShopId());
+
+
         }
 
 
