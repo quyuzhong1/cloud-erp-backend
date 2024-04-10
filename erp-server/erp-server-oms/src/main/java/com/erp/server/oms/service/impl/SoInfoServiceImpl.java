@@ -1448,10 +1448,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (customerInfo != null) {
             customerName = customerInfo.getName();
             countryId = customerInfo.getCountryId();
-            mailAddress = customerInfo.getMailAddress();
+//            mailAddress = customerInfo.getMailAddress();
         }
-
-
+        //客户开票信息
+        List<InvoiceDTO.ViewDTO> invoiceList = StringUtils.isNotEmpty(customerId) ? customerInvoiceService.listByMainId(customerId) : null;
+        if (CollectionUtils.isNotEmpty(invoiceList)){
+            InvoiceDTO.ViewDTO viewDTO = invoiceList.stream().filter(InvoiceDTO.ViewDTO::getIsDefault).findFirst().orElse(invoiceList.get(0));
+            mailAddress = viewDTO.getInvoiceAddress();
+        }
 
         //收货地址id
         String receiverAddressId = customer.getReceiveAddressId();
