@@ -16,6 +16,9 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -401,6 +404,17 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 发货时间【可排序】
          */
         private LocalDateTime deliveryTime;
+
+        /**
+         * 组包状态  not 不需要  wait 待组包   already 已经组包
+         *
+         */
+        private String packageStatus;
+        /**
+         * 中转状态 not 不需要  wait 待中转   already 已经中转
+         */
+        private String transferStatus;
+
 
     }
     /**

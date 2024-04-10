@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.util.DateUtils;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -3761,7 +3762,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     if (StringUtils.isBlank(taskChargeDistributionEntity.getChargeIds())) {
                         throw new ServiceException(ApiError.ERROR_95045);
                     }
-                    List<String> userIdList = Arrays.stream(taskChargeDistributionEntity.getChargeIds().split(",")).collect(Collectors.toList());
+                    List<String> userIdList = Arrays.stream(taskChargeDistributionEntity.getChargeIds().split(",")).filter(obj -> StrUtil.isNotBlank(obj)).collect(Collectors.toList());
                     membersIds.add(userIdList);
                 }
                 String businessProcessId = processTask.getBusinessProcessId();

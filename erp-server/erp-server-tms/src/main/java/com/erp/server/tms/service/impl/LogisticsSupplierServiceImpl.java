@@ -18,7 +18,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
@@ -411,6 +410,27 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         }
 
         return list;
+    }
+
+    @Override
+    public List<LogisticsSupplierDTO.LogisticsSupplierListDTO> listLogisticsChannel(List<String> logisticsSupplierIdList) {
+        List<LogisticsSupplierDTO.LogisticsSupplierListDTO> resultList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(logisticsSupplierIdList)) {
+            return resultList;
+        }
+        List<LogisticsSupplierDTO.LogisticsSupplierListDTO> list = baseMapper.listLogisticsChannel(logisticsSupplierIdList);
+
+        for (String  logisticsSupplierId: logisticsSupplierIdList) {
+            LogisticsSupplierDTO.LogisticsSupplierListDTO resultDTO = new LogisticsSupplierDTO.LogisticsSupplierListDTO();
+            //相同物流商直接赋值
+            LogisticsSupplierDTO.LogisticsSupplierListDTO logisticsSupplierListDTO = list.stream().filter(obj -> StrUtil.equals(obj.getLogisticsSupplierId(), logisticsSupplierId)).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(logisticsSupplierListDTO)) {
+                BeanMapperUtils.copy(logisticsSupplierListDTO,resultDTO);
+            }
+            resultDTO.setLogisticsSupplierId(logisticsSupplierId);
+            resultList.add(resultDTO);
+        }
+        return resultList;
     }
 
 

@@ -340,12 +340,27 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         return vo;
     }
 
-    public SysUserDTO adminLogin(SysUserDTO vo) {
+    public SysUserDTO getAdminLoginData(SysUserDTO vo) {
         if (!vo.getUserAccount().equals(SysConstant.ADMIN_USER)) {
             return null;
         }
         List<SysMenuVO> menuAll = sysRoleMenuService.findMenuAll();
         List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuAll();
+        List<String> permissionList = sysRoleMenuService.findMenuCodeAll();
+        vo.setPermissionList(permissionList);
+        vo.setOverallMenuList(menuAll);
+        vo.setLeftMenuList(leftMenuList);
+        vo.setBindingPlatform("");
+        vo.setBindingState(0);
+        return vo;
+    }
+
+    public SysUserDTO adminLogin(SysUserDTO vo) {
+        if (!vo.getUserAccount().equals(SysConstant.ADMIN_USER)) {
+            return null;
+        }
+        List<SysMenuVO> menuAll = sysRoleMenuService.findMenuAll();
+        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuAll(MathUtil.ONE);
         List<String> permissionList = sysRoleMenuService.findMenuCodeAll();
         vo.setPermissionList(permissionList);
         vo.setOverallMenuList(menuAll);
@@ -1104,7 +1119,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         BeanMapperUtils.copy(entity, vo);
 
         //判断是否是超级管理员登录
-        SysUserDTO sysUserDTO = adminLogin(vo);
+        SysUserDTO sysUserDTO = getAdminLoginData(vo);
         if (sysUserDTO != null) {
             return sysUserDTO;
         }

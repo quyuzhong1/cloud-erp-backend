@@ -1023,7 +1023,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(v->v.getOutstockId().equals(soOutstock.getId())).findFirst().orElse(null);
             if(Objects.isNull(logisticsBillEntity)){
                 //如果是修改，返回成功
-                batchResultDTOList.add(BatchResultDTO.fail(soOutstock.getId(),soOutstock.getCode(),"未生成物流单，无法更新跟踪号"));
+//                batchResultDTOList.add(BatchResultDTO.fail(soOutstock.getId(),soOutstock.getCode(),"未生成物流单，无法更新跟踪号"));
                 continue;
             }
 //            LogisticsBillDetailEntity logisticsBillDetailEntity = logisticsBillDetailEntityList.stream().filter(v->batchUpdateTrackNoDTO.getTrackNoList().contains(v.getTrackNo())).findFirst().orElse(null);
@@ -1042,6 +1042,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 //            }
             if(StringUtils.isNotBlank(batchUpdateTrackNoDTO.getLogisticsChannelId())){
                 logisticsBillEntity.setChannelId(batchUpdateTrackNoDTO.getLogisticsChannelId());
+                if (CollectionUtils.isNotEmpty(batchUpdateTrackNoDTO.getTrackNoList())){
+                    logisticsBillEntity.setTransportNo(String.join(",", batchUpdateTrackNoDTO.getTrackNoList()));
+                }
                 updateEntityList.add(logisticsBillEntity);
             }
             if(CollectionUtils.isNotEmpty(batchUpdateTrackNoDTO.getTrackNoList())){

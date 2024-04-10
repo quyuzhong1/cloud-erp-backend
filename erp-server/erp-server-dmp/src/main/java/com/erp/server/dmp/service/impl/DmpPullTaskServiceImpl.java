@@ -9,6 +9,7 @@ import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -55,6 +56,7 @@ import com.erp.rpc.wms.feign.SoReturnInstockFeign;
 import com.erp.server.dmp.convert.DmpOrderConverter;
 import com.erp.server.dmp.mapper.DmpPullTaskMapper;
 import com.erp.server.dmp.service.*;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -139,10 +141,12 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DataIdempotent(keyIdName = "dmpPullTaskEntity.redissonKey", waitTime = 30)
     public String saveOrUpdateDmpSyncTask(DmpPullTaskEntity dmpPullTaskEntity) {
         DmpPullTaskEntity found = lambdaQuery()
                 .eq(DmpPullTaskEntity::getSourceType, dmpPullTaskEntity.getSourceType())
                 .eq(DmpPullTaskEntity::getSourceId, dmpPullTaskEntity.getSourceId())
+                .eq(DmpPullTaskEntity::getSourceCode, dmpPullTaskEntity.getSourceCode())
                 .eq(DmpPullTaskEntity::getSourcePlatformName, dmpPullTaskEntity.getSourcePlatformName())
                 .eq(DmpPullTaskEntity::getTargetPlatformName, dmpPullTaskEntity.getTargetPlatformName())
                 .eq(DmpPullTaskEntity::getMqTopic, dmpPullTaskEntity.getMqTopic())
@@ -992,5 +996,65 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         warnMsgInfo.setKeyInfo("");
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         mqProducerService.sendWarnMsg(warnMsgInfo);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<DmpPullTaskEntity> batchCheckSaveAndUpdate(List<DmpPullTaskEntity> allList, String platform, String sourceCode, String targetPlatform, String topic, String tag) {
+        List<String> sourceIds = allList.stream().map(DmpPullTaskEntity::getSourceId).collect(Collectors.toList());
+        // 查询所有
+        List<DmpPullTaskEntity> existTaskList = this.findList(platform, sourceCode, targetPlatform, topic, tag, sourceIds);
+
+        Map<String, DmpPullTaskEntity> taskMap = existTaskList.stream().collect(Collectors.toMap(DmpPullTaskEntity::redissonKey, Function.identity()));
+        // 需要保存的List
+        List<DmpPullTaskEntity> saveList = new LinkedList<>();
+        // 需要更新的List
+        List<DmpPullTaskEntity> updateList = new LinkedList<>();
+        LocalDateTime now = LocalDateTime.now();
+        allList.forEach(e->{
+            DmpPullTaskEntity entity = taskMap.get(e.redissonKey());
+            if (null == entity){
+                // 不存在添加到新增列表
+                saveList.add(e);
+            } else {
+                // 存在添加到更新列表
+                entity.setUpdateTime(now);
+                updateList.add(entity);
+            }
+        });
+        // 批量保存
+        if (CollectionUtils.isNotEmpty(saveList)){
+            // 分组
+            List<List<DmpPullTaskEntity>> partition = Lists.partition(saveList, 1000);
+            for (List<DmpPullTaskEntity> curList : partition) {
+                if (!this.saveBatch(curList)){
+                    throw new ServiceException("批量保存DmpPullTaskEntity失败");
+                }
+            }
+        }
+        // 批量更新
+        if (CollectionUtils.isNotEmpty(updateList)){
+            // 分组
+            List<List<DmpPullTaskEntity>> partition = Lists.partition(updateList, 1000);
+            for (List<DmpPullTaskEntity> curList : partition) {
+                if (!this.saveBatch(curList)){
+                    throw new ServiceException("批量更新DmpPullTaskEntity失败");
+                }
+            }
+        }
+        return allList;
+    }
+
+    @Override
+    public List<DmpPullTaskEntity> findList(String platform, String sourceCode, String targetPlatform, String topic, String tag, List<String> sourceIds) {
+        return lambdaQuery()
+                .in(DmpPullTaskEntity::getSourceId, sourceIds)
+                .eq(DmpPullTaskEntity::getSourceType, sourceCode)
+                .eq(DmpPullTaskEntity::getSourceCode, sourceCode)
+                .eq(DmpPullTaskEntity::getSourcePlatformName, platform)
+                .eq(DmpPullTaskEntity::getTargetPlatformName, targetPlatform)
+                .eq(DmpPullTaskEntity::getMqTopic, topic)
+                .eq(DmpPullTaskEntity::getMqTag, tag)
+                .list();
     }
 }

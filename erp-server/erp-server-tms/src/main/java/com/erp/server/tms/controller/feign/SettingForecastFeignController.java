@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 
 /**
  * @author Lambda
@@ -28,13 +27,13 @@ public class SettingForecastFeignController {
     private SettingForecastService settingForecastService;
 
 
-    
+
     /**
      * 根据渠道id 获取到 有效的设置
      * @description
      * @param dto
      * @author Lambda
-     * @return 
+     * @return
      * @create 2024-01-19 17:48
      */
     @PostMapping("/getByLogisticsChannelId")
@@ -60,6 +59,5 @@ public class SettingForecastFeignController {
     public SettingForecastDTO.ForecastStatusDTO getByLogisticsSupplier(@RequestBody SettingForecastDTO.FindByLogisticsSupplierDTO dto) {
         return settingForecastService.getByLogisticsSupplier(dto);
     }
-
 
 }

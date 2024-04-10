@@ -10,7 +10,6 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -224,7 +223,7 @@ public class PurchaseOrderDetailDTO implements Serializable {
         * sku编码
         */
         @NotBlank(message = "sku编码不能为空")
-        @Size(max = 32,message = "sku编码最大长度不能超过32位")
+        @Size(max = 64,message = "sku编码最大长度不能超过64位")
         private String skuNo;
 
         /**

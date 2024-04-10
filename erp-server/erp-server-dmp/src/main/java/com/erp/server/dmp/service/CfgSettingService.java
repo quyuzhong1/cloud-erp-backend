@@ -39,6 +39,9 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
 
     String getValue(SettingEnum key);
 
-
+    /**
+     * 获取platform_api_task延时配置
+     */
+    Map<String, Integer> getApiTaskDelaySecond(SettingEnum settingEnum);
 
 }

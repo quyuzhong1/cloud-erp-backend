@@ -192,6 +192,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "consignee.consigneeTelephone",source = "receiverInfoVO.telNumber"),
             @Mapping(target = "consignee.consigneeMobile",source = "receiverInfoVO.telNumber"),
             @Mapping(target = "consignee.consigneeEmail",source = "receiverInfoVO.email"),
+            @Mapping(target = "consignee.consigneeTaxno",source = "receiverInfoVO.receiverTaxNo"),
             @Mapping(target = "shipper.shipperCompany",source = "senderInfo.companyName"),
             @Mapping(target = "shipper.shipperCountrycode",source = "senderInfo.country"),
             @Mapping(target = "shipper.shipperProvince",source = "senderInfo.provinceName"),

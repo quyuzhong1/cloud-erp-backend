@@ -8,6 +8,8 @@ import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.plm.vo.SkuInfoSimpleVO;
+import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
 
@@ -95,7 +97,7 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @Author Jim
      * @since 2023-11-10
      **/
-    List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap, ShopInfoEntity shopInfo, List<SkuVO> skuList);
+    List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap, ShopInfoEntity shopInfo, List<SkuInfoSimpleVO> skuList);
 
     /**
      * 通过platformSkuNo查询关联关系
@@ -119,7 +121,7 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @param list
      * @param mainEntity
      */
-    void consumerHandleDetailList(List<SoB2cDetailEntity> list, SoB2cEntity mainEntity, List<SkuVO> skuList);
+    void consumerHandleDetailList(List<SoB2cDetailEntity> list, SoB2cEntity mainEntity, List<SkuInfoSimpleVO> skuList);
 
     /**
      * @description: 更新明细的是否匹配仓库规则字段

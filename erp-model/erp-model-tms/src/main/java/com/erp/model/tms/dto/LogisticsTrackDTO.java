@@ -120,6 +120,27 @@ public class LogisticsTrackDTO implements Serializable {
 
     }
 
+    /**
+     * 修改
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateTrackDTO {
+
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+        /**
+         * 运单号
+         */
+        @NotBlank(message = "运单号不能为空")
+        @Size(max = 30,message = "运单号最大长度不能超过30位")
+        private String trackNo;
+
+    }
+
     @Data
     @NoArgsConstructor
     public static class CommonDTO {

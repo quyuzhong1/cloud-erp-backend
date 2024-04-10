@@ -23,6 +23,8 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.plm.vo.SkuInfoSimpleVO;
+import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -261,7 +263,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap, ShopInfoEntity shopInfo, List<SkuVO> skuList) {
+    public List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap, ShopInfoEntity shopInfo, List<SkuInfoSimpleVO> skuList) {
         // 订单明细
         List<SoB2cDetailEntity> oldDetailEntityList = this.listByMainId(mainEntity.getId());
         // 来源为空
@@ -399,11 +401,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void consumerHandleDetailList(List<SoB2cDetailEntity> list, SoB2cEntity mainEntity, List<SkuVO> skuList) {
+    public void consumerHandleDetailList(List<SoB2cDetailEntity> list, SoB2cEntity mainEntity, List<SkuInfoSimpleVO> skuList) {
 
         for (SoB2cDetailEntity detailEntity :list) {
             //产品信息
-            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst()
+            SkuInfoSimpleVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst()
                     .orElse(null);
 
             detailEntity.setCurrency(mainEntity.getCurrency());
@@ -420,6 +422,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             BigDecimal costPrice = null == skuVO ? BigDecimal.ZERO : ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
             detailEntity.setTaxCost(costPrice);
             detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
+            // 产品图片
+            detailEntity.setImageUrl(null == skuVO ? "" : skuVO.getSkuImagesUrl());
         }
     }
 
@@ -433,7 +437,10 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         paramDTO.setShopIdList(Collections.singletonList(shopId));
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(platformSkuList);
-        paramDTO.setPlatformSpuNoList(platformSpuList);
+        // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)){
+            paramDTO.setPlatformSpuNoList(platformSpuList);
+        }
         paramDTO.setMatchResult(true);
         paramDTO.setLastExpireDate(platformOrderCreateTime);
         paramDTO.setIsExpire(isExpire);

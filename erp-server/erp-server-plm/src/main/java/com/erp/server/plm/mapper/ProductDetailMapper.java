@@ -8,6 +8,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import org.apache.ibatis.annotations.Mapper;
@@ -235,6 +236,11 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return
      */
     IPage<ProductDetailDTO.SkuDTO> listSku(Page query, @Param("params") ProductSkuDTO params);
+
+    /**
+     * 根据SkuIds获取SKU简单信息
+     */
+    List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(@Param("skuIds") List<String> skuIds);
 }
 
 
