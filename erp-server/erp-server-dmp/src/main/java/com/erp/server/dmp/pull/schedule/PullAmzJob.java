@@ -243,6 +243,7 @@ public class PullAmzJob {
             PlatformAmazonOrderDTO newDto = amazonOrderHandler.downloadDetail(dto, extentJsonObj);
 
             newDto.setDownloadStatus(1);
+            newDto.setDownloadAddressStatus(0);
             newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
             newDto.setRedissonKey(null);
             List<PlatformOrderDTO> convertDto = amazonOrderHandler.convert(Collections.singletonList(newDto));
