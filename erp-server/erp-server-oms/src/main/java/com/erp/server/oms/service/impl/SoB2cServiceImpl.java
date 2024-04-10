@@ -1274,13 +1274,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(soB2cLogisticsEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
-        Boolean isCodeNotNull = StringUtils.isNotBlank(soB2cLogisticsEntity.getCode());
-        if (StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())
-                || isCodeNotNull) {
-            if (isCodeNotNull) {
-                soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
+        //如果有物流单号 就要去取消
+        if (StringUtils.isNotBlank(soB2cLogisticsEntity.getCode())) {
+            //已存在的渠道为空
+            if (StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
+                throw new ServiceException(ApiError.CANCEL_LOGISTICS_ID_NOT_EXIST);
             }
-            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CODE, entity.getCode());
+            //取消物流单
+            LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
+                    channelId(soB2cLogisticsEntity.getLogisticsChannelId()).transportNo(soB2cLogisticsEntity.getCode()).
+                    referenceNumber(entity.getCode()).build();
+            ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
+            //取消失败
+            if (!cancelResult.isSuccess() && !"功能未开放".equals(cancelResult.getMsg())) {
+                soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
+                log.error("{}原因是：{}", ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAIL.msg, cancelResult.getMsg());
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAIL, entity.getCode());
+            }
         }
         try {
             LogisticsBillDTO.GenerateBillDTO generateBillDTO = makeGenerateBillDTO(entity, soB2cLogisticsEntity);

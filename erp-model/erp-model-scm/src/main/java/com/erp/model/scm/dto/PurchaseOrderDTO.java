@@ -1572,4 +1572,15 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private String supplierId;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PushIdDTO{
+        /**
+         * 采购订单明细id
+         */
+        @NotEmpty(message = "采购单明细Id不能为空")
+        private List<String>  purchaseDetailIdList;
+    }
 }
