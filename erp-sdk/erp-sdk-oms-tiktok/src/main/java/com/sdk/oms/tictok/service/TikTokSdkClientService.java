@@ -32,6 +32,7 @@ import com.sdk.oms.tictok.dto.tiktok.order.OrderDTO;
 import com.sdk.oms.tictok.dto.tiktok.order.view.OrderViewDTO;
 import com.sdk.oms.tictok.dto.tiktok.shop.ShopsBean;
 import com.sdk.oms.tictok.dto.tiktok.shop.TikTokShopAuthDTO;
+import com.sdk.oms.tictok.dto.tiktok.split.SplitAttributesDTO;
 import com.sdk.oms.tictok.dto.tiktok.token.PlatformTikTokTokenDTO;
 import com.sdk.oms.tictok.dto.tiktok.token.TokenDTO;
 import com.sdk.oms.tictok.util.EncryptionUtils;
@@ -587,21 +588,31 @@ public class TikTokSdkClientService {
         return resultsBeanList;
     }
 
-    /*public void sendTikTokSplitAttributes(TikTokShopInfoDTO tikTokShopInfoDTO) {
-        String url = tikTokShopInfoDTO.getBaseUrl();
+    /**
+     * 查询平台是否允许拆分订单
+     * @param tikTokShopInfoDTO
+     * @param orderId
+     * @return
+     */
+    public static SplitAttributesDTO sendTikTokSplitAttributes(TikTokShopInfoDTO tikTokShopInfoDTO, String orderId) {
+        String url = TikTokConstant.URL;
         String path = "/fulfillment/" + TikTokConstant.VERSION + "/orders/split_attributes";
         String clientSecret = tikTokShopInfoDTO.getClientSecret();
         String clientId = tikTokShopInfoDTO.getClientId();
+
         // 定义查询参数
         Map<String, Object> params = new HashMap<>();
+        params.put("access_token", tikTokShopInfoDTO.getAccessToken());
         params.put("app_key", clientId);
+        params.put("order_ids", orderId);
+        params.put("shop_cipher", tikTokShopInfoDTO.getShopCipher());
         Long timestamp = System.currentTimeMillis() / 1000;
         params.put("timestamp", timestamp);
         params.put("version", TikTokConstant.VERSION);
 
         //设置请求头
         Map<String, String> headerMap = new HashMap<>(2);
-        headerMap.put("x-tts-access-token", accessToken);
+        headerMap.put("x-tts-access-token", tikTokShopInfoDTO.getAccessToken());
         headerMap.put("content-type", "multipart/form-data");
 
         String input = EncryptionUtils.urlParamsSort(params, path, headerMap, clientSecret, "");
@@ -613,17 +624,17 @@ public class TikTokSdkClientService {
         //拉取数据
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-            log.error("调用url={},入参params={}, TikTok查询店铺权限失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
-            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询店铺权限失败，返回值 responseMap={}",
+            log.error("调用url={},入参params={}, TikTok查询订单是否允许拆分失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询订单是否允许拆分失败，返回值 responseMap={}",
                     url + path, headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
         }
         //解析数据
-        TikTokShopAuthDTO tikTokTokenDTO = null;
+        SplitAttributesDTO splitAttributesDTO = null;
         try {
-            tikTokTokenDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), TikTokShopAuthDTO.class);
+            splitAttributesDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), SplitAttributesDTO.class);
         } catch (Exception e) {
-            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询店铺权限返回值 responseMap={}，转换成实体错误", apiResult.getData()));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询订单是否允许拆分失败返回值 responseMap={}，转换成实体错误", apiResult.getData()));
         }
-        return tikTokTokenDTO;
-    }*/
+        return splitAttributesDTO;
+    }
 }

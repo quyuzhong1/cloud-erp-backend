@@ -92,6 +92,7 @@ import com.erp.server.oms.convert.WalmartShipOrderConverter;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.service.*;
 import com.sdk.oms.tictok.dto.TikTokShopInfoDTO;
+import com.sdk.oms.tictok.dto.tiktok.split.SplitAttributesDTO;
 import com.sdk.oms.tictok.service.TikTokSdkClientService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -3355,12 +3356,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_MERCADO_NOT_SPLIT, entity.getCode());
         }
         if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform())) {
+            TikTokShopInfoDTO tikTokShopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(entity.getShopId());
+            SplitAttributesDTO splitAttributesDTO = tikTokSdkClientService.sendTikTokSplitAttributes(tikTokShopInfoDTO, entity.getPlatformCode());
+    /*        if (splitAttributesDTO.getData().getSplitAttributes()) {
 
-            TikTokShopInfoDTO shopInfoByShopId = tikTokSdkClientService.getShopInfoByShopId(entity.getShopId());
-
-
+            }*/
         }
-
 
         //未付款数据不能操作
         if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) {
