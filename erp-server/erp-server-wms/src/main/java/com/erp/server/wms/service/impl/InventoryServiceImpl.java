@@ -17,7 +17,10 @@ import com.common.core.constant.FieldConstant;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
+import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpSyncKingdeeDTO;
 import com.erp.model.plm.enums.SaleStateEnum;
@@ -686,6 +689,10 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 data.setProductName(skuVO.getSkuName());
                 // 产品图片
                 data.setProductImgUrl(skuVO.getSkuImagesUrl());
+                //产品id
+                data.setProductId(skuVO.getProductId());
+                //规格类型
+                data.setSpecType(skuVO.getSpecType());
             }
             // 销售状态名称
             data.setSaleStateName(SaleStateEnum.getNameByCode(data.getSaleState()));

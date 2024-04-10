@@ -208,6 +208,15 @@ public class InventoryDTO implements Serializable {
          */
         private String skuNo;
 
+        /**
+         * 产品id
+         */
+        private String productId;
+
+        /**
+         * 规格类型  1：无规格  2：多规格
+         */
+        private Integer specType;
 
         /**
          * 产品名称

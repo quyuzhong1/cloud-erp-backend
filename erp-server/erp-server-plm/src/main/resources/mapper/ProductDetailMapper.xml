@@ -940,6 +940,7 @@
         pd.version,
         pd.id AS skuId,
         pi.id AS productId,
+        pi.spec_type,
         pi.spu_no,
         pi.name AS spuName,
         pd.sku_no,
