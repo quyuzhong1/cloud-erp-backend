@@ -176,7 +176,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public SoB2cDTO.PullOrderResultDTO checkAndSaveAll(PlatformOrderDTO dto) {
         // 查询关联关系
         List<String> platformSkuList = dto.getDetails()
@@ -270,9 +269,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity);
 
         receiverEntity.setCustomerId(customerB2cEntity.getId());
-        if (!soB2cReceiverService.saveOrUpdate(receiverEntity)) {
-            throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
-        }
+        soB2cReceiverService.saveOrUpdate(receiverEntity);
+//        if (!soB2cReceiverService.saveOrUpdate(receiverEntity)) {
+//            throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
+//        }
         return resultDTO;
     }
 
