@@ -26,7 +26,7 @@ import com.erp.server.srm.convert.DeliveryOrderConverter;
 import com.erp.server.srm.service.DeliveryOrderDetailService;
 import com.erp.server.srm.service.DeliveryOrderService;
 import com.erp.server.srm.service.UserService;
-import javafx.util.Pair;
+import org.apache.commons.math3.util.Pair;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
