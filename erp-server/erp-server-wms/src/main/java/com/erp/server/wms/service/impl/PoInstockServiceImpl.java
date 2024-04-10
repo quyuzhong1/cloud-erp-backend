@@ -22,10 +22,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.MathUtil;
+import com.common.core.utils.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -335,6 +332,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
         //存在收货单,且收货单下面的质检单未质检完成则不允许提交
         checkQcInfo(list,thisDetailList);
+        //校验入库明细与收货单数量
+        checkInstockDetail(thisDetailList);
         //已下推入库明细信息
         List<PoInstockDetailEntity> hasDetailList = poInstockDetailService.listDetailByPodIds(podIds);
 
@@ -384,6 +383,39 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("提交了一个采购入库单【%s】", ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "提交操作");
         return Boolean.TRUE;
+    }
+
+    private void checkInstockDetail(List<PoInstockDetailEntity> thisDetailList) {
+        if (CollectionUtils.isEmpty(thisDetailList)){
+            return;
+        }
+        List<String> podIds = thisDetailList.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+
+        //收货列表
+        List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
+        //退货数量
+        List<PoReturnDetailEntity> returnOrderDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(podIds);
+
+        thisDetailList.forEach(poInstockDetailEntity -> {
+            //收货单已收数量（已审核）
+            Integer receiveQty = receiveDetailList.stream()
+                    .filter(req -> req.getPurchaseOrderDetailId().equals(poInstockDetailEntity.getPurchaseOrderDetailId())
+                    && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
+                    .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            //已退货数量（质检退货）
+            Integer returnQty = returnOrderDetailList.stream().filter(e -> Objects.equals(e.getPurchaseOrderDetailId(), poInstockDetailEntity.getPurchaseOrderDetailId())
+                            && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode())
+                            && StrUtils.isNotEmpty(e.getPurchaseOrderDetailId())
+                            && ReturnOrderSourceEnum.QC.getCode().equals(e.getSourceType())
+                            && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
+                    .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            //最大入库数量
+            Integer maxInstockQty = receiveQty - receiveQty;
+            if (poInstockDetailEntity.getStockInQty() > maxInstockQty){
+                throw new ServiceException(String.format("SKU【%s】入库数量不能大于"+ maxInstockQty, poInstockDetailEntity.getSkuNo()));
+            }
+        });
+
     }
 
     @Override
