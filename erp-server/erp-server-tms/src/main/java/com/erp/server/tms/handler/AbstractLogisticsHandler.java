@@ -3,6 +3,7 @@ package com.erp.server.tms.handler;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.dto.LogisticsTrackBaseDTO;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
@@ -155,6 +156,15 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
     public ApiResult<List<LogisticsTrackEntity>> getTrack(LogisticsTrackVO logisticsTrackVO) {
         return ApiResult.error(-1, "功能未开放");
     }
+    /**
+     * 海运轨迹查询
+     *
+     * @param oceanTrackRequestList
+     * @return
+     */
+    public ApiResult<List<LogisticsTrackEntity>> getOceanTrack(List<LogisticsTrackBaseDTO.OceanTrackRequestDTO> oceanTrackRequestList) {
+        return ApiResult.error(-1, "功能未开放");
+    }
 
     /**
      * 渠道查询
@@ -183,6 +193,16 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<List<RegisterResponseVO>> registerLogisticsNumber(RegisterTrackVO registerTrackVO) {
+        return ApiResult.error(-1, "功能未开放");
+    }
+
+    /**
+     * 物流单海运注册
+     *
+     * @param list
+     * @return
+     */
+    public ApiResult<List<RegisterResponseVO>> oceanRegisterLogisticsNumber(List<LogisticsTrackBaseDTO.OceanRegisterRequestDTO> list) {
         return ApiResult.error(-1, "功能未开放");
     }
 

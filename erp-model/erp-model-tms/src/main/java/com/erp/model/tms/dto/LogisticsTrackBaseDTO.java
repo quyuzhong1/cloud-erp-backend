@@ -24,7 +24,6 @@ public class LogisticsTrackBaseDTO implements Serializable {
      */
     @Data
     @Builder
-    @NoArgsConstructor
     public static class OceanTrackRequestDTO {
 
         /**
@@ -56,7 +55,6 @@ public class LogisticsTrackBaseDTO implements Serializable {
      */
     @Data
     @Builder
-    @NoArgsConstructor
     public static class OceanTrackResponseDTO {
 
         /**
@@ -87,7 +85,6 @@ public class LogisticsTrackBaseDTO implements Serializable {
      */
     @Data
     @Builder
-    @NoArgsConstructor
     public static class OceanRegisterRequestDTO {
 
         /**
