@@ -23,6 +23,7 @@ import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.PurchaseOrderFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.server.srm.convert.DeliveryOrderConverter;
 import com.erp.server.srm.mapper.DeliveryOrderDetailMapper;
 import com.erp.server.srm.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -116,7 +117,7 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         List<DeliveryOrderDetailEntity> needUpdateDetailList = oldDetailList.stream().filter(v->existDetailIds.contains(v.getId())).collect(Collectors.toList());
         Map<String,DeliveryOrderDetailDTO.UpdateDTO> updateDTOMap = updateDTOList.stream().collect(Collectors.toMap(DeliveryOrderDetailDTO.UpdateDTO::getDetailId, Function.identity()));
         for(DeliveryOrderDetailEntity deliveryOrderDetailEntity : needUpdateDetailList){
-            DeliveryOrderDetailEntity old = ObjectUtil.cloneByStream(deliveryOrderDetailEntity);
+            DeliveryOrderDetailEntity old =  DeliveryOrderConverter.INSTANCE.detailConvert(deliveryOrderDetailEntity);
             DeliveryOrderDetailDTO.UpdateDTO updateDTO = updateDTOMap.get(deliveryOrderDetailEntity.getId());
             checkDelivery(deliveryOrderDetailEntity.getSourceDetailId(),deliveryOrderDetailEntity.getId(),updateDTO.getDeliveryQty(),deliveryOrderDetailEntity.getOrderQty());
             BeanUtil.copyProperties(updateDTO,deliveryOrderDetailEntity);
