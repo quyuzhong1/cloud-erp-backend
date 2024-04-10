@@ -229,6 +229,9 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
             entity.setExchangeRate(rate);
             //币别
             entity.setCurrency(currency);
+            //更新数据无类型默认实际
+            entity.setType(StrUtil.isBlank(entity.getType()) ? LogisticsBillCostTypeEnum.ACTUAL.getCode() : entity.getType());
+
         }
     }
 }
