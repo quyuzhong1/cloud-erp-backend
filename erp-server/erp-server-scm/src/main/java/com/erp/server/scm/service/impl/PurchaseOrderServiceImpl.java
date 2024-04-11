@@ -1933,6 +1933,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             if (Objects.nonNull(taxPrice)){
                 price = MathUtil.divide(taxPrice, multiplyTax);
             }
+            detailDTO.setPrice(price);
             //未税金额
             detailDTO.setAmount(MathUtil.multiply(price, qty));
             //单位
