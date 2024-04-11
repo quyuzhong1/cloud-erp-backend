@@ -1567,7 +1567,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }
             addDTO.setReturnMode(purchaseReturnOrderDTO.getReturnMode());
             addDTO.setPurchasePriceDetailList(addDetailList);
-            addDTO.setReturnUserId(userInfo.getUid());
+            addDTO.setReturnUserId(purchaseReturnOrderDTO.getReturnUserId());
 
             addDTO.setPurchaseOrderId(qcInfoEntity.getPurchaseOrderId());
             String receiveOrgId = receiveList.stream().filter(r -> r.getPurchaseOrderId().equals(purchaseOrderId)).
