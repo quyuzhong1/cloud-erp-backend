@@ -36,6 +36,7 @@ import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
 import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
+import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -217,14 +218,14 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         log.info("提交 开始修改头程对账单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
-        // TODO 启动流程（如果需要的话）
+        // 启动流程（如果需要的话）
         log.info("提交 开始启动头程对账单流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录头程对账单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "头程对账单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
+        // 此处的需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -601,7 +602,21 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         if (!ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getApproveStatus()))) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
-        return;
+        // 是否所有明细确认
+        List<TmsFirstMileReconciliationDetailEntity> detailList = tmsFirstMileReconciliationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (CollectionUtils.isEmpty(detailList)){
+            throw new ServiceException("明细为空无法提交");
+        }
+        List<String> unConfirmNoList = detailList.stream()
+                .filter(e -> ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equalsIgnoreCase(e.getStatus()))
+                .map(TmsFirstMileReconciliationDetailEntity::getTransportNo)
+                .distinct()
+                .collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(unConfirmNoList)){
+            String msg = StrUtil.format("运单号{}明细处于待确认，无法提交", unConfirmNoList);
+            throw new ServiceException(msg);
+        }
+
     }
 
     /**
