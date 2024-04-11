@@ -2348,6 +2348,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //分组包装重量
         BigDecimal groupWeight = BigDecimal.ZERO;
 
+        // 使用 Set 存储 platformSkuNo 值
+        Set<String> platformSkuNoSet = new HashSet<>();
+
         for (int i = 0; i < splitList.size(); i++) {
             SoB2cDTO.GroupSplitSaveDTO groupSplitSaveDTO = splitList.get(i);
             //新建拆分后数据
@@ -2374,6 +2377,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     log.error("订单【{}】SKU【{}】拆分数量【{}】不能大于原数量【{}】", entity.getCode(), detailEntity.getSkuNo(), splitDetailSaveDTO.getQty(), detailEntity.getQty());
                     throw new ServiceException(ApiError.ERROR_SO_B2C_SPLIT_QTY, entity.getCode(), detailEntity.getSkuNo(), splitDetailSaveDTO.getQty(), detailEntity.getQty());
                 }
+
+                if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform())) {
+                    String platformSkuNo = detailEntity.getPlatformSkuNo();
+                    // 如果 platformSkuNo 已经存在于 Set 中，则表示重复
+                    if (!platformSkuNoSet.add(platformSkuNo) && i != 0) {
+                        throw new ServiceException(ApiError.ERROR_SO_B2C_TIKTOK_SPLIT_SKU, entity.getCode(), detailEntity.getSkuNo());
+                    }
+                }
+
                 SoB2cDetailDTO.AddDTO addDetailDTO = new SoB2cDetailDTO.AddDTO();
                 BeanMapperUtils.copy(detailEntity, addDetailDTO);
                 addDetailDTO.setQty(splitDetailSaveDTO.getQty());
@@ -3359,7 +3371,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SplitAttributesDTO splitAttributesDTO = tikTokSdkClientService.sendTikTokSplitAttributes(tikTokShopInfoDTO, entity.getPlatformCode());
             SplitAttributesBean splitAttributesBean = splitAttributesDTO.getData().getSplitAttributes().stream().filter(req -> entity.getPlatformCode().equals(req.getOrderId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(splitAttributesBean) || !splitAttributesBean.getCanSplit()) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_TikTok_NOT_SPLIT, entity.getCode(), ObjectUtil.isNotEmpty(splitAttributesBean) ? splitAttributesBean.getReason() : "");
+                throw new ServiceException(ApiError.ERROR_SO_B2C_TIKTOK_NOT_SPLIT, entity.getCode(), ObjectUtil.isNotEmpty(splitAttributesBean) ? splitAttributesBean.getReason() : "");
             }
         }
 

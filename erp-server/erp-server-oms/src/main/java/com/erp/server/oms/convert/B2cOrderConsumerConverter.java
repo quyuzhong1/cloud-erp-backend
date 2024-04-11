@@ -1,6 +1,5 @@
 package com.erp.server.oms.convert;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.*;
 import com.erp.model.oms.entity.*;
 import org.mapstruct.Mapper;
@@ -8,7 +7,6 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.PostMapping;
 
 import java.math.BigDecimal;
 
@@ -73,6 +71,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "warehouseOrgName", source = "oldEntity.warehouseOrgName"),
             @Mapping(target = "warehouseLocation", source = "oldEntity.warehouseLocation"),
             @Mapping(target = "platformLineNumber", source = "oldEntity.platformLineNumber"),
+            @Mapping(target = "platformPackageId", source = "oldEntity.platformPackageId"),
             // 映射关系
             @Mapping(target = "skuId", source = "skuId"),
             @Mapping(target = "skuNo", source = "skuNo"),

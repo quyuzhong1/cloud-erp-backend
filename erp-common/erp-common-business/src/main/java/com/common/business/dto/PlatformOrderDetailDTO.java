@@ -100,6 +100,10 @@ public class PlatformOrderDetailDTO {
      * 平台明细行号
      */
     private String platformLineNumber;
+    /**
+     * 平台包裹号
+     */
+    private String platformPackageId;
 
 
 }

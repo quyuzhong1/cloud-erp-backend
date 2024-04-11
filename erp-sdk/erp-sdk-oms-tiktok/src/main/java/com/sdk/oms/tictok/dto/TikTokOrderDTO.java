@@ -236,7 +236,8 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         detailDTO.setWarehouseOrgName("");
         // 库位
         detailDTO.setWarehouseLocation("");
-
+        //包裹号
+        detailDTO.setPlatformPackageId(itemsBean.getPackageId());
         return detailDTO;
     }
 
@@ -304,14 +305,13 @@ public class TikTokOrderDTO extends CleanBaseDTO {
             return Collections.emptyList();
         }
 
-        String trackingNumber = "";
         String name = "";
         BigDecimal cost = BigDecimal.ZERO;
 
 
         List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
         PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
-                .code(trackingNumber)
+                .code(ordersBean.getTrackingNumber())
                 .name(name)
                 .deliveryTime(ordersBean.getRtsTime()>0 ? LocalDateTime.ofInstant(Instant.ofEpochSecond(ordersBean.getRtsTime()), ZoneOffset.UTC) : null)
                 .logisticsChannelId(ordersBean.getShippingProviderId())
