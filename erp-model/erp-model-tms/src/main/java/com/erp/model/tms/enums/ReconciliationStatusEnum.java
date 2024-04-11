@@ -19,7 +19,7 @@ public enum ReconciliationStatusEnum implements EnumMessage {
     CONFIRMED("confirmed","已确认"),
     RECONCILED("Reconciled","已对账"),
     INVALID("invalid","已作废"),
-    DIFF("diff","差异确认"),
+    DIFF_CONFIRM("diffConfirm", "差异确认"),
     ;
 
     /**

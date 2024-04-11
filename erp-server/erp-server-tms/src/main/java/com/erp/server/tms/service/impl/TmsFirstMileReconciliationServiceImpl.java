@@ -388,7 +388,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
             return Boolean.TRUE;
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        updateForApprove(entity.getId(), approveStatus.getStatus());
+        updateForApprove(entity.getId(), approveStatus.getStatus(), dto.getComment());
         // 明细数据处理 上下游数据处理
 
         return Boolean.TRUE;
@@ -474,13 +474,16 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
      * @param id
      * @param approveStatus
      */
-    public void updateForApprove(String id, String approveStatus) {
+    public void updateForApprove(String id, String approveStatus, String comment) {
         //当前登录人
         LoginUser userInfo = commonService.getUserInfo();
         this.lambdaUpdate().eq(TmsFirstMileReconciliationEntity::getId, id)
                 .set(TmsFirstMileReconciliationEntity::getApproveUserId, userInfo.getUid())
                 .set(TmsFirstMileReconciliationEntity::getApproveUserName, userInfo.getUserName())
                 .set(TmsFirstMileReconciliationEntity::getApproveStatus, approveStatus)
+                .set(TmsFirstMileReconciliationEntity::getApproveDate, LocalDate.now())
+                .set(ApproveStatusEnum.REJECT.getStatus().equalsIgnoreCase(approveStatus) && StringUtils.isNotBlank(comment),
+                        TmsFirstMileReconciliationEntity::getReason, comment)
                 .update(new TmsFirstMileReconciliationEntity());
     }
 
@@ -506,6 +509,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(TmsFirstMileReconciliationEntity::getId, id)
                 .set(TmsFirstMileReconciliationEntity::getApproveStatus, approveStatus)
+                .set(ApproveStatusEnum.APPROVE_ING.getCode().equals(approveStatus),TmsFirstMileReconciliationEntity::getSubmitDate, LocalDate.now())
                 .update(new TmsFirstMileReconciliationEntity());
     }
 
