@@ -243,6 +243,7 @@ public class PullAmzJob {
             PlatformAmazonOrderDTO newDto = amazonOrderHandler.downloadDetail(dto, extentJsonObj);
 
             newDto.setDownloadStatus(1);
+            newDto.setDownloadAddressStatus(0);
             newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
             newDto.setRedissonKey(null);
             List<PlatformOrderDTO> convertDto = amazonOrderHandler.convert(Collections.singletonList(newDto));
@@ -807,6 +808,13 @@ public class PullAmzJob {
             jobTaskDTO.setPlatformCategory(cleanDataTableEnum.getCategory());
             jobTaskDTO.setDictPlatform(cleanDataTableEnum.getPlatform());
             jobTaskDTO.setBillType(cleanDataTableEnum.getBusiness());
+            if (CleanDataTableEnum.AMAZON_ORDER.equals(cleanDataTableEnum)
+                    || CleanDataTableEnum.AMAZON_FBA_SHIPMENT.equals(cleanDataTableEnum)
+                    || CleanDataTableEnum.AMAZON_PRODUCT.equals(cleanDataTableEnum)
+            ){
+                // 清洗时检查明细下载状态:DownloadStatus=1
+                jobTaskDTO.setClearCheckDownloadStatus(true);
+            }
             try {
                 XxlJobHelper.log("亚马逊开始清洗：{}类{}数据", cleanDataTableEnum.getPlatform(), cleanDataTableEnum.getBusiness());
                 platformDataThread.cleanOrder(jobTaskDTO);

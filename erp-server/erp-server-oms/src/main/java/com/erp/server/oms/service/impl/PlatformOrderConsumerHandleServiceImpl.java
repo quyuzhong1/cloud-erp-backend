@@ -176,7 +176,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public SoB2cDTO.PullOrderResultDTO checkAndSaveAll(PlatformOrderDTO dto) {
         // 查询关联关系
         List<String> platformSkuList = dto.getDetails()
@@ -270,9 +269,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity);
 
         receiverEntity.setCustomerId(customerB2cEntity.getId());
-        if (!soB2cReceiverService.saveOrUpdate(receiverEntity)) {
-            throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
-        }
+        soB2cReceiverService.saveOrUpdate(receiverEntity);
+//        if (!soB2cReceiverService.saveOrUpdate(receiverEntity)) {
+//            throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
+//        }
         return resultDTO;
     }
 
@@ -306,17 +306,23 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 });
             }else {
                 SkuInfoSimpleVO simpleSkuVO = sourceSkuMap.get(addDTO.getSkuId());
-                skuVO = BomChildrenSkuDTO.builder()
-                        .skuId(simpleSkuVO.getSkuId())
-                        .productSize(simpleSkuVO.getProductSize())
-                        .build();
-                soB2cService.buildProductSize(skuVO);
-                splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
-                        .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
-                        .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? skuVO.getLength() : BigDecimal.ZERO)
-                        .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? skuVO.getWidth() : BigDecimal.ZERO)
-                        .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? skuVO.getHeight() : BigDecimal.ZERO)
-                        .build());
+                if (null == simpleSkuVO){
+                    // 部分无映射关系设置为空
+                    splitSkuDTOS.add(new SplitSkuDTO(addDTO.getSkuId(), addDTO.getSkuNo()));
+                } else {
+                    skuVO = BomChildrenSkuDTO.builder()
+                            .skuId(simpleSkuVO.getSkuId())
+                            .productSize(simpleSkuVO.getProductSize())
+                            .build();
+                    soB2cService.buildProductSize(skuVO);
+                    splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
+                            .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
+                            .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? skuVO.getLength() : BigDecimal.ZERO)
+                            .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? skuVO.getWidth() : BigDecimal.ZERO)
+                            .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? skuVO.getHeight() : BigDecimal.ZERO)
+                            .build());
+                }
+
             }
         });
         return splitSkuDTOS;

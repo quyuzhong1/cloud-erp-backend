@@ -103,7 +103,6 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public SoB2cReceiverEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, List<DictCountryEntity> countryList) {
         PlatformOrderReceiverDTO receiverDTO = dto.getReceiver();
         // 当前国家
@@ -154,9 +153,10 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                     entity.setCountryName(dictCountryEntity.getNameCn());
                 }
                 entity2.setId(entity.getId());
-                if (!this.updateById(entity2)){
-                    throw new ServiceException("[SoB2cReceiverEntity] 更新失败");
-                }
+                this.updateById(entity2);
+//                if (!this.updateById(entity2)){
+//                    throw new ServiceException("[SoB2cReceiverEntity] 更新失败");
+//                }
                 return entity2;
             }
 
