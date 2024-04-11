@@ -177,7 +177,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
             } else if ("not_delivered".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-            }else if ("cancelled".equals(orderBean.getStatus())) {
+            }else if ("cancelled".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
                 orderDTO.setInvalidStatus(Boolean.TRUE);
