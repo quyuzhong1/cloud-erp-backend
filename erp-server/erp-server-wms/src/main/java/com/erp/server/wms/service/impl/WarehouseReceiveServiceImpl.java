@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -34,10 +34,8 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
@@ -273,9 +271,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         }
 
         //获取用户信息
-        SysUserDTO userDTO = null;
+        FindUserDTO userDTO = null;
         if (StringUtils.isNotBlank(dto.getReceiveUserId())) {
-            userDTO = sysUserFeign.getSysUserById(dto.getReceiveUserId());
+            userDTO = sysUserFeign.getUserByUserId(dto.getReceiveUserId());
         }
         //获取用户部门
         SysDepartmentDTO departmentDTO = null;
@@ -343,7 +341,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(WarehouseReceiveDTO.UpdateDTO dto) {
         //根据用户id获取用户信息
-        SysUserDTO sysUserDTO = sysUserFeign.getSysUserById(dto.getReceiveUserId());
+        FindUserDTO sysUserDTO = sysUserFeign.getUserByUserId(dto.getReceiveUserId());
 
         //获取用户部门
         SysDepartmentDTO departmentDTO = null;
@@ -1085,7 +1083,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         LoginUser userInfo = commonService.getUserInfo();
         List<String> collect = dtos.stream().map(WarehouseReceiveDTO.GenerateStockInDTO::getMainId).distinct().collect(Collectors.toList());
         //获取用户信息
-        SysUserDTO userDTO = sysUserFeign.getSysUserById(userInfo.getUid());
+        FindUserDTO userDTO = sysUserFeign.getUserByUserId(userInfo.getUid());
         if (ObjectUtil.isEmpty(userDTO)) {
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
