@@ -721,6 +721,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             }
             detailEntity.setEstimateWeight(soB2cLogisticsEntity.getWeight());
             detailEntity.setEstimateWeightUnit(UnitEnum.WeightUnitEnum.G.getCode());
+            resultList.add(detailEntity);
         }
         return resultList;
     }
