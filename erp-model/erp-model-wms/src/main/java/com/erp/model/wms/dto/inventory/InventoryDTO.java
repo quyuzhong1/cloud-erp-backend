@@ -336,9 +336,9 @@ public class InventoryDTO implements Serializable {
     @NoArgsConstructor
     public static class ExportInvFlowSearchParamDTO extends SortDTO {
         /**
-         * 勾选行数据（仅传该字段，其他字段不要传输）
+         * 勾选行数据（仅传该字段（行id），其他字段不要传输）
          */
-        private List<ExportInvParamDTO> checkData;
+        private List<String> ids;
         /**
          * 仓库id（点击查看流水必传参数）
          */
@@ -376,10 +376,6 @@ public class InventoryDTO implements Serializable {
          * 库存状态  接口地址：/wms/common/enumDropDown?type=InventoryStatus
          */
         private List<String> inventoryStatusList;
-        /**
-         * 仓库id集合
-         */
-        private List<String> idList;
 
         /**
          * 销售状态集合 接口地址：plm/common/enumDropDown?type=SaleState

@@ -19,7 +19,6 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.enums.SaleStateEnum;
@@ -28,7 +27,6 @@ import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.ExportTransactionFlowDTO;
-import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
@@ -61,7 +59,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -228,16 +225,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     }
     @Override
     public void exportTransFlow(InventoryDTO.ExportInvFlowSearchParamDTO param, HttpServletResponse response) {
-        // 如果是否选导出处理
-        if (CollUtil.isNotEmpty(param.getCheckData())) {
-            List<InventoryDTO.ExportInvParamDTO> checkData = param.getCheckData();
-            List<String> ids = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getId).distinct().collect(Collectors.toList());
-            param.setIdList(ids);
-        }
         List<InventoryDTO.TransFlowPagingViewDTO> dataList = this.baseMapper.exportTransFlow(param);
-        if (CollUtil.isEmpty(dataList)) {
-            return;
-        }
         // 填充名称
         fillInventoryTransactionFlowPageData(dataList);
         StringBuffer sb = new StringBuffer();
