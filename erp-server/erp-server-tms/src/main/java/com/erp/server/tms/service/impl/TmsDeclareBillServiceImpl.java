@@ -208,6 +208,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     public Boolean update(TmsDeclareBillDTO.UpdateDTO updateDTO,SourceTypeEnum sourceTypeEnum) {
         TmsDeclareBillEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "报关单"));
+        if(Objects.isNull(updateDTO.getShippingFee())){
+            updateDTO.setShippingFee(BigDecimal.ZERO);
+        }
+        if(Objects.isNull(updateDTO.getInsuranceFee())){
+            updateDTO.setInsuranceFee(BigDecimal.ZERO);
+        }
+        if(Objects.isNull(updateDTO.getOtherFee())){
+            updateDTO.setOtherFee(BigDecimal.ZERO);
+        }
         TmsDeclareBillEntity tmsDeclareBillEntity =  BeanMapperUtils.map(TmsDeclareBillEntity.class, updateDTO);
         if(!old.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode())){
             throw new ServiceException("报关单状态不是待报关，不能编辑");
