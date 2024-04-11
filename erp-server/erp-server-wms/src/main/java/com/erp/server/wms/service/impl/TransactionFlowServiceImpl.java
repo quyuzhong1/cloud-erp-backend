@@ -231,12 +231,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         // 如果是否选导出处理
         if (CollUtil.isNotEmpty(param.getCheckData())) {
             List<InventoryDTO.ExportInvParamDTO> checkData = param.getCheckData();
-            List<String> warehouseIds = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getWarehouseId).distinct().collect(Collectors.toList());
-            List<String> orgIds = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getOrgId).distinct().collect(Collectors.toList());
-            List<String> skuIds = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getSkuId).distinct().collect(Collectors.toList());
-            param.setWarehouseIdList(warehouseIds);
-            param.setOrgIdList(orgIds);
-            param.setSkuIdList(skuIds);
+            List<String> ids = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getId).distinct().collect(Collectors.toList());
+            param.setIdList(ids);
         }
         List<InventoryDTO.TransFlowPagingViewDTO> dataList = this.baseMapper.exportTransFlow(param);
         if (CollUtil.isEmpty(dataList)) {

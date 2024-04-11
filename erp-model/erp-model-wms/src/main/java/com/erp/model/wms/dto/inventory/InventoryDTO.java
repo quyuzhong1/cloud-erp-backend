@@ -126,6 +126,11 @@ public class InventoryDTO implements Serializable {
          */
         @NotEmpty(message = "库存组织不能为空")
         private String orgId;
+        /**
+         * 库存组织id（勾选导出必传参数）
+         */
+        @NotEmpty(message = "库存组织不能为空")
+        private String id;
 
         /**
          * sku id（勾选导出必传参数）
@@ -374,7 +379,7 @@ public class InventoryDTO implements Serializable {
         /**
          * 仓库id集合
          */
-        private List<String> warehouseIdList;
+        private List<String> idList;
 
         /**
          * 销售状态集合 接口地址：plm/common/enumDropDown?type=SaleState
