@@ -333,7 +333,7 @@ public class QcInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "下推退货单数据保存")
     @PostMapping("/generatePurchaseReturnOrder")
-    public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
+    public ApiResult<List<BatchResultDTO>> generatePurchaseReturnOrder(@RequestBody @Validated PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getList().size());
         try {
             resultDTOS = qcInfoService.generatePurchaseReturnOrder(dto.getList());
