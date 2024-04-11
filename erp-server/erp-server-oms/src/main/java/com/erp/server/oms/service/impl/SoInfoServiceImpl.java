@@ -1560,6 +1560,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         result.setTotalQty(totalQty);
         BigDecimal totalAmount = details.stream().map(SoDetailDTO.ExportPdfDTO::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         result.setTotalAmount(totalAmount);
+        BigDecimal totalTaxAmount = details.stream().map(SoDetailDTO.ExportPdfDTO::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        result.setTotalTaxAmount(totalTaxAmount);
         result.setDetails(details);
         String chineseAmount = Convert.digitToChinese(totalAmount);
         result.setChineseAmount(chineseAmount);
