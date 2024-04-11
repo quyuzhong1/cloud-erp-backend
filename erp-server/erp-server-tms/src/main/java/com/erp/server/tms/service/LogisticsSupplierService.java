@@ -125,4 +125,11 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      * @return List<LogisticsSupplierListDTO>
      */
     List<LogisticsSupplierDTO.LogisticsSupplierListDTO> listLogisticsChannel(List<String> logisticsSupplierIdList);
+
+    /**
+     *
+     * @param id 主键id
+     * @return {@link LogisticsSupplierDTO.ViewDTO}
+     */
+    LogisticsSupplierDTO.ViewDTO detail(String id);
 }

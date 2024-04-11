@@ -432,6 +432,11 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         return resultList;
     }
 
+    @Override
+    public LogisticsSupplierDTO.ViewDTO detail(String id) {
+        return baseMapper.detail(id);
+    }
+
 
     /**
      * 填充分页数据

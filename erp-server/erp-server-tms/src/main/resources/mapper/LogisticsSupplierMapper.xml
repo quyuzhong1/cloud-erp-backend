@@ -244,6 +244,16 @@
         </where>
         order by lc.disabled
     </select>
+    <select id="detail" resultType="com.erp.model.tms.dto.LogisticsSupplierDTO$ViewDTO">
+        select
+            ls.id,
+            ls.supplier_id,
+            ls.supplier_name,
+            ls.short_name,
+            ls.type
+        from logistics_supplier ls
+        where id = #{id}
+    </select>
 
 
 </mapper>

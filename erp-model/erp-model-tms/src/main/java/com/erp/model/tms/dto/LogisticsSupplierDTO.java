@@ -115,7 +115,7 @@ public class LogisticsSupplierDTO implements Serializable {
          */
         private String name;
         /**
-         * 物流商名
+         * 物流商简称
          */
         private String shortName;
 
@@ -314,12 +314,11 @@ public class LogisticsSupplierDTO implements Serializable {
 
     }
 
-
     /**
      * 详情
      */
-    @Data
-    @NoArgsConstructor
+    @Getter
+    @Setter
     public static class ViewDTO {
 
         /**
@@ -336,27 +335,15 @@ public class LogisticsSupplierDTO implements Serializable {
          * 名称
          */
         private String supplierName;
+        /**
+         * 物流商简称
+         */
+        private String shortName;
 
         /**
          * 类型
          */
         private String type;
-
-        /**
-         * 是否禁用 true 禁用
-         */
-        private Boolean disabled;
-
-        /**
-         * 授权状态
-         */
-        private String authStatus;
-
-        /**
-         * 授权时间
-         */
-        private LocalDateTime authTime;
-
 
     }
 

@@ -76,6 +76,16 @@ public class LogisticsSupplierController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 明细
+     * @param id
+     */
+    @GetMapping("/detail")
+    public ApiResult<LogisticsSupplierDTO.ViewDTO> detail(@RequestParam String id) {
+        LogisticsSupplierDTO.ViewDTO viewDTO = logisticsSupplierService.detail(id);
+        return success(viewDTO);
+    }
+
 
     /**
     * 新增
