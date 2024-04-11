@@ -52,6 +52,12 @@ public interface WmsTaskFeign {
     List<PoReturnDetailEntity> listPurchaseReturnOrderDetailBySourceDetailIds(List<String> sourceDetailIds);
 
     /**
+     * 根据来源明细ids查询退货明细
+     */
+    @PostMapping("feign/purchaseReturnOrder/listPurchaseReturnOrderDetailByMainIds")
+    List<PoReturnDetailEntity> listPurchaseReturnOrderDetailByMainIds(List<String> mainIds);
+
+    /**
      * 根据来源明细ids查询入库明细
      */
     @PostMapping("feign/purchaseStockIn/listDetailBySourceDetailIds")
