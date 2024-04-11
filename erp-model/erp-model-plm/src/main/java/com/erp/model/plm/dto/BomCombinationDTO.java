@@ -133,7 +133,7 @@ public class BomCombinationDTO implements Serializable {
          * 组合产品编码
          */
         @NotBlank(message = "组合产品编码不能为空")
-        @Size(max = 50, message = "组合产品编码最大50个字符")
+        @Size(max = 64, message = "组合产品编码最大64个字符")
         private String skuNo;
         /**
          * 组合产品名称

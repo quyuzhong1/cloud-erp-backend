@@ -45,10 +45,8 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.model.tms.dto.LogisticsBillDTO;
-import com.erp.model.tms.dto.LogisticsBillDetailDTO;
-import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.dto.*;
+import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -783,6 +781,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                         addDTO.setToCountry("");
                     }
                     addDTO.setCurrency(soInfo.getCurrency());
+                    addDTO.setChannelId(entity.getLogisticsChannelId());
+                    addDTO.setTransportNo(entity.getTrackNo());
                 }
             } else {
                 //表示是b2c
@@ -906,15 +906,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> ids = dto.getIds();
         List<SoOutstockEntity> list = this.listByIds(ids);
         String b2cType = OrderTypeEnum.B2C.getCode();
-        List<SoOutstockEntity> b2cList = list.stream().filter(o -> b2cType.equals(o.getOrderType())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(b2cList)) {
-            String code = b2cList.stream().map(SoOutstockEntity::getCode).collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.B2C_SO_OUTSTOCK_NOT_DIS_APPROVE, code);
-        }
-
-
+//        List<SoOutstockEntity> b2cList = list.stream().filter(o -> b2cType.equals(o.getOrderType())).collect(Collectors.toList());
+//        if (CollectionUtils.isNotEmpty(b2cList)) {
+//            String code = b2cList.stream().map(SoOutstockEntity::getCode).collect(Collectors.joining(","));
+//            throw new ServiceException(ApiError.B2C_SO_OUTSTOCK_NOT_DIS_APPROVE, code);
+//        }
 
         //审核通过
+        // 增加 出库单关联的自发货费用单据已确认状态下，不允许出库单反审核
+        List<LogisticsBillCostDTO.OutStockDTO> outStockDTOS = logisticsBillFeign.listBillCostByOutstockIds(ids);
+        List<LogisticsBillCostDTO.OutStockDTO> outStockDTOList = outStockDTOS.stream().filter(e -> StringUtils.isNotEmpty(e.getReconciliationStatus())
+                        && ReconciliationStatusEnum.CONFIRMED.getCode().equals(e.getReconciliationStatus()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(outStockDTOList)){
+            String code = outStockDTOList.stream().map(LogisticsBillCostDTO.OutStockDTO::getOutstockCode).distinct().collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_SO_OUTSTOCK_BILL_COST_NOT_DIS_APPROVE, code);
+        }
         //待提交
         if (!isPushKingDee) {
             list = list.stream().filter(x -> ApproveStatusEnum.APPROVE.equals(x.getApproveStatus())).collect(Collectors.toList());
@@ -1194,13 +1201,17 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soB2cEntities = soB2cFeign.listByIds(soIds);
         }
         String b2c = OrderTypeEnum.B2C.getCode();
-        List<String> ids = list.stream().map(SoOutstockDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
+//        List<String> ids = list.stream().map(SoOutstockDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         //跟踪单号
-        Map<String,List<String>> trackNoMAp = logisticsBillFeign.mapTrackNoAndSoOutId(ids);
+//        Map<String,List<String>> trackNoMAp = logisticsBillFeign.mapTrackNoAndSoOutId(ids);
         for (SoOutstockDTO.PagingViewDTO item : list) {
             //设置跟踪单号
-            if(trackNoMAp.containsKey(item.getId())){
-                item.setTrackNo(trackNoMAp.get(item.getId()));
+//            if(trackNoMAp.containsKey(item.getId())){
+//                item.setTrackNo(trackNoMAp.get(item.getId()));
+//            }
+            if (StringUtils.isNotEmpty(item.getTrackNos())){
+                String[] split = item.getTrackNos().split(",");
+                item.setTrackNo(Arrays.stream(split).collect(Collectors.toList()));
             }
             //设置拦截标识
             SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(item.getSoId())).findFirst().orElse(null);
@@ -1722,6 +1733,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 LogisticsChannelDTO.BaseDTO logisticsInfo = logisticsInfoList.stream().filter(v->v.getId().equals(pagingUpdateDTO.getLogisticsChannelId())).findFirst().orElse(null);
                 if(Objects.nonNull(logisticsInfo)){
                     soOutstock.setCarrierId(logisticsInfo.getSupplierId());
+                    //记录 运输单号和渠道信息
+                    if (CollectionUtils.isNotEmpty(pagingUpdateDTO.getTrackNoList())){
+                        soOutstock.setTrackNo(String.join(",", pagingUpdateDTO.getTrackNoList()));
+                    }
+                    soOutstock.setLogisticsChannelId(pagingUpdateDTO.getLogisticsChannelId());
                     updateList.add(soOutstock);
                 }
             }
@@ -2321,6 +2337,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             if (CollectionUtils.isEmpty(generateSourceDetailList)){
                 log.warn("所有明细已生成销售出库单忽略处理, B2C销售订单={}, 来源明细IDS={}", dto.getPlatformCode(), existSourceDetailIds);
+                String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+                SoB2cErrorDTO.DeleteDetailDTO deleteDTO = new SoB2cErrorDTO.DeleteDetailDTO();
+                deleteDTO.setMainId(soB2cEntity.getId());
+                deleteDTO.setType(type);
+                deleteDTO.setDetailIdList(existSourceDetailIds);
+                soB2cFeign.checkAndDeleteAllError(deleteDTO);
                 return true;
             }
         }

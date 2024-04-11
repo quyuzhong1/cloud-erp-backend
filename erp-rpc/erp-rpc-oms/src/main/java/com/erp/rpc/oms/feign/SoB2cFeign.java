@@ -429,4 +429,8 @@ public interface SoB2cFeign {
 
     @PostMapping("/feign/soB2c/checkAndFillBySoOutStock")
     Boolean checkAndFillBySoOutStock(@RequestBody PlatformSoOutStockDTO dto);
+
+
+    @PostMapping("/feign/soB2cError/deleteAll")
+    void checkAndDeleteAllError(@RequestBody SoB2cErrorDTO.DeleteDetailDTO deleteDTO);
 }

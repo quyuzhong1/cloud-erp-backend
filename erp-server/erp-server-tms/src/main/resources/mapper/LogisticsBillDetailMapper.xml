@@ -50,5 +50,20 @@
         </if>
         order by track_time desc
     </select>
-
+    <select id="getTrackDtoPage" resultType="com.erp.model.tms.dto.LogisticsTrackDTO$UpdateTrackDTO">
+        select id,track_no
+        from logistics_bill_detail
+        where track_status != 'sign'
+        and is_deleted = false and track_no != ''
+        <if test="query.trackQueryMode != null and query.trackQueryMode != ''">
+            and track_query_mode = #{query.trackQueryMode}
+        </if>
+        <if test="query.registerStatus != null">
+            and register_status = #{query.registerStatus}
+        </if>
+        <if test="query.trackEnable != null">
+            and track_enable = #{query.trackEnable}
+        </if>
+        order by track_time desc
+    </select>
 </mapper>

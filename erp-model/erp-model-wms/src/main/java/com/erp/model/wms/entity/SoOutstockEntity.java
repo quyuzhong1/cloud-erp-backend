@@ -253,6 +253,11 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     @TableField("third_code")
     private String thirdCode;
 
+    /**
+     * 物流渠道id
+     */
+    @TableField("logistics_channel_id")
+    private String logisticsChannelId;
 
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;

@@ -7,6 +7,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
@@ -217,13 +218,13 @@ public class LogisticsController extends BaseController {
     /**
      * 批量更新物流信息
      *
-     * @param logisticsBillDetailEntities
+     * @param updateDTOS
      * @return
      */
     @PostMapping("/batchUpdateTrackInfo")
-    public ApiResult<List<BatchResultDTO>> batchUpdateTrackInfo(@RequestBody List<LogisticsBillDetailEntity> logisticsBillDetailEntities) {
-        if (CollectionUtils.isEmpty(logisticsBillDetailEntities)) return failure("数据不能为空");
-        List<BatchResultDTO> resultDTOS = logisticsBaseService.batchUpdateTrackInfo(logisticsBillDetailEntities);
+    public ApiResult<List<BatchResultDTO>> batchUpdateTrackInfo(@RequestBody List<LogisticsTrackDTO.UpdateTrackDTO> updateDTOS) {
+        if (CollectionUtils.isEmpty(updateDTOS)) return failure("数据不能为空");
+        List<BatchResultDTO> resultDTOS = logisticsBaseService.batchUpdateTrackInfo(updateDTOS);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

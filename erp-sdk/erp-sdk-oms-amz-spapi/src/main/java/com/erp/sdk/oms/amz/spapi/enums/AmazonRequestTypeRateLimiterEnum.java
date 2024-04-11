@@ -21,6 +21,7 @@ public enum AmazonRequestTypeRateLimiterEnum {
     ORDER_LIST("0.0167", "20", "order","订单列表"),
     ORDER_ITEMS("0.5", "30", "order_items","订单详情"),
     ORDER_ADDRESS("0.04512", "20", "order_address","订单地址"),
+    BUYER_INFO("0.04512", "20", "buyer_info","买家信息"),
 //    ORDER_ADDRESS("0.0167", "20", "order_address","订单地址"),
 
     // 商品相关

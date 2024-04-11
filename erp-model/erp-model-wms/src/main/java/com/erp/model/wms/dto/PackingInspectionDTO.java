@@ -35,6 +35,11 @@ public class PackingInspectionDTO implements Serializable {
         @NotBlank(message = "操作类型不能为空")
         private String operationType;
 
+        /**
+         * 是否自动出库
+         */
+        @NotNull(message = "是否自动出库不能为空")
+        private Boolean isAutoOut;
 
 
         /**
@@ -87,6 +92,18 @@ public class PackingInspectionDTO implements Serializable {
          * sku总数量
          */
         private Integer skuTotalQty;
+
+        /**
+         * 中转状态 dict_basic：type=transferStatus
+         * not 不需要  wait 待中转   already 已经中转
+         */
+        private String transferStatus;
+
+        /**
+         * 上传状态（订单）dict_basic：type=transferDeclareUploadStatus
+         * enum:TransferDeclareUploadStatusEnum,waitUpload待上传,uploadFailure上传失败,uploadSuccess上传成功
+         */
+        private String orderUploadStatus;
 
         private List<ScanSkuInfo> waitScanSkuList;
 

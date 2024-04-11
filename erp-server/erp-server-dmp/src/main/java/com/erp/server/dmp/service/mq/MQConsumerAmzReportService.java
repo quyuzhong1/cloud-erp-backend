@@ -146,7 +146,7 @@ public class MQConsumerAmzReportService {
             consumerGroup = RocketMqConsumerGroup.SYNC_AMZ_REPORT_PARSE)
     public class ConsumerAmzReportParse implements RocketMQListener<AmzReportTaskEntity> {
         @Override
-        @DataIdempotent(keyIdName = "entity.redissonKey", waitTime = 120)
+//        @DataIdempotent(keyIdName = "entity.redissonKey", waitTime = 120)
         public void onMessage(AmzReportTaskEntity entity) {
             try {
                 log.info("【亚马逊报告】步骤4：报告解析消费处理：entity={}", JSONUtil.toJsonStr(entity));
@@ -178,7 +178,7 @@ public class MQConsumerAmzReportService {
             consumerGroup = RocketMqConsumerGroup.SYNC_AMZ_REPORT_DIRECT_QUERY)
     public class ConsumeAmzReportDirectQuery implements RocketMQListener<AmzReportTaskEntity> {
         @Override
-        @DataIdempotent(keyIdName = "entity.redissonKey", waitTime = 120)
+//        @DataIdempotent(keyIdName = "entity.redissonKey", waitTime = 120)
         public void onMessage(AmzReportTaskEntity entity) {
             try {
                 log.info("【亚马逊报告】步骤4：报告解析消费处理：entity={}", JSONUtil.toJsonStr(entity));

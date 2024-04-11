@@ -1,14 +1,16 @@
 package com.erp.model.tms.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -79,6 +81,12 @@ public class SettingForecastEntity extends BaseEntity<SettingForecastEntity> {
     @TableField("transfer_logistics_supplier_name")
     private String transferLogisticsSupplierName;
 
+
+    /**
+     * 物流渠道id集合
+     */
+    @TableField(exist = false)
+    private List<String> logisticsChannelIdList;
 
     public static final String LOGISTICS_SUPPLIER_ID = "logistics_supplier_id";
 

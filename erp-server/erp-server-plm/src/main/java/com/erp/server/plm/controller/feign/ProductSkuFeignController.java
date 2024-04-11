@@ -9,6 +9,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.ProductVO;
+import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeService;
@@ -428,5 +429,13 @@ public class ProductSkuFeignController {
     @PostMapping("/listProductCustomsBySkuIds")
     public List<ProductCustomsEntity> listProductCustomsBySkuIds(@RequestBody ProductCustomsSkuDTO dto){
         return productCustomsService.listProductCustomsBySkuIds(dto);
+    }
+
+    /**
+     * 根据SkuIds获取SKU简单信息
+     */
+    @PostMapping("/getSimpleSkuInfoByIds")
+    public List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(@RequestBody List<String> skuIds){
+        return productDetailService.getSimpleSkuInfoByIds(skuIds);
     }
 }

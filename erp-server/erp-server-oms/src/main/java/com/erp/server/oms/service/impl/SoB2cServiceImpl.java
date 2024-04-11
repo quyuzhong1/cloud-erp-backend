@@ -830,9 +830,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         // 调用流程审核
         approveProcess(entity, dto, isMatch);
-
+        String approveName = ApproveTypeEnum.REJECT.getName();
+        if (Objects.nonNull(approveType)){
+            approveName = approveType.getName();
+        }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核规则【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "B2C销售订单表", approveType.getName(), ruleName, dto.getComment());
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核规则【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "B2C销售订单表", approveName, ruleName, dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
 
@@ -4820,6 +4823,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 handleData(oldEntity, false, false);
             }
             ApproveStatusEnum oldApproveStatus = oldEntity.getApproveStatus();
+            // 自发货订单如果来源状态是带配货不更新状态, 审核状态也不更新
+            if (!oldEntity.hasPlatformWarehouseOrder() && SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(dto.getBillStatus())){
+                dto.setApproveStatusStr("");
+            }
             if (StringUtils.isNotBlank(dto.getApproveStatusStr())) {
                 ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(dto.getApproveStatusStr());
                 if (null == approveStatusEnum) {
@@ -4873,6 +4880,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(oldEntity.getBillStatus());
                 }
+            }
+            // 自发货订单如果来源状态是带配货不更新状态, 审核状态也不更新
+            if (!oldEntity.hasPlatformWarehouseOrder() && SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(dto.getBillStatus())){
+                dto.setBillStatus(oldEntity.getBillStatus());
             }
 
             // 只替换更新信息
@@ -6202,7 +6213,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         paramDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(platformSkuList);
-        paramDTO.setPlatformSpuNoList(platformSpuList);
+        // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(entity.getDictPlatform())){
+            paramDTO.setPlatformSpuNoList(platformSpuList);
+        }
         paramDTO.setMatchResult(true);
         paramDTO.setLastExpireDate(entity.getPlatformOrderCreateTime());
 
