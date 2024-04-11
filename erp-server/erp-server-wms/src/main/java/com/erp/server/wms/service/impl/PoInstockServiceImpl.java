@@ -410,7 +410,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                             && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
                     .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             //最大入库数量
-            Integer maxInstockQty = receiveQty - receiveQty;
+            Integer maxInstockQty = receiveQty - returnQty;
             if (poInstockDetailEntity.getStockInQty() > maxInstockQty){
                 throw new ServiceException(String.format("SKU【%s】入库数量不能大于"+ maxInstockQty, poInstockDetailEntity.getSkuNo()));
             }
