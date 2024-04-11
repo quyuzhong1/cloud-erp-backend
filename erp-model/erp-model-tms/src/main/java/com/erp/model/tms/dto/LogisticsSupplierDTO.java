@@ -2,8 +2,8 @@ package com.erp.model.tms.dto;
 
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -64,6 +64,10 @@ public class LogisticsSupplierDTO implements Serializable {
          */
         private String name;
         /**
+         * 物流商名
+         */
+        private String shortName;
+        /**
          * 授权状态集合
          */
         private List<String> authStatusList;
@@ -110,6 +114,10 @@ public class LogisticsSupplierDTO implements Serializable {
          * 物流商名
          */
         private String name;
+        /**
+         * 物流商名
+         */
+        private String shortName;
 
         /**
          * 类型
@@ -402,6 +410,11 @@ public class LogisticsSupplierDTO implements Serializable {
         @NotBlank(message = "供应商id不能为空")
         private String supplierId;
 
+        /**
+         * 物流商名
+         */
+        @NotBlank(message = "供应商简称不能为空")
+        private String shortName;
 
         /**
          * 类型
@@ -455,5 +468,34 @@ public class LogisticsSupplierDTO implements Serializable {
          * 禁用
          */
         private Boolean disabled;
+    }
+
+    @Getter
+    @Setter
+    public static class ListChildTreeDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 简称
+         */
+        private String shortName;
+
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
+
+        @JsonInclude(value= JsonInclude.Include.NON_NULL)
+        private List<ListChildTreeDTO> children;
+
     }
 }

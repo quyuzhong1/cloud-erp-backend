@@ -212,7 +212,7 @@ public class LogisticsSupplierController extends BaseController {
      * @return
      */
     @GetMapping("/tree")
-    public ApiResult<List<BaseChildDTO.ListChildTreeDTO>> tree(){
+    public ApiResult<List<LogisticsSupplierDTO.ListChildTreeDTO>> tree(){
         return success(logisticsSupplierService.tree());
     }
 

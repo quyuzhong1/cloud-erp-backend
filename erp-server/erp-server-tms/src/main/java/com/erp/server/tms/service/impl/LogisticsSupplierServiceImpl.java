@@ -396,19 +396,18 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     }
 
     @Override
-    public List<BaseChildDTO.ListChildTreeDTO> tree() {
-        List<LogisticsSupplierEntity> dbList = this.list();
-        List<BaseChildDTO.ListChildTreeDTO> list = LogisticsSupplierConverter.INSTANCE.convertTree(dbList);
+    public List<LogisticsSupplierDTO.ListChildTreeDTO> tree() {
+        List<LogisticsSupplierEntity> dbList = list();
+        List<LogisticsSupplierDTO.ListChildTreeDTO> list = LogisticsSupplierConverter.INSTANCE.convertTree(dbList);
         List<LogisticsChannelEntity> allChannelList = logisticsChannelService.list();
-        for (BaseChildDTO.ListChildTreeDTO item : list) {
+        for (LogisticsSupplierDTO.ListChildTreeDTO item : list) {
             String id = item.getId();
             List<LogisticsChannelEntity> channelList = allChannelList.stream().
                     filter(c -> c.getMainId().equals(id)).sorted(Comparator.comparing(LogisticsChannelEntity::getDisabled)).
                     collect(Collectors.toList());
-            List<BaseChildDTO.ListChildTreeDTO> childrenList = LogisticsChannelConverter.INSTANCE.convertTree(channelList);
+            List<LogisticsSupplierDTO.ListChildTreeDTO> childrenList = LogisticsChannelConverter.INSTANCE.convertTree(channelList);
             item.setChildren(childrenList);
         }
-
         return list;
     }
 
