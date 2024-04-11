@@ -78,6 +78,7 @@ public enum ModuleTypeEnum {
     PRODUCT_REGISTRATION("68", "产品备案"),
     TMS_B2C_DECLARE_RECONCILIATION("69", "B2C报关账单"),
     TMS_FIRST_MILE_RECONCILIATION("70", "头程对账单"),
+    CFG_FIELD_RECONCILIATION("71", "字段配置"),
     ;
 
 

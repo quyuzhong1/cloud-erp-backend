@@ -40,4 +40,8 @@ public enum CfgReconciliationTypeEnum implements EnumMessage {
         }
         return customsTypeNewEnum.getName();
     }
+
+    public static boolean checkSupplier(CfgReconciliationTypeEnum typeEnum) {
+        return CfgReconciliationTypeEnum.B2C_DECLARE.equals(typeEnum) || CfgReconciliationTypeEnum.FIRST_MILE.equals(typeEnum);
+    }
 }

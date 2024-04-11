@@ -19,6 +19,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportDTO;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportExcelDTO;
@@ -87,10 +88,10 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         }
 
         // 记录主单操作日志
-//     log.info("编辑 开始记录对账字段配置单日志数据，id：【{}】", cfgReconciliationFieldEntity.getId());
-//            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), cfgReconciliationFieldEntity.getId(), "对账字段配置单");
+        log.info("编辑 开始记录对账字段配置单日志数据，id：【{}】", cfgReconciliationFieldEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), cfgReconciliationFieldEntity.getId(), "对账字段配置单");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-//        operateLogService.addModuleOperateLogByObj(old, cfgReconciliationFieldEntity, null, cfgReconciliationFieldEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, cfgReconciliationFieldEntity, ModuleTypeEnum.CFG_FIELD_RECONCILIATION.getCode(), cfgReconciliationFieldEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -303,7 +304,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         List<CfgReconciliationFieldDTO.ErpFieldViewDTO> resultList = new ArrayList<>();
         for (CfgReconciliationFieldEntity fieldEntity : list) {
             CfgReconciliationFieldDTO.ErpFieldViewDTO erpFieldViewDTO = BeanMapperUtils.map(CfgReconciliationFieldDTO.ErpFieldViewDTO.class, fieldEntity);
-            if (StrUtil.equals(fieldEntity.getSourceType(),SourceTypeEnum.TMS_CFG_COST.getCode()) ) {
+            if (StrUtil.equals(fieldEntity.getSourceType(), SourceTypeEnum.TMS_CFG_COST.getCode())) {
                 //费用名称
                 String costName = tmsCfgCostList.stream().filter(obj -> StrUtil.equals(obj.getId(), fieldEntity.getSourceId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCostName())).orElse("");
                 erpFieldViewDTO.setErpFieldName(costName);
@@ -323,7 +324,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         if (CollectionUtils.isEmpty(cfgCostIdList)) {
             return Collections.EMPTY_LIST;
         }
-        return lambdaQuery().in(CfgReconciliationFieldEntity::getSourceId,cfgCostIdList).list();
+        return lambdaQuery().in(CfgReconciliationFieldEntity::getSourceId, cfgCostIdList).list();
     }
 
     private void handleImportCfgReconciliationFieldFile(List<CfgReconciliationFieldImportExcelDTO> successList, List<CfgReconciliationFieldImportExcelDTO> errorList) {
@@ -444,6 +445,14 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         if (null == typeEnum) {
             throw new ServiceException("配置核对类型不存在");
         }
+        // 当前对账类型是否校验物流商
+        if (CfgReconciliationTypeEnum.checkSupplier(typeEnum)){
+            LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(entity.getThirdCode());
+            if (null == supplierEntity){
+                throw new ServiceException("物流商不存在");
+            }
+        }
+
         // 设置来源ERP字段名
         Map<String, CfgReconciliationFieldDTO.ErpFieldDropDownDTO> erpFieldNameMap = this.mapErpFieldByUniqueCode(Collections.singletonList(typeEnum.getCode()));
         CfgReconciliationFieldDTO.ErpFieldDropDownDTO dropDownDTO = erpFieldNameMap.get(CfgReconciliationFieldDTO.ErpFieldDropDownDTO.convertUniqueCode(entity.getSourceType(), entity.getSourceId()));
