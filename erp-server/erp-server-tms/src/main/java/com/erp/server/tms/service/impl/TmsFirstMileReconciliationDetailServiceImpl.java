@@ -1,7 +1,6 @@
 package com.erp.server.tms.service.impl;
 
 
-import ch.qos.logback.core.spi.LifeCycle;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -265,10 +264,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         }
         List<TmsFirstMileReconciliationDetailEntity> list = BeanMapperUtils.copyList(TmsFirstMileReconciliationDetailEntity.class, detailList);
 
-        handleUpdateData(list, mainId);
-
         //原明细数据被删除的需要清除mainId
         List<TmsFirstMileReconciliationDetailEntity> oldList = this.listByMainIds(Collections.singletonList(mainId));
+
+        handleUpdateData(list, mainId, oldList);
+
         List<String> deleteIds = getDeleteIds(list, oldList);
         // 需要移除的物流单
         List<String> deleteSourceIds = new LinkedList<>();
@@ -486,7 +486,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
-    private void handleUpdateData(List<TmsFirstMileReconciliationDetailEntity> list, String mainId) {
+    private void handleUpdateData(List<TmsFirstMileReconciliationDetailEntity> list, String mainId, List<TmsFirstMileReconciliationDetailEntity> oldList) {
+        // 当前已有的明细
+        List<String> oldSourceIdList = oldList.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
+
         // 统计预计费用
         Map<String, List<TmsFirstMileReconciliationDetailEntity>> sourceDetailMap = list.stream()
                 .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailEntity::getSourceId));
@@ -503,12 +506,19 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             if (null == listDTO) {
                 throw new ServiceException("物流单不存在,sourceId=" + entry.getKey());
             }
-            if (!ReconciliationStatusEnum.TO_BE_GENERATED.getCode().equalsIgnoreCase(listDTO.getReconciliationStatus())) {
-                throw new ServiceException("该物流单已生成对账单,物流运单号=" + listDTO.getTransportNo());
-            }
             if (!FmLogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(listDTO.getTransportStatus())) {
                 throw new ServiceException("该物流单未签收完成,物流运单号=" + listDTO.getTransportNo());
             }
+            if (CollectionUtils.isEmpty(oldSourceIdList)){
+                continue;
+            }
+            if (oldSourceIdList.contains(listDTO.getSourceId())){
+                continue;
+            }
+            if (!ReconciliationStatusEnum.TO_BE_GENERATED.getCode().equalsIgnoreCase(listDTO.getReconciliationStatus())) {
+                throw new ServiceException("该物流单已生成对账单,物流运单号=" + listDTO.getTransportNo());
+            }
+
         }
         // 补充基础信息
         fillWaitReconciliationList(sourceList);
