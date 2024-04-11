@@ -17,6 +17,7 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierRefUserEntity;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UserPagingSearchDTO;
+import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -70,6 +71,14 @@ public class UserServiceImpl implements UserService {
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (Objects.nonNull(loginUser)){
             String uid = loginUser.getUid();
+            SysUserInfoEntity user = userInfoFeign.info(uid);
+            //判断用户是否有效 防止账号被删除
+            if (Objects.isNull(user)){
+                //用户不存在
+                throw new ServiceException(ApiError.USER_NOT_EXIST);
+            }else if (Objects.isNull(user.getUserState()) || 0 == user.getUserState()){
+                throw new ServiceException(ApiError.ERROR_9016);
+            }
             //获取用户关联供应商
             SupplierUserInfoVO info = supplierUserFeign.info(uid);
             if (Objects.nonNull(info) && StringUtils.isNotEmpty(info.getSupplierId())){

@@ -71,6 +71,7 @@ public class SupplierUserController extends BaseController {
     public ApiResult<PagingVO<SupplierUserVO>> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
         dto.getParams().setUserType(UserTypeEnum.SRM.code);
         dto.getParams().setSupplierId(userService.getSupplierId());
+        dto.getParams().setIsSuper(Boolean.FALSE);
         List<SupplierRefUserVO> supplierRefUserVOS = supplierUserFeign.getSupplierRefBySupplierIds(Collections.singletonList(dto.getParams().getSupplierId()));
         if (CollectionUtils.isEmpty(supplierRefUserVOS)) {
             return success(new PagingVO<>());
