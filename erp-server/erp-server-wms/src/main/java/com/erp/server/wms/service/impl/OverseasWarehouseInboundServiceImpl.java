@@ -1217,6 +1217,17 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
     @Override
 	public List<OverseasInboundDTO> getDataCompareByCondition(OverseasInboundDTO params) {
+    	this.getParams(params);
+		return baseMapper.getDataCompareByCondition(params);
+	}
+
+	@Override
+	public Integer getDataCompareByConditionCount(OverseasInboundDTO params) {
+		this.getParams(params);
+		return baseMapper.getDataCompareByConditionCount(params);
+	}
+	
+	private void getParams(OverseasInboundDTO params) {
 		if(CollUtil.isEmpty(params.getReceiveDateList())) {
 			throw new ServiceException("第三方仓货件签收的系统数据范围【签收日期】不能为空");
 		}
@@ -1227,7 +1238,6 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 				params.setToWarehouseName(warehouseEntity.getName());
 			}
 		}
-		return baseMapper.getDataCompareByCondition(params);
 	}
 
 }

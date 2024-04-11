@@ -2332,4 +2332,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 		
 		return resultDTOList;
 	}
+	
+	@Override
+	public Integer getDataCompareByConditionCount(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params) {
+		List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> list = getDataCompareByCondition(params);
+		if(list == null) {
+			list = new ArrayList<>();
+		}
+		return list.size();
+	}
 }

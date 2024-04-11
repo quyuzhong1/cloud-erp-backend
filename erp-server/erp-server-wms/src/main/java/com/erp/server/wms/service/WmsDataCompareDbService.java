@@ -6,4 +6,6 @@ import com.erp.model.wms.dto.WmsDataCompareTaskDTO.DataCompareDTO;
 
 public interface WmsDataCompareDbService<T extends DataCompareDTO> {
 	List<T> getDataCompareByCondition(T params);
+	
+	Integer getDataCompareByConditionCount(T params);
 }

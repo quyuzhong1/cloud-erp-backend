@@ -1815,6 +1815,17 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 	@Override
 	public List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO> getDataCompareByCondition(
 			com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO params) {
+		this.getParams(params);
+		return baseMapper.getDataCompareByCondition(params);
+	}
+
+	@Override
+	public Integer getDataCompareByConditionCount(com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO params) {
+		this.getParams(params);
+		return baseMapper.getDataCompareByConditionCount(params);
+	}
+	
+	private void getParams(com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO params) {
 		if(CollUtil.isEmpty(params.getReceiveDateList())) {
 			throw new ServiceException("FBA货件签收的系统数据范围【签收日期】不能为空");
 		}
@@ -1825,6 +1836,5 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 				params.setShopName(shopInfo.getName());
 			}
 		}
-		return baseMapper.getDataCompareByCondition(params);
 	}
 }

@@ -16,7 +16,6 @@ import com.erp.model.wms.enums.WmsDataCompareTaskBillTypeEnum;
 import com.erp.server.wms.service.WmsDataCompareBillService;
 import com.erp.server.wms.service.WmsDataCompareDbService;
 
-import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -39,12 +38,13 @@ public abstract class WmsAbstractDataCompareHandler<M extends WmsDataCompareDbSe
 	
 	@Override
 	public Integer getSystemDataCount(String systemDataCondition) {
-		List<T> billSystemDatas = this.getDataCompareByCondition(systemDataCondition , null);
-		if(CollUtil.isEmpty(billSystemDatas)) {
-			return 0;
-		}else {
-			return billSystemDatas.size();
+		currentDbService();
+		T dataCompareDTO = JSON.parseObject(systemDataCondition, entityClass);
+		Integer count = wmsDataCompareDbService.getDataCompareByConditionCount(dataCompareDTO);
+		if(count == null) {
+			count = 0;
 		}
+		return count;
 	}
 	
 	@Override

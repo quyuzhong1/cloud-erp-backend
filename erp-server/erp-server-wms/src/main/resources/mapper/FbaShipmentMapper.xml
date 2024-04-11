@@ -136,7 +136,20 @@
 			fba_shipment
 			T LEFT JOIN fba_shipment_detail G ON T.ID = G.main_id 
 			left join fba_shipment_receive h on g.id = h.detail_id 
-		WHERE
+		<include refid="FbaDataCompareByCondition"/>
+    </select>
+    
+    <select id="getDataCompareByConditionCount" resultType="java.lang.Integer">
+		 SELECT count(h.id)
+		FROM
+			fba_shipment
+			T LEFT JOIN fba_shipment_detail G ON T.ID = G.main_id 
+			left join fba_shipment_receive h on g.id = h.detail_id 
+		<include refid="FbaDataCompareByCondition"/>
+    </select>
+    
+    <sql id="FbaDataCompareByCondition">
+    	WHERE
 			T.is_deleted = 'f' 
 			AND G.is_deleted = 'f' 
 			and h.is_deleted = 'f' 
@@ -151,5 +164,5 @@
 			<if test="params.id!=null and params.id!=''">
             and not exists (select id from wms_data_compare_temp where system_data_id = h.id and task_id = #{params.id})
         	</if>
-    </select>
+	</sql>
 </mapper>
