@@ -1505,7 +1505,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Tuple generateTransferOut(ShopInfoEntity shopEntity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList, Boolean isToOnwayWarehouse, String remark, LocalDate billDate, String transferDirection, Map<String, LocalDate> closedDateMap) {
+    public Tuple generateTransferOut(ShopInfoEntity shopEntity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList, Boolean isToOnwayWarehouse, String remark, LocalDate billDate, String transferDirection) {
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(shopEntity.getWarehouseId()));
 
         //仓库列表配置的在途归属仓库，目的仓为FBA第三方仓时，在途仓优先取仓库列表配置，配置为空时默认为“FBA在途仓-xgwj-fba”
@@ -1518,20 +1518,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         WarehouseEntity outWarehouse = isToOnwayWarehouse?warehouseEntity:onwayWarehouse;
 
         WarehouseEntity inWarehouse = isToOnwayWarehouse?onwayWarehouse:warehouseEntity;
-
-        // 关账时间之前的不审核
-        LocalDate inClosedDate = closedDateMap.get(inWarehouse.getOrgId());
-        LocalDate outClosedDate = closedDateMap.get(outWarehouse.getOrgId());
-        if ( null != inClosedDate){
-            if (!billDate.isAfter(inClosedDate)){
-                return null;
-            }
-        }
-        if (null != outClosedDate){
-            if (!billDate.isAfter(outClosedDate)){
-                return null;
-            }
-        }
 
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //默认来源类型：FBA货件
@@ -1700,14 +1686,23 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void generateTransfer(ShopInfoEntity shopInfoEntity , FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> receiveList , Boolean isToOnwayWarehouse, String remark, LocalDate billDate, String transferDirection, Map<String, LocalDate> closedDateMap){
-        Tuple tuple =  this.generateTransferOut(shopInfoEntity, entity,  receiveList,isToOnwayWarehouse,remark, billDate, transferDirection, closedDateMap);
-        // 空=不生成挑拨单
-        if (null == tuple){
-            return;
-        }
-
+        Tuple tuple =  this.generateTransferOut(shopInfoEntity, entity,  receiveList,isToOnwayWarehouse,remark, billDate, transferDirection);
         String transferOutId = tuple.get(0);
         if (StringUtils.isNotBlank(transferOutId)) {
+            // 关账时间之前的不审核
+            TransferInfoDTO.AddDTO addDTO = tuple.get(1);
+            LocalDate inClosedDate = closedDateMap.get(addDTO.getInOrgId());
+            LocalDate outClosedDate = closedDateMap.get(addDTO.getOutOrgId());
+            if (null != inClosedDate) {
+                if (!billDate.isAfter(inClosedDate)) {
+                    return;
+                }
+            }
+            if (null != outClosedDate) {
+                if (!billDate.isAfter(outClosedDate)) {
+                    return;
+                }
+            }
             //提交
             transferInfoService.submit(Collections.singletonList(transferOutId));
 
