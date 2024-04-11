@@ -490,7 +490,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         List<String> costNameList = successList.stream().map(LogisticsBillCostExcelDTO::getCostName).distinct().collect(Collectors.toList());
         List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listByCostNameList(costNameList);
 
-        Map<String, List<LogisticsBillCostExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getOutstockCode().concat(obj.getTrackNo()).concat(obj.getCostName())));
+        Map<String, List<LogisticsBillCostExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getOutstockCode().concat(obj.getTrackNo())));
 
 
         for ( Map.Entry<String, List<LogisticsBillCostExcelDTO>> entry : map.entrySet()) {
@@ -501,7 +501,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             for (LogisticsBillCostExcelDTO excelDTO : value) {
                 //数据验证
                 List<String> errorMsgList = checkImportData(excelDTO,logisticsBillList,logisticsBillCostList,logisticsBillDetailList);
-                if (value.size() > MathUtil.ONE) {
+                //判断导入费用名称是否重复
+                long count = value.stream().filter(obj -> StrUtil.equals(obj.getCostName(), excelDTO.getCostName())).count();
+                if (count > MathUtil.ONE) {
                     errorMsgList.add("费用名称不能重复录入");
                 }
                 TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(obj -> StrUtil.equals(obj.getCostName(), excelDTO.getCostName())).findFirst().orElse(null);
