@@ -9,8 +9,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.AttachDTO;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -38,9 +38,7 @@ import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.model.sys.entity.SysPostUserEntity;
 import com.erp.model.wms.dto.*;
@@ -258,11 +256,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String add(PurchaseReturnOrderDTO.AddDTO dto) {
-        SysUserDTO userDTO = new SysUserDTO();
+        FindUserDTO userDTO = new FindUserDTO();
 
         //获取用户信息
         if (ObjectUtils.isNotEmpty(dto.getReturnUserId())) {
-            userDTO =  sysUserFeign.getSysUserById(dto.getReturnUserId());
+            userDTO =  sysUserFeign.getUserByUserId(dto.getReturnUserId());
         }
         //验证单价必填
         if (ReturnModeEnum.DEDUCTION.getCode().equals(dto.getReturnMode())) {
@@ -295,7 +293,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 //        PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
         String purchaseUserId = dto.getPurchaseUserId();
         if (StringUtils.isNotBlank(purchaseUserId)) {
-            SysUserDTO purchaseUser = sysUserFeign.getSysUserById(dto.getPurchaseUserId());
+            FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(dto.getPurchaseUserId());
             poReturnEntity.setPurchaseUserId(dto.getPurchaseUserId());
             poReturnEntity.setPurchaseUserName(purchaseUser.getUserName());
         }
@@ -343,7 +341,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(PurchaseReturnOrderDTO.UpdateDTO dto) {
         //获取用户信息
-        SysUserDTO userDTO = sysUserFeign.getSysUserById(dto.getReturnUserId());
+        FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getReturnUserId());
         //获取核算公司
         List<BaseIdDTO.CodeDTO> companyEntityList = sysUserFeign.getAccountingCompanyList(Arrays.asList(dto.getReturnOrgId(),dto.getPurchaseOrgId()));
         //获取仓库信息
@@ -372,7 +370,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //获取采购单供应商信息
 //        PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
         if (StringUtils.isNotBlank(dto.getPurchaseUserId())) {
-            SysUserDTO purchaseUser = sysUserFeign.getSysUserById(dto.getPurchaseUserId());
+            FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(dto.getPurchaseUserId());
             poReturnEntity.setPurchaseUserName(purchaseUser.getUserName());
         }
 
