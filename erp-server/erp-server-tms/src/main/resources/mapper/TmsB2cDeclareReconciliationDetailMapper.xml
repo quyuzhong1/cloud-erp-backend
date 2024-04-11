@@ -41,16 +41,42 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        main_id, source_id, source_detail_id, source_type, source_code, so_id, so_detail_id, so_code, date,shop_id, country, logistics_channel_id, logistics_channel_name, qty, estimate_weight, estimate_weight_unit, actual_weight, actual_weight_unit, actual_billing_weight, actual_shipping_cost, actual_declare_cost, actual_other_cost, remark, status, confirm_date, confirm_user_id, confirm_user_name
+        tbdrd.id,
+        tbdrd.create_user_id,
+        tbdrd.create_user_name,
+        tbdrd.create_time,
+        tbdrd.update_user_id,
+        tbdrd.update_user_name,
+        tbdrd.update_time,
+        tbdrd.version,
+        tbdrd.is_deleted,
+        tbdrd.main_id,
+        tbdrd.source_id,
+        tbdrd.source_detail_id,
+        tbdrd.source_type,
+        tbdrd.source_code,
+        tbdrd.so_id,
+        tbdrd.so_detail_id,
+        tbdrd.so_code,
+        tbdrd.date,
+        tbdrd.shop_id,
+        tbdrd.country,
+        tbdrd.logistics_channel_id,
+        tbdrd.logistics_channel_name,
+        tbdrd.qty,
+        tbdrd.estimate_weight,
+        tbdrd.estimate_weight_unit,
+        tbdrd.actual_weight,
+        tbdrd.actual_weight_unit,
+        tbdrd.actual_billing_weight,
+        tbdrd.actual_shipping_cost,
+        tbdrd.actual_declare_cost,
+        tbdrd.actual_other_cost,
+        tbdrd.remark,
+        tbdrd.status,
+        tbdrd.confirm_date,
+        tbdrd.confirm_user_id,
+        tbdrd.confirm_user_name
     </sql>
 
     <!-- 分页查询 -->
@@ -80,9 +106,14 @@
     <select id="listExport" resultType="com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO$ListDTO">
         select
             <include refid="Base_Column_List" />
+            ,tbdr.code
         from tms_b2c_declare_reconciliation_detail tbdrd
+        inner join tms_b2c_declare_reconciliation tbdr on tbdrd.main_id = tbdr.id and tbdr.is_deleted = false
         <where>
-        tbdrd.is_deleted = false and tbdrd.main_id = #{params.mainId}
+        tbdrd.is_deleted = false and tbdrd.main_id in
+        <foreach collection="params.mainIdList" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
         order by tbdrd.id desc
         </where>
     </select>

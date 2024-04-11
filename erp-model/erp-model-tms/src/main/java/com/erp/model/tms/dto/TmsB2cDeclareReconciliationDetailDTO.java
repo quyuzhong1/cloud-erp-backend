@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -65,6 +66,11 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
          * 主表id
          */
         private String mainId;
+
+        /**
+         * 对账单编码
+         */
+        private String code;
 
         /**
          * 来源id
@@ -453,7 +459,8 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
         /**
          * 对账单id
          */
-        private String mainId;
+        @NotEmpty(message = "选中对账单id不能为空")
+        private List<String> mainIdList;
     }
 
 
