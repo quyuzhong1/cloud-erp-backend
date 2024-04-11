@@ -11,7 +11,7 @@
         from
         qc_info qb
         <where>
-            qb.is_deleted = false and qb.qc_date is not null
+            qb.is_deleted = false and qb.qc_date is not null and qb.qc_status != 'cancel'
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
@@ -34,7 +34,7 @@
             count (0) as count
         from qc_info qb
         <where>
-            qb.is_deleted = false and qb.qc_date is not null
+            qb.is_deleted = false and qb.qc_date is not null and qb.qc_status != 'cancel'
             <if test="beginDate != null and endDate != null">
                 and qb.qc_date >= #{beginDate} and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
             </if>
@@ -61,7 +61,7 @@
         from qc_info qb
         left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
-            qb.is_deleted = false and qb.qc_date is not null
+            qb.is_deleted = false and qb.qc_date is not null and qb.qc_status != 'cancel'
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
@@ -91,7 +91,7 @@
         inner join qc_product qp on qb.id = qp.main_id and qp.is_deleted = false
         left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
-            qb.is_deleted = false and qb.qc_date is not null
+            qb.is_deleted = false and qb.qc_date is not null and qb.qc_status != 'cancel'
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
@@ -132,7 +132,7 @@
         from qc_info qb
         left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
-            qb.is_deleted = false and qb.qc_date is not null
+            qb.is_deleted = false and qb.qc_date is not null and qb.qc_status != 'cancel'
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
@@ -166,7 +166,7 @@
         inner join qc_product qp on qb.id = qp.main_id and qp.is_deleted = false
         left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
-            qb.is_deleted = false and qb.qc_date is not null
+            qb.is_deleted = false and qb.qc_date is not null and qb.qc_status != 'cancel'
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date

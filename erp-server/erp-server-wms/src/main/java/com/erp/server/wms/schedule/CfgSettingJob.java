@@ -118,11 +118,15 @@ public class CfgSettingJob {
         Integer notQcCount = list.stream().filter(obj -> StrUtil.equals(obj.getType(), QcBillStatusEnum.WAIT_QC.getName())).map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount).findFirst().orElse(MathUtil.ZERO);
         //累计未质检
         QcEffectivenessDTO.CountQcParamDTO qcParamDTO = new QcEffectivenessDTO.CountQcParamDTO();
-        qcParamDTO.setQcStatusList(Arrays.asList(QcBillStatusEnum.WAIT_QC.getCode(),QcBillStatusEnum.CANCEL.getCode(),QcBillStatusEnum.DRAFT.getCode(),QcBillStatusEnum.WAIT_RE_QC.getCode()));
-        qcInfoService.countTotalNotQc(qcParamDTO);
+        qcParamDTO.setQcStatusList(Arrays.asList(QcBillStatusEnum.WAIT_QC.getCode(),QcBillStatusEnum.DRAFT.getCode(),QcBillStatusEnum.WAIT_RE_QC.getCode()));
+        Integer notQcTotalCount = qcInfoService.countTotalNotQc(qcParamDTO);
+
+        //超时未质检
+        qcParamDTO.setIsTimeOut(Boolean.TRUE);
+        Integer timeOutTotalCount = qcInfoService.countTotalNotQc(qcParamDTO);
 
         //消息头
-        String title = StrUtil.format(NoticeMsgConstant.FS_QC_SETTING_HEAD,totalCount,hasQcCount,viewQcOverviewDTO.getCompletionRate(),notQcCount);
+        String title = StrUtil.format(NoticeMsgConstant.FS_QC_SETTING_HEAD,totalCount,hasQcCount,viewQcOverviewDTO.getCompletionRate(),notQcCount,notQcTotalCount,timeOutTotalCount);
         noticeMsgInfoDTO.setTitle(title);
         //消息体
         String msgContent = StrUtil.format(NoticeMsgConstant.FS_QC_SETTING_CONTENT,"质检通知", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
