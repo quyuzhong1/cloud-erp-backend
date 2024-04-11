@@ -195,6 +195,14 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         syncIng.setCount(syncIngCount);
         result.add(syncIng);
+
+        //无需同步
+        DmpPushTaskDTO.TabListDTO noNeedSync = new DmpPushTaskDTO.TabListDTO();
+        noNeedSync.setTabFlag(SyncStatusEnum.NO_NEED_SYNC.getCode());
+        int noNeedSyncCount = countList.stream().filter(a -> a.getTabFlag().equals(noNeedSync.getTabFlag())).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        noNeedSync.setCount(noNeedSyncCount);
+        result.add(noNeedSync);
         return result;
     }
 
