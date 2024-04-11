@@ -663,4 +663,28 @@
         </foreach>
     </select>
 
+    <!--统计未质检数量 -->
+    <select id="countTotalNotQc" resultType="java.lang.Integer">
+        select
+            count(0)
+        from qc_info  qb
+        <where>
+            qb.is_deleted = false and qb.qc_date is not null
+            <if test="params.qcStatusList !=null and params.qcStatusList.size>0">
+                AND qb.qc_status IN
+                <foreach collection="params.qcStatusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.isTimeOut != null">
+                <if test="params.isTimeOut == false">
+                    and wr.approve_time::timestamp + '1 day' >= qb.qc_finish_time::timestamp
+                </if>
+                <if test="params.isTimeOut == true">
+                    and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status = 'waitQc'))
+                </if>
+            </if>
+        </where>
+    </select>
+
 </mapper>

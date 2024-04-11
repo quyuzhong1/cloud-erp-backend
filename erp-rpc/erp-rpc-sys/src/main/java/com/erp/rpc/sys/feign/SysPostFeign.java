@@ -43,4 +43,15 @@ public interface SysPostFeign {
      **/
     @GetMapping("/feign/post/getPostUserByUserId")
     List<SysPostUserEntity> getPostUserByUserId(@RequestParam("userId") String userId);
+
+
+    /**
+     * 根据岗位id集合查询岗位用户关联信息
+     * @author Will
+     * @date: 2024/4/10 16:40
+     * @param postIdList
+     * @return List<SysPostUserEntity>
+     */
+    @GetMapping("/feign/post/listPostUserByPostIdList")
+    List<SysPostUserEntity> listPostUserByPostIdList(@RequestParam("postIdList") List<String> postIdList);
 }

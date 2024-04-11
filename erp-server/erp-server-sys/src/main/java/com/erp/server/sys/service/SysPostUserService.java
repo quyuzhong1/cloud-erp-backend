@@ -3,8 +3,8 @@ package com.erp.server.sys.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.BaseSearchDTO;
-import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.dto.BatchSavePostUserDTO;
+import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysPostUserEntity;
 
 import java.util.List;
@@ -30,4 +30,12 @@ public interface SysPostUserService  extends IService<SysPostUserEntity> {
      * @return java.util.List<com.erp.model.sys.entity.SysPostUserEntity>
      **/
     List<SysPostUserEntity> getByUserId(String userId);
+    /**
+     * @description: 根据用户id查询用户岗位
+     * @author Will
+     * @date: 2024/4/10 16:41
+     * @param postIdList
+     * @return List<SysPostUserEntity>
+     */
+    List<SysPostUserEntity> listPostUserByPostIdList(List<String> postIdList);
 }

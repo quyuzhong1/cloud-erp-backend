@@ -9,6 +9,8 @@ public enum CfgSettingEnum implements EnumMessage {
     SUBCONTRACT_ISSUE("subcontractIssue","委外发料单设置"),
     PO_RETURN("poReturn","采购退货单设置"),
     PO_RECONCILIATION("poReconciliation","采购对账单设置"),
+    FS_QC_NOTICE("fsQcNotice","飞书通知配置"),
+
     ;
 
     /**

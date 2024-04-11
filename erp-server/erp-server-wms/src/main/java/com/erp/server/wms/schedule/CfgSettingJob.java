@@ -1,0 +1,139 @@
+package com.erp.server.wms.schedule;
+
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson2.JSONObject;
+import com.common.core.utils.MathUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.msg.constant.NoticeMsgConstant;
+import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.enums.NoticeTypeEnum;
+import com.erp.model.sys.entity.SysPostUserEntity;
+import com.erp.model.wms.dto.CfgSettingValueDTO;
+import com.erp.model.wms.dto.QcEffectivenessDTO;
+import com.erp.model.wms.entity.CfgSettingEntity;
+import com.erp.model.wms.enums.CfgSettingEnum;
+import com.erp.model.wms.enums.QcBillStatusEnum;
+import com.erp.rpc.sys.feign.SysPostFeign;
+import com.erp.server.wms.service.CfgSettingService;
+import com.erp.server.wms.service.QcEffectivenessService;
+import com.erp.server.wms.service.QcInfoService;
+import com.xxl.job.core.biz.model.ReturnT;
+import com.xxl.job.core.context.XxlJobHelper;
+import com.xxl.job.core.handler.annotation.XxlJob;
+import io.seata.common.util.CollectionUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * @description: 系统配置定时任务
+ * @author Will
+ * @date: 2024/4/10 16:16
+ */
+@Component
+@Slf4j
+public class CfgSettingJob {
+
+    @Resource
+    private CfgSettingService cfgSettingService;
+
+    @Resource
+    private SysPostFeign sysPostFeign;
+
+    @Resource
+    private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
+
+    @Resource
+    private QcEffectivenessService qcEffectivenessService;
+
+    @Resource
+    private QcInfoService qcInfoService;
+
+    /**
+     * 质检飞书通知
+     * @author Will
+     * @date: 2024/4/10 16:19
+     * @return ReturnT<String>
+     */
+    @XxlJob("fsQcNotice")
+    public ReturnT<String> fsQcNotice() {
+        XxlJobHelper.log("====开始发送质检飞书通知=====");
+        //查询系统配置
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.FS_QC_NOTICE.getCode());
+        if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
+            XxlJobHelper.log("未设置质检飞书通知配置，无需发送通知");
+            return ReturnT.SUCCESS;
+        }
+        CfgSettingValueDTO.FsQcNoticeDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.FsQcNoticeDTO.class);
+        if (ObjectUtil.isEmpty(dto.getSendTime())) {
+            XxlJobHelper.log("未设置发送时间，无需发送通知");
+            return ReturnT.SUCCESS;
+        }
+        List<String> noticeUserIdList = new ArrayList<>();
+        //岗位处理
+        if (CollectionUtils.isNotEmpty(dto.getPostIdList())) {
+            List<SysPostUserEntity> sysPostList = sysPostFeign.listPostUserByPostIdList(dto.getPostIdList());
+            //岗位下用户
+            List<String> postUserIdList = sysPostList.stream().map(SysPostUserEntity::getUserId).distinct().collect(Collectors.toList());
+            noticeUserIdList.addAll(postUserIdList);
+        }
+        //抄送人员
+        if (CollectionUtils.isNotEmpty(dto.getUserIdList())) {
+            noticeUserIdList.addAll(dto.getUserIdList());
+            noticeUserIdList = noticeUserIdList.stream().distinct().collect(Collectors.toList());
+        }
+        if (CollectionUtils.isEmpty(noticeUserIdList)) {
+            XxlJobHelper.log("未找到通知人员，无需发送通知");
+            return ReturnT.SUCCESS;
+        }
+        NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
+        noticeMsgInfoDTO.setReceiverUserIds(noticeUserIdList);
+        String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
+
+        QcEffectivenessDTO.CommonSearchParamDTO paramDTO = new  QcEffectivenessDTO.CommonSearchParamDTO();
+        LocalDate now = LocalDate.now();
+        paramDTO.setDateList(Arrays.asList(now, now));
+        QcEffectivenessDTO.ViewQcOverviewDTO viewQcOverviewDTO = qcEffectivenessService.viewQcOverview(paramDTO);
+        List<QcEffectivenessDTO.ViewQcOverviewDetailDTO> list = viewQcOverviewDTO.getList();
+        //质检单总计
+        Integer totalCount = list.stream().filter(obj -> StrUtil.equals(obj.getType(), "总计")).map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount).findFirst().orElse(MathUtil.ZERO);
+        //已质检数量
+        Integer hasQcCount = list.stream().filter(obj -> StrUtil.equals(obj.getType(), QcBillStatusEnum.FINISH_QC.getName())).map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount).findFirst().orElse(MathUtil.ZERO);
+        //未质检数量
+        Integer notQcCount = list.stream().filter(obj -> StrUtil.equals(obj.getType(), QcBillStatusEnum.WAIT_QC.getName())).map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount).findFirst().orElse(MathUtil.ZERO);
+        //累计未质检
+        QcEffectivenessDTO.CountQcParamDTO qcParamDTO = new QcEffectivenessDTO.CountQcParamDTO();
+        qcParamDTO.setQcStatusList(Arrays.asList(QcBillStatusEnum.WAIT_QC.getCode(),QcBillStatusEnum.CANCEL.getCode(),QcBillStatusEnum.DRAFT.getCode(),QcBillStatusEnum.WAIT_RE_QC.getCode()));
+        qcInfoService.countTotalNotQc(qcParamDTO);
+
+        //消息头
+        String title = StrUtil.format(NoticeMsgConstant.FS_QC_SETTING_HEAD,totalCount,hasQcCount,viewQcOverviewDTO.getCompletionRate(),notQcCount);
+        noticeMsgInfoDTO.setTitle(title);
+        //消息体
+        String msgContent = StrUtil.format(NoticeMsgConstant.FS_QC_SETTING_CONTENT,"质检通知", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        noticeMsgInfoDTO.setContent(msgContent);
+        noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.WMS_TASK);
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
+                noticeMsgInfoDTO, IdUtil.simpleUUID());
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+            log.error("消息发送结果失败：{}", JSONObject.toJSONString(result));
+        }
+        return ReturnT.SUCCESS;
+    }
+
+}
