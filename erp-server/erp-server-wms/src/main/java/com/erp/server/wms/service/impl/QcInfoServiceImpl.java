@@ -1627,7 +1627,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             resultDTOS.add(BatchResultDTO.success(qcInfoEntity.getId(), qcInfoEntity.getCode(), OperationTypeEnum.GENERATE));
             addList.add(addDTO);
         }
-        if (CollectionUtils.isNotEmpty(addList) && CollectionUtils.isEmpty(resultDTOS)) {
+        Boolean success = resultDTOS.stream().allMatch(BatchResultDTO::getSuccess);
+        if (CollectionUtils.isNotEmpty(addList) && success) {
             addList.forEach(obj -> poReturnService.add(obj));
         }
         return resultDTOS;
