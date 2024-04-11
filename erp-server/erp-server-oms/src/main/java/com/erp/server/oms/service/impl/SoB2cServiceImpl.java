@@ -92,6 +92,7 @@ import com.erp.server.oms.convert.WalmartShipOrderConverter;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.service.*;
 import com.sdk.oms.tictok.dto.TikTokShopInfoDTO;
+import com.sdk.oms.tictok.dto.tiktok.split.SplitAttributesBean;
 import com.sdk.oms.tictok.dto.tiktok.split.SplitAttributesDTO;
 import com.sdk.oms.tictok.service.TikTokSdkClientService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -2302,8 +2303,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
          * 拆分后金额、费用根据金额比例进行分摊
          */
 
-        //验证拆分数据
-        checkSplitData(dto.getId(), entity);
         //原单据明细
         List<SoB2cDetailEntity> oldDetailList = soB2cDetailService.listByMainId(dto.getId());
         if (CollectionUtils.isEmpty(oldDetailList)) {
@@ -3358,9 +3357,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform())) {
             TikTokShopInfoDTO tikTokShopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(entity.getShopId());
             SplitAttributesDTO splitAttributesDTO = tikTokSdkClientService.sendTikTokSplitAttributes(tikTokShopInfoDTO, entity.getPlatformCode());
-    /*        if (splitAttributesDTO.getData().getSplitAttributes()) {
-
-            }*/
+            SplitAttributesBean splitAttributesBean = splitAttributesDTO.getData().getSplitAttributes().stream().filter(req -> entity.getPlatformCode().equals(req.getOrderId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(splitAttributesBean) || !splitAttributesBean.getCanSplit()) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_TikTok_NOT_SPLIT, entity.getCode(), ObjectUtil.isNotEmpty(splitAttributesBean) ? splitAttributesBean.getReason() : "");
+            }
         }
 
         //未付款数据不能操作

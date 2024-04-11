@@ -1169,6 +1169,7 @@ public enum ApiError implements Serializable {
     IS_NOT_B2C_NOT_UPDATE_MAPPING(92134,"非平台来源的B2C销售订单不可修改映射关系"),
 
     SKU_MAPPING_INVENTORY_INSUFFICIENT(92135,"需要扣除的映射关系SKU【{}】可用库存不足"),
+    ERROR_SO_B2C_TikTok_NOT_SPLIT(92119,"B2C销售订单【{}】在TikTok平台不允许拆分，平台提示【{}】"),
 
 
     /**

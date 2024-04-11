@@ -1509,6 +1509,10 @@ public class SoB2cDTO implements Serializable {
          */
         private String id;
         /**
+         * 平台产品sku
+         */
+        private String platformSkuNo;
+        /**
          * 图片Url
          */
         private String imageUrl;

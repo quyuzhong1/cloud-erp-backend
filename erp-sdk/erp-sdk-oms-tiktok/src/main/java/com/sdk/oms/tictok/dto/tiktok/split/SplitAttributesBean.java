@@ -1,7 +1,9 @@
 package com.sdk.oms.tictok.dto.tiktok.split;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 
+@Data
 public class SplitAttributesBean {
     /**
      * can_split : false
@@ -10,33 +12,9 @@ public class SplitAttributesBean {
      */
 
     @SerializedName("can_split")
-    private boolean canSplit;
+    private Boolean canSplit;
     @SerializedName("order_id")
     private String orderId;
     @SerializedName("reason")
     private String reason;
-
-    public boolean isCanSplit() {
-        return canSplit;
-    }
-
-    public void setCanSplit(boolean canSplit) {
-        this.canSplit = canSplit;
-    }
-
-    public String getOrderId() {
-        return orderId;
-    }
-
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
-    }
-
-    public String getReason() {
-        return reason;
-    }
-
-    public void setReason(String reason) {
-        this.reason = reason;
-    }
 }

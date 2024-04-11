@@ -443,7 +443,7 @@ public class TikTokSdkClientService {
             params.put("access_token", shopInfoDTO.getAccessToken());
             params.put("app_key", shopInfoDTO.getClientId());
             params.put("page_size", pageSize);
-            params.put("page_size", pageToken);
+            params.put("page_token", pageToken);
             params.put("shop_cipher", shopInfoDTO.getShopCipher());
             params.put("shop_id", "");
             params.put("sign", "");
