@@ -50,7 +50,6 @@ import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -2547,7 +2546,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //数据处理
         buildPurchaseOrderCount(list);
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/SrmPurchaseOrder.xlsx";
+        String excelPath = "excel/srmPurchaseOrder.xlsx";
         String name = "采购订单导出";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
