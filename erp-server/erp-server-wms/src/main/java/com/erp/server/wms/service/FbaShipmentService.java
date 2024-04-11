@@ -215,7 +215,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @Author Jim
      * @Date 2023/12/04
      */
-    Tuple generateTransferOut(ShopInfoEntity shopEntity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList, Boolean isToOnwayWarehouse, String remark, LocalDate billDate, String transferDirection, Map<String, LocalDate> closedDateMap);
+    Tuple generateTransferOut(ShopInfoEntity shopEntity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList, Boolean isToOnwayWarehouse, String remark, LocalDate billDate, String transferDirection);
 
     /**
      * 重新直接调拨单
