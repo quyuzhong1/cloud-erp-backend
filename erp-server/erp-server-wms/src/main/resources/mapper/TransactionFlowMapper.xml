@@ -92,9 +92,9 @@
             and t.bill_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
             t.bill_date
         </if>
-        <if test="params.idList != null and params.idList.size != ''">
+        <if test="params.ids != null and params.ids.size != ''">
             and t.id in
-            <foreach collection="params.idList" item="item" open="(" close=")" separator=",">
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
