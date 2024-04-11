@@ -41,7 +41,7 @@ public class CfgReconciliationFieldQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if ("erpFieldName".equals(field) && null != value) {
+        if ("erpFieldName".equalsIgnoreCase(field) && null != value) {
             //查询ERO
             List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> erpFieldList = cfgReconciliationFieldService.erpFieldList(null);
             if (CollectionUtils.isEmpty(erpFieldList)) {
@@ -116,6 +116,9 @@ public class CfgReconciliationFieldQueryHandler extends AbstractQueryHandler {
                         .map(CfgReconciliationFieldDTO.ErpFieldDropDownDTO::getSourceId)
                         .distinct()
                         .collect(Collectors.toList());
+            }
+            if(CollectionUtils.isEmpty(sourceIds)){
+                return this.getQueryEmptySql();
             }
             if (queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.CONTAINS)
                     || queryConditionEnum.equals(QueryConditionEnum.STARTS_WITH) || queryConditionEnum.equals(QueryConditionEnum.ENDS_WITH)) {
