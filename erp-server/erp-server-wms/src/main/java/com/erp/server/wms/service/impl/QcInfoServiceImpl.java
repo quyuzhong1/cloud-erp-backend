@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
@@ -36,7 +35,6 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.QcInsideTypeEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
@@ -2470,5 +2468,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             return new ArrayList<>();
         }
         return baseMapper.getQcReceiveResult(purchaseDetailIds);
+    }
+
+    @Override
+    public Integer countTotalNotQc(QcEffectivenessDTO.CountQcParamDTO qcParamDTO) {
+        return baseMapper.countTotalNotQc(qcParamDTO);
     }
 }
