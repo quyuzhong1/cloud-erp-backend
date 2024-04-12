@@ -202,6 +202,10 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 CfgSettingValueDTO.PoReconciliationSettingDTO poReconciliationSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.PoReconciliationSettingDTO.class);
                 viewDTO.setPoReconciliationSettingDTO(poReconciliationSettingDTO);
                 break;
+            case FS_QC_NOTICE:
+                CfgSettingValueDTO.FsQcNoticeDTO fsQcNoticeDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsQcNoticeDTO.class);
+                viewDTO.setFsQcNoticeDTO(fsQcNoticeDTO);
+                break;
             default:
                 break;
         }
