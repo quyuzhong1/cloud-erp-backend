@@ -12,6 +12,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -204,7 +205,18 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
             sb.append(" ) ");
             return sb.toString();
         }
-
+        if("warehouse".equals(field)){
+            return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.main_id = sb2c.id and sbd.warehouse_id "+ compareCodeSplicingValueSql +" ) ";
+        }
+        //是否缺货 （待配货和配货中且sku数量大于可用库存且不是忽略库存计算SKU） 因为需要查询PLM系统和WMS系统，所以无法在这里直接处理
+        if("isOutStock".equals(field)){
+            Boolean bool = (Boolean) value;
+            if(bool){
+                super.buildDefaultDTO("sb2c.bill_status", Arrays.asList(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode(),SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode()));
+            }else {
+                return getQueryAllSql();
+            }
+        }
         return null;
     }
 
