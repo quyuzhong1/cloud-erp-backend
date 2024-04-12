@@ -333,6 +333,11 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
          */
         private LocalDate endDate;
 
+        /**
+         * 供应商id
+         */
+        private String logisticsSupplierId;
+
     }
 
     /**

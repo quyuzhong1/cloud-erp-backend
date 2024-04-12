@@ -20,6 +20,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -29,9 +30,11 @@ import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.tms.mapper.TmsB2cDeclareReconciliationMapper;
 import com.erp.server.tms.service.CommonService;
@@ -46,7 +49,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 /**
@@ -77,6 +83,12 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
 
     @Autowired
     private SysDictFeign sysDictFeign;
+
+    @Autowired
+    private ScmTaskFeign scmTaskFeign;
+
+    @Autowired
+    private DmpTaskFeign dmpTaskFeign;
 
     @Autowired
     private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
@@ -447,6 +459,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         //币别信息
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(data.getCurrency()));
 
+
         for (TmsB2cDeclareReconciliationDetailDTO.ViewDTO viewDTO : viewDTOList) {
             //店铺名称
             String shopName = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), viewDTO.getShopId()))
@@ -548,6 +561,17 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
     * 新增修改处理数据
     */
     private void handleData(TmsB2cDeclareReconciliationEntity tmsB2cDeclareReconciliationEntity) {
+        //供应商
+        SupplierEntity supplier = scmTaskFeign.getSupplierById(tmsB2cDeclareReconciliationEntity.getLogisticsSupplierId());
+        if (ObjectUtil.isNotEmpty(supplier)) {
+            tmsB2cDeclareReconciliationEntity.setCurrency(supplier.getPayCurrency());
 
+            //查询汇率
+            BigDecimal rate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), tmsB2cDeclareReconciliationEntity.getCurrency());
+            if(ObjectUtil.isEmpty(rate)){
+                log.error("币别【{}】,汇率为空，请维护汇率后再提交",tmsB2cDeclareReconciliationEntity.getCurrency());
+                throw new ServiceException("汇率为空，请维护汇率后再提交");
+            }
+        }
     }
 }
