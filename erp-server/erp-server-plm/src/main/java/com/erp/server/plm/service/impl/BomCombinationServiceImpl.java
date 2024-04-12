@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -256,6 +257,49 @@ public class BomCombinationServiceImpl implements BomCombinationService {
             log.error("组合产品 downloadTemplate  出错了 e==={}", e);
             throw new ServiceException(ApiError.ERROR_95131);
         }
+    }
+
+    @Override
+    public String checkBomChildSku(BomCombinationDTO.CheckBomParentSkuDTO dto) {
+        //skuId集合
+        List<String> skuIdList = dto.getChildSkuList().stream().map(BomCombinationDTO.CheckBomChildSkuDTO::getSkuId).collect(Collectors.toList());
+
+        List<BomDTO.BomSku> bomSkuList = bomSkuService.listAllBomByChildSkuIdList(skuIdList);
+        if (CollectionUtils.isEmpty(bomSkuList)) {
+            return null;
+        }
+        List<String> errorSkuNoList = new ArrayList<>();
+        Map<String, List<BomDTO.BomSku>> map = bomSkuList.stream().collect(Collectors.groupingBy(BomDTO.BomSku::getParentSkuNo));
+        for (Map.Entry<String, List<BomDTO.BomSku>> entry : map.entrySet()) {
+            List<BomDTO.BomSku> value = entry.getValue();
+            //父级SKU相同无需校验
+            if (StrUtil.equals(entry.getKey(),dto.getSkuNo())) {
+                continue;
+            }
+            //子级数量不一致无需校验
+            if (skuIdList.size() != value.size()) {
+                continue;
+            }
+            //是否匹配
+            Boolean isMatch = Boolean.TRUE;
+            for (BomDTO.BomSku bomSku : value) {
+                long count = dto.getChildSkuList().stream()
+                        .filter(obj -> StrUtil.equals(obj.getSkuId(), bomSku.getSkuId())
+                                && MathUtil.compareTo(obj.getQty(), bomSku.getQty()) == MathUtil.ZERO)
+                        .count();
+                if (count == MathUtil.ZERO) {
+                    isMatch = Boolean.FALSE;
+                }
+            }
+            if (isMatch) {
+                errorSkuNoList.add(entry.getKey());
+            }
+        }
+        if (CollectionUtils.isEmpty(errorSkuNoList)) {
+            return null;
+        }
+        String parentSkuNos = errorSkuNoList.stream().collect(Collectors.joining(","));
+        return StrUtil.format("子产品明细与已存在捆绑商品【{}】的子件一致，是否继续创建",parentSkuNos);
     }
 
     /**

@@ -2,8 +2,8 @@ package com.erp.server.plm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.dto.BomSkuPageDTO;
 import com.erp.model.plm.dto.BomDTO;
+import com.erp.model.plm.dto.BomSkuPageDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -72,7 +72,14 @@ public interface BomRefSkuMapper extends BaseMapper<BomSkuEntity> {
      */
     List<BomInfoEntity> listAllBomByParentSkuNos(@Param("parentSkuNos") List<String> parentSkuNos);
 
-
+    /**
+     * @description: 根据子级skuId集合查询未作废BOM
+     * @author Will
+     * @date: 2023/8/30 11:05
+     * @param childSkuIdList
+     * @return List<BomInfoEntity>
+     */
+    List<BomDTO.BomSku> listAllBomByChildSkuIdList(@Param("childSkuIdList") List<String> childSkuIdList);
     /**
      * 根据KU查询Bom
      * @Author Luo_WG

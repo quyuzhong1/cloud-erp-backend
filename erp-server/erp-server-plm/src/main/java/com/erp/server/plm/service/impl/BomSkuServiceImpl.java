@@ -6,11 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.dto.BomDTO;
-import com.erp.model.plm.dto.BomSkuDTO;
-import com.erp.model.plm.dto.ProductBomInfoDTO;
-import com.erp.model.plm.dto.BomSkuPageDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
@@ -220,6 +216,14 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
     }
 
     @Override
+    public List<BomDTO.BomSku> listAllBomByChildSkuIdList(List<String> childSkuIdList) {
+        if (CollectionUtils.isEmpty(childSkuIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listAllBomByChildSkuIdList(childSkuIdList);
+    }
+
+    @Override
     public BomSkuPageDTO.ListAllSkuDTO listAllLevelSku(BomSkuPageDTO.AllSkuParamDTO params) {
         BomSkuPageDTO.ListAllSkuDTO listAllSkuDTO = new BomSkuPageDTO.ListAllSkuDTO();
         //父级SKU
@@ -284,6 +288,7 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         return this.lambdaQuery().eq(BomSkuEntity::getBomId, bomId).list();
     }
 
+
     @Override
     public List<BomDTO.BomSku> listBySkuIds(List<String> skuIdList) {
         if (CollectionUtils.isEmpty(skuIdList)) {
@@ -291,6 +296,7 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         }
         return baseMapper.listBySkuIds(skuIdList);
     }
+
 
     @Override
     public List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(List<String> skuNos) {

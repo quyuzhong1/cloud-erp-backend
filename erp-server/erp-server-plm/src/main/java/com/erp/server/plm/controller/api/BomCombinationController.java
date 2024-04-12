@@ -65,6 +65,20 @@ public class BomCombinationController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+
+    /**
+     * 验证BOM是否重复
+     * @author Will
+     * @date: 2024/4/12 16:14
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/checkBomChildSku")
+    public ApiResult<String> checkBomChildSku(@RequestBody @Validated BomCombinationDTO.CheckBomParentSkuDTO dto) {
+        String msg = this.bomCombinationService.checkBomChildSku(dto);
+        return success(msg);
+    }
+
     /**
      * 查看详情
      * @author Will
