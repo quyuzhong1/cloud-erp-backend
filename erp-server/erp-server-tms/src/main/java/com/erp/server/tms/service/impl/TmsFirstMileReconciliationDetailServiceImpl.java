@@ -259,9 +259,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList, String mainId) {
-        if (CollectionUtils.isEmpty(detailList)) {
-            return Boolean.TRUE;
-        }
+//        if (CollectionUtils.isEmpty(detailList)) {
+//            return Boolean.TRUE;
+//        }
         List<TmsFirstMileReconciliationDetailEntity> list = BeanMapperUtils.copyList(TmsFirstMileReconciliationDetailEntity.class, detailList);
 
         //原明细数据被删除的需要清除mainId
@@ -329,6 +329,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
     @Override
     public void fillDetailList(List<TmsFirstMileReconciliationDetailDTO.ListDTO> viewDTOList, String currency, String currencySymbol) {
+        if (CollectionUtils.isEmpty(viewDTOList)){
+            return;
+        }
         //店铺信息
         List<String> shopIdList = viewDTOList.stream()
                 .map(TmsFirstMileReconciliationDetailDTO.ListDTO::getShopId)
@@ -516,11 +519,12 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 continue;
             }
             if (sourceListMap.containsKey(listDTO.getSourceId())){
-                List<TmsFirstMileReconciliationDetailEntity> oldEntityList = sourceDetailMap.get(listDTO.getSourceId());
-                if (!CollectionUtils.isEmpty(oldEntityList)){
-                    String status = oldEntityList.get(0).getStatus();
+                Map<String, TmsFirstMileReconciliationDetailEntity> oldEntityMap = sourceListMap.get(listDTO.getSourceId());
+                if (!CollectionUtils.isEmpty(oldEntityMap)){
+                    TmsFirstMileReconciliationDetailEntity detailEntity = oldEntityMap.values().stream().findFirst().orElse(null);
+                    String status = detailEntity.getStatus();
                     // 非确认状态校验
-                    if (ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equalsIgnoreCase(status) || status.equalsIgnoreCase(listDTO.getStatus())) {
+                    if (ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equalsIgnoreCase(status) || status.equalsIgnoreCase(detailEntity.getStatus())) {
                         continue;
                     } else {
                         throw new ServiceException("仅{待确认}可提交确认,物流运单号=" + listDTO.getTransportNo());

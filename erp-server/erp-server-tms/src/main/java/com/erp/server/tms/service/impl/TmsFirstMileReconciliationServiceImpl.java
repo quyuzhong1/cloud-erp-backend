@@ -499,6 +499,8 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                 .set(TmsFirstMileReconciliationEntity::getApproveUserId, "")
                 .set(TmsFirstMileReconciliationEntity::getApproveUserName, "")
                 .set(TmsFirstMileReconciliationEntity::getApproveStatus, approveStatus)
+                .set(TmsFirstMileReconciliationEntity::getSubmitDate, null)
+                .set(TmsFirstMileReconciliationEntity::getApproveDate, null)
                 .update(new TmsFirstMileReconciliationEntity());
     }
 
@@ -510,6 +512,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         lambdaUpdate().eq(TmsFirstMileReconciliationEntity::getId, id)
                 .set(TmsFirstMileReconciliationEntity::getApproveStatus, approveStatus)
                 .set(ApproveStatusEnum.APPROVE_ING.getCode().equals(approveStatus),TmsFirstMileReconciliationEntity::getSubmitDate, LocalDate.now())
+                .set(ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(approveStatus),TmsFirstMileReconciliationEntity::getSubmitDate, null)
                 .update(new TmsFirstMileReconciliationEntity());
     }
 
