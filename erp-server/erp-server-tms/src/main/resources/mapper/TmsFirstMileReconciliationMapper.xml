@@ -31,16 +31,30 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
+        id as id,
+        create_user_id AS createUserId,
+        create_user_name AS createUserName,
+        create_time AS createTime,
+        update_user_id AS updateUserId,
+        update_user_name AS updateUserName,
+        update_time AS updateTime,
         version,
-        is_deleted,
-        code, approve_status, approve_user_id, approve_user_name, reconciliation_date, submit_date, approve_date, start_date, end_date, logistics_supplier_id, logistics_supplier_name, currency, exchange_rate, total_cost, reason
+        is_deleted AS isDeleted,
+        code,
+        approve_status AS approveStatus,
+        approve_user_id AS approveUserId,
+        approve_user_name AS approveUserName,
+        reconciliation_date AS reconciliationDate,
+        submit_date AS submitDate,
+        approve_date AS approveDate,
+        start_date AS startDate,
+        end_date AS endDate,
+        logistics_supplier_id AS logisticsSupplierId,
+        logistics_supplier_name AS logisticsSupplierName,
+        currency AS currency,
+        exchange_rate AS exchangeRate,
+        total_cost AS totalCost,
+        reason
     </sql>
 
     <select id="paging" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDTO$ListDTO">
