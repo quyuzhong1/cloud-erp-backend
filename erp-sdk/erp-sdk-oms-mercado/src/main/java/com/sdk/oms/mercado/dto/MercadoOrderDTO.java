@@ -164,10 +164,18 @@ public class MercadoOrderDTO extends CleanBaseDTO {
 
             if ("handling".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-                orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+                if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
+                    orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+                } else {
+                    orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+                }
             } else if ("ready_to_ship".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-                orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+                if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
+                    orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+                } else {
+                    orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+                }
             } else if ("shipped".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
@@ -184,7 +192,6 @@ public class MercadoOrderDTO extends CleanBaseDTO {
                 orderDTO.setRemark("平台取消");
             }
         }
-
 
         if ("invalid".equals(orderBean.getStatus())) {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -345,12 +352,8 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         }
         List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
         //自发货不用更新物流单
-        ShipmentViewDTO shipmentViewDTO = new ShipmentViewDTO();
-        if (ObjectUtil.isNotEmpty(orderBean.getShipmentViewDTO())) {
-            shipmentViewDTO = orderBean.getShipmentViewDTO();
-            if ("me1".equalsIgnoreCase(shipmentViewDTO.getLogistic().getMode())) {
-                trackingNumber = "";
-            }
+        if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
+            trackingNumber = "";
         }
 
         PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()

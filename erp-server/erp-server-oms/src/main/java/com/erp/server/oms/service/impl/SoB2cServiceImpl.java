@@ -4881,6 +4881,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     dto.setBillStatus(oldEntity.getBillStatus());
                 }
             }
+
             // 自发货订单如果来源状态是带配货不更新状态, 审核状态也不更新
             if (!oldEntity.hasPlatformWarehouseOrder() && SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(dto.getBillStatus())){
                 dto.setBillStatus(oldEntity.getBillStatus());
