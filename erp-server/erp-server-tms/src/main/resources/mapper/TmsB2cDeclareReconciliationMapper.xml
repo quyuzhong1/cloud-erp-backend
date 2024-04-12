@@ -25,7 +25,6 @@
        <result column="logistics_supplier_name" property="logisticsSupplierName" />
        <result column="currency" property="currency" />
        <result column="exchange_rate" property="exchangeRate" />
-       <result column="total_cost" property="totalCost" />
        <result column="reason" property="reason" />
     </resultMap>
 
@@ -52,13 +51,13 @@
         tbdr.logistics_supplier_id as logisticsSupplierId,
         tbdr.logistics_supplier_name as logisticsSupplierName,
         tbdr.currency, exchange_rate as exchangeRate,
-        tbdr.total_cost as totalCost,
         tbdr.reason,
         tbdrd.actualBillingWeight,
         tbdrd.actualWeightUnit,
         tbdrd.actualShippingCost,
         tbdrd.actualDeclareCost,
-        tbdrd.actualOtherCost
+        tbdrd.actualOtherCost,
+        (tbdrd.actualShippingCost + tbdrd.actualDeclareCost + tbdrd.actualOtherCost) as totalCost
     </sql>
 
     <!-- 分页查询 -->

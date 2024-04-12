@@ -94,11 +94,6 @@ public class TmsB2cDeclareReconciliationEntity extends BaseEntity<TmsB2cDeclareR
     @TableField("exchange_rate")
     private BigDecimal exchangeRate;
     /**
-    * 费用合计
-    */
-    @TableField("total_cost")
-    private BigDecimal totalCost;
-    /**
     * 审核不通过原因
     */
     @TableField("reason")
@@ -130,8 +125,6 @@ public class TmsB2cDeclareReconciliationEntity extends BaseEntity<TmsB2cDeclareR
     public static final String CURRENCY = "currency";
 
     public static final String EXCHANGE_RATE = "exchange_rate";
-
-    public static final String TOTAL_COST = "total_cost";
 
     public static final String REASON = "reason";
 

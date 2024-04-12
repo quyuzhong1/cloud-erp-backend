@@ -163,7 +163,7 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
         private BigDecimal exchangeRate;
 
         /**
-        * 费用合计【可排序】
+        * 费用合计
         */
         private BigDecimal totalCost;
 
@@ -338,6 +338,10 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
          */
         private String logisticsSupplierId;
 
+        /**
+         * 供应商名称
+         */
+        private String logisticsSupplierName;
     }
 
     /**

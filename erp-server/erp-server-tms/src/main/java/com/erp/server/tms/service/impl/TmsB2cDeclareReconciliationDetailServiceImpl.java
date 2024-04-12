@@ -290,6 +290,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             addDTO.setStartDate(startDate);
             addDTO.setEndDate(endDate);
             addDTO.setLogisticsSupplierId(entry.getKey());
+            addDTO.setLogisticsSupplierName(value.get(0).getLogisticsSupplierName());
             List<TmsB2cDeclareReconciliationDetailDTO.UpdateDTO> detailList = BeanMapperUtils.copyList(TmsB2cDeclareReconciliationDetailDTO.UpdateDTO.class, value);
             addDTO.setDetailList(detailList);
             tmsB2cDeclareReconciliationService.add(addDTO);

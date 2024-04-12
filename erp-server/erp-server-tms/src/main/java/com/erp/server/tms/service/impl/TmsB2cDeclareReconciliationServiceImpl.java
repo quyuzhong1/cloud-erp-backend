@@ -28,6 +28,7 @@ import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
+import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -37,10 +38,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.tms.mapper.TmsB2cDeclareReconciliationMapper;
-import com.erp.server.tms.service.CommonService;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.TmsB2cDeclareReconciliationDetailService;
-import com.erp.server.tms.service.TmsB2cDeclareReconciliationService;
+import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -92,6 +90,10 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
 
     @Autowired
     private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
+
+    @Autowired
+    private TransferLogisticsSupplierService transferLogisticsSupplierService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -460,7 +462,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(data.getCurrency()));
 
         //物流费用总金额
-        BigDecimal totalCost = detailList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getActualShippingCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalCost = detailList.stream().map(obj -> obj.getActualShippingCost().add(obj.getActualDeclareCost()).add(obj.getActualOtherCost())).reduce(BigDecimal.ZERO, BigDecimal::add);
         data.setTotalCost(totalCost);
 
         for (TmsB2cDeclareReconciliationDetailDTO.ViewDTO viewDTO : viewDTOList) {
@@ -565,17 +567,22 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
     * 新增修改处理数据
     */
     private void handleData(TmsB2cDeclareReconciliationEntity tmsB2cDeclareReconciliationEntity) {
-        //供应商
-        SupplierEntity supplier = scmTaskFeign.getSupplierById(tmsB2cDeclareReconciliationEntity.getLogisticsSupplierId());
-        if (ObjectUtil.isNotEmpty(supplier)) {
-            tmsB2cDeclareReconciliationEntity.setCurrency(supplier.getPayCurrency());
-
-            //查询汇率
-            BigDecimal rate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), tmsB2cDeclareReconciliationEntity.getCurrency());
-            if(ObjectUtil.isEmpty(rate)){
-                log.error("币别【{}】,汇率为空，请维护汇率后再提交",tmsB2cDeclareReconciliationEntity.getCurrency());
-                throw new ServiceException("汇率为空，请维护汇率后再提交");
-            }
+        //中转报关供应商
+        TransferLogisticsSupplierEntity supplierEntity = transferLogisticsSupplierService.getById(tmsB2cDeclareReconciliationEntity.getLogisticsSupplierId());
+        if (ObjectUtil.isEmpty(supplierEntity)) {
+            return;
         }
+        SupplierEntity supplier = scmTaskFeign.getSupplierById(supplierEntity.getSupplierId());
+        if (ObjectUtil.isEmpty(supplier)) {
+            return;
+        }
+        tmsB2cDeclareReconciliationEntity.setCurrency(supplier.getPayCurrency());
+        //查询汇率
+        BigDecimal rate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), tmsB2cDeclareReconciliationEntity.getCurrency());
+        if(ObjectUtil.isEmpty(rate)){
+            log.error("币别【{}】,汇率为空，请维护汇率后再提交",tmsB2cDeclareReconciliationEntity.getCurrency());
+            throw new ServiceException("汇率为空，请维护汇率后再提交");
+        }
+        tmsB2cDeclareReconciliationEntity.setExchangeRate(rate);
     }
 }
