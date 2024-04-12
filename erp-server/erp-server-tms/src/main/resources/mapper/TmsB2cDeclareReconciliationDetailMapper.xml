@@ -61,6 +61,8 @@
         tbdrd.date,
         tbdrd.shop_id,
         tbdrd.country,
+        tbdrd.logistics_supplier_id,
+        tbdrd.logistics_supplier_name,
         tbdrd.logistics_channel_id,
         tbdrd.logistics_channel_name,
         tbdrd.qty,
