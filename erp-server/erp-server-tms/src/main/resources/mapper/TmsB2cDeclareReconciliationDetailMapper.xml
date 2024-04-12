@@ -138,8 +138,8 @@
         tms_b2c_declare_reconciliation_detail tbdrd
         <where>
             tbdrd.is_deleted = false and tbdrd.main_id = ''
-            and tbdrd.confirm_date >= #{startDate}
-            and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY') > tbdrd.confirm_date
+            and tbdrd.date >= #{startDate}
+            and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY') > tbdrd.date
         </where>
     </select>
 
