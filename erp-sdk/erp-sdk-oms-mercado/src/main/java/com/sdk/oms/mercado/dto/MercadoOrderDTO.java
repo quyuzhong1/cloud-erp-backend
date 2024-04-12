@@ -344,7 +344,14 @@ public class MercadoOrderDTO extends CleanBaseDTO {
             cost = orderBean.getShipmentViewDTO().getLeadTime().getCost();
         }
         List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
-
+        //自发货不用更新物流单
+        ShipmentViewDTO shipmentViewDTO = new ShipmentViewDTO();
+        if (ObjectUtil.isNotEmpty(orderBean.getShipmentViewDTO())) {
+            shipmentViewDTO = orderBean.getShipmentViewDTO();
+            if ("me1".equalsIgnoreCase(shipmentViewDTO.getLogistic().getMode())) {
+                trackingNumber = "";
+            }
+        }
 
         PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
                 .code(trackingNumber)
