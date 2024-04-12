@@ -229,7 +229,7 @@
                sui.update_time as updateTime
         from sys_user_info sui
         <where>
-            sui.deleteState = 1 and sui.user_type = 'erp'
+            sui.delete_state = 1 and sui.user_type = 'erp'
             <if test="params.userName != null and params.userName != ''">
                 and sui.user_name  ilike concat('%',#{params.userName}::text,'%')
             </if>
