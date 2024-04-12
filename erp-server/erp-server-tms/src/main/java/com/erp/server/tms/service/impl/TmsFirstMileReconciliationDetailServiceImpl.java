@@ -754,6 +754,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     }
 
     private void checkAndConvertResult(List<FirstMileReconciliationStandardExcelDTO> successList, List<FirstMileReconciliationStandardExcelDTO> errorList, Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> sourceLogisticMap, Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> resultMap, Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> oldDbGroupMap, Map<String, CfgReconciliationFieldDTO.ErpFieldDropDownDTO> cfgErpFieldMap) {
+        // 配置来源分组
+        Map<String, List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO>> sourceTypeGroupMap = cfgErpFieldMap.values()
+                .stream()
+                .collect(Collectors.groupingBy(CfgReconciliationFieldDTO.ErpFieldDropDownDTO::getSourceType));
+
         for (FirstMileReconciliationStandardExcelDTO excelDTO : successList) {
             // 对应物流单
             List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailDTO = sourceLogisticMap.get(excelDTO.getTransportNo());
@@ -766,6 +771,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             List<TmsFirstMileReconciliationDetailDTO.ListDTO> currentTrackNoList = resultMap.get(excelDTO.getTransportNo());
             if (null == currentTrackNoList) {
                 currentTrackNoList = oldDbGroupMap.get(excelDTO.getTransportNo());
+                if (currentTrackNoList.stream().anyMatch(e-> !ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equalsIgnoreCase(e.getStatus()))){
+                    excelDTO.setErrorMsg(StrUtil.format("物流运单号【{}】已确认", excelDTO.getTransportNo()));
+                    errorList.add(excelDTO);
+                    continue;
+                }
                 if (CollectionUtils.isEmpty(currentTrackNoList)) {
                     // 生成当前物流单的所有明细
                     currentTrackNoList = sourceDetailDTO.stream()
@@ -828,9 +838,20 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                         case OTHER_COST:
                             actualListDTO.setOtherCost(actualListDTO.getOtherCost().add(new BigDecimal(excelDTO.getCostValue())));
                     }
+                    // 根据字段名设置
+                    List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> dictBasticList = sourceTypeGroupMap.get(SourceTypeEnum.DICT_BASIC.getCode());
+                    if (!CollectionUtils.isEmpty(dictBasticList)){
+                        for (CfgReconciliationFieldDTO.ErpFieldDropDownDTO fieldDropDownDTO : dictBasticList) {
+                            Object value = ReflectUtil.getFieldValue(excelDTO, fieldDropDownDTO.getSourceCodeValue());
+                            if (null != value){
+                                ReflectUtil.setFieldValue(actualListDTO, fieldDropDownDTO.getSourceCodeValue(), value);
+                            }
+                        }
+                    }
                 } else if (SourceTypeEnum.DICT_BASIC.getCode().equalsIgnoreCase(erpFieldDropDownDTO.getSourceType())) {
                     // 根据字段名设置
-                    ReflectUtil.setFieldValue(actualListDTO, erpFieldDropDownDTO.getSourceCodeValue(), new BigDecimal(excelDTO.getCostValue()));
+                    Object value = ReflectUtil.getFieldValue(excelDTO, erpFieldDropDownDTO.getSourceCodeValue());
+                    ReflectUtil.setFieldValue(actualListDTO, erpFieldDropDownDTO.getSourceCodeValue(), value);
                 } else {
                     excelDTO.setErrorMsg(StrUtil.format("配置类型不存在【{}】", erpFieldDropDownDTO.getSourceType()));
                     errorList.add(excelDTO);

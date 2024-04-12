@@ -32,11 +32,11 @@ public class FirstMileReconciliationStandardExcelDTO implements Serializable {
     private String actualWeight;
 
     /**
-     * 实际计费重
+     * 实际体积重
      */
-    @ExcelProperty(value = "实际计费重", index = 2)
-    @FieldValid(fieldName = "实际计费重", formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
-    private String actualBillingWeight;
+    @ExcelProperty(value = "实际体积重", index = 2)
+    @FieldValid(fieldName = "实际体积重", formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
+    private String volumeWeight;
 
     /**
      * 费用项

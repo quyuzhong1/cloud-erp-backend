@@ -5,7 +5,6 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.tms.dto.excel.DeclareReconciliationStandardExcelDTO;
 import com.erp.model.tms.dto.excel.FirstMileReconciliationStandardExcelDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -58,7 +57,7 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
         }
         if ((StrUtil.isBlank(excelDTO.getCostName()) || StrUtil.isBlank(excelDTO.getCostValue()))
                 && StrUtil.isBlank(excelDTO.getActualWeight())
-                && StrUtil.isBlank(excelDTO.getActualBillingWeight())
+                && StrUtil.isBlank(excelDTO.getVolumeWeight())
         ) {
             errorMsgList.add("实际实重、实际计费重、（费用项、费用金额）至少填一个");
         }
