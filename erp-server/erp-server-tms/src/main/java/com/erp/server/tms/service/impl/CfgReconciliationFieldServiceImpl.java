@@ -382,10 +382,16 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
                     .findFirst()
                     .orElse(null);
             if (null == erpFieldDTO) {
-                importExcelDTO.setErrorMsg(StrUtil.format("【{}】数大臣字段不存在", importExcelDTO.getThirdName()));
+                importExcelDTO.setErrorMsg(StrUtil.format("【{}】数大臣字段不存在", importExcelDTO.getErpFieldName()));
                 errorList.add(importExcelDTO);
                 continue;
             }
+            if (!erpFieldDTO.getReconciliationType().equalsIgnoreCase(cfgReconciliationTypeEnum.getCode())){
+                importExcelDTO.setErrorMsg(StrUtil.format("【{}】数大臣字段不属于【{}】核对类型", importExcelDTO.getErpFieldName(), cfgReconciliationTypeEnum.getName()));
+                errorList.add(importExcelDTO);
+                continue;
+            }
+
             CfgReconciliationFieldEntity historyEntity = allEntityMap.get(CfgReconciliationFieldEntity.combineUniqueCode(cfgReconciliationTypeEnum.getCode(),
                     supplierEntity.getSupplierId(),
                     erpFieldDTO.getSourceType(),
