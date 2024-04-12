@@ -438,9 +438,9 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
     public static class ExportDTO {
 
         /**
-         * 对账单id
+         * 对账单ids
          */
-        private String mainId;
+        private List<String> mainIdList;
     }
 
 

@@ -48,39 +48,6 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
     @Resource
     private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
 
-    /**
-     * 新增
-     *
-     * @param dto DTO
-     * @return ApiResult<String>
-     * @author Jim
-     * {@code @date:} 2024-03-25
-     */
-//    @PostMapping("/add")
-//    @LogAction(value = LogActionEnum.INSERT, desc = "头程对账单明细新增")
-//    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated TmsFirstMileReconciliationDetailDTO.AddDTO dto) {
-//        return success(tmsFirstMileReconciliationDetailService.add(dto));
-//    }
-
-
-//    /**
-//     * 分页查询
-//     *
-//     * @param dto DTO
-//     * @return ApiResult<String>
-//     * @author Jim
-//     * {@code @date:} 2024-03-25
-//     */
-//    @PostMapping("/paging")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "create_user_id",
-//            menuCode = "tms:tmsFirstMileReconciliationDetail:paging",
-//            tableAlias = "tfmrd"
-//    )
-//    @WebAdvanceQuery(handler = TmsFirstMileReconciliationDetailQueryHandler.class)
-//    public ApiResult<PagingVO<TmsFirstMileReconciliationDetailDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<TmsFirstMileReconciliationDetailDTO.PagingParamDTO> dto) {
-//        return success(tmsFirstMileReconciliationDetailService.paging(dto));
-//    }
 
     /**
      * 更新对账状态

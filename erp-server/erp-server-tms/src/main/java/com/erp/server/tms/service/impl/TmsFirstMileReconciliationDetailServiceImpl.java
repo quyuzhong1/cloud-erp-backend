@@ -32,6 +32,7 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
+import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.dto.excel.FirstMileReconciliationStandardExcelDTO;
 import com.erp.model.tms.entity.*;
@@ -101,6 +102,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     private ShopInfoFeign shopInfoFeign;
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -243,9 +246,16 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     }
 
     private void fillMainInfo(List<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> list) {
+        List<String> supplierIds = list.stream().map(TmsFirstMileReconciliationDetailDTO.ExportDetailDTO::getLogisticsSupplierId).distinct().collect(Collectors.toList());
+        // 物流商
+        Map<String, LogisticsSupplierEntity> supplierMap = logisticsSupplierService.mapByIds(supplierIds);
+
         for (TmsFirstMileReconciliationDetailDTO.ExportDetailDTO data : list) {
             //审核状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+            LogisticsSupplierEntity supplierEntity = supplierMap.get(data.getLogisticsSupplierId());
+            // 物流商
+            data.setLogisticsSupplierName(null == supplierEntity ? "" : supplierEntity.getSupplierName());
         }
     }
 

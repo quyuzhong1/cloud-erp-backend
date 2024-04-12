@@ -164,7 +164,10 @@
         from tms_first_mile_reconciliation_detail tfmrd
         left join tms_first_mile_reconciliation tfmr on tfmrd.main_id = tfmr.id
         <where>
-            tfmrd.is_deleted = false and tfmrd.main_id = #{params.mainId}
+            tfmrd.is_deleted = false and tfmrd.main_id in
+            <foreach collection="params.mainIdList" open="(" close=")" separator="," item="item">
+                #{item}
+            </foreach>
             order by tfmrd.id desc
         </where>
     </select>
