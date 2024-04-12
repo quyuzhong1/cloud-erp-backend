@@ -490,6 +490,39 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
+    public List<BaseDropDownDTO.Tree> tree() {
+        List<BaseDropDownDTO.DisabledDTO> supplierDTOList = logisticsSupplierService.listAll();
+        List<BaseDropDownDTO.Tree> result = BeanUtil.copyToList(supplierDTOList,BaseDropDownDTO.Tree.class);
+        if(CollectionUtils.isEmpty(result)){
+            return new ArrayList<>();
+        }
+        // 使用 Comparator 对 disabled 属性进行排序
+        Collections.sort(result, Comparator.comparing(BaseDropDownDTO.Tree::getDisabled));
+        List<String> supplierList = result.stream().map(BaseDropDownDTO.Tree::getCode).collect(Collectors.toList());
+        List<LogisticsChannelDTO.ListSelectDTO> childrenList = this.listLogisticsChannel(supplierList);
+        Map<String,List<LogisticsChannelDTO.ListSelectDTO>> channelMap = childrenList.stream().collect(Collectors.groupingBy(LogisticsChannelDTO.ListSelectDTO::getLogisticsSupplierId));
+        for (BaseDropDownDTO.Tree tree : result) {
+            List<LogisticsChannelDTO.ListSelectDTO> channelList = channelMap.get(tree.getCode());
+            if(CollectionUtils.isEmpty(channelList)){
+                tree.setChildTreeList(new ArrayList<>());
+                continue;
+            }
+            List<BaseDropDownDTO.ChildTree> childList = new ArrayList<>();
+            for (LogisticsChannelDTO.ListSelectDTO channel : channelList) {
+                BaseDropDownDTO.ChildTree child = BaseDropDownDTO.ChildTree.builder()
+                        .code(channel.getId())
+                        .value(channel.getName())
+                        .disabled(channel.getDisabled())
+                        .build();
+                childList.add(child);
+            }
+            Collections.sort(childList, Comparator.comparing(BaseDropDownDTO.ChildTree::getDisabled));
+            tree.setChildTreeList(childList);
+        }
+        return result;
+    }
+
+    @Override
     public LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelId(String channelId) {
         LogisticsChannelDTO.SignShipDTO signShipDTO = new LogisticsChannelDTO.SignShipDTO();
         LogisticsChannelEntity channelEntity = this.getById(channelId);
