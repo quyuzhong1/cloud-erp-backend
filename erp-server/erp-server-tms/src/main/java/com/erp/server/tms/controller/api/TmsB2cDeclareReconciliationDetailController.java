@@ -59,7 +59,7 @@ public class TmsB2cDeclareReconciliationDetailController extends BaseController 
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "tms:tmsB2cDeclareReconciliation:paging",
+            menuCode = "tms:tmsB2cDeclareReconciliationDetail:paging",
             tableAlias = "tbdr"
     )
     @WebAdvanceQuery(handler = TmsB2cDeclareReconciliationDetailQueryHandler.class)

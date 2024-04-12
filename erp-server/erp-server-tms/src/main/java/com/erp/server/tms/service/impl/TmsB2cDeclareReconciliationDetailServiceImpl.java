@@ -57,6 +57,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
@@ -188,6 +189,33 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                 continue;
             }
             tmsCostDetailService.batchUpdate(updateList,detailEntity.getId(),DictCostAttributionEnum.DECLARE);
+        }
+        //更新报关明细实际费用
+        updateDeclareReconciliationDetailCost(list);
+    }
+
+    private void updateDeclareReconciliationDetailCost (List<TmsB2cDeclareReconciliationDetailEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<String> mainIdList = list.stream().map(TmsB2cDeclareReconciliationDetailEntity::getId).collect(Collectors.toList());
+        List<TmsCostDetailDTO.CostViewDTO> tmsCostDetailList = tmsCostDetailService.listCostByMainIdList(mainIdList);
+        if (CollectionUtils.isEmpty(tmsCostDetailList)) {
+            return;
+        }
+        for (TmsB2cDeclareReconciliationDetailEntity entity : list) {
+            BigDecimal shippingCost = tmsCostDetailList.stream().filter(obj -> StrUtil.equals(entity.getId(), obj.getMainId()) && StrUtil.equals(obj.getDictCostCategory(),DictCostCategoryEnum.SHIPPING_COST.getCode()))
+                    .map(TmsCostDetailDTO.CostViewDTO::getCostValue)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            entity.setActualShippingCost(shippingCost);
+            BigDecimal declareCost = tmsCostDetailList.stream().filter(obj -> StrUtil.equals(entity.getId(), obj.getMainId()) && StrUtil.equals(obj.getDictCostCategory(),DictCostCategoryEnum.DECLARE_COST.getCode()))
+                    .map(TmsCostDetailDTO.CostViewDTO::getCostValue)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            entity.setActualShippingCost(declareCost);
+            BigDecimal otherCost = tmsCostDetailList.stream().filter(obj -> StrUtil.equals(entity.getId(), obj.getMainId()) && StrUtil.equals(obj.getDictCostCategory(),DictCostCategoryEnum.OTHER_COST.getCode()))
+                    .map(TmsCostDetailDTO.CostViewDTO::getCostValue)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            entity.setActualShippingCost(otherCost);
         }
     }
 
@@ -809,7 +837,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                 throw new ServiceException(ApiError.ERROR_DECLARE_RECONCILIATION_ADD_DETAIL,declareReconciliationEntity.getCode(),declareReconciliationEntity.getLogisticsSupplierName());
             }
 
-            if (!StrUtil.equals(entity.getStatus(),old.getStatus()) &&  !StrUtil.equals(entity.getStatus(), TmsB2cDeclareReconciliationStatusEnum.TO_BE_CONFIRM.getCode())) {
+            if (!StrUtil.equals(entity.getStatus(),old.getStatus()) &&  !StrUtil.equals(old.getStatus(), TmsB2cDeclareReconciliationStatusEnum.TO_BE_CONFIRM.getCode())) {
                 throw new ServiceException("只有待对账数据支持更新对账");
             }
 
