@@ -459,6 +459,9 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         //币别信息
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(data.getCurrency()));
 
+        //物流费用总金额
+        BigDecimal totalCost = detailList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getActualShippingCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+        data.setTotalCost(totalCost);
 
         for (TmsB2cDeclareReconciliationDetailDTO.ViewDTO viewDTO : viewDTOList) {
             //店铺名称
@@ -475,6 +478,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
                 viewDTO.setCurrencySymbol(currencyList.get(0).getSymbol());
             }
             viewDTO.setStatusName(TmsB2cDeclareReconciliationStatusEnum.getName(viewDTO.getStatus()));
+
         }
         data.setDetailList(viewDTOList);
 
