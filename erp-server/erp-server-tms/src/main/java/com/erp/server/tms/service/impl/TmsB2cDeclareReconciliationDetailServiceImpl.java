@@ -254,7 +254,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     @Override
     public BatchResultDTO updateStatus(String id, String status) {
         TmsB2cDeclareReconciliationDetailEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到b2c报关对账单明细数据"));
-        if (!StrUtil.equals(entity.getStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())) {
+        if (!StrUtil.equals(entity.getStatus(), TmsB2cDeclareReconciliationStatusEnum.TO_BE_CONFIRM.getCode())) {
             throw new ServiceException("只有待对账数据支持更新对账");
         }
         lambdaUpdate().eq(TmsB2cDeclareReconciliationDetailEntity::getId,id)
@@ -798,6 +798,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             operateLogService.batchAddModuleOperateLog("新增了一条销售订单【%s】", ModuleTypeEnum.PO_RECONCILIATION.getCode(), addPairList, "编辑操作");
         }
         for (TmsB2cDeclareReconciliationDetailEntity entity : list) {
+
             //添加日志
             TmsB2cDeclareReconciliationDetailEntity old = declareReconciliationDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(old)) {
@@ -807,6 +808,11 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             if (!StrUtil.equals(declareReconciliationEntity.getLogisticsSupplierId(),old.getLogisticsSupplierId())) {
                 throw new ServiceException(ApiError.ERROR_DECLARE_RECONCILIATION_ADD_DETAIL,declareReconciliationEntity.getCode(),declareReconciliationEntity.getLogisticsSupplierName());
             }
+
+            if (!StrUtil.equals(entity.getStatus(),old.getStatus()) &&  !StrUtil.equals(entity.getStatus(), TmsB2cDeclareReconciliationStatusEnum.TO_BE_CONFIRM.getCode())) {
+                throw new ServiceException("只有待对账数据支持更新对账");
+            }
+
             entity.setMainId(mainId);
             //操作日志
             operateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode(),mainId,"",String.format("【%s】",old.getSoCode()));

@@ -223,7 +223,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         validateSubmit(entity);
         // 更新单据审核状态
         log.info("提交 开始修改b2c报关对账单状态数据，id：【{}】", id);
-        this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
+        this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus(),LocalDate.now());
 
         log.info("提交 开始启动b2c报关对账单流程，id=：【{}】", entity.getId());
         startProcess(entity);
@@ -367,7 +367,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
         log.info("撤销 开始修改b2c报关对账单状态，id：【{}】", id);
-        updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus(),null);
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
@@ -388,7 +388,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
             return Boolean.TRUE;
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        updateForApprove(entity.getId(), approveStatus.getStatus());
+        updateForApprove(entity.getId(), approveStatus.getStatus(),dto.getComment());
 
         return Boolean.TRUE;
     }
@@ -491,7 +491,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
     * @param id
     * @param approveStatus
     */
-    public void updateForApprove(String id, String approveStatus) {
+    public void updateForApprove(String id, String approveStatus,String comment) {
         //当前登录人
         LoginUser userInfo = commonService.getUserInfo();
         this.lambdaUpdate().eq(TmsB2cDeclareReconciliationEntity::getId, id)
@@ -499,6 +499,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
             .set(TmsB2cDeclareReconciliationEntity::getApproveUserName, userInfo.getUserName())
             .set(TmsB2cDeclareReconciliationEntity::getApproveStatus, approveStatus)
             .set(TmsB2cDeclareReconciliationEntity::getApproveDate, LocalDate.now())
+            .set(ApproveStatusEnum.REJECT.getCode().equals(approveStatus),TmsB2cDeclareReconciliationEntity::getReason, comment)
             .update();
      }
 
@@ -522,10 +523,10 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
     * 更新审核状态
     */
     @Transactional(rollbackFor = Exception.class)
-    public void updateApproveStatus(String id, String approveStatus) {
+    public void updateApproveStatus(String id, String approveStatus,LocalDate submitDate) {
         lambdaUpdate().eq(TmsB2cDeclareReconciliationEntity::getId, id)
         .set(TmsB2cDeclareReconciliationEntity::getApproveStatus, approveStatus)
-        .set(ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(approveStatus),TmsB2cDeclareReconciliationEntity::getSubmitDate,LocalDate.now())
+        .set(TmsB2cDeclareReconciliationEntity::getSubmitDate,submitDate)
         .update();
     }
 
@@ -559,6 +560,17 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
+        }
+        List<TmsB2cDeclareReconciliationDetailEntity> tmsB2cDeclareReconciliationDetailList = tmsB2cDeclareReconciliationDetailService.listMainIdList(Arrays.asList(entity.getId()));
+        if (CollectionUtils.isEmpty(tmsB2cDeclareReconciliationDetailList)) {
+            throw new ServiceException("对账单下未发现明细不支持提交");
+        }
+        String soCodes = tmsB2cDeclareReconciliationDetailList.stream()
+                .filter(obj -> !StrUtil.equals(obj.getStatus(), TmsB2cDeclareReconciliationStatusEnum.CONFIRM.getCode())
+                        && !StrUtil.equals(obj.getStatus(), TmsB2cDeclareReconciliationStatusEnum.DIFF_CONFIRM.getCode()))
+                .map(TmsB2cDeclareReconciliationDetailEntity::getSoCode).collect(Collectors.joining(","));
+        if (StrUtil.isNotBlank(soCodes)) {
+            throw new ServiceException(StrUtil.format("销售订单【{}】对账状态非【已确认/差异确认】不支持提交",soCodes));
         }
         return;
     }

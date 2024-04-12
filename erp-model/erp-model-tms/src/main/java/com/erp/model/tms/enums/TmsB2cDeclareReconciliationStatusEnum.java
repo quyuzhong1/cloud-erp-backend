@@ -15,7 +15,7 @@ import java.util.Arrays;
 public enum TmsB2cDeclareReconciliationStatusEnum implements EnumMessage {
 
     TO_BE_CONFIRM("toBeConfirm", "待确认"),
-    CONFIRM("confirm", "已确认"),
+    CONFIRM("confirmed", "已确认"),
     DIFF_CONFIRM("diffConfirm", "差异确认"),
 
     ;
