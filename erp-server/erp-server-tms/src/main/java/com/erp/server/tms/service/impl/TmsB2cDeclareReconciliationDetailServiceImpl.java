@@ -701,6 +701,10 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             detailEntity.setSoId(transferDeclareDetail.getSoId());
             detailEntity.setSoCode(transferDeclareDetail.getSoCode());
             detailEntity.setShopId(soB2cEntity.getShopId());
+            detailEntity.setLogisticsSupplierId(transferDeclareEntity.getTransferLogisticsSupplierId());
+            detailEntity.setLogisticsSupplierName(transferDeclareEntity.getTransferLogisticsSupplierName());
+            detailEntity.setLogisticsChannelId(transferDeclareDetail.getLogisticsChannelId());
+            detailEntity.setLogisticsChannelName(transferDeclareDetail.getLogisticsChannelName());
 
             //销售订单明细
             List<SoB2cDetailEntity> detailList = soB2cDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), soB2cEntity.getId())).collect(Collectors.toList());
