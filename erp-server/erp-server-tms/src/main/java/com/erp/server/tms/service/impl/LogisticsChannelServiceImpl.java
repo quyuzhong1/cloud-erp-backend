@@ -499,16 +499,16 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         // 使用 Comparator 对 disabled 属性进行排序
         Collections.sort(result, Comparator.comparing(BaseDropDownDTO.Tree::getDisabled));
         List<String> supplierList = result.stream().map(BaseDropDownDTO.Tree::getCode).collect(Collectors.toList());
-        List<LogisticsChannelDTO.ListSelectDTO> childrenList = this.listLogisticsChannel(supplierList);
-        Map<String,List<LogisticsChannelDTO.ListSelectDTO>> channelMap = childrenList.stream().collect(Collectors.groupingBy(LogisticsChannelDTO.ListSelectDTO::getLogisticsSupplierId));
+        List<LogisticsChannelEntity> childrenList = this.listDbByMainIdList(supplierList);
+        Map<String,List<LogisticsChannelEntity>> channelMap = childrenList.stream().collect(Collectors.groupingBy(LogisticsChannelEntity::getMainId));
         for (BaseDropDownDTO.Tree tree : result) {
-            List<LogisticsChannelDTO.ListSelectDTO> channelList = channelMap.get(tree.getCode());
+            List<LogisticsChannelEntity> channelList = channelMap.get(tree.getCode());
             if(CollectionUtils.isEmpty(channelList)){
                 tree.setChildTreeList(new ArrayList<>());
                 continue;
             }
             List<BaseDropDownDTO.ChildTree> childList = new ArrayList<>();
-            for (LogisticsChannelDTO.ListSelectDTO channel : channelList) {
+            for (LogisticsChannelEntity channel : channelList) {
                 BaseDropDownDTO.ChildTree child = BaseDropDownDTO.ChildTree.builder()
                         .code(channel.getId())
                         .value(channel.getName())
