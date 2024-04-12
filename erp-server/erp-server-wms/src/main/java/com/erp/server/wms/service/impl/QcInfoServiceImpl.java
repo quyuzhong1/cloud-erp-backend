@@ -1456,9 +1456,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                     dto.getPurchaseOrderDetailId().equals(s.getPurchaseOrderDetailId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getStockInQty())).orElse(0);
             dto.setStockInQty(stockInQty);
-            //收货数量
-            Integer receiveQty = receiveDetails.stream().filter(s -> s.getSkuId().equals(dto.getSkuId()) &&
-                            dto.getPurchaseOrderDetailId().equals(s.getPurchaseOrderDetailId())).mapToInt(WarehouseReceiveDetailEntity::getReceiveQty).sum();
+            //收货单已收数量（已审核）
+            Integer receiveQty = receiveDetails.stream()
+                    .filter(req -> req.getPurchaseOrderDetailId().equals(dto.getPurchaseOrderDetailId())
+                            && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
+                    .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             dto.setReceiveQty(receiveQty);
             //币种符号
             PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(dto.getPurchaseOrderDetailId())).findFirst().orElse(null);
