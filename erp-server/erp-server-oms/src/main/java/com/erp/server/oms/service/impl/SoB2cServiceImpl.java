@@ -3616,7 +3616,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //如果是美客多，取订单标签里面的发货类型标识匹配订单规则
             if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(soB2cEntity.getDictPlatform())) {
                 SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(soB2cEntity.getLabelJson(), SoB2cDTO.LabelDTO.class);
-                map.put("mercadoOrderDeliveryType", labelJsonDTO.getLogisticType());
+                detailMap.put("mercadoOrderDeliveryType", labelJsonDTO.getLogisticType());
             }
 
             //明细标签处理
