@@ -10,6 +10,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
+import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
@@ -483,4 +484,41 @@ public class PurchaseOrderFeignController {
         List<PurchaseOrderDTO.ListDTO> list = purchaseOrderService.generateDeliveryList(dto);
         return list;
     }
+
+    /**
+     * srm待发货列表统计
+     * @author zdy
+     * @date: 2024/1/16 17:34
+     * @return ApiResult
+     */
+    @PostMapping("/srmWaitDeliveryCount")
+    public List<DeliveryOrderDTO.WaitDeliveryCountDTO> srmWaitDeliveryCount(@RequestBody PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto) {
+        return purchaseOrderService.srmWaitDeliveryCount(dto);
+    }
+
+
+    /**
+     * srm待发货分页查询
+     * @author Will
+     * @date: 2023/3/15 16:47
+     * @param dto
+     * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
+     */
+    @PostMapping("/srmWaitDeliveryPaging")
+    public PagingVO<PurchaseOrderDTO.ListDTO> srmWaitDeliveryPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto) {
+        return purchaseOrderService.srmWaitDeliveryPaging(dto);
+    }
+
+    /**
+     * srm待发货列表合计
+     * @author zdy
+     * @date: 2024/1/15 17:34
+     * @param dto
+     * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
+     */
+    @PostMapping("/srmWaitDeliveryTotal")
+    public PurchaseOrderDTO.ListDTO srmWaitDeliveryTotal(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto) {
+        return purchaseOrderService.srmWaitDeliveryTotal(dto);
+    }
+
 }

@@ -40,7 +40,13 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return
      */
     IPage<PurchaseOrderDTO.ListDTO> srmPaging(Page query,@Param("params") PurchaseOrderDTO.SrmSearchParamDTO params);
-
+    /**
+     * srm 待发货分页查询
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<PurchaseOrderDTO.ListDTO> srmWaitDeliveryPaging(Page query,@Param("params") PurchaseOrderDTO.SrmSearchParamDTO params);
 
     /**
      * @description: 查询总数量、金额
@@ -170,7 +176,12 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      */
     List<PurchaseOrderDTO.ListDTO> srmPurchaseOrderList(@Param("params") PurchaseOrderDTO.SrmSearchParamDTO params);
 
-
+    /**
+     * srm 待发货订单列表
+     * @param params
+     * @return
+     */
+    List<PurchaseOrderDTO.ListDTO> srmWaitDeliveryList(@Param("params") PurchaseOrderDTO.SrmSearchParamDTO params);
     List<PurchaseOrderDTO.ListDTO> listByDetailIds(@Param("detailIds") List<String> purchaseDetailIds);
 
     /**
@@ -178,4 +189,11 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return
      */
     List<PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO> getSrmPurchaseOrder();
+    /**
+     * 汇总待发货订单明细数量
+     * @param supplierId
+     * @return
+     */
+    Integer srmWaitDeliveryCount(@Param("supplierId")String supplierId,@Param("code") String code);
+
 }

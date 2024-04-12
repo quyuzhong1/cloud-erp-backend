@@ -76,12 +76,16 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
 
     /**
      * 汇总待发货列表统计
-     * @param waitDeliveryCountDTO
+     * @param
      * @return
      */
     List<DeliveryOrderDTO.WaitDeliveryCountDTO> buildSrmWaitDeliveryCount();
-
-
+    /**
+     * 汇总待发货列表统计
+     * @param waitDeliveryCountDTO
+     * @return
+     */
+    List<DeliveryOrderDTO.WaitDeliveryCountDTO> buildSrmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryCountDTO waitDeliveryCountDTO);
     /**
      * 确认收货
      */

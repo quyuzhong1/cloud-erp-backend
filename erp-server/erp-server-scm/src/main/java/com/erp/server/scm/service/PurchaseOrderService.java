@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import org.springframework.web.multipart.MultipartFile;
@@ -440,4 +441,25 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     Boolean exportSrmExcel(PurchaseOrderDTO.SrmSearchParamDTO dto, HttpServletResponse response);
 
     SupplierUserInfoVO getSrmSupplierUserInfo();
+
+    /**
+     * 待发货 时间周期统计
+     * @param dto
+     * @return
+     */
+    List<DeliveryOrderDTO.WaitDeliveryCountDTO> srmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto);
+
+    /**
+     * 待发货 分页列表
+     * @param dto
+     * @return
+     */
+    PagingVO<PurchaseOrderDTO.ListDTO> srmWaitDeliveryPaging(PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto);
+    /**
+     * 待发货订单合计
+     * @param dto
+     * @return
+     */
+    PurchaseOrderDTO.ListDTO srmWaitDeliveryTotal(PurchaseOrderDTO.SrmSearchParamDTO dto);
+
 }
