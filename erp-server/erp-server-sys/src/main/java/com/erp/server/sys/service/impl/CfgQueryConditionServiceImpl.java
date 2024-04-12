@@ -78,6 +78,12 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
             if(v.getIsExtend()){
                 v.getCompareList().removeIf(item -> item.getLogic().equals(QueryConditionEnum.IS_NULL.getCompareCode()) || item.getLogic().equals(QueryConditionEnum.NOT_NULL.getCompareCode()));
             }
+            if("select".equals(v.getType())){
+                v.getCompareList().removeIf(item -> item.getLogic().equals(QueryConditionEnum.CONTAINS.getCompareCode())
+                        || item.getLogic().equals(QueryConditionEnum.NOT_CONTAINS.getCompareCode())
+                        || item.getLogic().equals(QueryConditionEnum.ENDS_WITH.getCompareCode())
+                        || item.getLogic().equals(QueryConditionEnum.STARTS_WITH.getCompareCode()));
+            }
         });
         return viewList;
     }
