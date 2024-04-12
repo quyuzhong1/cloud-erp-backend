@@ -520,7 +520,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 if (!CollectionUtils.isEmpty(oldEntityList)){
                     String status = oldEntityList.get(0).getStatus();
                     // 非确认状态校验
-                    if (ReconciliationStatusEnum.TO_BE_GENERATED.getCode().equalsIgnoreCase(status) || status.equalsIgnoreCase(listDTO.getStatus())) {
+                    if (ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equalsIgnoreCase(status) || status.equalsIgnoreCase(listDTO.getStatus())) {
                         continue;
                     } else {
                         throw new ServiceException("仅{待确认}可提交确认,物流运单号=" + listDTO.getTransportNo());
