@@ -159,8 +159,6 @@ public class BusinessServiceImpl {
             orderMongoDTO = OrderMongoDTO.getByIsCleanDateStr(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
         }
         Class tClass = CleanDataTableEnum.getByName(tableName).getTClass();
-        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsCleanDateStr(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
-        Class tClass = Objects.requireNonNull(CleanDataTableEnum.getByName(tableName)).getTClass();
         List<T> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, tableName, tClass);
         if (CollectionUtil.isEmpty(mongoData)) {
             return Collections.EMPTY_LIST;
