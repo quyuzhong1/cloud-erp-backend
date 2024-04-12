@@ -398,21 +398,23 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
         thisDetailList.forEach(poInstockDetailEntity -> {
             //收货单已收数量（已审核）
-            Integer receiveQty = receiveDetailList.stream()
+            List<WarehouseReceiveDetailEntity> receiveList = receiveDetailList.stream()
                     .filter(req -> req.getPurchaseOrderDetailId().equals(poInstockDetailEntity.getPurchaseOrderDetailId())
-                    && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
-                    .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-            //已退货数量（质检退货）
-            Integer returnQty = returnOrderDetailList.stream().filter(e -> Objects.equals(e.getPurchaseOrderDetailId(), poInstockDetailEntity.getPurchaseOrderDetailId())
-                            && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode())
-                            && StrUtils.isNotEmpty(e.getPurchaseOrderDetailId())
-                            && ReturnOrderSourceEnum.QC.getCode().equals(e.getSourceType())
-                            && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
-                    .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-            //最大入库数量
-            Integer maxInstockQty = receiveQty - returnQty;
-            if (poInstockDetailEntity.getStockInQty() > maxInstockQty){
-                throw new ServiceException(String.format("SKU【%s】入库数量不能大于"+ maxInstockQty, poInstockDetailEntity.getSkuNo()));
+                            && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(receiveList)){
+                Integer receiveQty = receiveList.stream().map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                //已退货数量（质检退货）
+                Integer returnQty = returnOrderDetailList.stream().filter(e -> Objects.equals(e.getPurchaseOrderDetailId(), poInstockDetailEntity.getPurchaseOrderDetailId())
+                                && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode())
+                                && StrUtils.isNotEmpty(e.getPurchaseOrderDetailId())
+                                && ReturnOrderSourceEnum.QC.getCode().equals(e.getSourceType())
+                                && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
+                        .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                //最大入库数量
+                Integer maxInstockQty = receiveQty - returnQty;
+                if (poInstockDetailEntity.getStockInQty() > maxInstockQty){
+                    throw new ServiceException(String.format("SKU【%s】入库数量不能大于"+ maxInstockQty, poInstockDetailEntity.getSkuNo()));
+                }
             }
         });
 
