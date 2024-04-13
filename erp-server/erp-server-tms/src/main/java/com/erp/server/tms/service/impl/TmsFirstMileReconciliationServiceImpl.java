@@ -15,32 +15,22 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
-import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
-import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
-import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
-import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.tms.mapper.TmsFirstMileReconciliationMapper;
@@ -54,13 +44,9 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * <p>
@@ -334,10 +320,12 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     public BatchResultDTO delete(String id) {
         TmsFirstMileReconciliationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到头程对账单数据"));
         // 只有待提交数据允许删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
         // 删除明细数据（如果有明细数据的话）
+        //清除明细
+        tmsFirstMileReconciliationDetailService.checkRemoveByMainId(id);
 
         // 删除主单数据
         log.info("删除 开始删除头程对账单主单数据，id：【{}】", id);

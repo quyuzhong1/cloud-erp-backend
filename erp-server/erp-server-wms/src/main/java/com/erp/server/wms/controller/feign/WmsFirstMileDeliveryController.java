@@ -6,13 +6,12 @@ import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.server.wms.service.CfgAmzFulfillmentCenterService;
 import com.erp.server.wms.service.FirstMileDeliveryService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -28,6 +27,8 @@ public class WmsFirstMileDeliveryController {
 
     @Resource
     private FirstMileDeliveryService firstMileDeliveryService;
+    @Resource
+    private CfgAmzFulfillmentCenterService cfgAmzFulfillmentCenterService;
 
     /**
      * 根据入参查询单据数量
@@ -88,5 +89,14 @@ public class WmsFirstMileDeliveryController {
             return new ArrayList<>();
         }
         return firstMileDeliveryService.listByIds(ids);
+    }
+
+
+    /**
+     * 亚马逊仓库中心配置
+     */
+    @GetMapping("/feign/firstMileDelivery/getCfgAmzCenter")
+    List<CfgAmzFulfillmentCenterEntity> getCfgAmzCenter(){
+        return cfgAmzFulfillmentCenterService.list();
     }
 }

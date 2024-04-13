@@ -168,7 +168,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
     }
 
     @Override
-    public List<TmsCostDetailEntity> sumCostByMainIdAndCostId(String logisticsBillCostType, List<String> logisticsBillIds) {
+    public List<TmsCostDetailEntity> sumCostByMainIdAndCostId(String logisticsBillCostType, Collection<String> logisticsBillIds) {
         if (CollectionUtils.isEmpty(logisticsBillIds)){
             return Collections.emptyList();
         }

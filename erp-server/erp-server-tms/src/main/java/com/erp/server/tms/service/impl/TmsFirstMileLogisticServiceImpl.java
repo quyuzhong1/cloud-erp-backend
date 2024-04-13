@@ -16,7 +16,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ThirdConstants;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -31,7 +30,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.FmDeliveryLogisticsStatusEnum;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -45,7 +43,6 @@ import com.erp.model.tms.dto.excel.FmLogisticsBillExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.dto.StocktakingPlanDetailDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
@@ -67,7 +64,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -84,7 +80,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -1050,7 +1045,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
 
     @Override
-    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> listByMainIds(List<String> logisticsBillIds) {
+    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> listReconciliationByMainIds(List<String> logisticsBillIds) {
         return this.baseMapper.waitReconciliationList(
                 OrderTypeEnum.FIRST_MILE.getCode(),
                 "",
@@ -1090,7 +1085,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO singleGenerateReconciliation(String id, String reconciliationId, List<LocalDate> dateList) {
         // 校验物理商是否一致
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailList = this.listByMainIds(Collections.singletonList(id));
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailList = this.listReconciliationByMainIds(Collections.singletonList(id));
         if (CollectionUtils.isEmpty(sourceDetailList)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流单");
         }

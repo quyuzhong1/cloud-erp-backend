@@ -3,8 +3,10 @@ package com.erp.rpc.wms.feign;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -50,4 +52,11 @@ public interface WmsFirstMileDeliveryFeign {
      */
     @PostMapping("/feign/firstMileDelivery/getCanGenerateDeclare")
     List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeclare(@RequestBody TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
+
+    /**
+     * 亚马逊仓库中心配置
+     */
+    @GetMapping("/feign/firstMileDelivery/getCfgAmzCenter")
+    List<CfgAmzFulfillmentCenterEntity> getCfgAmzCenter();
+
 }

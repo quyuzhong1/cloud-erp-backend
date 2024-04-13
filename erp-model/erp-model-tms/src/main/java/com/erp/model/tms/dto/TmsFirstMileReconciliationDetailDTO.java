@@ -371,6 +371,10 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          */
         private String logisticsSupplierId;
 
+        /**
+         * 发货单ID(后台用)
+         */
+        private String deliveryId;
 
         /**
          * 费用明细详情(导入时传递)

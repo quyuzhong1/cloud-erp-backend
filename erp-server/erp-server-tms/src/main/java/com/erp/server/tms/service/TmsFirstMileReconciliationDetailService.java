@@ -1,10 +1,13 @@
 package com.erp.server.tms.service;
 
 import com.common.business.vo.PagingVO;
+import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
+import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -120,4 +123,12 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
     List<TmsFirstMileReconciliationDetailDTO.ListDTO> generateAllTypeDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO);
 
     String getCurrencySymbol(String currency);
+
+    void checkRemoveByMainId(String id);
+
+    void changeLogisticsBillCost(List<String> sourceIds, String reconciliationStatus);
+
+    List<DictCountryDTO.ListDTO> checkAndFindCountry(FirstMileDeliveryEntity delivery, List<CfgAmzFulfillmentCenterEntity> centerList, List<DictCountryDTO.ListDTO> conuntryList);
+
+    List<DictCountryDTO.ListDTO> defaultCountry(String toCountry, List<DictCountryDTO.ListDTO> countryList);
 }
