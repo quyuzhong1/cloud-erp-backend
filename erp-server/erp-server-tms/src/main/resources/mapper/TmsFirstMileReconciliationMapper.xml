@@ -31,36 +31,63 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id as id,
-        create_user_id AS createUserId,
-        create_user_name AS createUserName,
-        create_time AS createTime,
-        update_user_id AS updateUserId,
-        update_user_name AS updateUserName,
-        update_time AS updateTime,
-        version,
-        is_deleted AS isDeleted,
-        code,
-        approve_status AS approveStatus,
-        approve_user_id AS approveUserId,
-        approve_user_name AS approveUserName,
-        reconciliation_date AS reconciliationDate,
-        submit_date AS submitDate,
-        approve_date AS approveDate,
-        start_date AS startDate,
-        end_date AS endDate,
-        logistics_supplier_id AS logisticsSupplierId,
-        logistics_supplier_name AS logisticsSupplierName,
-        currency AS currency,
-        exchange_rate AS exchangeRate,
-        total_cost AS totalCost,
-        reason
+        tfmr.id AS id,
+        tfmr.create_user_id AS createUserId,
+        tfmr.create_user_name AS createUserName,
+        tfmr.create_time AS createTime,
+        tfmr.update_user_id AS updateUserId,
+        tfmr.update_user_name AS updateUserName,
+        tfmr.update_time AS updateTime,
+        tfmr.VERSION AS VERSION,
+        tfmr.is_deleted AS isDeleted,
+        TO_CHAR(tfmr.start_date, 'YYYY-MM-DD') || '-' || TO_CHAR(tfmr.end_date, 'YYYY-MM-DD') AS CYCLE,
+        tfmr.code AS code,
+        tfmr.approve_status AS approveStatus,
+        tfmr.approve_user_id AS approveUserId,
+        tfmr.approve_user_name AS approveUserName,
+        tfmr.reconciliation_date AS reconciliationDate,
+        tfmr.submit_date AS submitDate,
+        tfmr.approve_date AS approveDate,
+        tfmr.start_date AS startDate,
+        tfmr.end_date AS endDate,
+        tfmr.logistics_supplier_id AS logisticsSupplierId,
+        tfmr.logistics_supplier_name AS logisticsSupplierName,
+        tfmr.currency AS currency,
+        tfmr.exchange_rate AS exchangeRate,
+        tfmr.total_cost AS totalCost,
+        tfmr.reason AS reason,
+        COALESCE(tfmrd.actualBillingWeight, 0) AS actualBillingWeight,
+        COALESCE(tfmrd.actualWeightUnit, 'kg') AS actualWeightUnit,
+        COALESCE(tfmrd.actualBillingWeightUnit, 'kg') AS actualBillingWeightUnit,
+        COALESCE(tfmrd.actualShippingCost, 0) AS actualShippingCost,
+        COALESCE(tfmrd.actualDeclareCost, 0) AS actualDeclareCost,
+        COALESCE(tfmrd.actualOtherCost, 0) AS actualOtherCost,
+        COALESCE(tfmrd.totalCost, 0) AS totalCostDetail
     </sql>
 
     <select id="paging" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDTO$ListDTO">
         select
-        <include refid="Base_Column_List" />
-        from tms_first_mile_reconciliation tfmr
+        <include refid="Base_Column_List"/>
+        FROM
+        tms_first_mile_reconciliation tfmr
+        LEFT JOIN (
+        SELECT
+            SUM(billing_weight) AS actualBillingWeight,
+            MAX(actual_weight_unit) AS actualWeightUnit,
+            MAX(billing_weight_unit) AS actualBillingWeightUnit,
+            SUM(shipping_cost) AS actualShippingCost,
+            SUM(declare_cost) AS actualDeclareCost,
+            SUM(other_cost) AS actualOtherCost,
+            SUM(total_logistics_cost) AS totalCost,
+        main_id
+        FROM
+        tms_first_mile_reconciliation_detail
+        WHERE
+        is_deleted = FALSE
+        AND TYPE = 'actual'
+        GROUP BY
+        main_id
+        ) tfmrd ON tfmr.id = tfmrd.main_id
         <where>
             ${params.sqlMap.default}
             and tfmr.is_deleted = false
@@ -85,7 +112,26 @@
     <select id="listExport" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDTO$ListDTO">
         select
         <include refid="Base_Column_List" />
-        from tms_first_mile_reconciliation tfmr
+        FROM
+        tms_first_mile_reconciliation tfmr
+        LEFT JOIN (
+        SELECT
+        SUM(billing_weight) AS actualBillingWeight,
+        MAX(actual_weight_unit) AS actualWeightUnit,
+        MAX(billing_weight_unit) AS actualBillingWeightUnit,
+        SUM(shipping_cost) AS actualShippingCost,
+        SUM(declare_cost) AS actualDeclareCost,
+        SUM(other_cost) AS actualOtherCost,
+        SUM(total_logistics_cost) AS totalCost,
+        main_id
+        FROM
+        tms_first_mile_reconciliation_detail
+        WHERE
+        is_deleted = FALSE
+        AND TYPE = 'actual'
+        GROUP BY
+        main_id
+        ) tfmrd ON tfmr.id = tfmrd.main_id
         <where>
             ${params.sqlMap.default}
             and tfmr.is_deleted = false

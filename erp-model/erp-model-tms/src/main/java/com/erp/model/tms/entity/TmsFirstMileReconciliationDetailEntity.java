@@ -151,17 +151,17 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
     /**
      * 运费用
      */
-    @TableField("actual_shipping_cost")
+    @TableField("shipping_cost")
     private BigDecimal shippingCost;
     /**
      * 报关费用
      */
-    @TableField("actual_declare_cost")
+    @TableField("declare_cost")
     private BigDecimal declareCost;
     /**
      * 其他费用
      */
-    @TableField("actual_other_cost")
+    @TableField("other_cost")
     private BigDecimal otherCost;
     /**
      * 备注

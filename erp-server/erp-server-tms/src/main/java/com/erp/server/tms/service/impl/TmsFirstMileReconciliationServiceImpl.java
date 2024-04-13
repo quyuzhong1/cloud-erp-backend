@@ -541,46 +541,6 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 
         // 属性赋值
         for (TmsFirstMileReconciliationDTO.ListDTO data : list) {
-            // 费用类型
-            List<TmsFirstMileReconciliationDetailEntity> costList = detailGroupMap.get(data.getId());
-            if (!CollectionUtils.isEmpty(costList)){
-                Map<String, List<TmsFirstMileReconciliationDetailEntity>> typeCostMap = costList
-                        .stream()
-                        .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailEntity::getType));
-                // 实际
-                List<TmsFirstMileReconciliationDetailEntity> actualList = typeCostMap.getOrDefault(DetailReconciliationTypeEnum.ACTUAL.getCode(), Collections.emptyList());
-
-                // 实际物流费用
-                BigDecimal shippingValue = actualList.stream()
-                        .map(TmsFirstMileReconciliationDetailEntity::getShippingCost)
-                        .reduce(BigDecimal::add)
-                        .orElse(BigDecimal.ZERO);
-                data.setActualShippingCost(shippingValue);
-
-                // 实际报关费用
-                BigDecimal declareValue = actualList.stream()
-                        .map(TmsFirstMileReconciliationDetailEntity::getDeclareCost).reduce(BigDecimal::add)
-                        .orElse(BigDecimal.ZERO);
-                data.setActualDeclareCost(declareValue);
-
-                // 实际其他费用
-                BigDecimal otherValue = actualList.stream()
-                        .map(TmsFirstMileReconciliationDetailEntity::getOtherCost).reduce(BigDecimal::add)
-                        .orElse(BigDecimal.ZERO);
-                data.setActualOtherCost(otherValue);
-
-                // 实际重量
-                BigDecimal billWeightValue = actualList.stream()
-                        .map(TmsFirstMileReconciliationDetailEntity::getBillingWeight).reduce(BigDecimal::add)
-                        .orElse(BigDecimal.ZERO);
-                data.setActualBillingWeight(billWeightValue);
-
-                String weightUnit = actualList.stream()
-                        .map(TmsFirstMileReconciliationDetailEntity::getActualWeightUnit)
-                        .findFirst()
-                        .orElse("");
-                data.setActualWeightUnit(weightUnit);
-            }
             //审核状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             //对账周期
