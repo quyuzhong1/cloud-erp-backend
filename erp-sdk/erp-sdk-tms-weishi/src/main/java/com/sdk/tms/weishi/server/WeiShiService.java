@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 @Slf4j
@@ -37,7 +38,15 @@ public class WeiShiService {
         String response = WeiShiUtils.sendPost(authMap.get("url"),WeiShiConstants.METHOD_CREATE_ORDER,JSONObject.toJSONString(request),authMap.get("clientId"),authMap.get("clientSecret"));
         return JSONObject.parseObject(response,WeiShiCreateOrder.class);
     }
-
+    /**
+     *  创建订单
+     */
+    public String getOrder(@Valid String referenceNo ,Map<String, String> authMap){
+        Map<String,String> map = new HashMap<>();
+        map.put("reference_no",referenceNo);
+        String response = WeiShiUtils.sendPost(authMap.get("url"),WeiShiConstants.GET_ORDER,JSONObject.toJSONString(map),authMap.get("clientId"),authMap.get("clientSecret"));
+        return response;
+    }
     /**
      *  打印标签
      */

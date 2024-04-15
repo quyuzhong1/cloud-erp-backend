@@ -26,8 +26,17 @@ class WeiShiServiceTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public WeiShiServiceTest(){
-        authMap.put("clientId","dcfe81e2059c1f0e6e6263dbcb764885");
-        authMap.put("clientSecret","dcfe81e2059c1f0e6e6263dbcb7648850d0c1386bae3caf82229e7cf472d7b53");
+        //生产
+        //http://track.360lion.com/api/service
+        //*令牌：d7d0bfc63ecd2fc453092e64a373292d
+        //*令牌：*账户：6b14e5ecef56ee35aeffee5cd96930a8
+        //测试
+        //http://218.17.123.141:81/prod-api/toms/service
+        //clientId dcfe81e2059c1f0e6e6263dbcb764885
+        //clientSecret dcfe81e2059c1f0e6e6263dbcb7648850d0c1386bae3caf82229e7cf472d7b53
+        authMap.put("url","http://track.360lion.com/api/service");
+        authMap.put("clientId","f8067aa0dc9ab7e927e03dfbce54ff4d");
+        authMap.put("clientSecret","f8067aa0dc9ab7e927e03dfbce54ff4d7b6fc31d87f0c7e913c112f8b33423ce");
     }
 
     @Test
@@ -63,21 +72,27 @@ class WeiShiServiceTest {
                         .shipperMobile("123456789")
                         .build())
                 .itemArr(Arrays.asList(WeiShiCreateOrderRequest.ItemArr.builder()
-                        .invoiceEnname("mta")
+                        .invoiceEnname("2883")
 //                        .invoiceCnname("物流")
                         .invoiceWeight(new BigDecimal("1.999"))
                         .invoiceQuantity(10)
+                        .hsCode("8518100000")
                         .invoiceUnitcharge(12.0F)
                         .build()))
                 .build();
         WeiShiCreateOrder response = weiShiService.createOrder(weiShiCreateOrderRequest,authMap);
         System.out.println(response);
     }
+    @Test
+    void testOrder(){
+        String json = weiShiService.getOrder("1736938321835200514",authMap);
+        System.out.println(json);
+    }
 
     @Test
     void getLabelUrl() {
         WeiShiGetLabelUrlRequest weiShiGetLabelUrlRequest = WeiShiGetLabelUrlRequest.builder()
-                .referenceNo("WSHMX3123400544YQ")
+                .referenceNo("WSHBR1064148766YQ")
                 .lableType("2")
                 .build()
                 ;
