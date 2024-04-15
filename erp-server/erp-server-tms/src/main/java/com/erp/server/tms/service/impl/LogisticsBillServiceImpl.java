@@ -507,16 +507,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (Objects.nonNull(isAliExpress) && isAliExpress){
             //速卖通不做sku拆分
             ordersSkuList = new ArrayList<>(skuInfoList.size());
-            List<String> skuIds = skuInfoList.stream().map(LogisticsProductDTO.ProductDTO::getSkuId).collect(Collectors.toList());
-            //获取sku目的国海关编码映射关系
-            List<ProductCustomsEntity> productCustomsList = plmTaskFeign.listProductCustomsBySkuIds(ProductCustomsSkuDTO.builder().skuIds(skuIds).build());
             for (LogisticsBillDTO.SkuDTO item : dto.getSkuList()){
                 String skuId = item.getSkuId();
-                String customCode = "";
-                ProductCustomsEntity customs = getCustomsByCountry(country,skuId,productCustomsList);
-                if (Objects.nonNull(customs)){
-                    customCode = customs.getCustomsCode();
-                }
                 LogisticsProductDTO.ProductDTO productDTO = skuInfoList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
                 if (Objects.nonNull(productDTO)) {
                     Integer qty = item.getQty();
@@ -542,7 +534,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     productDTO.setChildOrderId(sourceDetailId);
                     productDTO.setSkuNo(item.getSkuNo());
                     productDTO.setSkuId(skuId);
-                    productDTO.setCustomsCode(customCode);
                     ordersSkuList.add(productDTO);
                 }
             }
