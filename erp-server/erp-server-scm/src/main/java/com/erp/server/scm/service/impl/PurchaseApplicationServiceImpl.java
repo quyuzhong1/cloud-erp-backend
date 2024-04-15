@@ -10,7 +10,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
@@ -30,13 +29,16 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.SkuPurchaseDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseApplicationExportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.*;
-import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.scm.enums.CreatePoTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
+import com.erp.model.scm.enums.PurchaseTableFlagEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
@@ -1171,7 +1173,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
             //是否是组合SKU
             if (CollectionUtils.isNotEmpty(bomChildrenList)) {
-                long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(obj.getSkuId())).count();
+                long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(obj.getSkuId()) && StrUtil.equals(e.getType(), BomTypeEnum.SINGLE.getType())).count();
                 if (count > 0) {
                     obj.setIsConstitute(Boolean.TRUE);
                 }
