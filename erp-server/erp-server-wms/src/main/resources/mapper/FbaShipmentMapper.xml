@@ -137,6 +137,7 @@
 			T LEFT JOIN fba_shipment_detail G ON T.ID = G.main_id 
 			left join fba_shipment_receive h on g.id = h.detail_id 
 		<include refid="FbaDataCompareByCondition"/>
+		 order by h.id limit #{pageSize}
     </select>
     
     <select id="getDataCompareByConditionCount" resultType="java.lang.Integer">
@@ -153,6 +154,9 @@
 			T.is_deleted = 'f' 
 			AND G.is_deleted = 'f' 
 			and h.is_deleted = 'f' 
+			<if test="params.id!=null and params.id!=''">
+			and h.id > #{params.id}
+			</if>
 			<if test="params.receiveDateList !=null and params.receiveDateList.size>0">
             AND h.receive_date >= #{params.receiveDateList[0]} and
             (#{params.receiveDateList[1]}::TIMESTAMP + INTERVAL '1
@@ -161,8 +165,8 @@
         	<if test="params.shopName!=null and params.shopName!=''">
             AND t.shop_name = #{params.shopName}
         	</if>
-			<if test="params.id!=null and params.id!=''">
-            and not exists (select id from wms_data_compare_temp where system_data_id = h.id and task_id = #{params.id})
+			<if test="params.taskId!=null and params.taskId!=''">
+            and not exists (select id from wms_data_compare_temp where system_data_id = h.id and task_id = #{params.taskId})
         	</if>
 	</sql>
 </mapper>

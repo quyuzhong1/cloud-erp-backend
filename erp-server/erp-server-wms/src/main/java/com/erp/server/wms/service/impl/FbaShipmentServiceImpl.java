@@ -1814,9 +1814,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
 	@Override
 	public List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO> getDataCompareByCondition(
-			com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO params) {
-		this.getParams(params);
-		return baseMapper.getDataCompareByCondition(params);
+			com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO params , Integer pageSize) {
+		if("0".equals(params.getId())) {
+			this.getParams(params);
+		}
+		return baseMapper.getDataCompareByCondition(params , pageSize);
 	}
 
 	@Override

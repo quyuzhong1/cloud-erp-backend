@@ -1,6 +1,7 @@
 package com.erp.server.wms.handler.datacompare;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -16,6 +17,7 @@ import com.erp.model.wms.enums.WmsDataCompareTaskBillTypeEnum;
 import com.erp.server.wms.service.WmsDataCompareBillService;
 import com.erp.server.wms.service.WmsDataCompareDbService;
 
+import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -28,12 +30,30 @@ public abstract class WmsAbstractDataCompareHandler<M extends WmsDataCompareDbSe
 	
 	private String billType;
 	
+	private final static Integer pageSize = 10;
+	
 	@Override
 	public List<T> getDataCompareByCondition(String systemDataCondition , String taskId){
 		currentDbService();
 		T dataCompareDTO = JSON.parseObject(systemDataCondition, entityClass);
-		dataCompareDTO.setId(taskId);
-		return wmsDataCompareDbService.getDataCompareByCondition(dataCompareDTO);
+		dataCompareDTO.setTaskId(taskId);
+		dataCompareDTO.setId("0");
+		List<T> resultList = new ArrayList<>();
+		while(true) {
+			List<T> list = wmsDataCompareDbService.getDataCompareByCondition(dataCompareDTO , pageSize);
+			
+			if(CollUtil.isEmpty(list)) {
+				break;
+			}
+			
+			resultList.addAll(list);
+			dataCompareDTO.setId(list.get(list.size() - 1).getId());
+			
+			if(list.size() < pageSize) {
+				break;
+			}
+		}
+		return resultList;
 	}
 	
 	@Override

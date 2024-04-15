@@ -9,6 +9,7 @@ import com.erp.model.oms.vo.CustomerInfoVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -138,4 +139,13 @@ public interface CustomerFeign {
      */
     @PostMapping("feign/customer/getCustomerById")
     CustomerInfoEntity getCustomerById(@RequestBody String id);
+    
+    /**
+     * 根据客户名称和编码获取客户详情
+     *
+     * @param customerName
+     * @return
+     */
+    @PostMapping("feign/customer/getCustomerByCodeAndName")
+    List<CustomerInfoEntity> getCustomerByCodeAndName(@RequestParam(value = "code") String code,@RequestParam(value = "name") String name);
 }

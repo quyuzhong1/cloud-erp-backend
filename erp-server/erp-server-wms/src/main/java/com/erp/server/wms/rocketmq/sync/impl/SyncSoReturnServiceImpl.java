@@ -1,5 +1,6 @@
 package com.erp.server.wms.rocketmq.sync.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -14,6 +15,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeReturnOrderItemEntity;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -25,6 +27,7 @@ import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.rocketmq.sync.SyncSoReturnService;
@@ -65,6 +68,9 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
 
     @Resource
     private InventoryTransCoreService inventoryTransCoreService;
+    
+    @Resource
+    private CustomerFeign customerFeign;
 
 
     @Override
@@ -85,6 +91,15 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             }
         }
 
+        String retcustNumber = kingdeeReturnOrderEntity.getFRetcustNumber();
+        String retcustName = kingdeeReturnOrderEntity.getFRetcustName();
+        List<CustomerInfoEntity> customerInfoEntityList = customerFeign.getCustomerByCodeAndName(retcustNumber, retcustName);
+    	if(CollUtil.isEmpty(customerInfoEntityList)) {
+    		throw new ServiceException(String.format("通过客户编码：{}，客户名称：{}查询不到客户信息" , retcustNumber , retcustName));
+    	}else if(customerInfoEntityList.size() > 1){
+    		throw new ServiceException(String.format("通过客户编码：{}，客户名称：{}查询到多条客户信息" , retcustNumber , retcustName));
+    	}
+        
         List<KingdeeReturnOrderItemEntity> itemEntityList = kingdeeReturnOrderEntity.getItemEntityList();
         List<String> stockNumberList = itemEntityList.stream().map(KingdeeReturnOrderItemEntity::getFStockNumber).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseEntities = warehouseService.listByKingdeeCodeList(stockNumberList);
@@ -121,7 +136,8 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             instockEntity.setSoReturnId(kingdeeReturnOrderItemEntity.getFSOEntryId());
         }
         instockEntity.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
-        instockEntity.setCustomerName(kingdeeReturnOrderEntity.getFRetcustName());
+        instockEntity.setCustomerId(customerInfoEntityList.get(0).getId());
+		instockEntity.setCustomerName(retcustName);
         instockEntity.setId(IdWorker.getIdStr());
         instockEntity.setThirdCode(kingdeeReturnOrderEntity.getFEThirdBillNo());
         List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();

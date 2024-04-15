@@ -58,6 +58,7 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -180,6 +181,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private StocktakingProfitLossService stocktakingProfitLossService;
+    
+    @Resource
+    private OmsListingInfoFeign omsListingInfoFeign;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -2258,7 +2262,20 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
 	@Override
 	public List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> getDataCompareByCondition(
-			com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params) {
+			com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params , Integer pageSize) {
+		if("0".equals(params.getId())) {
+			this.getParams(params);
+		}
+		return baseMapper.getDataCompareByCondition(params , pageSize);
+	}
+	
+	@Override
+	public Integer getDataCompareByConditionCount(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params) {
+		this.getParams(params);
+		return baseMapper.getDataCompareByConditionCount(params);
+	}
+	
+	private void getParams(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params) {
 		if(StringUtils.isBlank(params.getDictPlatform())) {
 			throw new ServiceException("销售出库单的系统数据范围【销售平台】不能为空");
 		}
@@ -2267,14 +2284,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 			throw new ServiceException("销售出库单的系统数据范围【出库日期】不能为空");
 		}
 		
+		List<String> customerIdList = new ArrayList<>();
 		String shopId = params.getShopId();
 		if(StringUtils.isNotBlank(shopId)) {
 			ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
-			if(shopInfoEntity != null) {
-				params.setShopName(shopInfoEntity.getName());
-			}
+			customerIdList.add(shopInfoEntity.getCustomerId());
+		}else {
+			ApiResult<List<ShopInfoEntity>> list = shopInfoFeign.list();
+			customerIdList = list.getData().stream().filter(s -> s.getCustomerId() != null).map(ShopInfoEntity::getCustomerId).collect(Collectors.toList());
 		}
-		boolean haveShopName = StringUtils.isNotBlank(params.getShopName());
+		
+		List<CustomerInfoEntity> customerInfoEntityList = customerFeign.listCustomerByIds(customerIdList);
+		List<String> customerNameList = customerInfoEntityList.stream().filter(c -> StringUtils.isNotBlank(c.getName())).map(CustomerInfoEntity::getName).collect(Collectors.toList());
+		if(CollUtil.isEmpty(customerNameList)) {
+			throw new ServiceException("选择的店铺未配置客户信息");
+		}
+		params.setCustomerNameList(customerNameList);
 		
 		String warehouseId = params.getWarehouseId();
 		if(StringUtils.isNotBlank(warehouseId)) {
@@ -2283,62 +2308,5 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 				params.setWarehouseName(warehouseEntity.getName());
 			}
 		}
-		
-		List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> soOutstockDTOList = baseMapper.getDataCompareByCondition(params);
-		if(CollUtil.isEmpty(soOutstockDTOList)) {
-			return soOutstockDTOList;
-		}
-		
-		List<String> soCodeList = soOutstockDTOList.stream().filter(s -> StringUtils.isNotBlank(s.getSoCode()))
-				.map(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO::getSoCode).distinct().collect(Collectors.toList());
-		if(CollUtil.isEmpty(soCodeList)) {
-			return new ArrayList<>();
-		}
-		
-		params.setSoCodeList(soCodeList);
-		
-		List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO> soB2cDTOList = soB2cFeign.getDataCompareByCondition(params);
-		
-		List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> resultDTOList = new ArrayList<>();
-		if(CollUtil.isNotEmpty(soB2cDTOList)) {
-			Map<String, List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO>> b2cCodeDTOMaps = soB2cDTOList.stream()
-					.collect(Collectors.groupingBy(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO::getCode));
-			soOutstockDTOList.forEach(soOutstockDTO -> {
-				String soCode = soOutstockDTO.getSoCode();
-				if(StringUtils.isNotBlank(soCode)) {
-					List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO> soCodeDTOList = b2cCodeDTOMaps.get(soCode);
-					if(CollUtil.isNotEmpty(soCodeDTOList)) {
-						soOutstockDTO.setDictPlatform(soCodeDTOList.stream().filter(s -> StringUtils.isNotBlank(s.getDictPlatform()))
-								.map(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO::getDictPlatform).findAny().orElse(null));
-						if(StringUtils.isBlank(soOutstockDTO.getDictPlatform())) {
-							return;
-						}
-						soOutstockDTO.setShopName(soCodeDTOList.stream().filter(s -> StringUtils.isNotBlank(s.getShopName()))
-								.map(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO::getShopName).findAny().orElse(null));
-						if(haveShopName && StringUtils.isBlank(soOutstockDTO.getShopName())) {
-							return;
-						}
-						String skuNo = soOutstockDTO.getSkuNo();
-						if(StringUtils.isNotBlank(skuNo)) {
-							soOutstockDTO.setPlatformSkuNo(soCodeDTOList.stream().filter(s -> StringUtils.isNotBlank(s.getSkuNo()) 
-									&& StringUtils.isNotBlank(s.getPlatformSkuNo()) && skuNo.equals(s.getSkuNo()))
-								.map(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO::getPlatformSkuNo).findAny().orElse(null));
-						}
-						resultDTOList.add(soOutstockDTO);
-					}
-				}
-			});
-		}
-		
-		return resultDTOList;
-	}
-	
-	@Override
-	public Integer getDataCompareByConditionCount(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params) {
-		List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> list = getDataCompareByCondition(params);
-		if(list == null) {
-			list = new ArrayList<>();
-		}
-		return list.size();
 	}
 }

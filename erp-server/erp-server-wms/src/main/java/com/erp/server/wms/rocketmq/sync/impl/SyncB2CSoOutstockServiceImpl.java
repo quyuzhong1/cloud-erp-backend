@@ -8,6 +8,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.SyncKingdeeDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -17,11 +18,15 @@ import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.inventory.*;
+import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
 import com.erp.server.wms.service.InventoryTransCoreService;
 import com.erp.server.wms.service.SoOutstockService;
 import com.erp.server.wms.service.WarehouseService;
+
+import cn.hutool.core.collection.CollUtil;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -56,6 +61,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     @Resource
     private SoOutstockService soOutstockService;
 
+    @Resource
+    private CustomerFeign customerFeign;
 
     /**
      * 同步金蝶的销售出库单
@@ -111,7 +118,16 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
      * @date 2023-07-01 10:56
      */
     private SyncKingdeeDTO.B2CSoOutstockDTO handleWmsSoOutstock(KingdeeDeliveryDetailEntity entity, List<String> noInventorySkuNoList) {
-        SyncKingdeeDTO.B2CSoOutstockDTO result = new SyncKingdeeDTO.B2CSoOutstockDTO();
+    	String customerNumber = entity.getFCustomerNumber();
+    	String customerName = entity.getFCustomerName();
+    	List<CustomerInfoEntity> customerInfoEntityList = customerFeign.getCustomerByCodeAndName(customerNumber, customerName);
+    	if(CollUtil.isEmpty(customerInfoEntityList)) {
+    		throw new ServiceException(String.format("通过客户编码：{}，客户名称：{}查询不到客户信息" , customerNumber , customerName));
+    	}else if(customerInfoEntityList.size() > 1){
+    		throw new ServiceException(String.format("通过客户编码：{}，客户名称：{}查询到多条客户信息" , customerNumber , customerName));
+    	}
+    	
+    	SyncKingdeeDTO.B2CSoOutstockDTO result = new SyncKingdeeDTO.B2CSoOutstockDTO();
         List<KingdeeDeliveryDetailItemEntity> kingdeeDetailList = entity.getKingdeeOutStockItemEntityList();
         //金蝶的仓库code
         List<String> kingdeeWarehouseCodeList = kingdeeDetailList.stream().map(KingdeeDeliveryDetailItemEntity::getFStockNumber).distinct().collect(Collectors.toList());
@@ -128,6 +144,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         String flagId = soOutstockService.getByCode(code);
         result.setFlagId(flagId);
         SoOutstockEntity soOutstock = new SoOutstockEntity();
+        soOutstock.setCustomerId(customerInfoEntityList.get(0).getId());
+        soOutstock.setCustomerName(customerName);
         //单据编号
         soOutstock.setCode(code);
         //运输单号
@@ -177,6 +195,10 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             Integer actualQty = Integer.parseInt(realQty.split("\\.")[0]);
             detailEntity.setActualQty(actualQty);
             detailEntity.setPlanQty(actualQty);
+            String note = detail.getFNote();
+            if(StringUtils.isNotBlank(note)) {
+            	detailEntity.setPlatformCode(note.trim());
+            }
             String warehouseId = "";
             String warehouseName = "";
             //表示要

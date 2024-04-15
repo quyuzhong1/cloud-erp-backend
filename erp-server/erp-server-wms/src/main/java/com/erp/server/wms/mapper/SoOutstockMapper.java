@@ -81,5 +81,7 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
      * @param params
      * @return
      */
-    List<WmsDataCompareTaskDTO.SoOutstockDTO> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.SoOutstockDTO params);
+    List<WmsDataCompareTaskDTO.SoOutstockDTO> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.SoOutstockDTO params , @Param("pageSize") Integer pageSize);
+    
+    Integer getDataCompareByConditionCount(@Param("params") WmsDataCompareTaskDTO.SoOutstockDTO params);
 }

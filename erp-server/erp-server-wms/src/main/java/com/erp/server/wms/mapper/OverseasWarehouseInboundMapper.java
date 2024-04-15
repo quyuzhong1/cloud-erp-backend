@@ -53,7 +53,7 @@ public interface OverseasWarehouseInboundMapper extends BaseMapper<OverseasWareh
      * @param params
      * @return
      */
-    List<WmsDataCompareTaskDTO.OverseasInboundDTO> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.OverseasInboundDTO params);
+    List<WmsDataCompareTaskDTO.OverseasInboundDTO> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.OverseasInboundDTO params , @Param("pageSize") Integer pageSize);
     
     Integer getDataCompareByConditionCount(@Param("params") WmsDataCompareTaskDTO.OverseasInboundDTO params);
 }

@@ -300,7 +300,7 @@
     </select>
     
     <select id="getDataCompareByCondition" resultType="com.erp.model.wms.dto.WmsDataCompareTaskDTO$SoOutstockDTO">
-		        SELECT g.id,T.so_code,
+		        SELECT g.id,g.platform_code so_code,t.customer_name shop_name,
 			T.warehouse_name,
 			G.sku_no,
 			G.actual_qty::VARCHAR actual_qty,
@@ -308,20 +308,41 @@
 		FROM
 			so_outstock
 			T LEFT JOIN so_outstock_detail G ON T.ID = G.main_id 
-		WHERE
-			T.approve_status = 'approve' 
-			AND T.is_deleted = 'f' and G.is_deleted = 'f'
-			<if test="params.billDateList !=null and params.billDateList.size>0">
-            AND t.bill_date >= #{params.billDateList[0]} and
-            (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > t.bill_date
-        	</if>
-        	<if test="params.warehouseName!=null and params.warehouseName!=''">
-            AND t.warehouse_name = #{params.warehouseName}
-        	</if>
-			<if test="params.id!=null and params.id!=''">
-            and not exists (select id from wms_data_compare_temp where system_data_id = g.id and task_id = #{params.id})
-        	</if>
+		<include refid="SoDataCompareByCondition"/>
+        	order by g.id limit #{pageSize}
     </select>
     
+    <select id="getDataCompareByConditionCount" resultType="java.lang.Integer">
+		 SELECT count(g.id)
+			FROM
+			so_outstock
+			T LEFT JOIN so_outstock_detail G ON T.ID = G.main_id 
+		<include refid="SoDataCompareByCondition"/>
+    </select>
+    
+    <sql id="SoDataCompareByCondition">
+   		WHERE
+		T.approve_status = 'approve' 
+		AND T.is_deleted = 'f' and G.is_deleted = 'f'
+		<if test="params.id!=null and params.id!=''">
+		and g.id > #{params.id}
+		</if>
+		<if test="params.customerNameList !=null and params.customerNameList.size>0">
+           AND t.customer_name IN
+           <foreach collection="params.customerNameList" item="name" open="(" separator="," close=")">
+               #{name}
+           </foreach>
+       	</if>
+		<if test="params.billDateList !=null and params.billDateList.size>0">
+           AND t.bill_date >= #{params.billDateList[0]} and
+           (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1
+           DAY' ) > t.bill_date
+       	</if>
+       	<if test="params.warehouseName!=null and params.warehouseName!=''">
+           AND t.warehouse_name = #{params.warehouseName}
+       	</if>
+		<if test="params.taskId!=null and params.taskId!=''">
+           and not exists (select id from wms_data_compare_temp where system_data_id = g.id and task_id = #{params.taskId})
+       	</if>
+    </sql>
 </mapper>

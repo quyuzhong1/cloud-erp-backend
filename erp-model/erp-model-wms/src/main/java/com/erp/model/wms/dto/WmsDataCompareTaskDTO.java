@@ -420,6 +420,12 @@ public class WmsDataCompareTaskDTO implements Serializable {
          */
     	@ExcelIgnore
     	private String id;
+    	
+    	/**
+         * 任务id
+         */
+    	@ExcelIgnore
+    	private String taskId;
     }
     
     /**
@@ -498,7 +504,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
     	 *  销售单号查询条件
     	 */
     	 @ExcelIgnore
-    	private List<String> soCodeList;
+    	private List<String> customerNameList;
      }
      
      /**

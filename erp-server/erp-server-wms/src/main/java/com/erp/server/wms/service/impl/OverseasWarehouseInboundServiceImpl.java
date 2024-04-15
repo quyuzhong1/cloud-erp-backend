@@ -1216,9 +1216,11 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     }
 
     @Override
-	public List<OverseasInboundDTO> getDataCompareByCondition(OverseasInboundDTO params) {
-    	this.getParams(params);
-		return baseMapper.getDataCompareByCondition(params);
+	public List<OverseasInboundDTO> getDataCompareByCondition(OverseasInboundDTO params , Integer pageSize) {
+    	if("0".equals(params.getId())) {
+			this.getParams(params);
+		}
+		return baseMapper.getDataCompareByCondition(params , pageSize);
 	}
 
 	@Override
