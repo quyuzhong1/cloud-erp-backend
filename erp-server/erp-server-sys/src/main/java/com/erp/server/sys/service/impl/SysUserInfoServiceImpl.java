@@ -467,6 +467,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         updateWrapper.in(SysUserInfoEntity::getUid, stateDTO.getIds());
         this.update(updateWrapper);
 
+        //禁用清除redis登录信息
+        if (ObjectUtil.isNotEmpty(stateDTO.getState()) && MathUtil.compareTo(stateDTO.getState(),MathUtil.ZERO) == MathUtil.ZERO) {
+            stateDTO.getIds().forEach(uid -> redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + uid));
+        }
+
         List<SysUserInfoEntity> list = this.listByIds(stateDTO.getIds());
         if (CollectionUtils.isEmpty(list)) {
             return;
