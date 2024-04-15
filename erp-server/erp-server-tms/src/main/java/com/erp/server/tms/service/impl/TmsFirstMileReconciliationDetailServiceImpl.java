@@ -34,6 +34,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
+import com.erp.model.tms.dto.excel.DeclareReconciliationStandardExcelDTO;
 import com.erp.model.tms.dto.excel.FirstMileReconciliationStandardExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
@@ -48,6 +49,7 @@ import com.erp.server.tms.listener.FirstMileReconciliationStandardExcelListener;
 import com.erp.server.tms.mapper.TmsFirstMileReconciliationDetailMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
+import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -67,6 +69,7 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -896,7 +899,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                         updateListMap.put(erpFieldDropDownDTO.getSourceId(), oldUpdateDTO);
                     } else {
                         // 历史不存在新增
-                        TmsCostDetailDTO.UpdateDTO updateDTO = newCostUpdateDTO(categoryEnum, excelDTO, erpFieldDropDownDTO);
+                        TmsCostDetailDTO.UpdateDTO updateDTO = newCostUpdateDTO(categoryEnum, excelDTO.getCostValue(), erpFieldDropDownDTO);
                         updateListMap.put(erpFieldDropDownDTO.getSourceId(), updateDTO);
                     }
                     // 加成和设置实际值
@@ -1074,7 +1077,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         }
         //验证导入数据是否为空
         List<JSONObject> excelDateList = excelListenerUtil.getExcelDateList();
-        if (org.apache.commons.collections4.CollectionUtils.isEmpty(excelDateList)) {
+        if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.ERROR_95123);
         }
         //导入数据处理
@@ -1124,12 +1127,16 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         String currency = mainEntity.getCurrency();
         String currencySymbol = this.getCurrencySymbol(currency);
 
-        //物流跟踪单号下标
+        //物流运单号下标
         List<String> transportNoList = new ArrayList<>();
-        int transportNoIndex = MathUtil.ZERO;
+        // 列表名称Map
+        Map<String, Integer> columnNameIndexMap = IntStream.range(0, headList.size())
+                .boxed()
+                .collect(Collectors.toMap(headList::get, i -> i));
+        Integer transportNoIndex = MathUtil.ZERO;
         for (int i = 0; i < headList.size(); i++) {
             CfgReconciliationFieldDTO.ErpFieldViewDTO erpFieldViewDTO = map.get(headList.get(i));
-            if (ObjectUtil.isEmpty(erpFieldViewDTO) || !StrUtil.equals(erpFieldViewDTO.getErpFieldCode(), "tradeNo")) {
+            if (ObjectUtil.isEmpty(erpFieldViewDTO) || !StrUtil.equals(erpFieldViewDTO.getErpFieldCode(), "transportNo")) {
                 continue;
             }
             String finalI = String.valueOf(i);
@@ -1179,16 +1186,19 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> resultMap = new HashMap<>();
 
         for (JSONObject jsonObject : successList) {
-            //主数据
-            JSONObject successJson = new JSONObject();
             List<String> errorMsgList = new ArrayList<>();
             CfgReconciliationFieldDTO.ErpFieldDropDownDTO erpFieldDropDownDTO = null;
+            String columnValue = "";
             if (cfgErpFieldMap.isEmpty()) {
-                errorMsgList.add("未发现字段配置");
+                errorMsgList.add("未发现字段配置, 请联系管理员");
             } else {
                 for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
+                    if (entry.getKey().equalsIgnoreCase(transportNoIndex.toString())){
+                        continue;
+                    }
                     //字段名称
                     String field = headList.get(Integer.parseInt(entry.getKey()));
+                    columnValue = entry.getKey();
                     erpFieldDropDownDTO = cfgErpFieldMap.get(field);
                     if (null == erpFieldDropDownDTO || StrUtil.isBlank(erpFieldDropDownDTO.getErpFieldName())) {
                         errorMsgList.add(StrUtil.format("未找到该字段配置项【{}】", field));
@@ -1196,29 +1206,28 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     }
                 }
             }
-            FirstMileReconciliationStandardExcelDTO excelDTO = BeanUtil.toBean(successJson, FirstMileReconciliationStandardExcelDTO.class);
-            //基础验证
-            List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
-            if (!CollectionUtils.isEmpty(msgList)) {
-                errorMsgList.addAll(msgList);
-            }
 
             if (!CollectionUtils.isEmpty(errorMsgList)) {
                 jsonObject.set("错误信息", FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(jsonObject);
                 continue;
             }
+            if(StringUtils.isBlank(columnValue)){
+                continue;
+            }
+
+            String transportNo = jsonObject.getStr(transportNoIndex.toString());
             // 对应物流单
-            List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailDTO = sourceLogisticMap.get(excelDTO.getTransportNo());
+            List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailDTO = sourceLogisticMap.get(transportNo);
             if (CollectionUtils.isEmpty(sourceDetailDTO)) {
-                jsonObject.set("错误信息", StrUtil.format("未找到物流运单号【{}】的物流单", excelDTO.getTransportNo()));
+                jsonObject.set("错误信息", StrUtil.format("未找到物流运单号【{}】的物流单", transportNo));
                 errorList.add(jsonObject);
                 continue;
             }
             // 先从结果集获取
-            List<TmsFirstMileReconciliationDetailDTO.ListDTO> currentTrackNoList = resultMap.get(excelDTO.getTransportNo());
+            List<TmsFirstMileReconciliationDetailDTO.ListDTO> currentTrackNoList = resultMap.get(transportNo);
             if (null == currentTrackNoList) {
-                currentTrackNoList = oldDbGroupMap.get(excelDTO.getTransportNo());
+                currentTrackNoList = oldDbGroupMap.get(transportNo);
                 if (CollectionUtils.isEmpty(currentTrackNoList)) {
                     // 生成当前物流单的所有明细
                     currentTrackNoList = sourceDetailDTO.stream()
@@ -1256,19 +1265,19 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                             continue;
                         } else {
                             oldUpdateDTO.setHasUpdate(true);
-                            oldUpdateDTO.setCostValue(MathUtil.valueOf(excelDTO.getCostValue()));
+                            oldUpdateDTO.setCostValue(MathUtil.valueOf(columnValue));
                             updateListMap.put(erpFieldDropDownDTO.getSourceId(), oldUpdateDTO);
                         }
                     } else {
                         // 历史不存在新增
-                        TmsCostDetailDTO.UpdateDTO updateDTO = newCostUpdateDTO(categoryEnum, excelDTO, erpFieldDropDownDTO);
+                        TmsCostDetailDTO.UpdateDTO updateDTO = newCostUpdateDTO(categoryEnum, columnValue, erpFieldDropDownDTO);
                         updateListMap.put(erpFieldDropDownDTO.getSourceId(), updateDTO);
                     }
                     // 加成和设置实际值
                     checkAndUpdateCfgCostValue(updateListMap, categoryEnum, actualListDTO);
                 } else if (SourceTypeEnum.DICT_BASIC.getCode().equalsIgnoreCase(erpFieldDropDownDTO.getSourceType())) {
                     // 根据字段名设置
-                    ReflectUtil.setFieldValue(actualListDTO, erpFieldDropDownDTO.getSourceCodeValue(), new BigDecimal(excelDTO.getCostValue()));
+                    ReflectUtil.setFieldValue(actualListDTO, erpFieldDropDownDTO.getSourceCodeValue(), new BigDecimal(columnValue));
                 } else {
                     jsonObject.set("错误信息", StrUtil.format("配置类型不存在【{}】", erpFieldDropDownDTO.getSourceType()));
                     errorList.add(jsonObject);
@@ -1279,7 +1288,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 // 添加明细信息
                 actualListDTO.setUpdateList(new LinkedList<>(updateListMap.values()));
                 // 添加到当前结果
-                resultMap.put(excelDTO.getTransportNo(), Arrays.asList(estimatedListDTO, actualListDTO, diffListDTO));
+                resultMap.put(transportNo, Arrays.asList(estimatedListDTO, actualListDTO, diffListDTO));
             }
         }
         return resultMap.values().stream()
@@ -1288,11 +1297,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     }
 
     @NotNull
-    private static TmsCostDetailDTO.UpdateDTO newCostUpdateDTO(DictCostCategoryEnum categoryEnum, FirstMileReconciliationStandardExcelDTO excelDTO, CfgReconciliationFieldDTO.ErpFieldDropDownDTO erpFieldDropDownDTO) {
+    private static TmsCostDetailDTO.UpdateDTO newCostUpdateDTO(DictCostCategoryEnum categoryEnum, String costValue, CfgReconciliationFieldDTO.ErpFieldDropDownDTO erpFieldDropDownDTO) {
         TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
         updateDTO.setHasUpdate(true);
         updateDTO.setDictCostCategory(categoryEnum.getCode());
-        updateDTO.setCostValue(MathUtil.valueOf(excelDTO.getCostValue()));
+        updateDTO.setCostValue(MathUtil.valueOf(costValue));
         updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
         updateDTO.setCfgCostId(erpFieldDropDownDTO.getSourceId());
         return updateDTO;
