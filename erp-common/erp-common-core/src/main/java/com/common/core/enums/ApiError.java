@@ -182,6 +182,7 @@ public enum ApiError implements Serializable {
     ERROR_NOT_EXIST_ADDRESS_OR_CONTRACT(80005,"地址编码或联系人编号是空，同步金蝶失败，请手动维护数据"),
     ERROR_NOT_EXIST_PARENT_ASSISTANT_DATA(80006,"未找到上级辅助资料"),
     ERROR_NOT_EXIST_DMP_PUSH_TASK(80007,"未找到中台推送任务"),
+    ERROR_STATUS_NO_NEED_SYNC(80008,"只有同步失败状态才可更新为无需同步"),
 
 
     /**
@@ -1247,6 +1248,7 @@ public enum ApiError implements Serializable {
     ERROR_TRANSFER_LOGISTICS_CHANNEL_DISABLED_EXIST(94039,"存在未停用的中转物流渠道,无法停用该物流商"),
     ORDER_UPLOAD_SUCCESS_NOT_DELETE(94040,"订单【{}】上传成功不能删除"),
     ERROR_LOGISTICS_MAX_LIMIT_NOT_EMPTY(94041,"长宽高单个值不能为空，需大于0"),
+    ERROR_CANNOT_SAME_POSITION(94100,"取货和上架仓位不能是同一个仓位"),
 
     // 亚马逊公用异常
     ERROR_MARKETPLACE_UNAUTHORIZED(100000,"亚马逊店铺已被禁用:{}"),

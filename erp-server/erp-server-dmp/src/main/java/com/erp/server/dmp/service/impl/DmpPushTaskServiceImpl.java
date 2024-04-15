@@ -299,6 +299,23 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean batchNoNeedSync(List<String> ids) {
+        //获取数据
+        List<DmpPushTaskEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DATA);
+        }
+        //判断数据状态-只有同步失败的才可以变更为无需同步
+        List<String> noNeedSyncIds = list.stream().filter(obj -> SyncStatusEnum.FAILED_SYNC.getCode().equals(obj.getStatus())).map(DmpPushTaskEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(noNeedSyncIds)) {
+            throw new ServiceException(ApiError.ERROR_STATUS_NO_NEED_SYNC);
+        }
+        this.baseMapper.updateStatus(noNeedSyncIds);
+        return Boolean.TRUE;
+    }
+
+    @Override
     public void sendWarnMsg(String syncTaskId) {
         DmpPushTaskEntity entity = this.getById(syncTaskId);
         if (ObjectUtil.isEmpty(entity)) {
