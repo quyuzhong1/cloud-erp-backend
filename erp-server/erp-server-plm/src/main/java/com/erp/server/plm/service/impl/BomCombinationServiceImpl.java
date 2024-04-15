@@ -299,7 +299,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
             return null;
         }
         String parentSkuNos = errorSkuNoList.stream().collect(Collectors.joining(","));
-        return StrUtil.format("子产品明细与已存在捆绑商品【{}】的子件一致，是否继续创建",parentSkuNos);
+        return parentSkuNos;
     }
 
     /**
@@ -331,6 +331,16 @@ public class BomCombinationServiceImpl implements BomCombinationService {
             updateDTO.setSkuId(productDetailEntity.getId());
             updateDTO.setQty(Integer.valueOf(importExcelDTO.getQty()));
             updateList.add(updateDTO);
+        }
+
+        //校验导入数据是否重复
+        BomCombinationDTO.CheckBomParentSkuDTO dto = new BomCombinationDTO.CheckBomParentSkuDTO();
+        dto.setSkuNo(value.get(0).getSkuNo());
+        List<BomCombinationDTO.CheckBomChildSkuDTO> childSkuList = updateList.stream().map(obj -> new BomCombinationDTO.CheckBomChildSkuDTO(obj.getSkuId(), obj.getQty())).collect(Collectors.toList());
+        dto.setChildSkuList(childSkuList);
+        String parentSkuNos = checkBomChildSku(dto);
+        if (StrUtil.isNotBlank(parentSkuNos)) {
+            throw new ServiceException(StrUtil.format("子产品明细与已存在捆绑商品【{}】的子件一致，如需继续创建，请手动单个创建",parentSkuNos));
         }
         return updateList;
     }

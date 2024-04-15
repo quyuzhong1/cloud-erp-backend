@@ -1,6 +1,7 @@
 package com.erp.model.plm.dto;
 
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -208,6 +209,7 @@ public class BomCombinationDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class CheckBomChildSkuDTO {
 
         /**

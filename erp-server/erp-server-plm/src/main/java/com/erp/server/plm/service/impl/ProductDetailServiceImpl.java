@@ -2044,11 +2044,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
-        if (isCheck) {
-            //校验字段是否必填
-            checkApproveField(Arrays.asList(entity));
-        }
-
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
@@ -2412,6 +2407,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return;
         }
         List<ProductDetailEntity> detailEntityList = this.listByIds(ids);
+
+        //校验字段是否必填
+        checkApproveField(detailEntityList);
+
         for (ProductDetailEntity entity : detailEntityList) {
             ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
             /*if (StringUtils.isBlank(productInfoEntity.getSpuNo())) {
@@ -3469,15 +3468,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(entityList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-/*        for (String id : ids) {
-            ProductCostEntity costEntity = productCostService.getBySkuId(id);
-            if (costEntity.getActualTaxCost() == null) {
-                throw new ServiceException(ApiError.ERROR_95237);
-            }
-            if (costEntity.getActualNoTaxCost() == null) {
-                throw new ServiceException(ApiError.ERROR_95238);
-            }
-        }*/
+
 
         //待提交、审核不通过才可以提交
         long count = entityList.stream().filter(entity ->
@@ -3546,8 +3537,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (count != entityList.size()) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
-        //校验字段是否必填
-        checkApproveField(entityList);
 
         LoginUser userInfo = commonService.getUserInfo();
         //TODO 待加审核流程
@@ -4051,7 +4040,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isEmpty(productInfo)) {
                 throw new ServiceException(ApiError.ERROR_95084);
             }
-            if (ObjectUtil.isEmpty(productInfo.getSaleMethod() )|| !productInfo.getSaleMethod().contains(SaleMethodEnum.GOODS.getName())) {
+            if (ObjectUtil.isEmpty(productInfo.getSaleMethod() )|| (!productInfo.getSaleMethod().contains(SaleMethodEnum.GOODS.getName()) && !productInfo.getSaleMethod().contains(SaleMethodEnum.GIFT.getName()))) {
                 continue;
             }
             /**
