@@ -44,7 +44,6 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
@@ -64,7 +63,10 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -2949,11 +2951,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             .orElse(MathUtil.ZERO);
                     detailDTO.setFreezeQty(freezeQty);
                 }
-                //缺货订单
-                if ((SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(data.getBillStatus())
-                        || SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(data.getBillStatus()))
-                        && MathUtil.compareTo(detailDTO.getQty(), useableQty) > MathUtil.ZERO && !ignoreInventorySkuIds.contains(detailDTO.getSkuId())) {
-                    detailLabelDTO.setIsOutStock(Boolean.TRUE);
+                //存在仓库则需要判断是否缺货
+                if (StrUtil.isNotBlank(detailDTO.getWarehouseId())) {
+                    //缺货订单
+                    if ((SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(data.getBillStatus())
+                            || SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(data.getBillStatus()))
+                            && MathUtil.compareTo(detailDTO.getQty(), useableQty) > MathUtil.ZERO && !ignoreInventorySkuIds.contains(detailDTO.getSkuId())) {
+                        detailLabelDTO.setIsOutStock(Boolean.TRUE);
+                    }
                 }
                 detailDTO.setDetailLabelDTO(detailLabelDTO);
             }
