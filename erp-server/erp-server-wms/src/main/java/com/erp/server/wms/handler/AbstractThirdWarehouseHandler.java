@@ -19,10 +19,7 @@ import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
+import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
@@ -34,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.util.List;
 import java.util.Objects;
 
 @Slf4j
@@ -79,6 +77,11 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     }
 
     @Override
+    public ApiResult<List<ThirdWarehouseSkuResp>> getSkuList(ThirdWarehouseProductReq productReq, String authId) {
+        return handleAndRemoveContext(() -> getSkuList(productReq), authId,null,null);
+    }
+
+    @Override
     public ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq, String authId) {
         return handleAndRemoveContext(() -> createInboundBill(createInboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CREATE_INBOUND_BILL,createInboundReq.getReferenceNo());
     }
@@ -105,6 +108,8 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         return handleAndRemoveContext(() -> cancelOutboundBill(cancelOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL,cancelOutboundReq.getOrderCode());
     }
 
+    protected abstract ApiResult<List<ThirdWarehouseSkuResp>> getSkuList(ThirdWarehouseProductReq productReq);
+
     protected abstract ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq);
 
     protected abstract ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq);
@@ -117,12 +122,12 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
     protected abstract Boolean hasWarehouse();
 
-    private ApiResult<String> handleAndRemoveContext(Handler handler, String authId,SourceTypeEnum businessType,String erpBusinessCode) {
+    private <T> ApiResult<T> handleAndRemoveContext(Handler<T> handler, String authId,SourceTypeEnum businessType,String erpBusinessCode) {
         try {
             //设置授权信息
             handleAuthInfo(authId);
             //执行逻辑
-            ApiResult<String> result = handler.handle();
+            ApiResult<T> result = handler.handle();
             ThirdWarehouseContext.setMsg(result.getMsg());
             //记录日志
             pushOperateLog(businessType,result.getCode(),erpBusinessCode);
@@ -139,11 +144,14 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     }
 
     @FunctionalInterface
-    private interface Handler {
-        ApiResult<String> handle();
+    private interface Handler<T> {
+        ApiResult<T> handle();
     }
 
     private void pushOperateLog(SourceTypeEnum businessType, Integer status, String erpBusinessCode) {
+        if(businessType == null){
+            return;
+        }
         DmpPushTaskEntity dmpPushTaskEntity = buildDmpPushTaskEntity(businessType, status, erpBusinessCode);
         try {
             String id = dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
