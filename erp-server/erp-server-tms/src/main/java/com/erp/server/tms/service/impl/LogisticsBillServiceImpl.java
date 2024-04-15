@@ -509,7 +509,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             ordersSkuList = new ArrayList<>(skuInfoList.size());
             List<String> skuIds = skuInfoList.stream().map(LogisticsProductDTO.ProductDTO::getSkuId).collect(Collectors.toList());
             //获取sku目的国海关编码映射关系
-            List<ProductCustomsEntity> productCustomsList = plmTaskFeign.listProductCustomsBySkuIds(ProductCustomsSkuDTO.builder().skuIds(skuIds).country(country).build());
+            List<ProductCustomsEntity> productCustomsList = plmTaskFeign.listProductCustomsBySkuIds(ProductCustomsSkuDTO.builder().skuIds(skuIds).build());
             for (LogisticsBillDTO.SkuDTO item : dto.getSkuList()){
                 String skuId = item.getSkuId();
                 String customCode = "";
@@ -519,6 +519,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                             && StringUtils.isNotEmpty(country) && StringUtils.isNotEmpty(e.getCountry())).findFirst().orElse(null);
 
                 }else {
+                    customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
+                            && StringUtils.isEmpty(e.getCountry())).findFirst().orElse(null);
+                }
+                //未匹配到时，获取默认值
+                if (Objects.isNull(customs)){
                     customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
                             && StringUtils.isEmpty(e.getCountry())).findFirst().orElse(null);
                 }
@@ -569,6 +574,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                             && StringUtils.isNotEmpty(country) && StringUtils.isNotEmpty(e.getCountry())).findFirst().orElse(null);
 
                 }else {
+                    customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
+                            && StringUtils.isEmpty(e.getCountry())).findFirst().orElse(null);
+                }
+                //未匹配到时，获取默认值
+                if (Objects.isNull(customs)){
                     customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
                             && StringUtils.isEmpty(e.getCountry())).findFirst().orElse(null);
                 }
