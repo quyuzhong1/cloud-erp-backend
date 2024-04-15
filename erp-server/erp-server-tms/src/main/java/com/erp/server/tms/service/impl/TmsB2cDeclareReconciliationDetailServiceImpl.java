@@ -32,10 +32,7 @@ import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.excel.DeclareReconciliationStandardExcelDTO;
-import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
-import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
-import com.erp.model.tms.entity.TransferDeclareDetailEntity;
-import com.erp.model.tms.entity.TransferDeclareEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -252,7 +249,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.EMPTY_LIST;
         }
-       return lambdaQuery().in(TmsB2cDeclareReconciliationDetailEntity::getMainId,mainIdList).list();
+       return lambdaQuery().in(TmsB2cDeclareReconciliationDetailEntity::getMainId,mainIdList).orderByDesc(TmsB2cDeclareReconciliationDetailEntity::getDate).list();
     }
 
     @Override
@@ -430,6 +427,8 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             viewDTO.setActualBillingWeight(MathUtil.valueOf(reconciliationStandardExcelDTO.getActualBillingWeight()));
             viewDTO.setActualWeightUnit(StrUtil.isBlank(reconciliationStandardExcelDTO.getActualWeightUnit()) ? UnitEnum.WeightUnitEnum.KG.getCode() : reconciliationStandardExcelDTO.getActualWeightUnit());
             viewDTO.setUpdateList(updateList);
+            //费用处理
+            handleCost(updateList,viewDTO);
             resultList.add(viewDTO);
         }
         return resultList;
@@ -585,6 +584,9 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             viewDTO.setActualBillingWeight(MathUtil.valueOf(excelDTO.getActualBillingWeight()));
             viewDTO.setActualWeightUnit(StrUtil.isBlank(excelDTO.getActualWeightUnit()) ? UnitEnum.WeightUnitEnum.KG.getCode() : excelDTO.getActualWeightUnit());
             viewDTO.setUpdateList(updateList);
+
+            //费用处理
+            handleCost(updateList,viewDTO);
             resultList.add(viewDTO);
         }
         return resultList;
@@ -853,6 +855,41 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             entity.setActualOtherCost(otherCost);
         }
         this.updateBatchById(list);
+    }
+
+    /**
+     * @description: 费用处理
+     * @author Will
+     * @date: 2024/4/15 14:27
+     * @param updateList
+     * @param viewDTO
+     */
+    private void handleCost (List<TmsCostDetailDTO.UpdateDTO> updateList,TmsB2cDeclareReconciliationDetailDTO.ViewDTO  viewDTO) {
+        List<String> cfgCostIdList = updateList.stream().map(TmsCostDetailDTO.UpdateDTO::getCfgCostId).collect(Collectors.toList());
+        List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listByIds(cfgCostIdList);
+        if (CollectionUtils.isEmpty(tmsCfgCostList)) {
+            return;
+        }
+        //实际物流运费
+         BigDecimal actualShippingCost = BigDecimal.ZERO;
+        //实际报关费
+         BigDecimal actualDeclareCost = BigDecimal.ZERO;
+        //实际其他费
+         BigDecimal actualOtherCost = BigDecimal.ZERO;
+
+        for (TmsCostDetailDTO.UpdateDTO updateDTO : updateList) {
+            //费用类型
+            String dictCostCategory = tmsCfgCostList.stream().filter(obj -> StrUtil.equals(obj.getId(), updateDTO.getCfgCostId())).map(TmsCfgCostEntity::getDictCostCategory).findFirst().orElse("");
+            //实际物流运费
+            actualShippingCost = StrUtil.equals(dictCostCategory,DictCostCategoryEnum.SHIPPING_COST.getCode()) ? MathUtil.add(actualShippingCost,updateDTO.getCostValue()) : actualShippingCost;
+            //实际报关费
+            actualDeclareCost = StrUtil.equals(dictCostCategory,DictCostCategoryEnum.DECLARE_COST.getCode()) ? MathUtil.add(actualDeclareCost,updateDTO.getCostValue()) : actualDeclareCost;
+            //实际其他费
+            actualOtherCost = StrUtil.equals(dictCostCategory,DictCostCategoryEnum.OTHER_COST.getCode()) ? MathUtil.add(actualOtherCost,updateDTO.getCostValue()) : actualOtherCost;
+        }
+        viewDTO.setActualShippingCost(actualShippingCost);
+        viewDTO.setActualDeclareCost(actualDeclareCost);
+        viewDTO.setActualOtherCost(actualOtherCost);
     }
 
 }

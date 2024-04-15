@@ -422,6 +422,21 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
         private String status;
 
         /**
+         * 实际重量
+         */
+        private BigDecimal actualWeight;
+
+        /**
+         * 实际重量单位
+         */
+        private String actualWeightUnit;
+
+        /**
+         * 实际计费重
+         */
+        private BigDecimal actualBillingWeight;
+
+        /**
          * 费用编辑（导入数据返回）
          */
         private List<TmsCostDetailDTO.UpdateDTO> updateList;
