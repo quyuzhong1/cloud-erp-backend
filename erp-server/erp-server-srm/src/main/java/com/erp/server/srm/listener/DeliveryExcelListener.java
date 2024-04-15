@@ -1,5 +1,6 @@
 package com.erp.server.srm.listener;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
@@ -31,6 +32,8 @@ import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -209,7 +212,7 @@ public class DeliveryExcelListener extends AnalysisEventListener<DeliveryOrderIm
             //封装主记录
             DeliveryOrderDTO.AddDeliveryDTO addDeliveryDTO = new DeliveryOrderDTO.AddDeliveryDTO();
             addDeliveryDTO.setSupplierId(userService.getSupplierId());
-            addDeliveryDTO.setExpectDeliveryDate(value.get(0).getPlanDeliveryDate().toLocalDate());
+            addDeliveryDTO.setExpectDeliveryDate(ObjectUtil.isEmpty(value.get(0).getPlanDeliveryDate()) ? null : LocalDate.parse(value.get(0).getPlanDeliveryDate(), DateTimeFormatter.ofPattern("yyyy/M/d")));
             DeliveryOrderEntity deliveryOrderEntity = DeliveryOrderConverter.INSTANCE.purchaseOrderToDeliveryOrder(purchaseOrderEntity,addDeliveryDTO);
             List<DeliveryOrderDetailEntity> detailEntityList = new ArrayList<>();
             //封装明细
@@ -225,10 +228,12 @@ public class DeliveryExcelListener extends AnalysisEventListener<DeliveryOrderIm
                     if(excelData.getDeliveryQty() > remainQty){
                         remainQtyMap.put(purchaseOrderDetailEntity.getId(),0);
                         DeliveryOrderDetailEntity detail = DeliveryOrderConverter.INSTANCE.importConvertDeatil(purchaseOrderDetailEntity,excelData,remainQty);
+                        detail.setPlanDeliveryDate(LocalDate.parse(value.get(0).getPlanDeliveryDate(), DateTimeFormatter.ofPattern("yyyy/M/d")));
                         detailEntityList.add(detail);
                     }else{
                         remainQtyMap.put(purchaseOrderDetailEntity.getId(),remainQty - excelData.getDeliveryQty());
                         DeliveryOrderDetailEntity detail = DeliveryOrderConverter.INSTANCE.importConvertDeatil(purchaseOrderDetailEntity,excelData,excelData.getDeliveryQty());
+                        detail.setPlanDeliveryDate(LocalDate.parse(value.get(0).getPlanDeliveryDate(), DateTimeFormatter.ofPattern("yyyy/M/d")));
                         detailEntityList.add(detail);
                         break;
                     }

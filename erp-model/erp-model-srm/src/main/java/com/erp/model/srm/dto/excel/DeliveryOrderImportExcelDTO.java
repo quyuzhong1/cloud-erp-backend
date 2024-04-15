@@ -23,9 +23,9 @@ public class DeliveryOrderImportExcelDTO implements Serializable {
     private String sourceCode;
 
 
-    @ExcelProperty(value = "*预计到货日期",converter = LocalDateStringConverter.class)
-    @FieldValid(fieldName = "预计到货日期",isNotBlank = true)
-    private LocalDateTime planDeliveryDate;
+    @ExcelProperty(value = "*预计到货日期")
+    @FieldValid(fieldName = "预计到货日期",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.DATE)
+    private String planDeliveryDate;
 
     @ExcelProperty(value = "*SKU")
     @FieldValid(fieldName = "SKU",isNotBlank = true)

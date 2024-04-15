@@ -64,6 +64,6 @@ public interface DeliveryOrderConverter {
     @Mapping(target = "remark", source = "excelData.remark")
     @Mapping(target = "productName", source = "purchaseOrderDetail.productName")
     @Mapping(target = "orderQty", source = "purchaseOrderDetail.purchaseQty")
-    @Mapping(target = "planDeliveryDate", expression = "java(excelData.getPlanDeliveryDate().toLocalDate())")
+    @Mapping(target = "planDeliveryDate",  ignore = true)
     DeliveryOrderDetailEntity importConvertDeatil(PurchaseOrderDetailEntity purchaseOrderDetail, DeliveryOrderImportExcelDTO excelData, Integer qty);
 }
