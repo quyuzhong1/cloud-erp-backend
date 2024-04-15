@@ -308,7 +308,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "coverage" ,source = "parceInfoVO.insuranceValue"),
             @Mapping(target = "receiver.countryCode",source = "receiverInfoVO.country"),
             @Mapping(target = "receiver.firstName",source = "receiverInfoVO.name"),
-            @Mapping(target = "receiver.lastName",source = "receiverInfoVO.name"),
+//            @Mapping(target = "receiver.lastName",source = "receiverInfoVO.name"),
             @Mapping(target = "receiver.company",source = "receiverInfoVO.companyName"),
             @Mapping(target = "receiver.street",source = "receiverInfoVO.addressFirst"),
             @Mapping(target = "receiver.streetAddress1",source = "receiverInfoVO.addressFirst"),
