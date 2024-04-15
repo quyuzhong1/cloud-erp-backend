@@ -4,6 +4,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -35,7 +36,6 @@ import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -81,6 +81,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             return syncAliExpressChannel(platform);
         } else if (LogisticsPlatformEnum.SHOPIFY.getCode().equalsIgnoreCase(platform)) {
             return syncShopifyChannel(platform);
+        } else if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(platform)) {
+            return syncTikTokChannel(platform);
         } else {
             return syncSingleChannel(platform);
         }
@@ -455,5 +457,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(list)) {
             logisticsAddressService.batchSaveOrUpdateLogisticsAddress(list);
         }
+    }
+
+    public List<BatchResultDTO> syncTikTokChannel(String platform) {
+        return null;
     }
 }

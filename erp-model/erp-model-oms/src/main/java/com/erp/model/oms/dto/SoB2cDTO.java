@@ -1980,4 +1980,25 @@ public class SoB2cDTO implements Serializable {
          */
         private LocalDateTime deliveryTime;
     }
+
+    /**
+     * 拆单保存结果返回
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SplitSaveResultDTO {
+        /**
+         * id
+         */
+        private List<String> soB2cIds;
+        /**
+         * TikTok拆单入参
+         */
+        private OrderSplitPramDTO tikTokPramDTO;
+        /**
+         * 原始订单信息
+         */
+        private SoB2cEntity oldEntity;
+
+    }
 }

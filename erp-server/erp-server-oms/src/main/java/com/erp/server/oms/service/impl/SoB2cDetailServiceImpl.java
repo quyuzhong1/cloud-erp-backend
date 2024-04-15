@@ -539,6 +539,14 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         return baseMapper.listWaitDeliveryQty(paramDTO);
     }
 
+    @Override
+    public Boolean updatePlatformPackageIdByMainId(String platformPackageId, String mainId) {
+        if (StringUtils.isBlank(mainId)) {
+            return Boolean.FALSE;
+        }
+        return lambdaUpdate().set(SoB2cDetailEntity::getPlatformPackageId, platformPackageId).eq(SoB2cDetailEntity::getMainId, mainId).update();
+    }
+
     /**
      * 查询需要删除的数据
      */

@@ -1171,6 +1171,7 @@ public enum ApiError implements Serializable {
     SKU_MAPPING_INVENTORY_INSUFFICIENT(92135,"需要扣除的映射关系SKU【{}】可用库存不足"),
     ERROR_SO_B2C_TIKTOK_NOT_SPLIT(92119,"B2C销售订单【{}】在TikTok平台不允许拆分，平台提示【{}】"),
     ERROR_SO_B2C_TIKTOK_SPLIT_SKU(92080,"订单【{}】SKU【{}】在TikTok平台中不允许把一个sku拆分成多个单据分开发货"),
+    ERROR_TIKTOK_SPLIT(92081,"订单【{}】TikTok拆分订单失败"),
 
     /**
      * TMS 错误
