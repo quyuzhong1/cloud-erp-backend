@@ -1626,7 +1626,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 addDTO.setPurchaseOrgId(purchaseOrderInfo.getPurchaseOrgId());
             }
             addDTO.setPurchaseUserId(purchaseUserId);
-            resultDTOS.add(BatchResultDTO.success(qcInfoEntity.getId(), qcInfoEntity.getCode(), OperationTypeEnum.GENERATE));
             addList.add(addDTO);
         }
         Boolean success = resultDTOS.stream().allMatch(BatchResultDTO::getSuccess);
