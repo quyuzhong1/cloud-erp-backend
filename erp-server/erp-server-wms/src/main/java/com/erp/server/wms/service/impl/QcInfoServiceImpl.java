@@ -181,6 +181,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Autowired
     private WmsAttachmentService wmsAttachmentService;
 
+    @Resource
+    private PoReturnDetailService poReturnDetailService;
+
     @Value("${fdfs.publicUrl:''}")
     private String filePublicUrl;
 
@@ -1435,7 +1438,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         stockInSkuList = stockInSkuList.stream().filter(s -> approveStatus.equals(s.getApproveStatus())).collect(Collectors.toList());
         //采购收货
-        List<WarehouseReceiveDetailEntity> receiveDetails = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
+        List<String> receiveIds = qcInfoList.stream().map(QcInfoEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<WarehouseReceiveDetailEntity> receiveDetails = warehouseReceiveDetailService.listDetailByMainIds(receiveIds);
+        //质检退货
+        List<PoReturnDetailEntity> returnOrderDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(podIds);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
@@ -1457,11 +1463,26 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getStockInQty())).orElse(0);
             dto.setStockInQty(stockInQty);
             //收货单已收数量（已审核）
+//            Integer receiveQty = receiveDetails.stream()
+//                    .filter(req -> req.getPurchaseOrderDetailId().equals(dto.getPurchaseOrderDetailId())
+//                            && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
+//                    .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+//            dto.setReceiveQty(receiveQty);
+            //质检单关联的收货单
             Integer receiveQty = receiveDetails.stream()
-                    .filter(req -> req.getPurchaseOrderDetailId().equals(dto.getPurchaseOrderDetailId())
-                            && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
+                    .filter(req -> req.getMainId().equals(dto.getSourceId())
+                            && dto.getSkuId().equals(req.getSkuId()))
                     .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-            dto.setReceiveQty(receiveQty);
+            //退货数量
+            Integer returnQty = returnOrderDetailList.stream().filter(e -> Objects.equals(e.getPurchaseOrderDetailId(), dto.getPurchaseOrderDetailId())
+                            && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode())
+                            && dto.getSourceId().equals(e.getSourceId())
+                            && ReturnOrderSourceEnum.QC.getCode().equals(e.getSourceType())
+                            && !ApproveStatusEnum.REJECT.getStatus().equals(e.getApproveStatus()))
+                    .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            //收货数量 = 收货单已收数量 - 已退数量
+            dto.setReceiveQty(receiveQty - returnQty);
+
             //币种符号
             PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(dto.getPurchaseOrderDetailId())).findFirst().orElse(null);
             dto.setCurrency(detailEntity.getCurrency());

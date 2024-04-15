@@ -132,6 +132,8 @@ public class PoReturnDetailEntity extends BaseEntity<PoReturnDetailEntity> {
     @TableField(exist = false)
     private String sourceType;
 
+    @TableField(exist = false)
+    private String sourceId;
 
     @Override
     public Serializable pkVal() {
