@@ -1,5 +1,6 @@
 package com.erp.model.srm.dto.excel;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.business.utils.LocalDateStringConverter;
 import com.common.core.anno.FieldValid;
@@ -33,10 +34,16 @@ public class DeliveryOrderImportExcelDTO implements Serializable {
 
     @ExcelProperty(value = "*送货数量")
     @FieldValid(fieldName = "送货数量",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
+    private String deliveryQtyStr;
+
+    @ExcelIgnore
     private Integer deliveryQty;
 
     @ExcelProperty(value = "*赠品数量")
-    @FieldValid(fieldName = "赠品数量",isNotBlank = true)
+    @FieldValid(fieldName = "赠品数量",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
+    private String giftQtyStr;
+
+    @ExcelIgnore
     private Integer giftQty;
 
     @ExcelProperty(value = "备注")
