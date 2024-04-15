@@ -376,6 +376,16 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private String deliveryId;
 
         /**
+         * 物流单记录的实际体积重(后台用)
+         */
+        private BigDecimal volumeWeightLogistics;
+
+        /**
+         * 物流单记录的实际重(后台用)
+         */
+        private BigDecimal weightLogistics;
+
+        /**
          * 费用明细详情(导入时传递)
          */
         private List<TmsCostDetailDTO.UpdateDTO> updateList;

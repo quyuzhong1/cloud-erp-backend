@@ -462,12 +462,12 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         actualListDTO.setOtherCost(BigDecimal.ZERO);
         // 总物流费用
         actualListDTO.setTotalLogisticsCost(BigDecimal.ZERO);
-        // 实际重量【箱包装重量】
-        actualListDTO.setActualWeight(BigDecimal.ZERO);
-        // 体积重
-        actualListDTO.setVolumeWeight(BigDecimal.ZERO);
+        // 实际重量【箱包装重量】（取物流单输入的重量）
+        actualListDTO.setActualWeight(null == sourceListDTO.getWeightLogistics() ? BigDecimal.ZERO : sourceListDTO.getWeightLogistics());
+        // 体积重 （取物流单输入的体积重）
+        actualListDTO.setVolumeWeight(null == sourceListDTO.getVolumeWeightLogistics() ? BigDecimal.ZERO : sourceListDTO.getVolumeWeightLogistics());
         // 计费重
-        actualListDTO.setBillingWeight(BigDecimal.ZERO);
+        actualListDTO.setBillingWeight(actualListDTO.getActualWeight().max(actualListDTO.getVolumeWeight()));
         actualListDTO.setType(DetailReconciliationTypeEnum.ACTUAL.getCode());
         actualListDTO.setTypeName(DetailReconciliationTypeEnum.ACTUAL.getName());
 
