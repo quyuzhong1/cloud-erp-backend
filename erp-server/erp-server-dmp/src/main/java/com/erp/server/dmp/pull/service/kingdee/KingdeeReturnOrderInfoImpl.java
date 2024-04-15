@@ -33,6 +33,8 @@ import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.utils.MapCountUtils;
+import com.xxl.job.core.util.GsonTool;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -90,7 +92,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
                 continue;
             }
             pushToMqList.add(entity);
-            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
+            MapUtil mapUtil = JSONObject.parseObject(GsonTool.toJson(entity), MapUtil.class);
             OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER, KingdeeReturnOrderEntity.class);
         }
