@@ -12,7 +12,7 @@ public class TmsB2cDeclareReconciliationDetailQueryHandler extends AbstractQuery
         //查询待对账明细
         if("waitReconciliationDetail".equals(field)){
             super.buildDefaultDTO("tbdrd.main_id","");
-            super.buildDefaultDTO("tbdrd.supplier_id",value);
+            super.buildDefaultDTO("tbdrd.logistics_supplier_id",value);
         }
         return null;
     }
