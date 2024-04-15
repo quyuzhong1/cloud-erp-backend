@@ -3,9 +3,9 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -25,7 +25,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
-import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
@@ -49,6 +48,7 @@ import com.erp.server.tms.convert.TransferDeclareConverter;
 import com.erp.server.tms.handler.TransferLogisticsRegistry;
 import com.erp.server.tms.mapper.TransferDeclareMapper;
 import com.erp.server.tms.service.*;
+import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -636,17 +636,20 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         LocalTime localTime = LocalTime.now();
         //报关设置信息
         List<TransferDeclareGenerationSettingDTO.ViewDTO> forcastSettingView = transferDeclareGenerationSettingService.forcastSettingView();
-
+        XxlJobHelper.log("====查询报关设置信息信息，date={}====", JSONUtil.toJsonStr(forcastSettingView));
         //截单设置信息
         List<TransferDeclareDeadlineSettingDTO.ViewDTO> deadlineSettingView = transferDeclareDeadlineSettingService.view();
+        XxlJobHelper.log("====查询截单设置信息信息，date={}====", JSONUtil.toJsonStr(deadlineSettingView));
         for (TransferDeclareDeadlineSettingDTO.ViewDTO deadlineSetting : deadlineSettingView) {
             //生效时间
             LocalTime generateTime = deadlineSetting.getGenerateTime();
+            XxlJobHelper.log("====系统当前时={}：分={}，接单设置时={}：分={}====", localTime.getHour(), localTime.getMinute(), generateTime.getHour(), generateTime.getMinute());
             if (localTime.getHour() == generateTime.getHour() && generateTime.getMinute() == localTime.getMinute()) {
 
                 //如果当前时间等于生效时间，根据报关设置生成报关单
                 List<TransferDeclareGenerationSettingDTO.ViewDTO> viewDTOList = forcastSettingView.stream().filter(req -> deadlineSetting.getTransferLogisticsSupplierIdList().contains(req.getTransferLogisticsSupplierId())).collect(Collectors.toList());
                 List<TransferDeclareDTO.AddDTO> addDTOList = soB2cFeign.generateTransferDeclareView(viewDTOList);
+                XxlJobHelper.log("====根据报关设置生成报关单，组装新增入参TransferDeclareDTO.AddDTO={}====", JSONUtil.toJsonStr(addDTOList));
                 for (TransferDeclareDTO.AddDTO addDTO : addDTOList) {
                     addDTO.setGenerateTime(generateTime);
                     BaseResultDTO.AddDTO add = this.add(addDTO);
@@ -655,8 +658,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                         List<String> soIds = addDTO.getDetailList().stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
                         soB2cFeign.updateTransferStatusBatch(soIds, TransferStatusEnum.ALREADY.getCode());
                     }
-
                 }
+                XxlJobHelper.log("====新增成功====");
             }
         }
     }
