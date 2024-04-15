@@ -117,7 +117,7 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
         if (CollectionUtils.isEmpty(skuIds)){
             return Collections.EMPTY_LIST;
         }
-        return lambdaQuery().in(ProductCostEntity::getSkuId).list();
+        return lambdaQuery().in(ProductCostEntity::getSkuId, skuIds).list();
     }
 
     /**
