@@ -27,11 +27,13 @@ import com.erp.server.srm.convert.DeliveryOrderConverter;
 import com.erp.server.srm.service.DeliveryOrderDetailService;
 import com.erp.server.srm.service.DeliveryOrderService;
 import com.erp.server.srm.service.UserService;
+import jnr.ffi.annotations.In;
 import org.apache.commons.math3.util.Pair;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -78,12 +80,31 @@ public class DeliveryExcelListener extends AnalysisEventListener<DeliveryOrderIm
             errorList.add(data);
             return;
         }
+        BigInteger bigDeliveryQty = new BigInteger(data.getDeliveryQtyStr());
+        BigInteger bigGiftQty = new BigInteger(data.getGiftQtyStr());
+        if(bigDeliveryQty.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0){
+            data.setErrorMsg("送货数量过大");
+            errorList.add(data);
+            return;
+        }
+        if(bigGiftQty.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0){
+            data.setErrorMsg("赠品数量过大");
+            errorList.add(data);
+            return;
+        }
+        data.setDeliveryQty(Integer.valueOf(data.getDeliveryQtyStr()));
+        data.setGiftQty(Integer.valueOf(data.getGiftQtyStr()));
         if(data.getGiftQty() < 0){
             data.setErrorMsg("赠品数量不能小于0");
             errorList.add(data);
             return;
         }
         dataList.add(data);
+    }
+
+    public static void main(String[] args) {
+        System.out.println(Integer.MAX_VALUE);
+        System.out.println(new BigInteger("15235656656565600"));
     }
 
     /**
