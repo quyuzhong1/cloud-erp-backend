@@ -55,6 +55,7 @@ import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.tms.convert.FmLogisticsConverter;
+import com.erp.server.tms.convert.TmsFirstMileReconciliationConverter;
 import com.erp.server.tms.listener.FmLogisticsBillCostExcelListener;
 import com.erp.server.tms.listener.FmLogisticsBillExcelListener;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
@@ -64,6 +65,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -1101,8 +1103,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         }
 
         // 填充信息
-        String currency = sourceDetailList.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getCurrency).findFirst().orElse("");
-        tmsFirstMileReconciliationDetailService.fillDetailList(sourceDetailList, currency, "");
+//        String currency = sourceDetailList.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getCurrency).findFirst().orElse("");
+        tmsFirstMileReconciliationDetailService.fillWaitReconciliationList(sourceDetailList);
         TmsFirstMileReconciliationDetailDTO.ListDTO curListDTO = sourceDetailList.stream().findFirst().orElse(null);
 
         // 查询对账单ID
@@ -1145,7 +1147,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> saveListDTO = tmsFirstMileReconciliationDetailService.generateAllTypeDTO(curListDTO);
         TmsFirstMileReconciliationDTO.UpdateDTO updateDTO = new TmsFirstMileReconciliationDTO.UpdateDTO();
         updateDTO.setId(reconciliationEntity.getId());
-        List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailDTOList = BeanUtil.copyToList(saveListDTO, TmsFirstMileReconciliationDetailDTO.UpdateDTO.class);
+//        List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailDTOList = BeanUtil.copyToList(saveListDTO, TmsFirstMileReconciliationDetailDTO.UpdateDTO.class);
+        List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailDTOList = TmsFirstMileReconciliationConverter.INSTANCE.convertDetailDTOList(saveListDTO);
         updateDTO.setDetailList(detailDTOList);
         tmsFirstMileReconciliationService.update(updateDTO);
 

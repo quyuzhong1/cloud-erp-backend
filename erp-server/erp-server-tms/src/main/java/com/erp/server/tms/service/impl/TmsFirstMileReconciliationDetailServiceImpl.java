@@ -457,6 +457,17 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         // 实际
         TmsFirstMileReconciliationDetailDTO.ListDTO actualListDTO = new TmsFirstMileReconciliationDetailDTO.ListDTO();
         BeanUtils.copyProperties(sourceListDTO, actualListDTO);
+        actualListDTO.setShippingCost(BigDecimal.ZERO);
+        actualListDTO.setDeclareCost(BigDecimal.ZERO);
+        actualListDTO.setOtherCost(BigDecimal.ZERO);
+        // 总物流费用
+        actualListDTO.setTotalLogisticsCost(BigDecimal.ZERO);
+        // 实际重量【箱包装重量】
+        actualListDTO.setActualWeight(BigDecimal.ZERO);
+        // 体积重
+        actualListDTO.setVolumeWeight(BigDecimal.ZERO);
+        // 计费重
+        actualListDTO.setBillingWeight(BigDecimal.ZERO);
         actualListDTO.setType(DetailReconciliationTypeEnum.ACTUAL.getCode());
         actualListDTO.setTypeName(DetailReconciliationTypeEnum.ACTUAL.getName());
 
@@ -465,6 +476,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         BeanUtils.copyProperties(sourceListDTO, diffListDTO);
         diffListDTO.setType(DetailReconciliationTypeEnum.DIFF.getCode());
         diffListDTO.setTypeName(DetailReconciliationTypeEnum.DIFF.getName());
+
+        // 计算差异值
+        generateDiff(sourceListDTO, actualListDTO, diffListDTO);
+
         return Arrays.asList(sourceListDTO, actualListDTO, diffListDTO);
     }
 
@@ -562,7 +577,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         );
     }
 
-    private void fillWaitReconciliationList(List<? extends TmsFirstMileReconciliationDetailDTO.ListDTO> records) {
+    @Override
+    public void fillWaitReconciliationList(List<? extends TmsFirstMileReconciliationDetailDTO.ListDTO> records) {
         // 统计预计费用
         List<String> logisticsBillIds = records.stream()
                 .map(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId)

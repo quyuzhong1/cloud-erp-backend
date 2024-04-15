@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.*;
@@ -804,22 +803,22 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private String billingWeightUnit;
 
         /**
-         * 实际物流运费用
+         * 物流运费用
          */
         @Digits(integer = 12, fraction = 4, message = "实际物流运费用整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal actualShippingCost;
+        private BigDecimal shippingCost;
 
         /**
-         * 实际报关费用
+         * 报关费用
          */
         @Digits(integer = 12, fraction = 4, message = "实际报关费用整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal actualDeclareCost;
+        private BigDecimal declareCost;
 
         /**
-         * 实际其他费用
+         * 其他费用
          */
         @Digits(integer = 12, fraction = 4, message = "实际其他费用整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal actualOtherCost;
+        private BigDecimal otherCost;
 
         /**
          * 备注
