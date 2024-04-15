@@ -2781,6 +2781,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     skuVO.setBrandName(productInfo.getBrandName());
                     skuVO.setCategoryId(productInfo.getCategoryId());
                     skuVO.setSaleMethod(productInfo.getSaleMethod());
+                    skuVO.setSpecType(productInfo.getSpecType());
                 }
                 if (productPackMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productPackMap.get(skuVO.getSkuId()))) {
                     ProductPackEntity packEntity = productPackMap.get(skuVO.getSkuId()).get(0);
