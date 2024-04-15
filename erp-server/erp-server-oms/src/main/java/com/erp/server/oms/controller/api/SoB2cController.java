@@ -19,7 +19,7 @@ import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.server.oms.service.SoB2cDetailService;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
-import com.sdk.oms.tictok.service.TikTokSdkClientService;
+import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;

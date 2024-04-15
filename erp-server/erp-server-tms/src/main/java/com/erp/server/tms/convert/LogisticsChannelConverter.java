@@ -4,7 +4,6 @@ import com.common.business.dto.base.BaseChildDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.mapper.BooleanMapperWork;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
-import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsRegisterVO;
@@ -262,4 +261,16 @@ public interface LogisticsChannelConverter {
     })
     LogisticsSaleChannelEntity serviceConvertByAliExpress(ServiceResult serviceResult);
     List<LogisticsSaleChannelEntity> serviceConvertByAliExpress(List<ServiceResult> serviceResults);
+
+    @Mappings({
+            @Mapping(target = "platformChannelId", source = "logisticsChannelId"),
+            @Mapping(target = "code", source = "logisticsChannelId"),
+            @Mapping(target = "cnName", source = "logisticsChannelName"),
+            @Mapping(target = "enName", source = "logisticsChannelName"),
+            @Mapping(target = "channelStatus", source = "enabled",qualifiedByName = "booleanToStatus"),
+            @Mapping(target = "logisticsPlatform", constant = "Shopee"),
+            @Mapping(target = "id", ignore = true),
+    })
+    LogisticsSaleChannelEntity channelConvertByTikTok(LogisticsSaleChannelEntity logisticsChannel);
+    List<LogisticsSaleChannelEntity> channelConvertByTikTok(List<LogisticsSaleChannelEntity> logisticsChannels);
 }

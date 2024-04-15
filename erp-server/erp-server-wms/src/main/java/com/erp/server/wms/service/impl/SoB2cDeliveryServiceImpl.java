@@ -667,6 +667,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         try {
             return PdfUtil.getNewMergePdfBase64(base64List);
+
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_PDF_MERGE);
         }

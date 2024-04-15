@@ -1,4 +1,4 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-   com.sdk.oms.tictok.service.TikTokSdkClientService,\
-   com.sdk.oms.tictok.handler.TikTokOrderHandler,\
-   com.sdk.oms.tictok.handler.TikTokListingHandler
+   com.sdk.oms.tiktok.service.TikTokSdkClientService,\
+   com.sdk.oms.tiktok.handler.TikTokOrderHandler,\
+   com.sdk.oms.tiktok.handler.TikTokListingHandler
