@@ -2,6 +2,7 @@ package com.erp.server.tms.service;
 
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -11,6 +12,7 @@ import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -133,4 +135,9 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
     List<DictCountryDTO.ListDTO> checkAndFindCountry(FirstMileDeliveryEntity delivery, List<CfgAmzFulfillmentCenterEntity> centerList, List<DictCountryDTO.ListDTO> conuntryList);
 
     List<DictCountryDTO.ListDTO> defaultCountry(String toCountry, List<DictCountryDTO.ListDTO> countryList);
+
+    /**
+     * 根据mainId查询历史实际明细并转换UpdateDTO,格式Map<SourceId, Map<cfgCostId, UpdateDTO>>
+     */
+    Map<String, Map<String, TmsCostDetailDTO.UpdateDTO>> convertUpdateDTOAndMap(List<TmsFirstMileReconciliationDetailEntity> oldDetailList);
 }

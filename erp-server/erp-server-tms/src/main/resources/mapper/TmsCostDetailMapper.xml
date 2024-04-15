@@ -61,6 +61,7 @@
                 cc.dict_cost_category,
                 cc.cost_name,
                 lbc.cost_value,
+                lbc.cfg_cost_id,
                 lbc.currency,
                 lbc.type
         from tms_logistics_bill_cost_detail lbc

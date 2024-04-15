@@ -1,7 +1,7 @@
 package com.erp.model.tms.dto;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.Accessors;
 
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
@@ -141,13 +141,34 @@ public class TmsCostDetailDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = true)
     public static class UpdateDTO extends CommonDTO {
 
         /**
         * 主键id
         */
         private String id;
+
+        /**
+         * 当前是否已更新
+         */
+        private boolean hasUpdate;
+
+        /**
+         * 费用分类（字典dictCostCategory）
+         */
+        private String dictCostCategory;
+
+        public UpdateDTO(String id, String dictCostCategory, BigDecimal costValue, String cfgCostId, String type) {
+            this.id = id;
+            this.hasUpdate = false;
+            this.dictCostCategory = dictCostCategory;
+            super.costValue = costValue;
+            super.cfgCostId = cfgCostId;
+            super.type = type;
+        }
     }
+
 
     @Data
     @NoArgsConstructor
@@ -205,6 +226,10 @@ public class TmsCostDetailDTO implements Serializable {
          * 费用名称
          */
         private String costName;
+        /**
+         * 费用ID
+         */
+        private String cfgCostId;
 
         /**
          * 费用值
