@@ -194,30 +194,6 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         updateDeclareReconciliationDetailCost(list);
     }
 
-    private void updateDeclareReconciliationDetailCost (List<TmsB2cDeclareReconciliationDetailEntity> list) {
-        if (CollectionUtils.isEmpty(list)) {
-            return;
-        }
-        List<String> mainIdList = list.stream().map(TmsB2cDeclareReconciliationDetailEntity::getId).collect(Collectors.toList());
-        List<TmsCostDetailDTO.CostViewDTO> tmsCostDetailList = tmsCostDetailService.listCostByMainIdList(mainIdList);
-        if (CollectionUtils.isEmpty(tmsCostDetailList)) {
-            return;
-        }
-        for (TmsB2cDeclareReconciliationDetailEntity entity : list) {
-            BigDecimal shippingCost = tmsCostDetailList.stream().filter(obj -> StrUtil.equals(entity.getId(), obj.getMainId()) && StrUtil.equals(obj.getDictCostCategory(),DictCostCategoryEnum.SHIPPING_COST.getCode()))
-                    .map(TmsCostDetailDTO.CostViewDTO::getCostValue)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            entity.setActualShippingCost(shippingCost);
-            BigDecimal declareCost = tmsCostDetailList.stream().filter(obj -> StrUtil.equals(entity.getId(), obj.getMainId()) && StrUtil.equals(obj.getDictCostCategory(),DictCostCategoryEnum.DECLARE_COST.getCode()))
-                    .map(TmsCostDetailDTO.CostViewDTO::getCostValue)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            entity.setActualShippingCost(declareCost);
-            BigDecimal otherCost = tmsCostDetailList.stream().filter(obj -> StrUtil.equals(entity.getId(), obj.getMainId()) && StrUtil.equals(obj.getDictCostCategory(),DictCostCategoryEnum.OTHER_COST.getCode()))
-                    .map(TmsCostDetailDTO.CostViewDTO::getCostValue)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            entity.setActualShippingCost(otherCost);
-        }
-    }
 
     @Override
     public void exportDetailList(TmsB2cDeclareReconciliationDetailDTO.ExportDTO param, HttpServletResponse response) {
@@ -846,4 +822,37 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             operateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode(),mainId,"",String.format("【%s】",old.getSoCode()));
         }
     }
+
+    /**
+     * @description: 更新报关明细实际费用
+     * @author Will
+     * @date: 2024/4/15 10:21
+     * @param list
+     */
+    private void updateDeclareReconciliationDetailCost (List<TmsB2cDeclareReconciliationDetailEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<String> mainIdList = list.stream().map(TmsB2cDeclareReconciliationDetailEntity::getId).collect(Collectors.toList());
+        List<TmsCostDetailDTO.CostViewDTO> tmsCostDetailList = tmsCostDetailService.listCostByMainIdList(mainIdList);
+        if (CollectionUtils.isEmpty(tmsCostDetailList)) {
+            return;
+        }
+        for (TmsB2cDeclareReconciliationDetailEntity entity : list) {
+            BigDecimal shippingCost = tmsCostDetailList.stream().filter(obj -> StrUtil.equals(entity.getId(), obj.getMainId()) && StrUtil.equals(obj.getDictCostCategory(),DictCostCategoryEnum.SHIPPING_COST.getCode()))
+                    .map(TmsCostDetailDTO.CostViewDTO::getCostValue)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            entity.setActualShippingCost(shippingCost);
+            BigDecimal declareCost = tmsCostDetailList.stream().filter(obj -> StrUtil.equals(entity.getId(), obj.getMainId()) && StrUtil.equals(obj.getDictCostCategory(),DictCostCategoryEnum.DECLARE_COST.getCode()))
+                    .map(TmsCostDetailDTO.CostViewDTO::getCostValue)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            entity.setActualDeclareCost(declareCost);
+            BigDecimal otherCost = tmsCostDetailList.stream().filter(obj -> StrUtil.equals(entity.getId(), obj.getMainId()) && StrUtil.equals(obj.getDictCostCategory(),DictCostCategoryEnum.OTHER_COST.getCode()))
+                    .map(TmsCostDetailDTO.CostViewDTO::getCostValue)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            entity.setActualOtherCost(otherCost);
+        }
+        this.updateBatchById(list);
+    }
+
 }
