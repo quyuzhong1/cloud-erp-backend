@@ -101,7 +101,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     private SysDictFeign sysDictFeign;
 
     @Autowired
-    private DictBasicService dictBasicService;
+    private TransferLogisticsSupplierService transferLogisticsSupplierService;
 
     @Autowired
     private TmsCfgCostService tmsCfgCostService;
@@ -302,15 +302,23 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     public TmsB2cDeclareReconciliationDetailDTO.ImportDTO importFile(TmsB2cDeclareReconciliationDetailDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
         switch (excelImportDTO.getTypeEnum()) {
             case STANDARD:
-                return importStandardFile(excelImportDTO.getExcelFile());
+                return importStandardFile(excelImportDTO.getExcelFile(),excelImportDTO.getLogisticsSupplierId());
             case CONFIG:
-                return importConfigFile(excelImportDTO.getExcelFile(),response);
+                return importConfigFile(excelImportDTO.getExcelFile(),excelImportDTO.getLogisticsSupplierId());
             default:
                 throw new ServiceException("输入类型有误");
         }
     }
-
-    private TmsB2cDeclareReconciliationDetailDTO.ImportDTO importStandardFile(MultipartFile excelFile) {
+    
+    /**
+     * @description: 导入标准模板
+     * @author Will
+     * @date: 2024/4/15 15:34
+     * @param excelFile 
+     * @param logisticsSupplierId 
+     * @return ImportDTO 
+     */
+    private TmsB2cDeclareReconciliationDetailDTO.ImportDTO importStandardFile(MultipartFile excelFile,String logisticsSupplierId) {
         TmsB2cDeclareReconciliationDetailDTO.ImportDTO importDTO = new TmsB2cDeclareReconciliationDetailDTO.ImportDTO();
 
         DeclareReconciliationStandardExcelListener excelListenerUtil = new DeclareReconciliationStandardExcelListener();
@@ -333,7 +341,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         //导出错误数据
         List<DeclareReconciliationStandardExcelDTO> errorList = excelListenerUtil.getErrorList();
         //导入数据保存
-        List<TmsB2cDeclareReconciliationDetailDTO.ViewDTO> successImortList = handleImportStandardData(successList, errorList);
+        List<TmsB2cDeclareReconciliationDetailDTO.ViewDTO> successImortList = handleImportStandardData(successList, errorList,logisticsSupplierId);
 
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
@@ -359,7 +367,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
      * @return List<AddDTO>
      */
     private List<TmsB2cDeclareReconciliationDetailDTO.ViewDTO> handleImportStandardData (List<DeclareReconciliationStandardExcelDTO> successList,
-                                                                                        List<DeclareReconciliationStandardExcelDTO> errorList ) {
+                                                                                        List<DeclareReconciliationStandardExcelDTO> errorList,String logisticsSupplierId) {
         if (CollectionUtils.isEmpty(successList)) {
             return Collections.EMPTY_LIST;
         }
@@ -396,6 +404,10 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
 
                 if( ObjectUtil.isEmpty(detailEntity))  {
                     errorMsgList.add("未找到销售订单报关对账单明细信息");
+                } else {
+                    if (!StrUtil.equals(detailEntity.getLogisticsSupplierId(),logisticsSupplierId)) {
+                        errorMsgList.add("物流商不一致不支持导入");
+                    }
                 }
                 if (ObjectUtil.isEmpty(reconciliationEntity)) {
                     errorMsgList.add("未找到销售订单报关对账单信息");
@@ -441,7 +453,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
      * @param excelFile
      * @return ImportDTO
      */
-    private TmsB2cDeclareReconciliationDetailDTO.ImportDTO importConfigFile(MultipartFile excelFile, HttpServletResponse response) {
+    private TmsB2cDeclareReconciliationDetailDTO.ImportDTO importConfigFile(MultipartFile excelFile,String logisticsSupplierId) {
         TmsB2cDeclareReconciliationDetailDTO.ImportDTO importDTO = new TmsB2cDeclareReconciliationDetailDTO.ImportDTO();
 
         DeclareReconciliationConfigExcelListener excelListenerUtil = new DeclareReconciliationConfigExcelListener();
@@ -466,7 +478,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         //表头
         List<String> headList = excelListenerUtil.getHeadList();
         //导入数据保存
-        List<TmsB2cDeclareReconciliationDetailDTO.ViewDTO> successImortList = handleImportConfigData(successList, errorList,headList);
+        List<TmsB2cDeclareReconciliationDetailDTO.ViewDTO> successImortList = handleImportConfigData(successList, errorList,headList,logisticsSupplierId);
 
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
@@ -491,16 +503,24 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
      * @param errorList
      * @return List<ViewDTO>
      */
-    private List<TmsB2cDeclareReconciliationDetailDTO.ViewDTO> handleImportConfigData (List<JSONObject> successList,List<JSONObject> errorList,List<String> headList ) {
+    private List<TmsB2cDeclareReconciliationDetailDTO.ViewDTO> handleImportConfigData (List<JSONObject> successList,List<JSONObject> errorList,List<String> headList ,String logisticsSupplierId) {
         if (CollectionUtils.isEmpty(successList)) {
             return Collections.EMPTY_LIST;
         }
+        //中转物流供应商查询
+        TransferLogisticsSupplierEntity transferLogisticsSupplierEntity = transferLogisticsSupplierService.getById(logisticsSupplierId);
+        if (ObjectUtil.isEmpty(transferLogisticsSupplierEntity)) {
+            throw new ServiceException("对账单中转物流供应商未找到");
+        }
+
         //字段配置信息
         List<CfgReconciliationFieldDTO.ErpFieldViewDTO> erpFieldList = cfgReconciliationFieldService.getByReconciliationType(CfgReconciliationTypeEnum.B2C_DECLARE.getCode());
-        Map<String, CfgReconciliationFieldDTO.ErpFieldViewDTO> map = erpFieldList.stream().collect(Collectors.toMap(CfgReconciliationFieldDTO.ErpFieldViewDTO::getThirdFieldName, Function.identity()));
-        if (ObjectUtil.isEmpty(map)) {
-            throw new ServiceException("未设置字段配置，请配置后导入");
+        //字段配置信息
+        List<CfgReconciliationFieldDTO.ErpFieldViewDTO> erpFieldResultList = erpFieldList.stream().filter(obj -> StrUtil.equals(obj.getThirdCode(), transferLogisticsSupplierEntity.getSupplierId())).collect(Collectors.toList());
+        if (ObjectUtil.isEmpty(erpFieldResultList)) {
+            throw new ServiceException("物流商未设置字段配置，请配置后导入");
         }
+        Map<String, CfgReconciliationFieldDTO.ErpFieldViewDTO> map = erpFieldResultList.stream().collect(Collectors.toMap(CfgReconciliationFieldDTO.ErpFieldViewDTO::getThirdFieldName, Function.identity()));
 
         //销售订单
         List<String> soCodeList = new ArrayList<>();
@@ -566,6 +586,10 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                     .findFirst().orElse(null);
             if( ObjectUtil.isEmpty(detailEntity))  {
                 errorMsgList.add("未找到销售订单报关对账单明细信息");
+            } else {
+                if (!StrUtil.equals(detailEntity.getLogisticsSupplierId(),logisticsSupplierId)) {
+                    errorMsgList.add("物流商不一致不支持导入");
+                }
             }
             //对账单主表信息
             String mainId = ObjectUtil.isEmpty(detailEntity) ? "" : detailEntity.getMainId();

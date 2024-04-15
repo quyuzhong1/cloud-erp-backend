@@ -512,6 +512,12 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
          */
         @NotNull(message = "导入文件不能为空")
         private MultipartFile excelFile;
+
+        /**
+         * 物流商Id
+         */
+        @NotBlank(message = "物流商不能为空")
+        private String logisticsSupplierId;
     }
 
     @Data
