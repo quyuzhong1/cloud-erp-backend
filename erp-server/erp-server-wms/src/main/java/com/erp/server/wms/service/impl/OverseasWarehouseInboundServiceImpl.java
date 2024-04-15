@@ -310,6 +310,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 //  OpenCollectingServiceEnum： 0=自送货物，1=上门提货
                 .collectingService(collectingService)
                 .deliveryCode(mainEntity.getExpressNo())
+                .declareType(mainEntity.getDeclareType())
                 //发货信息
                 .shiperInfo(ThirdWarehouseCreateInboundReq.ShiperInfo.builder()
                         .contacterName(contactName)
@@ -476,6 +477,17 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 }
                 // 设置其他参数为空
                 commonDTO.setBlankOtherByTransferAgentAndSelfDelivery();
+            }
+
+            if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)) {
+                if (StringUtils.isBlank(commonDTO.getLogisticsProductCode())) {
+                    throw new ServiceException("【logisticsProductCode】 物流产品代码不能为空");
+                }
+                List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey("imlLogisticProduct");
+                commonDTO.setLogisticsProductName(dictList.stream().filter(v->v.getValue().equals(commonDTO.getLogisticsProductCode())).findFirst().orElse(new DictBasicDTO.ListDTO()).getName());
+                if (StringUtils.isBlank(commonDTO.getDeclareType())) {
+                    throw new ServiceException("报关类型不能为空");
+                }
             }
         }
 
@@ -685,7 +697,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         resultDTO.setCustomsTypeName(OverseasCustomsTypeNewEnum.getNameByCode(resultDTO.getCustomsType()));
         // 交货方式名称
         resultDTO.setDeliveryModeName(OverseasDeliveryModeEnum.getNameByCode(resultDTO.getDeliveryMode()));
-
+        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey("imlDeclareType");
+        resultDTO.setDeclareTypeName(dictList.stream().filter(v->v.getValue().equals(resultDTO.getDeclareType())).findFirst().orElse(new DictBasicDTO.ListDTO()).getName());
         // 查询详情信息
         List<OverseasWarehouseInboundDetailEntity> detailEntityList = overseasWarehouseInboundDetailService.getByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailEntityList)) {

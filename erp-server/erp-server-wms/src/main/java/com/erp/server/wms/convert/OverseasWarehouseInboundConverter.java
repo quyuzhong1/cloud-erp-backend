@@ -149,6 +149,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "regionIdLevel0",  source = "collect.collectStateId"),
             @Mapping(target = "regionIdLevel1",  source = "collect.collectCityId"),
             @Mapping(target = "regionIdLevel2",  source = "collect.collectAreaId"),
+            @Mapping(target = "customerType",  source = "declareType"),
             @Mapping(target = "street",  source = "collect.collectStreet"),
             @Mapping(target = "items",  source = "items"),
     })

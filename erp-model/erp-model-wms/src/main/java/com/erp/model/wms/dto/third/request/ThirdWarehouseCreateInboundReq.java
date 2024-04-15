@@ -89,6 +89,11 @@ public class ThirdWarehouseCreateInboundReq {
     private String customsType;
 
     /**
+     * 报关类型
+     */
+    private String declareType;
+
+    /**
      * 交货方式
      * {@link com.erp.model.wms.enums.OverseasDeliveryModeEnum}
      */
