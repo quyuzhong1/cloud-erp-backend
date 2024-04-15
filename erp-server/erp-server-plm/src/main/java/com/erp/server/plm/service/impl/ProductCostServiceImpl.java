@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -109,6 +110,14 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
             }
         }
         return productCostShowDTOList;
+    }
+
+    @Override
+    public List<ProductCostEntity> listBySkuIds(List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)){
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(ProductCostEntity::getSkuId).list();
     }
 
     /**
