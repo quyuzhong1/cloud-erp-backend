@@ -906,13 +906,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> ids = dto.getIds();
         List<SoOutstockEntity> list = this.listByIds(ids);
         String b2cType = OrderTypeEnum.B2C.getCode();
-        List<SoOutstockEntity> b2cList = list.stream().filter(o -> b2cType.equals(o.getOrderType())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(b2cList)) {
-            String code = b2cList.stream().map(SoOutstockEntity::getCode).collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.B2C_SO_OUTSTOCK_NOT_DIS_APPROVE, code);
-        }
-
-
+//        List<SoOutstockEntity> b2cList = list.stream().filter(o -> b2cType.equals(o.getOrderType())).collect(Collectors.toList());
+//        if (CollectionUtils.isNotEmpty(b2cList)) {
+//            String code = b2cList.stream().map(SoOutstockEntity::getCode).collect(Collectors.joining(","));
+//            throw new ServiceException(ApiError.B2C_SO_OUTSTOCK_NOT_DIS_APPROVE, code);
+//        }
 
         //审核通过
         // 增加 出库单关联的自发货费用单据已确认状态下，不允许出库单反审核

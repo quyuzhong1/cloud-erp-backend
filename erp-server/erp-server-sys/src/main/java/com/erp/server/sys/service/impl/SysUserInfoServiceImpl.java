@@ -876,6 +876,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //验证手机号是否已存在
         LambdaQueryWrapper<SysUserInfoEntity> mobileQueryWrapper = new LambdaQueryWrapper<>();
         mobileQueryWrapper.eq(SysUserInfoEntity::getUserAccount, sysUserInfoDTO.getMobile());
+        mobileQueryWrapper.eq(SysUserInfoEntity::getDeleteState, SysConstant.YES_STATE);
         if (StringUtils.isNotBlank(sysUserInfoDTO.getUid())) {
             mobileQueryWrapper.ne(SysUserInfoEntity::getUid, sysUserInfoDTO.getUid());
         }
@@ -889,6 +890,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //验证用户名是否已存在
         LambdaQueryWrapper<SysUserInfoEntity> userNameQueryWrapper = new LambdaQueryWrapper<>();
         userNameQueryWrapper.eq(SysUserInfoEntity::getUserName, sysUserInfoDTO.getUserName());
+        userNameQueryWrapper.eq(SysUserInfoEntity::getDeleteState, SysConstant.YES_STATE);
         if (StringUtils.isNotBlank(sysUserInfoDTO.getUid())) {
             userNameQueryWrapper.ne(SysUserInfoEntity::getUid, sysUserInfoDTO.getUid());
         }

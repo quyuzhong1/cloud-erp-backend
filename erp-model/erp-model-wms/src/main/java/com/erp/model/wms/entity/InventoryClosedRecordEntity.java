@@ -100,6 +100,7 @@ public class InventoryClosedRecordEntity extends BaseEntity<InventoryClosedRecor
         //是否存在不一致数据
         long count = list.stream().filter(obj ->
                 StrUtil.equals(obj.getCategory(), this.category)
+                && StrUtil.equals(this.inventoryOrgId,obj.getInventoryOrgId())
                 && !this.closedDate.isEqual(obj.getClosedDate())
         ).count();
         return count > MathUtil.ZERO ? Boolean.TRUE : Boolean.FALSE;
@@ -115,6 +116,7 @@ public class InventoryClosedRecordEntity extends BaseEntity<InventoryClosedRecor
         //匹配数据
         InventoryClosedRecordEntity entity = list.stream().filter(obj ->
                 StrUtil.equals(obj.getCategory(), this.category)
+                && StrUtil.equals(this.inventoryOrgId,obj.getInventoryOrgId())
                 && !this.closedDate.isEqual(obj.getClosedDate())
         ).findFirst().orElse(null);
         //更新关账时间

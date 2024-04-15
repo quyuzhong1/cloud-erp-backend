@@ -25,15 +25,12 @@ import com.erp.server.dmp.enums.CleanDataTableEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpPullTaskService;
-import com.google.common.collect.Lists;
-import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -124,20 +121,21 @@ public class BusinessServiceImpl {
     /**
      * 业务处理
      *
-     * @param <T>        业务类型
-     * @param <R>        业务返回类型
-     * @param <>         业务数据类型
-     * @param category   业务类型
-     * @param platform   平台类型
-     * @param business   业务类型
-     * @param platformApiEnum 任务类型
+     * @param <T>                      业务类型
+     * @param <R>                      业务返回类型
+     * @param <>                       业务数据类型
+     * @param category                 业务类型
+     * @param platform                 平台类型
+     * @param business                 业务类型
+     * @param platformApiEnum          任务类型
+     * @param clearCheckDownloadStatus
      */
 //    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public <T extends CleanBaseDTO,R extends UniqueDto> void cleanProcessBusiness(String category, String platform, String business, PlatformApiEnum platformApiEnum) {
+    public <T extends CleanBaseDTO,R extends UniqueDto> void cleanProcessBusiness(String category, String platform, String business, PlatformApiEnum platformApiEnum, Boolean clearCheckDownloadStatus) {
         IBusinessHandler<T,R> handler = (IBusinessHandler<T,R>) registry.getHandler(category, platform, business);
         if (handler != null) {
-            List<T> sourceDataList = getCleanData(category,platform,business);
+            List<T> sourceDataList = getCleanData(category,platform, business, clearCheckDownloadStatus);
             PlatformDataDTO<T, R> platformData = handler.cleanHandle(sourceDataList);
 
             String targetPlatform = handler.getTargetPlatform();
@@ -150,12 +148,18 @@ public class BusinessServiceImpl {
 
     }
 
-    private <T extends CleanBaseDTO> List<T> getCleanData(String category, String platform, String business) {
+    private <T extends CleanBaseDTO> List<T> getCleanData(String category, String platform, String business, Boolean clearCheckDownloadStatus) {
         String tableName = StrUtil.format("{}_{}_{}", category, platform, business);
         // 查询mongo待推送数据
         String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
         Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
-        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsCleanDateStr(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        OrderMongoDTO orderMongoDTO;
+        if (null != clearCheckDownloadStatus && clearCheckDownloadStatus){
+            orderMongoDTO = OrderMongoDTO.getByIsCleanDateStrWithDownloadStatus(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        } else {
+            // 查询isClean = 0
+            orderMongoDTO = OrderMongoDTO.getByIsCleanDateStr(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        }
         Class tClass = Objects.requireNonNull(CleanDataTableEnum.getByName(tableName)).getTClass();
         List<T> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, tableName, tClass);
         if (CollectionUtil.isEmpty(mongoData)) {
