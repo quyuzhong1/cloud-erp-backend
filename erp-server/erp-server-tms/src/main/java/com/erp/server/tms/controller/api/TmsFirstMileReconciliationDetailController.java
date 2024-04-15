@@ -124,7 +124,7 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
             menuCode = "tms:tmsFirstMileReconciliationDetail:paging",
             tableAlias = "tfmrd"
     )
-    @WebAdvanceQuery(handler = TmsB2cDeclareReconciliationDetailQueryHandler.class)
+    @WebAdvanceQuery(handler = TmsFirstMileReconciliationDetailQueryHandler.class)
     public ApiResult<PagingVO<TmsFirstMileReconciliationDetailDTO.ListDTO>> waitPaging(@RequestBody @Validated PagingDTO<TmsFirstMileReconciliationDetailDTO.PagingParamDTO> dto) {
         return success(tmsFirstMileReconciliationDetailService.waitReconciliationPaging(dto));
     }

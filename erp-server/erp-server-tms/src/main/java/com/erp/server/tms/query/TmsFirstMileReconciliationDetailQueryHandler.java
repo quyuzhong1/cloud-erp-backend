@@ -11,8 +11,7 @@ public class TmsFirstMileReconciliationDetailQueryHandler extends AbstractQueryH
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         //查询待对账明细
         if("waitReconciliationDetail".equals(field)){
-            super.buildDefaultDTO("tfmrd.main_id","");
-            super.buildDefaultDTO("tfmrd.supplier_id",value);
+            super.buildDefaultDTO("lb.logistics_supplier_id",value);
         }
         return null;
     }
