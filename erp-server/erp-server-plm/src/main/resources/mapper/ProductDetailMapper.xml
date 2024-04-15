@@ -959,7 +959,7 @@
         pd.status,
 --         pp.moq,
 --         pp.main_supplier as supplierId,
-        pd.warehouse_location as warehouseLocation,
+        pd.warehouse_location as warehouseLocation
 --         pi.sale_method,
 --         ppk.gross_weight,
 --         pc.actual_tax_cost,
