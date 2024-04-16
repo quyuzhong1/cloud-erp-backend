@@ -51,8 +51,8 @@ public interface ProductRegistrationConverter {
             @Mapping(target = "hsName", source = "declareChineseName"),
             @Mapping(target = "hsCode", source = "customsCode"),
             @Mapping(target = "hsElement", source = "declareElement"),
-            @Mapping(target = "firstQauntity", expression = "java(java.util.Objects.nonNull(productDTO.getFirstQty())?productDTO.getFirstQty().divide(java.math.BigDecimal.valueOf(1000)):null)"),
-            @Mapping(target = "secondQauntity", expression = "java(java.util.Objects.nonNull(productDTO.getSecondQty())?productDTO.getSecondQty().divide(java.math.BigDecimal.valueOf(1000)):null)"),
+            @Mapping(target = "firstQauntity", source = "firstQty"),
+            @Mapping(target = "secondQauntity", source = "secondQty"),
             @Mapping(target = "productProperty", source = "productProperty"),
     })
     TransferLogisticsCreateProductReq convertToCreateProduct(LogisticsProductDTO.ProductDTO productDTO);
