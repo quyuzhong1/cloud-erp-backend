@@ -1,8 +1,7 @@
-package com.erp.server.srm.query;
+package com.erp.server.scm.query;
 
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.scm.enums.ExecutionStatusEnum;
-import com.erp.model.srm.enums.DeliveryOrderEnum;
 import org.springframework.stereotype.Component;
 
 /**

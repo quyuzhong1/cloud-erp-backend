@@ -1226,10 +1226,19 @@ public class WarehouseReceiveDTO {
          * 来源记录id
          */
         private String sourceId;
+
+        /**
+         * 来源明细记录id
+         */
+        private String sourceDetailId;
         /**
          * 收货数量
          */
         private Integer receiveQty;
+        /**
+         * 赠品收货数量
+         */
+        private Integer giftReceiveQty;
     }
 
 }

@@ -76,4 +76,15 @@ public class WarehouseReceiveFeignController {
     public List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIds(@RequestBody List<String> purchaseOrderIds){
         return warehouseReceiveService.getReceiveListByPurchaseOrderIds(purchaseOrderIds);
     }
+
+
+    /***
+     * 同销售订单获取 收货详情
+     * @param purchaseOrderIds
+     * @return
+     */
+    @PostMapping("/getReceiveListByPurchaseOrderIdsAll")
+    public List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIdsAll(@RequestBody List<String> purchaseOrderIds){
+        return warehouseReceiveService.getReceiveListByPurchaseOrderIdsAll(purchaseOrderIds);
+    }
 }

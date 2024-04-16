@@ -15,17 +15,27 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.server.srm.query.DeliveryOrderQueryHandler;
 import com.erp.server.srm.service.CommonService;
 import com.erp.server.srm.service.DeliveryOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collections;
@@ -185,5 +195,42 @@ public class DeliveryOrderController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除送货单")
     public ApiResult<?> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(deliveryOrderService.delete(dto.getIds()));
+    }
+
+    /**
+     * 导入模板-下载
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "发货单下载模板")
+    @GetMapping("/exportTemplate")
+    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "excel/srmDeliveryTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.Default);
+        }
+        return success();
+    }
+
+    /**
+     * 导入
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "发货单导入")
+    @PostMapping("/import")
+    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = deliveryOrderService.importExcel(excelFile, response);
+        return result?success():failure();
     }
 }

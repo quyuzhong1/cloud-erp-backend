@@ -302,10 +302,12 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             List<ListingInfoWithSkuMappingDTO> mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailDTO.getPlatformSkuNo());
             // 检查和获取映射关系
             ListingInfoWithSkuMappingDTO mappingDTO = this.checkAndMappingDTO(mappingDTOList, detailDTO.getPlatformSpuNo(), mainEntity.getDictPlatform());
-            String skuId = "";
-            String skuNO= "";
-            String imageUrl= "";
-            if(null != mappingDTO){
+
+            String skuId = null == oldEntity ? "" : oldEntity.getSkuId();
+            String skuNO= null == oldEntity ? "" : oldEntity.getSkuNo();
+            String imageUrl= null == oldEntity ? "" : oldEntity.getImageUrl();
+            // 历史不为空不更新
+            if(null != mappingDTO && null != oldEntity && StringUtils.isBlank(skuNO) && StringUtils.isBlank(skuId)){
                 skuId = mappingDTO.checkAndGetProductSkuId();
                 skuNO = mappingDTO.checkAndGetProductSkuNo();
                 imageUrl = mappingDTO.checkAndGetProductImageUrl();

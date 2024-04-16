@@ -1138,7 +1138,10 @@ public class SoDetailDTO implements Serializable {
          * 单位
          */
         private String unit;
-
+        /**
+         * 销售单价(不含税单价)
+         */
+        private BigDecimal price;
         /**
          * 含税单价
          */
@@ -1160,7 +1163,7 @@ public class SoDetailDTO implements Serializable {
 
 
         /**
-         * 含税金额
+         * 金额 = 单价 * 数量
          */
         private BigDecimal amount;
 

@@ -264,22 +264,60 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         //列表Tab查询状态处理
-        handleTableParam(pagingParamDTO.getParams());
         //查询店铺设置权限
         SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
         if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
             return new PagingVO(new Page<>());
         }
-        IPage<SoB2cDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams(), shopAuthResultDTO);
-        if (CollUtil.isEmpty(pageData.getRecords())) {
+        List<AdvanceQueryDTO> advanceQueryDTOList = pagingParamDTO.getParams().getAdvanceQueryDTOList();
+        //是否缺货 过滤
+        Boolean isOutStock = (Boolean)advanceQueryDTOList.stream().filter(v->v.getField().equals("isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        if(Objects.nonNull(isOutStock)){
+            //必须选仓库而且只能选一个
+            List<String> warehouseIdList = com.common.business.utils.CollectionUtils.convertStrClzToList(advanceQueryDTOList.stream().filter(v->v.getField().equals("warehouse") && (v.getCompare().equals(QueryConditionEnum.EQ.getCompareCode()) || v.getCompare().equals(QueryConditionEnum.IN_LIST.getCompareCode()))).findFirst().orElse(new AdvanceQueryDTO()).getValue());
+            if(warehouseIdList.size() != 1){
+                throw new ServiceException("选择缺货条件必须选择仓库且只能选择一个仓库");
+            }
+            //查询全部数据，过滤出有缺货
+            Page query = new Page(1,Integer.MAX_VALUE,false);
+            IPage<SoB2cDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams(), shopAuthResultDTO);
+            if (CollUtil.isEmpty(pageData.getRecords())) {
+                return new PagingVO(pageData.getRecords(),0,pagingParamDTO.getPageSize(),pagingParamDTO.getCurrPage());
+            }
+            List<SoB2cDTO.ListDTO> list = pageData.getRecords();
+            // 数据处理
+            fillList(list);
+            if(isOutStock){
+                for (SoB2cDTO.ListDTO listDTO : list) {
+                    listDTO.setDetailList(listDTO.getDetailList().stream().filter(v->v.getDetailLabelDTO().getIsOutStock()!=null && v.getDetailLabelDTO().getIsOutStock()).collect(Collectors.toList()));
+                }
+                list = list.stream().filter(v->CollectionUtils.isNotEmpty(v.getDetailList())).collect(Collectors.toList());
+            }else{
+                for (SoB2cDTO.ListDTO listDTO : list) {
+                    listDTO.setDetailList(listDTO.getDetailList().stream().filter(v->v.getDetailLabelDTO().getIsOutStock()==null || !v.getDetailLabelDTO().getIsOutStock()).collect(Collectors.toList()));
+                }
+                list = list.stream().filter(v->CollectionUtils.isNotEmpty(v.getDetailList())).collect(Collectors.toList());
+            }
+            IPage<SoB2cDTO.ListDTO> result = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize(),list.size());
+            result.setPages(pagingParamDTO.getCurrPage());
+            result.setSize(pagingParamDTO.getPageSize());
+            result.setTotal(list.size());
+            list = com.common.business.utils.CollectionUtils.paginateList(list,pagingParamDTO.getPageSize(),pagingParamDTO.getCurrPage());
+            result.setRecords(list);
+            return new PagingVO(result);
+        }else{
+            Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+            IPage<SoB2cDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams(), shopAuthResultDTO);
+            if (CollUtil.isEmpty(pageData.getRecords())) {
+                return new PagingVO(pageData);
+            }
+            // 数据处理
+            fillList(pageData.getRecords());
             return new PagingVO(pageData);
         }
-        // 数据处理
-        fillList(pageData.getRecords());
-        return new PagingVO(pageData);
     }
+
 
 
     @Override

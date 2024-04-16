@@ -13,6 +13,7 @@ import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -179,6 +180,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Autowired
     private WmsAttachmentService wmsAttachmentService;
+
+    @Resource
+    private PoReturnDetailService poReturnDetailService;
 
     @Value("${fdfs.publicUrl:''}")
     private String filePublicUrl;
@@ -1433,7 +1437,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         stockInSkuList = stockInSkuList.stream().filter(s -> approveStatus.equals(s.getApproveStatus())).collect(Collectors.toList());
-
+        //采购收货
+        List<WarehouseReceiveDetailEntity> receiveDetails = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
+        //质检退货
+        List<PoReturnDetailEntity> returnOrderDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(podIds);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
@@ -1449,10 +1456,36 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 dto.setDeliveryWarehouseName(purchaseOrder.getDeliveryWarehouseName());
                 dto.setDeliveryWarehouseId(purchaseOrder.getDeliveryWarehouseId());
             }
-            Integer qty = stockInSkuList.stream().filter(s -> s.getSkuId().equals(dto.getSkuId()) &&
+            //入库数量
+            Integer stockInQty = stockInSkuList.stream().filter(s -> s.getSkuId().equals(dto.getSkuId()) &&
                     dto.getPurchaseOrderDetailId().equals(s.getPurchaseOrderDetailId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getStockInQty())).orElse(0);
-            dto.setStockInQty(qty);
+            dto.setStockInQty(stockInQty);
+            //质检单关联的收货单存在时 汇总单条收货单，不存在时，汇总全部采购收货单
+            List<WarehouseReceiveDetailEntity> receiveDetailList = receiveDetails.stream()
+                    .filter(req -> req.getMainId().equals(dto.getReceiveId())
+                            && SourceTypeEnum.PO_RECEIVE.getCode().equals(dto.getReceiveType())
+                            && dto.getSkuId().equals(req.getSkuId())).collect(Collectors.toList());
+            Integer receiveQty;
+            if (CollectionUtils.isEmpty(receiveDetailList)){
+                //收货单已收数量
+                receiveQty = receiveDetails.stream()
+                        .filter(req -> req.getPurchaseOrderDetailId().equals(dto.getPurchaseOrderDetailId()))
+                        .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }else {
+                //质检单关联的收货单
+                receiveQty = receiveDetailList.stream()
+                        .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //退货数量
+            Integer returnQty = returnOrderDetailList.stream().filter(e -> Objects.equals(e.getPurchaseOrderDetailId(), dto.getPurchaseOrderDetailId())
+                            && dto.getSourceId().equals(e.getSourceId())
+                            && ReturnOrderSourceEnum.QC.getCode().equals(e.getSourceType())
+                            && !ApproveStatusEnum.REJECT.getStatus().equals(e.getApproveStatus()))
+                    .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            //收货数量 = 收货单已收数量 - 已退数量
+            dto.setReceiveQty(receiveQty - returnQty);
+
             //币种符号
             PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(dto.getPurchaseOrderDetailId())).findFirst().orElse(null);
             dto.setCurrency(detailEntity.getCurrency());
@@ -1481,34 +1514,52 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     /**
      * 下推退货单
      *
-     * @param dto
+     * @param list
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-04-24 9:35
+     * 一个校验失败，则都下推失败
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean generatePurchaseReturnOrder(PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
-        List<String> ids = dto.getList().stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getSourceId).collect(Collectors.toList());
+    public List<BatchResultDTO> generatePurchaseReturnOrder(List<PoInstockDTO.GeneratePurchaseReturnOrderDTO> list) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+        List<String> ids = list.stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getSourceId).collect(Collectors.toList());
         List<QcInfoEntity> qcInfoList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(qcInfoList)) {
-            throw new ServiceException(ApiError.ERROR_99015);
+            resultDTOS.add(BatchResultDTO.fail(String.join(",",ids), "", ApiError.ERROR_99015.msg));
+//            throw new ServiceException(ApiError.ERROR_99015);
+            return resultDTOS;
         }
         String finishQcCode = QcBillStatusEnum.FINISH_QC.getCode();
 
-        long count = qcInfoList.stream().filter(f -> !f.getQcStatus().getCode().equals(finishQcCode)).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_99029);
+//        long count = qcInfoList.stream().filter(f -> !f.getQcStatus().getCode().equals(finishQcCode)).count();
+        List<QcInfoEntity> qcStatus = qcInfoList.stream().filter(f -> !f.getQcStatus().getCode().equals(finishQcCode)).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(qcStatus)) {
+//            throw new ServiceException(ApiError.ERROR_99029);
+            qcStatus.forEach(qcInfoEntity -> {
+                resultDTOS.add(BatchResultDTO.fail(qcInfoEntity.getId(), qcInfoEntity.getCode(), ApiError.ERROR_99029.msg));
+            });
+            return resultDTOS;
         }
         List<QcResultEntity> qcResultList = qcResultService.getByMainIdList(ids);
-        long handleCount = qcResultList.stream().filter(r -> !r.getHandleModeDict().equals(WmsConstant.QC_RESULT_HANDLE_MODE)).count();
-        if (handleCount > 0) {
-            throw new ServiceException(ApiError.ERROR_99029);
+//        long handleCount = qcResultList.stream().filter(r -> !r.getHandleModeDict().equals(WmsConstant.QC_RESULT_HANDLE_MODE)).count();
+        List<QcResultEntity> qchHandles = qcResultList.stream().filter(r -> !r.getHandleModeDict().equals(WmsConstant.QC_RESULT_HANDLE_MODE)).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(qchHandles)) {
+            qchHandles.forEach(qcResultEntity -> {
+                String code = "";
+                QcInfoEntity qcInfoEntity = qcInfoList.stream().filter(e -> e.getId().equals(qcResultEntity.getMainId())).findFirst().orElse(null);
+                if (Objects.nonNull(qcInfoEntity)){
+                    code = qcInfoEntity.getCode();
+                }
+                resultDTOS.add(BatchResultDTO.fail(qcResultEntity.getMainId(), code, ApiError.ERROR_99029.msg));
+            });
+            return resultDTOS;
+//            throw new ServiceException(ApiError.ERROR_99029);
         }
 
 
         LoginUser userInfo = commonService.getUserInfo();
-        List<PoInstockDTO.GeneratePurchaseReturnOrderDTO> list = dto.getList();
         //采购订单id集合
         List<String> poIds = list.stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getPurchaseOrderId).collect(Collectors.toList());
 
@@ -1524,7 +1575,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
         String qcBill = SourceTypeEnum.QC_INFO.getCode();
         Map<String, List<PoInstockDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getSourceId));
-
+        //质检单主表循环
         for (Map.Entry<String, List<PoInstockDTO.GeneratePurchaseReturnOrderDTO>> entry : map.entrySet()) {
             String sourceId = entry.getKey();
             List<PoInstockDTO.GeneratePurchaseReturnOrderDTO> value = entry.getValue();
@@ -1533,7 +1584,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //质检单
             QcInfoEntity qcInfoEntity = qcInfoList.stream().filter(obj -> obj.getId().equals(sourceId)).findFirst().orElse(null);
             if (Objects.isNull(qcInfoEntity)) {
-                throw new ServiceException(ApiError.ERROR_99015);
+                resultDTOS.add(BatchResultDTO.fail(sourceId, "", ApiError.ERROR_99015.msg));
+//                throw new ServiceException(ApiError.ERROR_99015);
+                continue;
             }
 
             addDTO.setBillDate(LocalDate.now());
@@ -1544,21 +1597,31 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             PoInstockDTO.GeneratePurchaseReturnOrderDTO purchaseReturnOrderDTO = value.get(0);
             //采购订单id
             String purchaseOrderId = purchaseReturnOrderDTO.getPurchaseOrderId();
-
+            //质检单明细表循环
             for (PoInstockDTO.GeneratePurchaseReturnOrderDTO detail : value) {
                 PurchaseReturnOrderDetailDTO.AddDTO addDetailDTO = new PurchaseReturnOrderDetailDTO.AddDTO();
                 //收货单的ids
                 List<String> receiveIdList = receiveList.stream().filter(r -> r.getPurchaseOrderId().equals(detail.getPurchaseOrderId())).map(WarehouseReceiveEntity::getId).collect(Collectors.toList());
-                //验证 sku 收货数量
+                //验证 sku 收货总数量
                 Integer receiveQty = receiveSkuList.stream().filter(
                         obj -> obj.getSkuId().equals(detail.getSkuId()) &&
                                 receiveIdList.contains(obj.getMainId())
                 ).mapToInt(e -> e.getReceiveQty()).sum();
                 if (receiveQty == 0) {
-                    throw new ServiceException(1, String.format("SKU【%s】未找到对应收货数量", detail.getSkuNo()));
+                    resultDTOS.add(BatchResultDTO.fail(qcInfoEntity.getId(), qcInfoEntity.getCode(), String.format("SKU【%s】未找到对应收货数量", detail.getSkuNo())));
+                    continue;
+//                    throw new ServiceException(1, String.format("SKU【%s】未找到对应收货数量", detail.getSkuNo()));
                 }
                 if (MathUtil.compareTo(detail.getRealityReturnQty(), receiveQty) > 0) {
-                    throw new ServiceException(1, String.format("SKU【%s】实退数量不能大于【%s】", detail.getSkuNo(), receiveQty));
+                    resultDTOS.add(BatchResultDTO.fail(qcInfoEntity.getId(), qcInfoEntity.getCode(), String.format("SKU【%s】实退总数量不能大于【%s】", detail.getSkuNo(), receiveQty)));
+                    continue;
+//                    throw new ServiceException(1, String.format("SKU【%s】实退数量不能大于【%s】", detail.getSkuNo(), receiveQty));
+                }
+                //退货单：质检单下推质检退货单【入库数量改为收货数量】【校验退货数量不能大于已收货数量】【下推新增校验】
+                if (MathUtil.compareTo(detail.getRealityReturnQty(), detail.getReceiveQty()) > 0) {
+                    resultDTOS.add(BatchResultDTO.fail(qcInfoEntity.getId(), qcInfoEntity.getCode(), String.format("SKU【%s】实退数量不能大于【%s】", detail.getSkuNo(), detail.getReceiveQty())));
+                    continue;
+//                    throw new ServiceException(1, String.format("SKU【%s】实退数量不能大于【%s】", detail.getSkuNo(), receiveQty));
                 }
                 BeanMapperUtils.copy(detail, addDetailDTO);
                 addDetailDTO.setPurchaseOrderDetailId(detail.getPurchaseOrderDetailId());
@@ -1589,10 +1652,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             addDTO.setPurchaseUserId(purchaseUserId);
             addList.add(addDTO);
         }
-        if (CollectionUtils.isNotEmpty(addList)) {
+        Boolean success = resultDTOS.stream().allMatch(BatchResultDTO::getSuccess);
+        if (CollectionUtils.isNotEmpty(addList) && success) {
             addList.forEach(obj -> poReturnService.add(obj));
         }
-        return Boolean.TRUE;
+        return resultDTOS;
     }
 
 

@@ -605,8 +605,6 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         purchaseOrderDetailService.updateBatchById(purchaseOrderDetailList);
         //同步到WMS
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), purchaseOrderDetailList, IdUtil.simpleUUID());
-        //同步到SRM
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_INFO_TAG.getName(), purchaseOrderDetailList, IdUtil.simpleUUID());
     }
 
     /**

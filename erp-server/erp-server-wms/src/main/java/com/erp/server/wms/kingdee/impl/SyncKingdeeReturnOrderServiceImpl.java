@@ -213,6 +213,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         List<JSONObject> list = new ArrayList<>();
         for (PoReturnDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
+            jsonObject.set("detailId", detail.getId());
             //SKU
             jsonObject.set("skuNo", detail.getSkuNo());
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detail.getSkuId())).findFirst().orElse(new ProductDetailEntity());
