@@ -18,6 +18,7 @@ import com.erp.model.oms.dto.InvoiceDTO;
 import com.erp.model.oms.entity.CustomerContactEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.KingdeeReceiptConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
@@ -78,6 +79,8 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
     @Resource
     private SyncKingdeeCustomerContactService syncKingdeeCustomerContactService;
 
+    @Resource
+    private  KingdeeReceiptConditionService kingdeeReceiptConditionService;
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -185,9 +188,9 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         List<DictBasicDTO.ViewDTO> settleModeList = dictBasicService.getByKey("settleMode");
         DictBasicDTO.ViewDTO settleMode = settleModeList.stream().filter(req -> req.getValue().equals(entity.getSettleDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
         resultMap.put("settleModeCode", settleMode.getRemark());
-        List<DictBasicDTO.ViewDTO> collectionTermsList = dictBasicService.getByKey("collectionTerms");
-        DictBasicDTO.ViewDTO collectionTerms = collectionTermsList.stream().filter(req -> req.getValue().equals(entity.getConditionDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
-        resultMap.put("collectionTermsCode", collectionTerms.getRemark());
+        List<KingdeeReceiptConditionEntity> collectionTermsList = kingdeeReceiptConditionService.list();
+        KingdeeReceiptConditionEntity collectionTerms = collectionTermsList.stream().filter(req -> req.getId().equals(entity.getConditionDict())).findFirst().orElse(new KingdeeReceiptConditionEntity());
+        resultMap.put("collectionTermsCode", collectionTerms.getCode());
         List<CustomerContactEntity> customerContactList = customerContactService.listEntityByMainId(entity.getId());
         if (CollectionUtils.isNotEmpty(customerContactList)) {
             List<CustomerContactEntity> collect = customerContactList.stream().sorted(Comparator.comparing(CustomerContactEntity::getIsDefault).reversed()).collect(Collectors.toList());

@@ -111,7 +111,7 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class)
     public void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cLogisticsEntity logisticsEntity, List<SoB2cDetailEntity> detailList) {
         if (Objects.isNull(mainEntity) || StrUtil.isBlank(mainEntity.getId())) return;
         PlatformOrderFinanceDTO financeDTO = dto.getFinances();

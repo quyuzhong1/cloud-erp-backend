@@ -216,8 +216,14 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
             if (null != buyerTaxInfo){
                 List<TaxClassification> taxClassifications = dto.getOrder().getBuyerInfo().getBuyerTaxInfo().getTaxClassifications();
                 if (!CollectionUtils.isEmpty(taxClassifications)){
-                    // 税号
-                    receiverDTO.setReceiverTaxNo(JSONUtil.toJsonStr(taxClassifications));
+                    TaxClassification taxClassification = taxClassifications.stream().filter(e -> "CPF".equalsIgnoreCase(e.getName())).findFirst().orElse(null);
+                    if (null != taxClassification){
+                        // 巴西税号
+                        receiverDTO.setReceiverTaxNo(taxClassification.getValue());
+                    } else {
+                        // 税号
+                        receiverDTO.setReceiverTaxNo(JSONUtil.toJsonStr(taxClassifications));
+                    }
                 }
             }
 

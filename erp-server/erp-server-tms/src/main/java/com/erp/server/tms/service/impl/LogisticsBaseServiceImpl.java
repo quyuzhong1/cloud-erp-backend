@@ -9,6 +9,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
@@ -112,14 +113,14 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
      * @param records
      */
     @Override
-    public List<BatchResultDTO> processTrackData(String platformType, List<LogisticsBillDetailEntity> records) {
+    public List<BatchResultDTO> processTrackData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(records.size());
         LogisticsService service = logisticsRegistry.getHandler(platformType);
         List<Map<String, String>> mapList = service.getLogisticsAuthConfigByPlatform(platformType);
         if (CollectionUtils.isEmpty(mapList)) Collections.emptyList();
         LogisticsTrackVO logisticsTrackVO = LogisticsTrackVO.builder()
                 .authMap(mapList.get(0))
-                .trackNos(records.stream().map(LogisticsBillDetailEntity::getTrackNo).collect(Collectors.toList()))
+                .trackNos(records.stream().map(LogisticsTrackDTO.UpdateTrackDTO::getTrackNo).collect(Collectors.toList()))
                 .build();
         ApiResult<List<LogisticsTrackEntity>> track = service.getTrack(logisticsTrackVO);
         if (track.isSuccess()) {
@@ -166,7 +167,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     }
 
     @Override
-    public List<BatchResultDTO> processRegisterData(String platformType, List<LogisticsBillDetailEntity> records) {
+    public List<BatchResultDTO> processRegisterData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(records.size());
         LogisticsService service = logisticsRegistry.getHandler(platformType);
         List<Map<String, String>> mapList = service.getLogisticsAuthConfigByPlatform(platformType);
@@ -180,10 +181,11 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         if (listApiResult.isSuccess()) {
             List<RegisterResponseVO> data = listApiResult.getData();
             if (CollectionUtils.isNotEmpty(data)) {
-                Map<String, LogisticsBillDetailEntity> collect = records.stream().collect(Collectors.toMap(LogisticsBillDetailEntity::getTrackNo, Function.identity()));
+                Map<String, LogisticsTrackDTO.UpdateTrackDTO> collect = records.stream().collect(Collectors.toMap(LogisticsTrackDTO.UpdateTrackDTO::getTrackNo, Function.identity()));
                 data.forEach(registerResponseVO -> {
                     BatchResultDTO dto = new BatchResultDTO();
-                    LogisticsBillDetailEntity logisticsBillDetailEntity = collect.get(registerResponseVO.getTrackNo());
+                    LogisticsTrackDTO.UpdateTrackDTO updateTrackDTO = collect.get(registerResponseVO.getTrackNo());
+                    LogisticsBillDetailEntity logisticsBillDetailEntity = logisticsBillDetailService.getById(updateTrackDTO.getId());
                     if (registerResponseVO.getTrackStatus()) {
                         logisticsBillDetailEntity.setRegisterStatus(1);
                         dto.setSuccess(true);
@@ -199,8 +201,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                         logisticsBillDetailEntity.setRegisterResult(registerResponseVO.getMsg());
 //                        }
                     }
-                    dto.setId(logisticsBillDetailEntity.getId());
-                    dto.setCode(logisticsBillDetailEntity.getTrackNo());
+                    dto.setId(updateTrackDTO.getId());
+                    dto.setCode(updateTrackDTO.getTrackNo());
                     dto.setMsg(registerResponseVO.getMsg());
                     resultDTOS.add(dto);
                     logisticsBillDetailEntity.setUpdateTime(LocalDateTime.now());
@@ -226,7 +228,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
      * @param records
      * @return
      */
-    private List<LogisticsRegisterVO> convertRegisterData(List<LogisticsBillDetailEntity> records) {
+    private List<LogisticsRegisterVO> convertRegisterData(List<LogisticsTrackDTO.UpdateTrackDTO> records) {
         if (CollectionUtils.isEmpty(records)) {
             return Collections.emptyList();
         }
@@ -234,18 +236,18 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     }
 
     @Override
-    public List<BatchResultDTO> batchUpdateTrackInfo(List<LogisticsBillDetailEntity> logisticsBillDetailEntities) {
-        if (CollectionUtils.isNotEmpty(logisticsBillDetailEntities)) {
-            List<BatchResultDTO> dtoList = new ArrayList<>(logisticsBillDetailEntities.size());
-            LogisticsBillDetailEntity detailEntity = logisticsBillDetailEntities.stream().filter(e -> StringUtils.isBlank(e.getTrackNo())).findFirst().orElse(null);
-            if (Objects.nonNull(detailEntity)) throw new ServiceException(ApiError.BATCH_UPDATE_TRACK_INFO_HAS_EMPTY);
-            if (logisticsBillDetailEntities.size() > 100) {
-                List<List<LogisticsBillDetailEntity>> partition = Lists.partition(logisticsBillDetailEntities, 100);
-                for (List<LogisticsBillDetailEntity> entityList : partition) {
+    public List<BatchResultDTO> batchUpdateTrackInfo(List<LogisticsTrackDTO.UpdateTrackDTO> dtos) {
+        if (CollectionUtils.isNotEmpty(dtos)) {
+            List<BatchResultDTO> dtoList = new ArrayList<>(dtos.size());
+            LogisticsTrackDTO.UpdateTrackDTO dto = dtos.stream().filter(e -> StringUtils.isBlank(e.getTrackNo())).findFirst().orElse(null);
+            if (Objects.nonNull(dto)) throw new ServiceException(ApiError.BATCH_UPDATE_TRACK_INFO_HAS_EMPTY);
+            if (dtos.size() > 100) {
+                List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = Lists.partition(dtos, 100);
+                for (List<LogisticsTrackDTO.UpdateTrackDTO> entityList : partition) {
                     dtoList.addAll(processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), entityList));
                 }
             } else {
-                dtoList.addAll(processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), logisticsBillDetailEntities));
+                dtoList.addAll(processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), dtos));
             }
             return dtoList;
         } else {

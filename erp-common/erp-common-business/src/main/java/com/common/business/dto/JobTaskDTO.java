@@ -133,6 +133,11 @@ public class JobTaskDTO {
      */
     private JSONObject extendObj;
 
+    /**
+     * 清洗时检查明细下载状态:downloadStatus=1
+     */
+    private Boolean clearCheckDownloadStatus;
+
 
 //    public JobTaskDTO(PlatformApiTaskEntity entity, String taskName) {
 //        this.id = Long.parseLong(entity.getId());

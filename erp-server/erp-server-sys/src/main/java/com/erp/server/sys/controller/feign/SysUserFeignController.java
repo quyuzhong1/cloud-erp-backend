@@ -1,11 +1,13 @@
 package com.erp.server.sys.controller.feign;
 
 import com.common.business.annotation.DataIdempotent;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.impl.RedisService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -68,7 +70,8 @@ public class SysUserFeignController extends BaseController {
 
     @Resource
     private UserDatePermissionService userDatePermissionService;
-
+    @Resource
+    private RedisService redisService;
 
     @PostMapping("/accountLogin")
     public ApiResult<SysUserDTO> accountLogin(@RequestBody AccountLoginDTO dto) {
@@ -496,6 +499,9 @@ public class SysUserFeignController extends BaseController {
     @PostMapping("/deleteSrmUser")
     public ApiResult deleteSrmUser(@RequestBody List<String> uids) {
         sysUserInfoService.removeByIds(uids);
+        uids.forEach(uid ->{
+            redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + uid);
+        });
         return success();
     }
 

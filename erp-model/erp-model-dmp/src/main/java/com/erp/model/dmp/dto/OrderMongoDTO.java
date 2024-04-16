@@ -210,6 +210,13 @@ public class  OrderMongoDTO {
     }
 
 
-
-
+    public static OrderMongoDTO getByIsCleanDateStrWithDownloadStatus(Integer isClean, Integer diffMinute) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        orderMongoDTO.setIsClean(isClean);
+        orderMongoDTO.setDownloadStatus(1);
+        if(null != diffMinute && diffMinute != 0){
+            orderMongoDTO.setDownloadEndTimeStr(LocalDateTime.now().minusMinutes(diffMinute).toString());
+        }
+        return orderMongoDTO;
+    }
 }

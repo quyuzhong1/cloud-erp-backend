@@ -80,6 +80,10 @@ public class PullShopifyJob {
                 jobTaskDTO.setPlatformCategory(cleanDataTableEnum.getCategory());
                 jobTaskDTO.setDictPlatform(cleanDataTableEnum.getPlatform());
                 jobTaskDTO.setBillType(cleanDataTableEnum.getBusiness());
+                if (CleanDataTableEnum.SHOPIFY_ORDER.equals(cleanDataTableEnum)){
+                    // 清洗时检查明细下载状态:DownloadStatus=1
+                    jobTaskDTO.setClearCheckDownloadStatus(true);
+                }
                 try {
                     XxlJobHelper.log("开始清洗：{}类{}数据", cleanDataTableEnum.getPlatform(),cleanDataTableEnum.getBusiness());
                     platformDataThread.cleanOrder(jobTaskDTO);

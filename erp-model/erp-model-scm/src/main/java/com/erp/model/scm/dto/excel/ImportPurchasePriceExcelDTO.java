@@ -55,7 +55,7 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "SKU", index = 4)
-    @FieldValid(fieldName = "SKU",isNotBlank = true, maxLength =50 )
+    @FieldValid(fieldName = "SKU",isNotBlank = true, maxLength =64 )
     private String skuNo;
 
     /**
