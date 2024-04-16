@@ -60,14 +60,6 @@ public @interface Dict {
     ServiceCodeNameEnum serviceCode() default ServiceCodeNameEnum.DEFAULT;
     
     /**
-     * 是否翻译子属性里的字典字段
-     *
-     * @return
-     */
-    boolean dictChildren() default false;
-
-
-    /**
      * 翻译为空是否取原值
      *
      * @return

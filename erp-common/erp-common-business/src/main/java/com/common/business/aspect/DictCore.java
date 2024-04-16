@@ -3,6 +3,8 @@ package com.common.business.aspect;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -96,7 +98,7 @@ public class DictCore {
                 return;
             }
 
-            Object recordObj = this.parseDictTextPlus(resultData, lang);
+            Object recordObj = this.parseDictTextPlus(resultData, lang , true);
             ((ApiResult) result).setData(recordObj);
         }
     }
@@ -108,16 +110,17 @@ public class DictCore {
      * @param lang
      * @return
      */
-    public Object parseDictTextPlus(Object result, String lang) {
+    public Object parseDictTextPlus(Object result, String lang , boolean isFirst) {
         if (result == null) {
             return result;
         }
         if (result instanceof PagingVO<?>) {
         	List<?> list = ((PagingVO<?>)result).getList();
         	if(CollUtil.isNotEmpty(list)) {
+        		addDictCache(list, isFirst);
         		List<Object> items = new ArrayList<>();
                 for (Object record : list) {
-                    record = this.dealRecord(record, lang);
+                	record = this.dealRecord(record, lang);
                     items.add(record);
                 }
                 ((PagingVO) result).setList(items);
@@ -125,8 +128,8 @@ public class DictCore {
             return result;
 
         }else if (result instanceof List) {
-
             List<Object> items = new ArrayList<>();
+            addDictCache(result, isFirst);
             for (Object record : ((List) result)) {
                 record = this.dealRecord(record, lang);
                 items.add(record);
@@ -134,9 +137,8 @@ public class DictCore {
             return items;
 
         } else if (result instanceof Map) {
-
+        	addDictCache(((Map<String, Object>) result).values(), isFirst);
             Map<String, Object> items = new HashMap<>();
-
             for (Map.Entry<String, Object> entry : ((Map<String, Object>) result).entrySet()) {
                 String key = entry.getKey();
                 Object record = entry.getValue();
@@ -148,8 +150,8 @@ public class DictCore {
 
 
         } else if (result instanceof Set) {
-
             Set<Object> items = new HashSet<>();
+            addDictCache(result, isFirst);
             for (Object record : ((Set) result)) {
                 record = this.dealRecord(record, lang);
                 items.add(record);
@@ -157,11 +159,111 @@ public class DictCore {
             return items;
 
         } else {
+        	addDictCache(result, isFirst);
             Object record = this.dealRecord(result, lang);
             return record;
         }
     }
 
+    public void addDictCache(Object record , boolean isFirst) {
+    	if(!isFirst) {
+    		return;
+    	}
+    	Class<?> clazz = null;
+        Type type = record.getClass().getGenericSuperclass();
+        if (type instanceof ParameterizedType) {
+            ParameterizedType parameterizedType = (ParameterizedType) type;
+            Type[] typeArguments = parameterizedType.getActualTypeArguments();
+            if (typeArguments.length > 0) {
+            	clazz = (Class<?>) typeArguments[0];
+            }else {
+            	clazz = record.getClass();
+            }
+        }
+    	List<DictDto> dictDtoList = new ArrayList<>();
+    	getDictDtoList(clazz, dictDtoList);
+    	if(CollUtil.isNotEmpty(dictDtoList)) {
+    		Map<String, List<DictDto>> queryDictMaps = dictDtoList.stream().collect(Collectors.groupingBy(d -> {
+    			return d.getServiceCode().getCode() + "_" + d.getTableName() + "_" + d.getQueryFieldName() + "_" + d.getReturnFieldName();
+    		}));
+    		for(Map.Entry<String, List<DictDto>> queryDictMap : queryDictMaps.entrySet()) {
+    			List<DictDto> value = queryDictMap.getValue();
+				DictDto dictDto = value.get(0);
+    			BaseDataFeign baseDataFeign = getBaseDataFeign(dictDto.getServiceCode());
+    			List<Map<String, Object>> data = baseDataFeign.queryValueByType(dictDto.getTableName(), dictDto.getQueryFieldName()
+    					,dictDto.getReturnFieldName() , value.stream().map(DictDto::getQueryTypeField).
+    					collect(Collectors.joining("','", "'", "'")));
+    			
+    			Map<String, List<Map<String, Object>>> typeDataMaps = new HashMap<>();
+    			for(Map<String, Object> d : data) {
+    				String queryType = d.get("type").toString();
+    				List<Map<String, Object>> dataList = typeDataMaps.get(queryType);
+    				if(dataList == null) {
+    					dataList = new ArrayList<>();
+    				}
+    				dataList.add(d);
+					typeDataMaps.put(queryType, dataList);
+    			}
+    			
+    			for(DictDto v : value) {
+    				String queryTypeField = v.getQueryTypeField();
+    				String queryFieldName = v.getQueryFieldName();
+					List<Map<String, Object>> dataList = typeDataMaps.get(queryTypeField);
+    				if(CollUtil.isNotEmpty(dataList)) {
+    					for(Map<String, Object> d : dataList) {
+    						Object queryFieldValue = d.get(queryFieldName);
+    						if(queryFieldValue == null) {
+    							queryFieldValue = d.get(StringUtil.convertToCamel(queryFieldName));
+    						}
+							if(queryFieldValue != null) {
+    							List<Map<String, Object>> finalData = DictThreadLocal.get(queryTypeField, queryFieldName ,v.getReturnFieldName(), v.getTableName()
+        	    						, queryFieldName, v.getServiceCode());
+    							if(finalData == null) {
+    								finalData = new ArrayList<>();
+    							}
+    							Map<String, Object> oneData = new HashMap<>();
+    							oneData.put(v.getReturnFieldName(), d.get(v.getReturnFieldName()));
+    							finalData.add(oneData);
+    							DictThreadLocal.set(queryTypeField, queryFieldName ,v.getReturnFieldName(), v.getTableName()
+        	    						, queryFieldName, v.getServiceCode(), finalData);
+    						}
+    					}
+    				}
+    			}
+    		}
+    	}
+    }
+    
+    public void getDictDtoList(Class<?> clazz , List<DictDto> dictDtoList){
+    	for (Field field : ConvertUtils.getAllFields(clazz)) {
+    		Dict dictAnnotation = field.getAnnotation(Dict.class);
+            if (dictAnnotation != null) {
+            	Class<?> declaringClass = field.getDeclaringClass();
+            	if(!"java.lang.String".equals(declaringClass.getName()) && !declaringClass.isEnum()) {
+            		getDictDtoList(clazz , dictDtoList);
+            		continue;
+            	}
+            	
+            	String queryTypeField = dictAnnotation.queryTypeField();
+            	if(StringUtils.isNotBlank(queryTypeField) && StringUtils.isBlank(dictAnnotation.extendQuerySql())) {
+            		String queryFieldName = dictAnnotation.queryFieldName();
+                    String returnFieldName = dictAnnotation.returnFieldName();
+                    ServiceCodeNameEnum serviceCode = dictAnnotation.serviceCode();
+                    serviceCode = convertServiceCode(serviceCode);
+                    String table = dictAnnotation.tableName();
+                    table = convertTable(serviceCode, table);
+                    
+                    DictDto dictDto = new DictDto();
+                    dictDto.setQueryFieldName(queryFieldName);
+                    dictDto.setQueryTypeField(queryTypeField);
+                    dictDto.setReturnFieldName(returnFieldName);
+                    dictDto.setServiceCode(serviceCode);
+                    dictDto.setTableName(table);
+                    dictDtoList.add(dictDto);
+            	}
+            }
+    	}
+    }
 
     public Object dealRecord(Object record, String lang) {
 
@@ -200,45 +302,6 @@ public class DictCore {
 
     }
 
-    public static void main(String[] args) {
-    	AttachDTO dto = new AttachDTO();
-    	dto.setStatus(ApproveStatusEnum.APPROVE);
-    	AttachDTO subDto = new AttachDTO();
-    	dto.setDto(subDto);
-    	subDto.setStatus(ApproveStatusEnum.REJECT);
-    	System.out.println(JSON.toJSONString(new DictCore().dealRecord(dto, "")));
-	}
-    
-    private static Object test(Object record) {
-    	set(record);
-    	BeanGenerator beanGenerator = new BeanGenerator();
-        //设置类的class
-        beanGenerator.setSuperclass(record.getClass());
-        //创建拥有_dictText字段的类
-        Object objHasDictText = beanGenerator.create();
-        //复制当前记录的值，给新创建的拥有_dictText字段的新对象
-        BeanUtils.copyProperties(record, objHasDictText);
-        //为新对象赋值_dictText字段
-        BeanMap beanMap = BeanMap.create(objHasDictText);
-        beanMap.put("attachUrl", "attachUrlchange");
-    	return objHasDictText;
-    }
-    
-    private static void set(Object record) {
-    	BeanGenerator beanGenerator = new BeanGenerator();
-        //设置类的class
-        beanGenerator.setSuperclass(record.getClass());
-        //创建拥有_dictText字段的类
-        Object objHasDictText = beanGenerator.create();
-        //复制当前记录的值，给新创建的拥有_dictText字段的新对象
-        BeanUtils.copyProperties(record, objHasDictText);
-        //为新对象赋值_dictText字段
-        BeanMap beanMap = BeanMap.create(objHasDictText);
-        beanMap.put("attachName", "change");
-        // 替换原record
-        record = objHasDictText;
-    }
-
     /**
      * 翻译字典文本
      *
@@ -248,7 +311,7 @@ public class DictCore {
      * @param key
      * @return
      */
-    private List<Map<String, Object>> translateDictValue(String code, String text, String table, String key, ServiceCodeNameEnum serviceCodeNameEnum) {
+    private List<Map<String, Object>> translateDictValue(String code, String text, String table, String key, ServiceCodeNameEnum serviceCodeNameEnum , String extendQuerySql) {
         if (ConvertUtils.isEmpty(code) || ConvertUtils.isEmpty(text) || ConvertUtils.isEmpty(table)) {
             return null;
         }
@@ -260,13 +323,15 @@ public class DictCore {
         List<Map<String, Object>> data = DictThreadLocal.get(code, text, table, key , serviceCodeNameEnum);
         if(data == null) {
         	try {
-				data = getBaseDataFeign(serviceCodeNameEnum).queryValueByValue(table, code, key, text , "");
+				data = getBaseDataFeign(serviceCodeNameEnum).queryValueByValue(table, code, key, text , extendQuerySql);
 			} catch (Exception e) {
 			}
         	if(data == null) {
         		data = getNullDataView(table, text);
         	}
-        	DictThreadLocal.set(code, text, table, key , serviceCodeNameEnum , data);
+        	if(StringUtils.isBlank(extendQuerySql)) {
+        		DictThreadLocal.set(code, text, table, key , serviceCodeNameEnum , data);
+        	}
         }
 		return data.stream().map(da -> {
 			Map<String, Object> m = new HashMap<>();
@@ -307,12 +372,15 @@ public class DictCore {
             Dict dictAnnotation = field.getAnnotation(Dict.class);
             if (dictAnnotation != null) {
                 String code = dictAnnotation.queryFieldName();
-                String table = dictAnnotation.tableName();
                 String text = dictAnnotation.returnFieldName();
                 Class<? extends EnumMessage> enumClass = dictAnnotation.enumClass();
-                boolean dictChildren = dictAnnotation.dictChildren();
                 boolean dictDefaultOriginalValue = dictAnnotation.dictDefaultOriginalValue();
                 ServiceCodeNameEnum serviceCode = dictAnnotation.serviceCode();
+                serviceCode = convertServiceCode(serviceCode);
+                String table = dictAnnotation.tableName();
+                table = convertTable(serviceCode, table);
+                String type = dictAnnotation.queryTypeField();
+                String extendQuerySql = dictAnnotation.extendQuerySql();
 
                 field.setAccessible(true);
 
@@ -321,37 +389,36 @@ public class DictCore {
 				try {
 					keyObject = field.get(record);
 				} catch (Exception e1) {
-				} 
-				if (dictChildren) {
-                    try {
-                        Object childrenObj = keyObject;
-                        // 翻译子属性值
-                        Object dictChildrenObj = this.parseDictTextPlus(childrenObj, lang);
+				}
+				//翻译字典值对应的txt
+				if(keyObject != null) {
+					String textValue = "";
+					boolean isEnum = keyObject.getClass().isEnum();
+					if (!(keyObject instanceof String) && !isEnum) {
+	                    try {
+	                        Object childrenObj = keyObject;
+	                        // 翻译子属性值
+	                        Object dictChildrenObj = this.parseDictTextPlus(childrenObj, lang , false);
 
-                        BeanGenerator beanGenerator = new BeanGenerator();
-                        //设置类的class
-                        beanGenerator.setSuperclass(record.getClass());
-                        //创建拥有_dictText字段的类
-                        Object objHasDictText = beanGenerator.create();
-                        //复制当前记录的值，给新创建的拥有_dictText字段的新对象
-                        BeanUtils.copyProperties(record, objHasDictText);
-                        //为新对象赋值_dictText字段
-                        BeanMap beanMap = BeanMap.create(objHasDictText);
-                        beanMap.put(field.getName(), dictChildrenObj);
-                        // 替换原record
-                        record = objHasDictText;
+	                        BeanGenerator beanGenerator = new BeanGenerator();
+	                        //设置类的class
+	                        beanGenerator.setSuperclass(record.getClass());
+	                        //创建拥有_dictText字段的类
+	                        Object objHasDictText = beanGenerator.create();
+	                        //复制当前记录的值，给新创建的拥有_dictText字段的新对象
+	                        BeanUtils.copyProperties(record, objHasDictText);
+	                        //为新对象赋值_dictText字段
+	                        BeanMap beanMap = BeanMap.create(objHasDictText);
+	                        beanMap.put(field.getName(), dictChildrenObj);
+	                        // 替换原record
+	                        record = objHasDictText;
 
-                    } catch (Exception ignored) {
-                    }
-                    continue;
-                }
+	                    } catch (Exception ignored) {
+	                    }
+	                    continue;
+	                }
 
-                //翻译字典值对应的txt
-                String textValue = "";
-                boolean isEnum = keyObject.getClass().isEnum();
-                boolean isNotDict = (serviceCode == null || serviceCode == ServiceCodeNameEnum.DEFAULT);
-                if(keyObject != null) {
-                	if(isEnum && isNotDict) {
+                	if(isEnum) {
                         try {
                             textValue = getFieldVal(keyObject, enumClass);
                         } catch (Exception e) {
@@ -362,21 +429,24 @@ public class DictCore {
                 	if(StringUtils.isBlank(textValue)) {
                 		String key = keyObject.toString();
                 		if(StringUtils.isNotBlank(key)) {
-                			if(((serviceCode == ServiceCodeNameEnum.DEFAULT && "erp-plm".equals(serviceName)) || serviceCode == ServiceCodeNameEnum.PLM)
-                					&& "dict_basic".equals(table)) {
-                				table = "basic_dict";
+                			List<Map<String, Object>> translateDictValue = null;
+                			if(StringUtils.isNotBlank(type) && StringUtils.isBlank(extendQuerySql)) {
+                				translateDictValue =  DictThreadLocal.get(type , code, text, table, key , serviceCode);
+                			}else {
+                				translateDictValue = translateDictValue(code, text, table, key , serviceCode , extendQuerySql);
                 			}
-                			List<Map<String, Object>> translateDictValue = translateDictValue(code, text, table, key , serviceCode);
+                			
                 			if(CollUtil.isNotEmpty(translateDictValue)) {
                 				Map<String, Object> map = translateDictValue.get(0);
                 				if(map != null && !map.isEmpty()) {
                 					textValue = map.values().stream().filter(o -> o != null).map(Object::toString).collect(Collectors.joining(","));
                 				}
                 			}
+                			
                 		}
                     }
                 	
-                	if(StringUtils.isBlank(textValue) && isNotDict && enumClass != EnumMessage.class) {
+                	if(StringUtils.isBlank(textValue) && enumClass != EnumMessage.class) {
                 		try {
                             textValue = getFieldVal(keyObject, enumClass);
                         } catch (Exception e) {
@@ -387,9 +457,9 @@ public class DictCore {
                 	if(dictDefaultOriginalValue && StringUtils.isBlank(textValue)) {
                     	textValue = keyObject.toString();
                     }
-                }
+                	fieldValueMap.put(field.getName() + "Name", textValue);
+				}
                 
-                fieldValueMap.put(field.getName() + "Name", textValue);
             }
 
         }
@@ -400,6 +470,28 @@ public class DictCore {
         return dictAspectFieldMap;
     }
 
+    private ServiceCodeNameEnum convertServiceCode(ServiceCodeNameEnum serviceCode) {
+    	if(serviceCode == ServiceCodeNameEnum.DEFAULT) {
+        	ServiceCodeNameEnum[] values = ServiceCodeNameEnum.values();
+        	for(ServiceCodeNameEnum value : values) {
+        		if(serviceName.contains(value.getCode())) {
+        			return value;
+        		}
+        	}
+        }
+    	return serviceCode;
+    }
+    
+    private String convertTable(ServiceCodeNameEnum serviceCode , String table) {
+    	if(serviceCode == ServiceCodeNameEnum.DEFAULT) {
+    		serviceCode = convertServiceCode(serviceCode);
+    	}
+    	if(serviceCode == ServiceCodeNameEnum.PLM && "dict_basic".equals(table)) {
+			table = "basic_dict";
+		}
+    	return table;
+    }
+    
     public static String getFieldVal(Object targetClass, Class<?> objClass) throws Exception {
         if(targetClass == null){
             return "";
@@ -426,5 +518,14 @@ public class DictCore {
     public static class DictAspectFieldMap{
     	private Object record;
     	private Map<String, Object> fieldValueMap;
+    }
+    
+    @Data
+    public static class DictDto{
+    	private String queryFieldName;
+    	private String queryTypeField;
+    	private String returnFieldName;
+    	private String tableName;
+    	private ServiceCodeNameEnum serviceCode;
     }
 }

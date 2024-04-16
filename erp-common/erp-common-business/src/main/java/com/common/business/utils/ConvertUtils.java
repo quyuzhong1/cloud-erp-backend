@@ -596,6 +596,17 @@ public class ConvertUtils {
         return fields;
     }
 
+    public static Field[] getAllFields(Class<?> clazz) {
+        List<Field> fieldList = new ArrayList<>();
+        while (clazz != null) {
+            fieldList.addAll(new ArrayList<>(Arrays.asList(clazz.getDeclaredFields())));
+            clazz = clazz.getSuperclass();
+        }
+        Field[] fields = new Field[fieldList.size()];
+        fieldList.toArray(fields);
+        return fields;
+    }
+    
     /**
      * 将map的key全部转成小写
      *

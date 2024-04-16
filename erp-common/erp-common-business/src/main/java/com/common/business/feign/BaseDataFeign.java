@@ -10,4 +10,8 @@ public interface BaseDataFeign {
 	@GetMapping("feign/baseData/queryValueByValue")
 	List<Map<String, Object>> queryValueByValue(@RequestParam("tableName") String tableName, @RequestParam("queryFieldName") String queryFieldName,
             @RequestParam("queryValue") String queryValue, @RequestParam("returnFieldName") String returnFieldName, @RequestParam("extendQuerySql") String extendQuerySql);
+	
+	@GetMapping("feign/baseData/queryValueByType")
+	List<Map<String, Object>> queryValueByType(@RequestParam("tableName") String tableName, @RequestParam("queryFieldName") String queryFieldName,
+			@RequestParam("returnFieldName") String returnFieldName, @RequestParam("queryTypeField") String queryTypeField);
 }

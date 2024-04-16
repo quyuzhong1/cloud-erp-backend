@@ -22,7 +22,7 @@ public interface BaseDataMapper {
                              @Param("queryValue") String queryValue, @Param("returnFieldName") String returnFieldName , @Param("extendQuerySql") String extendQuerySql);
 	 
 	 /**
-	  * 【查询任意表某一字段值】根据指定查询字段的值
+	  * 【查询dict表某一字段值】根据指定查询字段的值
 	  *
 	  * @param tableName       表名
 	  * @param queryFieldName  查询字段名
@@ -30,9 +30,8 @@ public interface BaseDataMapper {
 	  * @param returnFieldName 返回字段名
 	  * @return
 	  */
-	 @Select("select type,${returnFieldName} from ${tableName} where type in (${queryTypeField}) and ${queryFieldName} = #{queryValue} ${extendQuerySql} limit 1")
+	 @Select("select type,${queryFieldName},${returnFieldName} from ${tableName} where type in (${queryTypeField})")
 	 List<Map<String, Object>> queryValueByType(@Param("tableName") String tableName, @Param("queryFieldName") String queryFieldName,
-			 @Param("queryValue") String queryValue, @Param("returnFieldName") String returnFieldName 
-			 , @Param("queryTypeField") String queryTypeField , @Param("extendQuerySql") String extendQuerySql);
+			 @Param("returnFieldName") String returnFieldName , @Param("queryTypeField") String queryTypeField);
 
 }
