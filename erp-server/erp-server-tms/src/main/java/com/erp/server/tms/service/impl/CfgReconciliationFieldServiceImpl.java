@@ -327,6 +327,23 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         return lambdaQuery().in(CfgReconciliationFieldEntity::getSourceId, cfgCostIdList).list();
     }
 
+    @Override
+    public LinkedList<String> erpFieldListName(List<String> typeList, boolean nullThrow) {
+        List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> list = this.erpFieldList(Collections.singletonList(DictBasicEnum.CFG_FIRST_MILE_ERP_FIELD.getType()));
+        if (CollectionUtils.isEmpty(list)){
+            if (nullThrow){
+                throw new ServiceException("配置字段缺失，请联系管理员");
+            } else {
+                return new LinkedList<>();
+            }
+        }
+        // 配置的字段名称列表
+        return list.stream()
+                .map(CfgReconciliationFieldDTO.ErpFieldDropDownDTO::getErpFieldName)
+                .distinct()
+                .collect(Collectors.toCollection(LinkedList::new));
+    }
+
     private void handleImportCfgReconciliationFieldFile(List<CfgReconciliationFieldImportExcelDTO> successList, List<CfgReconciliationFieldImportExcelDTO> errorList) {
         if (CollectionUtils.isEmpty(successList)) {
             return;

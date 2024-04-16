@@ -6,6 +6,7 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.FieldValidUtil;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +58,7 @@ public class FirstMileReconciliationConfigExcelListener extends AnalysisEventLis
         //添加数据用于判断是否为空
         dataList.add(excelDTO);
         //存在错误数据则直接返回
-        if (!errorMsgList.isEmpty()) {
+        if (!CollectionUtils.isEmpty(errorMsgList)) {
             String errorMsg = FieldValidUtil.getMsgSort(errorMsgList);
             excelDTO.set("错误信息",errorMsg);
             errorList.add(excelDTO);
