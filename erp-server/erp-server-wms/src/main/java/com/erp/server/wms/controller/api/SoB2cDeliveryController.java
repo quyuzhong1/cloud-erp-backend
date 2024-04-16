@@ -314,8 +314,8 @@ public class SoB2cDeliveryController extends BaseController {
      **/
 
     @PostMapping("/printLogisticsBillConfirm")
-    public ApiResult<String> printLogisticsBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto) {
-        String base64 = soB2cDeliveryService.printLogisticsBillConfirm(dto);
-        return success(base64);
+    public void printLogisticsBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
+        soB2cDeliveryService.printLogisticsBillConfirm(dto, response);
+
     }
 }
