@@ -382,7 +382,30 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     @Override
     public DeliveryOrderDTO.TotalInfo pagingTotal(DeliveryOrderDTO.ParamDTO dto) {
-        return this.baseMapper.pagingTotal(dto);
+        List<DeliveryOrderDTO.TotalDetail> totalDetailList = this.baseMapper.pagingTotal(dto);
+        List<String> purchaseIds = totalDetailList.stream().map(DeliveryOrderDTO.TotalDetail::getPurchaseId).distinct().collect(Collectors.toList());
+        //查询采购签收信息
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(purchaseIds);
+        for (DeliveryOrderDTO.TotalDetail totalDetail : totalDetailList) {
+            Integer receiveQty = 0;
+            Integer giftReceiveQty = 0;
+            //收货数量
+            if (CollectionUtils.isNotEmpty(receiveList)) {
+                receiveQty = receiveList.stream().filter(e -> e.getSourceDetailId().equals(totalDetail.getDetailId()) )
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                giftReceiveQty = receiveList.stream().filter(e -> e.getSourceDetailId().equals(totalDetail.getDetailId()) )
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getGiftReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            totalDetail.setReceiveQty(receiveQty);
+            totalDetail.setGiftReceiveQty(giftReceiveQty);
+        }
+        return DeliveryOrderDTO.TotalInfo.builder()
+                .totalDeliveryQty(totalDetailList.stream().mapToInt(DeliveryOrderDTO.TotalDetail::getDeliveryQty).sum())
+                .totalOrderQty(totalDetailList.stream().mapToInt(DeliveryOrderDTO.TotalDetail::getOrderQty).sum())
+                .totalGiftQty(totalDetailList.stream().mapToInt(DeliveryOrderDTO.TotalDetail::getGiftQty).sum())
+                .totalReceiveQty(totalDetailList.stream().mapToInt(DeliveryOrderDTO.TotalDetail::getReceiveQty).sum())
+                .totalGiftReceiveQty(totalDetailList.stream().mapToInt(DeliveryOrderDTO.TotalDetail::getGiftReceiveQty).sum())
+                .build();
     }
 
     @Override
