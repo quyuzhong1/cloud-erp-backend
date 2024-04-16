@@ -609,7 +609,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             List<String> soIds = waybillDetailDTOList.stream().map(req -> req.getSoB2cId()).distinct().collect(Collectors.toList());
             List<PrintWayBillPdfDTO> printWayBillPdfResultList = soB2cFeign.printWayBillPdf(soIds);
 
-            //获取SDK物流商商面单
+
             List<SoB2cDTO.WaybillDTO> platformWaybill = new ArrayList<>();
 
             // 配货单需要根据渠道查询是否是自定义配置
@@ -618,6 +618,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                             && LogisticsLabelTypeEnum.CUSTOM.getCode().equals(req.getLabelType())
                     ).findFirst().orElse(null);
             if (!SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(printType)) {
+
+                //获取SDK物流商商面单
                 platformWaybill = this.getPlatformWaybill(waybillDetailDTOList);
             }
 
@@ -847,8 +849,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             printLogisticsWaybill.setB2cSoId(detailDTO.getSoB2cId());
             printLogisticsWaybill.setDeliveryNo(detailDTO.getSoCode());
             printLogisticsWaybill.setShopId(detailDTO.getShopId());
-            printLogisticsWaybill.setShopId(detailDTO.getShopId());
-            printLogisticsWaybill.setLogisticType(detailDTO.getLogisticType());
 
             SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO logisticsWaybillDetailDTO = waybillDetailDTOList.stream().filter(req -> req.getSoB2cId().equals(detailDTO.getSoB2cId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(logisticsWaybillDetailDTO)) {

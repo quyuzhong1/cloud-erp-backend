@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -36,6 +37,7 @@ import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -260,6 +262,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private SoOutstockFeign soOutstockFeign;
+
+    @Resource
+    private MQProducerService mqProducerService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -1295,6 +1300,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String trackNo = resultDTO.getTrackNoList().stream().collect(Collectors.joining(","));
             String transportNo = resultDTO.getTransportNo();
             soB2cLogisticsService.updateLogisticsCode(id, transportNo, trackNo);
+
+            //下单成功发送异步请求保存面单
+            LogisticsBillDTO.PrintLogisticsWaybillDTO waybillDTO = getPlatformWaybill(soB2cLogisticsEntity.getLogisticsChannelId(), entity, transportNo);
+            mqProducerService.asyncClassMsg(RocketMqTopic.ASYNC_GET_PLATFORM_LABEL_TOPIC, RocketMqTagEnum.ASYNC_GET_PLATFORM_LABEL_TAG.getName(), waybillDTO, IdUtil.simpleUUID());
+
             if (Boolean.TRUE.equals(isDelivery)) {
                 //提交发货
                 submitDelivery(id);
@@ -1325,6 +1335,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
     }
+
+    /**
+     * 组装打印面单需要的数据
+     * @param logisticsChannelId 订单渠道id
+     * @param soB2cEntity 订单信息
+     * @param transportNo 物流单号
+     * @return
+     */
+    private LogisticsBillDTO.PrintLogisticsWaybillDTO getPlatformWaybill(String logisticsChannelId, SoB2cEntity soB2cEntity, String transportNo) {
+        LogisticsBillDTO.PrintLogisticsWaybillDTO printLogisticsWaybill = new LogisticsBillDTO.PrintLogisticsWaybillDTO();
+        printLogisticsWaybill.setChannelId(logisticsChannelId);
+        printLogisticsWaybill.setB2cSoId(soB2cEntity.getId());
+        printLogisticsWaybill.setDeliveryNo(soB2cEntity.getCode());
+        printLogisticsWaybill.setShopId(soB2cEntity.getShopId());
+        printLogisticsWaybill.setTransportNo(transportNo);
+        return printLogisticsWaybill;
+    }
+
 
     /**
      * 组装生成物流单数据
