@@ -972,4 +972,21 @@ public class LogisticsBillDTO implements Serializable {
 
     }
 
+
+    /**
+     * 打印物流面单参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SoB2cLabelDTO {
+        /**
+         * 销售单id
+         */
+        private String soB2cId;
+
+        /**
+         * 物流面单base64格式
+         */
+        private String logisticsBase64;
+    }
 }

@@ -8,15 +8,13 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.tms.dto.SettingForecastDTO;
-import com.erp.model.tms.dto.TransferDeclareDTO;
-import com.erp.model.tms.dto.TransferDeclareDetailDTO;
-import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.wms.dto.SoOutstockDTO;
 
 import javax.servlet.http.HttpServletResponse;
@@ -835,4 +833,11 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @author Jim
      */
     BatchResultDTO skuMappingBatch(String soId);
+
+    /**
+     * 修改订单物流面单
+     * @param soB2cLabelDTOList
+     * @return
+     */
+    Boolean updateLogisticsLabelBase64ById(List<LogisticsBillDTO.SoB2cLabelDTO> soB2cLabelDTOList);
 }

@@ -4,7 +4,6 @@ package com.erp.server.tms.rocketmq;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.service.LogisticsBillService;
@@ -17,8 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 报告步骤1
- * 报告创建消费处理
+ * 异步请求存储平台面单
  */
 @Service
 @RocketMQMessageListener(topic = RocketMqTopic.ASYNC_GET_PLATFORM_LABEL_TOPIC,
@@ -33,12 +31,11 @@ public class PlatformLabelPrintConsumerService implements RocketMQListener<Logis
     @Override
     public void onMessage(LogisticsBillDTO.PrintLogisticsWaybillDTO dto) {
         List<SoB2cDTO.WaybillDTO> waybillDTOList = logisticsBillService.printLogisticsWaybill(Arrays.asList(dto));
-
-        SoB2cEntity soB2cEntity = soB2cFeign.getById(dto.getB2cSoId());
-
         for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
-            soB2cEntity.setLogisticsLabelBase64(waybillDTO.getDistributeBase64());
-            soB2cFeign.updateById(soB2cEntity);
+            LogisticsBillDTO.SoB2cLabelDTO soB2cLabelDTO = new LogisticsBillDTO.SoB2cLabelDTO();
+            soB2cLabelDTO.setSoB2cId(waybillDTO.getSoB2cId());
+            soB2cLabelDTO.setLogisticsBase64(waybillDTO.getLogisticsBase64());
+            soB2cFeign.updateLogisticsLabelBase64ById(Arrays.asList(soB2cLabelDTO));
         }
     }
 }

@@ -5338,6 +5338,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             printWayBillPdfDTO.setSoCode(soB2cEntity.getCode());
             printWayBillPdfDTO.setAmount(soB2cEntity.getAmount());
             printWayBillPdfDTO.setRemark(soB2cEntity.getRemark());
+            printWayBillPdfDTO.setLogisticsLabelBase64(soB2cEntity.getLogisticsLabelBase64());
             printWayBillPdfDTO.setPrintTime(cn.hutool.core.date.DateUtil.format(LocalDateTime.now(), "yyyy-MM-dd HH:mm:ss"));
             //店铺信息
             ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getId().equals(soB2cEntity.getShopId())).findFirst().orElse(null);
@@ -5357,6 +5358,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 printWayBillPdfDTO.setTransportNo(logisticsEntity.getCode());
                 printWayBillPdfDTO.setChannelName(logisticsEntity.getLogisticsChannelName());
                 printWayBillPdfDTO.setWeight(logisticsEntity.getWeight());
+                printWayBillPdfDTO.setLogisticsChannelId(logisticsEntity.getLogisticsChannelId());
             }
             resultList.add(printWayBillPdfDTO);
         }
@@ -6260,5 +6262,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException(ApiError.IS_B2C_DELIVERY_NOT_UPDATE_MAPPING);
             }
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateLogisticsLabelBase64ById(List<LogisticsBillDTO.SoB2cLabelDTO> soB2cLabelDTOList) {
+        for (LogisticsBillDTO.SoB2cLabelDTO soB2cLabelDTO : soB2cLabelDTOList) {
+            if (StringUtils.isNotBlank(soB2cLabelDTO.getSoB2cId())) {
+                lambdaUpdate()
+                        .set(SoB2cEntity::getLogisticsLabelBase64, soB2cLabelDTO.getLogisticsBase64())
+                        .eq(SoB2cEntity::getId, soB2cLabelDTO.getSoB2cId())
+                        .update();
+            }
+        }
+        return Boolean.TRUE;
     }
 }
