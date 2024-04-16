@@ -301,6 +301,9 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchNoNeedSync(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
         //获取数据
         List<DmpPushTaskEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {

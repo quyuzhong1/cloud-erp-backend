@@ -43,9 +43,9 @@
     <update id="updateStatus">
         update dmp_push_task set status=0
         where is_deleted = false
-        <if test="params.noNeedSyncIds != null and params.noNeedSyncIds.size > 0 ">
+        <if test="noNeedSyncIds != null and noNeedSyncIds.size > 0 ">
             and id in
-            <foreach collection="params.noNeedSyncIds" item="item" open="(" separator="," close=")">
+            <foreach collection="noNeedSyncIds" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
         </if>
