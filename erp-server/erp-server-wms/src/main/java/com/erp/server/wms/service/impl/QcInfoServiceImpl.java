@@ -1438,8 +1438,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         stockInSkuList = stockInSkuList.stream().filter(s -> approveStatus.equals(s.getApproveStatus())).collect(Collectors.toList());
         //采购收货
-        List<String> receiveIds = qcInfoList.stream().map(QcInfoEntity::getSourceId).distinct().collect(Collectors.toList());
-        List<WarehouseReceiveDetailEntity> receiveDetails = warehouseReceiveDetailService.listDetailByMainIds(receiveIds);
+        List<WarehouseReceiveDetailEntity> receiveDetails = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
         //质检退货
         List<PoReturnDetailEntity> returnOrderDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(podIds);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
@@ -1462,17 +1461,23 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                     dto.getPurchaseOrderDetailId().equals(s.getPurchaseOrderDetailId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getStockInQty())).orElse(0);
             dto.setStockInQty(stockInQty);
-            //收货单已收数量（已审核）
-//            Integer receiveQty = receiveDetails.stream()
-//                    .filter(req -> req.getPurchaseOrderDetailId().equals(dto.getPurchaseOrderDetailId())
-//                            && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
-//                    .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-//            dto.setReceiveQty(receiveQty);
-            //质检单关联的收货单
-            Integer receiveQty = receiveDetails.stream()
-                    .filter(req -> req.getMainId().equals(dto.getSourceId())
-                            && dto.getSkuId().equals(req.getSkuId()))
-                    .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            //质检单关联的收货单存在时 汇总单条收货单，不存在时，汇总全部采购收货单
+            List<WarehouseReceiveDetailEntity> receiveDetailList = receiveDetails.stream()
+                    .filter(req -> req.getMainId().equals(dto.getReceiveId())
+                            && SourceTypeEnum.PO_RECEIVE.getCode().equals(dto.getReceiveType())
+                            && dto.getSkuId().equals(req.getSkuId())).collect(Collectors.toList());
+            Integer receiveQty;
+            if (CollectionUtils.isEmpty(receiveDetailList)){
+                //收货单已收数量（已审核）
+                receiveQty = receiveDetails.stream()
+                        .filter(req -> req.getPurchaseOrderDetailId().equals(dto.getPurchaseOrderDetailId())
+                            && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
+                        .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }else {
+                //质检单关联的收货单
+                receiveQty = receiveDetailList.stream()
+                        .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
             //退货数量
             Integer returnQty = returnOrderDetailList.stream().filter(e -> Objects.equals(e.getPurchaseOrderDetailId(), dto.getPurchaseOrderDetailId())
                             && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode())

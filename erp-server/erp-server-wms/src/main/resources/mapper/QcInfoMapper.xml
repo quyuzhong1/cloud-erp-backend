@@ -468,6 +468,8 @@
             resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$ViewGeneratePurchaseReturnOrderDTO">
         SELECT
           qb.id AS sourceId,
+          qb.source_id as receiveId,
+          qb.source_type as receiveType,
           qb.purchase_order_id AS purchaseOrderId,
           qb.purchase_order_code AS purchaseOrderCode,
           qi.purchase_order_detail_id AS purchaseOrderDetailId,

@@ -906,6 +906,14 @@ public class PurchaseReturnOrderDTO {
          * 来源id
          */
         private String sourceId;
+        /**
+         * 收货id来源/采购订单id
+         */
+        private String receiveId;
+        /**
+         * 来源类型
+         */
+        private String receiveType;
 
         /**
          * 来源明细id
