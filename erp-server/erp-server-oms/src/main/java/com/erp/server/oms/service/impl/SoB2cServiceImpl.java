@@ -2843,8 +2843,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
 
             //单据状态
-            data.setStatus(data.getBillStatus());
-            data.setStatusName(SoB2cBillStatusEnum.getName(data.getBillStatus()));
+            data.setStatus(StrUtil.format("{}-{}",data.getApproveStatus(),data.getBillStatus()));
+            data.setStatusName(StrUtil.format("{}-{}",ApproveStatusEnum.getName(data.getApproveStatus()),SoB2cBillStatusEnum.getName(data.getBillStatus())));
 
             //异常信息名称
             data.setAbnormalTypeName(SoB2cAbnormalTypeEnum.getName(data.getAbnormalType()));
