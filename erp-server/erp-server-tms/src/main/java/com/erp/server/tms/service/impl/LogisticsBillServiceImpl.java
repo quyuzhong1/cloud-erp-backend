@@ -507,24 +507,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (Objects.nonNull(isAliExpress) && isAliExpress){
             //速卖通不做sku拆分
             ordersSkuList = new ArrayList<>(skuInfoList.size());
-            List<String> skuIds = skuInfoList.stream().map(LogisticsProductDTO.ProductDTO::getSkuId).collect(Collectors.toList());
-            //获取sku目的国海关编码映射关系
-            List<ProductCustomsEntity> productCustomsList = plmTaskFeign.listProductCustomsBySkuIds(ProductCustomsSkuDTO.builder().skuIds(skuIds).country(country).build());
             for (LogisticsBillDTO.SkuDTO item : dto.getSkuList()){
                 String skuId = item.getSkuId();
-                String customCode = "";
-                ProductCustomsEntity customs;
-                if (StringUtils.isNotEmpty(country)){
-                    customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
-                            && StringUtils.isNotEmpty(country) && StringUtils.isNotEmpty(e.getCountry())).findFirst().orElse(null);
-
-                }else {
-                    customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
-                            && StringUtils.isEmpty(e.getCountry())).findFirst().orElse(null);
-                }
-                if (Objects.nonNull(customs)){
-                    customCode = customs.getCustomsCode();
-                }
                 LogisticsProductDTO.ProductDTO productDTO = skuInfoList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
                 if (Objects.nonNull(productDTO)) {
                     Integer qty = item.getQty();
@@ -550,7 +534,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     productDTO.setChildOrderId(sourceDetailId);
                     productDTO.setSkuNo(item.getSkuNo());
                     productDTO.setSkuId(skuId);
-                    productDTO.setCustomsCode(customCode);
                     ordersSkuList.add(productDTO);
                 }
             }
@@ -563,15 +546,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             for (com.erp.model.oms.dto.TransferDeclareProductDTO transferDeclareProductDTO : transferDeclareProductBySoIds) {
                 String skuId = transferDeclareProductDTO.getSkuId();
                 String customCode = "";
-                ProductCustomsEntity customs;
-                if (StringUtils.isNotEmpty(country)){
-                    customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
-                            && StringUtils.isNotEmpty(country) && StringUtils.isNotEmpty(e.getCountry())).findFirst().orElse(null);
-
-                }else {
-                    customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
-                            && StringUtils.isEmpty(e.getCountry())).findFirst().orElse(null);
-                }
+                ProductCustomsEntity customs = getCustomsByCountry(country,skuId,productCustomsList);
                 if (Objects.nonNull(customs)){
                     customCode = customs.getCustomsCode();
                 }
@@ -594,6 +569,29 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             }
         }
        return ordersSkuList;
+    }
+
+    /**
+     * 匹配海关编码
+     *
+     * @param country
+     * @param skuId
+     * @param productCustomsList
+     * @return
+     */
+    private ProductCustomsEntity getCustomsByCountry(String country, String skuId, List<ProductCustomsEntity> productCustomsList) {
+        ProductCustomsEntity customs = null;
+        if (StringUtils.isNotEmpty(country)){
+            customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
+                    && StringUtils.isNotEmpty(country) && e.getCountry().equals(country)).findFirst().orElse(null);
+
+        }
+        //未匹配到时，获取默认值
+        if (Objects.isNull(customs)){
+            customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
+                    && StringUtils.isEmpty(e.getCountry())).findFirst().orElse(null);
+        }
+        return customs;
     }
 
     /**
@@ -861,6 +859,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Transactional(rollbackFor = Exception.class)
     public List<SoB2cDTO.WaybillDTO> printLogisticsWaybill(List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list) {
         List<SoB2cDTO.WaybillDTO> waybillDTOList = new ArrayList<>();
+        List<String> soIds = list.stream().map(req -> req.getB2cSoId()).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
 
         for (LogisticsBillDTO.PrintLogisticsWaybillDTO dto : list) {
             String channelId = dto.getChannelId();
@@ -880,14 +880,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
             if (logisticsPlatform.equals(LogisticsPlatformEnum.ALI_EXPRESS.getCode())) {
                 authMap = service.getLogisticsAuthConfig(dto.getShopId());
-                SoB2cEntity soB2cEntity = soB2cFeign.getById(dto.getB2cSoId());
+                SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(dto.getB2cSoId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                     getLabelVO.setDeliveryNo(soB2cEntity.getPlatformCode());
                 }
             }
             //如果是保宏
             if (logisticsPlatform.equals(LogisticsPlatformEnum.BAO_HONG.getCode())) {
-                SoB2cEntity soB2cEntity = soB2cFeign.getById(dto.getB2cSoId());
+                SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(dto.getB2cSoId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                     getLabelVO.setDeliveryNo(soB2cEntity.getShippingOrderNo());
                 }
@@ -993,6 +993,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 //            }
             if(StringUtils.isNotBlank(batchUpdateTrackNoDTO.getLogisticsChannelId())){
                 logisticsBillEntity.setChannelId(batchUpdateTrackNoDTO.getLogisticsChannelId());
+                if (CollectionUtils.isNotEmpty(batchUpdateTrackNoDTO.getTrackNoList())){
+                    logisticsBillEntity.setTransportNo(String.join(",", batchUpdateTrackNoDTO.getTrackNoList()));
+                }
                 updateEntityList.add(logisticsBillEntity);
             }
             if(CollectionUtils.isNotEmpty(batchUpdateTrackNoDTO.getTrackNoList())){

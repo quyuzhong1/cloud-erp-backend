@@ -31,4 +31,13 @@ public class SplitSkuDTO {
     private BigDecimal width;
 
     private BigDecimal height;
+
+    public SplitSkuDTO(String skuId, String skuNo) {
+        this.skuId = skuId;
+        this.skuNo = skuNo;
+        this.qty = 0;
+        this.length = BigDecimal.ZERO;
+        this.width = BigDecimal.ZERO;
+        this.height = BigDecimal.ZERO;
+    }
 }

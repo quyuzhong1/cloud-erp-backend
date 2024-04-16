@@ -114,9 +114,16 @@ public interface ShopInfoFeign {
 
 
     /**
-     * 根据店铺ID获取所有同账号的店铺
+     * 根据店铺获取所有同账号的店铺
      */
     @PostMapping("feign/shop/getRelatedShopById")
     List<ShopInfoEntity> getRelatedShopById(@RequestBody ShopInfoEntity shopInfo);
+
+
+    /**
+     * 根据店铺ID获取所有同账号的店铺
+     */
+    @GetMapping("feign/shop/getRelatedByShopId")
+    List<ShopInfoEntity> getRelatedByShopId(@RequestParam("shopId") String shopId);
 
 }

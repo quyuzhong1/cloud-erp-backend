@@ -5,6 +5,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.server.tms.service.LogisticsBaseService;
 import com.erp.server.tms.service.LogisticsBillDetailService;
@@ -121,9 +122,9 @@ public class LogisticsChannelJob {
     }
 
     private void getTrackData(LogisticsBillDetailQueryDTO query) {
-        PagingVO<LogisticsBillDetailEntity> page = logisticsBillDetailService.getPage(query);
+        PagingVO<LogisticsTrackDTO.UpdateTrackDTO> page = logisticsBillDetailService.getTrackDtoPage(query);
         //业务处理
-        processTrackData((List<LogisticsBillDetailEntity>) page.getList());
+        processTrackData((List<LogisticsTrackDTO.UpdateTrackDTO>) page.getList());
         long pages = page.getTotalPage();
         if (pages > page.getCurrPage()) {
             //下一页
@@ -136,9 +137,9 @@ public class LogisticsChannelJob {
     }
 
     private void getRegisterData(LogisticsBillDetailQueryDTO query) {
-        PagingVO<LogisticsBillDetailEntity> page = logisticsBillDetailService.getPage(query);
+        PagingVO<LogisticsTrackDTO.UpdateTrackDTO> page = logisticsBillDetailService.getTrackDtoPage(query);
         //业务处理
-        processRegisterData((List<LogisticsBillDetailEntity>) page.getList());
+        processRegisterData((List<LogisticsTrackDTO.UpdateTrackDTO>) page.getList());
         long pages = page.getTotalPage();
         if (pages > page.getCurrPage()) {
             //下一页
@@ -150,13 +151,13 @@ public class LogisticsChannelJob {
         }
     }
 
-    private void processTrackData(List<LogisticsBillDetailEntity> records) {
+    private void processTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records) {
         if (CollectionUtils.isNotEmpty(records)) {
             logisticsBaseService.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), records);
         }
     }
 
-    private void processRegisterData(List<LogisticsBillDetailEntity> records) {
+    private void processRegisterData(List<LogisticsTrackDTO.UpdateTrackDTO> records) {
         if (CollectionUtils.isNotEmpty(records)) {
             logisticsBaseService.processRegisterData(LogisticsPlatformEnum.TRACK123.getCode(), records);
         }

@@ -82,7 +82,12 @@ public class PlatformDataThread {
         try {
             log.info("发起异步调用平台【{}】", jobTaskDTO.getDictPlatform());
             PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType(jobTaskDTO.getApiCode());
-            businessService.cleanProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(),jobTaskDTO.getBillType(), platformApiEnum);
+            businessService.cleanProcessBusiness(jobTaskDTO.getPlatformCategory(),
+                    jobTaskDTO.getDictPlatform(),
+                    jobTaskDTO.getBillType(),
+                    platformApiEnum,
+                    jobTaskDTO.getClearCheckDownloadStatus()
+            );
 
         } catch (Exception e) {
             log.error(" {}重新推送数据错误:{}", jobTaskDTO.getDictPlatform(), e);
@@ -90,6 +95,7 @@ public class PlatformDataThread {
             dmpErrorLogService.save(dmpErrorLogEntity);
         }
     }
+
     /**
      * 执行任务
      * @param taskName

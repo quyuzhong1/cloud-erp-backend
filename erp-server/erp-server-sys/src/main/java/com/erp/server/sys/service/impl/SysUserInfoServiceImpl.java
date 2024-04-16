@@ -340,12 +340,27 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         return vo;
     }
 
-    public SysUserDTO adminLogin(SysUserDTO vo) {
+    public SysUserDTO getAdminLoginData(SysUserDTO vo) {
         if (!vo.getUserAccount().equals(SysConstant.ADMIN_USER)) {
             return null;
         }
         List<SysMenuVO> menuAll = sysRoleMenuService.findMenuAll();
         List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuAll();
+        List<String> permissionList = sysRoleMenuService.findMenuCodeAll();
+        vo.setPermissionList(permissionList);
+        vo.setOverallMenuList(menuAll);
+        vo.setLeftMenuList(leftMenuList);
+        vo.setBindingPlatform("");
+        vo.setBindingState(0);
+        return vo;
+    }
+
+    public SysUserDTO adminLogin(SysUserDTO vo) {
+        if (!vo.getUserAccount().equals(SysConstant.ADMIN_USER)) {
+            return null;
+        }
+        List<SysMenuVO> menuAll = sysRoleMenuService.findMenuAll();
+        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuAll(MathUtil.ONE);
         List<String> permissionList = sysRoleMenuService.findMenuCodeAll();
         vo.setPermissionList(permissionList);
         vo.setOverallMenuList(menuAll);
@@ -861,6 +876,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //验证手机号是否已存在
         LambdaQueryWrapper<SysUserInfoEntity> mobileQueryWrapper = new LambdaQueryWrapper<>();
         mobileQueryWrapper.eq(SysUserInfoEntity::getUserAccount, sysUserInfoDTO.getMobile());
+        mobileQueryWrapper.eq(SysUserInfoEntity::getDeleteState, SysConstant.YES_STATE);
         if (StringUtils.isNotBlank(sysUserInfoDTO.getUid())) {
             mobileQueryWrapper.ne(SysUserInfoEntity::getUid, sysUserInfoDTO.getUid());
         }
@@ -874,6 +890,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //验证用户名是否已存在
         LambdaQueryWrapper<SysUserInfoEntity> userNameQueryWrapper = new LambdaQueryWrapper<>();
         userNameQueryWrapper.eq(SysUserInfoEntity::getUserName, sysUserInfoDTO.getUserName());
+        userNameQueryWrapper.eq(SysUserInfoEntity::getDeleteState, SysConstant.YES_STATE);
         if (StringUtils.isNotBlank(sysUserInfoDTO.getUid())) {
             userNameQueryWrapper.ne(SysUserInfoEntity::getUid, sysUserInfoDTO.getUid());
         }
@@ -1104,7 +1121,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         BeanMapperUtils.copy(entity, vo);
 
         //判断是否是超级管理员登录
-        SysUserDTO sysUserDTO = adminLogin(vo);
+        SysUserDTO sysUserDTO = getAdminLoginData(vo);
         if (sysUserDTO != null) {
             return sysUserDTO;
         }

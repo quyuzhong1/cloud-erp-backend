@@ -251,7 +251,10 @@ public class SoOutstockDTO implements Serializable {
          * 打包日期
          */
         private LocalDate packDate;
-
+        /**
+         * 运输单号-数据库
+         */
+        private String trackNos;
         /**
          * 运输单号集合
          */
