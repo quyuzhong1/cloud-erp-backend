@@ -393,6 +393,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 //收货单已收数量（已审核）
                 List<WarehouseReceiveDetailEntity> receiveList = receiveDetailList.stream()
                         .filter(req -> req.getPurchaseOrderDetailId().equals(poInstockDetailEntity.getPurchaseOrderDetailId())
+                                && req.getMainId().equals(poInstockEntity.getSourceId())
                                 && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(receiveList)){
                     Integer receiveQty = receiveList.stream().map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);

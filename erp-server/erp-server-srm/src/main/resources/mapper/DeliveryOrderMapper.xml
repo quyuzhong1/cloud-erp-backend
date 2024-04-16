@@ -52,6 +52,7 @@
             do2.id,
             doe.id as detailId,
             do2.code,
+            do2.source_id as sourceId,
             doe.source_detail_id as purchaseDetailId,
             do2.plan_delivery_date as planDeliveryDate,
             do2.receive_code as receiveCode,
@@ -122,12 +123,14 @@
     <select id="getExportList" resultType="com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO">
         select
         do2.id,
+        doe.id as detailId,
         do2.code,
         doe.source_detail_id as purchaseDetailId,
         do2.plan_delivery_date as planDeliveryDate,
         do2.receive_code as receiveCode,
         do2.is_print as isPrint,
         do2.receipt_status as receiptStatus,
+        do2.source_id as sourceId,
         do2.source_code as sourceCode,
         doe.sku_id as skuId,
         doe.sku_no as skuNo,

@@ -630,12 +630,14 @@
         SELECT
         pr.source_id as sourceId,
         prd.receive_qty  AS receiveQty,
-        prd.purchase_order_detail_id AS purchaseOrderDetailId
+        prd.source_detail_id as sourceDetailId,
+        prd.purchase_order_detail_id AS purchaseOrderDetailId,
+        prd.exceed_qty as giftReceiveQty
         FROM
         po_receive pr
         INNER JOIN po_receive_detail prd ON prd.main_id = pr.id
         WHERE
-        pr.approve_status = 'approve'
+        pr.is_deleted = false and prd.is_deleted = false and  pr.approve_status = 'approve'
         <if test="purchaseOrderIds !=null and purchaseOrderIds.size>0">
             AND pr.purchase_order_id IN
             <foreach collection="purchaseOrderIds" item="purchaseOrderId" open="(" separator="," close=")">
