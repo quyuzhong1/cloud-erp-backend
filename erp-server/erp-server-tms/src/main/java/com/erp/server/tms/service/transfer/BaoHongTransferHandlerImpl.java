@@ -4,6 +4,7 @@ import com.common.business.annotation.TransferLogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.CurrencyEnum;
 import com.erp.model.tms.dto.transfer.*;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
@@ -61,6 +62,9 @@ public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
 
     @Override
     protected ApiResult<String> createProduct(TransferLogisticsCreateProductReq createProductReq) {
+        if(CurrencyEnum.CNY.getCurrencyCode().equals(createProductReq.getCurrencyCode())){
+            createProductReq.setCurrencyCode(CurrencyEnum.RMB.getCurrencyCode());
+        }
         RecordItemRequest recordItemRequest  = BaoHongConverter.INSTANCE.createProductConvert(createProductReq);
         BaoHongResponse<RecordItemResponse> result = baoHongService.filingProduct(recordItemRequest);
         if(isFailure(result)){
