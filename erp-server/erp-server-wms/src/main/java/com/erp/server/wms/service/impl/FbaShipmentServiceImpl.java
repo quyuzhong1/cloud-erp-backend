@@ -997,6 +997,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 if (!oldEntity.getDeliveryStatus().equalsIgnoreCase(DeliveryStatusEnum.UN_SHIPPED.getCode())){
                     e.setDiffQty(e.getReceiveQty() - detailEntity.getDeliveryQty());
                 }
+                // 保留历史映射关系
+                if (StringUtils.isNotBlank(detailEntity.getSkuId()) && StringUtils.isNotBlank(detailEntity.getSkuNo())){
+                    e.setSkuId(detailEntity.getSkuId());
+                    e.setSkuNo(detailEntity.getSkuNo());
+                    e.setIsCombination(detailEntity.getIsCombination());
+                }
                 if (!e.toString().equals(detailEntity.toString())) {
                     saveOrUpdateDetailList.add(e);
                 }
@@ -1584,24 +1590,28 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             throw new ServiceException("数据异常:FBA货件详情为空");
         }
         List<String> detailIds = oldDetailEntityList.stream().map(FbaShipmentDetailEntity::getId).collect(Collectors.toList());
+
+        // 最终处理的签收日志
+        Set<FbaShipmentReceiveEntity> receiveEntitySet = new HashSet<>();
         // 查询签收记录
         List<FbaShipmentReceiveEntity> receiveEntityList = fbaShipmentReceiveService.listByDetailIdsAndSourceType(detailIds, PlatformEnum.LINGXING.getName());
         if (!CollectionUtils.isEmpty(receiveEntityList)){
             // 检查和设置最新映射关系到签收记录
             receiveEntityList = fbaShipmentReceiveService.checkAndSetReceiveSkuMapping(oldDetailEntityList, receiveEntityList);
+            receiveEntitySet = new HashSet<>(receiveEntityList);
         }
 
         // 检查历史领星的签收记录绑定
         List<FbaShipmentReceiveEntity> list = fbaShipmentReceiveService.checkAndBindHistory(entity, oldDetailEntityList, PlatformEnum.LINGXING.getName());
         if (CollectionUtils.isNotEmpty(list)){
-            receiveEntityList.addAll(list);
+            receiveEntitySet.addAll(new HashSet<>(list));
         }
         if (CollectionUtils.isEmpty(receiveEntityList)){
             throw new ServiceException("未找到FBA货件签收记录");
         }
 
         // 根据调拨日志分组
-        Map<LocalDate, List<FbaShipmentReceiveEntity>> groupBillDateMap = receiveEntityList.stream()
+        Map<LocalDate, List<FbaShipmentReceiveEntity>> groupBillDateMap = receiveEntitySet.stream()
                 .collect(Collectors.groupingBy(e-> e.getReceiveDate().toLocalDate()));
 
         // 查询最新库存关账记录
