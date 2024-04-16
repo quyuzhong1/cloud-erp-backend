@@ -516,11 +516,17 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
         if(Objects.isNull(addEntity.getGrossWeight())){
             addEntity.setGrossWeight(BigDecimal.ZERO);
         }
+        if(Objects.isNull(addEntity.getDeclarePrice())){
+            addEntity.setDeclarePrice(BigDecimal.ZERO);
+        }
+        if(Objects.isNull(productDTO.getDeclarePrice())){
+            productDTO.setDeclarePrice(BigDecimal.ZERO);
+        }
         return Objects.equals(addEntity.getSkuNo(), productDTO.getSkuNo()) &&
                 Objects.equals(addEntity.getProductName(), productDTO.getCnName()) &&
                 Objects.equals(addEntity.getProductNameEn(), productDTO.getEnName()) &&
                 (Objects.equals(addEntity.getCurrency(), productDTO.getDeclareCurrency()) || (Objects.equals(productDTO.getDeclareCurrency(), "CNY") && Objects.equals(addEntity.getCurrency(), "RMB"))) &&
-                Objects.equals(addEntity.getDeclarePrice(), productDTO.getDeclarePrice()) &&
+                addEntity.getDeclarePrice().compareTo(productDTO.getDeclarePrice()) == 0 &&
                 addEntity.getGrossWeight().compareTo(productDTO.getGrossWeight()) == 0 &&
                 Objects.equals(addEntity.getDeclareNameCn(), productDTO.getDeclareChineseName()) &&
                 Objects.equals(addEntity.getCustomsCode(), productDTO.getCustomsCode()) &&
