@@ -149,7 +149,7 @@ public class DeliveryExcelListener extends AnalysisEventListener<DeliveryOrderIm
             value.forEach(v->{
                 PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntityList.stream().filter(v1 -> v1.getSkuNo().equals(v.getSkuNo())).findFirst().orElse(null);
                 if(Objects.isNull(purchaseOrderDetailEntity)){
-                    v.setErrorMsg("采购单不存在");
+                    v.setErrorMsg("sku不存在");
                     errorList.add(v);
                     isSkuExist.set(false);
                 }
