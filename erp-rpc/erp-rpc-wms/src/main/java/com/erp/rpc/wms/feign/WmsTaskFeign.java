@@ -310,4 +310,11 @@ public interface WmsTaskFeign {
     @PostMapping("/feign/warehouseReceive/getReceiveListByPurchaseOrderIds")
     public List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIds(@RequestBody List<String> purchaseOrderIds);
 
+
+    /***
+     * @return
+     */
+    @PostMapping("/feign/warehouseReceive/getReceiveListByPurchaseOrderIdsAll")
+    List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIdsAll(@RequestBody List<String> purchaseOrderIds);
+
 }

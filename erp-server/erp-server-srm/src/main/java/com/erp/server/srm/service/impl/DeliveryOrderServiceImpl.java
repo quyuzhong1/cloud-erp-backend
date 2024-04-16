@@ -135,7 +135,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         }
         List<String> purchaseIds = dataList.stream().map(DeliveryOrderDTO.ListDTO::getSourceId).distinct().collect(Collectors.toList());
         //查询采购签收信息
-        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(purchaseIds);
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIdsAll(purchaseIds);
 
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(dataList.stream().map(DeliveryOrderDTO.ListDTO::getSupplierId).distinct().collect(Collectors.toList()));
         List<String> purchaseDetailIds = dataList.stream().filter(v->StringUtils.isNotBlank(v.getReceiveCode())).map(DeliveryOrderDTO.ListDTO::getPurchaseDetailId).distinct().collect(Collectors.toList());
@@ -227,7 +227,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     private void fillView(DeliveryOrderDTO.ViewDTO viewDTO) {
         List<String> purchaseIds = Arrays.asList(viewDTO.getSourceId());
         //查询采购签收信息
-        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(purchaseIds);
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIdsAll(purchaseIds);
         for (DeliveryOrderDetailDTO.ViewDTO dto : viewDTO.getDetailList()) {
             Integer receiveQty = 0;
             Integer giftReceiveQty = 0;
@@ -336,7 +336,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
         List<String> purchaseIds = list.stream().map(DeliveryOrderExportExcelDTO::getSourceId).distinct().collect(Collectors.toList());
         //查询采购签收信息
-        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(purchaseIds);
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIdsAll(purchaseIds);
 
         list.forEach(v->{
             Integer receiveQty = 0;
@@ -385,7 +385,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         List<DeliveryOrderDTO.TotalDetail> totalDetailList = this.baseMapper.pagingTotal(dto);
         List<String> purchaseIds = totalDetailList.stream().map(DeliveryOrderDTO.TotalDetail::getPurchaseId).distinct().collect(Collectors.toList());
         //查询采购签收信息
-        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(purchaseIds);
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIdsAll(purchaseIds);
         for (DeliveryOrderDTO.TotalDetail totalDetail : totalDetailList) {
             Integer receiveQty = 0;
             Integer giftReceiveQty = 0;
