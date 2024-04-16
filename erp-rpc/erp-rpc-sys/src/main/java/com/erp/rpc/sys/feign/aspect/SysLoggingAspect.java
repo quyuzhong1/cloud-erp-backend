@@ -185,8 +185,13 @@ public class SysLoggingAspect {
         // 处理请求
         Object obj = null;
         try {
-            log.debug("Sys Logging doAround.before");
-            log.warn("Sys Logging doAround.before");
+            String actionPath = "/";
+            RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+            if (null != requestAttributes) {
+                HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
+                actionPath = request.getRequestURI();
+            }
+            log.warn("Sys Logging doAround.before: actionPath = {}", actionPath);
             MethodSignature signature = (MethodSignature) joinPoint.getSignature();
             Method method = signature.getMethod();
             LogAction logAction = method.getAnnotation(LogAction.class);
