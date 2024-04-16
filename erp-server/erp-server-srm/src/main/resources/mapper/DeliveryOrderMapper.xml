@@ -190,13 +190,14 @@
         </foreach>
             order by do2.id
     </select>
-    <select id="pagingTotal" resultType="com.erp.model.srm.dto.DeliveryOrderDTO$TotalInfo">
+    <select id="pagingTotal" resultType="com.erp.model.srm.dto.DeliveryOrderDTO$TotalDetail">
         select
-            sum(doe.order_qty) as totalOrderQty,
-            sum(doe.delivery_qty) as totalDeliveryQty,
-            sum(doe.gift_qty) as totalGiftQty,
-            sum(doe.receive_qty) as totalReceiveQty,
-            sum(doe.gift_receive_qty) as totalGiftReceiveQty
+            doe.order_qty as orderQty,
+            doe.delivery_qty as deliveryQty,
+            doe.gift_qty as giftQty,
+            do2.id,
+            doe.id as detailId,
+            do2.source_id as purchaseId
         from delivery_order do2
         inner join delivery_order_detail doe on do2.id = doe.main_id and doe.is_deleted = false
         where
