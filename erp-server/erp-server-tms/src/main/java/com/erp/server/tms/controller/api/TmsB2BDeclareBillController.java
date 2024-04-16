@@ -120,7 +120,7 @@ public class TmsB2BDeclareBillController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "B2B报关单修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "tms:tmsDeclareBill:update",
+        menuCode = "tms:tmsB2BDeclareBill:update",
         serviceClass = TmsDeclareBillService.class,
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated TmsDeclareBillDTO.UpdateDTO dto) {
@@ -162,6 +162,11 @@ public class TmsB2BDeclareBillController extends BaseController {
      */
     @PostMapping("/updateToDeclare")
     @LogAction(value = LogActionEnum.UPDATE, desc = "B2B报关单更新状态为已报关")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:updateToDeclare",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> updateToDeclare(@RequestBody @Validated TmsDeclareBillDTO.UpdateDeclareStatusDTO dto) {
         List<BatchResultDTO> resultDTOList = tmsDeclareBillService.updateToDeclare(dto,SourceTypeEnum.B2B_DECLARE_BILL);
         return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
@@ -175,6 +180,11 @@ public class TmsB2BDeclareBillController extends BaseController {
      */
     @PostMapping("/cancelDeclare")
     @LogAction(value = LogActionEnum.UPDATE, desc = "B2B报关单更新状态为取消报关")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:cancelDeclare",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> cancelDeclare(@RequestBody @Validated TmsDeclareBillDTO.UpdateDeclareStatusDTO dto) {
         List<BatchResultDTO> resultDTOList = tmsDeclareBillService.cancelDeclare(dto);
         return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
@@ -187,6 +197,11 @@ public class TmsB2BDeclareBillController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/mergeDeclare")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:mergeDeclare",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "ids")
     @LogAction(value = LogActionEnum.UPDATE, desc = "B2B报关单合并报关")
     public ApiResult<Boolean> mergeDeclare(@RequestBody @Validated TmsDeclareBillDTO.MergeDeclareDTO dto) {
         return success(tmsDeclareBillService.mergeDeclare(dto));
@@ -200,6 +215,11 @@ public class TmsB2BDeclareBillController extends BaseController {
      */
     @PostMapping("/cancelMerge")
     @LogAction(value = LogActionEnum.UPDATE, desc = "B2B报关单取消合并")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:cancelMerge",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> cancelMerge(@RequestBody @Validated TmsDeclareBillDTO.MergeDeclareDTO dto) {
         List<BatchResultDTO> resultDTOList = tmsDeclareBillService.cancelMerge(dto);
         return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
@@ -213,6 +233,11 @@ public class TmsB2BDeclareBillController extends BaseController {
      */
     @PostMapping("/delete")
     @LogAction(value = LogActionEnum.UPDATE, desc = "B2B报关单删除")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:delete",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated TmsDeclareBillDTO.DeleteDTO dto) {
         List<BatchResultDTO> resultDTOList = tmsDeclareBillService.delete(dto);
         return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
