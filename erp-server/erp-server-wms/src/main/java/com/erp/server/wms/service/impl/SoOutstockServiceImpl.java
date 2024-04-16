@@ -104,7 +104,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, SoOutstockEntity> implements SoOutstockService,WmsDataCompareDbService<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> {
+public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, SoOutstockEntity> implements SoOutstockService , WmsDataCompareDbService<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> {
 
     @Resource
     private SysUserFeign sysUserFeign;
