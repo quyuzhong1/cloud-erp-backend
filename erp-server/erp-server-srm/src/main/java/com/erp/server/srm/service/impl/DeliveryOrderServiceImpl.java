@@ -133,6 +133,10 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         if(CollectionUtils.isEmpty(dataList)){
             return;
         }
+        List<String> purchaseIds = dataList.stream().map(DeliveryOrderDTO.ListDTO::getSourceId).distinct().collect(Collectors.toList());
+        //查询采购签收信息
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(purchaseIds);
+
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(dataList.stream().map(DeliveryOrderDTO.ListDTO::getSupplierId).distinct().collect(Collectors.toList()));
         List<String> purchaseDetailIds = dataList.stream().filter(v->StringUtils.isNotBlank(v.getReceiveCode())).map(DeliveryOrderDTO.ListDTO::getPurchaseDetailId).distinct().collect(Collectors.toList());
         List<QcInfoDTO.QcReceiveResultDTO> qcReceiveResultDTOList = wmsTaskFeign.getQcReceiveResult(purchaseDetailIds);
@@ -141,6 +145,18 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         sourceParamDTO.setSourceType(PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode());
         List<WarehouseReceiveEntity> warehouseReceiveEntityList = wmsTaskFeign.listReceiveBySourceTypeAndIds(sourceParamDTO);
         dataList.forEach(v->{
+            Integer receiveQty = 0;
+            Integer giftReceiveQty = 0;
+            //收货数量
+            if (CollectionUtils.isNotEmpty(receiveList)) {
+                receiveQty = receiveList.stream().filter(e -> e.getSourceDetailId().equals(v.getDetailId()) )
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                giftReceiveQty = receiveList.stream().filter(e -> e.getSourceDetailId().equals(v.getDetailId()) )
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getGiftReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            v.setReceiveQty(receiveQty);
+            v.setGiftReceiveQty(giftReceiveQty);
+
             v.setReceiptStatusName(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getReceiptStatus()));
             v.setSupplierName(supplierSimpleDTOMap.containsKey(v.getSupplierId())?supplierSimpleDTOMap.get(v.getSupplierId()).getName():"");
             QcInfoDTO.QcReceiveResultDTO qcReceiveResultDTO = qcReceiveResultDTOList.stream().filter(t->t.getPurchaseDetailId().equals(v.getPurchaseDetailId()) && t.getReceiveCode().equals(v.getReceiveCode())).findFirst().orElse(null);
@@ -203,7 +219,28 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         DeliveryOrderEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "送货单"));
         List<DeliveryOrderDetailEntity> detailEntityList = detailService.listByMainId(entity.getId());
-        return DeliveryOrderConverter.INSTANCE.viewConvert(entity,detailEntityList);
+        DeliveryOrderDTO.ViewDTO viewDTO = DeliveryOrderConverter.INSTANCE.viewConvert(entity,detailEntityList);
+        fillView(viewDTO);
+        return viewDTO;
+    }
+
+    private void fillView(DeliveryOrderDTO.ViewDTO viewDTO) {
+        List<String> purchaseIds = Arrays.asList(viewDTO.getSourceId());
+        //查询采购签收信息
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(purchaseIds);
+        for (DeliveryOrderDetailDTO.ViewDTO dto : viewDTO.getDetailList()) {
+            Integer receiveQty = 0;
+            Integer giftReceiveQty = 0;
+            //收货数量
+            if (CollectionUtils.isNotEmpty(receiveList)) {
+                receiveQty = receiveList.stream().filter(e -> e.getSourceDetailId().equals(dto.getDetailId()) )
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                giftReceiveQty = receiveList.stream().filter(e -> e.getSourceDetailId().equals(dto.getDetailId()) )
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getGiftReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            dto.setReceiveQty(receiveQty);
+            dto.setGiftReceiveQty(giftReceiveQty);
+        }
     }
 
     @Override
@@ -296,7 +333,24 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         sourceParamDTO.setSourceIds(list.stream().map(DeliveryOrderExportExcelDTO::getId).distinct().collect(Collectors.toList()));
         sourceParamDTO.setSourceType(PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode());
         List<WarehouseReceiveEntity> warehouseReceiveEntityList = wmsTaskFeign.listReceiveBySourceTypeAndIds(sourceParamDTO);
+
+        List<String> purchaseIds = list.stream().map(DeliveryOrderExportExcelDTO::getSourceId).distinct().collect(Collectors.toList());
+        //查询采购签收信息
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(purchaseIds);
+
         list.forEach(v->{
+            Integer receiveQty = 0;
+            Integer giftReceiveQty = 0;
+            //收货数量
+            if (CollectionUtils.isNotEmpty(receiveList)) {
+                receiveQty = receiveList.stream().filter(e -> e.getSourceDetailId().equals(v.getDetailId()) )
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                giftReceiveQty = receiveList.stream().filter(e -> e.getSourceDetailId().equals(v.getDetailId()) )
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getGiftReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            v.setReceiveQty(receiveQty);
+            v.setGiftReceiveQty(giftReceiveQty);
+
             v.setReceiptStatus(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getReceiptStatus()));
             v.setPrintStatus(v.getIsPrint()?"已打印":"未打印");
             v.setSupplierName(supplierSimpleDTOMap.containsKey(v.getSupplierId())?supplierSimpleDTOMap.get(v.getSupplierId()).getName():"");

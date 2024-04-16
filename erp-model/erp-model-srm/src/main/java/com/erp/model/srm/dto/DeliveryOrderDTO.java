@@ -353,6 +353,11 @@ public class DeliveryOrderDTO implements Serializable {
         /**
          * 订单单号
          */
+        private String sourceId;
+
+        /**
+         * 订单单号
+         */
         private String sourceCode;
 
         /**
