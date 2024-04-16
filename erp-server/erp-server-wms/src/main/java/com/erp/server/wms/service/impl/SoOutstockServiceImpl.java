@@ -2696,7 +2696,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     firstMileCartonList.add(addDTO);
                 });
                 dto.setWmsCartonList(firstMileCartonList);
-                if(StringUtils.isNotBlank(this.packingSave(dto))){
+                if(StringUtils.isBlank(this.packingSave(dto))){
                     throw new ServiceException("保存装箱信息失败");
                 }
             });

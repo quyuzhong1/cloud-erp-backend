@@ -146,10 +146,10 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<FirstMileCartonMapper
             for (WmsCartonDetailDTO.ViewDTO dto : detailList) {
                 Integer deliveryQty = 0;
                 if (SourceTypeEnum.SO_OUTSTOCK.getCode().equals(dto.getSourceType())) {
-                    deliveryQty = soOutstockDetailEntities.stream().mapToInt(req -> req.getActualQty()).sum();
+                    deliveryQty = soOutstockDetailEntities.stream().filter(req -> dto.getSkuId().equals(req.getSkuId())).mapToInt(req -> req.getActualQty()).sum();
                 }
                 if (SourceTypeEnum.FIRST_MILE_DELIVERY.getCode().equals(dto.getSourceType())) {
-                    deliveryQty = firstMileDeliveryDetailEntities.stream().mapToInt(req -> req.getDeliveryQty()).sum();
+                    deliveryQty = firstMileDeliveryDetailEntities.stream().filter(req -> dto.getSkuId().equals(req.getSkuId())).mapToInt(req -> req.getDeliveryQty()).sum();
                 }
                 dto.setDeliveryQty(deliveryQty);
                 //待装箱数量=发货数量-所有已装箱数量
