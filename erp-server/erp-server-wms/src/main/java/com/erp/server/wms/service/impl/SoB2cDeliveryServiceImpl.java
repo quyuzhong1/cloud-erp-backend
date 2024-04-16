@@ -89,6 +89,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sun.misc.BASE64Decoder;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -671,16 +672,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         try {
             String newMergePdfBase64 = PdfUtil.getNewMergePdfBase64(base64List);
-            FileInputStream newMergePdfStream = PdfUtil.getNewMergePdfStream(base64List);
 
             // 设置响应头，告诉浏览器返回的是一个 PDF 文件
             response.setContentType("application/pdf");
             response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\""); // 设置 PDF 的显示方式和文件名
-
+            BASE64Decoder decoder = new BASE64Decoder();
             try (OutputStream out = response.getOutputStream()) {
                 // 将 Base64 编码的字符串解码为字节数组
-                byte[] pdfBytes = Base64.getDecoder().decode(newMergePdfBase64);
-
+                byte[] pdfBytes = decoder.decodeBuffer(newMergePdfBase64);
                 // 将字节数组写入到响应输出流中
                 out.write(pdfBytes);
             } catch (IOException e) {
@@ -688,6 +687,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
 
         } catch (Exception e) {
+            e.printStackTrace();
             throw new ServiceException(ApiError.ERROR_PDF_MERGE);
         }
     }
