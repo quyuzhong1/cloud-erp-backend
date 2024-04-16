@@ -1037,6 +1037,7 @@ public class LogisticsProductDTO {
          */
         private String childOrderId;
 
+        private String imagesUrl;
 
        private BigDecimal price;
 

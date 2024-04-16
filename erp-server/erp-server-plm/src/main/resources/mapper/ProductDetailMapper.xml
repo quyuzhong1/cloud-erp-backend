@@ -1579,7 +1579,8 @@
             pi.spu_no as spuNo,
             pl.first_qty as firstQty,
             pl.second_qty as secondQty,
-            pl.approve_status as approveStatus
+            pl.approve_status as approveStatus,
+            pd.images_url as imagesUrl
          FROM product_logistics pl
         inner join product_detail pd on pl.sku_id = pd.id and pd.is_deleted = false
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE

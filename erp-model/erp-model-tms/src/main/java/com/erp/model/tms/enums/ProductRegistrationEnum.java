@@ -71,7 +71,7 @@ public enum ProductRegistrationEnum {
         FIRST_QAUNTITY("法定数量（第一数量）", "firstQauntity", "第一数量[新增字段]", LogisticsProductDTO.ProductDTO::getFirstQty, ProductRegistrationEntity::getFirstNumber, LogisticsProductDTO.ProductDTO::getFirstQty),
         SECOND_QAUNTITY("第二数量，当对应海关编码存在第二单位时必填", "secondQauntity", "第二数量[新增字段]", LogisticsProductDTO.ProductDTO::getSecondQty, ProductRegistrationEntity::getSecondNumber, LogisticsProductDTO.ProductDTO::getSecondQty),
         HS_ELEMENT("申报要素，各个申报要素项使用竖线|分隔", "hsElement", "申报要素", LogisticsProductDTO.ProductDTO::getDeclareElement, ProductRegistrationEntity::getDeclareElement, LogisticsProductDTO.ProductDTO::getDeclareElement),
-        PICTURE_URL("产品图片URL地址", "pictureUrl", "中国海关编码", LogisticsProductDTO.ProductDTO::getWeight, ProductRegistrationEntity::getUrl, LogisticsProductDTO.ProductDTO::getWeight),
+        PICTURE_URL("产品图片URL地址", "pictureUrl", "产品图片URL", LogisticsProductDTO.ProductDTO::getImagesUrl, ProductRegistrationEntity::getUrl, LogisticsProductDTO.ProductDTO::getImagesUrl),
         ;
 
         /**
