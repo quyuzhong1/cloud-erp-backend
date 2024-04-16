@@ -62,9 +62,27 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
          private List<LocalDate> billDateList;
 
          /**
+         * sku编号
+         */
+         private List<LocalDate> skuNoList;
+
+         /**
          * 作废状态
          */
          private Boolean invalidStatus;
+
+         /**
+         * 仓库id
+         */
+         private List<String>  warehouseIdList;
+         /**
+         * 创建人id
+         */
+         private List<String>  createUserIdList;
+         /**
+         * 创建时间
+         */
+         private List<String>  createTimeList;
 
      }
     /**
@@ -233,6 +251,33 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
          */
         @NotEmpty(message = "仓位移动明细不能为空")
         private List<WarehouseLocationMoveDetailDTO.AddDTO> detailList;
+        /**
+         * 是否是pc端访问
+         */
+        private Boolean pcShow = false;
+    }
+
+    /**
+    * 新增
+    */
+    @Data
+    @NoArgsConstructor
+    public static class PcAddDTO extends CommonDTO {
+
+        /**
+         * 仓位移动明细
+         */
+        @NotEmpty(message = "仓位移动明细不能为空")
+        private List<WarehouseLocationMoveDetailDTO.AddDTO> detailList;
+        /**
+         * 仓位
+         */
+        private String inWarehouseLocation;
+
+        /**
+         * 取出仓位
+         */
+        private String outWarehouseLocation;
     }
 
     /**
@@ -253,6 +298,10 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
          */
         @NotEmpty(message = "仓位移动明细不能为空")
         private List<WarehouseLocationMoveDetailDTO.UpdateDTO> detailList;
+        /**
+         * 是否是pc端访问
+         */
+        private Boolean pcShow = false;
     }
 
     @Data
@@ -316,6 +365,116 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
          */
         private List<PdaItemDTO> itemList;
     }
+    /**
+     * PDA:分页列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPcListDTO {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 审核人
+         */
+        private String approveUserId;
+        /**
+         * 审核人姓名
+         */
+        private String approveUserName;
+        /**
+         * 创建人
+         */
+        private String createUserId;
+        /**
+         * 创建人姓名
+         */
+        private String createUserName;
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 产品明细数量
+         */
+        private Integer detailCount;
+        /**
+         * 产品明细数量
+         */
+        private String remark;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 调拨数量
+         */
+        private String qty;
+        /**
+         * 仓位
+         */
+        private String inWarehouseLocation;
+        /**
+         * 仓位名称
+         */
+        private String inWarehouseLocationName;
+
+        /**
+         * 取出仓位
+         */
+        private String outWarehouseLocation;
+
+        /**
+         * 取出仓位名称
+         */
+        private String outWarehouseLocationName;
+    }
 
     /**
      * PDA:商品详情
@@ -347,5 +506,50 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
          * 仓位名称
          */
         private String inWarehouseLocationName;
+    }
+    /**
+     * PDA:商品详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPcItemDTO {
+        /**
+         * 详情id
+         */
+        private String id;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 调拨数量
+         */
+        private String qty;
+        /**
+         * 仓位
+         */
+        private String inWarehouseLocation;
+        /**
+         * 仓位名称
+         */
+        private String inWarehouseLocationName;
+
+        /**
+         * 取出仓位
+         */
+        private String outWarehouseLocation;
+
+        /**
+         * 取出仓位名称
+         */
+        private String outWarehouseLocationName;
     }
 }

@@ -172,6 +172,34 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     }
 
     @Override
+    public PagingVO<WarehouseLocationMoveInfoDTO.ListDTO> pcPaging(PagingDTO<WarehouseLocationMoveInfoDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        WarehouseLocationMoveInfoDTO.PagingParamDTO params = pagingParamDTO.getParams();
+
+        IPage<WarehouseLocationMoveInfoDTO.PdaPcListDTO> pageData = this.baseMapper.pdaPcPaging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+           return new PagingVO(pageData);
+        }
+        // 数据处理
+        List<WarehouseLocationMoveInfoDTO.PdaPcListDTO> itemDTOList = pageData.getRecords();
+        List<String> skuList = itemDTOList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        //feign获取产品信息
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuList);
+        List<String> warehouseIds = itemDTOList.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
+        for (WarehouseLocationMoveInfoDTO.PdaPcListDTO pdaPcListDTO : itemDTOList) {
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(pdaPcListDTO.getSkuId())).findFirst().orElse(null);
+            pdaPcListDTO.setProductName(skuVO.getSkuName());
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(pdaPcListDTO.getWarehouseId()) && req.getCode().equals(pdaPcListDTO.getInWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            pdaPcListDTO.setInWarehouseLocationName(warehouseLocationEntity.getName());
+            WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(pdaPcListDTO.getWarehouseId()) && req.getCode().equals(pdaPcListDTO.getOutWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            pdaPcListDTO.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
+        }
+        return new PagingVO(pageData);
+    }
+
+    @Override
     public List<WarehouseLocationMoveInfoDTO.PdaTabListDTO> tabList(PermissionsDTO dto) {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusDays(30);
@@ -203,6 +231,46 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
             resultDTO.setTabFlag(item.getCode());
             list.add(resultDTO);
         }
+        return list;
+    }
+
+    @Override
+    public List<WarehouseLocationMoveInfoDTO.PdaTabListDTO> pcTabList(PermissionsDTO dto) {
+        ApproveStatusEnum[] values = ApproveStatusEnum.values();
+        List<WarehouseLocationMoveInfoDTO.PdaTabListDTO> list = new ArrayList<>();
+        for (ApproveStatusEnum item : values) {
+            WarehouseLocationMoveInfoDTO.PagingParamDTO pagingParamDTO = new WarehouseLocationMoveInfoDTO.PagingParamDTO();
+            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+            pagingParamDTO.setInvalidStatus(Boolean.FALSE);
+            WarehouseLocationMoveInfoDTO.PdaTabListDTO resultDTO = new WarehouseLocationMoveInfoDTO.PdaTabListDTO();
+            Integer count = MathUtil.ZERO;
+            if (ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            if (ApproveStatusEnum.REJECT.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            if (ApproveStatusEnum.APPROVE_ING.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            if (ApproveStatusEnum.APPROVE.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            list.add(resultDTO);
+        }
+        //查询所有的数量
+        WarehouseLocationMoveInfoDTO.PagingParamDTO pagingParamDTO = new WarehouseLocationMoveInfoDTO.PagingParamDTO();
+        Integer totalCount = this.baseMapper.listCount(pagingParamDTO);
+        WarehouseLocationMoveInfoDTO.PdaTabListDTO resultDTO = new WarehouseLocationMoveInfoDTO.PdaTabListDTO();
+        resultDTO.setTabFlag(PdaTabFlagPcEnum.ALL.getCode());
+        resultDTO.setCount(totalCount);
+        list.add(resultDTO);
         return list;
     }
 

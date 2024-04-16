@@ -32,6 +32,15 @@ public interface WarehouseLocationMoveInfoMapper extends BaseMapper<WarehouseLoc
     IPage<WarehouseLocationMoveInfoDTO.PdaListDTO> pdaPaging(Page query, @Param("params") WarehouseLocationMoveInfoDTO.PagingParamDTO params);
 
     /**
+     * 列表查询-pc端
+     * @author hyj
+     * @date 2024/4/12 16:46
+     * @param params
+     * @return
+     */
+    IPage<WarehouseLocationMoveInfoDTO.PdaPcListDTO> pdaPcPaging(Page query, @Param("params") WarehouseLocationMoveInfoDTO.PagingParamDTO params);
+
+    /**
     * 状态数量
     * @param params
     * @return

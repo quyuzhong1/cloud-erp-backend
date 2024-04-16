@@ -43,6 +43,14 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
       * @return PagingVO<WarehouseLocationMoveInfoDTO.ListDTO>>
       */
       PagingVO<WarehouseLocationMoveInfoDTO.ListDTO> paging(PagingDTO<WarehouseLocationMoveInfoDTO.PagingParamDTO> pagingParamDTO);
+    /**
+     * 列表查询-pc端
+     * @author hyj
+     * @date 2024/4/12 16:46
+     * @param pagingParamDTO
+     * @return ApiResult<PagingVO<WarehouseLocationMoveInfoDTO.ListDTO>>
+     */
+      PagingVO<WarehouseLocationMoveInfoDTO.ListDTO> pcPaging(PagingDTO<WarehouseLocationMoveInfoDTO.PagingParamDTO> pagingParamDTO);
 
      /**
      * 状态统计
@@ -52,6 +60,15 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
      * @return List<WarehouseLocationMoveInfoDTO.TabListDTO>>
      */
      List<WarehouseLocationMoveInfoDTO.PdaTabListDTO> tabList(PermissionsDTO dto);
+
+     /**
+      * pc端状态统计
+      * @author hyj
+      * @date 2024/4/12 10:54
+      * @param dto
+      * @return List<WarehouseLocationMoveInfoDTO.TabListDTO>>
+      */
+     List<WarehouseLocationMoveInfoDTO.PdaTabListDTO> pcTabList(PermissionsDTO dto);
 
      /**
      * 详情
