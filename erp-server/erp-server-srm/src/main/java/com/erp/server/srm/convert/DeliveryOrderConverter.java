@@ -66,4 +66,6 @@ public interface DeliveryOrderConverter {
     @Mapping(target = "orderQty", source = "purchaseOrderDetail.purchaseQty")
     @Mapping(target = "planDeliveryDate",  ignore = true)
     DeliveryOrderDetailEntity importConvertDeatil(PurchaseOrderDetailEntity purchaseOrderDetail, DeliveryOrderImportExcelDTO excelData, Integer qty);
+
+    DeliveryOrderDetailEntity detailConvert(DeliveryOrderDetailEntity deliveryOrderDetailEntity);
 }
