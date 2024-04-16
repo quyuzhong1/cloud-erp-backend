@@ -3,7 +3,6 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
-import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -18,7 +17,6 @@ import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.DeliverTypeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.server.wms.query.SoB2cDeliveryQueryHandler;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -311,8 +309,8 @@ public class SoB2cDeliveryController extends BaseController {
      **/
 
     @PostMapping("/printLogisticsBillConfirm")
-    public ApiResult<String> printLogisticsBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto) {
-        String base64 = soB2cDeliveryService.printLogisticsBillConfirm(dto);
-        return success(base64);
+    public void printLogisticsBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
+        soB2cDeliveryService.printLogisticsBillConfirm(dto, response);
+
     }
 }

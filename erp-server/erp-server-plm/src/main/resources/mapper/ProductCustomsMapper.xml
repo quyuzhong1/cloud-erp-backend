@@ -60,12 +60,6 @@
                   #{item}
               </foreach>
           </if>
-        <if test="dto.country != null">
-            and (country = #{dto.country} or country = '')
-        </if>
-        <if test="dto.country == null">
-            and country = ''
-        </if>
     </select>
 
 </mapper>

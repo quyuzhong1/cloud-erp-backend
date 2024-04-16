@@ -11,6 +11,7 @@ import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -561,5 +562,14 @@ public class SoB2cFeignController extends BaseController {
     @PostMapping("/checkAndFillBySoOutStock")
     public Boolean checkAndFillBySoOutStock(@RequestBody PlatformSoOutStockDTO dto){
         return soB2cService.checkAndFillBySoOutStock(dto);
+    }
+
+    /**
+     * 修改订单物流面单
+     * @param soB2cLabelDTOList
+     */
+    @PostMapping("/updateLogisticsLabelBase64ById")
+    public Boolean updateLogisticsLabelBase64ById(@RequestBody List<LogisticsBillDTO.SoB2cLabelDTO> soB2cLabelDTOList) {
+        return soB2cService.updateLogisticsLabelBase64ById(soB2cLabelDTOList);
     }
 }
