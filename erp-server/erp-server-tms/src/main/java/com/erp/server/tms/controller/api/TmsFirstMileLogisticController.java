@@ -159,7 +159,7 @@ public class TmsFirstMileLogisticController extends BaseController {
             tableField = "create_user_id",
             menuCode = "tms:tmsFirstMileLogistic:update",
             serviceClass = TmsFirstMileLogisticService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> updateLogisticsStatus(@RequestBody @Valid TmsFirstMileLogisticDTO.UpdateLogisticsStatusDTO dto) {
         List<BatchResultDTO> resultDTOS = tmsFirstMileLogisticService.updateLogisticsStatus(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -194,7 +194,7 @@ public class TmsFirstMileLogisticController extends BaseController {
             tableField = "create_user_id",
             menuCode = "tms:tmsFirstMileLogistic:update",
             serviceClass = TmsFirstMileLogisticService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> updateInvoicesStatus(@RequestBody @Valid TmsFirstMileLogisticDTO.UpdateInvoicesStatusDTO dto) {
         List<BatchResultDTO> resultDTOS = tmsFirstMileLogisticService.updateInvoicesStatus(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -224,7 +224,7 @@ public class TmsFirstMileLogisticController extends BaseController {
             tableField = "create_user_id",
             menuCode = "tms:tmsFirstMileLogistic:update",
             serviceClass = TmsFirstMileLogisticService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> updateChannel(@RequestBody @Valid TmsFirstMileLogisticDTO.UpdateChannelDTO dto) {
         List<BatchResultDTO> resultDTOS = tmsFirstMileLogisticService.updateChannel(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -309,7 +309,7 @@ public class TmsFirstMileLogisticController extends BaseController {
             tableField = "create_user_id",
             menuCode = "tms:tmsFirstMileLogistic:delete",
             serviceClass = TmsFirstMileLogisticService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = tmsFirstMileLogisticService.delete(dto.getIds());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
