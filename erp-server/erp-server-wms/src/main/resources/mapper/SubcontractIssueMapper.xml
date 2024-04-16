@@ -104,7 +104,7 @@
         ${params.sqlMap.default}
         and si.is_deleted = FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
-            ${permissionSql}
+            ${params.permissionSql}
         </if>
     </select>
 

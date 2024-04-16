@@ -155,7 +155,7 @@
         FROM  tms_first_mile_reconciliation
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
-            ${permissionSql}
+            ${params.permissionSql}
         </if>
         GROUP BY approve_status
     </select>
