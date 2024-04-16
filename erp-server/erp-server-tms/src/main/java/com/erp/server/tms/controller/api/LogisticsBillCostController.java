@@ -101,11 +101,6 @@ public class LogisticsBillCostController extends BaseController {
      * @return ApiResult<ViewDTO>
      */
     @GetMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:logisticsBillCost:view",
-            serviceClass = LogisticsBillCostService.class,
-            keyIdName = "id")
     @LogViewService
     public ApiResult<LogisticsBillCostDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(logisticsBillCostService.view(id));
