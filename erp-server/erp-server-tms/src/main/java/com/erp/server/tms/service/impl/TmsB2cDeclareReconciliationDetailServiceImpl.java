@@ -416,9 +416,9 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                     continue;
                 }
                 //存在费用并且数量大于0
-                if (ObjectUtil.isNotEmpty(erpFieldDropDownDTO) && MathUtil.compareTo(MathUtil.valueOf(excelDTO.getCostValue()),MathUtil.ZERO) > MathUtil.ZERO) {
+                if (ObjectUtil.isNotEmpty(erpFieldDropDownDTO)) {
                     TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
-                    updateDTO.setCostValue(MathUtil.valueOf(excelDTO.getCostValue()));
+                    updateDTO.setCostValue(StrUtil.isBlank(excelDTO.getCostValue()) ? BigDecimal.ZERO : MathUtil.valueOf(excelDTO.getCostValue()));
                     updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
                     updateDTO.setCfgCostId(erpFieldDropDownDTO.getSourceId());
                     updateList.add(updateDTO);
@@ -434,7 +434,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             viewDTO.setActualWeightUnit(StrUtil.isBlank(reconciliationStandardExcelDTO.getActualWeightUnit()) ? UnitEnum.WeightUnitEnum.KG.getCode() : reconciliationStandardExcelDTO.getActualWeightUnit());
             viewDTO.setUpdateList(updateList);
             //费用处理
-            handleCost(updateList,viewDTO);
+            handleCost(updateList,viewDTO,detailEntity.getId());
             resultList.add(viewDTO);
         }
         return resultList;
@@ -596,7 +596,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             viewDTO.setUpdateList(updateList);
 
             //费用处理
-            handleCost(updateList,viewDTO);
+            handleCost(updateList,viewDTO,detailEntity.getId());
             resultList.add(viewDTO);
         }
         return resultList;
@@ -874,12 +874,26 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
      * @param updateList
      * @param viewDTO
      */
-    private void handleCost (List<TmsCostDetailDTO.UpdateDTO> updateList,TmsB2cDeclareReconciliationDetailDTO.ViewDTO  viewDTO) {
-        List<String> cfgCostIdList = updateList.stream().map(TmsCostDetailDTO.UpdateDTO::getCfgCostId).collect(Collectors.toList());
-        List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listByIds(cfgCostIdList);
-        if (CollectionUtils.isEmpty(tmsCfgCostList)) {
-            return;
+    private void handleCost (List<TmsCostDetailDTO.UpdateDTO> updateList,TmsB2cDeclareReconciliationDetailDTO.ViewDTO  viewDTO,String detailId) {
+        //需要查询配置的id
+        List<String> totalCfgCostIdList = new ArrayList<>();
+        //传入费用设置
+        List<String> cfgCostIdList = updateList.stream().map(TmsCostDetailDTO.UpdateDTO::getCfgCostId).distinct().collect(Collectors.toList());
+        totalCfgCostIdList.addAll(cfgCostIdList);
+        //原先费用设置
+        List<TmsCostDetailDTO.CostViewDTO> costViewList = tmsCostDetailService.listCostByMainIdList(Arrays.asList(detailId));
+        List<String> oldCfgIdList = costViewList.stream().filter(obj -> StrUtil.isNotBlank(obj.getId()))
+                .map(TmsCostDetailDTO.CostViewDTO::getCfgCostId)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(oldCfgIdList)) {
+            totalCfgCostIdList.addAll(oldCfgIdList);
         }
+        List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listByIds(totalCfgCostIdList);
+        if (CollectionUtils.isEmpty(tmsCfgCostList)) {
+            throw new ServiceException("未发现费用字段配置信息");
+        }
+
         //实际物流运费
          BigDecimal actualShippingCost = BigDecimal.ZERO;
         //实际报关费
@@ -889,13 +903,20 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
 
         for (TmsCostDetailDTO.UpdateDTO updateDTO : updateList) {
             //费用类型
-            String dictCostCategory = tmsCfgCostList.stream().filter(obj -> StrUtil.equals(obj.getId(), updateDTO.getCfgCostId())).map(TmsCfgCostEntity::getDictCostCategory).findFirst().orElse("");
+            String dictCostCategory = tmsCfgCostList.stream().filter(obj -> StrUtil.equals(obj.getId(), updateDTO.getCfgCostId()))
+                    .map(TmsCfgCostEntity::getDictCostCategory).findFirst().orElse("");
+            //需要累加到界面显示的原费用
+            BigDecimal oldCost = costViewList.stream().filter(obj -> !cfgCostIdList.contains(obj.getCfgCostId()) && StrUtil.equals(obj.getDictCostCategory(), dictCostCategory)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCostValue())).orElse(BigDecimal.ZERO);
+
             //实际物流运费
-            actualShippingCost = StrUtil.equals(dictCostCategory,DictCostCategoryEnum.SHIPPING_COST.getCode()) ? MathUtil.add(actualShippingCost,updateDTO.getCostValue()) : actualShippingCost;
+            actualShippingCost = StrUtil.equals(dictCostCategory,DictCostCategoryEnum.SHIPPING_COST.getCode())
+                    ? MathUtil.add(actualShippingCost.add(oldCost),updateDTO.getCostValue()) : actualShippingCost;
             //实际报关费
-            actualDeclareCost = StrUtil.equals(dictCostCategory,DictCostCategoryEnum.DECLARE_COST.getCode()) ? MathUtil.add(actualDeclareCost,updateDTO.getCostValue()) : actualDeclareCost;
+            actualDeclareCost = StrUtil.equals(dictCostCategory,DictCostCategoryEnum.DECLARE_COST.getCode())
+                    ? MathUtil.add(actualDeclareCost.add(oldCost),updateDTO.getCostValue()) : actualDeclareCost;
             //实际其他费
-            actualOtherCost = StrUtil.equals(dictCostCategory,DictCostCategoryEnum.OTHER_COST.getCode()) ? MathUtil.add(actualOtherCost,updateDTO.getCostValue()) : actualOtherCost;
+            actualOtherCost = StrUtil.equals(dictCostCategory,DictCostCategoryEnum.OTHER_COST.getCode())
+                    ? MathUtil.add(actualOtherCost.add(oldCost),updateDTO.getCostValue()) : actualOtherCost;
         }
         viewDTO.setActualShippingCost(actualShippingCost);
         viewDTO.setActualDeclareCost(actualDeclareCost);

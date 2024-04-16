@@ -60,6 +60,7 @@
                 cc.dict_cost_attribution,
                 cc.dict_cost_category,
                 cc.cost_name,
+                cc.id as cfgCostId,
                 lbc.cost_value,
                 lbc.cfg_cost_id,
                 lbc.currency,

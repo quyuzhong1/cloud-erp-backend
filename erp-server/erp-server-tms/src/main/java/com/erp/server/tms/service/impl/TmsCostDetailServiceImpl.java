@@ -55,15 +55,16 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
     @Autowired
     private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
 
-
     @Override
     public Boolean batchAdd(List<TmsCostDetailDTO.AddDTO> costDetailList, String mainId, DictCostAttributionEnum dictCostAttributionEnum) {
         if (CollectionUtils.isEmpty(costDetailList)) {
             return Boolean.TRUE;
         }
         List<TmsCostDetailEntity> list = BeanMapperUtils.copyList(TmsCostDetailEntity.class, costDetailList);
+
         // 数据处理
         handleData(list,mainId,dictCostAttributionEnum);
+
         log.info("开始新增自发货费用明细");
 
         boolean saveBatch = super.saveBatch(list);
@@ -73,6 +74,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         return saveBatch;
     }
 
+
     @Override
     public Boolean batchUpdate(List<TmsCostDetailDTO.UpdateDTO> costDetailList, String mainId,DictCostAttributionEnum dictCostAttributionEnum) {
         if (CollectionUtils.isEmpty(costDetailList)) {
@@ -80,18 +82,23 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         }
         List<TmsCostDetailEntity> list = BeanMapperUtils.copyList(TmsCostDetailEntity.class, costDetailList);
 
-        List<TmsCostDetailEntity> oldList = this.listByMainIdList(Arrays.asList(mainId));
+        //自发货要根据id判断删除
+        if (DictCostAttributionEnum.SELF_DELIVER.equals(dictCostAttributionEnum)) {
+            List<TmsCostDetailEntity> oldList = this.listByMainIdList(Arrays.asList(mainId));
 
-        List<String> deleteIds = getDeleteIds(list, oldList);
-        if (CollectionUtils.isNotEmpty(deleteIds)) {
-            List<TmsCostDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
-            //操作日志
-            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getCfgCostId())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("删除了一个费用【%s】", ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), pairList, "编辑操作");
-            this.removeByIds(deleteIds);
+            List<String> deleteIds = getDeleteIds(list, oldList);
+            if (CollectionUtils.isNotEmpty(deleteIds)) {
+                List<TmsCostDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+                //操作日志
+                List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getCfgCostId())).collect(Collectors.toList());
+                operateLogService.batchAddModuleOperateLog("删除了一个费用【%s】", ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), pairList, "编辑操作");
+                this.removeByIds(deleteIds);
+            }
         }
+
         // 数据处理
         handleData(list,mainId,dictCostAttributionEnum);
+
         log.info("开始更新自发货费用明细");
 
         if(CollectionUtils.isEmpty(list)){
@@ -216,6 +223,9 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
             throw new ServiceException(StrUtil.format("未找到【{}】数据币别",dictCostAttributionEnum.getName()));
         }
 
+        List<String> cfgCostIdList = list.stream().map(TmsCostDetailEntity::getCfgCostId).collect(Collectors.toList());
+        List<TmsCostDetailEntity> oldDetailList = listByCfgCostIdListAndMainId(cfgCostIdList, mainId);
+
         //查询汇率
         BigDecimal  rate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
         if(ObjectUtil.isEmpty(rate)){
@@ -232,6 +242,32 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
             //更新数据无类型默认实际
             entity.setType(StrUtil.isBlank(entity.getType()) ? LogisticsBillCostTypeEnum.ACTUAL.getCode() : entity.getType());
 
+            //主表id
+            TmsCostDetailEntity oldDetailEntity = oldDetailList.stream().filter(obj -> StrUtil.equals(obj.getCfgCostId(), entity.getCfgCostId())
+                    && StrUtil.equals(entity.getType(), obj.getType())
+            ).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(oldDetailEntity)) {
+                entity.setId(oldDetailEntity.getId());
+            }
         }
     }
+
+    /**
+     * @description: 根据配置 id和主表id查询
+     * @author Will
+     * @date: 2024/4/15 18:53
+     * @param cfgCostIdList
+     * @param mainId
+     * @return List<TmsCostDetailEntity>
+     */
+    private List<TmsCostDetailEntity> listByCfgCostIdListAndMainId(List<String> cfgCostIdList,String mainId) {
+        if (CollectionUtils.isEmpty(cfgCostIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<TmsCostDetailEntity> list = lambdaQuery().in(TmsCostDetailEntity::getCfgCostId, cfgCostIdList)
+                .eq(TmsCostDetailEntity::getMainId, mainId)
+                .list();
+        return list;
+    }
+
 }
