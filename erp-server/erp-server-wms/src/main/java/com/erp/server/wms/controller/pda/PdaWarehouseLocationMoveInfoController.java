@@ -52,6 +52,19 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     public ApiResult<String> add(@RequestBody @Validated WarehouseLocationMoveInfoDTO.AddDTO dto) {
         return success(warehouseLocationMoveInfoService.add(dto));
     }
+    /**
+    * 新增
+     * @author hyj
+     * @date 2024/4/15 17:06
+    * @param dto
+    * @return ApiResult<String>
+    */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增仓位移动")
+    @PostMapping("/pc/add")
+    public ApiResult<String> pcAdd(@RequestBody @Validated WarehouseLocationMoveInfoDTO.AddDTO dto) {
+        dto.setPcShow(true);
+        return success(warehouseLocationMoveInfoService.add(dto));
+    }
 
     /**
     * 修改
@@ -87,6 +100,20 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     }
 
     /**
+     * 获取状态统计
+     * @return
+     */
+    @PostMapping("/pc/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:paging",
+            tableAlias = "wlmi"
+    )
+    public ApiResult<List<WarehouseLocationMoveInfoDTO.PdaTabListDTO>> pcTabList(@RequestBody PermissionsDTO dto) {
+        return success(warehouseLocationMoveInfoService.pcTabList(dto));
+    }
+
+    /**
     * 列表查询
     * @author Luo_WG
     * @date: 2023-08-24
@@ -102,6 +129,22 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     public ApiResult<PagingVO<WarehouseLocationMoveInfoDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseLocationMoveInfoDTO.PagingParamDTO> dto) {
         return success(warehouseLocationMoveInfoService.paging(dto));
     }
+    /**
+    * 列表查询-pc端
+     * @author hyj
+     * @date 2024/4/12 16:46
+    * @param dto
+    * @return ApiResult<PagingVO<WarehouseLocationMoveInfoDTO.ListDTO>>
+    */
+    @PostMapping("/pc/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:paging",
+            tableAlias = "wlmi"
+    )
+    public ApiResult<PagingVO<WarehouseLocationMoveInfoDTO.ListDTO>> pcPaging(@RequestBody @Validated PagingDTO<WarehouseLocationMoveInfoDTO.PagingParamDTO> dto) {
+        return success(warehouseLocationMoveInfoService.pcPaging(dto));
+    }
 
     /**
     * 新增并提交审核
@@ -113,6 +156,20 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交仓位移动")
     @PostMapping("/addAndSubmit")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated WarehouseLocationMoveInfoDTO.AddDTO dto) {
+        warehouseLocationMoveInfoService.addAndSubmit(dto);
+        return success();
+    }
+    /**
+    * 新增并提交审核
+     * @author hyj
+     * @date 2024/4/15 10:47
+    * @param dto
+    * @return ApiResult<Void>
+    */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交仓位移动")
+    @PostMapping("/pc/addAndSubmit")
+    public ApiResult<Void> pcAddAndSubmit(@RequestBody @Validated WarehouseLocationMoveInfoDTO.AddDTO dto) {
+        dto.setPcShow(true);
         warehouseLocationMoveInfoService.addAndSubmit(dto);
         return success();
     }

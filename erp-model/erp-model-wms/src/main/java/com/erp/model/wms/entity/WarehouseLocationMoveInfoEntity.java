@@ -88,6 +88,12 @@ public class WarehouseLocationMoveInfoEntity extends BaseEntity<WarehouseLocatio
     @TableField("invalid_remark")
     private String invalidRemark;
 
+    /**
+    * 备注
+    */
+    @TableField("remark")
+    private String remark;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

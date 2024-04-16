@@ -53,7 +53,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
         List<WarehouseLocationMoveDetailEntity> warehouseLocationMoveDetailEntities = BeanMapperUtils.copyList(WarehouseLocationMoveDetailEntity.class, addDTO.getDetailList());
 
         // 数据处理
-        handleData(warehouseLocationMoveDetailEntities, mainId, addDTO.getWarehouseId());
+        handleData(warehouseLocationMoveDetailEntities, mainId, addDTO.getWarehouseId(), addDTO.getPcShow());
 
         log.info("开始新增仓位移动明细单");
         boolean save = super.saveBatch(warehouseLocationMoveDetailEntities);
@@ -85,7 +85,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
 
         List<WarehouseLocationMoveDetailEntity> list = BeanMapperUtils.copyList(WarehouseLocationMoveDetailEntity.class, dto.getDetailList());
         // 数据处理
-        handleData(list, mainId, dto.getWarehouseId());
+        handleData(list, mainId, dto.getWarehouseId(), dto.getPcShow());
         return this.saveOrUpdateBatch(list);
     }
 
@@ -104,7 +104,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<WarehouseLocationMoveDetailEntity> list, String mainId, String warehouseId) {
+    private void handleData(List<WarehouseLocationMoveDetailEntity> list, String mainId, String warehouseId, Boolean pcShow) {
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
         for (WarehouseLocationMoveDetailEntity detailEntity : list) {
@@ -116,6 +116,12 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
             List<InventoryDTO.PdaInventoryDTO> inventoryByParams = inventoryService.getInventoryByParam(paramDTO);
             InventoryDTO.PdaInventoryDTO inventoryByParam = inventoryByParams.stream().filter(req -> req.getWarehouseId().equals(warehouseId)
                     && req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+            if (pcShow) {
+                if ((ObjectUtil.isEmpty(detailEntity.getInWarehouseLocation()) && ObjectUtil.isEmpty(detailEntity.getInWarehouseLocation()))
+                        || detailEntity.getInWarehouseLocation().equals(detailEntity.getOutWarehouseLocation())) {
+                    throw new ServiceException(ApiError.ERROR_CANNOT_SAME_POSITION);
+                }
+            }
             if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getUsableQty()) {
                 throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR, detailEntity.getSkuNo());
             }
