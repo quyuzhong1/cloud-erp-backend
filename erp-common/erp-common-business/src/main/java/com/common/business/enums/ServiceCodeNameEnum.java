@@ -5,6 +5,11 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 
+/**
+ * @author Administrator
+ * dict通过调用feign服务查询不是当前服务的字典数据
+ * com.common.business.aspect.DictCore.getBaseDataFeign(ServiceCodeNameEnum)使用
+ */
 public enum ServiceCodeNameEnum implements EnumMessage {
 	DEFAULT("default","默认本系统"),
 	DMP("dmp","中台系统"),

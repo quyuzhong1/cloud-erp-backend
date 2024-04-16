@@ -18,7 +18,10 @@ import org.springframework.cglib.beans.BeanGenerator;
 import org.springframework.cglib.beans.BeanMap;
 import org.springframework.stereotype.Service;
 
+import com.alibaba.fastjson.JSON;
 import com.common.business.annotation.Dict;
+import com.common.business.dto.AttachDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ServiceCodeNameEnum;
 import com.common.business.feign.BaseDataFeign;
 import com.common.business.feign.controller.BaseDataFeignController;
@@ -27,9 +30,11 @@ import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.utils.ConvertUtils;
 import com.common.business.utils.StringUtil;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
 import com.common.core.controller.vo.ApiResult;
 
 import cn.hutool.core.collection.CollUtil;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -161,7 +166,9 @@ public class DictCore {
     public Object dealRecord(Object record, String lang) {
 
         //得到拥有@Dict注释的全部字段map
-    	Map<String, Object> fieldValueMap = this.translatePerItem(record, lang);
+    	DictAspectFieldMap dictAspectFieldMap = this.translatePerItem(record, lang);
+    	Map<String, Object> fieldValueMap = dictAspectFieldMap.getFieldValueMap();
+    	record = dictAspectFieldMap.getRecord();
         if (fieldValueMap.size() > 0) {
             BeanGenerator beanGenerator = new BeanGenerator();
             //设置类的class
@@ -193,7 +200,44 @@ public class DictCore {
 
     }
 
-
+    public static void main(String[] args) {
+    	AttachDTO dto = new AttachDTO();
+    	dto.setStatus(ApproveStatusEnum.APPROVE);
+    	AttachDTO subDto = new AttachDTO();
+    	dto.setDto(subDto);
+    	subDto.setStatus(ApproveStatusEnum.REJECT);
+    	System.out.println(JSON.toJSONString(new DictCore().dealRecord(dto, "")));
+	}
+    
+    private static Object test(Object record) {
+    	set(record);
+    	BeanGenerator beanGenerator = new BeanGenerator();
+        //设置类的class
+        beanGenerator.setSuperclass(record.getClass());
+        //创建拥有_dictText字段的类
+        Object objHasDictText = beanGenerator.create();
+        //复制当前记录的值，给新创建的拥有_dictText字段的新对象
+        BeanUtils.copyProperties(record, objHasDictText);
+        //为新对象赋值_dictText字段
+        BeanMap beanMap = BeanMap.create(objHasDictText);
+        beanMap.put("attachUrl", "attachUrlchange");
+    	return objHasDictText;
+    }
+    
+    private static void set(Object record) {
+    	BeanGenerator beanGenerator = new BeanGenerator();
+        //设置类的class
+        beanGenerator.setSuperclass(record.getClass());
+        //创建拥有_dictText字段的类
+        Object objHasDictText = beanGenerator.create();
+        //复制当前记录的值，给新创建的拥有_dictText字段的新对象
+        BeanUtils.copyProperties(record, objHasDictText);
+        //为新对象赋值_dictText字段
+        BeanMap beanMap = BeanMap.create(objHasDictText);
+        beanMap.put("attachName", "change");
+        // 替换原record
+        record = objHasDictText;
+    }
 
     /**
      * 翻译字典文本
@@ -216,7 +260,7 @@ public class DictCore {
         List<Map<String, Object>> data = DictThreadLocal.get(code, text, table, key , serviceCodeNameEnum);
         if(data == null) {
         	try {
-				data = getBaseDataFeign(serviceCodeNameEnum).queryValueByValue(table, code, key, text);
+				data = getBaseDataFeign(serviceCodeNameEnum).queryValueByValue(table, code, key, text , "");
 			} catch (Exception e) {
 			}
         	if(data == null) {
@@ -255,7 +299,8 @@ public class DictCore {
     }
     
 
-    private Map<String, Object> translatePerItem(Object record, String lang) {
+    private DictAspectFieldMap translatePerItem(Object record, String lang) {
+    	DictAspectFieldMap dictAspectFieldMap = new DictAspectFieldMap();
         Map<String, Object> fieldValueMap = new HashMap<>();
 
         for (Field field : ConvertUtils.getAllFields(record)) {
@@ -264,7 +309,7 @@ public class DictCore {
                 String code = dictAnnotation.queryFieldName();
                 String table = dictAnnotation.tableName();
                 String text = dictAnnotation.returnFieldName();
-                String enumClass = dictAnnotation.enumClass();
+                Class<? extends EnumMessage> enumClass = dictAnnotation.enumClass();
                 boolean dictChildren = dictAnnotation.dictChildren();
                 boolean dictDefaultOriginalValue = dictAnnotation.dictDefaultOriginalValue();
                 ServiceCodeNameEnum serviceCode = dictAnnotation.serviceCode();
@@ -303,7 +348,7 @@ public class DictCore {
 
                 //翻译字典值对应的txt
                 String textValue = "";
-                boolean isEnum = (StringUtils.isNotBlank(enumClass) || keyObject.getClass().isEnum());
+                boolean isEnum = keyObject.getClass().isEnum();
                 boolean isNotDict = (serviceCode == null || serviceCode == ServiceCodeNameEnum.DEFAULT);
                 if(keyObject != null) {
                 	if(isEnum && isNotDict) {
@@ -317,7 +362,8 @@ public class DictCore {
                 	if(StringUtils.isBlank(textValue)) {
                 		String key = keyObject.toString();
                 		if(StringUtils.isNotBlank(key)) {
-                			if(serviceCode == ServiceCodeNameEnum.PLM && "dict_basic".equals(table)) {
+                			if(((serviceCode == ServiceCodeNameEnum.DEFAULT && "erp-plm".equals(serviceName)) || serviceCode == ServiceCodeNameEnum.PLM)
+                					&& "dict_basic".equals(table)) {
                 				table = "basic_dict";
                 			}
                 			List<Map<String, Object>> translateDictValue = translateDictValue(code, text, table, key , serviceCode);
@@ -330,40 +376,38 @@ public class DictCore {
                 		}
                     }
                 	
+                	if(StringUtils.isBlank(textValue) && isNotDict && enumClass != EnumMessage.class) {
+                		try {
+                            textValue = getFieldVal(keyObject, enumClass);
+                        } catch (Exception e) {
+                            log.error(e.getMessage(), e);
+                        }
+                	}
+                	
                 	if(dictDefaultOriginalValue && StringUtils.isBlank(textValue)) {
                     	textValue = keyObject.toString();
                     }
                 }
                 
-                fieldValueMap.put(field.getName() + "_Name", textValue);
+                fieldValueMap.put(field.getName() + "Name", textValue);
             }
 
         }
         
-        return fieldValueMap;
+        dictAspectFieldMap.setRecord(record);
+        dictAspectFieldMap.setFieldValueMap(fieldValueMap);
+        
+        return dictAspectFieldMap;
     }
 
-    public static String getFieldVal(Object targetClass, String objClass) throws Exception {
+    public static String getFieldVal(Object targetClass, Class<?> objClass) throws Exception {
         if(targetClass == null){
             return "";
         }
-        if (org.apache.commons.lang3.StringUtils.isNotBlank(objClass)
-                && targetClass instanceof String){
-            String[] split = targetClass.toString().split(",");
-            StringBuilder result = new StringBuilder();
-            Class<?> clazz = Class.forName(objClass);
-            Method method = clazz.getMethod("getName", String.class);
-            for (String s : split) {
-                try {
-                    Object invoke = method.invoke(null , s);
-                    result.append(invoke.toString()).append(",");
-                } catch (Exception e) {
-                    result.append(s).append(",");
-                }
-            }
-            return result.length() == 0? result.toString() : result.substring(0, result.length() -1);
+        Class<?> clazz = objClass;
+        if (targetClass instanceof String){
+        	clazz = targetClass.getClass();
         }
-        Class<?> clazz = targetClass.getClass();
         String getMethodName = "getName";
         Object result = "";
         try {
@@ -378,4 +422,9 @@ public class DictCore {
         }
     }
 
+    @Data
+    public static class DictAspectFieldMap{
+    	private Object record;
+    	private Map<String, Object> fieldValueMap;
+    }
 }
