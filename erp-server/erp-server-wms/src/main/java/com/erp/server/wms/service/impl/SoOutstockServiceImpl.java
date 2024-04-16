@@ -55,9 +55,8 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
-import com.erp.model.tms.enums.*;
+import com.erp.model.tms.enums.TransferOutstockStatusEnum;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.dto.excel.SoOutstockPackingExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
@@ -80,7 +79,6 @@ import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.listener.SoOutstockPackingExcelListener;
@@ -2705,7 +2703,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         if (!errorList.isEmpty()) {
             String fileName = "装箱错误数据";
-            ExcelUtil.export(fileName, "error", errorList, PackingExcelDTO.class, response);
+            ExcelUtil.export(fileName, "error", errorList, SoOutstockPackingExcelDTO.class, response);
             return Boolean.FALSE;
         }
         return true;

@@ -109,7 +109,7 @@ public class SoOutstockPackingExcelListener extends AnalysisEventListener<SoOuts
             //检查发货单是否存在
             SoOutstockEntity soOutstockEntity = soOutstockEntityMap.get(packingExcelDTO.getCode());
             if(Objects.isNull(soOutstockEntity)){
-                packingExcelDTO.setErrorMsg("发货单号不存在");
+                packingExcelDTO.setErrorMsg("出库单号不存在");
                 errorList.add(packingExcelDTO);
                 it.remove();
                 continue;
