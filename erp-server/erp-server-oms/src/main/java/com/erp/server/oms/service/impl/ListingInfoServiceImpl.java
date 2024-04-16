@@ -144,37 +144,50 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         }
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Arrays.asList(dto.getSkuNo()));
         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(dto.getSkuNo())).distinct().findFirst().orElse(null);
-        if (ObjectUtil.isEmpty(skuVO)) {
+        if (null == skuVO) {
             throw new ServiceException("sku不存在");
         }
-        LocalDateTime now = LocalDateTime.now();
-        skuMapping.setExpireTime(now);
+
+        if (StringUtils.isBlank(skuMapping.getProductSkuId()) && StringUtils.isBlank(skuMapping.getProductSkuNo())){
+            // 历史无映射关系
+            skuMapping.setProductSkuId(skuVO.getSkuId());
+            skuMapping.setProductSkuNo(skuVO.getSkuNo());
+            skuMapping.setProductName(skuVO.getSkuName());
+            if (!skuMappingService.updateById(skuMapping)) {
+                throw new ServiceException("[SkuMapping] 首次映射修改失败");
+            }
+            // 记录日志
+            operateLogService.addModuleOperateLogByObj(skuMapping, skuMapping, ModuleTypeEnum.LISTING_INFO.getCode(), skuMapping.getListingId(), StrUtil.format("用户【{}】首次映射sku",commonService.getUserInfo().getUserName()));
+        } else {
+            LocalDateTime now = LocalDateTime.now();
+            skuMapping.setExpireTime(now);
 //        skuMapping.setIsDeleted(true);
-        skuMapping.setIsExpire(Boolean.TRUE);
-        if (!skuMappingService.updateById(skuMapping)) {
-            throw new ServiceException("[SkuMapping] 历史映射修改失败");
+            skuMapping.setIsExpire(Boolean.TRUE);
+            if (!skuMappingService.updateById(skuMapping)) {
+                throw new ServiceException("[SkuMapping] 历史映射修改失败");
+            }
+            SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
+            skuMappingEntity.setWarehouseId("");
+            skuMappingEntity.setWarehouseName("");
+            skuMappingEntity.setType(RuleTypeEnum.PLATFORM);
+            skuMappingEntity.setShopId(dto.getShopId());
+            skuMappingEntity.setProductSkuId(skuVO.getSkuId());
+            skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
+            skuMappingEntity.setProductName(skuVO.getSkuName());
+            skuMappingEntity.setListingId(listingInfoEntity.getId());
+            skuMappingEntity.setDictPlatform(dto.getPlatform());
+            PlatformDictEnum platformDictEnum = PlatformDictEnum.checkAndGetByCode(dto.getPlatform());
+            skuMappingEntity.setPlatformName(platformDictEnum.getDesc());
+
+            //生效时间
+            skuMappingEntity.setEffectiveTime(now);
+            skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
+            skuMappingService.save(skuMappingEntity);
+            // 记录日志
+            operateLogService.addModuleOperateLogByObj(skuMapping, skuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntity.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",commonService.getUserInfo().getUserName()));
+
         }
 
-        SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
-        skuMappingEntity.setWarehouseId("");
-        skuMappingEntity.setWarehouseName("");
-        skuMappingEntity.setType(RuleTypeEnum.PLATFORM);
-        skuMappingEntity.setShopId(dto.getShopId());
-        skuMappingEntity.setProductSkuId(skuVO.getSkuId());
-        skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
-        skuMappingEntity.setProductName(skuVO.getSkuName());
-        skuMappingEntity.setListingId(listingInfoEntity.getId());
-        skuMappingEntity.setDictPlatform(dto.getPlatform());
-        PlatformDictEnum platformDictEnum = PlatformDictEnum.checkAndGetByCode(dto.getPlatform());
-        skuMappingEntity.setPlatformName(platformDictEnum.getDesc());
-
-        //生效时间
-        skuMappingEntity.setEffectiveTime(now);
-        skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
-        skuMappingService.save(skuMappingEntity);
-
-        // 记录日志
-        operateLogService.addModuleOperateLogByObj(skuMapping, skuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntity.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",commonService.getUserInfo().getUserName()));
         return lambdaUpdate()
                 .set(ListingInfoEntity::getMatchResult, Boolean.TRUE)
                 .eq(ListingInfoEntity::getId, listingInfoEntity.getId())
