@@ -143,7 +143,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
         for(String skuId : skuIds){
             ProductRegistrationEntity entity = entities.stream().filter(v->v.getSkuId().equals(skuId)).findFirst().orElse(null);
             if(Objects.nonNull(entity)){
-                resultDTOList.add(BatchResultDTO.fail(entity.getSkuId(),entity.getSkuNo(),"SKU已备案"));
+                resultDTOList.add(BatchResultDTO.fail(entity.getSkuId(),entity.getSkuNo(),StrUtil.format("SKU已在{}已获取备案信息，无法重复获取",transferLogisticsService.getPlatForm().getName())));
                 continue;
             }
             LogisticsProductDTO.ProductDTO productDTO = productDTOList.stream().filter(v->v.getSkuId().equals(skuId)).findFirst().orElse(null);
@@ -231,7 +231,19 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
 
     @Override
     public List<ProductRegistrationDTO.TabListDTO> tabList() {
-        return baseMapper.tabList();
+        List<ProductRegistrationDTO.TabListDTO> tabListDTOList = baseMapper.tabList();
+        List<ProductRegistrationDTO.TabListDTO> result = new ArrayList<>();
+        for (ProductRegistrationEnum.TabEnum tabEnum : ProductRegistrationEnum.TabEnum.values()) {
+            ProductRegistrationDTO.TabListDTO tabListDTO = tabListDTOList.stream().filter(v->v.getTabFlag().equals(tabEnum.getCode())).findFirst().orElse(null);
+            if(Objects.isNull(tabListDTO)){
+                tabListDTO = new ProductRegistrationDTO.TabListDTO();
+                tabListDTO.setTabFlag(tabEnum.getCode());
+                tabListDTO.setTabFlagName(tabEnum.getName());
+                tabListDTO.setCount(0);
+            }
+            result.add(tabListDTO);
+        }
+        return result;
     }
 
     @Override

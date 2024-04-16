@@ -19,6 +19,23 @@ public enum ProductRegistrationEnum {
 
     ;
 
+
+    /**
+     * 产品状态枚举
+     */
+    @Getter
+    public enum TabEnum implements EnumMessage {
+
+        REGISTERING("notRegister","未备案"),
+        DRAFT("registered","已备案"),
+        ;
+        private final String code;
+        private final String name;
+        TabEnum(String code, String name) {
+            this.code = code;
+            this.name = name;
+        }
+    }
     /**
      * 产品状态枚举
      */
