@@ -2843,7 +2843,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
 
             //单据状态
-            data.setStatus(StrUtil.format("{}-{}",data.getApproveStatus(),data.getBillStatus()));
+            data.setStatus(data.getBillStatus());
             data.setStatusName(StrUtil.format("{}-{}",ApproveStatusEnum.getName(data.getApproveStatus()),SoB2cBillStatusEnum.getName(data.getBillStatus())));
 
             //异常信息名称
