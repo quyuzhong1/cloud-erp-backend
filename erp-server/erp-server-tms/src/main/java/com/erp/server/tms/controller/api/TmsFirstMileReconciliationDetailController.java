@@ -14,24 +14,33 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
+import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
+import com.erp.model.tms.enums.DictBasicEnum;
+import com.erp.model.tms.enums.TmsB2cDeclareReconciliationImportEnum;
 import com.erp.server.tms.query.TmsB2cDeclareReconciliationDetailQueryHandler;
 import com.erp.server.tms.query.TmsFirstMileReconciliationDetailQueryHandler;
 import com.erp.server.tms.query.TmsFirstMileReconciliationQueryHandler;
+import com.erp.server.tms.service.CfgReconciliationFieldService;
 import com.erp.server.tms.service.TmsFirstMileReconciliationDetailService;
+import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * 头程对账单明细
@@ -47,6 +56,8 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
 
     @Resource
     private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
+    @Resource
+    private CfgReconciliationFieldService cfgReconciliationFieldService;
 
 
     /**
@@ -89,11 +100,26 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载头程对账单模板")
     @GetMapping("/downloadTemplate")
-    public ApiResult<?> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/firstMileReconciliationDetailTemplate.xlsx";
-        String excelName = "template.xlsx";
-        ExcelUtil.downloadTemplate(path, excelName, response);
-        return success();
+    public ApiResult<?> exportTemplate(@ModelAttribute @Validated TmsFirstMileReconciliationDetailDTO.ExcelDownloadTemplateDTO dto, HttpServletRequest request, HttpServletResponse response) {
+        switch (dto.getTypeEnum()) {
+            case STANDARD:
+                String standardPath = "classpath:excel/firstMileReconciliationDetailTemplate.xlsx";
+                String standardExcelName = "templateStandard.xlsx";
+                ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
+                return success();
+            case CONFIG:
+                LinkedList<String> headerNameList = cfgReconciliationFieldService.erpFieldListName(Collections.singletonList(DictBasicEnum.CFG_FIRST_MILE_ERP_FIELD.getType()), true);
+                // 不存在添加运单号作为第一个元素
+                if (!headerNameList.contains("物流运单号")){
+                    headerNameList.addFirst("物流运单号");
+                }
+                // 去重
+                String configExcelName = "templateConfig.xlsx";
+                ExcelUtil.downloadDynamicTemplate(headerNameList, configExcelName, response);
+                return success();
+            default:
+                throw new ServiceException("输入导入的类型有误");
+        }
     }
 
     /**

@@ -9,6 +9,7 @@ import com.erp.model.tms.entity.CfgReconciliationFieldEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -127,4 +128,12 @@ public interface CfgReconciliationFieldService extends SuperService<CfgReconcili
      * @return List<CfgReconciliationFieldEntity>
      */
     List<CfgReconciliationFieldEntity> listByCfgCostIdList(List<String> cfgCostIdList);
+
+
+    /**
+     * 数大臣字段List
+     * @author Jim
+     * {@code @date:} 2024-03-25
+     */
+    LinkedList<String> erpFieldListName(List<String> typeList, boolean nullThrow);
 }
