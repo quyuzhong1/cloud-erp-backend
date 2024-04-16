@@ -1468,10 +1468,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                             && dto.getSkuId().equals(req.getSkuId())).collect(Collectors.toList());
             Integer receiveQty;
             if (CollectionUtils.isEmpty(receiveDetailList)){
-                //收货单已收数量（已审核）
+                //收货单已收数量
                 receiveQty = receiveDetails.stream()
-                        .filter(req -> req.getPurchaseOrderDetailId().equals(dto.getPurchaseOrderDetailId())
-                            && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
+                        .filter(req -> req.getPurchaseOrderDetailId().equals(dto.getPurchaseOrderDetailId()))
                         .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             }else {
                 //质检单关联的收货单
@@ -1480,7 +1479,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }
             //退货数量
             Integer returnQty = returnOrderDetailList.stream().filter(e -> Objects.equals(e.getPurchaseOrderDetailId(), dto.getPurchaseOrderDetailId())
-                            && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode())
                             && dto.getSourceId().equals(e.getSourceId())
                             && ReturnOrderSourceEnum.QC.getCode().equals(e.getSourceType())
                             && !ApproveStatusEnum.REJECT.getStatus().equals(e.getApproveStatus()))
