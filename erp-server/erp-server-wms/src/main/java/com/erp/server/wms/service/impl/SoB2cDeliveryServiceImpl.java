@@ -359,7 +359,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //已发货和取消发货单 状态，不允许在打印拣货单
         List<SoB2cDeliveryEntity> deliveryEntityList = this.listByIds(ids);
         List<String> codeList = deliveryEntityList.stream()
-                .filter(req -> SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(req.getStatus()))
+                .filter(req -> SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(req.getStatus())
+                        || SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(req.getStatus()))
                 .map(req -> req.getCode()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(codeList)) {
             throw new ServiceException(ApiError.STATUS_NOT_PRINT_PICKING, StrUtil.join(",", codeList));
@@ -489,8 +490,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         //已发货和取消发货单 状态，不允许在打印标签
         List<String> codeList = soB2cDeliveryEntities.stream()
-                .filter(req -> SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(req.getStatus())
-                        || SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(req.getStatus()))
+                .filter(req -> SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(req.getStatus()))
                 .map(req -> req.getCode()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(codeList)) {
             throw new ServiceException(ApiError.STATUS_NOT_PRINT_LABEL, StrUtil.join(",", codeList));
