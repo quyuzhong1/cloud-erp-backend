@@ -861,4 +861,39 @@ public class CustomerB2CDTO implements Serializable {
          */
         private Integer count;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class DropSearchDTO {
+        /**
+         * 客户名称
+         */
+        private String customerName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DropListDTO {
+        /**
+         * 客户id
+         */
+        private String customerId;
+        /**
+         * 客户名称
+         */
+        private String customerName;
+        /**
+         * 城市id
+         */
+        private String cityId;
+        /**
+         * 国家id
+         */
+        private String countryId;
+        private String countryName;
+        /**
+         * 邮编
+         */
+        private String zipCode;
+    }
 }

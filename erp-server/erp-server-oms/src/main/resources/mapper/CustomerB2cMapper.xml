@@ -159,4 +159,23 @@
          </if>
          GROUP BY approve_status
     </select>
+    <select id="customerDropDown" resultType="com.erp.model.oms.dto.CustomerB2CDTO$DropListDTO">
+        select customerId,customerName,cityId,countryId,zipCode
+        from (
+                 select
+                     c."id" as customerId,
+                     c."name" as customerName,
+                     c.city_id as cityId,
+                     c.country_id as countryId,
+                     a.zip_code as zipCode
+                 from customer_b2c c
+                          left join customer_b2c_address a on a.main_id = c.id and a.is_deleted  = FALSE and a.disabled = FALSE
+                 where c.is_deleted = FALSE and c.disabled = FALSE
+                 order by
+                     case when c."name" ILIKE concat(#{params.customerName}::text,'%') THEN 1
+                          when c."name" ILIKE concat('%',#{params.customerName}::text) THEN 2
+                          when c."name" ILIKE concat('%',#{params.customerName}::text,'%') THEN 3
+                         end , c."name"
+             ) customer
+    </select>
 </mapper>

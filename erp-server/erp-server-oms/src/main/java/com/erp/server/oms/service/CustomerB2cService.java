@@ -294,4 +294,11 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @return
      */
     CustomerB2cEntity findByPlatformAndName(String dictPlatform, String name, String sourceType);
+
+    /**
+     * 分页查询客户名称
+     * @param pagingDTO
+     * @return
+     */
+    PagingVO<CustomerB2CDTO.DropListDTO> customerDropDown(PagingDTO<CustomerB2CDTO.DropSearchDTO> pagingDTO);
 }
