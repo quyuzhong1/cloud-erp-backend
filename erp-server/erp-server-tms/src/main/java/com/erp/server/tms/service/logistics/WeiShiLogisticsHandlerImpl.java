@@ -88,7 +88,7 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
             return success(LogisticsOrderResponseVO.builder()
                     .transportNo(weiShiResponse.getOrderCode())
                     .deliveryNo(weiShiResponse.getReferenceNo())
-                    .trackNo(weiShiResponse.getOrderCode())
+                    .trackNo(weiShiResponse.getShippingMethodNo())
                     .build());
         }catch (Exception e){
             logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
