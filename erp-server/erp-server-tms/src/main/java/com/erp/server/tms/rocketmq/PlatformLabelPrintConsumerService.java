@@ -10,6 +10,7 @@ import com.erp.server.tms.service.LogisticsBillService;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
@@ -34,7 +35,7 @@ public class PlatformLabelPrintConsumerService implements RocketMQListener<Logis
         for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
             LogisticsBillDTO.SoB2cLabelDTO soB2cLabelDTO = new LogisticsBillDTO.SoB2cLabelDTO();
             soB2cLabelDTO.setSoB2cId(waybillDTO.getSoB2cId());
-            soB2cLabelDTO.setLogisticsBase64(waybillDTO.getLogisticsBase64());
+            soB2cLabelDTO.setLogisticsBase64(StringUtils.join(waybillDTO.getLogisticsBase64(), ","));
             soB2cFeign.updateLogisticsLabelBase64ById(Arrays.asList(soB2cLabelDTO));
         }
     }
