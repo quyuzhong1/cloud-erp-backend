@@ -23,6 +23,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
@@ -40,10 +41,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -503,5 +501,13 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
                     .eq(PoReturnDetailEntity::getId, detailId)
                     .update();
         }
+    }
+
+    @Override
+    public List<WarehouseReceiveDTO.PoReturnDetailDTO> listReturnOrderDetailByReceiveIds(List<String> receiveIds) {
+        if (CollectionUtils.isEmpty(receiveIds)){
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listReturnOrderDetailByReceiveIds(receiveIds);
     }
 }

@@ -379,12 +379,13 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             return;
         }
         List<String> podIds = thisDetailList.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
-
+        List<String> receiveIds = list.stream().map(PoInstockEntity::getSourceId).distinct().collect(Collectors.toList());
         //收货列表
         List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
         //退货数量
-        List<PoReturnDetailEntity> returnOrderDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(podIds);
-
+//        List<PoReturnDetailEntity> returnOrderDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(podIds);
+        //根据收货明细id获取退货列表
+        List<WarehouseReceiveDTO.PoReturnDetailDTO> returnDetailDTOS = poReturnDetailService.listReturnOrderDetailByReceiveIds(receiveIds);
         thisDetailList.forEach(poInstockDetailEntity -> {
             //未关联采购收货单，提审不校验
             PoInstockEntity poInstockEntity = list.stream().filter(e -> e.getId().equals(poInstockDetailEntity.getMainId()) && SourceTypeEnum.PO_RECEIVE.getCode().equals(e.getSourceType()))
@@ -398,15 +399,10 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                                 && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(receiveList)){
                     Integer receiveQty = receiveList.stream().map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                    //已退货数量（质检退货）
-                    Integer returnQty = returnOrderDetailList.stream().filter(e -> Objects.equals(e.getPurchaseOrderDetailId(), poInstockDetailEntity.getPurchaseOrderDetailId())
-//                                    && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode())
-                                    && StrUtils.isNotEmpty(e.getSourceId())
-                                    && e.getSourceId().equals(poInstockEntity.getId())
-                                    && StrUtils.isNotEmpty(e.getPurchaseOrderDetailId())
-                                    && ReturnOrderSourceEnum.QC.getCode().equals(e.getSourceType())
-                                    && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
-                            .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                    //已退货数量 根据收货单获取对应退货明细
+                    Integer returnQty = returnDetailDTOS.stream().filter(e -> poInstockDetailEntity.getSourceDetailId().equals(e.getReceiveDetailId())
+                                    && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()))
+                            .map(WarehouseReceiveDTO.PoReturnDetailDTO::getReturnQty).reduce(MathUtil.ZERO,Integer::sum);
                     //最大入库数量
                     Integer maxInstockQty = receiveQty - returnQty;
                     if (poInstockDetailEntity.getStockInQty() > maxInstockQty){
