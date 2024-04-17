@@ -629,6 +629,7 @@
     <select id="getReceiveListByPurchaseOrderIds" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PurchaseOrderDetailDTO">
         SELECT
         pr.source_id as sourceId,
+        pr.source_type as sourceType,
         prd.receive_qty  AS receiveQty,
         prd.source_detail_id as sourceDetailId,
         prd.purchase_order_detail_id AS purchaseOrderDetailId,
@@ -649,6 +650,7 @@
     <select id="getReceiveListByPurchaseOrderIdsAll" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PurchaseOrderDetailDTO">
         SELECT
         pr.source_id as sourceId,
+        pr.source_type as sourceType,
         prd.receive_qty  AS receiveQty,
         prd.source_detail_id as sourceDetailId,
         prd.purchase_order_detail_id AS purchaseOrderDetailId,
