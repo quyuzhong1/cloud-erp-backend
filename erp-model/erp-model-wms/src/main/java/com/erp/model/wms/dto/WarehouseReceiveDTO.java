@@ -1226,6 +1226,10 @@ public class WarehouseReceiveDTO {
          * 来源记录id
          */
         private String sourceId;
+        /**
+         * 订单类型 deliveryOrder 送货单
+         */
+        private String sourceType;
 
         /**
          * 来源明细记录id
