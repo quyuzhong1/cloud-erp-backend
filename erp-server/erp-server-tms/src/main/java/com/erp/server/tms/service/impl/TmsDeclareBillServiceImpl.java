@@ -433,6 +433,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         for (TmsDeclareBillDTO.ProductDetail productDetail : viewDTO.getProductDetailList()) {
             BasicDictEntity unitDTO = sysDictBasicEntityList.stream().filter(v->v.getValue().equals(productDetail.getDeclareUnit())).findFirst().orElse(new BasicDictEntity());
             productDetail.setDeclareUnitName(unitDTO.getName());
+            productDetail.setDeclareCurrencyName(CurrencyEnum.getNameByCode(productDetail.getDeclareCurrency()));
         }
         //处理发货人
         if(StringUtils.isNotBlank(viewDTO.getSenderId())){

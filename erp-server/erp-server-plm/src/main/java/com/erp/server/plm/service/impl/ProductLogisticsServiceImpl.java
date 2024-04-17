@@ -179,9 +179,9 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
             productLogisticDTO.setDeclareCurrencyName(CurrencyEnum.getNameByCode(productLogisticDTO.getDeclareCurrency()));
             productLogisticDTO.setSourceCountryName(sourceCountryMap.get(productLogisticDTO.getSourceCountry()));
             for(ProductDetailDTO.ProductLogisticDTO child : productLogisticDTO.getChildList()){
-                child.setDeclareUnitName(declareUnitMap.get(productLogisticDTO.getDeclareUnit()));
-                child.setDeclareCurrencyName(CurrencyEnum.getNameByCode(productLogisticDTO.getDeclareCurrency()));
-                child.setSourceCountryName(sourceCountryMap.get(productLogisticDTO.getSourceCountry()));
+                child.setDeclareUnitName(declareUnitMap.get(child.getDeclareUnit()));
+                child.setDeclareCurrencyName(CurrencyEnum.getNameByCode(child.getDeclareCurrency()));
+                child.setSourceCountryName(sourceCountryMap.get(child.getSourceCountry()));
             }
         }
         return productLogisticDTOList;
