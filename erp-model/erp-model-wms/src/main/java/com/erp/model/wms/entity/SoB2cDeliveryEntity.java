@@ -1,15 +1,15 @@
 package com.erp.model.wms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 
 /**
@@ -81,6 +81,12 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     */
     @TableField("is_print_picking")
     private Boolean isPrintPicking;
+
+    /**
+     * 完成打印时间
+     */
+    @TableField("finish_print_time")
+    private LocalDateTime finishPrintTime;
     /**
     * 是否验货
     */

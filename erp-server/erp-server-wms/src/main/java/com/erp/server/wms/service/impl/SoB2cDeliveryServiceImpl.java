@@ -446,47 +446,29 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
 
     @Override
-    public Boolean printPicking(List<String> ids) {
-        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(ids);
-
-        //查询是否冻结
-        List<String> soIds = soB2cDeliveryEntities.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
-        for (SoB2cEntity soB2cEntity : soB2cEntities) {
-            if (soB2cEntity.getIsFrozen()) {
-                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
-            }
+    public BatchResultDTO printPickingCancel(String id) {
+        SoB2cDeliveryEntity soB2cDeliveryEntity = this.getById(id);
+        if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
+            throw new ServiceException(ApiError.B2C_SO_DELIVERY_NOT_EXISTS);
+        }
+        if (!StrUtil.equals(soB2cDeliveryEntity.getStatus(),SoB2cDeliveryStatusEnum.PICKING.getCode())) {
+            throw new ServiceException(ApiError.B2C_SO_DELIVERY_FINISH_PRINT,soB2cDeliveryEntity.getCode());
         }
 
-        lambdaUpdate()
-                .set(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.PICKING.getCode())
-                .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getCode())
-                .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.SHIPPED.getCode())
-                .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
-                .in(SoB2cDeliveryEntity::getId, ids).update();
-
-        List<Pair<String, String>> addPairList = soB2cDeliveryEntities.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("打印了一张拣货单【%s】", ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), addPairList, "打印拣货单");
-
-        //修改打印状态
-        return lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintPicking, Boolean.TRUE).in(SoB2cDeliveryEntity::getId, ids).update();
-    }
-
-    @Override
-    public Boolean printPickingCancel(List<String> ids) {
-        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(ids);
-
         //查询是否冻结
-        List<String> soIds = soB2cDeliveryEntities.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(Arrays.asList(soB2cDeliveryEntity.getSourceId()));
         for (SoB2cEntity soB2cEntity : soB2cEntities) {
             if (soB2cEntity.getIsFrozen()) {
-                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+                throw new ServiceException(ApiError.B2C_SO_DELIVERY_NOT_FINISH_PRINT, soB2cEntity.getCode());
             }
         }
-
-        //修改打印状态
-        return lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintPicking, Boolean.FALSE).in(SoB2cDeliveryEntity::getId, ids).update();
+        //更新单据状态和拣货状态
+        Boolean update = updateStatusByIdList(Arrays.asList(id), SoB2cDeliveryStatusEnum.WAIT_HANDLE.getStatus(), Boolean.FALSE);
+        if (!update) {
+            throw new ServiceException("取消打印拣货单");
+        }
+        operateLogService.addModuleOperateLog("取消打印了一张拣货单【%s】", ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), soB2cDeliveryEntity.getId(), "取消打印拣货单");
+        return BatchResultDTO.success(soB2cDeliveryEntity.getId(), soB2cDeliveryEntity.getCode(), OperationTypeEnum.UPDATE);
     }
 
     @Override
@@ -814,6 +796,51 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         soOutstockService.generateB2cSoOutstock(generateB2cDTO);
 
+    }
+
+    @Override
+    public BatchResultDTO finishPrint(String id) {
+        SoB2cDeliveryEntity soB2cDeliveryEntity = this.getById(id);
+        if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
+            throw new ServiceException(ApiError.B2C_SO_DELIVERY_NOT_EXISTS);
+        }
+        if (!StrUtil.equals(soB2cDeliveryEntity.getStatus(),SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode())) {
+            throw new ServiceException(ApiError.B2C_SO_DELIVERY_FINISH_PRINT,soB2cDeliveryEntity.getCode());
+        }
+
+        //查询是否冻结
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(Arrays.asList(soB2cDeliveryEntity.getSourceId()));
+        for (SoB2cEntity soB2cEntity : soB2cEntities) {
+            if (soB2cEntity.getIsFrozen()) {
+                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+            }
+        }
+        //更新单据状态和拣货状态
+        Boolean update = updateStatusByIdList(Arrays.asList(id), SoB2cDeliveryStatusEnum.PICKING.getStatus(), Boolean.TRUE);
+        if (!update) {
+            throw new ServiceException("完成打印失败");
+        }
+        operateLogService.addModuleOperateLog("打印了一张拣货单【%s】", ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), soB2cDeliveryEntity.getId(), "打印拣货单");
+        return BatchResultDTO.success(soB2cDeliveryEntity.getId(), soB2cDeliveryEntity.getCode(), OperationTypeEnum.UPDATE);
+    }
+
+    /**
+     * @description: 根据id集合更新修改状态
+     * @author Will
+     * @date: 2024/4/17 10:58
+     * @param idList
+     * @param status
+     * @return Boolean
+     */
+    private Boolean updateStatusByIdList(List<String> idList,String status,Boolean isPrintPicking) {
+        if (CollectionUtils.isEmpty(idList)) {
+            return Boolean.FALSE;
+        }
+        return lambdaUpdate().in(SoB2cDeliveryEntity::getId,idList).set(SoB2cDeliveryEntity::getStatus,status)
+                .set(SoB2cDeliveryEntity::getIsPrintPicking,isPrintPicking)
+                .set(isPrintPicking,SoB2cDeliveryEntity::getFinishPrintTime,LocalDateTime.now())
+                .set(!isPrintPicking,SoB2cDeliveryEntity::getFinishPrintTime,null)
+                .update();
     }
 
     private List<SoB2cDeliveryEntity> listBySoB2cId(String soB2cId) {

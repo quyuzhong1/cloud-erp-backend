@@ -397,6 +397,12 @@ public class SoB2cDeliveryDTO implements Serializable {
         private LocalDateTime deliveryTime;
 
         /**
+         * 完成打印时间【可排序】
+         */
+        private LocalDateTime finishPrintTime;
+
+
+        /**
          * 组包状态  not 不需要  wait 待组包   already 已经组包
          *
          */
