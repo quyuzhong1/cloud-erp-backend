@@ -731,16 +731,16 @@ public class SoB2cDTO implements Serializable {
          */
         private Boolean isPass;
         private String id;
-        
+
         private Map<String,Object> map;
-        
+
         private List<SoB2cDetailEntity> soB2cDetailList;
 
         /**
          * 是否自动获取跟踪单号
          */
         private Boolean autoGetTrackNo;
-        
+
 
 
     }
@@ -2083,24 +2083,290 @@ public class SoB2cDTO implements Serializable {
          */
         private String categoryNames;
 
-        /**
-         * 物流信息
-         */
-        private SoB2cLogisticsDTO.ViewDTO logistics;
+        //----------------------------------------------------------物流信息-----------------------------------------------------
 
         /**
-         * 买家信息
+         * 物流渠道名
          */
-        private SoB2cReceiverDTO.ViewDTO receiver;
+        private String logisticsChannelName;
+
 
         /**
-         * 原币别财务数据
+         * 物流渠道id
          */
-        private  FinancialInfoDTO sourceFinance;
+        private String logisticsChannelId;
 
         /**
-         * 本位币财务信息
+         * 包装辅料sku编码
          */
-        private  FinancialInfoDTO baseFinance;
+        private String accessoriesSkuNo;
+
+        /**
+         * 物流跟踪单
+         */
+        private String logisticsCode;
+
+        /**
+         * 买家自选物流名称
+         */
+        private String name;
+
+        /**
+         * 发货时间
+         */
+        private LocalDateTime deliveryTime;
+
+        /**
+         * 预估运费
+         */
+        private BigDecimal estimatedShippingCost;
+
+        /**
+         * 预估运费币别
+         */
+        private String estimatedShippingCurrency;
+
+        /**
+         * 实际运费
+         */
+        private BigDecimal actualShippingCost;
+
+        /**
+         * 实际运费币别
+         */
+        private String actualShippingCurrency;
+
+        /**
+         * 包装重量
+         */
+        private BigDecimal weight;
+
+        /**
+         * 包装辅料skuId http://172.16.100.11:3002/project/47/interface/api/19600
+         */
+        private String accessoriesSkuId;
+
+        /**
+         * 包装辅料数量
+         */
+        private Integer accessoriesQty;
+
+        /**
+         * 包装辅料净重
+         */
+        private BigDecimal accessoriesNw;
+
+        /**
+         * 包装辅料费
+         */
+        private BigDecimal accessoriesCost;
+
+        /**
+         * 包装辅料费币别
+         */
+        private String accessoriesCostCurrency;
+
+        /**
+         * 长
+         */
+        private BigDecimal length;
+
+        /**
+         * 宽
+         */
+        private BigDecimal width;
+
+        /**
+         * 高
+         */
+        private BigDecimal height;
+
+        //-------------------------------------------- 买家信息 ---------------------------------------------------------------------------------------
+
+        /**
+         * 买家全名
+         */
+        private String buyerName;
+
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
+
+        /**
+         * 买家登录id
+         */
+        private String loginId;
+
+        /**
+         * 买家id
+         */
+        private String customerId;
+
+        /**
+         * 邮箱
+         */
+        private String email;
+
+        /**
+         * 买家电话
+         */
+        private String telNumber;
+
+        /**
+         * 收货地址1
+         */
+        private String firstAddress;
+
+        /**
+         * 收货地址2
+         */
+        private String secondAddress;
+
+        /**
+         * 城市名称
+         */
+        private String cityName;
+
+        /**
+         * 国家 来源 http://172.16.100.11:3002/project/36/interface/api/13390
+         */
+        private String country;
+
+        /**
+         *省/州
+         */
+        private String provinceName;
+
+        /**
+         *区
+         */
+        private String districtName;
+
+        /**
+         * 收货人名称
+         */
+        private String receiverName;
+
+        /**
+         * 收货人电话
+         */
+        private String receiverTelNumber;
+
+        /**
+         * 邮编
+         */
+        private String postCode;
+
+        /**
+         * 街道详细地址
+         */
+        private String fullAddress;
+
+        /**
+         * 收件人税号
+         */
+        private String receiverTaxNo;
+
+        //------------------------------------------------ 财务信息(原始信息) ----------------------------------------------------
+
+        /**
+         * 订单总金额
+         */
+        private BigDecimal sourceFinanceAmount;
+
+        /**
+         * 运费收入
+         */
+        private BigDecimal sourceFinanceShippingCost;
+
+        /**
+         * 商品成本
+         */
+        private BigDecimal sourceItemCost;
+
+        /**
+         * 物流成本
+         */
+        private BigDecimal sourceLogisticsCost;
+
+        /**
+         * 平台费
+         */
+        private BigDecimal sourcePlatformCost;
+
+        /**
+         * 转账费
+         */
+        private BigDecimal sourcePaypalCost;
+
+        /**
+         * 包装辅料费
+         */
+        private BigDecimal sourceFinanceAccessoriesCost;
+
+        /**
+         * VAT税费
+         */
+        private BigDecimal sourceVatCost;
+
+        //-------------------------------------------------------本位币信息 --------------------------------------------------
+
+        /**
+         * 订单总金额
+         */
+        private BigDecimal financeAmount;
+
+        /**
+         * 运费收入
+         */
+        private BigDecimal financeShippingCost;
+
+        /**
+         * 商品成本
+         */
+        private BigDecimal itemCost;
+
+        /**
+         * 物流成本
+         */
+        private BigDecimal logisticsCost;
+
+        /**
+         * 平台费
+         */
+        private BigDecimal platformCost;
+
+        /**
+         * 转账费
+         */
+        private BigDecimal paypalCost;
+
+        /**
+         * 包装辅料费
+         */
+        private BigDecimal financeAccessoriesCost;
+
+        /**
+         * VAT税费
+         */
+        private BigDecimal vatCost;
+
+        /**
+         * 平台费类型
+         */
+        private String platformCostType;
+
+        /**
+         * 转账费类型
+         */
+        private String transferCostType;
+
+        /**
+         * VAT税费类型
+         */
+        private String vatCostType;
+
     }
 }

@@ -104,25 +104,6 @@
         <result column="warehouseLocation" property="warehouseLocation"/>
         <result column="buyerRemark" property="buyerRemark"/>
         <result column="remark" property="remark"/>
-        <association property="logistics" javaType="com.erp.model.oms.dto.SoB2cLogisticsDTO$ViewDTO">
-            <result column="name" property="name"/>
-            <result column="logisticsCode" property="code"/>
-            <result column="logisticsChannelName" property="logisticsChannelName"/>
-            <result column="deliveryTime" property="deliveryTime"/>
-            <result column="estimatedShippingCost" property="estimatedShippingCost"/>
-            <result column="estimatedShippingCurrency" property="estimatedShippingCurrency"/>
-            <result column="actualShippingCost" property="actualShippingCost"/>
-            <result column="actualShippingCurrency" property="actualShippingCurrency"/>
-            <result column="weight" property="weight"/>
-            <result column="accessoriesSkuId" property="accessoriesSkuId"/>
-            <result column="accessoriesQty" property="accessoriesQty"/>
-            <result column="accessoriesNw" property="accessoriesNw"/>
-            <result column="accessoriesCost" property="accessoriesCost"/>
-            <result column="accessoriesCostCurrency" property="accessoriesCostCurrency"/>
-            <result column="length" property="length"/>
-            <result column="width" property="width"/>
-            <result column="height" property="height"/>
-        </association>
         <association property="receiver" javaType="com.erp.model.oms.dto.SoB2cReceiverDTO$ViewDTO">
             <result column="loginId" property="loginId"/>
             <result column="buyerName" property="name"/>
@@ -153,6 +134,25 @@
             <result column="transferCostType" property="transferCostType"/>
             <result column="vatCostType" property="vatCostType"/>
         </association>
+        <collection property="logistics" ofType="com.erp.model.oms.dto.SoB2cLogisticsDTO$ViewDTO">
+            <result column="name" property="name"/>
+            <result column="logisticsCode" property="code"/>
+            <result column="logisticsChannelName" property="logisticsChannelName"/>
+            <result column="deliveryTime" property="deliveryTime"/>
+            <result column="estimatedShippingCost" property="estimatedShippingCost"/>
+            <result column="estimatedShippingCurrency" property="estimatedShippingCurrency"/>
+            <result column="actualShippingCost" property="actualShippingCost"/>
+            <result column="actualShippingCurrency" property="actualShippingCurrency"/>
+            <result column="weight" property="weight"/>
+            <result column="accessoriesSkuId" property="accessoriesSkuId"/>
+            <result column="accessoriesQty" property="accessoriesQty"/>
+            <result column="accessoriesNw" property="accessoriesNw"/>
+            <result column="accessoriesCost" property="accessoriesCost"/>
+            <result column="accessoriesCostCurrency" property="accessoriesCostCurrency"/>
+            <result column="length" property="length"/>
+            <result column="width" property="width"/>
+            <result column="height" property="height"/>
+        </collection>
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -770,7 +770,7 @@
     </select>
 
     <!-- B2C销售订单导出 -->
-    <select id="exportExcel" resultMap="ExportResultMap">
+    <select id="exportExcel" resultType="com.erp.model.oms.dto.SoB2cDTO$ExcelExportDTO">
         select
         <include refid="Export_Column_List"></include>
         from so_b2c sb2c
