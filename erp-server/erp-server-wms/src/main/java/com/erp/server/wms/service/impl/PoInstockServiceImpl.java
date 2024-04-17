@@ -394,12 +394,15 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 List<WarehouseReceiveDetailEntity> receiveList = receiveDetailList.stream()
                         .filter(req -> req.getPurchaseOrderDetailId().equals(poInstockDetailEntity.getPurchaseOrderDetailId())
                                 && req.getMainId().equals(poInstockEntity.getSourceId())
+                                && req.getId().equalsIgnoreCase(poInstockDetailEntity.getSourceDetailId())
                                 && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(receiveList)){
                     Integer receiveQty = receiveList.stream().map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                     //已退货数量（质检退货）
                     Integer returnQty = returnOrderDetailList.stream().filter(e -> Objects.equals(e.getPurchaseOrderDetailId(), poInstockDetailEntity.getPurchaseOrderDetailId())
 //                                    && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode())
+                                    && StrUtils.isNotEmpty(e.getSourceId())
+                                    && e.getSourceId().equals(poInstockEntity.getId())
                                     && StrUtils.isNotEmpty(e.getPurchaseOrderDetailId())
                                     && ReturnOrderSourceEnum.QC.getCode().equals(e.getSourceType())
                                     && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
