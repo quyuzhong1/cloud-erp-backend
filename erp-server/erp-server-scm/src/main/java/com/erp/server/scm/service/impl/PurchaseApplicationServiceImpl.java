@@ -727,7 +727,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         //供应商信息
-        List<String> supplierIdList = skuList.stream().filter(obj -> StringUtils.isNotBlank(obj.getSupplierId())).map(SkuVO::getSupplierId).collect(Collectors.toList());
+        List<String> supplierIdList = skuList.stream().filter(obj -> StringUtils.isNotBlank(obj.getSupplierId()))
+                .map(SkuVO::getSupplierId).collect(Collectors.toList());
         List<SupplierEntity> supplierList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(supplierIdList)) {
             supplierList = supplierService.listByIds(supplierIdList);
@@ -740,21 +741,25 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             Integer purchaseQty = MathUtil.ZERO;
             Integer subcontractQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(subcontractOrderDetailList)) {
-                subcontractQty = subcontractOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(viewDTO.getSourceDetailId()) && StringUtils.isBlank(obj.getParentId())).map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+                subcontractQty = subcontractOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(viewDTO.getSourceDetailId()) && StringUtils.isBlank(obj.getParentId()))
+                        .map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             //查询已采购数量
             if (CollectionUtils.isNotEmpty(refList)) {
-                purchaseQty = refList.stream().filter(obj -> viewDTO.getSourceDetailId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(0, Integer::sum);
+                purchaseQty = refList.stream().filter(obj -> viewDTO.getSourceDetailId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty)
+                        .reduce(0, Integer::sum);
             }
             pushdownQty = purchaseQty+subcontractQty;
             if (MathUtil.compareTo(viewDTO.getQty(),pushdownQty) == MathUtil.ZERO) {
                 continue;
             }
             //产品信息
-            String supplierId = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
+            String supplierId = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
             viewDTO.setSupplierId(supplierId);
             //付款条件
-            String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(supplierId) && StringUtils.isNotBlank(obj.getPaymentCondition())).map(SupplierEntity::getPaymentCondition).findFirst().orElse("");
+            String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(supplierId) && StringUtils.isNotBlank(obj.getPaymentCondition()))
+                    .map(SupplierEntity::getPaymentCondition).findFirst().orElse("");
             viewDTO.setPaymentCondition(paymentCondition);
 
             //可下推数量
@@ -768,7 +773,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             viewDTO.setIndex(index);
             index++;
             //填充BOM子件信息
-            List<BomChildrenSkuDTO> childList = bomChildList.stream().filter(obj -> obj.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> childList = bomChildList.stream().filter(obj -> obj.getParentSkuId().equals(viewDTO.getSkuId()) && StrUtil.equals(obj.getType(),BomTypeEnum.SINGLE.getType())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(childList)) {
                 throw new ServiceException(ApiError.ERROR_98093);
             }
@@ -778,7 +783,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 BeanMapperUtils.copy(viewDTO,viewGenerateDTO);
 
                 //产品信息
-                String childSupplierId = skuList.stream().filter(obj -> obj.getSkuId().equals(childrenSkuDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
+                String childSupplierId = skuList.stream().filter(obj -> obj.getSkuId().equals(childrenSkuDTO.getSkuId())).findFirst()
+                        .flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
                 viewGenerateDTO.setSupplierId(childSupplierId);
                 viewGenerateDTO.setSkuId(childrenSkuDTO.getSkuId());
                 viewGenerateDTO.setSkuNo(childrenSkuDTO.getSkuNo());
@@ -1146,27 +1152,33 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             //委外数量
             Integer subcontractQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(subcontractOrderDetailList)) {
-                subcontractQty = subcontractOrderDetailList.stream().filter(v -> v.getSourceDetailId().equals(obj.getPurchaseApplicationDetailId()) && StringUtils.isBlank(v.getParentId())).map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+                subcontractQty = subcontractOrderDetailList.stream().filter(v -> v.getSourceDetailId().equals(obj.getPurchaseApplicationDetailId()) && StringUtils.isBlank(v.getParentId()))
+                        .map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             //采购数量
             Integer purchaseQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(refList)) {
-                purchaseQty = refList.stream().filter(e -> e.getPurchaseApplicationDetailId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+                purchaseQty = refList.stream().filter(e -> e.getPurchaseApplicationDetailId().equals(obj.getPurchaseApplicationDetailId()))
+                        .map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             obj.setRealPurchaseQty(purchaseQty+subcontractQty);
             //入库数量
             if (CollectionUtils.isNotEmpty(purchaseStockInDetailList)) {
-                List<String> thisPodIds = refList.stream().filter(e -> e.getPurchaseApplicationDetailId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+                List<String> thisPodIds = refList.stream().filter(e -> e.getPurchaseApplicationDetailId().equals(obj.getPurchaseApplicationDetailId()))
+                        .map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(thisPodIds)) {
-                    Integer stockInQty = purchaseStockInDetailList.stream().filter(e -> thisPodIds.contains(e.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                    Integer stockInQty = purchaseStockInDetailList.stream().filter(e -> thisPodIds.contains(e.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
+                            .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                     obj.setStockInQty(stockInQty);
                 }
             }
             //收货数量
             if (CollectionUtils.isNotEmpty(receiveDetailList)) {
-                List<String> thisPodIds = refList.stream().filter(e -> e.getPurchaseApplicationDetailId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+                List<String> thisPodIds = refList.stream().filter(e -> e.getPurchaseApplicationDetailId().equals(obj.getPurchaseApplicationDetailId())).
+                        map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(thisPodIds)) {
-                    Integer receiveQty = receiveDetailList.stream().filter(e -> thisPodIds.contains(e.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                    Integer receiveQty = receiveDetailList.stream().filter(e -> thisPodIds.contains(e.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
+                            .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                     obj.setReceiveQty(receiveQty);
                 }
             }
