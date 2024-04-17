@@ -7,6 +7,7 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -23,7 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -72,6 +75,11 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
 
+        //查询订单物流信息获取跟踪号
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
+        //设置物流跟踪单号
+        String trackNo = soB2cLogisticsEntities.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).map(req -> req.getTrackNo()).findFirst().orElse("");
+
         if (Objects.nonNull(dto.getWeight())) {
             if (Objects.isNull(dto.getWeightUnit())) {
                 throw new ServiceException("称重单位不能为空");
@@ -79,6 +87,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             if (Objects.isNull(EnumMessage.getNameByCode(UnitEnum.WeightUnitEnum.class, dto.getWeightUnit()))) {
                 throw new ServiceException("非法称重单位");
             }
+
             entity.setWeight(dto.getWeight());
             entity.setWeightUnit(dto.getWeightUnit());
             entity.setIsWeigh(true);
@@ -94,7 +103,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             //如果是待上传或上传失败则直接返回
             if (StrUtil.equals(soB2cEntity.getTransferStatus(),TransferStatusEnum.WAIT.getCode()) || StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
                     StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
-                return this.buildViewDTO(entity,soB2cEntity.getTransferStatus(),declareDetailEntity.getOrderUploadStatus());
+                return this.buildViewDTO(entity,soB2cEntity.getTransferStatus(),declareDetailEntity.getOrderUploadStatus(), trackNo);
             }
             //将发货状态更新为已发货
             entity.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
@@ -106,7 +115,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             soB2cDeliveryService.generateB2cSoOutstock(entity);
 
         }
-        return this.buildViewDTO(entity,soB2cEntity.getTransferStatus(),declareDetailEntity.getOrderUploadStatus());
+        return this.buildViewDTO(entity,soB2cEntity.getTransferStatus(),declareDetailEntity.getOrderUploadStatus(), trackNo);
     }
 
     @Override
@@ -123,11 +132,12 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
         }
     }
 
-    private WeightingOutboundDTO.ViewDTO buildViewDTO(SoB2cDeliveryEntity entity,String transferStatus,String orderUploadStatus) {
+    private WeightingOutboundDTO.ViewDTO buildViewDTO(SoB2cDeliveryEntity entity,String transferStatus,String orderUploadStatus, String trackNo) {
         return WeightingOutboundDTO.ViewDTO.builder()
                 .id(entity.getId())
                 .code(entity.getSoCode())
                 .transportNo(entity.getTransportNo())
+                .trackNo(trackNo)
                 .weight(entity.getWeight())
                 .weightUnit(entity.getWeightUnit())
                 .status(entity.getIsWeigh())

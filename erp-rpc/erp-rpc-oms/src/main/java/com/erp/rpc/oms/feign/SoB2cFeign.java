@@ -31,6 +31,14 @@ public interface SoB2cFeign {
     List<SoB2cLogisticsEntity> listSoB2cLogisticsByMainIdList(@RequestBody List<String> mainIdList);
 
     /**
+     * 根据跟踪单号查询订单物流信息
+     * @param trackNo
+     * @return
+     */
+    @PostMapping("/feign/soB2c/getSoB2cLogisticsByTrackNo")
+    SoB2cLogisticsEntity getSoB2cLogisticsByTrackNo(@RequestBody String trackNo);
+
+    /**
      * 根据订单id 获取到运费估算的参数值
      *
      * @param orderId
