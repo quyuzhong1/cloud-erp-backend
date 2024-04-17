@@ -236,7 +236,7 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @date 2024/4/17 10:57
      * @param dtos
      */
-    List<InventoryDTO.InventoryQtyDTO> getInventoryQty(List<InventoryDTO.InventoryBySkuIdAndWarehouseDTO> dtos);
+    List<InventoryDTO.InventoryViewQtyDTO> getInventoryQty(List<InventoryDTO.InventoryBySkuIdAndWarehouseDTO> dtos);
     /**
      * PDA:库存查询
      *

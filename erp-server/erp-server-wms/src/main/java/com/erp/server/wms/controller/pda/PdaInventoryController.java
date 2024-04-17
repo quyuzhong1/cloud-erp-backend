@@ -54,7 +54,7 @@ public class PdaInventoryController extends BaseController {
      * @param dtos
      */
     @PostMapping(value = "/getInventoryQty")
-    public ApiResult<List<InventoryDTO.InventoryQtyDTO>> getInventoryByParam(@RequestBody ValidList<InventoryDTO.InventoryBySkuIdAndWarehouseDTO> dtos) {
+    public ApiResult<List<InventoryDTO.InventoryViewQtyDTO>> getInventoryByParam(@RequestBody ValidList<InventoryDTO.InventoryBySkuIdAndWarehouseDTO> dtos) {
         return success(inventoryService.getInventoryQty(dtos.getList()));
     }
 

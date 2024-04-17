@@ -1330,6 +1330,34 @@ public class InventoryDTO implements Serializable {
          */
         private Integer frozenQty;
     }
+    @Data
+    @NoArgsConstructor
+    public static class InventoryViewQtyDTO {
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+        /**
+         * 实际库存
+         */
+        private Integer realQty = 0;
+        /**
+         * 可用库存
+         */
+        private Integer usableQty = 0;
+        /**
+         * 冻结库存
+         */
+        private Integer frozenQty = 0;
+    }
 
     @Data
     @NoArgsConstructor

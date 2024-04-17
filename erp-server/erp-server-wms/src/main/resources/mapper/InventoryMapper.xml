@@ -465,7 +465,7 @@
         </if>
         GROUP BY it.warehouse_id, it.org_id, it.sku_id
     </select>
-    <select id="getInventoryInfoByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$InventoryQtyDTO">
+    <select id="getInventoryInfoByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$InventoryViewQtyDTO">
         SELECT
             it.warehouse_id,
             it.org_id,

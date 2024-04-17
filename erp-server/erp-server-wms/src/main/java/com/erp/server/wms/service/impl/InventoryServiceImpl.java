@@ -881,14 +881,21 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public List<InventoryDTO.PdaInventoryDTO> getInventoryByParam(InventoryDTO.PdaSearchParamDTO dto) {
         return baseMapper.getInventoryByParam(dto);
     }
+
     @Override
-    public List<InventoryDTO.InventoryQtyDTO> getInventoryQty(List<InventoryDTO.InventoryBySkuIdAndWarehouseDTO> dtos) {
-        if (CollectionUtils.isEmpty(dtos)){
+    public List<InventoryDTO.InventoryViewQtyDTO> getInventoryQty(List<InventoryDTO.InventoryBySkuIdAndWarehouseDTO> dtos) {
+        if (CollectionUtils.isEmpty(dtos)) {
             return new ArrayList<>();
         }
-        List<InventoryDTO.InventoryQtyDTO> list = new ArrayList<>();
-        dtos.forEach(dto->{
-            InventoryDTO.InventoryQtyDTO inventoryQtyDTO = baseMapper.getInventoryInfoByParam(dto);
+        List<InventoryDTO.InventoryViewQtyDTO> list = new ArrayList<>();
+        dtos.forEach(dto -> {
+            InventoryDTO.InventoryViewQtyDTO inventoryQtyDTO = baseMapper.getInventoryInfoByParam(dto);
+            if (Objects.isNull(inventoryQtyDTO)) {
+                inventoryQtyDTO = new InventoryDTO.InventoryViewQtyDTO();
+                inventoryQtyDTO.setSkuId(dto.getSkuId());
+                inventoryQtyDTO.setWarehouseId(dto.getWarehouseId());
+                inventoryQtyDTO.setWarehouseLocation(dto.getWarehouseLocation());
+            }
             list.add(inventoryQtyDTO);
         });
         return list;
