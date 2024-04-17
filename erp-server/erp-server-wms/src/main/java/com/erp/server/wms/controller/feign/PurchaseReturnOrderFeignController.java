@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -42,6 +43,14 @@ public class PurchaseReturnOrderFeignController extends BaseController {
     @PostMapping("/listDetailBySourceDetailIds")
     public List<PoReturnDetailEntity> listBySourceDetailIds(@RequestBody List<String> SourceDetailIds) {
         return poReturnDetailService.listBySourceDetailIds(SourceDetailIds);
+    }
+
+    @PostMapping("/listPurchaseReturnOrderDetailByMainIds")
+    public List<PoReturnDetailEntity> listPurchaseReturnOrderDetailByMainIds(@RequestBody List<String> mainIds) {
+        if(CollectionUtils.isEmpty(mainIds)){
+            return new ArrayList<>();
+        }
+        return poReturnDetailService.listByMainIds(mainIds);
     }
 
     /**

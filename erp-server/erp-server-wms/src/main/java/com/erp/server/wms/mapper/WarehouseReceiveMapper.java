@@ -106,4 +106,5 @@ public interface WarehouseReceiveMapper extends BaseMapper<WarehouseReceiveEntit
      */
     List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIds(@Param(value = "purchaseOrderIds") List<String> purchaseOrderIds);
 
+    List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIdsAll(@Param(value = "purchaseOrderIds") List<String> purchaseOrderIds);
 }

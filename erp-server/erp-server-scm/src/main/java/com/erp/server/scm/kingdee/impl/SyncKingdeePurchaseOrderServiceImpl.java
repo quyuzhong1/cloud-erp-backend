@@ -23,6 +23,8 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.scm.entity.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
+import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -97,6 +99,17 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             }
             //委外订单明细
             subcontractOrderDetailList = subcontractOrderDetailService.listByMainId(subcontractOrderEntity.getId());
+        }
+
+        PoReturnEntity poReturnEntity = null;
+        List<PoReturnDetailEntity> poReturnDetailEntityList = null;
+        if (SourceTypeEnum.PO_RETURN.getCode().equals(entity.getSourceType())) {
+            List<PoReturnEntity> poReturnEntityList = wmsTaskFeign.listPoReturnByIdList(Arrays.asList(entity.getSourceId()));
+            poReturnEntity = poReturnEntityList.stream().findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(poReturnEntity)) {
+                throw new ServiceException(ApiError.PO_RETURN_NOT_EXISTS);
+            }
+            poReturnDetailEntityList = wmsTaskFeign.listPurchaseReturnOrderDetailByMainIds(Arrays.asList(poReturnEntity.getId()));
         }
 
         //业务id
@@ -228,6 +241,26 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
                     jsonObject.set("refList",refList);
                 }
             }
+
+            if (SourceTypeEnum.PO_RETURN.getCode().equals(entity.getSourceType())) {
+                jsonObject.set("detailSourceType", KingdeePushModuleEnum.PUR_MRB.getCode());
+                List<Map<String,Object>> refList = new ArrayList<>();
+                JSONObject refJsonObject = new JSONObject();
+                if (ObjectUtils.isNotEmpty(poReturnEntity)) {
+                    jsonObject.set("refCode", poReturnEntity.getCode());
+                    refJsonObject.set("refKingdeeId",poReturnEntity.getSyncKingdeeId());
+                    String detailKingdeeId = poReturnDetailEntityList.stream()
+                            .filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeDetailId()))
+                            .orElse("");
+                    if(StringUtils.isNotBlank(detailKingdeeId)){
+                        refJsonObject.set("refDetailKingdeeId",detailKingdeeId);
+                        refJsonObject.set("linkRule","PUR_MRB-PUR_PurchaseOrder");
+                        refJsonObject.set("linkTable","T_PUR_MRBENTRY");
+                        refList.add(refJsonObject);
+                        jsonObject.set("refList",refList);
+                    }
+                }
+            }
             list.add(jsonObject);
         }
         resultMap.put("list",list);
@@ -257,6 +290,9 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         taskFeignDTO.setSyncOperate(operate);
         if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType()) && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())) {
+            taskFeignDTO.setParentId(entity.getSourceId());
+        }
+        if (SourceTypeEnum.PO_RETURN.getCode().equals(entity.getSourceType())) {
             taskFeignDTO.setParentId(entity.getSourceId());
         }
         dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
