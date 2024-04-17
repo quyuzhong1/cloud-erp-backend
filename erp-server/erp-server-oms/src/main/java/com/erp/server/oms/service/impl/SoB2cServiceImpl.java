@@ -14,7 +14,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessCommonConstants;
-import com.common.business.constant.SearchType;
 import com.common.business.dto.*;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -70,7 +69,6 @@ import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.oms.aliexpress.api.IopResponse;
 import com.erp.oms.aliexpress.dto.response.AliExpressAscpFfoQueryResponse;
 import com.erp.oms.aliexpress.dto.response.DataListBean;
@@ -91,6 +89,7 @@ import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.convert.WalmartShipOrderConverter;
 import com.erp.server.oms.mapper.SoB2cMapper;
+import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -262,6 +261,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private SoOutstockFeign soOutstockFeign;
 
+    @Resource
+    private SoB2cQueryHandler soB2cQueryHandler;
+
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -329,22 +331,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cDTO.PagingParamDTO searchParamDTO = new SoB2cDTO.PagingParamDTO();
             searchParamDTO.setPermissionSql(param.getPermissionSql());
             SoB2cDTO.TabListDTO resultDTO = new SoB2cDTO.TabListDTO();
-            //搜索类型
-            searchParamDTO.setTabFlag(item.getCode());
-            //列表Tab查询状态处理
-            Boolean isFlag = handleTableParam(searchParamDTO);
+            String tabSql = soB2cQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            searchParamDTO.setSqlMap(map);
+            //查询店铺设置权限
             Integer count = MathUtil.ZERO;
-            if (isFlag) {
-                //查询店铺设置权限
-                SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
-                if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
-                    count = MathUtil.ZERO;
-                } else {
-                    count = this.baseMapper.listCount(searchParamDTO, shopAuthResultDTO);
-                }
+            SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
+            if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
+                count = MathUtil.ZERO;
+            } else {
+                count = this.baseMapper.listCount(searchParamDTO, shopAuthResultDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
             list.add(resultDTO);
         }
         return list;
@@ -3080,93 +3081,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cEntity.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
         }
 
-    }
-
-    /**
-     * @param params
-     * @return Boolean
-     * @description: 列表查询数量状态处理
-     * @author Will
-     * @date: 2023/8/21 12:16
-     */
-    private Boolean handleTableParam(SoB2cDTO.PagingParamDTO params) {
-        //审核状态
-        List<String> approveStatusList = new ArrayList<>(1);
-        //付款状态
-        List<String> payStatusList = new ArrayList<>(1);
-        //单据状态
-        List<String> billStatusList = new ArrayList<>(1);
-
-
-        // 全部
-        if (SearchType.ALL.equals(params.getTabFlag())) {
-            params.setInvalidStatus(Boolean.FALSE);
-        }
-
-        // 待付款
-        if (SoB2cTabEnum.ENUM_PAYMENT.getCode().equals(params.getTabFlag())) {
-            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
-            params.setInvalidStatus(Boolean.FALSE);
-        }
-        //待处理
-        if (SoB2cTabEnum.ENUM_PENDING.getCode().equals(params.getTabFlag())) {
-            params.setInvalidStatus(Boolean.FALSE);
-            params.setPayStatusList(Arrays.asList(SoB2cPayStatusEnum.ENUM_PAID.getCode()));
-        }
-        //审核中
-        if (SoB2cTabEnum.ENUM_APPROVE_ING.getCode().equals(params.getTabFlag())) {
-            approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-            params.setInvalidStatus(Boolean.FALSE);
-        }
-        //待配货
-        if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION.getCode().equals(params.getTabFlag())) {
-            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
-            billStatusList.add(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
-            params.setInvalidStatus(Boolean.FALSE);
-        }
-        //配货中
-        if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION.getCode().equals(params.getTabFlag())) {
-            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
-            billStatusList.add(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-            billStatusList.add(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
-            params.setInvalidStatus(Boolean.FALSE);
-        }
-        //待发货
-        if (SoB2cTabEnum.ENUM_WAIT_SHIPPED.getCode().equals(params.getTabFlag())) {
-            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
-            billStatusList.add(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-            params.setInvalidStatus(Boolean.FALSE);
-        }
-        //已发货
-        if (SoB2cTabEnum.ENUM_SHIPPED.getCode().equals(params.getTabFlag())) {
-            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
-            billStatusList.add(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-            params.setInvalidStatus(Boolean.FALSE);
-        }
-        //冻结中
-        if (SoB2cTabEnum.ENUM_FROZEN.getCode().equals(params.getTabFlag())) {
-            billStatusList.add(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
-            params.setInvalidStatus(Boolean.FALSE);
-        }
-        //已作废
-        if (SoB2cTabEnum.ENUM_INVALID.getCode().equals(params.getTabFlag())) {
-            params.setInvalidStatus(Boolean.TRUE);
-        }
-        //订单异常
-        if (SoB2cTabEnum.ENUM_ORDER_ERROR.getCode().equals(params.getTabFlag())) {
-            params.setIsOrderError(Boolean.TRUE);
-        }
-
-        if (CollectionUtils.isNotEmpty(approveStatusList)) {
-            params.setApproveStatusList(approveStatusList);
-        }
-        if (CollectionUtils.isNotEmpty(billStatusList)) {
-            params.setBillStatusList(billStatusList);
-        }
-        if (CollectionUtils.isNotEmpty(payStatusList)) {
-            params.setPayStatusList(payStatusList);
-        }
-        return Boolean.TRUE;
     }
 
     /**
