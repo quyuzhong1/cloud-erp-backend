@@ -64,7 +64,7 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
          /**
          * sku编号
          */
-         private List<LocalDate> skuNoList;
+         private List<String> skuNoList;
 
          /**
          * 作废状态
@@ -182,7 +182,7 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         /**
          * sku编号
          */
-        private List<LocalDate> skuNoList;
+        private List<String> skuNoList;
 
         /**
          * 仓库id
