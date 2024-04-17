@@ -175,8 +175,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         }
         //待处理
         if (SoB2cTabEnum.ENUM_PENDING.getCode().equals(value)) {
-            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
-            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+            return "sb2c.invalid_status = false and sb2c.pay_status = 'paid' and (sb2c.approve_status in ('waitSubmit','reject') or (sb2c.approve_status = 'approve' and sb2c.abnormal_type = 'distributionReject'))";
         }
         //审核中
         if (SoB2cTabEnum.ENUM_APPROVE_ING.getCode().equals(value)) {

@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 
 
@@ -54,7 +53,7 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     * 平台 产品id
     */
     @TableField("platform_spu_no")
-     private String platformSpuNo;
+         private String platformSpuNo;
     /**
     * 库存sku编号
     */
