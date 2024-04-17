@@ -63,6 +63,10 @@ public class CustomerAddressDTO implements Serializable {
         @RegularValid(formatPattern= FieldFormatPatternTypeEnum.MAILBOX,message = "邮箱格式有误")
         private String email;
 
+        /**
+         * 邮编
+         */
+        private String zipCode;
 
         /**
          * 是否默认
@@ -127,8 +131,10 @@ public class CustomerAddressDTO implements Serializable {
          * 邮箱
          */
         private String email;
-
-
+        /**
+         * 邮编
+         */
+        private String zipCode;
         /**
          * 是否默认
          * true 是

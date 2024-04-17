@@ -774,6 +774,10 @@ public class SoB2cDTO implements Serializable {
          */
         private SoB2cLogisticsDTO.AddDTO logisticsDTO;
         /**
+         * 是否添加买家 true 添加 ，false/null 不添加
+         */
+        private Boolean addBuyer;
+        /**
          * 买家信息
          */
         @NotNull(message = "买家信息不能为空")
@@ -839,6 +843,10 @@ public class SoB2cDTO implements Serializable {
          * 物流信息
          */
         private SoB2cLogisticsDTO.UpdateDTO logisticsDTO;
+        /**
+         * 是否添加买家 true 添加 ，false/null 不添加
+         */
+        private Boolean addBuyer;
         /**
          * 买家信息
          */
@@ -1660,7 +1668,14 @@ public class SoB2cDTO implements Serializable {
          * 城市名称
          */
         private String cityName;
-
+        /**
+         * 邮编
+         */
+        private String zipCode;
+        /**
+         * 国家id
+         */
+        private String countryId;
         /**
          * 国家名称
          */

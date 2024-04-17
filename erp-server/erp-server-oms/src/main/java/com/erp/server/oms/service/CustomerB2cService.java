@@ -290,7 +290,7 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * 根据条件查询
      * @param dictPlatform
      * @param name
-     * @param code
+     * @param sourceType
      * @return
      */
     CustomerB2cEntity findByPlatformAndName(String dictPlatform, String name, String sourceType);

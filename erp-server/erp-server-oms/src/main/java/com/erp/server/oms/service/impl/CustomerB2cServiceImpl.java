@@ -1381,6 +1381,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 //                viewReceiveDataDTO.setCityName(dictCityEntity.getName());
 //            }
 //        }
+        viewReceiveDataDTO.setCountryId(entity.getCountryId());
         if (StringUtils.isNotBlank(entity.getCountryId())) {
             DictCountryEntity dictCountryEntity = sysUserFeign.getCountryById(entity.getCountryId());
             if (ObjectUtils.isNotEmpty(dictCountryEntity)) {
@@ -1396,6 +1397,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
                 viewReceiveDataDTO.setReceiverTelNumber(viewDTO.getTelNumber());
                 viewReceiveDataDTO.setFirstAddress(viewDTO.getAddress());
                 viewReceiveDataDTO.setSecondAddress(viewDTO.getAddress());
+                viewReceiveDataDTO.setZipCode(viewDTO.getZipCode());
             }
         }
         //联系人

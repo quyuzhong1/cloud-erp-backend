@@ -88,6 +88,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.convert.B2cOrderConverter;
+import com.erp.server.oms.convert.CustomerInfoConverter;
 import com.erp.server.oms.convert.WalmartShipOrderConverter;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.service.*;
@@ -104,6 +105,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -261,6 +263,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private SoOutstockFeign soOutstockFeign;
 
+    @Resource
+    private CustomerB2cService customerB2cService;
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -339,6 +343,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         calculateSizeByAdd(addDTO.getLogisticsDTO(), addDTO.getDetailList());
         //新增物流信息
         soB2cLogisticsService.add(addDTO.getLogisticsDTO(), soB2cEntity.getId());
+        //TODO 如果新增客户
+        if (Objects.nonNull(addDTO.getAddBuyer()) && addDTO.getAddBuyer()){
+            CustomerB2CDTO.AddDTO dto = buildB2cCustomerAddDTO(addDTO,soB2cEntity.getId());
+            String customerId = customerB2cService.add(dto);
+            addDTO.getReceiverDTO().setCustomerId(customerId);
+        }else {
+            if (StringUtils.isBlank(addDTO.getReceiverDTO().getCustomerId())){
+                throw new ServiceException("买家id不能为空");
+            }
+        }
         //新增买家信息
         soB2cReceiverService.add(addDTO.getReceiverDTO(), soB2cEntity.getId());
         //新增明细
@@ -366,6 +380,30 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return soB2cEntity;
     }
 
+    private CustomerB2CDTO.AddDTO buildB2cCustomerAddDTO(SoB2cDTO.AddDTO addDTO, String id) {
+        SoB2cReceiverDTO.AddDTO receiverDTO = addDTO.getReceiverDTO();
+        CustomerB2CDTO.AddDTO add = CustomerInfoConverter.INSTANCE.soB2cAddToCustomerBase(addDTO,id);
+        //联系人信息
+        CustomerContactDTO.AddDTO contact = CustomerInfoConverter.INSTANCE.soB2cAddReceiveToContact(receiverDTO);
+        add.setContactList(Collections.singletonList(contact));
+        //地址信息
+        CustomerAddressDTO.AddDTO address =CustomerInfoConverter.INSTANCE.soB2cAddReceiveToAddress(receiverDTO);
+        address.setAddress(receiverDTO.getFirstAddress() + receiverDTO.getSecondAddress() + receiverDTO.getFullAddress());
+        add.setAddressList(Collections.singletonList(address));
+        return add;
+    }
+    private CustomerB2CDTO.AddDTO buildB2cCustomerUpdateDTO(SoB2cDTO.UpdateDTO updateDTO) {
+        SoB2cReceiverDTO.UpdateDTO receiverDTO = updateDTO.getReceiverDTO();
+        CustomerB2CDTO.AddDTO add = CustomerInfoConverter.INSTANCE.soB2cUpdateToCustomerBase(updateDTO);
+        //联系人信息
+        CustomerContactDTO.AddDTO contact = CustomerInfoConverter.INSTANCE.soB2cUpdateReceiveToContact(receiverDTO);
+        add.setContactList(Collections.singletonList(contact));
+        //地址信息
+        CustomerAddressDTO.AddDTO address =CustomerInfoConverter.INSTANCE.soB2cUpdateReceiveToAddress(receiverDTO);
+        address.setAddress(receiverDTO.getFirstAddress() + receiverDTO.getSecondAddress() + receiverDTO.getFullAddress());
+        add.setAddressList(Collections.singletonList(address));
+        return add;
+    }
     /**
      * 计算物流尺寸
      *
@@ -742,6 +780,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         boolean save = super.updateById(soB2cEntity);
         if (!save) {
             throw new ServiceException("B2C销售订单表保存失败");
+        }
+        //是否新增b2c客户
+        if (Objects.nonNull(updateDTO.getAddBuyer()) && updateDTO.getAddBuyer()){
+            CustomerB2CDTO.AddDTO dto = buildB2cCustomerUpdateDTO(updateDTO);
+            String customerId = customerB2cService.add(dto);
+            updateDTO.getReceiverDTO().setCustomerId(customerId);
+        }else {
+            if (StringUtils.isBlank(updateDTO.getReceiverDTO().getCustomerId())){
+                throw new ServiceException("买家id不能为空");
+            }
         }
         //计算物流尺寸
         calculateSizeByUpdate(updateDTO.getLogisticsDTO(), updateDTO.getDetailList());
