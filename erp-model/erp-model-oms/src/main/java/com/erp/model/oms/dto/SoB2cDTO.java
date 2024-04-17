@@ -401,17 +401,6 @@ public class SoB2cDTO implements Serializable {
         private Boolean isAliexpressPlatformWarehouseOrder;
     }
 
-    /**
-     * 导出Excel
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ExportDTO extends PagingParamDTO {
-        /**
-         * 勾选的id集合
-         */
-        private List<String> ids;
-    }
 
     /**
      * 详情
@@ -1908,5 +1897,210 @@ public class SoB2cDTO implements Serializable {
          * 发货时间
          */
         private LocalDateTime deliveryTime;
+    }
+
+
+    /**
+     * 分页列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExcelExportDTO {
+
+        /**
+         * 单据编码
+         */
+        private String code;
+
+        /**
+         * 销售平台
+         */
+        private String dictPlatform;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
+         * 实际运费(优先实际、没有取预估)
+         */
+        private BigDecimal shippingCost;
+
+        /**
+         * 实际运费币别
+         */
+        private String shippingCostCurrency;
+
+
+        /**
+         * 总利润
+         */
+        private BigDecimal totalProfit;
+
+        /**
+         * 利润币别（列表默认人民币）
+         */
+        private String profitCurrency;
+
+        /**
+         * 利润率
+         */
+        private BigDecimal profitRate;
+
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 单据状态
+         */
+        private String billStatus;
+
+        /**
+         * 单据状态名称
+         */
+        private String billStatusName;
+
+        /**
+         * 订单金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 币别（原币）
+         */
+        private String currency;
+
+        /**
+         * 付款时间
+         */
+        private LocalDateTime payTime;
+
+        /**
+         * 付款方式
+         */
+        private String dictPayMethod;
+
+        /**
+         * 付款方式名称
+         */
+        private String dictPayMethodName;
+
+        /**
+         * 平台产品ID
+         */
+        private String platformSpuNo;
+
+        /**
+         * 平台SKU
+         */
+        private String platformSkuNo;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 产品sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 规格属性
+         */
+        private String variantProperty;
+
+        /**
+         * 含税成本
+         */
+        private BigDecimal taxCost;
+
+        /**
+         * 订单原币金额
+         */
+        private BigDecimal sourceAmount;
+
+        /**
+         * 币别（原币）
+         */
+        private String sourceCurrency;
+
+        /**
+         * 订单本位币金额
+         */
+        private BigDecimal baseAmount;
+
+        /**
+         * 出货仓库
+         */
+        private String  warehouseName;
+
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+
+        /**
+         * 买家备注
+         */
+        private String buyerRemark;
+
+        /**
+         * 订单备注
+         */
+        private String remark;
+
+        /**
+         * 订单分类
+         */
+        private List<String> categoryList;
+
+        /**
+         * 订单分类名称
+         */
+        private String categoryNames;
+
+        /**
+         * 物流信息
+         */
+        private SoB2cLogisticsDTO.ViewDTO logistics;
+
+        /**
+         * 买家信息
+         */
+        private SoB2cReceiverDTO.ViewDTO receiver;
+
+        /**
+         * 原币别财务数据
+         */
+        private  FinancialInfoDTO sourceFinance;
+
+        /**
+         * 本位币财务信息
+         */
+        private  FinancialInfoDTO baseFinance;
     }
 }

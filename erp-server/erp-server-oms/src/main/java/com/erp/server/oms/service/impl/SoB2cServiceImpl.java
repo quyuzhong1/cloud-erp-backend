@@ -105,7 +105,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -6223,6 +6222,50 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return lambdaQuery()
                 .in(SoB2cEntity::getIsIntercept, Boolean.TRUE)
                 .list();
+    }
+
+    @Override
+    public Boolean exportExcel(SoB2cDTO.PagingParamDTO params, HttpServletResponse response) {
+        //查询店铺设置权限
+        SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
+        if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL,"B2C销售订单");
+        }
+        List<SoB2cDTO.ExcelExportDTO> records = null;
+        try {
+           records = this.baseMapper.exportExcel(params,shopAuthResultDTO);
+        } catch (Exception e) {
+            log.error(String.valueOf(e));
+        }
+        if (CollectionUtils.isEmpty(records)) {
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL,"B2C销售订单");
+        }
+        //数据赋值处理
+        handleExport(records);
+        String name = "B2C销售订单";
+        StringBuffer sb = new StringBuffer();
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        String excelPath = "excel/soB2c.xlsx";
+        try {
+            new ExcelPrintUtils().patchExport(records, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("产品认证列表导出出错 >>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * @description: 导出数据处理
+     * @author Will
+     * @date: 2024/4/16 18:42
+     * @param records
+     */
+    private void handleExport(List<SoB2cDTO.ExcelExportDTO> records) {
+
+
     }
 
     private void skuMappingCheck(SoB2cEntity entity, List<SoB2cDetailEntity> detailList) {
