@@ -120,7 +120,7 @@ public class TmsFmDeclareBillController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程报关单修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "tms:tmsDeclareBill:update",
+        menuCode = "tms:tmsFmDeclareBill:update",
         serviceClass = TmsDeclareBillService.class,
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated TmsDeclareBillDTO.UpdateDTO dto) {
@@ -164,7 +164,7 @@ public class TmsFmDeclareBillController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程报关单更新状态为已报关")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "tms:tmsDeclareBill:updateToDeclare",
+            menuCode = "tms:tmsFmDeclareBill:updateToDeclare",
             serviceClass = TmsDeclareBillService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> updateToDeclare(@RequestBody @Validated TmsDeclareBillDTO.UpdateDeclareStatusDTO dto) {
@@ -182,7 +182,7 @@ public class TmsFmDeclareBillController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程报关单更新状态为取消报关")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "tms:tmsDeclareBill:cancelDeclare",
+            menuCode = "tms:tmsFmDeclareBill:cancelDeclare",
             serviceClass = TmsDeclareBillService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> cancelDeclare(@RequestBody @Validated TmsDeclareBillDTO.UpdateDeclareStatusDTO dto) {
@@ -225,7 +225,7 @@ public class TmsFmDeclareBillController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程报关单删除")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "tms:tmsDeclareBill:delete",
+            menuCode = "tms:tmsFmDeclareBill:delete",
             serviceClass = TmsDeclareBillService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated TmsDeclareBillDTO.DeleteDTO dto) {

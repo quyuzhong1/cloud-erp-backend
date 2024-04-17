@@ -126,8 +126,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Resource
     private SysDictFeign sysDictFeign;
 
-
-
     @Override
     public Boolean addFmDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
         TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
