@@ -42,7 +42,8 @@
         sbdd.warehouse_name AS warehouseName,
         sbdd.warehouse_location AS warehouseLocation,
         sbd.create_time AS createTime,
-        sbd.delivery_time AS deliveryTime
+        sbd.delivery_time AS deliveryTime,
+        sbd.finish_print_time as finishPrintTime
         FROM so_b2c_delivery sbd
         LEFT JOIN so_b2c_delivery_detail sbdd ON sbd.id = sbdd.main_id AND sbd.is_deleted = FALSE
         WHERE ${params.sqlMap.default}
