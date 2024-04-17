@@ -96,6 +96,23 @@ public class TmsDeclareBillDetailEntity extends BaseEntity<TmsDeclareBillDetailE
     @TableField("exemption")
     private String exemption;
 
+    /**
+     * 目的国
+     */
+    @TableField("to_country")
+    private String toCountry;
+
+    /**
+     * 来源国名称
+     */
+    @TableField("source_country_name")
+    private String sourceCountryName;
+
+    /**
+     * 目的国名称
+     */
+    @TableField("to_country_name")
+    private String toCountryName;
 
     public static final String MAIN_ID = "main_id";
 
