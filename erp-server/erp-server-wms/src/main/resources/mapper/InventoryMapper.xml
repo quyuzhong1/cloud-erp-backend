@@ -468,7 +468,7 @@
     <select id="getInventoryInfoByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$InventoryViewQtyDTO">
         SELECT
             it.warehouse_id,
-            it.org_id,
+            it.warehouse_location,
             it.sku_id,
             sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end)
             +
@@ -488,7 +488,7 @@
         <if test="params.warehouseId != null and params.warehouseId != ''">
             and it.warehouse_id = #{params.warehouseId}
         </if>
-        GROUP BY it.warehouse_id, it.org_id, it.sku_id
+        GROUP BY it.warehouse_id, it.sku_id, it.warehouse_location
     </select>
 
     <select id="listInventoryWarehouseByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseDTO">
