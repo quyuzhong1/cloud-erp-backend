@@ -906,6 +906,14 @@ public class PurchaseReturnOrderDTO {
          * 来源id
          */
         private String sourceId;
+        /**
+         * 收货id来源/采购订单id
+         */
+        private String receiveId;
+        /**
+         * 来源类型
+         */
+        private String receiveType;
 
         /**
          * 来源明细id
@@ -966,6 +974,11 @@ public class PurchaseReturnOrderDTO {
          * 入库数量
          */
         private Integer stockInQty;
+
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
 
         /**
          * 库位名称
@@ -1223,6 +1236,16 @@ public class PurchaseReturnOrderDTO {
          * 退货确认状态中文
          */
         private String confirmStatusName;
+
+        /**
+         * 退货方式
+         */
+        private String returnMode;
+
+        /**
+         * 退货方式名称
+         */
+        private String returnModeName;
 
         /**
          * skuId

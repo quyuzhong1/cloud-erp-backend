@@ -23,50 +23,51 @@ public class PurchaseOrderConsumer {
     @Resource
     private PurchaseOrderDetailService purchaseOrderDetailService;
 
-    /**
-     * 同步已确认订单数据
-     */
-    @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC,
-            selectorExpression = "sync_srm_purchase_order_detail_tag",
-            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-srm_purchase_order_detail_consumer")
-    public class ConsumerSrmPurchaseOrder implements RocketMQListener<JSONObject> {
-        @Override
-        public void onMessage(JSONObject message) {
-            log.info("------同步scm采购订单明细开始-------");
-            log.info("同步明细：{}", message);
-            //按照订单id维度进行同步
-            String id = message.getStr("id");
-            List<String> ids = message.getBeanList("ids", String.class);
-            List<String> detailIds = message.getBeanList("detailIds", String.class);
-            String executionStatus = message.getStr("executionStatus");
-            if (executionStatus.equals(ExecutionStatusEnum.CONFIRM.getCode())){
-                try {
-                    purchaseOrderDetailService.syncScmPurchaseOrderDetail(id, detailIds, executionStatus);
-                } catch (Exception e) {
-                    log.error("同步SCM采购订单{}数据到SRM异常:{}", id, e.getMessage());
-                }
-            }else {
-                purchaseOrderDetailService.updateBySrmOrderIds(ids,detailIds, executionStatus);
-            }
-            log.info("------同步scm采购订单明细结束-------");
-        }
-    }
-
-    /**
-     * 用户采购变更单数据同步
-     */
-    @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC,
-            selectorExpression = "sync_srm_purchase_order_detail_info_tag",
-            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-srm_purchase_order_detail_info_consumer")
-    public class ConsumerWmsPurchaseDetail implements RocketMQListener<List<PurchaseOrderDetailEntity>> {
-        @Override
-        public void onMessage(List<PurchaseOrderDetailEntity> ext) {
-            log.info("-----用户采购变更单数据同步 开始-----");
-            purchaseOrderDetailService.saveOrUpdatePurchaseOrderDetail(ext);
-            log.info("-----用户采购变更单数据同步 结束-----");
-        }
-    }
+//    /**
+//     * 同步已确认订单数据
+//     */
+//    @Deprecated
+//    @Service
+//    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC,
+//            selectorExpression = "sync_srm_purchase_order_detail_tag",
+//            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-srm_purchase_order_detail_consumer")
+//    public class ConsumerSrmPurchaseOrder implements RocketMQListener<JSONObject> {
+//        @Override
+//        public void onMessage(JSONObject message) {
+//            log.info("------同步scm采购订单明细开始-------");
+//            log.info("同步明细：{}", message);
+//            //按照订单id维度进行同步
+//            String id = message.getStr("id");
+//            List<String> ids = message.getBeanList("ids", String.class);
+//            List<String> detailIds = message.getBeanList("detailIds", String.class);
+//            String executionStatus = message.getStr("executionStatus");
+//            if (executionStatus.equals(ExecutionStatusEnum.CONFIRM.getCode())){
+//                try {
+//                    purchaseOrderDetailService.syncScmPurchaseOrderDetail(id, detailIds, executionStatus);
+//                } catch (Exception e) {
+//                    log.error("同步SCM采购订单{}数据到SRM异常:{}", id, e.getMessage());
+//                }
+//            }else {
+//                purchaseOrderDetailService.updateBySrmOrderIds(ids,detailIds, executionStatus);
+//            }
+//            log.info("------同步scm采购订单明细结束-------");
+//        }
+//    }
+//
+//    /**
+//     * 用户采购变更单数据同步
+//     */
+//    @Service
+//    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC,
+//            selectorExpression = "sync_srm_purchase_order_detail_info_tag",
+//            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-srm_purchase_order_detail_info_consumer")
+//    public class ConsumerWmsPurchaseDetail implements RocketMQListener<List<PurchaseOrderDetailEntity>> {
+//        @Override
+//        public void onMessage(List<PurchaseOrderDetailEntity> ext) {
+//            log.info("-----用户采购变更单数据同步 开始-----");
+//            purchaseOrderDetailService.saveOrUpdatePurchaseOrderDetail(ext);
+//            log.info("-----用户采购变更单数据同步 结束-----");
+//        }
+//    }
 }
 

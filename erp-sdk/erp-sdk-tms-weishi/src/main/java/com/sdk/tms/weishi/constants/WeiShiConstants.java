@@ -12,5 +12,6 @@ public class WeiShiConstants {
     public static final String METHOD_ORDER_CANCEL= "cancelOrder";
     public static final String METHOD_GET_SHIPPING= "getShippingMethod";
     public static final String METHOD_GET_TRACK_NUMBER= "getTrackNumber";
+    public static final String GET_ORDER= "getOrder";
 
 }

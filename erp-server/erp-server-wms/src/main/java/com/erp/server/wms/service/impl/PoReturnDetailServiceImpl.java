@@ -2,6 +2,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -485,5 +487,21 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
     @Override
     public List<PoReturnDetailEntity> listByMainIds(List<String> mainIds) {
         return lambdaQuery().in(PoReturnDetailEntity::getMainId, mainIds).list();
+    }
+
+    @Override
+    public void updateKingdeeDetailId(JSONArray list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (Object obj : list) {
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            String detailId = (String) jsonObject.get("detailId");
+            String kingdeeDetailId = (String) jsonObject.get("kingdeeDetailId");
+            this.lambdaUpdate()
+                    .set(PoReturnDetailEntity::getKingdeeDetailId, kingdeeDetailId)
+                    .eq(PoReturnDetailEntity::getId, detailId)
+                    .update();
+        }
     }
 }

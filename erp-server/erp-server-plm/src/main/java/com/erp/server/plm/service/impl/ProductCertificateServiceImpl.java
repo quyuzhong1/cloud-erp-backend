@@ -28,8 +28,6 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.plm.listener.ProductCertificateExcelListener;
 import com.erp.server.plm.mapper.ProductCertificateMapper;
 import com.erp.server.plm.service.*;
-import jcifs.smb.NtlmPasswordAuthentication;
-import jcifs.smb.SmbFile;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -402,8 +400,6 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         //其他认证
         List<BasicDictEntity> otherAttestationList = basicDictService.listByType(BasicDictTypeEnum.OTHER_ATTESTATION.getCode());
 
-        List<ProductCertificateEntity> resultList = new ArrayList<>();
-
         for (ProductCertificateExcelDTO excelDTO : successList) {
 
             List<String> errorMsgList = new ArrayList<>();
@@ -472,12 +468,12 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                 errorList.add(excelDTO);
                 continue;
             }
-            resultList.add(entity);
+            //新增数据
+            this.saveOrUpdate(entity);
+
+            //上传附件
+            uploadFile (Arrays.asList(entity));
         }
-        //新增数据
-        this.saveOrUpdateBatch(resultList);
-        //上传附件
-        uploadFile (resultList);
     }
 
     /**
@@ -649,49 +645,6 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             //附件全路径
             listDTO.setFullAttachUrl(StrUtil.format("{}{}",FastDFSClientUtil.publicUrl,listDTO.getAttachUrl()));
         }
-    }
-
-    public static void main(String[] args) {
-        //String dir = "smb://172.16.100.252/it数字化部";
-        String userName = "sdc-erp";
-        String pwd = "BvuZVUxy4ulbrzsx";
-
-
-        String dir =  "172.16.100.252/it数字化部/雷智服务器使用及维护手册.zip";
-
-/*        boolean exists = false;
-        try {
-            exists = SambaUtil.exists(dir, userName, pwd);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        System.out.println(exists);*/
-        MultipartFile multipartFile = null;
-        try {
-             multipartFile = SambaUtil.toMultipartFile(dir, userName, pwd);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        System.out.println(multipartFile);
-        NtlmPasswordAuthentication auth = new NtlmPasswordAuthentication(null, userName, pwd);
-        SmbFile smbFile = null;
-        try {
-            smbFile = new SmbFile(dir);
-            if (smbFile.exists()) {
-                smbFile.connect();
-                if (smbFile.exists()) {
-                    System.out.println("连接成功！");
-                } else {
-                    System.out.println("连接失败！");
-                }
-            } else {
-                System.out.println("共享文件夹不存在！");
-            }
-            System.out.println(smbFile);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
     }
 
 

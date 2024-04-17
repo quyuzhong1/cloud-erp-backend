@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * 供应商用户feign
  * @author zdy
  * @ClassName SupplierUserFeignController
  * @description: TODO
