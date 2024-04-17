@@ -1,6 +1,7 @@
 package com.erp.server.dmp.push.service.business.impl;
 
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncOperateEnum;
@@ -93,6 +94,8 @@ public class KingdeeOperatorConsumerServiceImpl implements KingdeeOperatorConsum
         }catch (Exception e){
             //未查找到数据，新增数据
             JSONObject firstJson = json;
+            JSONUtil.toJsonStr(firstJson);
+            JSONUtil.toJsonStr(param);
             //更新数据
             kingdeeCommonService.save(platformEntity,map,apiUtils,json,param,type);
             return;

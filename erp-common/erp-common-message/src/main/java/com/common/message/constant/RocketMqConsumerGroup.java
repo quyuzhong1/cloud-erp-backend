@@ -1,9 +1,5 @@
 package com.common.message.constant;
 
-import com.common.message.enums.RocketMqTagEnum;
-
-import javax.ws.rs.POST;
-
 /**
  * @author Will
  * @version 1.0
@@ -302,4 +298,9 @@ public class RocketMqConsumerGroup {
      * 亚马逊直接查询报告
      */
     public static final String SYNC_AMZ_REPORT_DIRECT_QUERY = "${spring.cloud.nacos.discovery.namespace}-sync_amz_report_direct_query_consumer";
+
+    /**
+     * 异步获取平台打印面单标签
+     */
+    public static final String ASYNC_GET_PLATFORM_LABEL_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-async_get_platform_label_consumer";
 }

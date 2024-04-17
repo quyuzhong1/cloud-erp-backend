@@ -37,6 +37,44 @@ public class DeliveryOrderDTO implements Serializable {
     @NoArgsConstructor
     @Builder
     @AllArgsConstructor
+    public static class TotalDetail {
+        /**
+         * 订单数量
+         */
+        private Integer orderQty;
+
+        /**
+         * 送货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 赠品送货数量
+         */
+        private Integer giftQty;
+
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 赠品收货数量
+         */
+        private Integer giftReceiveQty;
+
+        private String id;
+
+        private String detailId;
+
+        private String purchaseId;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @Builder
+    @AllArgsConstructor
     public static class TotalInfo {
         /**
          * 订单数量
@@ -353,6 +391,11 @@ public class DeliveryOrderDTO implements Serializable {
         /**
          * 订单单号
          */
+        private String sourceId;
+
+        /**
+         * 订单单号
+         */
         private String sourceCode;
 
         /**
@@ -404,6 +447,11 @@ public class DeliveryOrderDTO implements Serializable {
          * 质检合格数
          */
         private Integer qcGoodQty;
+
+        /**
+         * 备注明细
+         */
+        private String remark;
 
         /**
          * 客户名称
@@ -658,6 +706,17 @@ public class DeliveryOrderDTO implements Serializable {
         @NotNull(message = "送货数量不能为空")
         @Min(value = 1,message = "送货数量最小值为1")
         private Integer planDeliveryQty;
+
+        /**
+         * 赠品数量
+         */
+        @NotNull(message = "赠品数量不能为空")
+        @Min(value = 0,message = "赠品数量最小值为0")
+        private Integer giftQty;
+        /**
+         * 备注信息
+         */
+        private String remark;
     }
 
     /**

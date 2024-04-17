@@ -267,6 +267,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("extend_data")
     private String extendData;
 
+    /**
+     * 平台物流面单base64
+     */
+    @TableField("logistics_label_base64")
+    private String logisticsLabelBase64;
+
 
 
     public static final String CODE = "code";

@@ -150,7 +150,7 @@ public class SupplierDeliveryOrderController extends BaseController {
     @PostMapping("/listGenerateReceive")
     public ApiResult<List<DeliveryOrderDTO.GenerateReceiveListDTO>> listGenerateReceive(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<DeliveryOrderDTO.GenerateReceiveListDTO> receiveListDTOList = srmDeliveryFeign.listGenerateReceive(dto);
-        return receiveListDTOList.stream().anyMatch(v-> StringUtils.isNotBlank(v.getReceiptStatus()))?failure("仅无收货状态的收获单支持下推"):success(receiveListDTOList);
+        return receiveListDTOList.stream().anyMatch(v-> StringUtils.isNotBlank(v.getReceiptStatus()))?failure("仅无收货状态的收货单支持下推"):success(receiveListDTOList);
     }
 
 

@@ -105,5 +105,4 @@ public class SoB2cErrorFeignController extends BaseController {
         Boolean mainDelete = soB2cErrorService.delete(mainDto);
         return detailResult && mainDelete;
     }
-
 }

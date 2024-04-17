@@ -59,7 +59,7 @@ public class RocketMqTopic {
     /**
      * 推送Scm采购单信息到SRM
      */
-    public static final String SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_scm_to_srm_purchase_order_detail_topic";
+//    public static final String SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_scm_to_srm_purchase_order_detail_topic";
     /**
      * 同步金蝶销售信息到OMS
      */
@@ -109,5 +109,10 @@ public class RocketMqTopic {
      * 推送系统日志数据
      */
     public static final String AMZ_REPORT_TASK_TOPIC = "${spring.cloud.nacos.discovery.namespace}-amz_report_task_topic";
+
+    /**
+     * 异步获取平台打印面单标签
+     */
+    public static final String ASYNC_GET_PLATFORM_LABEL_TOPIC = "${spring.cloud.nacos.discovery.namespace}-async_get_platform_label_topic";
 
 }

@@ -19,6 +19,9 @@ public class DeliveryOrderExportExcelDTO implements Serializable {
 
     @ExcelIgnore
     private String id;
+
+    @ExcelIgnore
+    private String detailId;
     @ExcelIgnore
     private String purchaseDetailId;
     /**
@@ -68,6 +71,12 @@ public class DeliveryOrderExportExcelDTO implements Serializable {
      */
     @ExcelIgnore
     private String supplierId;
+
+    /**
+     * 供应商Id
+     */
+    @ExcelIgnore
+    private String sourceId;
 
     /**
      * 供应商名称

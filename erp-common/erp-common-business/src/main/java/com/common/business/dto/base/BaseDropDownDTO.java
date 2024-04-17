@@ -1,10 +1,12 @@
 package com.common.business.dto.base;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -45,6 +47,38 @@ public class BaseDropDownDTO implements Serializable {
         private String value;
 
 
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class Tree {
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 值
+         */
+        private String value;
+        private Boolean disabled;
+        private List<ChildTree> childTreeList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ChildTree {
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 值
+         */
+        private String value;
+        private Boolean disabled;
     }
 
     @Data

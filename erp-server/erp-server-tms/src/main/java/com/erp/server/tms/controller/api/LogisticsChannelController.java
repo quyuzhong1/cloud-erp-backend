@@ -206,6 +206,16 @@ public class LogisticsChannelController extends BaseController {
         return success(logisticsChannelService.listAll());
     }
 
+
+    /**
+     * 所有渠道级联
+     * @return
+     */
+    @GetMapping("tree")
+    public ApiResult<List<BaseDropDownDTO.Tree>> tree(){
+        return success(logisticsChannelService.tree());
+    }
+
     /**
      * 根据物流商id 获取渠道
      *@parms logisticsSupplierId

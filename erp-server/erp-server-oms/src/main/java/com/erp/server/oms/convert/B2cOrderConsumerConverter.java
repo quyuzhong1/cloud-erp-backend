@@ -105,7 +105,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "platformCode", source = "oldEntity.platformCode"),
             @Mapping(target = "dictPlatform", source = "oldEntity.dictPlatform"),
             //@Mapping(target = "shopId", source = "oldEntity.shopId"),
-            @Mapping(target = "remark", source = "oldEntity.remark"),
+            @Mapping(target = "remark", source = "dto.remark"),
             @Mapping(target = "orgId", source = "oldEntity.orgId"),
             @Mapping(target = "orgName", source = "oldEntity.orgName"),
             @Mapping(target = "isIntercept", source = "oldEntity.isIntercept"),

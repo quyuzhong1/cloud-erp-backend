@@ -22,10 +22,12 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.oms.dto.excel.LogisticsProductExcelDTO;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.dto.ProductCustomsDTO;
 import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.enums.SaleStateEnum;
@@ -644,8 +646,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             return;
         }
         List<FindUserDTO> userList = sysUserFeign.getUserList();
-        List<String> skuNoList = list.stream().map(LogisticsProductDTO.PagingVO::getSkuNo).collect(Collectors.toList());
-        List<BomInfoEntity> bomSkuList = bomSkuService.listAllBomByParentSkuNos(skuNoList);
+        List<String> skuIdList = list.stream().map(LogisticsProductDTO.PagingVO::getSkuId).distinct().collect(Collectors.toList());
+        //根据SKU查询BOM判断是否是组合SKU
+        List<BomChildrenSkuDTO> bomChildrenList = bomSkuService.listBomChildBySkuIds(skuIdList);
+        String bomType = BomTypeEnum.COMBINATION.getType();
         for (LogisticsProductDTO.PagingVO item : list) {
             String skuNo = item.getSkuNo();
             Integer salesStatus = item.getSalesStatus();
@@ -660,9 +664,15 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             String chargeName = userList.stream().filter(u -> chargeIdList.contains(u.getUserId())).
                     map(FindUserDTO::getUserName).collect(Collectors.joining(","));
             item.setChargeName(chargeName);
-            BomInfoEntity bomInfo = bomSkuList.stream().filter(b -> b.getParentSkuNo().equals(skuNo)).
-                    findFirst().orElse(null);
-            item.setIsCombination(Objects.nonNull(bomInfo));
+            //是否是组合SKU
+            Boolean isCombination = Boolean.FALSE;
+            if (CollectionUtils.isNotEmpty(bomChildrenList)) {
+                long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(item.getSkuId())&& bomType.equals(e.getType())).count();
+                if (count > 0) {
+                    isCombination = Boolean.TRUE;
+                }
+            }
+            item.setIsCombination(isCombination);
         }
     }
 

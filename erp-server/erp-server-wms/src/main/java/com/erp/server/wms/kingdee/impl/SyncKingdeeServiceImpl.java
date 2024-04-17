@@ -36,6 +36,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     private PoReturnService poReturnService;
 
     @Resource
+    private PoReturnDetailService poReturnDetailService;
+
+    @Resource
     private PoInstockService poInstockService;
 
     @Resource
@@ -94,6 +97,11 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         }
         //采购退货单
         if (ApiModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode().toString().equals(code)) {
+            if (ObjectUtils.isNotEmpty(details)) {
+                JSONArray list = JSONUtil.parseArray(JSONUtil.toJsonStr(params.get("details")));
+                poReturnDetailService.updateKingdeeDetailId(list);
+                return;
+            }
             poReturnService.updateSyncKingdeeId(businessId, syncKingdeeId);
         }
         //采购入库单
