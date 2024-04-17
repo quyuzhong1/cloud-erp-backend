@@ -577,9 +577,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public SoB2cDeliveryEntity getByBusinessCode(String businessCode) {
         return this.getOne(new LambdaQueryWrapper<>(SoB2cDeliveryEntity.class)
-                .eq(SoB2cDeliveryEntity::getSoCode, businessCode)
-                .or()
-                .eq(SoB2cDeliveryEntity::getTransportNo, businessCode)
+                        .or(soB2cDeliveryEntityLambdaQueryWrapper -> soB2cDeliveryEntityLambdaQueryWrapper
+                                .eq(SoB2cDeliveryEntity::getSoCode, businessCode)
+                                .or()
+                                .eq(SoB2cDeliveryEntity::getTransportNo, businessCode))
+                .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
+                .last(" limit 1")
         );
     }
 
