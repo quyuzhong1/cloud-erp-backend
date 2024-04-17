@@ -20,7 +20,6 @@
         fd.delivery_warehouse_name AS deliveryWarehouseName,
         fd.dest_warehouse_id AS destWarehouseId,
         fd.dest_warehouse_name AS destWarehouseName,
-        fdl.logistics_method AS logisticsMethod,
         fdd.platform_spu_no AS platformSpuNo,
         fdd.platform_sku_no AS platformSkuNo,
         fdd.fn_sku AS fnSku,
@@ -41,7 +40,6 @@
         fd.declare_status
         FROM first_mile_delivery_detail fdd
         LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
-        LEFT JOIN first_mile_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
         LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = fd.dest_warehouse_id and opw.is_deleted = false
         LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
         WHERE
@@ -81,7 +79,6 @@
         fd.delivery_warehouse_name AS deliveryWarehouseName,
         fd.dest_warehouse_id AS destWarehouseId,
         fd.dest_warehouse_name AS destWarehouseName,
-        fdl.logistics_method AS logisticsMethod,
         fdd.platform_spu_no AS platformSpuNo,
         fdd.platform_sku_no AS platformSkuNo,
         fdd.fn_sku AS fnSku,
@@ -102,7 +99,6 @@
         fd.declare_status
         FROM first_mile_delivery fd
         INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
-        LEFT JOIN first_mile_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
         LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = fd.dest_warehouse_id and opw.is_deleted = false
         LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
         WHERE
@@ -139,7 +135,6 @@
         fd.approve_time AS deliveryTime
         FROM  first_mile_delivery fd
         INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
-        LEFT JOIN first_mile_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
         WHERE fd.is_deleted = FALSE
         <if test="sourceIds != null and sourceIds.size > 0">
             AND fd.source_id IN
@@ -166,7 +161,6 @@
         fdd.delivery_qty AS assembleQty
         FROM  first_mile_delivery fd
         INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
-        LEFT JOIN first_mile_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
         WHERE fd.is_deleted = FALSE
         AND fdd.is_combination = TRUE
         <if test="ids != null and ids.size > 0">
