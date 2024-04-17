@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.DmpPushTaskFeignDTO;
@@ -794,6 +795,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @return
      */
     @Override
+    @DataIdempotent(keyIdName = "id")
     public BatchResultDTO delivery(String id, String deliveryType) {
         //手工发货
         String manual = DeliverTypeEnum.MANUAL.getCode();
