@@ -1,9 +1,15 @@
 package com.erp.server.wms.controller.pda;
 
 
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.server.wms.service.TransferInfoService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.annotations.Param;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,9 +27,14 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO;
+
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.*;
 import com.erp.model.wms.entity.WarehouseLocationMoveInfoEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 仓位移动主表
@@ -81,6 +92,25 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
         serviceClass = WarehouseLocationMoveInfoService.class,
         keyIdName = "id")
     public ApiResult update(@RequestBody @Validated WarehouseLocationMoveInfoDTO.UpdateDTO dto) {
+        warehouseLocationMoveInfoService.update(dto);
+        return success();
+    }
+    /**
+    * 修改
+    * @author Luo_WG
+    * @date:  2023-08-24
+    * @param dto
+    * @return ApiResult
+    */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改仓位移动")
+    @PostMapping("/pc/update")
+        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+        tableField = "create_user_id",
+        menuCode = "wms:pdaWarehouseLocationMoveInfo:update",
+        serviceClass = WarehouseLocationMoveInfoService.class,
+        keyIdName = "id")
+    public ApiResult pcUpdate(@RequestBody @Validated WarehouseLocationMoveInfoDTO.UpdateDTO dto) {
+        dto.setPcShow(true);
         warehouseLocationMoveInfoService.update(dto);
         return success();
     }
@@ -189,6 +219,25 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
             serviceClass = WarehouseLocationMoveInfoService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated WarehouseLocationMoveInfoDTO.UpdateDTO dto) {
+        warehouseLocationMoveInfoService.updateAndSubmit(dto);
+        return success();
+    }
+    /**
+    * 修改并提交审核
+    * @author Luo_WG
+    * @date:  2023-08-24
+    * @param dto
+    * @return ApiResult<Void>
+    */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交仓位移动")
+    @PostMapping("/pc/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:updateAndSubmit",
+            serviceClass = WarehouseLocationMoveInfoService.class,
+            keyIdName = "id")
+    public ApiResult<Void> pcUpdateAndSubmit(@RequestBody @Validated WarehouseLocationMoveInfoDTO.UpdateDTO dto) {
+        dto.setPcShow(true);
         warehouseLocationMoveInfoService.updateAndSubmit(dto);
         return success();
     }
@@ -407,4 +456,69 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
         return success(warehouseLocationMoveInfoService.view(id));
     }
 
+    /**
+    * 详情
+    * @author Luo_WG
+    * @date:  2023-08-24
+    * @param id
+    * @return ApiResult<WarehouseLocationMoveInfoDTO.ViewDTO>>
+    */
+    @LogViewService
+    @GetMapping("/pc/view")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "wms:pdaWarehouseLocationMoveInfo:view",
+//            serviceClass = WarehouseLocationMoveInfoService.class,
+//            keyIdName = "id")
+    public ApiResult<WarehouseLocationMoveInfoDTO.PdaPcViewDTO> pcView(@RequestParam("id") String id) {
+        return success(warehouseLocationMoveInfoService.pcView(id));
+    }
+
+
+    /**
+     * 导出明细
+     * @author hyj
+     * @date 2024/4/16 11:33
+     * @param dto
+     */
+    @PostMapping("/export")
+    public void listExport(@RequestBody WarehouseLocationMoveInfoDTO.ExportDTO dto, HttpServletResponse response) {
+        warehouseLocationMoveInfoService.listExport(dto,response);
+    }
+    /**
+     * 导出明细
+     * @author hyj
+     * @date 2024/4/17 10:31
+     * @param request
+     * @param response
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板仓位移动")
+    @GetMapping("/exportTemplate")
+    public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/pdaMoveInfoTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+    }
+
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入")
+    @PostMapping("/importFile")
+    public ApiResult importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean flag = warehouseLocationMoveInfoService.importFile(excelFile,response);
+        return flag == true ? success() : failure();
+    }
 }

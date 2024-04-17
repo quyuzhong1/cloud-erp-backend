@@ -4,6 +4,9 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO;
 import com.common.business.vo.PagingVO;
+import org.apache.ibatis.annotations.Param;
+import org.springframework.web.multipart.MultipartFile;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -78,6 +81,13 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
      * @return
      */
      WarehouseLocationMoveInfoDTO.ViewDTO view(String id);
+     /**
+      * 详情
+      * @author hyj
+      * @date 2024/4/17 11:25
+      * @param id
+      */
+     WarehouseLocationMoveInfoDTO.PdaPcViewDTO pcView(String id);
 
      /**
      * 新增并提交审核
@@ -159,4 +169,23 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
      * @return java.lang.Boolean
      **/
     Boolean invalid(List<String> ids, String remark);
+    /**
+     * @description: 导出列表
+     * @author hyj
+     * @date 2024/4/17 10:31
+     * @param dto
+     * @param response
+     * @return Boolean
+     */
+    void listExport(WarehouseLocationMoveInfoDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * @description: 导入
+     * @author hyj
+     * @date 2024/4/17 10:31
+     * @param excelFile
+     * @param response
+     * @return Boolean
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 }

@@ -169,6 +169,33 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         * 勾选的id集合
         */
         private List<String> ids;
+        /**
+         * 审核状态
+         */
+        private List<String> ApproveStatusList;
+
+        /**
+         * 单据日期
+         */
+        private List<LocalDate> billDateList;
+
+        /**
+         * sku编号
+         */
+        private List<LocalDate> skuNoList;
+
+        /**
+         * 仓库id
+         */
+        private List<String>  warehouseIdList;
+        /**
+         * 创建人id
+         */
+        private List<String>  createUserIdList;
+        /**
+         * 创建时间
+         */
+        private List<String>  createTimeList;
     }
 
     /**
@@ -474,6 +501,128 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
          * 取出仓位名称
          */
         private String outWarehouseLocationName;
+    }    /**
+     * PDA:分页列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPcViewDTO {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 审核人
+         */
+        private String approveUserId;
+        /**
+         * 审核人姓名
+         */
+        private String approveUserName;
+        /**
+         * 创建人
+         */
+        private String createUserId;
+        /**
+         * 创建人姓名
+         */
+        private String createUserName;
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 产品明细数量
+         */
+        private Integer detailCount;
+        /**
+         * 产品明细数量
+         */
+        private String remark;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 调拨数量
+         */
+        private String qty;
+        /**
+         * 仓位
+         */
+        private String inWarehouseLocation;
+        /**
+         * 仓位名称
+         */
+        private String inWarehouseLocationName;
+
+        /**
+         * 取出仓位
+         */
+        private String outWarehouseLocation;
+
+        /**
+         * 取出仓位名称
+         */
+        private String outWarehouseLocationName;
+
+        /**
+         * 实际库存
+         */
+        private Integer realQty = 0;
+        /**
+         * 可用库存
+         */
+        private Integer usableQty = 0;
+        /**
+         * 冻结库存
+         */
+        private Integer frozenQty = 0;
     }
 
     /**

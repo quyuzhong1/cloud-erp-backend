@@ -881,6 +881,18 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public List<InventoryDTO.PdaInventoryDTO> getInventoryByParam(InventoryDTO.PdaSearchParamDTO dto) {
         return baseMapper.getInventoryByParam(dto);
     }
+    @Override
+    public List<InventoryDTO.InventoryQtyDTO> getInventoryQty(List<InventoryDTO.InventoryBySkuIdAndWarehouseDTO> dtos) {
+        if (CollectionUtils.isEmpty(dtos)){
+            return new ArrayList<>();
+        }
+        List<InventoryDTO.InventoryQtyDTO> list = new ArrayList<>();
+        dtos.forEach(dto->{
+            InventoryDTO.InventoryQtyDTO inventoryQtyDTO = baseMapper.getInventoryInfoByParam(dto);
+            list.add(inventoryQtyDTO);
+        });
+        return list;
+    }
 
     @Override
     public InventoryDTO.PdaInventorySearch getInventoryBySkuNo(String skuNo) {

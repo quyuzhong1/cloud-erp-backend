@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Param;
 
 import com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO;
-import com.common.business.dto.base.ApproveStatusQtyDTO;
 
 import java.util.List;
 
@@ -52,5 +51,11 @@ public interface WarehouseLocationMoveInfoMapper extends BaseMapper<WarehouseLoc
     * @param params
     * @return
     */
-    List<WarehouseLocationMoveInfoDTO.ListDTO> listExport(@Param("params") WarehouseLocationMoveInfoDTO.ExportDTO params);
+    List<WarehouseLocationMoveInfoDTO.PdaPcListDTO> listExport(@Param("params") WarehouseLocationMoveInfoDTO.ExportDTO params);
+    /**
+     * 展示详情-PC端
+     * @param id
+     * @return
+     */
+    WarehouseLocationMoveInfoDTO.PdaPcViewDTO getDetail(@Param("id") String id);
 }
