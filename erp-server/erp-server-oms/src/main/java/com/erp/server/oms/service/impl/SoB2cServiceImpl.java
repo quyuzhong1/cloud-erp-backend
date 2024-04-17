@@ -70,6 +70,7 @@ import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.oms.aliexpress.api.IopResponse;
 import com.erp.oms.aliexpress.dto.response.AliExpressAscpFfoQueryResponse;
 import com.erp.oms.aliexpress.dto.response.DataListBean;
@@ -6215,6 +6216,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新成功！");
+    }
+
+    @Override
+    public List<SoB2cEntity> listWithIsIntercept() {
+        return lambdaQuery()
+                .in(SoB2cEntity::getIsIntercept, Boolean.TRUE)
+                .list();
     }
 
     private void skuMappingCheck(SoB2cEntity entity, List<SoB2cDetailEntity> detailList) {

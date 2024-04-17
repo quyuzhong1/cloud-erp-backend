@@ -835,4 +835,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @author Jim
      */
     BatchResultDTO skuMappingBatch(String soId);
+
+    List<SoB2cEntity> listWithIsIntercept();
 }
