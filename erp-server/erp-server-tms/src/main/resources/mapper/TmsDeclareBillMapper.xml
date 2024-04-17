@@ -137,6 +137,7 @@
     <select id="exportDeclare" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$ExportDTO">
         select
             db.id,
+            db.type,
             db.source_code as   sourceCode,
             db.pre_input_no as  preInputNo,
             db.dest_customs as  destCustoms,

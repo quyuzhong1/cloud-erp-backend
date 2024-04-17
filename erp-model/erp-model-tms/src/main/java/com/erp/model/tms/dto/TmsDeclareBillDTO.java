@@ -426,6 +426,8 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private String id;
 
+        private String type;
+
         private String sourceCode;
 
         /**
