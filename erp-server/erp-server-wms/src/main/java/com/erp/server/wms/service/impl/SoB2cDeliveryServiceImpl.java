@@ -89,9 +89,13 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sun.misc.BASE64Decoder;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -354,8 +358,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //已发货和取消发货单 状态，不允许在打印拣货单
         List<SoB2cDeliveryEntity> deliveryEntityList = this.listByIds(ids);
         List<String> codeList = deliveryEntityList.stream()
-                .filter(req -> SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(req.getStatus())
-                        || SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(req.getStatus()))
+                .filter(req -> SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(req.getStatus()))
                 .map(req -> req.getCode()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(codeList)) {
             throw new ServiceException(ApiError.STATUS_NOT_PRINT_PICKING, StrUtil.join(",", codeList));
@@ -446,47 +449,29 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
 
     @Override
-    public Boolean printPicking(List<String> ids) {
-        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(ids);
-
-        //查询是否冻结
-        List<String> soIds = soB2cDeliveryEntities.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
-        for (SoB2cEntity soB2cEntity : soB2cEntities) {
-            if (soB2cEntity.getIsFrozen()) {
-                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
-            }
+    public BatchResultDTO printPickingCancel(String id) {
+        SoB2cDeliveryEntity soB2cDeliveryEntity = this.getById(id);
+        if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
+            throw new ServiceException(ApiError.B2C_SO_DELIVERY_NOT_EXISTS);
+        }
+        if (!StrUtil.equals(soB2cDeliveryEntity.getStatus(),SoB2cDeliveryStatusEnum.PICKING.getCode())) {
+            throw new ServiceException(ApiError.B2C_SO_DELIVERY_FINISH_PRINT,soB2cDeliveryEntity.getCode());
         }
 
-        lambdaUpdate()
-                .set(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.PICKING.getCode())
-                .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getCode())
-                .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.SHIPPED.getCode())
-                .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
-                .in(SoB2cDeliveryEntity::getId, ids).update();
-
-        List<Pair<String, String>> addPairList = soB2cDeliveryEntities.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("打印了一张拣货单【%s】", ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), addPairList, "打印拣货单");
-
-        //修改打印状态
-        return lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintPicking, Boolean.TRUE).in(SoB2cDeliveryEntity::getId, ids).update();
-    }
-
-    @Override
-    public Boolean printPickingCancel(List<String> ids) {
-        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(ids);
-
         //查询是否冻结
-        List<String> soIds = soB2cDeliveryEntities.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(Arrays.asList(soB2cDeliveryEntity.getSourceId()));
         for (SoB2cEntity soB2cEntity : soB2cEntities) {
             if (soB2cEntity.getIsFrozen()) {
-                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+                throw new ServiceException(ApiError.B2C_SO_DELIVERY_NOT_FINISH_PRINT, soB2cEntity.getCode());
             }
         }
-
-        //修改打印状态
-        return lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintPicking, Boolean.FALSE).in(SoB2cDeliveryEntity::getId, ids).update();
+        //更新单据状态和拣货状态
+        Boolean update = updateStatusByIdList(Arrays.asList(id), SoB2cDeliveryStatusEnum.WAIT_HANDLE.getStatus(), Boolean.FALSE);
+        if (!update) {
+            throw new ServiceException("取消打印拣货单");
+        }
+        operateLogService.addModuleOperateLog("取消打印了一张拣货单【%s】", ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), soB2cDeliveryEntity.getId(), "取消打印拣货单");
+        return BatchResultDTO.success(soB2cDeliveryEntity.getId(), soB2cDeliveryEntity.getCode(), OperationTypeEnum.UPDATE);
     }
 
     @Override
@@ -591,7 +576,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    public String printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto) {
+    public void printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
         //打印类型
         String printType = dto.getPrintType();
 
@@ -616,7 +601,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             List<PrintWayBillPdfDTO> printWayBillPdfResultList = soB2cFeign.printWayBillPdf(soIds);
 
             //获取SDK物流商商面单
-            List<SoB2cDTO.WaybillDTO> platformWaybill = this.getPlatformWaybill(waybillDetailDTOList);
+            List<SoB2cDTO.WaybillDTO> platformWaybill = new ArrayList<>();
+
+            // 配货单需要根据渠道查询是否是自定义配置
+            LogisticsPrintTypeDTO.ViewDTO logisticsPrintTypeEntity = logisticsPrintTypeEntities.stream()
+                    .filter(req -> LogisticsPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(req.getPrintType())
+                            && LogisticsLabelTypeEnum.CUSTOM.getCode().equals(req.getLabelType())
+                    ).findFirst().orElse(null);
+            if (!SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(printType)) {
+                platformWaybill = this.getPlatformWaybill(waybillDetailDTOList);
+            }
 
             //渠道包含的单据
             for (SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO logisticsWaybillDetailDTO : waybillDetailDTOList) {
@@ -629,17 +623,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 //如果打印面单
                 if (SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode().equals(printType)) {
                     //先获取订单的面单，没有就请求sdk获取
-                    String logisticsWaybill = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(printWayBillPdf.getSoId())).map(req -> req.getLogisticsBase64()).findFirst().orElse("");
-                    if (StringUtils.isNotBlank(logisticsWaybill)) {
-                        base64List.add(logisticsWaybill);
+                    List<String> logisticsWaybillList = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(printWayBillPdf.getSoId())).map(req -> req.getLogisticsBase64()).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(logisticsWaybillList)) {
+                        base64List.addAll(logisticsWaybillList);
                     }
                 } else if (SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(printType)) {
-
                     // 配货单需要根据渠道查询是否是自定义配置，自定义配置需要组装数据
-                    LogisticsPrintTypeDTO.ViewDTO logisticsPrintTypeEntity = logisticsPrintTypeEntities.stream()
-                            .filter(req -> LogisticsPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(req.getPrintType())
-                                    && LogisticsLabelTypeEnum.CUSTOM.getCode().equals(req.getLabelType())
-                            ).findFirst().orElse(null);
                     if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity)) {
 
                         PrintWayBillPdfDTO printWayBillPdfDTO = printWayBillPdfHandle(printWayBillPdf, logisticsWaybillDetailDTO);
@@ -648,16 +637,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     }
                 } else {
                     //先获取订单的面单，没有就请求sdk获取
-                    String logisticsWaybill = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(printWayBillPdf.getSoId())).map(req -> req.getLogisticsBase64()).findFirst().orElse("");
-                    if (StringUtils.isNotBlank(logisticsWaybill)) {
-                        base64List.add(logisticsWaybill);
+                    List<String> logisticsWaybillList = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(printWayBillPdf.getSoId())).map(req -> req.getLogisticsBase64()).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(logisticsWaybillList)) {
+                        base64List.addAll(logisticsWaybillList);
                     }
 
                     // 配货单需要根据渠道查询是否是自定义配置，自定义配置需要组装数据
-                    LogisticsPrintTypeDTO.ViewDTO logisticsPrintTypeEntity = logisticsPrintTypeEntities.stream()
-                            .filter(req -> LogisticsPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(req.getPrintType())
-                                    && LogisticsLabelTypeEnum.CUSTOM.getCode().equals(req.getLabelType())
-                            ).findFirst().orElse(null);
                     if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity)) {
                         PrintWayBillPdfDTO printWayBillPdfDTO = printWayBillPdfHandle(printWayBillPdf, logisticsWaybillDetailDTO);
                         // 自定义配货单
@@ -676,12 +661,26 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
 
         try {
-            return PdfUtil.getNewMergePdfBase64(base64List);
+            String newMergePdfBase64 = PdfUtil.getNewMergePdfBase64(base64List);
+
+            // 设置响应头，告诉浏览器返回的是一个 PDF 文件
+            response.setContentType("application/pdf");
+            response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\""); // 设置 PDF 的显示方式和文件名
+            BASE64Decoder decoder = new BASE64Decoder();
+            try (OutputStream out = response.getOutputStream()) {
+                // 将 Base64 编码的字符串解码为字节数组
+                byte[] pdfBytes = decoder.decodeBuffer(newMergePdfBase64);
+                // 将字节数组写入到响应输出流中
+                out.write(pdfBytes);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
         } catch (Exception e) {
+            e.printStackTrace();
             throw new ServiceException(ApiError.ERROR_PDF_MERGE);
         }
     }
-
 
     private void customDistribute(List<String> base64List, PrintWayBillPdfDTO printWayBillPdfDTO) {
         FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
@@ -816,6 +815,51 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     }
 
+    @Override
+    public BatchResultDTO finishPrint(String id) {
+        SoB2cDeliveryEntity soB2cDeliveryEntity = this.getById(id);
+        if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
+            throw new ServiceException(ApiError.B2C_SO_DELIVERY_NOT_EXISTS);
+        }
+        if (!StrUtil.equals(soB2cDeliveryEntity.getStatus(),SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode())) {
+            throw new ServiceException(ApiError.B2C_SO_DELIVERY_FINISH_PRINT,soB2cDeliveryEntity.getCode());
+        }
+
+        //查询是否冻结
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(Arrays.asList(soB2cDeliveryEntity.getSourceId()));
+        for (SoB2cEntity soB2cEntity : soB2cEntities) {
+            if (soB2cEntity.getIsFrozen()) {
+                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+            }
+        }
+        //更新单据状态和拣货状态
+        Boolean update = updateStatusByIdList(Arrays.asList(id), SoB2cDeliveryStatusEnum.PICKING.getStatus(), Boolean.TRUE);
+        if (!update) {
+            throw new ServiceException("完成打印失败");
+        }
+        operateLogService.addModuleOperateLog("打印了一张拣货单【%s】", ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), soB2cDeliveryEntity.getId(), "打印拣货单");
+        return BatchResultDTO.success(soB2cDeliveryEntity.getId(), soB2cDeliveryEntity.getCode(), OperationTypeEnum.UPDATE);
+    }
+
+    /**
+     * @description: 根据id集合更新修改状态
+     * @author Will
+     * @date: 2024/4/17 10:58
+     * @param idList
+     * @param status
+     * @return Boolean
+     */
+    private Boolean updateStatusByIdList(List<String> idList,String status,Boolean isPrintPicking) {
+        if (CollectionUtils.isEmpty(idList)) {
+            return Boolean.FALSE;
+        }
+        return lambdaUpdate().in(SoB2cDeliveryEntity::getId,idList).set(SoB2cDeliveryEntity::getStatus,status)
+                .set(SoB2cDeliveryEntity::getIsPrintPicking,isPrintPicking)
+                .set(isPrintPicking,SoB2cDeliveryEntity::getFinishPrintTime,LocalDateTime.now())
+                .set(!isPrintPicking,SoB2cDeliveryEntity::getFinishPrintTime,null)
+                .update();
+    }
+
     private List<SoB2cDeliveryEntity> listBySoB2cId(String soB2cId) {
         return this.lambdaQuery().eq(SoB2cDeliveryEntity::getSourceId, soB2cId).list();
     }
@@ -839,6 +883,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             printLogisticsWaybill.setB2cSoId(detailDTO.getSoB2cId());
             printLogisticsWaybill.setDeliveryNo(detailDTO.getSoCode());
             printLogisticsWaybill.setShopId(detailDTO.getShopId());
+            printLogisticsWaybill.setShopId(detailDTO.getShopId());
+            printLogisticsWaybill.setLogisticType(detailDTO.getLogisticType());
 
             SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO logisticsWaybillDetailDTO = waybillDetailDTOList.stream().filter(req -> req.getSoB2cId().equals(detailDTO.getSoB2cId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(logisticsWaybillDetailDTO)) {
@@ -853,7 +899,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * 新增修改处理数据
      */
     private void handleData(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> detailEntityList) {
-
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listBySourceIds(Arrays.asList(soB2cDeliveryEntity.getSourceId()));
         List<SoB2cDeliveryEntity> deliveryEntityList = soB2cDeliveryEntities.stream()
                 .filter(req -> !SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus().equals(req.getStatus()))

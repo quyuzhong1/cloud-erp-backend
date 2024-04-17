@@ -141,38 +141,45 @@ public class PurchaseStockExportExcelDTO implements Serializable {
     private String deliveryWarehouseName;
 
     /**
+     * 仓位
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "仓位", index = 17)
+    private String warehouseLocationName;
+
+    /**
      * 采购员
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "采购员", index = 17)
+    @ExcelProperty(value = "采购员", index = 18)
     private String purchaseUserName;
 
     /**
      * 入库员
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "入库员", index = 18)
+    @ExcelProperty(value = "入库员", index = 19)
     private String stockInUserName;
 
     /**
      * 入库备注
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "入库备注", index = 19)
+    @ExcelProperty(value = "入库备注", index = 20)
     private String remark;
 
     /**
      * 审核人（最新）
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "审核人（最新）", index = 20)
+    @ExcelProperty(value = "审核人（最新）", index = 21)
     private String approveUserName;
 
     /**
      * 审核完成时间
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "审核完成时间", index = 21 ,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "审核完成时间", index = 22 ,converter= LocalDateStringConverter.class)
     private LocalDateTime approveTime;
 
 
@@ -180,13 +187,13 @@ public class PurchaseStockExportExcelDTO implements Serializable {
      * 创建人
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建人", index = 22)
+    @ExcelProperty(value = "创建人", index = 23)
     private String createUserName;
 
     /**
      * 创建时间
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建时间", index = 23 ,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 24 ,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 }

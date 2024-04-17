@@ -109,7 +109,16 @@ public class SoB2cFeignController extends BaseController {
         List<SoB2cEntity> list = soB2cService.listByIds(soIds);
         return list;
     }
-
+    /**
+     * 查询已拦截的订单
+     *
+     * @return
+     */
+    @PostMapping("/listWithIsIntercept")
+    public List<SoB2cEntity> listWithIsIntercept() {
+        List<SoB2cEntity> list = soB2cService.listWithIsIntercept();
+        return list;
+    }
     /**
      * 根据主表id查询B2C订单主表信息
      *

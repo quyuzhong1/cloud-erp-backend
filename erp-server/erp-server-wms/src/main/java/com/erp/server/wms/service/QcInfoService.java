@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -182,10 +183,10 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * 下推退货单
      * @author yl
      * @date 2023-04-24 9:35
-     * @param dto
+     * @param list
      * @return java.lang.Boolean
      */
-    Boolean generatePurchaseReturnOrder(PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto);
+    List<BatchResultDTO> generatePurchaseReturnOrder(List<PoInstockDTO.GeneratePurchaseReturnOrderDTO> list);
     
     /**
      * 入库单自动下推质检单

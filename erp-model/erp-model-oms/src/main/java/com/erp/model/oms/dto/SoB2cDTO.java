@@ -1,6 +1,6 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
@@ -10,12 +10,8 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.stringtemplate.v4.ST;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -51,6 +47,11 @@ public class SoB2cDTO implements Serializable {
          * 类型 （all全部，payment待付款，pending待处理，approveIng审核中，inDistribution配货中，waitShipped代发货，shipped已发货，frozen冻结中，invalid已作废,orderError 异常订单 ）
          */
         private String tabFlag;
+
+        /**
+         * 类型名称
+         */
+        private String tabFlagName;
 
         /**
          * 数量
@@ -91,86 +92,14 @@ public class SoB2cDTO implements Serializable {
     public static class PagingParamDTO extends SortDTO {
 
         /**
-         * 搜索类型（all全部，payment待付款，pending待处理，approveIng审核中，inDistribution配货中，waitShipped代发货，shipped已发货，frozen冻结中，invalid已作废）
+         * 页面高级查询
          */
-        private String tabFlag;
-        /**
-         * 销售单号
-         */
-        private String code;
-        /**
-         * 平台订单号
-         */
-        private String platformCode;
-        /**
-         * 作废状态
-         */
-        private Boolean invalidStatus;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 组包状态 （soB2cPackageStatus 字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
+         * sqlMap 默认key default
          */
-        private List<String> packageStatusList;
-
-        /**
-         * 中转状态 （soB2cTransferStatus 字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-         */
-        private List<String> transferStatusList;
-        /**
-         * 平台集合（platform字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-         */
-        private List<String> platformList;
-        /**
-         * 店铺id集合 http://172.16.100.11:3002/project/110/interface/api/16513
-         */
-        private List<String> shopIdList;
-        /**
-         * 国家id集合 http://172.16.100.11:3002/project/36/interface/api/13390
-         */
-        private List<String> countryList;
-        /**
-         * 平台sku
-         */
-        private String platformSkuNo;
-        /**
-         * 平台产品id
-         */
-        private String platformSpuNo;
-        /**
-         * 审核状态
-         */
-        private List<String> approveStatusList;
-        /**
-         * 订单状态 （soB2cBillStatus字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-         */
-        private List<String> billStatusList;
-        /**
-         * 付款状态 （soB2cPayStatus字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-         */
-        private List<String> payStatusList;
-        /**
-         * 分类集合 http://172.16.100.11:3002/project/110/interface/api/19699
-         */
-        private List<String> categoryList;
-        /**
-         * 标签集合 （soB2cLable字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-         */
-        private List<String> labelList;
-        /**
-         * 异常信息集合（soB2cAbnormalType字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-         */
-        private List<String> abnormalTypeList;
-
-        /**
-         * 异常订单（b2cOrderErrorType字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-         */
-        private List<String> orderErrorTypeList;
-
-
-        /**
-         * 是否异常订单 前端不用赋值
-         */
-        private Boolean isOrderError;
+        private Map<String, String> sqlMap;
     }
 
     /**
@@ -360,7 +289,7 @@ public class SoB2cDTO implements Serializable {
          */
         private String sourceId;
         /**
-         * 来源类型
+         * 来源类型，（selfAdd,ERP新增；soB2c，平台新增）
          */
         private String sourceType;
         /**

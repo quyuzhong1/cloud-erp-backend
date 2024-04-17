@@ -32,5 +32,5 @@ public interface DeliveryOrderMapper extends BaseMapper<DeliveryOrderEntity> {
 
     List<DeliveryOrderDTO.GenerateReceiveListDTO> listGenerateReceive(@Param("ids") List<String> ids);
 
-    DeliveryOrderDTO.TotalInfo pagingTotal(@Param("params")DeliveryOrderDTO.ParamDTO dto);
+    List<DeliveryOrderDTO.TotalDetail> pagingTotal(@Param("params")DeliveryOrderDTO.ParamDTO dto);
 }

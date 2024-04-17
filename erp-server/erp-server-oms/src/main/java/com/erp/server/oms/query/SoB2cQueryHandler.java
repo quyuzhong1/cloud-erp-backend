@@ -1,0 +1,236 @@
+package com.erp.server.oms.query;
+
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.QueryConditionEnum;
+import com.common.business.enums.QueryDataTypeEnum;
+import com.common.business.query.AbstractQueryHandler;
+import com.common.business.threadlocal.AdvanceQueryContext;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.erp.model.oms.enums.SoB2cTabEnum;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+@Component
+public class SoB2cQueryHandler extends AbstractQueryHandler {
+
+    @Override
+    protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
+        if("tab".equals(field)){
+            return getTabSql(value);
+        }
+
+        if("sku".equals(field)){
+            return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.main_id = sb2c.id and sbd.sku_no "+ compareCodeSplicingValueSql +" ) ";
+        }
+
+        if("platformSpuNo".equals(field)){
+            return " exists ( select id from so_b2c_detail where is_deleted = false and main_id = sb2c.id and platform_spu_no "+compareCodeSplicingValueSql+" ) ";
+        }
+
+        if("platformSkuNo".equals(field)){
+            return " exists ( select id from so_b2c_detail where is_deleted = false and main_id = sb2c.id and platform_sku_no "+compareCodeSplicingValueSql+" ) ";
+        }
+
+        if("category".equals(field)){
+            return " sb2c.id in ( select so_b2c_id from so_b2c_ref_category  where is_deleted = false and category_id "+compareCodeSplicingValueSql+" ) ";
+        }
+        //标签类型
+        if("lable".equals(field)){
+            QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
+            List<String> valueList = com.common.business.utils.CollectionUtils.convertStrClzToList(value);
+            StringBuilder sb = new StringBuilder();
+            sb.append(" ( ");
+            //是否是第一个，否则需要加连接符
+            boolean isFirst = true;
+            if(queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST)){
+                for(String valueStr : valueList){
+                    if(!isFirst){
+                        sb.append(" or ");
+                    }
+                    if(valueStr.equals("frozen")){
+                        sb.append(" (sb2c.label_json ~ 'RISK_CONTROL' or sb2c.label_json ~ 'IN_FROZEN' or sb2c.label_json ~ 'Unfulfillable') ");
+                    }
+                    if(valueStr.equals("fba")){
+                        sb.append(" sb2c.label_json ~ 'AFN' ");
+                    }
+                    if(valueStr.equals("manual")){
+                        sb.append(" sb2c.source_type = 'selfAdd' ");
+                    }
+                    if(valueStr.equals("intercept")){
+                        sb.append(" sb2c.is_intercept = true ");
+                    }
+                    if(valueStr.equals("split")){
+                        sb.append("  exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type = 'split' and sbf.target_id = sb2c.id) ");
+                    }
+                    if(valueStr.equals("merge")){
+                        sb.append(" exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type = 'merge' and sbf.target_id = sb2c.id ) ");
+                    }
+                    if(valueStr.equals("aliexpressTaxed")){
+                        sb.append(" (sb2cd.label_json ~ 'U_TAXED' or sb2cd.label_json ~ 'I_TAXED') ");
+                        sb.append(" and exists ( select id from so_b2c_detail where is_deleted = false and main_id = sb2c.id and (label_json ~ 'U_TAXED' or label_json ~ 'I_TAXED')) ");
+                    }
+                    if(valueStr.equals("cainiaoWarehouse")){
+                        sb.append(" sb2c.label_json ~ 'cainiaoInternationalWarehouse' ");
+                    }
+                    if(valueStr.equals("aliexpressAePlus")){
+                        sb.append(" sb2c.label_json ~ 'AE_PLUS' ");
+                    }
+                    if(valueStr.equals("aliexpressUpExpress")){
+                        sb.append(" sb2c.label_json ~ 'HBA_UP_EXPRESS' ");
+                    }
+                    if(valueStr.equals("leadTenTime")){
+                        sb.append(" sb2c.label_json ~ 'leadTimeTag#10' ");
+                    }
+                    isFirst = false;
+                }
+            }
+
+            if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST)){
+                for(String valueStr : valueList){
+                    if(!isFirst){
+                        sb.append(" and ");
+                    }
+                    if(valueStr.equals("frozen")){
+                        sb.append(" (sb2c.label_json !~ 'RISK_CONTROL' and sb2c.label_json !~ 'IN_FROZEN' and sb2c.label_json !~ 'Unfulfillable') ");
+                    }
+                    if(valueStr.equals("fba")){
+                        sb.append(" sb2c.label_json !~ 'AFN' ");
+                    }
+                    if(valueStr.equals("manual")){
+                        sb.append(" sb2c.source_type != 'selfAdd' ");
+                    }
+                    if(valueStr.equals("intercept")){
+                        sb.append(" sb2c.is_intercept = false ");
+                    }
+                    if(valueStr.equals("split")){
+                        sb.append("  exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type != 'split' and sbf.target_id = sb2c.id) ");
+                    }
+                    if(valueStr.equals("merge")){
+                        sb.append(" exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type != 'merge' and sbf.target_id = sb2c.id ) ");
+                    }
+                    if(valueStr.equals("aliexpressTaxed")){
+                        sb.append(" ( sb2c.label_json !~ 'U_TAXED' AND sb2c.label_json !~ 'I_TAXED' )  ");
+                        sb.append(" and exists ( select id from so_b2c_detail where is_deleted = false and main_id = sb2c.id and (label_json !~ 'U_TAXED' and label_json !~ 'I_TAXED')) ");
+                    }
+                    if(valueStr.equals("cainiaoWarehouse")){
+                        sb.append(" sb2c.label_json !~ 'cainiaoInternationalWarehouse' ");
+                    }
+                    if(valueStr.equals("aliexpressAePlus")){
+                        sb.append(" sb2c.label_json !~ 'AE_PLUS' ");
+                    }
+                    if(valueStr.equals("aliexpressUpExpress")){
+                        sb.append(" sb2c.label_json !~ 'HBA_UP_EXPRESS' ");
+                    }
+                    if(valueStr.equals("leadTenTime")){
+                        sb.append(" sb2c.label_json !~ 'leadTimeTag#10' ");
+                    }
+                    isFirst = false;
+                }
+            }
+            sb.append(" ) ");
+            return sb.toString();
+        }
+        if("warehouse".equals(field)){
+            return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.main_id = sb2c.id and sbd.warehouse_id "+ compareCodeSplicingValueSql +" ) ";
+        }
+        //是否缺货 （待配货和配货中且sku数量大于可用库存且不是忽略库存计算SKU） 因为需要查询PLM系统和WMS系统，所以无法在这里直接处理
+        if("isOutStock".equals(field)){
+            Boolean bool = (Boolean) value;
+            if(bool){
+                super.buildDefaultDTO("sb2c.bill_status", Arrays.asList(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode(),SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode()));
+            }else {
+                return getQueryAllSql();
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * @description: tabSql
+     * @author Will
+     * @date: 2024/2/26 15:55
+     * @param value
+     * @return String
+     */
+    public String getTabSql (Object value) {
+        //审核状态
+        List<String> approveStatusList = new ArrayList<>(1);
+        //付款状态
+        List<String> payStatusList = new ArrayList<>(1);
+        //单据状态
+        List<String> billStatusList = new ArrayList<>(1);
+
+        if(value.equals("all")){
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+        }
+        // 待付款
+        if (SoB2cTabEnum.ENUM_PAYMENT.getCode().equals(value)) {
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+        }
+        //待处理
+        if (SoB2cTabEnum.ENUM_PENDING.getCode().equals(value)) {
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+        }
+        //审核中
+        if (SoB2cTabEnum.ENUM_APPROVE_ING.getCode().equals(value)) {
+            approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+        }
+        //待配货
+        if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION.getCode().equals(value)) {
+            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
+            billStatusList.add(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+        }
+        //配货中
+        if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION.getCode().equals(value)) {
+            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
+            billStatusList.add(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+            billStatusList.add(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+        }
+        //待发货
+        if (SoB2cTabEnum.ENUM_WAIT_SHIPPED.getCode().equals(value)) {
+            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
+            billStatusList.add(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+        }
+        //已发货
+        if (SoB2cTabEnum.ENUM_SHIPPED.getCode().equals(value)) {
+            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
+            billStatusList.add(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+        }
+        //冻结中
+        if (SoB2cTabEnum.ENUM_FROZEN.getCode().equals(value)) {
+            billStatusList.add(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+        }
+        //已作废
+        if (SoB2cTabEnum.ENUM_INVALID.getCode().equals(value)) {
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,true, QueryDataTypeEnum.BOOLEAN);
+        }
+        //订单异常
+        if (SoB2cTabEnum.ENUM_ORDER_ERROR.getCode().equals(value)) {
+            super.buildSplicingSQLDTO("sb2c.sign_order_error", QueryConditionEnum.NE,"", QueryDataTypeEnum.STRING);
+        }
+        if (CollectionUtils.isNotEmpty(approveStatusList)) {
+            super.buildDefaultDTO("sb2c.approve_status", approveStatusList);
+        }
+        if (CollectionUtils.isNotEmpty(billStatusList)) {
+            super.buildDefaultDTO("sb2c.bill_status", billStatusList);
+        }
+        if (CollectionUtils.isNotEmpty(payStatusList)) {
+            super.buildDefaultDTO("sb2c.pay_status", payStatusList);
+        }
+        return super.getSplicingSQL();
+    }
+}
+

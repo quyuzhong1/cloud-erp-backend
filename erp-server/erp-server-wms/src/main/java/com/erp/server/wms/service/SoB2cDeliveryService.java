@@ -1,10 +1,14 @@
 package com.erp.server.wms.service;
-import com.common.business.vo.PagingVO;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.SoB2cDeliveryDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -80,23 +84,15 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      **/
     List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids);
 
-    /**
-     * 打印拣货单
-     * @Author Luo_WG
-     * @Date 2023/12/19 16:12
-     * @param ids
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    Boolean printPicking(List<String> ids);
 
     /**
      * 取消打印拣货单
      * @Author Luo_WG
      * @Date 2023/12/19 16:20
-     * @param ids
+     * @param id
      * @return java.lang.Boolean
      **/
-    Boolean printPickingCancel(List<String> ids);
+    BatchResultDTO  printPickingCancel(String id);
 
     /**
      * 打印物流面单
@@ -116,7 +112,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param dto
      * @return void
      **/
-    String printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto);
+    void printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response);
 
     /**  销售订单标记发货失败后从新标记发货
      * @description
@@ -173,4 +169,12 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @create 2024-01-26 10:17
      */
     void generateB2cSoOutstock(SoB2cDeliveryEntity entity);
+    /**
+     * @description: 完成打印
+     * @author Will
+     * @date: 2024/4/17 10:48
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO finishPrint(String id);
 }
