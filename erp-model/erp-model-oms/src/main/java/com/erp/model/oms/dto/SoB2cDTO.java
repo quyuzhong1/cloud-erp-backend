@@ -1710,11 +1710,11 @@ public class SoB2cDTO implements Serializable {
         /**
          * 物流面单base64格式
          */
-        private String logisticsBase64;
+        private List<String> logisticsBase64;
         /**
          * 配货单base64格式
          */
-        private String distributeBase64;
+        private List<String> distributeBase64;
     }
 
     /**

@@ -646,7 +646,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         base64List.add(printWayBillPdf.getLogisticsLabelBase64());
                     } else {
                         //没有就请求sdk获取
-                        List<String> logisticsWaybillList = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(printWayBillPdf.getSoId())).map(req -> req.getLogisticsBase64()).collect(Collectors.toList());
+                        List<String> logisticsWaybillList = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(printWayBillPdf.getSoId())).map(req -> req.getLogisticsBase64()).findFirst().orElse(null);
                         if (CollectionUtils.isNotEmpty(logisticsWaybillList)) {
                             base64List.addAll(logisticsWaybillList);
                         }
@@ -666,7 +666,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         base64List.add(printWayBillPdf.getLogisticsLabelBase64());
                     } else {
                         //没有就请求sdk获取
-                        List<String> logisticsWaybillList = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(printWayBillPdf.getSoId())).map(req -> req.getLogisticsBase64()).collect(Collectors.toList());
+                        List<String> logisticsWaybillList = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(printWayBillPdf.getSoId())).map(req -> req.getLogisticsBase64()).findFirst().orElse(null);
                         if (CollectionUtils.isNotEmpty(logisticsWaybillList)) {
                             base64List.addAll(logisticsWaybillList);
                         }
