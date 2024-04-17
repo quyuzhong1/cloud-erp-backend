@@ -184,6 +184,7 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         map.put("sellerName", tokenDTO.getSellerName());
         map.put("sellerBaseRegion", tokenDTO.getSellerBaseRegion());
         map.put("shopCipher", tokenDTO.getShopCipher());
+        map.put("userType", tokenDTO.getUserType());
         shopInfo.setExtendData(map);
         shopAuthService.saveOrUpdate(shopAuth);
         dmpTaskFeign.createAndEnablePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));

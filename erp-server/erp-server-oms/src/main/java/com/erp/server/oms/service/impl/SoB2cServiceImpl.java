@@ -4213,7 +4213,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             authDTO.setLogisticsPlatform(platformEnum.getCode());
 
             //映射详情字段
-            List<SoB2cDetailEntity> detailList = soB2cDetailEntities.stream().filter(req -> soB2cEntity.getId().equals(req.getMainId())).collect(Collectors.toList());
+            List<SoB2cDetailEntity> detailList = soB2cDetailEntities.stream()
+                    .filter(req -> soB2cEntity.getId().equals(req.getMainId())
+                            && StringUtils.isBlank(req.getSourcePlatform())
+                    ).collect(Collectors.toList());
             List<WalmartShipOrderDetailDTO> walmartShipOrderDetailDTOS = WalmartShipOrderConverter.INSTANCE.soB2cDetailEntityToWalmartShipOrderDetail(detailList);
             walmartShipDTO.setDetailList(walmartShipOrderDetailDTOS);
 
