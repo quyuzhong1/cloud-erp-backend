@@ -15,6 +15,7 @@ import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.wms.dto.WeightingOutboundDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.enums.DeliverTypeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.service.*;
@@ -111,6 +112,9 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
                 throw new ServiceException("发货单更新失败");
             }
             soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()), SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+
+            //调用虚假发货方法，标记第三方平台发货
+            soB2cDeliveryService.delivery(entity.getId(), DeliverTypeEnum.FALSEHOOD.getCode());
 
             soB2cDeliveryService.generateB2cSoOutstock(entity);
 
