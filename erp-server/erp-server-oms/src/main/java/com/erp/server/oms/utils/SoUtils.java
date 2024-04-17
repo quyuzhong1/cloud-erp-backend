@@ -48,15 +48,16 @@ public class SoUtils {
             costParam.setTaxRate(BigDecimal.ZERO);
         }
 
-        // 销售毛利=销售单价*数量
-        BigDecimal saleAmount = costParam.getSaleAmount();
+        // 销售毛利=销售金额(折后)*汇率-总成本
+        BigDecimal saleAmount = costParam.getAmountLocalCurrency();
+        //总成本
         BigDecimal saleCost = skuCostProfitResult.getSaleCost();
 
         BigDecimal saleProfit = saleAmount.subtract(saleCost).setScale(4, BigDecimal.ROUND_HALF_UP);
         skuCostProfitResult.setSaleProfit(saleProfit);
         // 销售毛利率
         if (costParam.getSaleAmount().compareTo(BigDecimal.ZERO) > 0) {
-            skuCostProfitResult.setSaleProfitRate(skuCostProfitResult.getSaleProfit().divide(costParam.getSaleAmount(), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal("100")));
+            skuCostProfitResult.setSaleProfitRate(skuCostProfitResult.getSaleProfit().divide(costParam.getAmountLocalCurrency(), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal("100")));
         }
         return skuCostProfitResult;
     }
@@ -79,6 +80,10 @@ public class SoUtils {
         //该值应该为数量*单价*汇率
         BigDecimal amount = MathUtil.multiply(item.getPrice(), item.getQty());
         BigDecimal saleAmount = MathUtil.multiply(amount, item.getExchangeRate());
+        //销售毛利=销售金额(折后)*汇率-总成本
+        //销售金额(折后)*汇率
+        BigDecimal amountLocalCurrency = item.getAmountLocalCurrency();
+        costParam.setAmountLocalCurrency(amountLocalCurrency);
         costParam.setSaleAmount(saleAmount);
         costParam.setQty(item.getQty());
         costParam.setTaxRate(item.getTaxRate());

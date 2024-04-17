@@ -243,6 +243,7 @@
             pro.id,
             prod.id AS detailId,
             pro.confirm_date AS confirmDate,
+            pro.return_mode AS returnMode,
             pro.code AS code,
             pro.purchase_order_code AS purchaseOrderCode,
             pro.confirm_status AS confirmStatus,

@@ -1227,9 +1227,22 @@ public class WarehouseReceiveDTO {
          */
         private String sourceId;
         /**
+         * 订单类型 deliveryOrder 送货单
+         */
+        private String sourceType;
+
+        /**
+         * 来源明细记录id
+         */
+        private String sourceDetailId;
+        /**
          * 收货数量
          */
         private Integer receiveQty;
+        /**
+         * 赠品收货数量
+         */
+        private Integer giftReceiveQty;
     }
 
 }

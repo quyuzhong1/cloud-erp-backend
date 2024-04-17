@@ -4,6 +4,7 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
+import com.erp.model.srm.dto.excel.DeliveryOrderImportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
 import org.mapstruct.Mapper;
@@ -48,5 +49,23 @@ public interface DeliveryOrderConverter {
     @Mapping(target = "isUrgent", source = "detailEntity.isUrgent")
     @Mapping(target = "orderQty", source = "detailEntity.purchaseQty")
     @Mapping(target = "planDeliveryDate", source = "detailEntity.planDeliveryDate")
+    @Mapping(target = "giftQty", source = "addDeliveryDTO.giftQty")
+    @Mapping(target = "remark", source = "addDeliveryDTO.remark")
     DeliveryOrderDetailEntity purchaseOrderDetailToDeliveryOrderDetail(String mainId, DeliveryOrderDTO.AddDeliveryDTO addDeliveryDTO, PurchaseOrderDetailEntity detailEntity);
+
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "mainId", ignore = true)
+    @Mapping(target = "sourceDetailId", source = "purchaseOrderDetail.id")
+    @Mapping(target = "skuId", source = "purchaseOrderDetail.skuId")
+    @Mapping(target = "skuNo", source = "purchaseOrderDetail.skuNo")
+    @Mapping(target = "deliveryQty", source = "qty")
+    @Mapping(target = "giftQty", source = "excelData.giftQty")
+    @Mapping(target = "remark", source = "excelData.remark")
+    @Mapping(target = "productName", source = "purchaseOrderDetail.productName")
+    @Mapping(target = "orderQty", source = "purchaseOrderDetail.purchaseQty")
+    @Mapping(target = "planDeliveryDate",  ignore = true)
+    DeliveryOrderDetailEntity importConvertDeatil(PurchaseOrderDetailEntity purchaseOrderDetail, DeliveryOrderImportExcelDTO excelData, Integer qty);
+
+    DeliveryOrderDetailEntity detailConvert(DeliveryOrderDetailEntity deliveryOrderDetailEntity);
 }

@@ -1,37 +1,20 @@
 package com.common.business.utils;
 
-import cn.hutool.core.util.StrUtil;
-import com.common.core.utils.StrUtils;
 import com.lowagie.text.Document;
-import lombok.Cleanup;
-import org.apache.commons.collections.CollectionUtils;
-
-import java.io.*;
-
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.pdf.PdfCopy;
 import com.lowagie.text.pdf.PdfImportedPage;
 import com.lowagie.text.pdf.PdfReader;
+import lombok.Cleanup;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
-import java.io.FileOutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
-
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.EncodeHintType;
-import com.google.zxing.WriterException;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.oned.Code128Writer;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 public class PdfUtil {
 
 
@@ -55,6 +38,37 @@ public class PdfUtil {
             mergePdfFiles2(byteLists,newPdfName);
             @Cleanup FileInputStream fileInputStream = new FileInputStream(newPdfName);
             return prefix.concat(base64ForPdf(fileInputStream));
+        }finally {
+            // 如果临时文件存在，则删除临时文件
+            if(StringUtils.isNotBlank(newPdfName)){
+                File file = new File(newPdfName);
+                if (file != null && file.isFile() && file.exists()) {
+                    file.delete();
+                }
+            }
+        }
+    }
+
+
+    /**
+     * pdf 合并操作2
+     * 直接将各个pdf对应的字节码，进行合并成新的pdf文件数据
+     * @param base64Pdfs  多个pdf的base64编码文件
+     * @return
+     */
+    public static FileInputStream getNewMergePdfStream(List<String> base64Pdfs) throws Exception {
+        String newPdfName = null;
+        try{
+            List<byte[]> byteLists = base64ToByte(base64Pdfs);
+            // 将pdf的byte[] 数据生成新的pdf文件
+            if(CollectionUtils.isEmpty(byteLists)){
+                return null;
+            }
+            // 生成新的pdf文件
+            newPdfName = "report_"+UUID.randomUUID().toString()+".pdf";
+            mergePdfFiles2(byteLists,newPdfName);
+            @Cleanup FileInputStream fileInputStream = new FileInputStream(newPdfName);
+            return fileInputStream;
         }finally {
             // 如果临时文件存在，则删除临时文件
             if(StringUtils.isNotBlank(newPdfName)){

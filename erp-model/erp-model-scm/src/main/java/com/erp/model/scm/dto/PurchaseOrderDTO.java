@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
@@ -43,22 +44,22 @@ public class PurchaseOrderDTO implements Serializable {
         private String purchaseDetailId;
 
         /**
-         * 下单时间 取自审核时间
+         * 下单时间 取自审核时间 【可排序】
          */
         private LocalDateTime approveTime;
 
         /**
-         * 确认类型 auto系统 手动
+         * 确认类型 auto系统 手动 【可排序】
          */
         private String confirmType;
         private String confirmTypeName;
         /**
-         * 客户
+         * 客户 【可排序】
          */
         private String purchaseOrgName;
 
         /**
-         * 单据类型
+         * 单据类型 【可排序】
          */
         private String type;
 
@@ -68,7 +69,7 @@ public class PurchaseOrderDTO implements Serializable {
         private String typeName;
 
         /**
-         * 采购单号
+         * 采购单号【可排序】
          */
         private String code;
 
@@ -83,12 +84,12 @@ public class PurchaseOrderDTO implements Serializable {
         private String supplierId;
 
         /**
-         * 供应商名称
+         * 供应商名称【可排序】
          */
         private String supplierName;
 
         /**
-         * 审核状态
+         * 审核状态【可排序】
          */
         private String approveStatus;
 
@@ -103,7 +104,7 @@ public class PurchaseOrderDTO implements Serializable {
         private String processId;
 
         /**
-         * 作废状态
+         * 作废状态【可排序】
          */
         private Boolean invalidStatus;
 
@@ -113,7 +114,7 @@ public class PurchaseOrderDTO implements Serializable {
         private String invalidStatusName;
 
         /**
-         * 执行状态
+         * 执行状态【可排序】
          */
         private String executionStatus;
 
@@ -128,17 +129,17 @@ public class PurchaseOrderDTO implements Serializable {
         private String confirmRemark;
 
         /**
-         * skuId
+         * skuId【可排序】
          */
         private String skuId;
 
         /**
-         * sku编码
+         * sku编码 【可排序】
          */
         private String skuNo;
 
         /**
-         * 产品名称
+         * 产品名称【可排序】
          */
         private String productName;
 
@@ -158,7 +159,7 @@ public class PurchaseOrderDTO implements Serializable {
         private String planDeliveryDate;
 
         /**
-         * 交货仓库名称（目的仓库）
+         * 交货仓库名称（目的仓库）【可排序】
          */
         private String deliveryWarehouseName;
 
@@ -166,9 +167,12 @@ public class PurchaseOrderDTO implements Serializable {
          * 含税单价[可排序]
          */
         private BigDecimal taxPrice;
-
         /**
-         * 税率
+         * 含税单价【导出使用】
+         */
+        private String taxPriceName;
+        /**
+         * 税率【可排序】
          */
         private BigDecimal taxRate;
 
@@ -178,7 +182,7 @@ public class PurchaseOrderDTO implements Serializable {
         private String taxRateStr;
 
         /**
-         * 货币符号
+         * 货币符号【可排序】
          */
         private String currencySymbol;
 
@@ -188,9 +192,13 @@ public class PurchaseOrderDTO implements Serializable {
         private Integer purchaseQty;
 
         /**
-         * 采购金额
+         * 采购金额/价税合计【可排序】
          */
         private BigDecimal purchaseAmount;
+        /**
+         * 采购金额/价税合计【导出使用】
+         */
+        private String purchaseAmountName;
 
         /**
          * 签收数量/已送货数量/已收货数量（已签收）
@@ -231,23 +239,23 @@ public class PurchaseOrderDTO implements Serializable {
         private String remark;
 
         /**
-         * 审核人
+         * 审核人【可排序】
          */
         private String approveUserName;
 
 
         /**
-         * 申请人/客户联系人
+         * 申请人/客户联系人【可排序】
          */
         private String purchaseUserName;
 
         /**
-         * 创建人
+         * 创建人【可排序】
          */
         private String createUserName;
 
         /**
-         * 创建时间
+         * 创建时间【可排序】
          */
         private LocalDateTime createTime;
 
@@ -272,7 +280,7 @@ public class PurchaseOrderDTO implements Serializable {
         private Boolean isEndReceive;
 
         /**
-         * 结束交货时间
+         * 结束交货时间【可排序】
          */
         private LocalDateTime endReceiveTime;
 
@@ -287,7 +295,7 @@ public class PurchaseOrderDTO implements Serializable {
         private String sourceId;
 
         /**
-         * 来源类型
+         * 来源类型【可排序】
          */
         private String sourceType;
 
@@ -1285,9 +1293,13 @@ public class PurchaseOrderDTO implements Serializable {
         private Integer sumQty;
 
         /**
-         * 合计金额
+         * 合计未含税金额
          */
         private BigDecimal sumAmount;
+        /**
+         * 合计含税金额
+         */
+        private BigDecimal sumTaxAmount;
     }
     /**
      * 网采合同明细
@@ -1324,9 +1336,23 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private BigDecimal price;
         /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 税率
+         */
+        private String taxRate;
+
+        /**
          * 金额
          */
         private BigDecimal amount;
+        /**
+         * 含税金额
+         */
+        private BigDecimal taxAmount;
         /**
          * 备注
          */

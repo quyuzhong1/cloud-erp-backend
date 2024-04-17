@@ -68,7 +68,10 @@ public class SkuCostProfitDTO implements Serializable {
          * 价税合计
          */
         private BigDecimal taxAmount;
-
+        /**
+         * 销售金额(折后)*汇率
+         */
+        private BigDecimal amountLocalCurrency;
     }
 
 

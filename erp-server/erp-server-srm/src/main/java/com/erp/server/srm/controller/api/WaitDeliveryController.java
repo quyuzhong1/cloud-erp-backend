@@ -63,8 +63,13 @@ public class WaitDeliveryController extends BaseController {
      */
     @PostMapping("/srmWaitDeliveryCount")
     public ApiResult<List<DeliveryOrderDTO.WaitDeliveryCountDTO>> srmWaitDeliveryCount() {
-        List<DeliveryOrderDTO.WaitDeliveryCountDTO> countDTOS = deliveryOrderService.buildSrmWaitDeliveryCount();
+        PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto = new PurchaseOrderSrmDTO.WaitDeliveryParamDTO();
+        dto.setSupplierId(userService.getSupplierId());
+        List<DeliveryOrderDTO.WaitDeliveryCountDTO> countDTOS = purchaseOrderFeign.srmWaitDeliveryCount(dto);
+        //数据转换
+//        List<DeliveryOrderDTO.WaitDeliveryCountDTO> countDTOS = deliveryOrderService.buildSrmWaitDeliveryCount(waitDeliveryCountDTO);
         return success(countDTOS);
+//        List<DeliveryOrderDTO.WaitDeliveryCountDTO> countDTOS = deliveryOrderService.buildSrmWaitDeliveryCount();
     }
 
 
@@ -78,14 +83,11 @@ public class WaitDeliveryController extends BaseController {
     @PostMapping("/srmWaitDeliveryPaging")
     @WebAdvanceQuery(handler = WaitDeliveryQueryHandler.class)
     public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> srmWaitDeliveryPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto) {
+//        dto.getParams().setSupplierId(userService.getSupplierId());
+//        PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderDetailService.srmWaitDeliveryPaging(dto);
         dto.getParams().setSupplierId(userService.getSupplierId());
-        if (CollectionUtils.isEmpty(dto.getParams().getSortList())){
-            SortParamDTO sortParamDTO = new SortParamDTO();
-            sortParamDTO.setField("pod.plan_delivery_date");
-            sortParamDTO.setSort("ASC");
-            dto.getParams().setSortList(Collections.singletonList(sortParamDTO));
-        }
-        PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderDetailService.srmWaitDeliveryPaging(dto);
+        PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderFeign.srmWaitDeliveryPaging(dto);
+
         return success(pagingVO);
     }
 
@@ -113,7 +115,8 @@ public class WaitDeliveryController extends BaseController {
     @WebAdvanceQuery(handler = WaitDeliveryQueryHandler.class)
     public ApiResult<PurchaseOrderDTO.ListDTO> srmWaitDeliveryTotal(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto) {
         dto.setSupplierId(userService.getSupplierId());
-        PurchaseOrderDTO.ListDTO listDTO = purchaseOrderDetailService.srmWaitDeliveryTotal(dto);
+//        PurchaseOrderDTO.ListDTO listDTO = purchaseOrderDetailService.srmWaitDeliveryTotal(dto);
+        PurchaseOrderDTO.ListDTO listDTO = purchaseOrderFeign.srmWaitDeliveryTotal(dto);
         return success(listDTO);
     }
 

@@ -1883,6 +1883,13 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     }
 
     @Override
+    public List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIdsAll(List<String> purchaseOrderIds) {
+        if (CollectionUtils.isEmpty(purchaseOrderIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getReceiveListByPurchaseOrderIdsAll(purchaseOrderIds);
+    }
+    @Override
     public List<WarehouseReceiveEntity> listReceiveBySourceTypeAndIds(WarehouseReceiveDTO.SourceParamDTO dto) {
         if(StringUtils.isBlank(dto.getSourceType()) || CollectionUtils.isEmpty(dto.getSourceIds())){
             return new ArrayList<>();

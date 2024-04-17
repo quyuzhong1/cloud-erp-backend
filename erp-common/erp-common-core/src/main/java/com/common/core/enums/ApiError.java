@@ -734,6 +734,8 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_ORDER_NO_SUPPLIER_CONFIRM(98119,"采购订单【{}】未关联供应商不支持确认"),
     ERROR_PURCHASE_ORDER_REF_SUPPLIER_CONFIRM_DIFF(98119,"不能操作其他供应商采购订单【{}】"),
     ERROR_PURCHASE_DETAIL_ORDER_MORE_THEN_DELIVERY_QTY(98119,"采购订单明细【{}】送货数量不可超过【待交货量】"),
+    ERROR_98120(98120,"非当前供应商【{}】的采购订单不支持导出采购合同"),
+
     /**
      * WMS 错误
      * 从99000 开始  以端口号
@@ -942,7 +944,7 @@ public enum ApiError implements Serializable {
     SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态虚假发货，已发货，取消发货的数据不允许操作虚假发货"),
     APPROVE_IS_FALSE_DELIVERY(92120,"只有审核通过且配货中的订单允许虚假发货"),
     LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交虚假发货"),
-    STATUS_NOT_PRINT_PICKING(92122,"单据【{}】已发货和取消发货单状态，不允许再打印拣货单"),
+    STATUS_NOT_PRINT_PICKING(92122,"单据【{}】取消发货单状态，不允许再打印拣货单"),
     STATUS_NOT_PRINT_LABEL(92123,"单据【{}】已发货和取消发货单状态，不允许再打印标签"),
     TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单【{}】反审删除失败，无法撤销"),
     TRANSFER_INFO_CANCEL_PROCESS_ERROR(92123,"关联的直接调拨单【{}】撤销删除失败，无法撤销"),

@@ -6,11 +6,15 @@ import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.service.CommonService;
+import com.erp.server.scm.service.SupplierUserService;
+import groovy.lang.Lazy;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -36,7 +40,6 @@ public class CommonServiceImpl implements CommonService {
 
     @Resource
     private WorkflowFeign workflowFeign;
-
     @Override
     public LoginUser getUserInfo() {
         String userId = "";
@@ -50,7 +53,6 @@ public class CommonServiceImpl implements CommonService {
         }
         return loginUser;
     }
-
 
     /**
      * 公共的下载模板

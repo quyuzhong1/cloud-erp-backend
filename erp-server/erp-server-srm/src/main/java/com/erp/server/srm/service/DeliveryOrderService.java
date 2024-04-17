@@ -7,7 +7,10 @@ import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
+import org.apache.commons.math3.util.Pair;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -73,12 +76,16 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
 
     /**
      * 汇总待发货列表统计
-     * @param waitDeliveryCountDTO
+     * @param
      * @return
      */
     List<DeliveryOrderDTO.WaitDeliveryCountDTO> buildSrmWaitDeliveryCount();
-
-
+    /**
+     * 汇总待发货列表统计
+     * @param waitDeliveryCountDTO
+     * @return
+     */
+    List<DeliveryOrderDTO.WaitDeliveryCountDTO> buildSrmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryCountDTO waitDeliveryCountDTO);
     /**
      * 确认收货
      */
@@ -90,4 +97,8 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
     Boolean unConfirmReceiveStatus(List<String> ids);
 
     Boolean cancelReceive(List<String> ids);
+
+    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
+
+    void saveImport(List<Pair<DeliveryOrderEntity, List<DeliveryOrderDetailEntity>>> addList);
 }
