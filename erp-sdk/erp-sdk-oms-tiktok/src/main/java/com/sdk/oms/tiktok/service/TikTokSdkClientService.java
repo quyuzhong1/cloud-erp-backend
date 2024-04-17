@@ -891,4 +891,57 @@ public class TikTokSdkClientService {
         return shippingProviderDTO;
     }
 
+
+
+
+    /**
+     * 订单发货
+     * @param tikTokShopInfoDTO 店铺信息
+     * @param orderId 平台订单id
+     */
+    public ShippingProviderDTO sendTikTokShipOrder(TikTokShopInfoDTO tikTokShopInfoDTO, String orderId) {
+        String url = TikTokConstant.URL;
+        String path = "/fulfillment/"+TikTokConstant.VERSION+"/orders/"+orderId+"/packages";
+        String clientSecret = tikTokShopInfoDTO.getClientSecret();
+        String clientId = tikTokShopInfoDTO.getClientId();
+
+        // 定义查询参数
+        Map<String, Object> params = new HashMap<>();
+        params.put("access_token", tikTokShopInfoDTO.getAccessToken());
+        params.put("app_key", clientId);
+        params.put("shop_cipher", tikTokShopInfoDTO.getShopCipher());
+        Long timestamp = System.currentTimeMillis() / 1000;
+        params.put("timestamp", timestamp);
+        params.put("version", TikTokConstant.VERSION);
+
+        //设置请求头
+        Map<String, String> headerMap = new HashMap<>(2);
+        headerMap.put("x-tts-access-token", tikTokShopInfoDTO.getAccessToken());
+        headerMap.put("content-type", "multipart/form-data");
+
+        //组装入参排序计算签名字符串
+        String input = EncryptionUtils.urlParamsSort(params, path, headerMap, clientSecret, "");
+
+        // 追加请求路径获取签名
+        String sign = EncryptionUtils.generateSHA256(input, clientSecret);
+
+        //加入sign签名入参
+        params.put("sign", sign);
+
+        //拉取数据
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            log.error("调用url={},入参params={}, TikTok物流渠道失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok物流渠道失败，返回值 responseMap={}",
+                    url + path, headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
+        }
+        //解析数据
+        ShippingProviderDTO shippingProviderDTO = null;
+        try {
+            shippingProviderDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), ShippingProviderDTO.class);
+        } catch (Exception e) {
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok物流渠道返回值 responseMap={}，转换成实体错误", apiResult.getData()));
+        }
+        return shippingProviderDTO;
+    }
 }
