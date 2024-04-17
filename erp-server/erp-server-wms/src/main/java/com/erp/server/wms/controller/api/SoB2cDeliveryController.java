@@ -2,6 +2,8 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -128,6 +130,7 @@ public class SoB2cDeliveryController extends BaseController {
             menuCode = "wms:soB2cDelivery:delivery",
             serviceClass = SoB2cDeliveryService.class,
             keyIdName = "ids")
+    @DataIdempotent(keyIdName = "dto.ids")
     public ApiResult<List<BatchResultDTO>> delivery(@RequestBody SoB2cDeliveryDTO.DeliverDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         String deliveryType = dto.getType();
