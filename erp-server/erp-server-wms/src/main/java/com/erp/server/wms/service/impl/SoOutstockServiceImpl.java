@@ -2513,6 +2513,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (!ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.APPROVE_ING_IS_PACKING);
         }
+        //已装箱状态不允许再次修改装箱数据
+        if (PackingStatusEnum.PACKING.getCode().equals(entity.getPackingStatus())) {
+            throw new ServiceException(ApiError.SO_OUTSTOCK_NOT_PACKING);
+        }
 
         //只允许B2B订单装箱
         if (!OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
@@ -2559,7 +2563,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private void checkDeliveryQty(List<WmsCartonDTO.PackDateDTO> packDateDTOS, List<SoOutstockDetailEntity> soOutstockDetailEntities) {
         for (WmsCartonDTO.PackDateDTO packDateDTO : packDateDTOS) {
             //发货数量
-            int deliveryQty = soOutstockDetailEntities.stream().filter(req -> req.getMainId().equals(packDateDTO.getId())).mapToInt(req -> req.getActualQty()).sum();
+            int deliveryQty = soOutstockDetailEntities.stream().filter(req -> req.getMainId().equals(packDateDTO.getId()) && req.getSkuId().equals(packDateDTO.getSkuId())).mapToInt(req -> req.getActualQty()).sum();
             //待装箱数量=发货数量-所有已装箱数量
             int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(packDateDTO.getSkuId())).mapToInt(req -> req.getBoxQty() * req.getPackQty()).sum();
             if (deliveryQty < packQtySum) {

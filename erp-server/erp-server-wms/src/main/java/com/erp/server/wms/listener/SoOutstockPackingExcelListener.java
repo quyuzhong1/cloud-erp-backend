@@ -7,6 +7,7 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.alibaba.excel.exception.ExcelDataConvertException;
 import com.alibaba.excel.metadata.CellExtra;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
@@ -14,6 +15,7 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.wms.dto.excel.SoOutstockPackingExcelDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.server.wms.service.SoOutstockDetailService;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.Getter;
@@ -114,9 +116,32 @@ public class SoOutstockPackingExcelListener extends AnalysisEventListener<SoOuts
                 it.remove();
                 continue;
             }
+            if (!ApproveStatusEnum.APPROVE_ING.equals(soOutstockEntity.getApproveStatus())) {
+                packingExcelDTO.setErrorMsg(ApiError.APPROVE_ING_IS_PACKING.msg);
+                errorList.add(packingExcelDTO);
+                it.remove();
+                continue;
+            }
+
+            //只允许B2B订单装箱
+            if (!OrderTypeEnum.B2B.getCode().equals(soOutstockEntity.getOrderType())) {
+                packingExcelDTO.setErrorMsg(ApiError.B2B_ORDER_IS_PACK.msg);
+                errorList.add(packingExcelDTO);
+                it.remove();
+                continue;
+            }
+
             //检查发货单是否已审核
             if(soOutstockEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
                 packingExcelDTO.setErrorMsg("出库单已审核，无法更改装箱");
+                errorList.add(packingExcelDTO);
+                it.remove();
+                continue;
+            }
+
+            //检查发货单是否已装箱
+            if(soOutstockEntity.getPackingStatus().equals(PackingStatusEnum.PACKING.getCode())){
+                packingExcelDTO.setErrorMsg("出库单已装箱，无法更改装箱信息");
                 errorList.add(packingExcelDTO);
                 it.remove();
                 continue;
@@ -144,7 +169,7 @@ public class SoOutstockPackingExcelListener extends AnalysisEventListener<SoOuts
             //SKU是否存在
             List<SoOutstockDetailEntity> currentDetailList = soOutstockDetailEntityMap.get(soOutstockEntity.getId());
             if(currentDetailList.stream().noneMatch(v->v.getSkuNo().equals(packingExcelDTO.getSku()))){
-                packingExcelDTO.setErrorMsg("SKU在发货单不存在");
+                packingExcelDTO.setErrorMsg("SKU在出库单不存在");
                 errorList.add(packingExcelDTO);
                 it.remove();
                 continue;
