@@ -39,7 +39,7 @@ public interface ProductRegistrationConverter {
             @Mapping(target = "name", source = "cnName"),
             @Mapping(target = "englishName", source = "enName"),
             @Mapping(target = "unit", source = "declareUnit"),
-            @Mapping(target = "model", source = "spuNo"),
+            @Mapping(target = "model", source = "declareModel"),
             @Mapping(target = "currencyCode", source = "declareCurrency"),
             @Mapping(target = "declaredValue", source = "declarePrice"),
             @Mapping(target = "weight", expression = "java(java.util.Objects.nonNull(productDTO.getGrossWeight())?productDTO.getGrossWeight().divide(java.math.BigDecimal.valueOf(1000)):null)"),
