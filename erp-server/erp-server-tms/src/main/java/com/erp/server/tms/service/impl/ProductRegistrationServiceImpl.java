@@ -361,6 +361,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                 service.updateBatchById(updateList);
                 sendMsgList.addAll(updateList);
             }
+            sendMsgList = sendMsgList.stream().filter(v->!v.getStatus().equals(ProductRegistrationEnum.StatusEnum.REGISTERED.getCode())).collect(Collectors.toList());
             service.sendMsgWhenNotRegistration(sendMsgList);
         }else{
             //没有传skuId 则全量拉取
