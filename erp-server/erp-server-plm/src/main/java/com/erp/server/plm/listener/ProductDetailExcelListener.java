@@ -7,11 +7,10 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
-import com.common.core.anno.FieldValid;
 import com.common.core.enums.ApiError;
-import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FieldValidUtil;
+import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BasicCategoryEntity;
@@ -20,7 +19,6 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductUnitEntity;
 import com.erp.model.plm.enums.*;
 import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.BasicDictService;
@@ -643,52 +641,12 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         //产品包装信息
         ProductPackDTO productPackDTO = new ProductPackDTO();
         BeanMapper.copy(dto, productPackDTO);
-        String productSize = "";
-        String boxSize = "";
-        String productSizeLength = dto.getProductSizeLength();
-        String productSizeWide = dto.getProductSizeWide();
-        String productSizeHigh = dto.getProductSizeHigh();
-        String boxSizeLength = dto.getBoxSizeLength();
-        String boxSizeWide = dto.getBoxSizeWide();
-        String boxSizeHigh = dto.getBoxSizeHigh();
-        /**
-         * 产品尺寸(长)
-         */
-        if (StringUtils.isNotBlank(productSizeLength)) {
-            productSize = productSizeLength;
-        }
-        /**
-         * 产品尺寸(宽)
-         */
-        if (StringUtils.isNotBlank(productSizeWide)) {
-            productSize = productSize.concat("X").concat(productSizeWide);
-        }
-        /**
-         * 产品尺寸(高)
-         */
-        if (StringUtils.isNotBlank(productSizeHigh)) {
-            productSize = productSize.concat("X").concat(productSizeHigh);
-        }
-        productPackDTO.setProductSize(productSize);
-        /**
-         * 箱规(长)
-         */
-        if (StringUtils.isNotBlank(boxSizeLength)) {
-            boxSize = boxSizeLength;
-        }
-        /**
-         * 箱规(宽)
-         */
-        if (StringUtils.isNotBlank(boxSizeWide)) {
-            boxSize = boxSize.concat("X").concat(boxSizeWide);
-        }
-        /**
-         * 箱规(高)
-         */
-        if (StringUtils.isNotBlank(boxSizeHigh)) {
-            boxSize = boxSize.concat("X").concat(boxSizeHigh);
-        }
-        productPackDTO.setBoxSize(boxSize);
+        productPackDTO.setProductLength(LengthConverterUtil.cmToMm(new BigDecimal(dto.getProductLength())));
+        productPackDTO.setProductWidth(LengthConverterUtil.cmToMm(new BigDecimal(dto.getProductWidth())));
+        productPackDTO.setProductHeight(LengthConverterUtil.cmToMm(new BigDecimal(dto.getProductHeight())));
+        productPackDTO.setBoxLength(LengthConverterUtil.cmToMm(new BigDecimal(dto.getBoxLength())));
+        productPackDTO.setBoxWidth(LengthConverterUtil.cmToMm(new BigDecimal(dto.getBoxWidth())));
+        productPackDTO.setBoxHeight(LengthConverterUtil.cmToMm(new BigDecimal(dto.getBoxHeight())));
         /**
          * 毛重
          */

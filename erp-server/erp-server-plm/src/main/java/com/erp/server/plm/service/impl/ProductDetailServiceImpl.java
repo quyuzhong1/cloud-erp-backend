@@ -4049,26 +4049,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             ProductPackEntity productPackEntity = productPackList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), detailEntity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(productPackEntity)) {
                 errMsg.append(StrUtil.format(ApiError.ERROR_PRODUCT_PACK_NOT_EXIST.msg,detailEntity.getSkuNo())).append("</br>");
+                continue;
             }
             //包装尺寸
-            if (StrUtil.isBlank(productPackEntity.getProductSize())) {
-                errMsg.append(StrUtil.format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.msg,detailEntity.getSkuNo())).append("</br>");
-            }
-            if (StrUtil.isNotBlank(productPackEntity.getProductSize())) {
-                List<String> productSizeList = Arrays.stream(productPackEntity.getProductSize().split("X")).filter(obj -> StrUtil.isNotBlank(obj)).collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(productSizeList) || productSizeList.size() != 3) {
-                    errMsg.append(StrUtil.format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.msg,detailEntity.getSkuNo())).append("</br>");
-                }
-            }
-            if (StrUtil.isBlank(productPackEntity.getBoxSize())) {
-                errMsg.append(StrUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg,detailEntity.getSkuNo())).append("</br>");
+            if (ObjectUtils.isEmpty(productPackEntity.getProductLength()) || ObjectUtils.isEmpty(productPackEntity.getProductWidth()) && ObjectUtils.isEmpty(productPackEntity.getProductLength())) {
+                errMsg.append(StrUtil.format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append("</br>");
             }
             //箱规
-            if (StrUtil.isNotBlank(productPackEntity.getBoxSize())) {
-                List<String> boxSizeList = Arrays.stream(productPackEntity.getBoxSize().split("X")).filter(obj -> StrUtil.isNotBlank(obj)).collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(boxSizeList) || boxSizeList.size() != 3) {
-                    errMsg.append(StrUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg,detailEntity.getSkuNo())).append("</br>");
-                }
+            if (ObjectUtils.isEmpty(productPackEntity.getBoxLength()) || ObjectUtils.isEmpty(productPackEntity.getBoxWidth()) && ObjectUtils.isEmpty(productPackEntity.getBoxHeight())) {
+                errMsg.append(StrUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append("</br>");
             }
             //毛重
             if (MathUtil.compareTo(productPackEntity.getGrossWeight(),MathUtil.ZERO) == MathUtil.ZERO) {
@@ -4146,5 +4135,44 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
         return skuList;
+    }
+
+    @Override
+    public void initProductSizeAndBoxSize() {
+        // 查询出所有需要进行初始化的产品尺寸或箱规
+        List<ProductPackEntity> productPacks = productPackService.list();
+        List<List<ProductPackEntity>> partition = Lists.partition(productPacks, 500);
+        partition.parallelStream()
+                .forEach(packs ->{
+                    try {
+                        packs.forEach(this::convertSize);
+                    } catch (Exception e) {
+                        log.error("数据异常{}", e.getMessage(), e);
+                    }
+                    productPackService.updateBatchById(packs);
+                });
+    }
+
+    private void convertSize(ProductPackEntity pack) {
+        List<BigDecimal> productSizeList = Arrays.stream(Optional.ofNullable(pack.getProductSize()).orElse("").split("X"))
+                .filter(StrUtil::isNotBlank)
+                .map(BigDecimal::new)
+                .collect(Collectors.toList());
+        //产品尺寸-长
+        pack.setProductLength(LengthConverterUtil.cmToMm(productSizeList.stream().findFirst().orElse(BigDecimal.ZERO)));
+        //产品尺寸-宽
+        pack.setProductWidth(LengthConverterUtil.cmToMm(productSizeList.stream().skip(1).findFirst().orElse(BigDecimal.ZERO)));
+        //产品尺寸-高
+        pack.setProductHeight(LengthConverterUtil.cmToMm(productSizeList.stream().skip(2).findFirst().orElse(BigDecimal.ZERO)));
+        List<BigDecimal> boxSizeList = Arrays.stream(Optional.ofNullable(pack.getBoxSize()).orElse("").split("X"))
+                .filter(StrUtil::isNotBlank)
+                .map(BigDecimal::new)
+                .collect(Collectors.toList());
+        //箱规-长
+        pack.setBoxLength(LengthConverterUtil.cmToMm(boxSizeList.stream().findFirst().orElse(BigDecimal.ZERO)));
+        //箱规-宽
+        pack.setBoxWidth(LengthConverterUtil.cmToMm(boxSizeList.stream().skip(1).findFirst().orElse(BigDecimal.ZERO)));
+        //箱规-高
+        pack.setBoxHeight(LengthConverterUtil.cmToMm(boxSizeList.stream().skip(2).findFirst().orElse(BigDecimal.ZERO)));
     }
 }

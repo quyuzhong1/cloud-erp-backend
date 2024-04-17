@@ -635,7 +635,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         .collect(Collectors.toList());
                 //子sku数量需要乘订单数量
                 childrenSkuDTOS.forEach(bomChildrenSkuDTO -> {
-                    this.buildProductSize(bomChildrenSkuDTO);
                     splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty() * bomChildrenSkuDTO.getQuantity())
                             .skuNo( StrUtil.isNotEmpty(bomChildrenSkuDTO.getSkuNo()) ? bomChildrenSkuDTO.getSkuNo() : "")
                             .length( Objects.nonNull(bomChildrenSkuDTO.getLength()) ? bomChildrenSkuDTO.getLength() : BigDecimal.ZERO)
@@ -644,7 +643,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             .build());
                 });
             }else {
-                this.buildProductSize(skuVO);
                 splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
                         .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
                         .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? skuVO.getLength() : BigDecimal.ZERO)
@@ -673,7 +671,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         .collect(Collectors.toList());
                 //子sku数量需要乘订单数量
                 childrenSkuDTOS.forEach(bomChildrenSkuDTO -> {
-                    this.buildProductSize(bomChildrenSkuDTO);
                     splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty() * bomChildrenSkuDTO.getQuantity())
                             .skuNo( StrUtil.isNotEmpty(bomChildrenSkuDTO.getSkuNo()) ? bomChildrenSkuDTO.getSkuNo() : "")
                             .length( Objects.nonNull(bomChildrenSkuDTO.getLength()) ? bomChildrenSkuDTO.getLength() : BigDecimal.ZERO)
@@ -682,7 +679,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             .build());
                 });
             }else {
-                this.buildProductSize(skuVO);
                 splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
                         .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
                         .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? skuVO.getLength() : BigDecimal.ZERO)
@@ -6087,61 +6083,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
     }
 
-    @Override
-    public void buildProductSize(BomChildrenSkuDTO bomChildrenSkuDTO) {
-        if (Objects.isNull(bomChildrenSkuDTO)) {
-            return;
-        }
-        String productSize = bomChildrenSkuDTO.getProductSize();
-        if (org.apache.commons.lang3.StringUtils.isEmpty(productSize)) {
-            bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
-            bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
-            bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
-        } else {
-            String[] xes = productSize.split("X");
-            if (xes.length > 2){
-                if (org.apache.commons.lang3.StringUtils.isNotEmpty(xes[0])){
-                    bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
-                }else {
-                    bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
-                }
-                if (org.apache.commons.lang3.StringUtils.isNotEmpty(xes[1])){
-                    bomChildrenSkuDTO.setWidth(new BigDecimal(xes[1]));
-                }else {
-                    bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
-                }
-                if (org.apache.commons.lang3.StringUtils.isNotEmpty(xes[2])){
-                    bomChildrenSkuDTO.setHeight(new BigDecimal(xes[2]));
-                }else {
-                    bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
-                }
-            }else if (xes.length > 1){
-                if (org.apache.commons.lang3.StringUtils.isNotEmpty(xes[0])){
-                    bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
-                }else {
-                    bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
-                }
-                if (org.apache.commons.lang3.StringUtils.isNotEmpty(xes[1])){
-                    bomChildrenSkuDTO.setWidth(new BigDecimal(xes[1]));
-                }else {
-                    bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
-                }
-                bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
-            }else if (xes.length > 0){
-                if (org.apache.commons.lang3.StringUtils.isNotEmpty(xes[0])){
-                    bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
-                }else {
-                    bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
-                }
-                bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
-                bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
-            }else {
-                bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
-                bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
-                bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
-            }
-        }
-    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

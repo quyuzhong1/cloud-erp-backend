@@ -647,4 +647,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return
      */
     List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(List<String> skuIds);
+
+    void initProductSizeAndBoxSize();
 }

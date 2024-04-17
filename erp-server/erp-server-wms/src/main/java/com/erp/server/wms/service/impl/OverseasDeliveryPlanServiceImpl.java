@@ -23,7 +23,6 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -60,8 +59,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -827,9 +824,9 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
                 if (ObjectUtil.isNotEmpty(skuVO)) {
                     detailAddDto.setSkuNo(skuVO.getSkuNo());
                     detailAddDto.setNetWeight(skuVO.getNetWeight());
-                    //拆分产品尺寸
-                    String productSize = skuVO.getProductSize();
-                    splitProductSize(detailAddDto, productSize);
+                    detailAddDto.setProductSizeLength(skuVO.getProductLength());
+                    detailAddDto.setProductSizeWidth(skuVO.getProductWidth());
+                    detailAddDto.setProductSizeHeight(skuVO.getProductLength());
                 }
                 //暂无仓位
                 detailAddDto.setWarehouseLocation("");
@@ -844,45 +841,6 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
             }
         }
         return Boolean.TRUE;
-    }
-
-    /**
-     * 拆分产品尺寸长宽高存入数据集
-     *
-     * @param detailAdd   数据集
-     * @param productSize 需要拆分的尺寸
-     * @return void
-     * @Author Luo_WG
-     * @Date 2023/11/2 17:28
-     **/
-    private void splitProductSize(FirstMileDeliveryDetailDTO.AddDTO detailAdd, String productSize) {
-        if (StringUtils.isNotBlank(productSize)) {
-            String[] productSizes = productSize.split("X");
-            //长
-            if (productSizes.length > 0) {
-                if (StringUtils.isNotBlank(productSizes[0])) {
-                    detailAdd.setProductSizeLength(new BigDecimal(productSizes[0]));
-                } else {
-                    detailAdd.setProductSizeLength(new BigDecimal(BigInteger.ZERO));
-                }
-            }
-            //宽
-            if (productSizes.length > 1) {
-                if (StringUtils.isNotBlank(productSizes[1])) {
-                    detailAdd.setProductSizeWidth(new BigDecimal(productSizes[1]));
-                } else {
-                    detailAdd.setProductSizeWidth(new BigDecimal(BigInteger.ZERO));
-                }
-            }
-            //高
-            if (productSizes.length > 2) {
-                if (StringUtils.isNotBlank(productSizes[2])) {
-                    detailAdd.setProductSizeHeight(new BigDecimal(productSizes[2]));
-                } else {
-                    detailAdd.setProductSizeHeight(new BigDecimal(BigInteger.ZERO));
-                }
-            }
-        }
     }
 
     /**

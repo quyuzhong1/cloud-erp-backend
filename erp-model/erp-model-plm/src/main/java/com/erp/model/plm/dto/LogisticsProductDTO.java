@@ -6,15 +6,12 @@ package com.erp.model.plm.dto;/**
  * @Created by yl
  */
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -505,11 +502,18 @@ public class LogisticsProductDTO {
          */
         private String actualTaxCost;
 
-
         /**
-         * 产品尺寸
+         * 产品尺寸长
          */
-        private String productSize;
+        private BigDecimal productLength;
+        /**
+         * 产品尺寸宽
+         */
+        private BigDecimal productWidth;
+        /**
+         * 产品尺寸高
+         */
+        private BigDecimal productHeight;
         /**
          * 毛重
          */
@@ -756,11 +760,18 @@ public class LogisticsProductDTO {
          */
         private BigDecimal actualTaxCost;
 
-
         /**
-         * 产品尺寸
+         * 产品尺寸长
          */
-        private String productSize;
+        private BigDecimal productLength;
+        /**
+         * 产品尺寸宽
+         */
+        private BigDecimal productWidth;
+        /**
+         * 产品尺寸高
+         */
+        private BigDecimal productHeight;
         /**
          * 毛重
          */

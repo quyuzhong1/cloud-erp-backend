@@ -12,7 +12,6 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
@@ -752,11 +751,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      **/
     Boolean updateShippingOrderNo(List<TransferDeclareDTO.ShippingOrderDTO> list);
 
-    /**
-     * 计算产品尺寸
-     * @param bomChildrenSkuDTO
-     */
-    void buildProductSize(BomChildrenSkuDTO bomChildrenSkuDTO);
 
     /**
      * 计算长度

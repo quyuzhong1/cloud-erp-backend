@@ -22,8 +22,10 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        product_size,
-        gross_weight,net_weight,box_size,
+        product_length /10,
+        product_width /10,
+        product_height /10,
+        gross_weight,net_weight,box_length /10,box_width /10,box_height /10,
         box_weight,box_qty,pp.create_time,
         pp.create_user_id,pp.update_time,pp.update_user_id
     </sql>

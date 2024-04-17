@@ -1230,4 +1230,10 @@ public class ProductDetailController extends BaseController {
             e.printStackTrace();
         }
     }
+
+    @GetMapping("/initProductSizeAndBoxSize")
+    public ApiResult<String> initProductSizeAndBoxSize(){
+        productDetailService.initProductSizeAndBoxSize();
+        return success();
+    }
 }
