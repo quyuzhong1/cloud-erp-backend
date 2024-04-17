@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.DmpPushTaskFeignDTO;
@@ -38,6 +39,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
@@ -85,6 +87,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -358,8 +361,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //已发货和取消发货单 状态，不允许在打印拣货单
         List<SoB2cDeliveryEntity> deliveryEntityList = this.listByIds(ids);
         List<String> codeList = deliveryEntityList.stream()
-                .filter(req -> SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(req.getStatus())
-                        || SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(req.getStatus()))
+                .filter(req -> SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(req.getStatus()))
                 .map(req -> req.getCode()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(codeList)) {
             throw new ServiceException(ApiError.STATUS_NOT_PRINT_PICKING, StrUtil.join(",", codeList));
@@ -577,11 +579,23 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public SoB2cDeliveryEntity getByBusinessCode(String businessCode) {
-        return this.getOne(new LambdaQueryWrapper<>(SoB2cDeliveryEntity.class)
-                .eq(SoB2cDeliveryEntity::getSoCode, businessCode)
-                .or()
-                .eq(SoB2cDeliveryEntity::getTransportNo, businessCode)
-        );
+        //查询是否是跟踪单号
+        SoB2cLogisticsEntity logisticsEntity = soB2cFeign.getSoB2cLogisticsByTrackNo(businessCode);
+        if (ObjectUtils.isNotEmpty(logisticsEntity)) {
+            return lambdaQuery()
+                    .eq(SoB2cDeliveryEntity::getSourceId, logisticsEntity.getMainId())
+                    .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
+                    .last("LIMIT 1").one();
+        } else {
+            return this.getOne(new LambdaQueryWrapper<>(SoB2cDeliveryEntity.class)
+                    .or(soB2cDeliveryEntityLambdaQueryWrapper -> soB2cDeliveryEntityLambdaQueryWrapper
+                            .eq(SoB2cDeliveryEntity::getSoCode, businessCode)
+                            .or()
+                            .eq(SoB2cDeliveryEntity::getTransportNo, businessCode))
+                    .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
+                    .last(" limit 1")
+            );
+        }
     }
 
     @Override
@@ -795,6 +809,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @return
      */
     @Override
+    @DataIdempotent(keyIdName = "id")
     public BatchResultDTO delivery(String id, String deliveryType) {
         //手工发货
         String manual = DeliverTypeEnum.MANUAL.getCode();

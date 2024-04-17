@@ -29,6 +29,7 @@ import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemList;
 import com.erp.server.wms.rocketmq.consumer.PlatformSoOutStockConsumerService;
 import com.erp.server.wms.service.IPlatformRetryService;
+import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -51,9 +52,15 @@ public class AmazonPlatformRetry implements IPlatformRetryService {
     @Resource
     private DmpAmazonFeign dmpMongoDbFeign;
 
+    @Resource
+    private SoOutstockService soOutstockService;
 
     @Override
     public Boolean retrySoOutStock(SoB2cEntity currentEntity, List list) {
-        return dmpMongoDbFeign.checkAndSendSoOutStock(new DmpPullSoOutStockDTO(currentEntity.getShopId(), currentEntity.getPlatformCode()));
+        if(!currentEntity.hasPlatformWarehouseOrder()){
+            return soOutstockService.defaultHandleRetry(currentEntity.getId(), list);
+        }else{
+            return dmpMongoDbFeign.checkAndSendSoOutStock(new DmpPullSoOutStockDTO(currentEntity.getShopId(), currentEntity.getPlatformCode()));
+        }
     }
 }

@@ -2816,6 +2816,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     ProductPurchaseEntity productPurchase = productPurchaseMap.get(skuVO.getSkuId()).get(0);
                     skuVO.setMoq(productPurchase.getMoq());
                     skuVO.setSupplierId(productPurchase.getMainSupplier());
+                    skuVO.setEan(productPurchase.getEan());
                 }
                 //产品成本
                 if (productCostMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productCostMap.get(skuVO.getSkuId()))){

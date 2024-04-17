@@ -5,6 +5,7 @@ import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
@@ -179,6 +180,8 @@ public class DeliveryExcelListener extends AnalysisEventListener<DeliveryOrderIm
                 Integer returnQty = MathUtil.ZERO;
                 //无送货单收货数量
                 Integer receiveQty;
+                //有送货单的收货数量
+                Integer hasDeliveryReceiveQty = MathUtil.ZERO;
                 //收货数量(已审核的)
                 if (CollectionUtils.isNotEmpty(receiveList)) {
                     unDeliveryReceiveQty = receiveList.stream().filter(e -> StringUtils.isEmpty(e.getSourceId()) && e.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()))
@@ -186,10 +189,12 @@ public class DeliveryExcelListener extends AnalysisEventListener<DeliveryOrderIm
                 }
                 //收货数量(全部)
                 if (CollectionUtils.isNotEmpty(receiveAllList)) {
-                    receiveQty = receiveAllList.stream().filter(e -> StringUtils.isEmpty(e.getSourceId()) && e.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()))
+                    hasDeliveryReceiveQty = receiveAllList.stream().filter(e -> StringUtils.isNotEmpty(e.getSourceType())
+                            && e.getSourceType().equalsIgnoreCase(SourceTypeEnum.DELIVERY_ORDER.getCode())
+                                    && e.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()))
                             .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 } else {
-                    receiveQty = MathUtil.ZERO;
+                    hasDeliveryReceiveQty = MathUtil.ZERO;
                 }
                 //无收货单的入库数量
                 if (CollectionUtils.isNotEmpty(stockInDetailList)){
@@ -224,7 +229,7 @@ public class DeliveryExcelListener extends AnalysisEventListener<DeliveryOrderIm
                                     && e.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode()) )
                             .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty)
                             .reduce(MathUtil.ZERO, Integer::sum);
-                    diffSendAndReceive = srmDeliveryQty - receiveQty;
+                    diffSendAndReceive = srmDeliveryQty - hasDeliveryReceiveQty;
                 }
 
                 //剩余送货量/可下推量=采购订单-送货单数量-无送货单收货数量-无收货单的入库数量+[收发差异]+退货补货数量[库存退货/质检退货]
