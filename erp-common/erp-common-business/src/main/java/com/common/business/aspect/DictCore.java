@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -117,7 +118,7 @@ public class DictCore {
         if (result instanceof PagingVO<?>) {
         	List<?> list = ((PagingVO<?>)result).getList();
         	if(CollUtil.isNotEmpty(list)) {
-        		addDictCache(list, isFirst);
+        		addDictCache(list.stream().filter(Objects::nonNull).findAny().orElse(null), isFirst);
         		List<Object> items = new ArrayList<>();
                 for (Object record : list) {
                 	record = this.dealRecord(record, lang);
@@ -129,7 +130,7 @@ public class DictCore {
 
         }else if (result instanceof List) {
             List<Object> items = new ArrayList<>();
-            addDictCache(result, isFirst);
+            addDictCache(((List) result).stream().filter(Objects::nonNull).findAny().orElse(null), isFirst);
             for (Object record : ((List) result)) {
                 record = this.dealRecord(record, lang);
                 items.add(record);
@@ -137,7 +138,7 @@ public class DictCore {
             return items;
 
         } else if (result instanceof Map) {
-        	addDictCache(((Map<String, Object>) result).values(), isFirst);
+        	addDictCache(((Map<String, Object>) result).values().stream().filter(Objects::nonNull).findAny().orElse(null), isFirst);
             Map<String, Object> items = new HashMap<>();
             for (Map.Entry<String, Object> entry : ((Map<String, Object>) result).entrySet()) {
                 String key = entry.getKey();
@@ -151,7 +152,7 @@ public class DictCore {
 
         } else if (result instanceof Set) {
             Set<Object> items = new HashSet<>();
-            addDictCache(result, isFirst);
+            addDictCache(((Set) result).stream().filter(Objects::nonNull).findAny().orElse(null), isFirst);
             for (Object record : ((Set) result)) {
                 record = this.dealRecord(record, lang);
                 items.add(record);
@@ -166,23 +167,15 @@ public class DictCore {
     }
 
     public void addDictCache(Object record , boolean isFirst) {
-    	if(!isFirst) {
+    	if(!isFirst || record == null) {
     		return;
     	}
-    	Class<?> clazz = null;
-        Type type = record.getClass().getGenericSuperclass();
-        if (type instanceof ParameterizedType) {
-            ParameterizedType parameterizedType = (ParameterizedType) type;
-            Type[] typeArguments = parameterizedType.getActualTypeArguments();
-            if (typeArguments.length > 0) {
-            	clazz = (Class<?>) typeArguments[0];
-            }else {
-            	clazz = record.getClass();
-            }
-        }
+    	
+    	Class<?> clazz = record.getClass();
     	List<DictDto> dictDtoList = new ArrayList<>();
     	getDictDtoList(clazz, dictDtoList);
     	if(CollUtil.isNotEmpty(dictDtoList)) {
+    		dictDtoList = dictDtoList.stream().distinct().collect(Collectors.toList());
     		Map<String, List<DictDto>> queryDictMaps = dictDtoList.stream().collect(Collectors.groupingBy(d -> {
     			return d.getServiceCode().getCode() + "_" + d.getTableName() + "_" + d.getQueryFieldName() + "_" + d.getReturnFieldName();
     		}));
@@ -217,7 +210,7 @@ public class DictCore {
     						}
 							if(queryFieldValue != null) {
     							List<Map<String, Object>> finalData = DictThreadLocal.get(queryTypeField, queryFieldName ,v.getReturnFieldName(), v.getTableName()
-        	    						, queryFieldName, v.getServiceCode());
+        	    						, queryFieldValue.toString(), v.getServiceCode());
     							if(finalData == null) {
     								finalData = new ArrayList<>();
     							}
@@ -225,7 +218,7 @@ public class DictCore {
     							oneData.put(v.getReturnFieldName(), d.get(v.getReturnFieldName()));
     							finalData.add(oneData);
     							DictThreadLocal.set(queryTypeField, queryFieldName ,v.getReturnFieldName(), v.getTableName()
-        	    						, queryFieldName, v.getServiceCode(), finalData);
+        	    						, queryFieldValue.toString(), v.getServiceCode(), finalData);
     						}
     					}
     				}
@@ -238,9 +231,11 @@ public class DictCore {
     	for (Field field : ConvertUtils.getAllFields(clazz)) {
     		Dict dictAnnotation = field.getAnnotation(Dict.class);
             if (dictAnnotation != null) {
-            	Class<?> declaringClass = field.getDeclaringClass();
+            	Class<?> declaringClass = field.getType();
             	if(!"java.lang.String".equals(declaringClass.getName()) && !declaringClass.isEnum()) {
-            		getDictDtoList(clazz , dictDtoList);
+            		if(!declaringClass.getName().equals(clazz.getName())) {
+            			getDictDtoList(declaringClass , dictDtoList);
+                	}
             		continue;
             	}
             	
@@ -527,5 +522,51 @@ public class DictCore {
     	private String returnFieldName;
     	private String tableName;
     	private ServiceCodeNameEnum serviceCode;
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			DictDto other = (DictDto) obj;
+			if (queryFieldName == null) {
+				if (other.queryFieldName != null)
+					return false;
+			} else if (!queryFieldName.equals(other.queryFieldName))
+				return false;
+			if (queryTypeField == null) {
+				if (other.queryTypeField != null)
+					return false;
+			} else if (!queryTypeField.equals(other.queryTypeField))
+				return false;
+			if (returnFieldName == null) {
+				if (other.returnFieldName != null)
+					return false;
+			} else if (!returnFieldName.equals(other.returnFieldName))
+				return false;
+			if (serviceCode != other.serviceCode)
+				return false;
+			if (tableName == null) {
+				if (other.tableName != null)
+					return false;
+			} else if (!tableName.equals(other.tableName))
+				return false;
+			return true;
+		}
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((queryFieldName == null) ? 0 : queryFieldName.hashCode());
+			result = prime * result + ((queryTypeField == null) ? 0 : queryTypeField.hashCode());
+			result = prime * result + ((returnFieldName == null) ? 0 : returnFieldName.hashCode());
+			result = prime * result + ((serviceCode == null) ? 0 : serviceCode.hashCode());
+			result = prime * result + ((tableName == null) ? 0 : tableName.hashCode());
+			return result;
+		}
+    	
+    	
     }
 }

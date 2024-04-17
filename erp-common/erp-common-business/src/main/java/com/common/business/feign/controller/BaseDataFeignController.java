@@ -24,6 +24,7 @@ public class BaseDataFeignController implements BaseDataFeign{
 		return baseDataMapper.queryValueByValue(tableName, queryFieldName, queryValue, returnFieldName , extendQuerySql);
 	}
 
+	@GetMapping("/queryValueByType")
 	@Override
 	public List<Map<String, Object>> queryValueByType(String tableName, String queryFieldName,
 			String returnFieldName, String queryTypeField) {
