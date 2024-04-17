@@ -106,15 +106,15 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
                     StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
                 return this.buildViewDTO(entity,soB2cEntity.getTransferStatus(),declareDetailEntity.getOrderUploadStatus(), trackNo);
             }
+            //调用虚假发货方法，标记第三方平台发货
+            soB2cDeliveryService.delivery(entity.getId(), DeliverTypeEnum.FALSEHOOD.getCode());
+
             //将发货状态更新为已发货
             entity.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             if (!soB2cDeliveryService.updateById(entity)) {
                 throw new ServiceException("发货单更新失败");
             }
             soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()), SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-
-            //调用虚假发货方法，标记第三方平台发货
-            soB2cDeliveryService.delivery(entity.getId(), DeliverTypeEnum.FALSEHOOD.getCode());
 
             soB2cDeliveryService.generateB2cSoOutstock(entity);
 
