@@ -128,14 +128,14 @@
     <!-- tab列表 -->
     <select id="tabList" resultType="com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
+        tbdr.approve_status AS tabFlag,
         count(*)  AS count
-        FROM  tms_b2c_declare_reconciliation
-        WHERE is_deleted=FALSE
+        FROM  tms_b2c_declare_reconciliation tbdr
+        WHERE tbdr.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY tbdr.approve_status
     </select>
 
 </mapper>
