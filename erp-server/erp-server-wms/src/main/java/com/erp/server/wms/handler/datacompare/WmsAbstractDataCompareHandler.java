@@ -30,7 +30,7 @@ public abstract class WmsAbstractDataCompareHandler<M extends WmsDataCompareDbSe
 	
 	private String billType;
 	
-	private final static Integer pageSize = 10;
+	private final static Integer pageSize = 5000;
 	
 	@Override
 	public List<T> getDataCompareByCondition(String systemDataCondition , String taskId){

@@ -156,7 +156,7 @@ public class WmsDataComparePlanDTO implements Serializable {
     	 /**
     	 * 唯一键标识，true或false
     	 */
-    	private Boolean pkFlag;
+    	private Boolean status;
     	
     	/**
     	 * 导入数据表头索引

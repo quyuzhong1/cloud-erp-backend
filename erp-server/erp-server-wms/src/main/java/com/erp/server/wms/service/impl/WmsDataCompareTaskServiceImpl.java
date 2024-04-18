@@ -297,7 +297,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		}
 		
 		if(CollUtil.isNotEmpty(importDataMappingDTOList)) {
-			long count = importDataMappingDTOList.stream().filter(i -> i.getPkFlag() != null && i.getPkFlag()).count();
+			long count = importDataMappingDTOList.stream().filter(i -> i.getStatus() != null && i.getStatus()).count();
 			if(count == 0) {
 				setNextViewDTO.setErrMessageList(Collections.singletonList("汇总字段需要设置一个"));
 				return setNextViewDTO;
@@ -306,11 +306,11 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				setNextViewDTO.setErrMessageList(Collections.singletonList("汇总字段只能设置一个"));
 				return setNextViewDTO;
 			}
-			if(importDataMappingDTOList.stream().anyMatch(i -> i.getPkFlag() != null && i.getPkFlag() && (StringUtils.isBlank(i.getImportField()) || StringUtils.isBlank(i.getImportField())))) {
+			if(importDataMappingDTOList.stream().anyMatch(i -> i.getStatus() != null && i.getStatus() && (StringUtils.isBlank(i.getImportField()) || StringUtils.isBlank(i.getImportField())))) {
 				setNextViewDTO.setErrMessageList(Collections.singletonList("汇总字段已设置，但系统数据字段或导入数据字段属性未设置映射"));
 				return setNextViewDTO;
 			}
-			if(importDataMappingDTOList.stream().allMatch(i -> (i.getPkFlag() == null || !i.getPkFlag()) && (StringUtils.isBlank(i.getImportField()) || StringUtils.isBlank(i.getImportField())))) {
+			if(importDataMappingDTOList.stream().allMatch(i -> (i.getStatus() == null || !i.getStatus()) && (StringUtils.isBlank(i.getImportField()) || StringUtils.isBlank(i.getImportField())))) {
 				setNextViewDTO.setErrMessageList(Collections.singletonList("汇总字段未设置，但系统数据字段或导入数据字段属性未设置一个映射"));
 				return setNextViewDTO;
 			}
@@ -349,7 +349,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				}
 				
 				List<String> errMessageList = new ArrayList<>();
-				ImportDataMappingDTO pkImportDataMappingDTO = importDataMappingDTOList.stream().filter(i -> i.getPkFlag() != null && i.getPkFlag()).findAny().orElse(null);
+				ImportDataMappingDTO pkImportDataMappingDTO = importDataMappingDTOList.stream().filter(i -> i.getStatus() != null && i.getStatus()).findAny().orElse(null);
 				Integer headIndex = pkImportDataMappingDTO.getHeadIndex();
 				String importField = pkImportDataMappingDTO.getImportField();
 				int fileIndex = 0;
@@ -527,7 +527,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 										}
 									}
 									method.invoke(compareDTO, excelValue);
-									if(importDataMappingDTO.getPkFlag() == null || !importDataMappingDTO.getPkFlag()) {
+									if(importDataMappingDTO.getStatus() == null || !importDataMappingDTO.getStatus()) {
 										sb.append("-");
 										sb.append(excelValue);
 									}
@@ -561,10 +561,10 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 			Integer resultMissCount = wmsDataCompareTaskEntity.getResultMissCount();
 			Integer resultDiffCount = wmsDataCompareTaskEntity.getResultDiffCount();
 			List<ImportDataMappingDTO> importDataMappingDTOList = JSON.parseArray(wmsDataCompareTaskEntity.getImportDataMapping() , WmsDataComparePlanDTO.ImportDataMappingDTO.class);
-			ImportDataMappingDTO pkImportDataMappingDTO = importDataMappingDTOList.stream().filter(i -> i.getPkFlag() != null && i.getPkFlag()).findAny().orElse(null);
+			ImportDataMappingDTO pkImportDataMappingDTO = importDataMappingDTOList.stream().filter(i -> i.getStatus() != null && i.getStatus()).findAny().orElse(null);
 			String systemField = pkImportDataMappingDTO.getSystemField();
 			if(CollUtil.isNotEmpty(dataCompareByConditionList)) {
-				List<ImportDataMappingDTO> notPkImportDataMappingDTOList = importDataMappingDTOList.stream().filter(i -> i.getPkFlag() == null || !i.getPkFlag()).collect(Collectors.toList());
+				List<ImportDataMappingDTO> notPkImportDataMappingDTOList = importDataMappingDTOList.stream().filter(i -> i.getStatus() == null || !i.getStatus()).collect(Collectors.toList());
 				Map<String, List<Object>> pkFieldValueSystemDataMaps = new HashMap<>();
 				dataCompareByConditionList.forEach(d -> {
 					StringBuffer sb = new StringBuffer();
