@@ -889,14 +889,23 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         }
         List<InventoryDTO.InventoryViewQtyDTO> list = new ArrayList<>();
         dtos.forEach(dto -> {
-            InventoryDTO.InventoryViewQtyDTO inventoryQtyDTO = baseMapper.getInventoryInfoByParam(dto);
-            if (Objects.isNull(inventoryQtyDTO)) {
+            InventoryDTO.InventoryViewQtyDTO inventoryQtyDTO;
+            if (StringUtils.isBlank(dto.getSkuId())) {
                 inventoryQtyDTO = new InventoryDTO.InventoryViewQtyDTO();
                 inventoryQtyDTO.setSkuId(dto.getSkuId());
                 inventoryQtyDTO.setWarehouseId(dto.getWarehouseId());
                 inventoryQtyDTO.setWarehouseLocation(dto.getWarehouseLocation());
+                list.add(inventoryQtyDTO);
+            } else {
+                inventoryQtyDTO = baseMapper.getInventoryInfoByParam(dto);
+                if (Objects.isNull(inventoryQtyDTO)) {
+                    inventoryQtyDTO = new InventoryDTO.InventoryViewQtyDTO();
+                    inventoryQtyDTO.setSkuId(dto.getSkuId());
+                    inventoryQtyDTO.setWarehouseId(dto.getWarehouseId());
+                    inventoryQtyDTO.setWarehouseLocation(dto.getWarehouseLocation());
+                }
+                list.add(inventoryQtyDTO);
             }
-            list.add(inventoryQtyDTO);
         });
         return list;
     }

@@ -488,7 +488,7 @@
         <if test="params.warehouseId != null and params.warehouseId != ''">
             and it.warehouse_id = #{params.warehouseId}
         </if>
-        GROUP BY it.warehouse_id, it.sku_id, it.warehouse_location
+        GROUP BY it.warehouse_id, it.sku_id
     </select>
 
     <select id="listInventoryWarehouseByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseDTO">
