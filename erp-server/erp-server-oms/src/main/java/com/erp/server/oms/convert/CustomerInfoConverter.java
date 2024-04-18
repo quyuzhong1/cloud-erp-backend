@@ -51,7 +51,7 @@ public interface CustomerInfoConverter {
      */
     @Mappings({
             @Mapping(target = "platformType", source = "addDTO.dictPlatform"),
-            @Mapping(target = "name", source = "addDTO.receiverDTO.receiverName"),
+            @Mapping(target = "name", source = "addDTO.receiverDTO.customerId"),
             @Mapping(target = "countryId", source = "addDTO.receiverDTO.country"),
             @Mapping(target = "currency", source = "addDTO.currency"),
             @Mapping(target = "remark", source = "addDTO.remark"),
@@ -94,7 +94,7 @@ public interface CustomerInfoConverter {
      */
     @Mappings({
             @Mapping(target = "platformType", source = "updateDTO.dictPlatform"),
-            @Mapping(target = "name", source = "updateDTO.receiverDTO.receiverName"),
+            @Mapping(target = "name", source = "updateDTO.receiverDTO.customerId"),
             @Mapping(target = "countryId", source = "updateDTO.receiverDTO.country"),
             @Mapping(target = "currency", source = "updateDTO.currency"),
             @Mapping(target = "remark", source = "updateDTO.remark"),
