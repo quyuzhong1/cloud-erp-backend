@@ -2790,7 +2790,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     ProductPackEntity packEntity = productPackMap.get(skuVO.getSkuId()).get(0);
                     skuVO.setUnitQty(Objects.nonNull(packEntity.getBoxQty()) ? packEntity.getBoxQty().intValue() : null);
                     skuVO.setGrossWeight(packEntity.getGrossWeight());
-                    skuVO.setProductSize(packEntity.getProductSize());
+                    skuVO.setProductLength(packEntity.getProductLength());
+                    skuVO.setProductWidth(packEntity.getProductWidth());
+                    skuVO.setProductHeight(packEntity.getProductHeight());
                     skuVO.setNetWeight(packEntity.getNetWeight());
                 }
                 PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(skuVO.getSupplierId()) && req.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);

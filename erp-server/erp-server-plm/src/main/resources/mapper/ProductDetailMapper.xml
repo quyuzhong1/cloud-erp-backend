@@ -1660,7 +1660,9 @@
         pd.images_url AS skuImagesUrl,
         pc.retail_price,
         ppk.gross_weight,
-        ppk.product_size,
+        ppk.product_length / 10 as productLength,
+        ppk.product_width / 10 as productWidth,
+        ppk.product_height / 10 as productHeight,
         pp.main_supplier as supplierId
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
