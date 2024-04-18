@@ -834,10 +834,4 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     BatchResultDTO skuMappingBatch(String soId);
 
-    /**
-     * 修改订单物流面单
-     * @param soB2cLabelDTOList
-     * @return
-     */
-    Boolean updateLogisticsLabelBase64ById(List<LogisticsBillDTO.SoB2cLabelDTO> soB2cLabelDTOList);
 }

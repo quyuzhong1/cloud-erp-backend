@@ -266,6 +266,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private MQProducerService mqProducerService;
 
+    @Resource
+    private SoB2cLabelService soB2cLabelService;
+
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -5369,6 +5372,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //物流信息
         List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cLogisticsService.listByMainIds(soIds);
+
+        //标签信息
+        List<SoB2cLabelEntity> soB2cLabelEntities = soB2cLabelService.listSoB2cLabelByMainIds(soIds);
         List<PrintWayBillPdfDTO> resultList = new ArrayList<>();
         for (SoB2cEntity soB2cEntity : soB2cEntities) {
             PrintWayBillPdfDTO printWayBillPdfDTO = new PrintWayBillPdfDTO();
@@ -5376,7 +5382,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             printWayBillPdfDTO.setSoCode(soB2cEntity.getCode());
             printWayBillPdfDTO.setAmount(soB2cEntity.getAmount());
             printWayBillPdfDTO.setRemark(soB2cEntity.getRemark());
-            printWayBillPdfDTO.setLogisticsLabelBase64(soB2cEntity.getLogisticsLabelBase64());
+            List<String> base64List = soB2cLabelEntities.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).map(req -> req.getLogisticsLabelBase64()).collect(Collectors.toList());
+            printWayBillPdfDTO.setLogisticsLabelBase64List(base64List);
             printWayBillPdfDTO.setPrintTime(cn.hutool.core.date.DateUtil.format(LocalDateTime.now(), "yyyy-MM-dd HH:mm:ss"));
             //店铺信息
             ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getId().equals(soB2cEntity.getShopId())).findFirst().orElse(null);
@@ -6300,19 +6307,5 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException(ApiError.IS_B2C_DELIVERY_NOT_UPDATE_MAPPING);
             }
         }
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean updateLogisticsLabelBase64ById(List<LogisticsBillDTO.SoB2cLabelDTO> soB2cLabelDTOList) {
-        for (LogisticsBillDTO.SoB2cLabelDTO soB2cLabelDTO : soB2cLabelDTOList) {
-            if (StringUtils.isNotBlank(soB2cLabelDTO.getSoB2cId())) {
-                lambdaUpdate()
-                        .set(SoB2cEntity::getLogisticsLabelBase64, soB2cLabelDTO.getLogisticsBase64())
-                        .eq(SoB2cEntity::getId, soB2cLabelDTO.getSoB2cId())
-                        .update();
-            }
-        }
-        return Boolean.TRUE;
     }
 }

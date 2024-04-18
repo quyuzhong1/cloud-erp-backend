@@ -987,6 +987,6 @@ public class LogisticsBillDTO implements Serializable {
         /**
          * 物流面单base64格式
          */
-        private String logisticsBase64;
+        private List<String> logisticsBase64;
     }
 }
