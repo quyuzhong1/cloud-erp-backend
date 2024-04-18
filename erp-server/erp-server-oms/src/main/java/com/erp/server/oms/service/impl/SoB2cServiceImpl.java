@@ -1184,6 +1184,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
                 soB2cLogisticsEntity.setCode("");
+                soB2cLogisticsEntity.setTrackNo("");
+                logisticsBillFeign.removeLogisticsBillBySourceId(Arrays.asList(id));
             } else {
                 isCover = Boolean.FALSE;
                 //当为空就覆盖
@@ -5228,8 +5230,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
             soB2cLogisticsEntity.setLogisticsChannelName(logisticsChannel.getName());
             soB2cLogisticsEntity.setCode("");
+            soB2cLogisticsEntity.setTrackNo("");
             entity.setIsMatchLogisticsRule(Boolean.TRUE);
             this.updateById(entity);
+            logisticsBillFeign.removeLogisticsBillBySourceId(Arrays.asList(id));
             //物流信息更新
             return soB2cLogisticsService.updateById(soB2cLogisticsEntity);
         }
