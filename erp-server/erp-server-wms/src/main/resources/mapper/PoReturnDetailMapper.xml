@@ -64,4 +64,34 @@
             </if>
         </where>
     </select>
+    <select id="listReturnOrderDetailByReceiveIds"
+            resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PoReturnDetailDTO">
+        SELECT
+            prd."id" as receiveDetailId,
+            pr."id" as receiveId,
+            qi."id" as qcId,
+            por."id" as returnId,
+            por.approve_status as approveStatus,
+            pord."id" returnDetailId,
+            pord.sku_id as skuId,
+            pord.sku_no as skuNo,
+            pord.replenish_qty as replenishQty,
+            pord.return_qty as returnQty
+        FROM
+            po_receive_detail prd
+                LEFT JOIN po_receive pr ON pr."id" = prd.main_id and pr.is_deleted = FALSE
+                LEFT JOIN qc_info qi ON qi.source_id = pr."id" and qi.is_deleted = FALSE
+                LEFT JOIN po_return por ON por.source_id = qi."id" and por.is_deleted = FALSE
+                LEFT JOIN po_return_detail pord ON pord.main_id = por.ID  and pord.is_deleted = FALSE
+        <where>
+            prd.is_deleted = false
+            <if test="receiveIds != null and receiveIds.size > 0">
+                and pr."id" in
+                <foreach collection="receiveIds" separator="," item="id" open="(" close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+
+    </select>
 </mapper>

@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.DmpPushTaskFeignDTO;
@@ -39,6 +40,7 @@ import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
@@ -577,11 +579,23 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public SoB2cDeliveryEntity getByBusinessCode(String businessCode) {
-        return this.getOne(new LambdaQueryWrapper<>(SoB2cDeliveryEntity.class)
-                .eq(SoB2cDeliveryEntity::getSoCode, businessCode)
-                .or()
-                .eq(SoB2cDeliveryEntity::getTransportNo, businessCode)
-        );
+        //查询是否是跟踪单号
+        SoB2cLogisticsEntity logisticsEntity = soB2cFeign.getSoB2cLogisticsByTrackNo(businessCode);
+        if (ObjectUtils.isNotEmpty(logisticsEntity)) {
+            return lambdaQuery()
+                    .eq(SoB2cDeliveryEntity::getSourceId, logisticsEntity.getMainId())
+                    .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
+                    .last("LIMIT 1").one();
+        } else {
+            return this.getOne(new LambdaQueryWrapper<>(SoB2cDeliveryEntity.class)
+                    .or(soB2cDeliveryEntityLambdaQueryWrapper -> soB2cDeliveryEntityLambdaQueryWrapper
+                            .eq(SoB2cDeliveryEntity::getSoCode, businessCode)
+                            .or()
+                            .eq(SoB2cDeliveryEntity::getTransportNo, businessCode))
+                    .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
+                    .last(" limit 1")
+            );
+        }
     }
 
     @Override
@@ -827,6 +841,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @return
      */
     @Override
+    @DataIdempotent(keyIdName = "id")
     public BatchResultDTO delivery(String id, String deliveryType) {
         //手工发货
         String manual = DeliverTypeEnum.MANUAL.getCode();

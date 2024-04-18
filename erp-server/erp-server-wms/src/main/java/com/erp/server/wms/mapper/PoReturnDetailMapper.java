@@ -1,6 +1,7 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -34,4 +35,11 @@ public interface PoReturnDetailMapper extends BaseMapper<PoReturnDetailEntity> {
      * @return java.util.List<com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity>
      **/
     List<PoReturnDetailEntity> listReturnOrderDetailByPodIds(@Param("podIds") List<String> podIds);
+
+    /**
+     * 根据收货单获取退货数量（质检下推退货单）
+     * @param receiveIds
+     * @return
+     */
+    List<WarehouseReceiveDTO.PoReturnDetailDTO> listReturnOrderDetailByReceiveIds(@Param("receiveIds") List<String> receiveIds);
 }
