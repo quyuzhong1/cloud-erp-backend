@@ -1902,6 +1902,10 @@ public class SoB2cDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ExcelExportDTO {
+        /**
+         * 销售订单id
+         */
+        private String id;
 
         /**
          * 单据编码
@@ -1980,6 +1984,11 @@ public class SoB2cDTO implements Serializable {
         private String currency;
 
         /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+
+        /**
          * 付款时间
          */
         private LocalDateTime payTime;
@@ -2008,6 +2017,11 @@ public class SoB2cDTO implements Serializable {
          * 数量
          */
         private Integer qty;
+
+        /**
+         * 产品skuId
+         */
+        private String skuId;
 
         /**
          * 产品sku编号
@@ -2045,6 +2059,11 @@ public class SoB2cDTO implements Serializable {
         private BigDecimal baseAmount;
 
         /**
+         * 出货仓库id
+         */
+        private String  warehouseId;
+
+        /**
          * 出货仓库
          */
         private String  warehouseName;
@@ -2070,9 +2089,10 @@ public class SoB2cDTO implements Serializable {
         private String remark;
 
         /**
-         * 订单分类
+         * 国家名称
          */
-        private List<String> categoryList;
+        private String countryName;
+
 
         /**
          * 订单分类名称
@@ -2184,12 +2204,6 @@ public class SoB2cDTO implements Serializable {
          */
         private String buyerName;
 
-
-        /**
-         * 国家名称
-         */
-        private String countryName;
-
         /**
          * 买家登录id
          */
@@ -2265,104 +2279,16 @@ public class SoB2cDTO implements Serializable {
          */
         private String receiverTaxNo;
 
-        //------------------------------------------------ 财务信息(原始信息) ----------------------------------------------------
 
-        /**
-         * 订单总金额
-         */
-        private BigDecimal sourceFinanceAmount;
-
-        /**
-         * 运费收入
-         */
-        private BigDecimal sourceFinanceShippingCost;
-
-        /**
-         * 商品成本
-         */
-        private BigDecimal sourceItemCost;
-
-        /**
-         * 物流成本
-         */
-        private BigDecimal sourceLogisticsCost;
-
-        /**
-         * 平台费
-         */
-        private BigDecimal sourcePlatformCost;
-
-        /**
-         * 转账费
-         */
-        private BigDecimal sourcePaypalCost;
-
-        /**
-         * 包装辅料费
-         */
-        private BigDecimal sourceFinanceAccessoriesCost;
-
-        /**
-         * VAT税费
-         */
-        private BigDecimal sourceVatCost;
-
-        //-------------------------------------------------------本位币信息 --------------------------------------------------
-
-        /**
-         * 订单总金额
-         */
-        private BigDecimal financeAmount;
-
-        /**
-         * 运费收入
-         */
-        private BigDecimal financeShippingCost;
-
-        /**
-         * 商品成本
-         */
-        private BigDecimal itemCost;
-
-        /**
-         * 物流成本
-         */
-        private BigDecimal logisticsCost;
-
-        /**
-         * 平台费
-         */
-        private BigDecimal platformCost;
-
-        /**
-         * 转账费
-         */
-        private BigDecimal paypalCost;
-
-        /**
-         * 包装辅料费
-         */
-        private BigDecimal financeAccessoriesCost;
-
-        /**
-         * VAT税费
-         */
-        private BigDecimal vatCost;
-
-        /**
-         * 平台费类型
-         */
-        private String platformCostType;
-
-        /**
-         * 转账费类型
-         */
-        private String transferCostType;
-
-        /**
-         * VAT税费类型
-         */
-        private String vatCostType;
-
+        //get方法
+        private String getLengthStr () {
+            return this.length.stripTrailingZeros().toPlainString();
+        }
+        private String getWidthStr () {
+            return this.width.stripTrailingZeros().toPlainString();
+        }
+        private String getHeightStr () {
+            return this.height.stripTrailingZeros().toPlainString();
+        }
     }
 }

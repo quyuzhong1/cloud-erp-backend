@@ -81,6 +81,7 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Export_Column_List">
+        sb2c.id,
         sb2c.code,
         sb2c.dict_platform as dictPlatform,
         si.name as shopName,
@@ -98,15 +99,18 @@
         sb2c.amount as amount,
         sb2c.currency as currency,
         sb2c.pay_time as payTime,
+        sb2c.exchange_rate as exchangeRate,
         sb2c.dict_pay_method as dictPayMethod,
         sb2cd.platform_spu_no as platformSpuNo,
         sb2cd.platform_sku_no as platformSkuNo,
+        sb2cd.sku_id as skuId,
         sb2cd.sku_no as skuNo,
         sb2cd.qty,
         sb2cd.tax_cost as taxCost,
         sb2cd.amount as sourceAmount,
         sb2cd.currency as sourceCurrency,
         ROUND(sb2cd.amount * sb2cd.exchange_rate,4) as baseAmount,
+        sb2cd.warehouse_id as warehouseId,
         sb2cd.warehouse_name as warehouseName,
         sb2cd.warehouse_location as warehouseLocation,
         sb2c.buyer_remark as buyerRemark,
@@ -121,6 +125,7 @@
         sb2cl.actual_shipping_currency as actualShippingCurrency,
         sb2cl.weight,
         sb2cl.accessories_sku_id as accessoriesSkuId,
+        sb2cl.accessories_sku_no as accessoriesSkuNo,
         sb2cl.accessories_qty as accessoriesQty,
         sb2cl.accessories_nw as accessoriesNw,
         sb2cl.accessories_cost as accessoriesCost,
@@ -143,16 +148,8 @@
         sb2cr.receiver_tel_number as receiverTelNumber,
         sb2cr.post_code as postCode,
         sb2cr.receiver_tax_no as receiverTaxNo,
-        sbf.shipping_cost as financeShippingCost,
-        sbf.item_cost as itemCost,
-        sbf.logistics_cost as logisticsCost,
-        sbf.accessories_cost as financeAccessoriesCost,
-        sbf.platform_rate as platformRate,
-        sbf.vat_rate as vatRate,
-        sbf.transfer_rate as transferRate,
-        sbf.platform_cost_type as platformCostType,
-        sbf.transfer_cost_type as transferCostType,
-        sbf.vat_cost_type as vatCostType
+        si.country_name as countryName,
+        sbrc.categoryNames
     </sql>
 
     <!-- 列表分页查询 -->
@@ -702,7 +699,9 @@
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
-        inner join so_b2c_finance sbf on sb2c.id = sbf.main_id and sbf.is_deleted = false
+        left join (
+            select so_b2c_id,array_to_string(array_agg(category_name), ',') as categoryNames from so_b2c_ref_category where is_deleted = false group by so_b2c_id
+        ) sbrc on sb2c.id = sbrc.so_b2c_id
         <where>
             ${params.sqlMap.default}
             and sb2c.is_deleted = false

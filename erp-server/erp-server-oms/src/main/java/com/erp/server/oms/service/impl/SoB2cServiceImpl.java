@@ -42,6 +42,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -62,10 +63,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
-import com.erp.model.wms.entity.OverseasProviderEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -267,6 +265,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private CustomerB2cService customerB2cService;
+
+    @Resource
+    private WarehouseLocationFeign warehouseLocationFeign;
+
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -6227,11 +6229,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         try {
            records = this.baseMapper.exportExcel(params,shopAuthResultDTO);
         } catch (Exception e) {
-            log.error(String.valueOf(e));
+           throw new ServiceException("导出失败");
         }
         if (CollectionUtils.isEmpty(records)) {
             throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL,"B2C销售订单");
         }
+        if (records.size() >= 50000) {
+            throw new ServiceException("导出条数不能超过50000");
+        }
+
         //数据赋值处理
         handleExport(records);
         String name = "B2C销售订单";
@@ -6256,9 +6262,158 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param records
      */
     private void handleExport(List<SoB2cDTO.ExcelExportDTO> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
 
+        //产品信息
+        List<String> skuIdList = records.stream().map(SoB2cDTO.ExcelExportDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIdList);
 
+        //仓位信息
+        List<String> warehouseIdList = records.stream().map(SoB2cDTO.ExcelExportDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationFeign.listByWarehouseIds(warehouseIdList);
+
+        for (SoB2cDTO.ExcelExportDTO exportDTO : records) {
+            //审核状态
+            exportDTO.setApproveStatusName(ApproveStatusEnum.getName(exportDTO.getApproveStatus()));
+            //订单状态
+            exportDTO.setBillStatusName(SoB2cBillStatusEnum.getName(exportDTO.getBillStatus()));
+
+            exportDTO.setTaxCost(MathUtil.multiply(exportDTO.getTaxCost(), exportDTO.getQty()));
+            //产品名称
+            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), exportDTO.getSkuId()))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(productDetailEntity)) {
+                exportDTO.setProductName(productDetailEntity.getName());
+                exportDTO.setVariantProperty(productDetailEntity.getVariantProperty());
+            }
+
+            //仓位名称
+            String warehouseLocationName = warehouseLocationEntityList.stream().filter(obj -> StrUtil.equals(obj.getCode(), exportDTO.getWarehouseLocation())
+                            && StrUtil.equals(obj.getWarehouseId(), exportDTO.getWarehouseId()))
+                    .map(WarehouseLocationEntity::getName).findFirst().orElse("");
+            exportDTO.setWarehouseLocationName(warehouseLocationName);
+        }
     }
+
+
+    /**
+     * @description: 导出财务信息，现未用，之后会单独导出
+     * @author Will
+     * @date: 2024/4/18 12:29
+     * @param records
+     * @param exportDTO
+     * @param dictList
+     * @param isCny
+     * @return FinancialInfoDTO
+     */
+   /* private SoB2cDTO.FinancialInfoDTO getExportFinancialInfo(List<SoB2cDTO.ExcelExportDTO> records,SoB2cDTO.ExcelExportDTO exportDTO,
+                                            List<DictBasicEntity> dictList,Boolean isCny) {
+        //平台费
+        BigDecimal platformCost = BigDecimal.ZERO;
+        //avt 费
+        BigDecimal vatCost = BigDecimal.ZERO;
+        //转账费
+        BigDecimal paypalCost = BigDecimal.ZERO;
+
+        SoB2cDTO.FinancialInfoDTO financialInfoDTO = new SoB2cDTO.FinancialInfoDTO();
+        BeanMapperUtils.copy(exportDTO, financialInfoDTO);
+        financialInfoDTO.setShippingCost(exportDTO.getFinanceShippingCost());
+        financialInfoDTO.setAccessoriesCost(exportDTO.getFinanceAccessoriesCost());
+
+        //商品成本,订单SKU*数量的含税成本价汇总
+        BigDecimal itemCost = records.stream().map(obj -> MathUtil.multiply(obj.getTaxCost(), obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        //商品金额
+        BigDecimal totalAmount = records.stream().map(SoB2cDTO.ExcelExportDTO::getAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        //判断是否是人民币
+        if (isCny) {
+            financialInfoDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            financialInfoDTO.setAmount(MathUtil.multiply(totalAmount, exportDTO.getExchangeRate()));
+            financialInfoDTO.setItemCost(itemCost);
+        } else {
+            financialInfoDTO.setCurrency(exportDTO.getCurrency());
+            financialInfoDTO.setAmount(totalAmount);
+            financialInfoDTO.setItemCost(MathUtil.divide(itemCost, exportDTO.getExchangeRate()));
+        }
+
+        String platformOption = exportDTO.getPlatformCostType();
+        String vatOption = exportDTO.getVatCostType();
+        String transferOption = exportDTO.getTransferCostType();
+        BigDecimal platformRate = exportDTO.getPlatformRate();
+        BigDecimal vatRate = exportDTO.getVatRate();
+        BigDecimal transferRate = exportDTO.getTransferRate();
+
+        //平台费
+        DictBasicEntity dictPlatformOption = dictList.stream().filter(obj -> StrUtil.equals(obj.getType(),DictBasicTypeEnum.SHOP_PLATFORM_COST.getType())
+                && StrUtil.equals(obj.getValue(),platformOption)).findFirst().orElse(null);
+
+        //vat费
+        DictBasicEntity dictVatOption = dictList.stream().filter(obj -> StrUtil.equals(obj.getType(),DictBasicTypeEnum.SHOP_VAT_COST.getType())
+                && StrUtil.equals(obj.getValue(),vatOption)).findFirst().orElse(null);
+
+        //转账费
+        DictBasicEntity dictTransferOption = dictList.stream().filter(obj -> StrUtil.equals(obj.getType(),DictBasicTypeEnum.SHOP_TRANSFER_COST.getType())
+                && StrUtil.equals(obj.getValue(),transferOption)).findFirst().orElse(null);
+
+        //平台费
+        BigDecimal dividePlatformRate = MathUtil.divide(platformRate, MathUtil.BigDecimal_100);
+        if (ObjectUtils.isNotEmpty(dictPlatformOption) && ShopPlatformCostEnum.MULTIPLY_PLATFORM_RATE.getCode().equals(dictPlatformOption.getValue())) {
+            platformCost = MathUtil.multiply(MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost()), dividePlatformRate);
+            financialInfoDTO.setPlatformCostType(dictPlatformOption.getValue());
+            financialInfoDTO.setPlatformRate(platformRate);
+        }
+        //转账费
+        BigDecimal divideTransferRate = MathUtil.divide(transferRate, MathUtil.BigDecimal_100);
+        if (ObjectUtils.isNotEmpty(dictTransferOption) && ShopTransferCostEnum.MULTIPLY_TRANSFER_RATE.getCode().equals(dictTransferOption.getValue())) {
+            paypalCost = MathUtil.multiply(MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost()), divideTransferRate);
+            financialInfoDTO.setTransferCostType(dictTransferOption.getValue());
+            financialInfoDTO.setTransferRate(transferRate);
+        }
+        //vat费
+        BigDecimal divideVatRate = MathUtil.divide(vatRate, MathUtil.BigDecimal_100);
+        if (ObjectUtils.isNotEmpty(dictVatOption) && ShopVATCostEnum.MULTIPLY_VAT_RATE.getCode().equals(dictVatOption.getValue())) {
+            vatCost = MathUtil.multiply(MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost()), divideVatRate);
+        } else if (ObjectUtils.isNotEmpty(dictVatOption) && ShopVATCostEnum.MULTIPLY_ADD_VAT_RATE.getCode().equals(dictVatOption.getValue())) {
+            vatCost = MathUtil.multiply(MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost()), MathUtil.add(BigDecimal.ONE, divideVatRate)).multiply(divideVatRate);
+        } else if (ObjectUtils.isNotEmpty(dictVatOption) && ShopVATCostEnum.DIVISION_ADD_MULTIPLY_VAT_RATE.getCode().equals(dictVatOption.getValue())) {
+            vatCost = MathUtil.divide(MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost()), MathUtil.add(BigDecimal.ONE, divideVatRate)).multiply(divideVatRate);
+        }
+        if (ObjectUtils.isNotEmpty(dictVatOption)) {
+            financialInfoDTO.setVatCostType(dictVatOption.getValue());
+        }
+        financialInfoDTO.setVatRate(vatRate);
+
+        //平台费,店铺计算
+        financialInfoDTO.setPlatformCost(platformCost);
+
+        //转账费,店铺计算
+        financialInfoDTO.setPaypalCost(paypalCost);
+
+        //运费收入
+        financialInfoDTO.setShippingCost(ObjectUtil.isEmpty(financialInfoDTO.getShippingCost()) ? BigDecimal.ZERO : financialInfoDTO.getShippingCost());
+        //物流成本
+        financialInfoDTO.setLogisticsCost(ObjectUtil.isEmpty(financialInfoDTO.getLogisticsCost()) ? BigDecimal.ZERO : financialInfoDTO.getLogisticsCost());
+
+        //VAT税费,店铺计算
+        financialInfoDTO.setVatCost(vatCost);
+        //总利润,订单总金额+运费收入-商品成本-物流成本-平台费-转账费-包装辅料费-VAT税费
+        BigDecimal profit = ObjectUtil.defaultIfNull(financialInfoDTO.getAmount(), BigDecimal.ZERO)
+                .add(ObjectUtil.defaultIfNull(financialInfoDTO.getShippingCost(), BigDecimal.ZERO))
+                .subtract(ObjectUtil.defaultIfNull(financialInfoDTO.getItemCost(), BigDecimal.ZERO))
+                .subtract(ObjectUtil.defaultIfNull(financialInfoDTO.getLogisticsCost(), BigDecimal.ZERO))
+                .subtract(ObjectUtil.defaultIfNull(platformCost, BigDecimal.ZERO))
+                .subtract(ObjectUtil.defaultIfNull(paypalCost, BigDecimal.ZERO))
+                .subtract(ObjectUtil.defaultIfNull(financialInfoDTO.getAccessoriesCost(), BigDecimal.ZERO))
+                .subtract(ObjectUtil.defaultIfNull(vatCost, BigDecimal.ZERO));
+        financialInfoDTO.setProfit(profit);
+
+        BigDecimal profitRate = MathUtil.divide(profit, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
+        financialInfoDTO.setProfitRate(MathUtil.compareTo(profitRate, MathUtil.ZERO) == MathUtil.ZERO ? "0%" : profitRate + "%");
+        return financialInfoDTO;
+    }*/
 
     private void skuMappingCheck(SoB2cEntity entity, List<SoB2cDetailEntity> detailList) {
         if (entity.hasPlatformWarehouseOrder()){
