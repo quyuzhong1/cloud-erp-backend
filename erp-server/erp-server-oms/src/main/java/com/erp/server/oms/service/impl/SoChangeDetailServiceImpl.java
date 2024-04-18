@@ -113,7 +113,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         List<String> currencyList = detailList.stream().map(SoChangeDetailDTO.AddDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
         List<String> skuIdList = detailList.stream().map(SoChangeDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.getSkuBaseByIds(skuIdList);
 
         for (SoChangeDetailDTO.AddDTO item : detailList) {
             SoChangeDetailEntity soChangeDetail = new SoChangeDetailEntity();
@@ -187,7 +187,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         }
         List<SoChangeDetailDTO.ViewDTO> viewList = BeanMapper.copyList(dbList, SoChangeDetailDTO.ViewDTO.class);
         List<String> skuIdList = viewList.stream().map(SoChangeDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.getSkuBaseByIds(skuIdList);
         for (SoChangeDetailDTO.ViewDTO item : viewList) {
             String skuId = item.getSkuId();
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
@@ -251,7 +251,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             BigDecimal zero = BigDecimal.ZERO;
             SoChangeTypeEnum update = SoChangeTypeEnum.UPDATE;
             List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
-            List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+            List<SkuVO> skuList = plmTaskFeign.getSkuBaseByIds(skuIdList);
             for (SoDetailEntity item : soDetailList) {
                 SoChangeDetailDTO.ViewDTO view = new SoChangeDetailDTO.ViewDTO();
                 view.setOldAmount(item.getPrice());
@@ -333,7 +333,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         List<SoChangeDetailDTO.SoDetailViewDTO> viewList = new ArrayList<>(soDetailList.size());
         BigDecimal zero = BigDecimal.ZERO;
         SoChangeTypeEnum update = SoChangeTypeEnum.UPDATE;
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.getSkuBaseByIds(skuIdList);
         for (SoDetailEntity item : soDetailList) {
             SoChangeDetailDTO.SoDetailViewDTO view = new SoChangeDetailDTO.SoDetailViewDTO();
             view.setOldAmount(item.getPrice());
@@ -775,7 +775,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             this.removeByIds(deleteIdList);
         }
         List<String> skuIdList = detailList.stream().map(SoChangeDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.getSkuBaseByIds(skuIdList);
         //币种列表
         List<String> currencyList = detailList.stream().map(SoChangeDetailDTO.UpdateDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);

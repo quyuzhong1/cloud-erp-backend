@@ -634,7 +634,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         DeliveryOrderDTO.ViewDTO viewDTO = DeliveryOrderConverter.INSTANCE.viewConvert(entity,detailEntityList);
         viewDTO.setSupplierName(supplier.getName());
         List<DeliveryOrderDetailDTO.ViewDTO> detailList = viewDTO.getDetailList();
-        Map<String,SkuVO> skuVOMap = plmTaskFeign.getSkuInfoByIds(detailList.stream().map(DeliveryOrderDetailDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList())).stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity(),(v1, v2)->v1));
+        Map<String,SkuVO> skuVOMap = plmTaskFeign.getSkuBaseByIds(detailList.stream().map(DeliveryOrderDetailDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList())).stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity(),(v1, v2)->v1));
         List<String> purchaseDetailIds = detailList.stream().map(DeliveryOrderDetailDTO.ViewDTO::getSourceDetailId).collect(Collectors.toList());
         //查询退货数据
         List<PoReturnDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(purchaseDetailIds);
