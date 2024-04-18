@@ -2,6 +2,8 @@ package com.erp.model.wms.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 import lombok.Data;
@@ -289,7 +291,7 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class PcAddDTO extends CommonDTO {
+    public static class PcAddDTO  {
 
         /**
          * 仓位移动明细
@@ -305,6 +307,20 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
          * 取出仓位
          */
         private String outWarehouseLocation;
+        /**
+         * 是否是pc端访问
+         */
+        private Boolean pcShow = false;
+
+        /**
+         * 仓库id
+         */
+        @Size(max = 19,message = "仓库id最大长度不能超过19位")
+        private String warehouseId;
+        /**
+         * 单据时间
+         */
+        private LocalDate billDate;
     }
 
     /**

@@ -30,6 +30,14 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
     String add(WarehouseLocationMoveInfoDTO.AddDTO dto);
 
     /**
+     * 新增-pc端
+     *
+     * @param pcAddDTO
+     * @author hyj
+     * @date 2024/4/18 15:00
+     */
+    String pcAdd(WarehouseLocationMoveInfoDTO.PcAddDTO pcAddDTO);
+    /**
     * 修改
     * @author Luo_WG
     * @date: 2023-08-24

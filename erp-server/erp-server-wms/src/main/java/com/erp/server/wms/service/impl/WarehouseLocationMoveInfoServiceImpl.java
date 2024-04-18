@@ -24,7 +24,6 @@ import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.wms.listener.WarehouseExcelListener;
 import com.erp.server.wms.mapper.WarehouseLocationMoveInfoMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -32,9 +31,11 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import net.sf.cglib.beans.BeanMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -101,13 +102,6 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     public String add(WarehouseLocationMoveInfoDTO.AddDTO addDTO) {
         WarehouseLocationMoveInfoEntity warehouseLocationMoveInfoEntity = new WarehouseLocationMoveInfoEntity();
         BeanMapperUtils.copy(addDTO, warehouseLocationMoveInfoEntity);
-        if (addDTO.getPcShow() && StringUtils.isBlank(addDTO.getWarehouseId())) {
-            List<WarehouseLocationMoveInfoDTO.ViewDTO> listDTOS = BeanMapperUtils.copyList(WarehouseLocationMoveInfoDTO.ViewDTO.class, addDTO.getDetailList());
-            String warehouseId = listDTOS.stream().map(WarehouseLocationMoveInfoDTO.ViewDTO::getWarehouseId).distinct().findFirst().orElse(null);
-            if (StringUtils.isBlank(warehouseId)) {
-                throw new ServiceException(ApiError.ERROR_99001);
-            }
-        }
         // 数据处理
         handleData(warehouseLocationMoveInfoEntity);
 
@@ -126,6 +120,41 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         // 新增明细
         warehouseLocationMoveDetailService.add(addDTO, warehouseLocationMoveInfoEntity.getId());
         return warehouseLocationMoveInfoEntity.getId();
+    }
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public String pcAdd(WarehouseLocationMoveInfoDTO.PcAddDTO pcAddDTO) {
+        pcAddDTO.getDetailList().forEach(detail->{
+            WarehouseLocationMoveInfoDTO.ViewDTO viewDTO = new WarehouseLocationMoveInfoDTO.ViewDTO();
+            BeanMapperUtils.copy(detail, viewDTO);
+            //保存主单
+            WarehouseLocationMoveInfoEntity warehouseLocationMoveInfoEntity = new WarehouseLocationMoveInfoEntity();
+            BeanMapperUtils.copy(detail, warehouseLocationMoveInfoEntity);
+            // 数据处理
+            warehouseLocationMoveInfoEntity.setBillDate(viewDTO.getBillDate());
+            warehouseLocationMoveInfoEntity.setWarehouseId(viewDTO.getWarehouseId());
+            handleData(warehouseLocationMoveInfoEntity);
+
+            log.info("开始新增仓位移动主单");
+            // 生成单号
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CWYD);
+            warehouseLocationMoveInfoEntity.setCode(code);
+            boolean save = super.save(warehouseLocationMoveInfoEntity);
+            if (!save) {
+                throw new ServiceException("仓位移动主单保存失败");
+            }
+
+            // 操作日志
+            String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "仓位移动主单", warehouseLocationMoveInfoEntity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), warehouseLocationMoveInfoEntity.getId(), "新增操作");
+            WarehouseLocationMoveInfoDTO.AddDTO addDTO = new WarehouseLocationMoveInfoDTO.AddDTO();
+            addDTO.setDetailList(Arrays.asList(detail));
+            addDTO.setWarehouseId(viewDTO.getWarehouseId());
+            // 新增明细
+            warehouseLocationMoveDetailService.add(addDTO, warehouseLocationMoveInfoEntity.getId());
+        });
+        return "true";
     }
 
     /**
@@ -745,7 +774,19 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-//
-        return true;
+//        WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, plmTaskFeign, warehouseService);
+//        try {
+//            EasyExcel.read(excelFile.getInputStream(), WarehouseExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+//        } catch (Exception e) {
+//            log.error("导入错误！", e);
+//            return Boolean.FALSE;
+//        }
+//        List<WarehouseExcelDTO> errorList = excelListenerUtil.getErrorList();
+//        if (errorList.size() > 0) {
+//            String fileName = "错误信息";
+//            ExcelUtil.export(fileName, "warehouseError", errorList, WarehouseExcelDTO.class, response);
+//            return Boolean.FALSE;
+//        }
+        return Boolean.TRUE;
     }
 }

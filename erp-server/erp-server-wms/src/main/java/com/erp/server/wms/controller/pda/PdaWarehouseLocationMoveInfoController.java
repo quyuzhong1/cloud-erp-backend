@@ -7,6 +7,7 @@ import com.erp.server.wms.service.TransferInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -72,9 +73,8 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     */
     @LogAction(value = LogActionEnum.INSERT, desc = "新增仓位移动")
     @PostMapping("/pc/add")
-    public ApiResult<String> pcAdd(@RequestBody @Validated WarehouseLocationMoveInfoDTO.AddDTO dto) {
-        dto.setPcShow(true);
-        return success(warehouseLocationMoveInfoService.add(dto));
+    public ApiResult<String> pcAdd(@RequestBody @Validated WarehouseLocationMoveInfoDTO.PcAddDTO dto) {
+        return success(warehouseLocationMoveInfoService.pcAdd(dto));
     }
 
     /**
