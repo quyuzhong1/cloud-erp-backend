@@ -4930,54 +4930,123 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.isNull(detailEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
-        SoB2cEntity soB2cEntity = this.getById(detailEntity.getMainId());
-        if (Objects.isNull(soB2cEntity)) {
+        SoB2cEntity entity = this.getById(detailEntity.getMainId());
+        if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-        String skuId = dto.getSkuId();
-        List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(Arrays.asList(skuId));
-        if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (CollectionUtils.isEmpty(detailList)) {
+            // 未找到B2C销售订单明细信息
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
-        ProductDetailEntity skuEntity = skuList.get(0);
 
-        //根据平台sku查询映射信息
-        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
-        listingInfoParamDTO.setPlatformSkuNoList(Collections.singletonList(detailEntity.getPlatformSkuNo()));
-        // 速卖通同店铺存在相同SkuNo需要根据平台产ID/SPU查询
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(soB2cEntity.getDictPlatform())){
-            listingInfoParamDTO.setPlatformSpuNoList(Collections.singletonList(detailEntity.getPlatformSpuNo()));
+        List<String> platformSkuList = detailList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).collect(Collectors.toList());
+        // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
+        List<String> platformSpuList = new LinkedList<>();
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(entity.getDictPlatform())){
+            platformSpuList = detailList.stream()
+                    .map(SoB2cDetailEntity::getPlatformSpuNo)
+                    .distinct()
+                    .collect(Collectors.toList());
         }
-        listingInfoParamDTO.setPlatform(soB2cEntity.getDictPlatform());
-        listingInfoParamDTO.setShopIdList(Collections.singletonList(soB2cEntity.getShopId()));
-        List<SkuMappingDTO.MappingSkuViewDTO> skuDTOS = skuMappingService.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
-        List<SkuMappingDTO.MappingSkuViewDTO> collect = skuDTOS.stream()
-                .filter(req -> req.getPlatformSkuNo().equals(detailEntity.getPlatformSkuNo())
-                        && StringUtils.isNotBlank(req.getProductSkuNo()))
+        //根据平台sku查询Listing信息
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(entity.getDictPlatform());
+        paramDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
+        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setPlatformSkuNoList(platformSkuList);
+        // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(entity.getDictPlatform())){
+            paramDTO.setPlatformSpuNoList(platformSpuList);
+        }
+        paramDTO.setMatchResult(true);
+        paramDTO.setLastExpireDate(entity.getPlatformOrderCreateTime());
+
+        // 查询ListingInfo和skuMapping的关系
+        List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
+
+        Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap = listDto.stream()
+                .collect(Collectors.groupingBy(ListingInfoWithSkuMappingDTO::getPlatformSkuNo));
+
+        List<String> skuIds = listingInfoWithSkuMappingDTOMap.values().stream()
+                .flatMap(List::stream)
+                .map(ListingInfoWithSkuMappingDTO::getProductSkuId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
                 .collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(collect)) {
+        List<SkuInfoSimpleVO> skuList = new ArrayList<>();
+        Map<String, SkuInfoSimpleVO> skuMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(skuIds)) {
+            skuList = plmTaskFeign.getSimpleSkuInfoByIds(skuIds);
+            skuMap = skuList.stream().collect(Collectors.toMap(SkuInfoSimpleVO::getSkuId, Function.identity()));
+        }
+
+        // 设置其他处理
+        soB2cDetailService.consumerHandleDetailList(detailList, entity, skuList);
+
+        SkuInfoSimpleVO simpleVO = skuMap.get(dto.getSkuId());
+        if (null == simpleVO){
+            throw new ServiceException(ApiError.NOT_EXIST, "sku");
+        }
+        // 映射关系
+        List<ListingInfoWithSkuMappingDTO> mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailEntity.getPlatformSkuNo());
+        //校验对照表是否有对照关系
+        if (CollectionUtils.isNotEmpty(mappingDTOList)) {
             throw new ServiceException(ApiError.EXIST_SKU_MAPPING);
         }
-        if (ObjectUtil.isEmpty(skuDTOS)) {
+        // 检查和获取映射关系
+        ListingInfoWithSkuMappingDTO skuDTO = soB2cDetailService.checkAndMappingDTO(mappingDTOList, detailEntity.getPlatformSpuNo(), entity.getDictPlatform());
+        if (ObjectUtil.isEmpty(skuDTO)) {
             throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
         }
+        // 需要更新的明细
+        SoB2cDetailEntity handleDetailEntity = detailList.stream().filter(e -> e.getId().equals(dto.getId())).findFirst().orElse(null);
+        if (null == handleDetailEntity){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+        }
 
-        detailEntity.setSkuId(skuEntity.getId());
-        detailEntity.setSkuNo(skuEntity.getSkuNo());
+        // 净重
+        BigDecimal allNetWeight = detailList.stream().map(SoB2cDetailEntity::getCurrentNetWeight).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+        //长宽高计算
+        BigDecimal maxLength = BigDecimal.ZERO;
+        BigDecimal maxWidth = BigDecimal.ZERO;
+        BigDecimal totalHeight = BigDecimal.ZERO;
+        if (CollectionUtils.isNotEmpty(skuList)){
+            //拆分明细
+            List<SplitSkuDTO> splitSkuDTOS = splitBySoDetail(detailList, skuList);
+            //根据sku进行计算
+            List<String> keyList = new ArrayList<>();
+            keyList.add(CalculateSizeEnum.LENGTH.getCode());
+            keyList.add(CalculateSizeEnum.WIDTH.getCode());
+            keyList.add(CalculateSizeEnum.HEIGHT.getCode());
+            List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
+            Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
+            maxLength = this.calculateSplitSkuDTOLength(splitSkuDTOS,collect.get(CalculateSizeEnum.LENGTH.getCode()));
+            maxWidth = this.calculateSplitSkuDTOWidth(splitSkuDTOS,collect.get(CalculateSizeEnum.WIDTH.getCode()));
+            totalHeight = this.calculateSplitSkuDTOHeight(splitSkuDTOS,collect.get(CalculateSizeEnum.HEIGHT.getCode()));
+        }
+        //物流信息更新保存
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
+        logisticsEntity.setWeight(allNetWeight);
+        logisticsEntity.setLength(maxLength);
+        logisticsEntity.setWidth(maxWidth);
+        logisticsEntity.setHeight(totalHeight);
+        soB2cLogisticsService.updateById(logisticsEntity);
+
         //更新明细
-        soB2cDetailService.updateById(detailEntity);
-
+        soB2cDetailService.updateById(handleDetailEntity);
+        // 更新映射
         FbaShipmentDTO.SkuMappingParamDTO updateDTO = new FbaShipmentDTO.SkuMappingParamDTO();
         //映射sku
         updateDTO.setSkuNo(detailEntity.getSkuNo());
         updateDTO.setMsku(detailEntity.getPlatformSkuNo());
-        updateDTO.setShopId(soB2cEntity.getShopId());
+        updateDTO.setShopId(entity.getShopId());
         updateDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
-        updateDTO.setId(skuDTOS.get(0).getId());
+        updateDTO.setId(skuDTO.getTableId());
         Boolean flag = listingInfoService.skuMapping(updateDTO);
         if (flag) {
             //操作日志
-            operateLogService.addModuleOperateLog(String.format("映射了一个sku【%s】", skuEntity.getSkuNo()), ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "编辑信息");
+            operateLogService.addModuleOperateLog(String.format("映射了一个sku【%s】", simpleVO.getSkuNo()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "编辑信息");
         }
         return flag;
 

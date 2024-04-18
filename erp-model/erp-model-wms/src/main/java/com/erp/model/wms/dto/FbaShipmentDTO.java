@@ -400,6 +400,9 @@ public class FbaShipmentDTO implements Serializable {
     @NoArgsConstructor
     public static class SkuMappingParamDTO {
 
+        /**
+         * SkuMapping的ID
+         */
         private String id;
         /**
          * 详情id
