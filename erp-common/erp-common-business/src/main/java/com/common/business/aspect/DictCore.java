@@ -315,7 +315,7 @@ public class DictCore {
 			return getNullDataView(table , text);
         }
         
-        List<Map<String, Object>> data = DictThreadLocal.get(code, text, table, key , serviceCodeNameEnum);
+        List<Map<String, Object>> data = DictThreadLocal.get(extendQuerySql , code, text, table, key , serviceCodeNameEnum);
         if(data == null) {
         	try {
 				data = getBaseDataFeign(serviceCodeNameEnum).queryValueByValue(table, code, key, text , extendQuerySql);
@@ -324,9 +324,7 @@ public class DictCore {
         	if(data == null) {
         		data = getNullDataView(table, text);
         	}
-        	if(StringUtils.isBlank(extendQuerySql)) {
-        		DictThreadLocal.set(code, text, table, key , serviceCodeNameEnum , data);
-        	}
+        	DictThreadLocal.set(extendQuerySql , code, text, table, key , serviceCodeNameEnum , data);
         }
 		return data.stream().map(da -> {
 			Map<String, Object> m = new HashMap<>();
@@ -491,16 +489,21 @@ public class DictCore {
         if(targetClass == null){
             return "";
         }
-        Class<?> clazz = objClass;
-        if (targetClass instanceof String){
-        	clazz = targetClass.getClass();
-        }
+        Class<?> clazz = targetClass.getClass();
         String getMethodName = "getName";
         Object result = "";
-        try {
-            Method method = clazz.getMethod(getMethodName);
-            result = method.invoke(targetClass);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException ignored) {
+        if (clazz.isEnum()){
+        	 try {
+                 Method method = clazz.getMethod(getMethodName);
+                 result = method.invoke(targetClass);
+             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException ignored) {
+             }
+        }else {
+        	try {
+                Method method = objClass.getMethod(getMethodName , String.class);
+				result = method.invoke(Class.forName(objClass.getName()) , targetClass);
+            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException ignored) {
+            }
         }
         if(result == null) {
         	return "";
