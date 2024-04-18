@@ -495,6 +495,8 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                     entity.setFailureReason("报关信息与数大臣ERP不一致，请核实修改");
                 }
                 BeanUtil.copyProperties(entity, existEntity, CopyOptions.create().setIgnoreNullValue(true));
+                ProductRegistrationEntity erpEntity = ProductRegistrationConverter.INSTANCE.convertToEntity(productDTO);
+                BeanUtil.copyProperties(erpEntity,existEntity, CopyOptions.create().setIgnoreNullValue(true));
                 updateList.add(existEntity);
             }
         }
