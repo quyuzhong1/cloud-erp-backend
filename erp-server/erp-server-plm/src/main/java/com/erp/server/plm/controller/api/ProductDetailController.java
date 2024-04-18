@@ -1231,6 +1231,9 @@ public class ProductDetailController extends BaseController {
         }
     }
 
+    /**
+     * 初始化尺寸历史数据
+     */
     @GetMapping("/initProductSizeAndBoxSize")
     public ApiResult<String> initProductSizeAndBoxSize(){
         productDetailService.initProductSizeAndBoxSize();
