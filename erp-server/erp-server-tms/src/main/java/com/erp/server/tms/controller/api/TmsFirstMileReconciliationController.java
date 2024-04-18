@@ -273,7 +273,7 @@ public class TmsFirstMileReconciliationController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "tms:tmsFirstMileReconciliation:cancel",
+            menuCode = "tms:tmsFirstMileReconciliation:cancelProcess",
             serviceClass = TmsFirstMileReconciliationService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CANCEL, desc = "头程对账单撤销")

@@ -738,6 +738,10 @@
                     #{trackNo}
                 </foreach>
             </if>
+            <if test="startDate != null and endDate != null ">
+                and lbd.sign_time >= #{startDate}
+                and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY') > lbd.sign_time
+            </if>
             <if test="logisticsSupplierIdList != null and logisticsSupplierIdList.size() > 0 ">
                 and lb.logistics_supplier_id in
                 <foreach collection="logisticsSupplierIdList" item="logisticsSupplierId" open="(" separator="," close=")">

@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationImportEnum;
+import com.sun.corba.se.spi.orb.StringPair;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -389,6 +390,10 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 费用明细详情(导入时传递)
          */
         private List<TmsCostDetailDTO.UpdateDTO> updateList;
+
+        public StringPair getAutoStringPair() {
+            return new StringPair(this.logisticsSupplierId, this.currency);
+        }
     }
 
     @Data

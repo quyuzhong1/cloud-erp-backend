@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -103,10 +104,10 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
     );
 
     List<TmsFirstMileReconciliationDetailDTO.ListDTO> waitReconciliationList(@Param("orderType") String orderType,
-                                                                                @Param("reconciliationStatus") String reconciliationStatus,
-                                                                                @Param("trackStatus") String trackStatus,
-                                                                                @Param("mainIds") List<String> mainIds,
-                                                                                @Param("transportNoList") List<String> transportNoList,
-                                                                                @Param("logisticsSupplierIdList") List<String> logisticsSupplierIdList
-    );
+                                                                             @Param("reconciliationStatus") String reconciliationStatus,
+                                                                             @Param("trackStatus") String trackStatus,
+                                                                             @Param("mainIds") List<String> mainIds,
+                                                                             @Param("transportNoList") List<String> transportNoList,
+                                                                             @Param("logisticsSupplierIdList") List<String> logisticsSupplierIdList,
+                                                                             LocalDate startDate, LocalDate endDate);
 }

@@ -23,9 +23,7 @@ import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
-import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
-import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
@@ -623,5 +621,24 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
             throw new ServiceException("头程对账不存在");
         }
         return reconciliationEntity.getLogisticsSupplierId();
+    }
+
+    @Override
+    public TmsFirstMileReconciliationEntity findByCycleAndSupplier(String supplier, String currency, LocalDate startDate, LocalDate endDate) {
+        return lambdaQuery()
+                .eq(TmsFirstMileReconciliationEntity::getLogisticsSupplierId, supplier)
+                .eq(TmsFirstMileReconciliationEntity::getCurrency, currency)
+                .eq(TmsFirstMileReconciliationEntity::getStartDate, startDate)
+                .eq(TmsFirstMileReconciliationEntity::getEndDate, endDate)
+                .last(" LIMIT 1 ")
+                .one();
+    }
+
+    @Override
+    public TmsFirstMileReconciliationEntity getByCode(String code) {
+        return lambdaQuery()
+                .eq(TmsFirstMileReconciliationEntity::getCode, code)
+                .last(" LIMIT 1 ")
+                .one();
     }
 }

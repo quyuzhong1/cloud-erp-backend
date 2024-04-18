@@ -11,6 +11,7 @@ import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -140,4 +141,9 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      * 根据mainId查询历史实际明细并转换UpdateDTO,格式Map<SourceId, Map<cfgCostId, UpdateDTO>>
      */
     Map<String, Map<String, TmsCostDetailDTO.UpdateDTO>> convertUpdateDTOAndMap(List<TmsFirstMileReconciliationDetailEntity> oldDetailList);
+
+    /**
+     * 自动生成对账单
+     */
+    void autoGenFirstMileReconciliation(LocalDate startDate, LocalDate endDate);
 }
