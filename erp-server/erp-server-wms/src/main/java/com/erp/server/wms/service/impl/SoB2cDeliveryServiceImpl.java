@@ -995,7 +995,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      */
     private void fillList(List<SoB2cDeliveryDTO.ListDTO> records) {
         List<String> skuIds = records.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuBaseByIds(skuIds);
 
         //查询订单
         List<String> soIds = records.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
