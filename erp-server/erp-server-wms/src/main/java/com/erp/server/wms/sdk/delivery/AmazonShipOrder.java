@@ -154,7 +154,9 @@ public class AmazonShipOrder implements IPlatformService {
             // 包裹参考 ID 支持任何正数值，用于在确认货件后编辑货件。您可以提交任何数值作为 packageReferenceID，
             // 我们将存储该数据。如果您需要对货件进行编辑，请使用相同的 packageReferenceID 提交另一个 confirmShipment 操作。提交成功后，其他货件详情将被编辑
             packageDetail.setPackageReferenceId("1");
+            // 物流渠道代号
             packageDetail.setCarrierCode(tmsSignShipDTO.getCode());
+            // 物流跟踪号
             packageDetail.setTrackingNumber(logisticsEntity.getTrackNo());
             // 发货时间
             String shipDateTime = DateUtil.plus8SameUtcOffset(LocalDateTime.now()).toString();
