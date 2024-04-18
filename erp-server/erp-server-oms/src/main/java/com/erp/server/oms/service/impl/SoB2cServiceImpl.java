@@ -1620,7 +1620,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             Integer qty = detailItem.getQty();
             String sourceDetailId = detailItem.getId();
             //查询到对应的数据
-            List<SoB2cDeliveryDTO.DeliverySkuDTO> deliveryList = deliverySkuList.stream().filter(d -> skuId.equals(d.getSourceSkuId())).collect(Collectors.toList());
+            List<SoB2cDeliveryDTO.DeliverySkuDTO> deliveryList = deliverySkuList.stream().filter(d -> skuId.equals(d.getSourceSkuId())).distinct().collect(Collectors.toList());
             //表示有啊
             if (CollectionUtils.isNotEmpty(deliveryList)) {
                 for (SoB2cDeliveryDTO.DeliverySkuDTO deliverySku : deliveryList) {
