@@ -87,6 +87,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -460,15 +461,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         productNoSpecDetailAllDTO.setProductAccessoriesList(productAccessoriesList);
 
-
+        //国家列表
+        List<DictCountryDTO.ListDTO>  countryList = sysUserFeign.countryList();
         //查询目的国海关编码
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
         productCustomsEntityList.forEach(req -> {
             if (StringUtils.isNotBlank(req.getCountry())) {
                 String[] split = req.getCountry().split(",");
-                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
-                List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-                req.setCountryName(StringUtils.join(countryNameList, ","));
+                List<String> countryIdList = Arrays.asList(split);
+                List<DictCountryDTO.ListDTO> dictCountryList = countryList.stream().filter(c->countryIdList.contains(c.getId())).collect(Collectors.toList());
+                String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
+                req.setCountryName(countryName);
             }
         });
         productNoSpecDetailAllDTO.setProductCustomsList(productCustomsEntityList);
@@ -572,15 +575,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
         productNoSpecDetailAllDTO.setProductAccessoriesList(productAccessoriesList);
-
+        //国家列表
+        List<DictCountryDTO.ListDTO>  countryList = sysUserFeign.countryList();
         //查询目的国海关编码
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listBySkuId(skuId);
         productCustomsEntityList.forEach(req -> {
             if (StringUtils.isNotBlank(req.getCountry())) {
                 String[] split = req.getCountry().split(",");
-                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
-                List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-                req.setCountryName(StringUtils.join(countryNameList, ","));
+                List<String> countryIdList = Arrays.asList(split);
+                List<DictCountryDTO.ListDTO> dictCountryList = countryList.stream().filter(c->countryIdList.contains(c.getId())).collect(Collectors.toList());
+                String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
+                req.setCountryName(countryName);
             }
         });
         productNoSpecDetailAllDTO.setProductCustomsList(productCustomsEntityList);
@@ -2726,25 +2731,99 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (CollUtil.isNotEmpty(productPackList)) {
                 productPackMap = productPackList.stream().collect(Collectors.groupingBy(ProductPackEntity::getSkuId));
             }
+            //产品信息
+            List<String> productIds = skuList.stream().map(SkuVO::getProductId).distinct().collect(Collectors.toList());
+            Map<String, ProductInfoEntity> productMap = Maps.newHashMap();
+            if (CollectionUtils.isNotEmpty(productIds)){
+                List<ProductInfoEntity> productInfos = productInfoService.listByIds(productIds);
+                if (CollectionUtils.isNotEmpty(productInfos)){
+                    productMap = productInfos.stream().collect(Collectors.toMap(ProductInfoEntity::getId, Function.identity()));
+                }
+            }
+
+            //产品销售状态
+            List<ProductSaleEntity> productSales = productSaleService.listBySkuIds(skuIds);
+            Map<String, List<ProductSaleEntity>> productSaleMap = Maps.newHashMap();
+            if (CollUtil.isNotEmpty(productSales)) {
+                productSaleMap = productSales.stream().collect(Collectors.groupingBy(ProductSaleEntity::getSkuId));
+            }
+            //产品物流信息
+            List<ProductLogisticsEntity> productLogistics = productLogisticsService.listBySkuIdList(skuIds);
+            Map<String, List<ProductLogisticsEntity>> logisticsMap = Maps.newHashMap();
+            if (CollectionUtils.isNotEmpty(productLogistics)){
+                logisticsMap = productLogistics.stream().collect(Collectors.groupingBy(ProductLogisticsEntity::getSkuId));
+            }
+            //产品采购信息表
+            List<ProductPurchaseEntity> productPurchaseEntities = productPurchaseService.listBySkuIds(skuIds);
+            Map<String, List<ProductPurchaseEntity>> productPurchaseMap = Maps.newHashMap();
+            if (CollectionUtils.isNotEmpty(productPurchaseEntities)){
+                productPurchaseMap = productPurchaseEntities.stream().collect(Collectors.groupingBy(ProductPurchaseEntity::getSkuId));
+            }
+            //产品成本
+            List<ProductCostEntity> productCosts = productCostService.listBySkuIds(skuIds);
+            Map<String, List<ProductCostEntity>> productCostMap = Maps.newHashMap();
+            if (CollectionUtils.isNotEmpty(productCosts)){
+                productCostMap = productCosts.stream().collect(Collectors.groupingBy(ProductCostEntity::getSkuId));
+            }
             //供应商信息
             List<String> supplierIdList = skuList.stream().map(SkuVO::getSupplierId).collect(Collectors.toList());
             List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
-
             //产品分类
             List<String> categoryIdList = skuList.stream().map(SkuVO::getCategoryId).distinct().collect(Collectors.toList());
             List<BasicCategoryEntity> basicCategoryList = basicCategoryService.listByIds(categoryIdList);
 
             for (SkuVO skuVO : skuList) {
+                //产品信息
+                if (productMap.containsKey(skuVO.getProductId())&& Objects.nonNull(productMap.get(skuVO.getProductId()))){
+                    ProductInfoEntity productInfo = productMap.get(skuVO.getProductId());
+                    skuVO.setSpuNo(productInfo.getSpuNo());
+                    skuVO.setSpuName(productInfo.getName());
+                    skuVO.setMaterials(productInfo.getMaterials());
+                    skuVO.setFunctionDesc(productInfo.getFunctionDesc());
+                    skuVO.setProductGrade(productInfo.getGrade());
+                    skuVO.setBrandName(productInfo.getBrandName());
+                    skuVO.setCategoryId(productInfo.getCategoryId());
+                    skuVO.setSaleMethod(productInfo.getSaleMethod());
+                    skuVO.setSpecType(productInfo.getSpecType());
+                }
                 if (productPackMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productPackMap.get(skuVO.getSkuId()))) {
                     ProductPackEntity packEntity = productPackMap.get(skuVO.getSkuId()).get(0);
                     skuVO.setUnitQty(Objects.nonNull(packEntity.getBoxQty()) ? packEntity.getBoxQty().intValue() : null);
+                    skuVO.setGrossWeight(packEntity.getGrossWeight());
+                    skuVO.setProductSize(packEntity.getProductSize());
+                    skuVO.setNetWeight(packEntity.getNetWeight());
                 }
                 PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(skuVO.getSupplierId()) && req.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
                     //含税价
                     skuVO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
                 }
-
+                //物流报关信息
+                if (logisticsMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(logisticsMap.get(skuVO.getSkuId()))){
+                    ProductLogisticsEntity logisticsEntity = logisticsMap.get(skuVO.getSkuId()).get(0);
+                    skuVO.setDeclareName(logisticsEntity.getDeclareChineseName());
+                    skuVO.setDeclareModel(logisticsEntity.getDeclareModel());
+                    skuVO.setProductPropertyId(logisticsEntity.getProductPropertyId());
+                }
+                //产品销售信息
+                if (productSaleMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productSaleMap.get(skuVO.getSkuId()))){
+                    ProductSaleEntity saleEntity = productSaleMap.get(skuVO.getSkuId()).get(0);
+                    skuVO.setSaleState(saleEntity.getSaleState());
+                }
+                //产品采购信息表
+                if (productPurchaseMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productPurchaseMap.get(skuVO.getSkuId()))){
+                    ProductPurchaseEntity productPurchase = productPurchaseMap.get(skuVO.getSkuId()).get(0);
+                    skuVO.setMoq(productPurchase.getMoq());
+                    skuVO.setSupplierId(productPurchase.getMainSupplier());
+                    skuVO.setEan(productPurchase.getEan());
+                }
+                //产品成本
+                if (productCostMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productCostMap.get(skuVO.getSkuId()))){
+                    ProductCostEntity productCost = productCostMap.get(skuVO.getSkuId()).get(0);
+                    skuVO.setActualTaxCost(productCost.getActualTaxCost());
+                    skuVO.setTargetTaxCost(productCost.getTargetTaxCost());
+                    skuVO.setRetailPrice(productCost.getRetailPrice());
+                }
                 //产品分类
                 String categoryName = basicCategoryList.stream().filter(obj -> obj.getId().equals(skuVO.getCategoryId())).map(BasicCategoryEntity::getName).findFirst().orElse("");
                 skuVO.setCategoryName(categoryName);
@@ -2931,9 +3010,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productCustomsEntityList.forEach(req -> {
             if (StringUtils.isNotBlank(req.getCountry())) {
                 String[] split = req.getCountry().split(",");
-                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
-                List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-                req.setCountryName(StringUtils.join(countryNameList, ","));
+                List<String> countryIdList = Arrays.asList(split);
+                List<DictCountryDTO.ListDTO> dictCountryList = countryList.stream().filter(c->countryIdList.contains(c.getId())).collect(Collectors.toList());
+                String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
+                req.setCountryName(countryName);
             }
         });
         result.setProductCustomsList(productCustomsEntityList);

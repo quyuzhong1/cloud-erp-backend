@@ -3,6 +3,7 @@ package com.erp.server.tms.service;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
@@ -39,7 +40,7 @@ public interface LogisticsBaseService {
      *
      * @param platformType
      */
-    List<BatchResultDTO> processTrackData(String platformType, List<LogisticsBillDetailEntity> records);
+    List<BatchResultDTO> processTrackData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records);
 
     /**
      * 注册物流单号
@@ -48,9 +49,9 @@ public interface LogisticsBaseService {
      * @param records
      * @return
      */
-    List<BatchResultDTO> processRegisterData(String platformType, List<LogisticsBillDetailEntity> records);
+    List<BatchResultDTO> processRegisterData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records);
 
-    List<BatchResultDTO> batchUpdateTrackInfo(List<LogisticsBillDetailEntity> logisticsBillDetailEntities);
+    List<BatchResultDTO> batchUpdateTrackInfo(List<LogisticsTrackDTO.UpdateTrackDTO> dtos);
 
     /**
      * 同步虾皮渠道

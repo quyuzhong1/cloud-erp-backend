@@ -1,7 +1,9 @@
 package com.erp.server.wms.service;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 
 import java.util.List;
@@ -69,4 +71,13 @@ public interface PoReturnDetailService extends SuperService<PoReturnDetailEntity
      * @return
      */
     List<PoReturnDetailEntity> listByMainIds(List<String> mainIds);
+
+    void updateKingdeeDetailId(JSONArray list);
+
+    /**
+     * 根据收货记录获取退货列表
+     * @param receiveIds
+     * @return
+     */
+    List<WarehouseReceiveDTO.PoReturnDetailDTO> listReturnOrderDetailByReceiveIds(List<String> receiveIds);
 }

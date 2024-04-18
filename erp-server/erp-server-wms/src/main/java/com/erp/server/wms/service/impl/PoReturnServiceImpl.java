@@ -1349,8 +1349,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
                 //验证退货数量
                 Integer stockInQty = stockInSkuList.stream().filter(s -> s.getSkuId().equals(detail.getSkuId()) &&
-                        detail.getSourceDetailId().equals(s.getPurchaseOrderDetailId())).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getStockInQty())).orElse(0);
+                        detail.getSourceDetailId().equals(s.getPurchaseOrderDetailId()))
+                        .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO,Integer::sum);
                 if (ObjectUtils.isEmpty(stockInQty)) {
                     throw new ServiceException(1, String.format("SKU【%s】未找到对应数量", detail.getSkuNo()));
                 }
@@ -2198,7 +2198,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
             //异常分类名称
             record.setUnusualTypeName(PoReturnUnusualTypeEnum.getName(record.getUnusualType()));
-
+            //退货方式名称
+            record.setReturnModeName(ReturnModeEnum.getName(record.getReturnMode()));
             //产品信息
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(record.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             record.setProductName(productDetailEntity.getName());

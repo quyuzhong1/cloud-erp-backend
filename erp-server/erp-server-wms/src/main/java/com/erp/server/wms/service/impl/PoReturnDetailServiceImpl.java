@@ -2,6 +2,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -21,11 +23,8 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
-import com.erp.model.wms.entity.PoInstockDetailEntity;
-import com.erp.model.wms.entity.PoReturnDetailEntity;
-import com.erp.model.wms.entity.PoReturnEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -147,7 +146,11 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
                 if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
                     poReturnDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
                     poReturnDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
-                    returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                    //非质检退货数量
+                    returnQty = purchaseReturnOrderDetailEntities.stream()
+                            .filter(req -> req.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId())
+                                    && !ReturnOrderSourceEnum.QC.getCode().equals(req.getSourceType()))
+                            .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (dto.getSourceType().equals(SourceTypeEnum.PO_RECEIVE.getCode())) {
                         Integer receiveQty = detailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                         if (addDTO.getReturnQty() > receiveQty) {
@@ -345,7 +348,13 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
                         if (updateDTO.getReturnQty() > stockInQty) {
                             throw new ServiceException(ApiError.ERROR_99026.code, String.format(ApiError.ERROR_99026.msg, purchaseOrderDetailEntity.getSkuNo()));
                         }
-                        returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && !req.getId().equals(updateDTO.getId())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                        //非质检退货数量
+                        returnQty = purchaseReturnOrderDetailEntities.stream().filter(req ->
+                                        req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId())
+                                        && !ReturnOrderSourceEnum.QC.getCode().equals(req.getSourceType())
+                                        && !req.getId().equals(updateDTO.getId()))
+                                .map(PoReturnDetailEntity::getReturnQty)
+                                .reduce(MathUtil.ZERO, Integer::sum);
                         if (updateDTO.getReturnQty() + returnQty > stockInQty) {
                             throw new ServiceException(ApiError.ERROR_99031.code, String.format(ApiError.ERROR_99031.msg, purchaseOrderDetailEntity.getSkuNo()));
                         }
@@ -476,5 +485,29 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
     @Override
     public List<PoReturnDetailEntity> listByMainIds(List<String> mainIds) {
         return lambdaQuery().in(PoReturnDetailEntity::getMainId, mainIds).list();
+    }
+
+    @Override
+    public void updateKingdeeDetailId(JSONArray list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (Object obj : list) {
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            String detailId = (String) jsonObject.get("detailId");
+            String kingdeeDetailId = (String) jsonObject.get("kingdeeDetailId");
+            this.lambdaUpdate()
+                    .set(PoReturnDetailEntity::getKingdeeDetailId, kingdeeDetailId)
+                    .eq(PoReturnDetailEntity::getId, detailId)
+                    .update();
+        }
+    }
+
+    @Override
+    public List<WarehouseReceiveDTO.PoReturnDetailDTO> listReturnOrderDetailByReceiveIds(List<String> receiveIds) {
+        if (CollectionUtils.isEmpty(receiveIds)){
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listReturnOrderDetailByReceiveIds(receiveIds);
     }
 }

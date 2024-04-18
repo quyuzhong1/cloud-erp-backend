@@ -262,7 +262,6 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap, ShopInfoEntity shopInfo, List<SkuInfoSimpleVO> skuList) {
         // 订单明细
         List<SoB2cDetailEntity> oldDetailEntityList = this.listByMainId(mainEntity.getId());
@@ -303,10 +302,12 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             List<ListingInfoWithSkuMappingDTO> mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailDTO.getPlatformSkuNo());
             // 检查和获取映射关系
             ListingInfoWithSkuMappingDTO mappingDTO = this.checkAndMappingDTO(mappingDTOList, detailDTO.getPlatformSpuNo(), mainEntity.getDictPlatform());
-            String skuId = "";
-            String skuNO= "";
-            String imageUrl= "";
-            if(null != mappingDTO){
+
+            String skuId = null == oldEntity ? "" : oldEntity.getSkuId();
+            String skuNO= null == oldEntity ? "" : oldEntity.getSkuNo();
+            String imageUrl= null == oldEntity ? "" : oldEntity.getImageUrl();
+            // 历史不为空不更新
+            if(null != mappingDTO && null != oldEntity && StringUtils.isBlank(skuNO) && StringUtils.isBlank(skuId)){
                 skuId = mappingDTO.checkAndGetProductSkuId();
                 skuNO = mappingDTO.checkAndGetProductSkuNo();
                 imageUrl = mappingDTO.checkAndGetProductImageUrl();
@@ -437,7 +438,10 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         paramDTO.setShopIdList(Collections.singletonList(shopId));
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(platformSkuList);
-        paramDTO.setPlatformSpuNoList(platformSpuList);
+        // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)){
+            paramDTO.setPlatformSpuNoList(platformSpuList);
+        }
         paramDTO.setMatchResult(true);
         paramDTO.setLastExpireDate(platformOrderCreateTime);
         paramDTO.setIsExpire(isExpire);

@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -81,6 +82,11 @@ public class WeightingOutboundDTO implements Serializable {
          * 运单号
          */
         private String transportNo;
+
+        /**
+         * 跟踪号
+         */
+        private String trackNo;
 
         /**
          * 称重重量

@@ -26,6 +26,8 @@ public class SkuVO implements Serializable {
 
     private String productId;
 
+    private String ean;
+
     /**
      * 规格类型  1：无规格  2：多规格
      */

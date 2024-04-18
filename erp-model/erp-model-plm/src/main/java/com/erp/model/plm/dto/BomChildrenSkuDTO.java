@@ -1,7 +1,11 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 
 import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
@@ -18,6 +22,8 @@ import java.math.BigDecimal;
  */
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class BomChildrenSkuDTO  implements Serializable {
 
     /**

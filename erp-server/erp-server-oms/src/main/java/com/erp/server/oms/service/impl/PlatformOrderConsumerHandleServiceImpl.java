@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -175,7 +176,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public SoB2cDTO.PullOrderResultDTO checkAndSaveAll(PlatformOrderDTO dto) {
         // 查询关联关系
         List<String> platformSkuList = dto.getDetails()
@@ -238,7 +238,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         BigDecimal totalHeight = BigDecimal.ZERO;
         if (CollectionUtils.isNotEmpty(skuList)){
             //拆分明细
-            List<SplitSkuDTO> splitSkuDTOS = splitBySoDetail(detailList);
+            List<SplitSkuDTO> splitSkuDTOS = splitBySoDetail(detailList, skuList);
             //根据sku进行计算
             List<String> keyList = new ArrayList<>();
             keyList.add(CalculateSizeEnum.LENGTH.getCode());
@@ -269,16 +269,19 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity);
 
         receiverEntity.setCustomerId(customerB2cEntity.getId());
-        if (!soB2cReceiverService.saveOrUpdate(receiverEntity)) {
-            throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
-        }
+        soB2cReceiverService.saveOrUpdate(receiverEntity);
+//        if (!soB2cReceiverService.saveOrUpdate(receiverEntity)) {
+//            throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
+//        }
         return resultDTO;
     }
 
-    private List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> detailList) {
+    private List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> detailList, List<SkuInfoSimpleVO> skuList) {
         if (CollectionUtils.isEmpty(detailList)){
             return Collections.emptyList();
         }
+        Map<String, SkuInfoSimpleVO> sourceSkuMap = skuList.stream().collect(Collectors.toMap(SkuInfoSimpleVO::getSkuId, Function.identity()));
+
         List<String> skuIds = detailList.stream().map(SoB2cDetailEntity::getSkuId).filter(StringUtils::isNotEmpty).collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
         List<SplitSkuDTO> splitSkuDTOS = new ArrayList<>();
@@ -300,12 +303,23 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                             .build());
                 });
             }else {
-                splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
-                        .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
-                        .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? skuVO.getLength() : BigDecimal.ZERO)
-                        .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? skuVO.getWidth() : BigDecimal.ZERO)
-                        .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? skuVO.getHeight() : BigDecimal.ZERO)
-                        .build());
+
+                SkuInfoSimpleVO simpleSkuVO = sourceSkuMap.get(addDTO.getSkuId());
+                if (null == simpleSkuVO){
+                    // 部分无映射关系设置为空
+                    splitSkuDTOS.add(new SplitSkuDTO(addDTO.getSkuId(), addDTO.getSkuNo()));
+                } else {
+                    skuVO = BomChildrenSkuDTO.builder()
+                            .skuId(simpleSkuVO.getSkuId())
+                            .productSize(simpleSkuVO.getProductSize())
+                            .build();
+                    splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
+                            .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
+                            .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? skuVO.getLength() : BigDecimal.ZERO)
+                            .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? skuVO.getWidth() : BigDecimal.ZERO)
+                            .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? skuVO.getHeight() : BigDecimal.ZERO)
+                            .build());
+                }
             }
         });
         return splitSkuDTOS;

@@ -8,6 +8,7 @@ import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.server.oms.ErpServerOmsApplication;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +41,8 @@ public class ErpServerOmsListingApplicationTests {
     private SkuMappingService skuMappingService;
     @Resource
     private ShopInfoService shopInfoService;
+    @Resource
+    private SoB2cService soB2cService;
 
 
     @Test
@@ -87,6 +90,12 @@ public class ErpServerOmsListingApplicationTests {
         List<ListingInfoWithSkuMappingDTO> skuMappingList = skuMappingService.findListDto(paramDTO);
         System.out.println("结果");
         System.out.println(JSONUtil.toJsonStr(skuMappingList));
+    }
+
+    @Test
+    public void test(){
+        SoOutstockDTO.GenerateB2cDTO soOutstockInfoById = soB2cService.getSoOutstockInfoById("1773704392155860993");
+        System.out.println(soOutstockInfoById);
     }
 
 

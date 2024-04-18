@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
@@ -270,6 +271,8 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             Integer receiveQty = MathUtil.ZERO;
             //已送货数量
             Integer deliveryQty = MathUtil.ZERO;
+            //有送货单的收货数量
+            Integer hasDeliveryReceiveQty = MathUtil.ZERO;
             //无送货单收货数量
             Integer unDeliveryReceiveQty = MathUtil.ZERO;
             //无收货单的入库数量
@@ -281,6 +284,10 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             //收货数量
             if (CollectionUtils.isNotEmpty(receiveList)) {
                 receiveQty = receiveList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) )
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                hasDeliveryReceiveQty = receiveList.stream().filter(e -> org.apache.commons.lang3.StringUtils.isNotEmpty(e.getSourceType())
+                                && e.getSourceType().equalsIgnoreCase(SourceTypeEnum.DELIVERY_ORDER.getCode())
+                                && e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()))
                         .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 unDeliveryReceiveQty = receiveList.stream().filter(e -> StringUtils.isEmpty(e.getSourceId()) && e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()))
                         .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -308,10 +315,12 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 deliveryQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
                         .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 //收发差异
-                diffSendAndReceive = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId())
+                //发货数量 - 已审核收货数量
+                Integer srmDeliveryQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId())
                                 && com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(e.getReceiptStatus()) && e.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode()) )
-                        .map(deliveryOrderDetailEntity -> deliveryOrderDetailEntity.getDeliveryQty() - deliveryOrderDetailEntity.getReceiveQty())
+                        .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty)
                         .reduce(MathUtil.ZERO, Integer::sum);
+                diffSendAndReceive = srmDeliveryQty - hasDeliveryReceiveQty;
             }
             obj.setWaitReceiveQty(deliveryQty);
             //剩余送货量/可下推量=采购订单-送货单数量-无送货单收货数量-无收货单的入库数量+[收发差异]+退货补货数量[库存退货/质检退货]

@@ -2,10 +2,13 @@ package com.erp.server.scm.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -17,11 +20,14 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
+import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.server.scm.query.OrderConfirmQueryHandler;
 import com.erp.server.scm.query.PurchaseOrderQueryHandler;
-import com.erp.server.scm.service.PurchaseOrderDetailService;
-import com.erp.server.scm.service.PurchaseOrderService;
+import com.erp.server.scm.service.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -37,6 +43,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+
+import static com.rtfparserkit.rtf.Command.info;
 
 /**
  * 采购订单管理
@@ -54,7 +63,10 @@ public class PurchaseOrderController extends BaseController {
 
     @Resource
     private PurchaseOrderDetailService purchaseOrderDetailService;
-
+    @Resource
+    private SupplierUserService supplierUserService;
+    @Resource
+    private PurchaseOrderSupplierService purchaseOrderSupplierService;
     /**
      * 分页查询
      * @author Will
@@ -672,5 +684,46 @@ public class PurchaseOrderController extends BaseController {
     public ApiResult importEndReceiveFile(@RequestParam("excelFile") MultipartFile multipartFile, HttpServletResponse response) {
         purchaseOrderService.importEndReceiveFile(multipartFile, response);
         return success();
+    }
+
+    /**
+     *  导出SRM采购订单
+     * @author zdy
+     * @date: 2023/3/15 18:23
+     * @param dto
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出SRM采购订单")
+    @PostMapping(value = "/exportSrmExcel")
+    @WebAdvanceQuery(handler = OrderConfirmQueryHandler.class)
+    public ApiResult exportSrmExcel(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto, HttpServletResponse response) {
+        SupplierUserInfoVO info = purchaseOrderService.getSrmSupplierUserInfo();
+        dto.setSupplierId(info.getSupplierId());
+        Boolean flag = purchaseOrderService.exportSrmExcel(dto, response);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 导出Srm采购合同PDF
+     * @author zdy
+     * @date: 2023/3/15 17:59
+     * @param id
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出Srm采购合同PDF")
+    @GetMapping("/exportSrmPurchaseContractPdf")
+    public ApiResult<PurchaseOrderDTO.ExportPdfDTO> exportSrmPurchaseContractPdf(@RequestParam("id") String id) {
+        SupplierUserInfoVO info = purchaseOrderService.getSrmSupplierUserInfo();
+        //采购订单是否是该供应商合同
+        PurchaseOrderSupplierEntity orderSupplier = purchaseOrderSupplierService.getByPurchaseOrderId(id);
+        if (ObjectUtils.isEmpty(orderSupplier)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+        if (StringUtils.isEmpty(orderSupplier.getSupplierId()) || !orderSupplier.getSupplierId().equals(info.getSupplierId())){
+            throw new ServiceException(ApiError.ERROR_98120, info.getSupplierName());
+        }
+        PurchaseOrderDTO.ExportPdfDTO exportPdfDTO = purchaseOrderService.exportPurchaseContractPdf(id);
+        return success(exportPdfDTO);
     }
 }

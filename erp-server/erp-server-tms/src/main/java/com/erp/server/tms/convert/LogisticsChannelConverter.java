@@ -3,6 +3,7 @@ package com.erp.server.tms.convert;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.mapper.BooleanMapperWork;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
@@ -178,7 +179,7 @@ public interface LogisticsChannelConverter {
     RegisterRequest registerTrackNoByTrack123(LogisticsRegisterVO logisticsRegisterVO);
     List<RegisterRequest> registerTrackNoByTrack123(List<LogisticsRegisterVO> logisticsRegisterVOS);
     @Mapping(target = "trackNo",source = "trackNo")
-    List<LogisticsRegisterVO> convertRegisterDataByTrack123(List<LogisticsBillDetailEntity> records);
+    List<LogisticsRegisterVO> convertRegisterDataByTrack123(List<LogisticsTrackDTO.UpdateTrackDTO> records);
 
     @Mappings({
             @Mapping(target = "code", source = "code"),

@@ -105,6 +105,12 @@ public class PoReturnDetailEntity extends BaseEntity<PoReturnDetailEntity> {
     private String purchaseOrderDetailId;
 
     /**
+     * 金蝶明细id
+     */
+    @TableField("kingdee_detail_id")
+    private String KingdeeDetailId;
+
+    /**
      * 仓位
      */
     @TableField("warehouse_location")
@@ -126,6 +132,8 @@ public class PoReturnDetailEntity extends BaseEntity<PoReturnDetailEntity> {
     @TableField(exist = false)
     private String sourceType;
 
+    @TableField(exist = false)
+    private String sourceId;
 
     @Override
     public Serializable pkVal() {

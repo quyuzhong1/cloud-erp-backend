@@ -44,7 +44,6 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
@@ -62,6 +61,12 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
+import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
+import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.*;
@@ -262,22 +267,60 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         //列表Tab查询状态处理
-        handleTableParam(pagingParamDTO.getParams());
         //查询店铺设置权限
         SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
         if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
             return new PagingVO(new Page<>());
         }
-        IPage<SoB2cDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams(), shopAuthResultDTO);
-        if (CollUtil.isEmpty(pageData.getRecords())) {
+        List<AdvanceQueryDTO> advanceQueryDTOList = pagingParamDTO.getParams().getAdvanceQueryDTOList();
+        //是否缺货 过滤
+        Boolean isOutStock = (Boolean)advanceQueryDTOList.stream().filter(v->v.getField().equals("isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        if(Objects.nonNull(isOutStock)){
+            //必须选仓库而且只能选一个
+            List<String> warehouseIdList = com.common.business.utils.CollectionUtils.convertStrClzToList(advanceQueryDTOList.stream().filter(v->v.getField().equals("warehouse") && (v.getCompare().equals(QueryConditionEnum.EQ.getCompareCode()) || v.getCompare().equals(QueryConditionEnum.IN_LIST.getCompareCode()))).findFirst().orElse(new AdvanceQueryDTO()).getValue());
+            if(warehouseIdList.size() != 1){
+                throw new ServiceException("选择缺货条件必须选择仓库且只能选择一个仓库");
+            }
+            //查询全部数据，过滤出有缺货
+            Page query = new Page(1,Integer.MAX_VALUE,false);
+            IPage<SoB2cDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams(), shopAuthResultDTO);
+            if (CollUtil.isEmpty(pageData.getRecords())) {
+                return new PagingVO(pageData.getRecords(),0,pagingParamDTO.getPageSize(),pagingParamDTO.getCurrPage());
+            }
+            List<SoB2cDTO.ListDTO> list = pageData.getRecords();
+            // 数据处理
+            fillList(list);
+            if(isOutStock){
+                for (SoB2cDTO.ListDTO listDTO : list) {
+                    listDTO.setDetailList(listDTO.getDetailList().stream().filter(v->v.getDetailLabelDTO().getIsOutStock()!=null && v.getDetailLabelDTO().getIsOutStock()).collect(Collectors.toList()));
+                }
+                list = list.stream().filter(v->CollectionUtils.isNotEmpty(v.getDetailList())).collect(Collectors.toList());
+            }else{
+                for (SoB2cDTO.ListDTO listDTO : list) {
+                    listDTO.setDetailList(listDTO.getDetailList().stream().filter(v->v.getDetailLabelDTO().getIsOutStock()==null || !v.getDetailLabelDTO().getIsOutStock()).collect(Collectors.toList()));
+                }
+                list = list.stream().filter(v->CollectionUtils.isNotEmpty(v.getDetailList())).collect(Collectors.toList());
+            }
+            IPage<SoB2cDTO.ListDTO> result = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize(),list.size());
+            result.setPages(pagingParamDTO.getCurrPage());
+            result.setSize(pagingParamDTO.getPageSize());
+            result.setTotal(list.size());
+            list = com.common.business.utils.CollectionUtils.paginateList(list,pagingParamDTO.getPageSize(),pagingParamDTO.getCurrPage());
+            result.setRecords(list);
+            return new PagingVO(result);
+        }else{
+            Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+            IPage<SoB2cDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams(), shopAuthResultDTO);
+            if (CollUtil.isEmpty(pageData.getRecords())) {
+                return new PagingVO(pageData);
+            }
+            // 数据处理
+            fillList(pageData.getRecords());
             return new PagingVO(pageData);
         }
-        // 数据处理
-        fillList(pageData.getRecords());
-        return new PagingVO(pageData);
     }
+
 
 
     @Override
@@ -2955,11 +2998,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             .orElse(MathUtil.ZERO);
                     detailDTO.setFreezeQty(freezeQty);
                 }
-                //缺货订单
-                if ((SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(data.getBillStatus())
-                        || SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(data.getBillStatus()))
-                        && MathUtil.compareTo(detailDTO.getQty(), useableQty) > MathUtil.ZERO && !ignoreInventorySkuIds.contains(detailDTO.getSkuId())) {
-                    detailLabelDTO.setIsOutStock(Boolean.TRUE);
+                //存在仓库则需要判断是否缺货
+                if (StrUtil.isNotBlank(detailDTO.getWarehouseId())) {
+                    //缺货订单
+                    if ((SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(data.getBillStatus())
+                            || SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(data.getBillStatus()))
+                            && MathUtil.compareTo(detailDTO.getQty(), useableQty) > MathUtil.ZERO && !ignoreInventorySkuIds.contains(detailDTO.getSkuId())) {
+                        detailLabelDTO.setIsOutStock(Boolean.TRUE);
+                    }
                 }
                 detailDTO.setDetailLabelDTO(detailLabelDTO);
             }
@@ -4788,6 +4834,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 handleData(oldEntity, false, false);
             }
             ApproveStatusEnum oldApproveStatus = oldEntity.getApproveStatus();
+            // 自发货订单如果来源状态是带配货不更新状态, 审核状态也不更新
+            if (!oldEntity.hasPlatformWarehouseOrder() && SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(dto.getBillStatus())){
+                dto.setApproveStatusStr("");
+            }
             if (StringUtils.isNotBlank(dto.getApproveStatusStr())) {
                 ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(dto.getApproveStatusStr());
                 if (null == approveStatusEnum) {
@@ -4842,7 +4892,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     dto.setBillStatus(oldEntity.getBillStatus());
                 }
             }
-            // 自发货订单如果来源状态是带配货不更新状态
+            // 自发货订单如果来源状态是带配货不更新状态, 审核状态也不更新
             if (!oldEntity.hasPlatformWarehouseOrder() && SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(dto.getBillStatus())){
                 dto.setBillStatus(oldEntity.getBillStatus());
             }
@@ -6119,7 +6169,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         paramDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(platformSkuList);
-        paramDTO.setPlatformSpuNoList(platformSpuList);
+        // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(entity.getDictPlatform())){
+            paramDTO.setPlatformSpuNoList(platformSpuList);
+        }
         paramDTO.setMatchResult(true);
         paramDTO.setLastExpireDate(entity.getPlatformOrderCreateTime());
 

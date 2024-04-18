@@ -29,7 +29,6 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cLogisticsMapper;
 import com.erp.server.oms.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -175,7 +174,6 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public SoB2cLogisticsEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, BigDecimal allNetWeight,
                                                    BigDecimal maxLength, BigDecimal maxWidth, BigDecimal totalHeight) {
 //        if (Objects.isNull(mainEntity) || StrUtil.isBlank(mainEntity.getId())) return;
@@ -187,14 +185,26 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             if (null == oldEntity) {
                 SoB2cLogisticsEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(null, mainEntity.getId(), allNetWeight,maxLength,maxWidth,totalHeight);
                 entity.setMainId(mainEntity.getId());
+                entity.setWeight(allNetWeight);
+                entity.setLength(maxLength);
+                entity.setWidth(maxWidth);
+                entity.setHeight(totalHeight);
                 handleLogisticsData(entity);
                 // 无信息新增空表
                 if (!this.save(entity)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
                 }
                 return entity;
+            } else {
+                oldEntity.setWeight(allNetWeight);
+                oldEntity.setLength(maxLength);
+                oldEntity.setWidth(maxWidth);
+                oldEntity.setHeight(totalHeight);
+                if (!this.updateById(oldEntity)) {
+                    throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
+                }
+                return oldEntity;
             }
-            return oldEntity;
         }
         // 暂时使用第一个
         PlatformOrderLogisticsDTO platformOrderLogisticsDTO = logisticsList.get(0);
@@ -305,6 +315,14 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 .set(SoB2cLogisticsEntity::getDeliveryTime, deliveryTime)
                 .in(SoB2cLogisticsEntity::getMainId, mainIds)
                 .update();
+    }
+
+    @Override
+    public SoB2cLogisticsEntity getSoB2cLogisticsByTrackNo(String trackNo) {
+        if (StringUtils.isBlank(trackNo)) {
+            return null;
+        }
+        return lambdaQuery().eq(SoB2cLogisticsEntity::getTrackNo, trackNo).last("LIMIT 1").one();
     }
 
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {

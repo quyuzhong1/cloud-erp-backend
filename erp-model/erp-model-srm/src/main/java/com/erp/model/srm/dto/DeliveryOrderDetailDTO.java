@@ -232,21 +232,6 @@ public class DeliveryOrderDetailDTO implements Serializable {
         private Integer giftQty;
 
         /**
-        * 收货数量
-        */
-        private Integer receiveQty;
-
-        /**
-        * 赠品收货数量
-        */
-        private Integer giftReceiveQty;
-
-        /**
-        * 质检合格数
-        */
-        private Integer qcGoodQty;
-
-        /**
         * 备注
         */
         private String remark;

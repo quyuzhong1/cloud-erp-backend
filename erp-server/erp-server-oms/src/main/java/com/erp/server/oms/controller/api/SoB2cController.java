@@ -4,6 +4,7 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.Idempotent;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -20,6 +21,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
+import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
@@ -80,6 +82,7 @@ public class SoB2cController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
     public ApiResult<PagingVO<SoB2cDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDTO.PagingParamDTO> dto) {
         return success(soB2cService.paging(dto));
     }
