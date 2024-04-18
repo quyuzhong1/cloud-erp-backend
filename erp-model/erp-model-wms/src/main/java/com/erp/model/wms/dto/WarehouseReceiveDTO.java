@@ -1227,9 +1227,66 @@ public class WarehouseReceiveDTO {
          */
         private String sourceId;
         /**
+         * 订单类型 deliveryOrder 送货单
+         */
+        private String sourceType;
+
+        /**
+         * 来源明细记录id
+         */
+        private String sourceDetailId;
+        /**
          * 收货数量
          */
         private Integer receiveQty;
+        /**
+         * 赠品收货数量
+         */
+        private Integer giftReceiveQty;
     }
 
+    /**
+     * 根据收货单获取 退货明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PoReturnDetailDTO{
+        /**
+         * 收货明细id来源
+         */
+        private String receiveDetailId;
+        /**
+         * 收货id来源
+         */
+        private String receiveId;
+        /**
+         * 质检主键id
+         */
+        private String qcId;
+        /**
+         * 退货id
+         */
+        private String returnId;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        /**
+         * 退货明细id
+         */
+        private String returnDetailId;
+        private String skuId;
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * 补货数量
+         */
+        private Integer replenishQty;
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
+    }
 }

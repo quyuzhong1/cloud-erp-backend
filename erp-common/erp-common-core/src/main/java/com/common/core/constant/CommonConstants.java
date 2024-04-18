@@ -17,4 +17,10 @@ public class CommonConstants {
 
     public static final String SYSTEM = "UlanziERP";
     public static final String B2BXSDD = "B2BXSDD";
+    /**
+     * 默认字段
+     */
+    public static final String DEFAULT = "default";
+
+
 }

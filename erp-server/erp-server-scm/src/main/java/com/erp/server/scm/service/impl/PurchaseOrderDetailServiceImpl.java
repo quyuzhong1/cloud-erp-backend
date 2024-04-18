@@ -656,14 +656,14 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         List<PurchaseOrderEntity> mainList = purchaseOrderService.getList(mainIds);
         //更新明细中的交货状态
         this.updateArrivalStatusByIds(ExecutionStatusEnum.CLOSED.getCode(), ids, purchaseOrderDetailList, remark);
-        //TODO 关闭时，更新订单明细状态
-        if (CollectionUtils.isNotEmpty(ids)){
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.putOpt("detailIds",ids);
-            jsonObject.putOpt("executionStatus",ExecutionStatusEnum.CLOSED.getCode());
-            //同步scm 确认订单 到 srm
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG.getName(),jsonObject, IdUtil.simpleUUID());
-        }
+//        //TODO 关闭时，更新订单明细状态
+//        if (CollectionUtils.isNotEmpty(ids)){
+//            JSONObject jsonObject = new JSONObject();
+//            jsonObject.putOpt("detailIds",ids);
+//            jsonObject.putOpt("executionStatus",ExecutionStatusEnum.CLOSED.getCode());
+//            //同步scm 确认订单 到 srm
+//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG.getName(),jsonObject, IdUtil.simpleUUID());
+//        }
         // 更新库存
         updateInventoryFinish(mainList, purchaseOrderDetailList);
         //操作日志

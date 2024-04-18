@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.common.core.utils.MathUtil;
 import com.erp.server.scm.service.CommonService;
+import groovy.lang.Lazy;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;
 

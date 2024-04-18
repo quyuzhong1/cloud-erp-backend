@@ -865,6 +865,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Transactional(rollbackFor = Exception.class)
     public List<SoB2cDTO.WaybillDTO> printLogisticsWaybill(List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list) {
         List<SoB2cDTO.WaybillDTO> waybillDTOList = new ArrayList<>();
+        List<String> soIds = list.stream().map(req -> req.getB2cSoId()).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
 
         for (LogisticsBillDTO.PrintLogisticsWaybillDTO dto : list) {
             String channelId = dto.getChannelId();
@@ -884,14 +886,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
             if (logisticsPlatform.equals(LogisticsPlatformEnum.ALI_EXPRESS.getCode())) {
                 authMap = service.getLogisticsAuthConfig(dto.getShopId());
-                SoB2cEntity soB2cEntity = soB2cFeign.getById(dto.getB2cSoId());
+                SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(dto.getB2cSoId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                     getLabelVO.setDeliveryNo(soB2cEntity.getPlatformCode());
                 }
             }
             //如果是保宏
             if (logisticsPlatform.equals(LogisticsPlatformEnum.BAO_HONG.getCode())) {
-                SoB2cEntity soB2cEntity = soB2cFeign.getById(dto.getB2cSoId());
+                SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(dto.getB2cSoId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                     getLabelVO.setDeliveryNo(soB2cEntity.getShippingOrderNo());
                 }

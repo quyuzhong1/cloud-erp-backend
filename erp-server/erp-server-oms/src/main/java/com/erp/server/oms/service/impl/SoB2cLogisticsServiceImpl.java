@@ -29,7 +29,6 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cLogisticsMapper;
 import com.erp.server.oms.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -316,6 +315,14 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 .set(SoB2cLogisticsEntity::getDeliveryTime, deliveryTime)
                 .in(SoB2cLogisticsEntity::getMainId, mainIds)
                 .update();
+    }
+
+    @Override
+    public SoB2cLogisticsEntity getSoB2cLogisticsByTrackNo(String trackNo) {
+        if (StringUtils.isBlank(trackNo)) {
+            return null;
+        }
+        return lambdaQuery().eq(SoB2cLogisticsEntity::getTrackNo, trackNo).last("LIMIT 1").one();
     }
 
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {
