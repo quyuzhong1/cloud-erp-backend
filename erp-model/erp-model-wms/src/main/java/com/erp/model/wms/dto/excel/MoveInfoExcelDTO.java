@@ -51,7 +51,7 @@ public class MoveInfoExcelDTO implements Serializable {
     @ColumnWidth(20)
     @ExcelProperty(value = "移动数量", index = 4)
     @FieldValid(fieldName = "移动数量",isNotBlank = true,fieldValues = "是,否")
-    private String isVirtual;
+    private String qty;
 
     /**
      * 备注
