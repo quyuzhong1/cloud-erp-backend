@@ -393,9 +393,6 @@ public class CustomerB2cController extends BaseController {
      */
     @PostMapping("/drop/down")
     public ApiResult<PagingVO<CustomerB2CDTO.DropListDTO>> customerDropDown(@RequestBody PagingDTO<CustomerB2CDTO.DropSearchDTO> pagingDTO) {
-        if (Objects.isNull(pagingDTO.getParams()) || org.springframework.util.StringUtils.isEmpty(pagingDTO.getParams().getCustomerName())){
-            return success();
-        }
         return success(customerB2cService.customerDropDown(pagingDTO));
     }
 

@@ -1490,9 +1490,6 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 
     @Override
     public PagingVO<CustomerB2CDTO.DropListDTO> customerDropDown(PagingDTO<CustomerB2CDTO.DropSearchDTO> pagingDTO) {
-        if(StringUtils.isEmpty(pagingDTO.getParams().getCustomerName())){
-            return new PagingVO<>();
-        }
         Page<CustomerB2CDTO.DropListDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<CustomerB2CDTO.DropListDTO> pageData=  baseMapper.customerDropDown(query, pagingDTO.getParams());
         buildCustomerDTO(pageData.getRecords());
