@@ -21,7 +21,6 @@ public class ParceInfoVO {
     private Boolean hasBattery;
 
     //币种代码传 USD,EUR,GBP,CNY,AUD,CAD;
-    @StateEnumValue(strValues = {"USD", "EUR","GBP","CNY","AUD","CAD"}, message = "币种代码有误")
     private String currency;
 
     //申报总价值

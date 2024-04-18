@@ -48,6 +48,7 @@ public class YanWenService {
     public YanWenResponse<YanWenCreateWayBill> createWayBill(@Valid YanWenCreateWayBillRequest request,Map<String,String> authMap){
         log.info("==========YanWenService.createOrder==========start");
         log.info("authMap:{}, orderRequest:{}",authMap, request);
+        request.getParcelInfo().setCurrency("USD");
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
         String response = YanWenUtils.sendPost(authMap.get("url"),YanWenConstants.METHOD_ORDER_CREATE,paramsMap,authMap.get("clientId"),authMap.get("clientSecret"));
         YanWenResponse<YanWenCreateWayBill> yanWenResponseDTO;
