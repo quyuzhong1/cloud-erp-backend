@@ -172,6 +172,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         // 待付款
         if (SoB2cTabEnum.ENUM_PAYMENT.getCode().equals(value)) {
             payStatusList.add(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
         //待处理
         if (SoB2cTabEnum.ENUM_PENDING.getCode().equals(value)) {
