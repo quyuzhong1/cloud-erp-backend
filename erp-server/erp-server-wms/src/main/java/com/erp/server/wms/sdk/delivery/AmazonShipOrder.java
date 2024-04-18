@@ -12,6 +12,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -136,9 +137,12 @@ public class AmazonShipOrder implements IPlatformService {
             if (StringUtils.isBlank(logisticsEntity.getLogisticsChannelId())){
                 throw new ServiceException("订单渠道ID为空");
             }
-            //获取渠道信息
-            LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getSignShipInfoByChannelById(logisticsEntity.getLogisticsChannelId());
-            if (null == tmsSignShipDTO){
+            //获取销售渠道信息
+            LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = logisticsFeign.getScaleChannelByChannelById(
+                    logisticsEntity.getLogisticsChannelId(),
+                    PlatformDictEnum.AMAZON.getCode()
+            );
+            if (null == tmsScaleChannelShipDTO){
                 throw new ServiceException("找不到渠道信息");
             }
             // 获取店铺授权信息
@@ -155,9 +159,14 @@ public class AmazonShipOrder implements IPlatformService {
             // 我们将存储该数据。如果您需要对货件进行编辑，请使用相同的 packageReferenceID 提交另一个 confirmShipment 操作。提交成功后，其他货件详情将被编辑
             packageDetail.setPackageReferenceId("1");
             // 物流渠道代号
-            packageDetail.setCarrierCode(tmsSignShipDTO.getCode());
-            // 物流跟踪号
-            packageDetail.setTrackingNumber(logisticsEntity.getTrackNo());
+            packageDetail.setCarrierCode(tmsScaleChannelShipDTO.getCode());
+            // 物流渠道名称
+            packageDetail.setCarrierName(tmsScaleChannelShipDTO.getSaleChannelSupplierName());
+            // 物流服务商=物流渠道名称
+            packageDetail.setShippingMethod(tmsScaleChannelShipDTO.getSaleChannelSupplierName());
+            // 物流运单号
+            packageDetail.setTrackingNumber(logisticsEntity.getCode());
+
             // 发货时间
             String shipDateTime = DateUtil.plus8SameUtcOffset(LocalDateTime.now()).toString();
             packageDetail.setShipDate(shipDateTime);
@@ -171,12 +180,18 @@ public class AmazonShipOrder implements IPlatformService {
             }
             packageDetail.setOrderItems(orderItemList);
             body.setPackageDetail(packageDetail);
-            //
+
             OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
 
             try {
                 ApiResponse<Void> voidApiResponse = api.confirmShipmentWithHttpInfo(body, mainEntity.getPlatformCode());
                 log.warn("标记发货响应结果:{}", JSONUtil.toJsonStr(voidApiResponse));
+            } catch (ApiException e){
+                if (e.getMessage().contains("ErrorCode: NonexistentOrderItem Description: Failed to find order item list by order ID:")){
+                    throw new ServiceException("平台取消发货，不允许出库，请处理订单发货拦截后，取消发货");
+                } else {
+                    throw new ServiceException("亚马逊标记发货失败:" + e.getMessage());
+                }
             } catch (Exception e) {
                 throw new ServiceException("亚马逊标记发货失败:" + e.getMessage());
             }

@@ -12,7 +12,6 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.core.constant.EnumMessage;
-import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
@@ -24,20 +23,16 @@ import com.erp.server.tms.mapper.LogisticsChannelMapper;
 import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
@@ -616,6 +611,29 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             }
         }
 
+    }
 
+    @Override
+    public LogisticsChannelDTO.SignShipDTO getScaleChannelByChannelById(String logisticsChannelId, String dictPlatform) {
+        LogisticsChannelEntity channelEntity = this.getById(logisticsChannelId);
+        if (null == channelEntity){
+            throw new ServiceException(ApiError.NOT_EXIST, "物流渠道");
+        }
+        if (StringUtils.isBlank(dictPlatform)){
+            throw new ServiceException("关联的销售平台不能为空");
+        }
+        List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingService.listByChannelId(logisticsChannelId);
+        if (CollectionUtils.isEmpty(mappingList)){
+            throw new ServiceException("物流渠道关联的销售平台物流渠道为空");
+        }
+        LogisticsMappingDTO.ViewDTO viewDTO = mappingList.stream().filter(e -> e.getSalesPlatform().equalsIgnoreCase(dictPlatform)).findFirst().orElse(null);
+        if (null == viewDTO){
+            throw new ServiceException("物流渠道关联无对应销售平台物流渠道");
+        }
+        LogisticsSaleChannelEntity entity = logisticsSaleChannelService.getById(viewDTO.getLogisticsSaleChannelId());
+        if (null == entity){
+            throw new ServiceException("对应销售平台物流渠道信息不存在");
+        }
+        return new LogisticsChannelDTO.SignShipDTO(entity.getId(), entity.getCode(), entity.getCnName());
     }
 }
