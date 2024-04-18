@@ -647,4 +647,12 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return
      */
     List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(List<String> skuIds);
+    /**
+     * @description: 远程搜索包装辅料SKU
+     * @author Will
+     * @date: 2024/4/18 14:17
+     * @param searchKeyword
+     * @return List<SkuVO>
+     */
+    List<SkuVO> accessoriesSku(String searchKeyword);
 }

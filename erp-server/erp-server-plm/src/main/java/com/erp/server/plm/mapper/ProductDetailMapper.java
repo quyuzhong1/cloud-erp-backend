@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
@@ -241,6 +240,15 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * 根据SkuIds获取SKU简单信息
      */
     List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(@Param("skuIds") List<String> skuIds);
+    /**
+     * @description: 远程搜索包装辅料SKU
+     * @author Will
+     * @date: 2024/4/18 14:18
+     * @param searchKeyword
+     * @param state
+     * @return List<SkuVO>
+     */
+    List<SkuVO> accessoriesSku(@Param("searchKeyword") String searchKeyword,@Param("state") Integer state);
 }
 
 

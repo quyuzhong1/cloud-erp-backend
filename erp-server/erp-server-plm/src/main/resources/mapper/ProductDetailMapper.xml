@@ -1667,4 +1667,39 @@
             </foreach>
         </if>
     </select>
+
+    <!-- 远程搜索包装辅料SKU -->
+    <select id="accessoriesSku" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pd.id AS skuId,
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pd.sku_no,
+        pd.images_url AS skuImagesUrl,
+        pd.name AS skuName,
+        pd.variant_property,
+        pd.unit_name
+        FROM product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        WHERE pd.is_deleted = FALSE and pi.sale_method = '包材'
+        <if test="state!=null">
+            AND pd.status=#{state}
+        </if>
+        <if test="searchKeyword != null and searchKeyword!=''">
+            AND
+            (
+            pd.sku_no ILIKE concat(#{searchKeyword}::text,'%')
+            OR
+            pd.name ILIKE concat(#{searchKeyword}::text,'%')
+            )
+            ORDER BY CASE
+            WHEN pd.sku_no ILIKE concat(#{searchKeyword}::text,'%') THEN 1
+            WHEN pd.name ILIKE concat(#{searchKeyword}::text,'%') THEN 1
+            ELSE 2
+            END,
+            LENGTH(pd.sku_no), LENGTH(pd.name),
+            pd.sku_no, pd.name;
+        </if>
+    </select>
 </mapper>

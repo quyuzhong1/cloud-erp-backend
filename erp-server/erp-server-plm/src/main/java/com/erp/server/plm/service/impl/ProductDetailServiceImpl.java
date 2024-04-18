@@ -4238,4 +4238,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         return skuList;
     }
+
+    @Override
+    public List<SkuVO> accessoriesSku(String searchKeyword) {
+        return baseMapper.accessoriesSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
+
+    }
 }
