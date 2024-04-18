@@ -69,7 +69,7 @@ public enum ProductRegistrationEnum {
         COMMODITY_ID("商品ID", "commodityId", "", null, ProductRegistrationEntity::getGoodId, null),
         SUPPLIER_CODE("供应商代码", "supplierCode", "", null, ProductRegistrationEntity::getSupplierCode, null),
         UNIT("计量单位，三位海关代码：006套，007个，011件，025双，032平方米，125包，140盒", "unit", "报关单位", LogisticsProductDTO.ProductDTO::getDeclareUnitName, ProductRegistrationEntity::getDeclareUnit, LogisticsProductDTO.ProductDTO::getDeclareUnitName),
-        MODEL("产品型号", "model", "SPU", LogisticsProductDTO.ProductDTO::getDeclareModel, ProductRegistrationEntity::getSpu, LogisticsProductDTO.ProductDTO::getDeclareModel),
+        MODEL("产品型号", "model", "报关型号", LogisticsProductDTO.ProductDTO::getDeclareModel, ProductRegistrationEntity::getDeclareModel, LogisticsProductDTO.ProductDTO::getDeclareModel),
         BARCODE_TYPE("条码类型：0默认条码、1自定义条码、2序列号", "barcodeType", "", null, ProductRegistrationEntity::getBarcodeType, null),
         BARCODE("自定义条码（barcodeType=1时，必填）", "barcode", "", null, ProductRegistrationEntity::getCustomBarcode, null),
         CURRENCY_CODE("申报币种", "currencyCode", "报关币种", v-> "CNY".equals(v.getDeclareCurrency())?"RMB":v.getDeclareCurrency(), ProductRegistrationEntity::getCurrency, v-> "CNY".equals(v.getDeclareCurrency())?"RMB":v.getDeclareCurrency()),
