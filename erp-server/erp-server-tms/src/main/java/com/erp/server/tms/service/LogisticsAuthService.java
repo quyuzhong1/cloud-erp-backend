@@ -6,6 +6,7 @@ import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsAuthDTO;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -61,7 +62,7 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      *@author yl
      *@date 2023-11-20
      */
-    LogisticsAuthDTO.ViewDTO getViewByChannelId(String channelId);
+    LogisticsAuthEntity getByChannelId(String channelId);
 
     /**
      * 根据授权id组装授权信息
