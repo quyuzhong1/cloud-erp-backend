@@ -280,7 +280,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
         LogisticsProductDTO.ProductDTO ruleDTO = JSONObject.parseObject(jsonObject.toJSONString(),new TypeReference< LogisticsProductDTO.ProductDTO>() {}.getType());
 
         JSONObject pullJson = new JSONObject(old.getPullInfo());
-        ProductRegistrationEntity pullEntity = JSONObject.parseObject(pullJson.toJSONString(),new TypeReference< LogisticsProductDTO.ProductDTO>() {}.getType());
+        ProductRegistrationEntity pullEntity = JSONObject.parseObject(pullJson.toJSONString(),new TypeReference<ProductRegistrationEntity>() {}.getType());
 
 
         //最新产品信息
