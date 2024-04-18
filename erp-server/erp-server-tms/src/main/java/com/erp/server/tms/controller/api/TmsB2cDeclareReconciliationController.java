@@ -281,7 +281,7 @@ public class TmsB2cDeclareReconciliationController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "tms:tmsB2cDeclareReconciliation:cancel",
+            menuCode = "tms:tmsB2cDeclareReconciliation:cancelProcess",
             serviceClass = TmsB2cDeclareReconciliationService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CANCEL, desc = "b2c报关对账单撤销")
@@ -336,7 +336,7 @@ public class TmsB2cDeclareReconciliationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:tmsB2cDeclareReconciliation:export",
-            tableAlias = ""
+            tableAlias = "tbdr"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "b2c报关对账单导出Excel数据")
     @WebAdvanceQuery(handler = TmsB2cDeclareReconciliationQueryHandler.class)

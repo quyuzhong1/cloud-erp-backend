@@ -402,6 +402,9 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                     if (!StrUtil.equals(detailEntity.getLogisticsSupplierId(),oldMainEntity.getLogisticsSupplierId())) {
                         errorMsgList.add("物流商不一致不支持导入");
                     }
+                    if (!StrUtil.equals(detailEntity.getStatus(),TmsB2cDeclareReconciliationStatusEnum.TO_BE_CONFIRM.getCode())) {
+                        errorMsgList.add("仅待确认支持导入更新");
+                    }
                 }
                 if (ObjectUtil.isEmpty(oldMainEntity)) {
                     errorMsgList.add("未找到销售订单报关对账单信息");
@@ -582,6 +585,9 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             } else {
                 if (!StrUtil.equals(detailEntity.getLogisticsSupplierId(),oldMainEntity.getLogisticsSupplierId())) {
                     errorMsgList.add("物流商不一致不支持导入");
+                }
+                if (!StrUtil.equals(detailEntity.getStatus(),TmsB2cDeclareReconciliationStatusEnum.TO_BE_CONFIRM.getCode())) {
+                    errorMsgList.add("仅待确认支持导入更新");
                 }
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
