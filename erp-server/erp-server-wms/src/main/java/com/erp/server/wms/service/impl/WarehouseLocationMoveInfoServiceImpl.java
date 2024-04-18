@@ -132,7 +132,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
             WarehouseLocationMoveInfoEntity warehouseLocationMoveInfoEntity = new WarehouseLocationMoveInfoEntity();
             BeanMapperUtils.copy(detail, warehouseLocationMoveInfoEntity);
             // 数据处理
-            warehouseLocationMoveInfoEntity.setBillDate(viewDTO.getBillDate());
+            warehouseLocationMoveInfoEntity.setBillDate(pcAddDTO.getBillDate());
             warehouseLocationMoveInfoEntity.setWarehouseId(viewDTO.getWarehouseId());
             handleData(warehouseLocationMoveInfoEntity);
 

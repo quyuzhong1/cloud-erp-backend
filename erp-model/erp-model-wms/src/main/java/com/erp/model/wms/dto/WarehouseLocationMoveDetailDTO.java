@@ -240,7 +240,10 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
         @Max(value = 999999999, message = "移动数量最大值为999999999")
         private Integer qty;
 
-
+        /**
+         * 取货仓位
+         */
+        private String WarehouseId;
     }
 
 
