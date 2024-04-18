@@ -344,6 +344,38 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
                 .collect(Collectors.toCollection(LinkedList::new));
     }
 
+    @Override
+    public LinkedList<String> thirdFieldListName(List<String> typeList,String supplierId, boolean nullThrow) {
+        List<CfgReconciliationFieldEntity> list = listByTypeList(typeList, supplierId);
+        if (CollectionUtils.isEmpty(list)){
+            if (nullThrow){
+                throw new ServiceException("配置字段缺失，请联系管理员");
+            } else {
+                return new LinkedList<>();
+            }
+        }
+        // 配置的字段名称列表
+        return list.stream()
+                .map(CfgReconciliationFieldEntity::getThirdFieldName)
+                .distinct()
+                .collect(Collectors.toCollection(LinkedList::new));
+    }
+
+    /**
+     * @description:
+     * @author Will
+     * @date: 2024/4/18 16:11
+     * @param typeList
+     * @return List<CfgReconciliationFieldEntity>
+     */
+    private List<CfgReconciliationFieldEntity> listByTypeList (List<String> typeList,String supplierId) {
+       return lambdaQuery()
+               .in(CollectionUtils.isNotEmpty(typeList),CfgReconciliationFieldEntity::getReconciliationType,typeList)
+               .eq(StrUtil.isNotBlank(supplierId),CfgReconciliationFieldEntity::getThirdCode,supplierId)
+               .eq(CfgReconciliationFieldEntity::getStatus,Boolean.TRUE)
+               .list();
+    }
+
     private void handleImportCfgReconciliationFieldFile(List<CfgReconciliationFieldImportExcelDTO> successList, List<CfgReconciliationFieldImportExcelDTO> errorList) {
         if (CollectionUtils.isEmpty(successList)) {
             return;

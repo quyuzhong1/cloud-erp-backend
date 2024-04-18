@@ -535,4 +535,21 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
         private String errorUrl;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ExcelDownloadTemplateDTO {
+
+        /**
+         * 导入类型，standard标准，config配置
+         */
+        @NotNull(message = "导入类型不能为空")
+        private TmsB2cDeclareReconciliationImportEnum typeEnum;
+
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+    }
+
 }

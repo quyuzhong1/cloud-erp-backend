@@ -12,26 +12,22 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.server.tms.query.TmsB2cDeclareReconciliationDetailQueryHandler;
 import com.erp.server.tms.service.TmsB2cDeclareReconciliationDetailService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -107,26 +103,26 @@ public class TmsB2cDeclareReconciliationDetailController extends BaseController 
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载报关对账单模板")
     @GetMapping("/exportExcelTemplate")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/declareReconciliationDetailTemplate.xlsx";
-        String excelName = "template.xlsx";
-        ResourceLoader resourceLoader = new DefaultResourceLoader();
-        try {
-            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
-            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
-            // 输出Excel文件
-            OutputStream output = response.getOutputStream();
-            response.reset();
-            // 设置文件头
-            response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
-            response.setContentType("application/msexcel");
-            wb.write(output);
-            wb.close();
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+    public ApiResult exportTemplate(@ModelAttribute @Validated TmsB2cDeclareReconciliationDetailDTO.ExcelDownloadTemplateDTO dto, HttpServletRequest request, HttpServletResponse response) {
+        switch (dto.getTypeEnum()) {
+            case STANDARD:
+                String standardPath = "classpath:excel/declareReconciliationDetailTemplate.xlsx";
+                String standardExcelName = "templateStandard.xlsx";
+                ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
+                return success();
+            case CONFIG:
+                LinkedList<String> headerNameList = tmsB2cDeclareReconciliationDetailService.thirdFieldListName(dto);
+                // 不存在添加运单号作为第一个元素
+                if (!headerNameList.contains("销售订单号")){
+                    headerNameList.addFirst("销售订单号");
+                }
+                // 去重
+                String configExcelName = "templateConfig.xlsx";
+                ExcelUtil.downloadDynamicTemplate(headerNameList, configExcelName, response);
+                return success();
+            default:
+                throw new ServiceException("输入导入的类型有误");
         }
-        return success();
     }
 
     /**

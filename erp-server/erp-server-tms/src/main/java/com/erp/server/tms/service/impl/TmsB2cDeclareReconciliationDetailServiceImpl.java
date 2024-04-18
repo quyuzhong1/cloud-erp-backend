@@ -106,6 +106,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     @Autowired
     private TmsCfgCostService tmsCfgCostService;
 
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -162,7 +163,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         log.info("编辑 开始修改报关对账单数据，id：【{}】", mainId);
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
-            throw new ServiceException("采购对账单明细保存失败");
+            throw new ServiceException("报关对账单明细保存失败");
         }
 
         //更新费用信息
@@ -296,6 +297,18 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             addDTO.setDetailList(detailList);
             tmsB2cDeclareReconciliationService.add(addDTO);
         }
+    }
+
+    @Override
+    public LinkedList<String> thirdFieldListName(TmsB2cDeclareReconciliationDetailDTO.ExcelDownloadTemplateDTO dto) {
+        TmsB2cDeclareReconciliationEntity old = tmsB2cDeclareReconciliationService.getById(dto.getId());
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "b2c报关对账单"));
+
+        TransferLogisticsSupplierEntity transferLogisticsSupplierEntity = transferLogisticsSupplierService.getById(old.getLogisticsSupplierId());
+        Optional.ofNullable(transferLogisticsSupplierEntity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中转物流商"));
+
+        LinkedList<String> thirdFieldList = cfgReconciliationFieldService.thirdFieldListName(Arrays.asList(DictBasicEnum.CFG_B2C_DECLARE_ERP_FIELD.getType()), transferLogisticsSupplierEntity.getSupplierId(), Boolean.TRUE);
+        return thirdFieldList;
     }
 
     @Override

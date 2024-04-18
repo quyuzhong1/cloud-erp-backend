@@ -136,4 +136,15 @@ public interface CfgReconciliationFieldService extends SuperService<CfgReconcili
      * {@code @date:} 2024-03-25
      */
     LinkedList<String> erpFieldListName(List<String> typeList, boolean nullThrow);
+
+    /**
+     * @description: 获取第三方字段
+     * @author Will
+     * @date: 2024/4/18 16:14
+     * @param typeList
+     * @param supplierId
+     * @param nullThrow
+     * @return LinkedList<String>
+     */
+    LinkedList<String> thirdFieldListName(List<String> typeList,String supplierId, boolean nullThrow);
 }
