@@ -423,7 +423,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         parceInfo.setTotalQuantity(totalQuantity);
 
         //申报总价
-        BigDecimal totalPrice = ordersSkuList.stream().filter(s -> Objects.nonNull(s.getDeclarePrice())).map(LogisticsProductDTO.ProductDTO::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        BigDecimal totalPrice = ordersSkuList.stream().filter(s -> Objects.nonNull(s.getDestDeclarePrice())).map(LogisticsProductDTO.ProductDTO::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         parceInfo.setTotalPrice(totalPrice);
         //总重量 取包裹重量
 //        Integer totalWeight = skuInfoList.stream().filter(s -> Objects.nonNull(s.getWeight())).mapToInt(LogisticsProductDTO.ProductDTO::getWeight).sum();
@@ -1000,15 +1000,15 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             }
             if(CollectionUtils.isNotEmpty(batchUpdateTrackNoDTO.getTrackNoList())){
                 String channelId = logisticsBillEntity.getChannelId();
-                LogisticsAuthDTO.ViewDTO view = logisticsAuthService.getViewByChannelId(channelId);
+                LogisticsAuthEntity authEntity = logisticsAuthService.getByChannelId(channelId);
                 for(String trackNo : batchUpdateTrackNoDTO.getTrackNoList()){
                     LogisticsBillDetailEntity detailEntity = new LogisticsBillDetailEntity();
                     detailEntity.setMainId(logisticsBillEntity.getId());
                     detailEntity.setTrackNo(trackNo);
                     detailEntity.setTrackQueryMode(LogisticsPlatformEnum.TRACK123.getCode());
                     detailEntity.setIsApiUpdate(true);
-                    if(Objects.nonNull(view)){
-                        detailEntity.setLogisticsAuthId(view.getId());
+                    if(StringUtils.isNotBlank(authEntity.getId())){
+                        detailEntity.setLogisticsAuthId(authEntity.getId());
                     }
                     addDetailEntityList.add(detailEntity);
                 }
