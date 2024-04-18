@@ -1,7 +1,6 @@
 package com.erp.rpc.tms.feign;
 
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -171,4 +169,12 @@ public interface LogisticsBillFeign {
      */
     @PostMapping("/feign/logisticsBill/listBillCostByOutstockIds")
     List<LogisticsBillCostDTO.OutStockDTO> listBillCostByOutstockIds(@RequestBody List<String> ids);
+
+    /**
+     * 根据sourceId删除物流单
+     * @return
+     */
+    @PostMapping("/feign/logisticsBill/removeLogisticsBillBySourceId")
+    Boolean removeLogisticsBillBySourceId(@RequestBody List<String> sourceId);
+
 }

@@ -13,6 +13,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.CommonConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -586,7 +587,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     && StringUtils.isNotEmpty(country) && e.getCountry().equals(country)).findFirst().orElse(null);
 
         }
-        //未匹配到时，获取默认值
+        //存在默认值时，先取默认值
+        if (Objects.isNull(customs)){
+            customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
+                    && StringUtils.isNotEmpty(e.getCountry()) && CommonConstants.DEFAULT.equals(e.getCountry())).findFirst().orElse(null);
+        }
+        //未匹配到时，获取空值
         if (Objects.isNull(customs)){
             customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
                     && StringUtils.isEmpty(e.getCountry())).findFirst().orElse(null);
@@ -1061,5 +1067,20 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Override
     public List<String> listSoOutIdByQuery(AdvanceQueryContainer advanceQueryContainer) {
         return baseMapper.listSoOutIdByQuery(advanceQueryContainer);
+    }
+
+    @Override
+    public Boolean removeLogisticsBillBySourceId(List<String> sourceId) {
+        if (CollectionUtils.isEmpty(sourceId)){
+            return Boolean.FALSE;
+        }
+
+        //删除物流详情
+        List<LogisticsBillEntity> logisticsBillEntityList = this.listBySourceIds(sourceId);
+        List<String> ids = logisticsBillEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        logisticsBillDetailService.removeByMainIds(ids);
+
+        //删除主表
+        return lambdaUpdate().in(LogisticsBillEntity::getSourceId, sourceId).remove();
     }
 }

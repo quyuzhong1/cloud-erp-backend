@@ -302,6 +302,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return baseMapper.listBillCostByOutstockIds(ids);
     }
 
+
     /**
      * @description: 根据物流单id集合查询
      * @author Will
