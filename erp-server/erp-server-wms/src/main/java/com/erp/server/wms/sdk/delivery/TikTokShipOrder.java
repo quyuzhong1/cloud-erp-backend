@@ -12,6 +12,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
 import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderUSParam;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
@@ -32,6 +33,9 @@ public class TikTokShipOrder implements IPlatformService {
 
     @Resource
     private ShopInfoFeign shopInfoFeign;
+
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     @Resource
     private TikTokSdkClientService tikTokSdkClientService;
@@ -57,7 +61,7 @@ public class TikTokShipOrder implements IPlatformService {
             ShipOrderUSParam paramDTO = new ShipOrderUSParam();
             paramDTO.setTrackingNumber(view.getLogisticsDTO().getCode());
             paramDTO.setOrderLineItemIds(sourceDetailIds);
-
+            paramDTO.setShippingProviderId("");
             tikTokSdkClientService.sendTikTokShipOrderUS(tikTokShopInfoDTO, view.getPlatformCode(), paramDTO);
         } else {
 

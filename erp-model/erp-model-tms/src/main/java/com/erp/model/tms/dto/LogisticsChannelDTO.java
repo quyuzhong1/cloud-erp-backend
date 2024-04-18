@@ -1,17 +1,16 @@
 package com.erp.model.tms.dto;
 
-import java.math.BigDecimal;
-
 import com.common.business.enums.UnitEnum;
 import com.common.core.enums.CurrencyEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-import java.util.List;
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * <p>
@@ -202,6 +201,11 @@ public class LogisticsChannelDTO implements Serializable {
          * 渠道供应商名称 logistics_sale_channel
          */
         private String saleChannelSupplierName;
+
+        /**
+         * 渠道id(物流平台原始id)
+         */
+        private String platformChannelId;
 
     }
 
