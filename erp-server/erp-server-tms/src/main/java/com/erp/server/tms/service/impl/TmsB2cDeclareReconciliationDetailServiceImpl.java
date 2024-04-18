@@ -406,6 +406,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
 
             //需要更新的费用
             List<TmsCostDetailDTO.UpdateDTO> updateList = new ArrayList<>();
+            JSONObject hasData = new JSONObject();
             for (DeclareReconciliationStandardExcelDTO excelDTO : value) {
                 List<String> errorMsgList = new ArrayList<>();
 
@@ -426,6 +427,14 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                 if (StrUtil.isNotBlank(excelDTO.getCostName()) && ObjectUtil.isEmpty(erpFieldDropDownDTO)) {
                     errorMsgList.add("字段配置中未找到费用项");
                 }
+                //校验后面数据是否存在重复的
+                if (ObjectUtil.isNotEmpty(erpFieldDropDownDTO)) {
+                    if (ObjectUtil.isNotEmpty(hasData.get(erpFieldDropDownDTO.getSourceId()))) {
+                        errorMsgList.add("费用已存在，请勿重复导入");
+                    }
+                    hasData.set(erpFieldDropDownDTO.getSourceId(), excelDTO.getCostName());
+                }
+
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                     errorList.add(excelDTO);
@@ -562,6 +571,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             if (ObjectUtil.isEmpty(map)) {
                 errorMsgList.add("未发现字段配置");
             } else {
+                JSONObject hasData = new JSONObject();
                 for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
                     //字段名称
                     String field = headList.get(Integer.valueOf(entry.getKey()));
@@ -570,6 +580,14 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                         errorMsgList.add(StrUtil.format("未发现该字段配置项【{}】",field));
                         continue;
                     }
+                    //校验后面数据是否存在重复的
+                    if (ObjectUtil.isNotEmpty(erpFieldViewDTO)) {
+                        if (ObjectUtil.isNotEmpty(hasData.get(erpFieldViewDTO.getSourceId()))) {
+                            errorMsgList.add("费用已存在，请勿重复导入");
+                        }
+                        hasData.set(erpFieldViewDTO.getSourceId(), erpFieldViewDTO.getErpFieldName());
+                    }
+
                     if (StrUtil.isNotBlank(erpFieldViewDTO.getErpFieldCode())) {
                         successJson.set(erpFieldViewDTO.getErpFieldCode(),String.valueOf(entry.getValue()));
                     }
@@ -920,23 +938,29 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         //实际其他费
          BigDecimal actualOtherCost = BigDecimal.ZERO;
 
-        for (TmsCostDetailDTO.UpdateDTO updateDTO : updateList) {
-            //费用类型
-            String dictCostCategory = tmsCfgCostList.stream().filter(obj -> StrUtil.equals(obj.getId(), updateDTO.getCfgCostId()))
-                    .map(TmsCfgCostEntity::getDictCostCategory).findFirst().orElse("");
-            //需要累加到界面显示的原费用
-            BigDecimal oldCost = costViewList.stream().filter(obj -> !cfgCostIdList.contains(obj.getCfgCostId()) && StrUtil.equals(obj.getDictCostCategory(), dictCostCategory)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCostValue())).orElse(BigDecimal.ZERO);
+         for (DictCostCategoryEnum dictCostCategoryEnum :  DictCostCategoryEnum.values()) {
+             //费用类型
+             List<String> cfgIdList = tmsCfgCostList.stream().filter(obj -> StrUtil.equals(dictCostCategoryEnum.getCode(), obj.getDictCostCategory()))
+                     .map(TmsCfgCostEntity::getId).collect(Collectors.toList());
 
-            //实际物流运费
-            actualShippingCost = StrUtil.equals(dictCostCategory,DictCostCategoryEnum.SHIPPING_COST.getCode())
-                    ? MathUtil.add(actualShippingCost.add(oldCost),updateDTO.getCostValue()) : actualShippingCost;
-            //实际报关费
-            actualDeclareCost = StrUtil.equals(dictCostCategory,DictCostCategoryEnum.DECLARE_COST.getCode())
-                    ? MathUtil.add(actualDeclareCost.add(oldCost),updateDTO.getCostValue()) : actualDeclareCost;
-            //实际其他费
-            actualOtherCost = StrUtil.equals(dictCostCategory,DictCostCategoryEnum.OTHER_COST.getCode())
-                    ? MathUtil.add(actualOtherCost.add(oldCost),updateDTO.getCostValue()) : actualOtherCost;
-        }
+             //导入的费用
+             BigDecimal importCost = updateList.stream().filter(obj -> cfgIdList.contains(obj.getCfgCostId()))
+                     .map(TmsCostDetailDTO.UpdateDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+             //需要累加到界面显示的原费用
+             BigDecimal oldCost = costViewList.stream().filter(obj -> !cfgCostIdList.contains(obj.getCfgCostId()) && StrUtil.equals(obj.getDictCostCategory(), dictCostCategoryEnum.getCode()))
+                     .map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+             //实际物流运费
+             actualShippingCost = StrUtil.equals(dictCostCategoryEnum.getCode(),DictCostCategoryEnum.SHIPPING_COST.getCode())
+                     ? MathUtil.add(actualShippingCost.add(oldCost),importCost) : actualShippingCost;
+             //实际报关费
+             actualDeclareCost = StrUtil.equals(dictCostCategoryEnum.getCode(),DictCostCategoryEnum.DECLARE_COST.getCode())
+                     ? MathUtil.add(actualDeclareCost.add(oldCost),importCost) : actualDeclareCost;
+             //实际其他费
+             actualOtherCost = StrUtil.equals(dictCostCategoryEnum.getCode(),DictCostCategoryEnum.OTHER_COST.getCode())
+                     ? MathUtil.add(actualOtherCost.add(oldCost),importCost) : actualOtherCost;
+         }
         viewDTO.setActualShippingCost(actualShippingCost);
         viewDTO.setActualDeclareCost(actualDeclareCost);
         viewDTO.setActualOtherCost(actualOtherCost);
