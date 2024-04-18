@@ -6302,10 +6302,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @description: 导出财务信息，现未用，之后会单独导出
      * @author Will
      * @date: 2024/4/18 12:29
-     * @param records
-     * @param exportDTO
-     * @param dictList
-     * @param isCny
      * @return FinancialInfoDTO
      */
    /* private SoB2cDTO.FinancialInfoDTO getExportFinancialInfo(List<SoB2cDTO.ExcelExportDTO> records,SoB2cDTO.ExcelExportDTO exportDTO,
