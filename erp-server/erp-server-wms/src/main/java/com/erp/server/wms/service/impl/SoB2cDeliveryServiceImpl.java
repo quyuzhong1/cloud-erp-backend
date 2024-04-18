@@ -1010,7 +1010,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 record.setTransferStatus(soB2cEntity.getTransferStatus());
             }
             //平台名称
-            record.setDictPlatformName(PlatformDictEnum.getByCode(record.getDictPlatform()).getName());
+            PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(record.getDictPlatform());
+            if (ObjectUtil.isNotEmpty(platformDictEnum)){
+                record.setDictPlatformName(platformDictEnum.getName());
+            }
             //状态中文
             record.setStatusName(SoB2cDeliveryStatusEnum.getName(record.getStatus()));
             //拣货类型中文
