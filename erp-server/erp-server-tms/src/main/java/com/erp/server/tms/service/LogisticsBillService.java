@@ -1,15 +1,16 @@
 package com.erp.server.tms.service;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -183,4 +184,13 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
     Map<String, List<String>> mapTrackNoAndSoOutId(List<String> ids);
 
     List<String> listSoOutIdByQuery(AdvanceQueryContainer advanceQueryContainer);
+
+    /**
+     * 根据来源id删除物流信息
+     * @Author Luo_WG
+     * @Date 2024/4/18 16:41
+     * @param sourceId
+     * @return java.lang.Boolean
+     **/
+    Boolean removeLogisticsBillBySourceId(List<String> sourceId);
 }

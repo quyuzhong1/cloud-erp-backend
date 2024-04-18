@@ -143,4 +143,11 @@ public class LogisticsFeignController {
     public LogisticsAddressEntity getLogisticsAddressById(@RequestParam("id") String id) {
         return logisticsAddressService.getById(id);
     }
+
+    @GetMapping("/getScaleChannelByChannelById")
+    private LogisticsChannelDTO.SignShipDTO getScaleChannelByChannelById(@RequestParam("logisticsChannelId") String logisticsChannelId,
+                                                                         @RequestParam("dictPlatform") String dictPlatform
+    ) {
+        return logisticsChannelService.getScaleChannelByChannelById(logisticsChannelId, dictPlatform);
+    }
 }

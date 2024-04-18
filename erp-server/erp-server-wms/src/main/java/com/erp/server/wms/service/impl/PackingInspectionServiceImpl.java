@@ -148,6 +148,12 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             if(Objects.nonNull(skuInfo) && Objects.nonNull(eanInfo) && !skuInfo.getSkuId().equals(eanInfo.getSkuId())){
                 throw new ServiceException("有超过一个sku编号或ean码匹配，请确认");
             }
+            if(Objects.isNull(dto.getScanQty())){
+                throw new ServiceException("扫描数量不能为空");
+            }
+            if(dto.getScanQty() <= 0){
+                throw new ServiceException("扫描数量必须大于0");
+            }
             //修改对应SKU扫描数量
             Iterator<PackingInspectionDTO.ViewDTO.ScanSkuInfo> it = waitScanList.iterator();
             List<PackingInspectionDTO.ViewDTO.ScanSkuInfo> scannedList = viewDTO.getScannedSkuList();
@@ -166,7 +172,10 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                     }else{
                         scanned.setScannedQty(scanSkuInfo.getSaleQty() - scanSkuInfo.getWaitScanQty());
                     }
-                    scanSkuInfo.setWaitScanQty(scanSkuInfo.getWaitScanQty()-1);
+                    if(dto.getScanQty() > scanSkuInfo.getWaitScanQty()){
+                        throw new ServiceException("扫描数量大于待扫描数量");
+                    }
+                    scanSkuInfo.setWaitScanQty(scanSkuInfo.getWaitScanQty()-dto.getScanQty());
                     scanSkuInfo.setScannedQty(scanSkuInfo.getSaleQty() - scanSkuInfo.getWaitScanQty());
                     //如果已扫描数等于销售数，放到已扫描队列
                     if(scanSkuInfo.getScannedQty().equals(scanSkuInfo.getSaleQty())){

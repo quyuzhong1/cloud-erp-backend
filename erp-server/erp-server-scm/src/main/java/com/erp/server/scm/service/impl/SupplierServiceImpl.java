@@ -828,6 +828,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         queryWrapper.eq(SupplierEntity::getApproveStatus, ApproveStatusEnum.getByStatus(approveStatus));
+        queryWrapper.orderByAsc(SupplierEntity::getDisabled);
         return this.listMaps(queryWrapper);
     }
 

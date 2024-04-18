@@ -28,8 +28,8 @@ class WeiShiServiceTest {
     public WeiShiServiceTest(){
         //生产
         //http://track.360lion.com/api/service
-        //*令牌：d7d0bfc63ecd2fc453092e64a373292d
-        //*令牌：*账户：6b14e5ecef56ee35aeffee5cd96930a8
+        //*令牌：f8067aa0dc9ab7e927e03dfbce54ff4d
+        //*令牌：*账户：f8067aa0dc9ab7e927e03dfbce54ff4d7b6fc31d87f0c7e913c112f8b33423ce
         //测试
         //http://218.17.123.141:81/prod-api/toms/service
         //clientId dcfe81e2059c1f0e6e6263dbcb764885
@@ -92,7 +92,7 @@ class WeiShiServiceTest {
     @Test
     void getLabelUrl() {
         WeiShiGetLabelUrlRequest weiShiGetLabelUrlRequest = WeiShiGetLabelUrlRequest.builder()
-                .referenceNo("WSHBR1064148766YQ")
+                .referenceNo("XSDD24041500834")
                 .lableType("2")
                 .build()
                 ;
