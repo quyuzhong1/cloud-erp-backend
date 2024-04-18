@@ -114,7 +114,7 @@ public class SoB2cDeliveryController extends BaseController {
             tableAlias = "sbd"
     )
     @WebAdvanceQuery(handler = SoB2cDeliveryQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody @Validated PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@RequestBody @Validated SoB2cDeliveryDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean flag = soB2cDeliveryService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }

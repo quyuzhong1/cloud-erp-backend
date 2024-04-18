@@ -184,5 +184,5 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param response
      * @return
      */
-    Boolean exportExcel(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto, HttpServletResponse response);
+    Boolean exportExcel(SoB2cDeliveryDTO.PagingParamDTO dto, HttpServletResponse response);
 }

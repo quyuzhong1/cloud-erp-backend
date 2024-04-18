@@ -854,9 +854,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    public Boolean exportExcel(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto, HttpServletResponse response) {
-        dto.getParams().setPermissionSql(dto.getPermissionSql());
-        List<SoB2cDeliveryDTO.ListDTO> list = this.baseMapper.list(dto.getParams());
+    public Boolean exportExcel(SoB2cDeliveryDTO.PagingParamDTO dto, HttpServletResponse response) {
+        dto.setPermissionSql(dto.getPermissionSql());
+        List<SoB2cDeliveryDTO.ListDTO> list = this.baseMapper.list(dto);
         if (CollUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
