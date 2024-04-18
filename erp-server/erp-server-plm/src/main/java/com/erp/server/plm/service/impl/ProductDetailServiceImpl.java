@@ -4244,7 +4244,43 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return baseMapper.accessoriesSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
 
     }
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 费用信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    @Override
+    public List<SkuVO> getSkuCostByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuVOList = baseMapper.getSkuBaseBySkuIds(skuIds);
+        List<ProductCostEntity> productCosts = productCostService.listBySkuIds(skuIds);
+        Map<String, List<ProductCostEntity>> productCostMap = Maps.newHashMap();
+        if (CollectionUtils.isNotEmpty(productCosts)){
+            productCostMap = productCosts.stream().collect(Collectors.groupingBy(ProductCostEntity::getSkuId));
+        }
+        Map<String, List<ProductCostEntity>> finalProductCostMap = productCostMap;
+        skuVOList.forEach(skuVO -> {
+            //产品成本
+            if (finalProductCostMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(finalProductCostMap.get(skuVO.getSkuId()))){
+                ProductCostEntity productCost = finalProductCostMap.get(skuVO.getSkuId()).get(0);
+                skuVO.setActualTaxCost(productCost.getActualTaxCost());
+                skuVO.setTargetTaxCost(productCost.getTargetTaxCost());
+                skuVO.setRetailPrice(productCost.getRetailPrice());
+            }
+        });
+        return skuVOList;
+    }
 
+    /**
+     * 基础信息
+     * @param skuIds
+     * @return
+     */
     @Override
     public List<SkuVO> getSkuBaseByIds(List<String> skuIds) {
         if(CollectionUtils.isEmpty(skuIds)){

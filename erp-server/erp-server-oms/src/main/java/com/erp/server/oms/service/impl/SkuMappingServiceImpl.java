@@ -346,7 +346,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException(ApiError.ERROR_92051);
         }
         String productSkuId = dto.getProductSkuId();
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(productSkuId));
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuBaseByIds(Arrays.asList(productSkuId));
         if (CollectionUtils.isEmpty(skuVOList)) {
             throw new ServiceException(ApiError.ERROR_95107);
         }
@@ -442,7 +442,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             return new PagingVO<>(pageData);
         }
         List<String> skuIdList = list.stream().map(SkuMappingDTO.ProductSkuInfoDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.getSkuBaseByIds(skuIdList);
         for (SkuMappingDTO.ProductSkuInfoDTO item : list) {
             String skuId = item.getSkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
@@ -498,7 +498,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (null != platformEnum) {
             throw new ServiceException(platformEnum.getName() + "服务商仓库不允许新增");
         }
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(skuId));
+        List<SkuVO> skuList = plmTaskFeign.getSkuBaseByIds(Arrays.asList(skuId));
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException("sku不存在");
         }
@@ -585,7 +585,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
 
         String productSkuId = dto.getProductSkuId();
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(productSkuId));
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuBaseByIds(Arrays.asList(productSkuId));
         if (CollectionUtils.isEmpty(skuVOList)) {
             throw new ServiceException(ApiError.ERROR_95107);
         }
@@ -809,7 +809,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIdViews = baseMapper.listStockSkuNoByProductSkuIds(productSkuIdList);
 
         List<String> skuIds = listStockSkuNoByProductSkuIdViews.stream().map(req -> req.getProductSkuId()).distinct().collect(Collectors.toList());
-        List<SkuVO> skuInfoByIds = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuInfoByIds = plmTaskFeign.getSkuBaseByIds(skuIds);
 
         for (SkuMappingDTO.ListStockSkuNoByProductSkuIdView view : listStockSkuNoByProductSkuIdViews) {
             SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(view.getProductSkuId())).findFirst().orElse(null);
@@ -862,7 +862,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
      */
     private void fillWarehouseDb(List<SkuMappingDTO.WarehousePagingViewDTO> list) {
         List<String> skuIdList = list.stream().map(SkuMappingDTO.WarehousePagingViewDTO::getProductSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.getSkuBaseByIds(skuIdList);
         for (SkuMappingDTO.WarehousePagingViewDTO item : list) {
             Boolean matchResult = item.getMatchResult();
             String skuId = item.getProductSkuId();
@@ -945,7 +945,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         Map<String, List<SkuMappingExtendDTO.ListDTO>> extendMap =  skuMappingExtendService.mapByMainIds(mainIds, false);
 
         List<String> skuIdList = list.stream().map(SkuMappingDTO.PagingViewDTO::getProductSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.getSkuBaseByIds(skuIdList);
         //子件信息
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
 

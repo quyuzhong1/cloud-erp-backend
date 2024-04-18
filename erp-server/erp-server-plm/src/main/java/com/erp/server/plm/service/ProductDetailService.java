@@ -662,4 +662,13 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return List<SkuVO>
      */
     List<SkuVO> accessoriesSku(String searchKeyword);
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 费用信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> getSkuCostByIds(List<String> skuIds);
 }
