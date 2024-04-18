@@ -56,4 +56,28 @@ public interface ProductRegistrationConverter {
             @Mapping(target = "productProperty", source = "productProperty"),
     })
     TransferLogisticsCreateProductReq convertToCreateProduct(LogisticsProductDTO.ProductDTO productDTO);
+
+    @Mappings({
+            @Mapping(target = "skuId", source = "skuId"),
+            @Mapping(target = "skuNo", source = "skuNo"),
+            @Mapping(target = "productName", source = "cnName"),
+            @Mapping(target = "productNameEn", source = "enName"),
+            @Mapping(target = "declareUnit", source = "declareUnit"),
+            @Mapping(target = "spu", source = "spuNo"),
+            @Mapping(target = "declareModel", source = "declareModel"),
+            @Mapping(target = "currency", source = "declareCurrency"),
+            @Mapping(target = "declarePrice", source = "declarePrice"),
+            @Mapping(target = "grossWeight", source = "grossWeight"),
+            @Mapping(target = "length", source = "boxSizeLength"),
+            @Mapping(target = "width", source = "boxSizeWide"),
+            @Mapping(target = "height", source = "boxSizeHigh"),
+            @Mapping(target = "isBattery", source = "isElectric"),
+            @Mapping(target = "batteryType", source = "batteryType"),
+            @Mapping(target = "declareNameCn", source = "declareChineseName"),
+            @Mapping(target = "customsCode", source = "customsCode"),
+            @Mapping(target = "firstNumber", source = "firstQty"),
+            @Mapping(target = "secondNumber", source = "secondQty"),
+            @Mapping(target = "declareElement", source = "declareElement"),
+    })
+    ProductRegistrationEntity convertToEntity(LogisticsProductDTO.ProductDTO productDTO);
 }

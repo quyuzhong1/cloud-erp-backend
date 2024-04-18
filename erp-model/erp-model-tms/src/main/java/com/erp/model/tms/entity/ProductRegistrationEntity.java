@@ -215,6 +215,17 @@ public class ProductRegistrationEntity extends BaseEntity<ProductRegistrationEnt
     @TableField(value = "push_info", typeHandler = JsonTypeHandler.class)
     private Map<String, Object> pushInfo;
 
+    /**
+     * 拉取信息
+     */
+    @TableField(value = "pull_info", typeHandler = JsonTypeHandler.class)
+    private Map<String, Object> pullInfo;
+    /**
+     * 报关型号
+     */
+    @TableField(value = "declare_model")
+    private String declareModel;
+
     public static final String SKU_ID = "sku_id";
 
     public static final String SKU_NO = "sku_no";

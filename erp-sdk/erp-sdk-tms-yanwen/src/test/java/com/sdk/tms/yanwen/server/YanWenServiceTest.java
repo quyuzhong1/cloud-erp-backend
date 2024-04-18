@@ -35,14 +35,14 @@ class YanWenServiceTest {
      * clientSercet:62854821B3B261983589ACFE94C7D652
      *
      * UAT:
-     * url:
+     * url:Https://ejf-fat.yw56.com.cn
      * clientId:100000
      * clientSercet:D6140AA383FD8515B09028C586493DDB
      */
     public YanWenServiceTest(){
-//        authMap.put("url","Https://open.yw56.com.cn");
-        authMap.put("clientId","30114979");
-        authMap.put("clientSecret","62854821B3B261983589ACFE94C7D652");
+        authMap.put("url","Https://ejf-fat.yw56.com.cn");
+        authMap.put("clientId","100000");
+        authMap.put("clientSecret","D6140AA383FD8515B09028C586493DDB");
     }
     @Test
     public void getAllChannel() {
@@ -105,7 +105,7 @@ class YanWenServiceTest {
     @Test
     public void queryOrder() {
         YanWenQueryOrderRequest request = YanWenQueryOrderRequest.builder()
-                .listNumber(Arrays.asList("XSDS24041500001"))
+                .listNumber(Arrays.asList("XSDS24041800016"))
                 .build();
         System.out.println(yanWenService.queryOrder(request,authMap).getData());
     }
