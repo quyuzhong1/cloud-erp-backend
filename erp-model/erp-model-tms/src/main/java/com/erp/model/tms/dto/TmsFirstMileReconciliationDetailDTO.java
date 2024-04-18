@@ -509,6 +509,11 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          */
         @NotNull(message = "导入类型不能为空")
         private TmsB2cDeclareReconciliationImportEnum typeEnum;
+
+        /**
+         * 详情主ID
+         */
+        private String id;
     }
 
     @Data

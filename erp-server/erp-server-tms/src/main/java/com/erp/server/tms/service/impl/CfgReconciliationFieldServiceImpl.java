@@ -306,8 +306,13 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
             CfgReconciliationFieldDTO.ErpFieldViewDTO erpFieldViewDTO = BeanMapperUtils.map(CfgReconciliationFieldDTO.ErpFieldViewDTO.class, fieldEntity);
             if (StrUtil.equals(fieldEntity.getSourceType(), SourceTypeEnum.TMS_CFG_COST.getCode())) {
                 //费用名称
-                String costName = tmsCfgCostList.stream().filter(obj -> StrUtil.equals(obj.getId(), fieldEntity.getSourceId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCostName())).orElse("");
-                erpFieldViewDTO.setErpFieldName(costName);
+                TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(obj -> StrUtil.equals(obj.getId(), fieldEntity.getSourceId()))
+                        .findFirst()
+                        .orElse(null);
+                if (null != tmsCfgCostEntity){
+                    erpFieldViewDTO.setErpFieldName(tmsCfgCostEntity.getCostName());
+                    erpFieldViewDTO.setDictCostCategory(tmsCfgCostEntity.getDictCostCategory());
+                }
             } else {
                 //字段名称
                 DictBasicEntity dictBasicEntity = dictList.stream().filter(obj -> StrUtil.equals(obj.getId(), fieldEntity.getSourceId())).findFirst().orElse(new DictBasicEntity());
@@ -368,7 +373,8 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
      * @param typeList
      * @return List<CfgReconciliationFieldEntity>
      */
-    private List<CfgReconciliationFieldEntity> listByTypeList (List<String> typeList,String supplierId) {
+    @Override
+    public List<CfgReconciliationFieldEntity> listByTypeList(List<String> typeList, String supplierId) {
        return lambdaQuery()
                .in(CollectionUtils.isNotEmpty(typeList),CfgReconciliationFieldEntity::getReconciliationType,typeList)
                .eq(StrUtil.isNotBlank(supplierId),CfgReconciliationFieldEntity::getThirdCode,supplierId)
@@ -506,6 +512,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
             if (null == supplierEntity){
                 throw new ServiceException("物流商不存在");
             }
+            entity.setThirdFieldName(supplierEntity.getSupplierName());
         }
 
         // 设置来源ERP字段名
@@ -518,6 +525,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         Integer count = this.lambdaQuery()
                 .eq(CfgReconciliationFieldEntity::getReconciliationType, entity.getReconciliationType())
                 .eq(CfgReconciliationFieldEntity::getThirdCode, entity.getThirdCode())
+                .eq(CfgReconciliationFieldEntity::getThirdName, entity.getThirdName())
                 .eq(CfgReconciliationFieldEntity::getSourceType, entity.getSourceType())
                 .eq(CfgReconciliationFieldEntity::getSourceId, entity.getSourceId())
                 .ne(CfgReconciliationFieldEntity::getId, entity.getId())

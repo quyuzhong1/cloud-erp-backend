@@ -612,4 +612,16 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                 .last(" LIMIT 1")
                 .one();
     }
+
+    @Override
+    public String checkAndGetSupplier(String id) {
+        if (StringUtils.isBlank(id)){
+            throw new ServiceException("id不能为空");
+        }
+        TmsFirstMileReconciliationEntity reconciliationEntity = this.getById(id);
+        if (null == reconciliationEntity){
+            throw new ServiceException("头程对账不存在");
+        }
+        return reconciliationEntity.getLogisticsSupplierId();
+    }
 }

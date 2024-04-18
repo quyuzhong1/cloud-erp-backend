@@ -21,6 +21,8 @@ import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
+import com.erp.model.tms.enums.CfgReconciliationTypeEnum;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationImportEnum;
 import com.erp.server.tms.query.TmsB2cDeclareReconciliationDetailQueryHandler;
@@ -28,6 +30,7 @@ import com.erp.server.tms.query.TmsFirstMileReconciliationDetailQueryHandler;
 import com.erp.server.tms.query.TmsFirstMileReconciliationQueryHandler;
 import com.erp.server.tms.service.CfgReconciliationFieldService;
 import com.erp.server.tms.service.TmsFirstMileReconciliationDetailService;
+import com.erp.server.tms.service.TmsFirstMileReconciliationService;
 import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -58,6 +61,8 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
     private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
     @Resource
     private CfgReconciliationFieldService cfgReconciliationFieldService;
+    @Resource
+    private TmsFirstMileReconciliationService tmsFirstMileReconciliationService;
 
 
     /**
@@ -108,7 +113,8 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
                 ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
                 return success();
             case CONFIG:
-                LinkedList<String> headerNameList = cfgReconciliationFieldService.erpFieldListName(Collections.singletonList(DictBasicEnum.CFG_FIRST_MILE_ERP_FIELD.getType()), true);
+                String supplierId =  tmsFirstMileReconciliationService.checkAndGetSupplier(dto.getId());
+                LinkedList<String> headerNameList = cfgReconciliationFieldService.thirdFieldListName(Collections.singletonList(CfgReconciliationTypeEnum.FIRST_MILE.getCode()), supplierId, true);
                 // 不存在添加运单号作为第一个元素
                 if (!headerNameList.contains("物流运单号")){
                     headerNameList.addFirst("物流运单号");

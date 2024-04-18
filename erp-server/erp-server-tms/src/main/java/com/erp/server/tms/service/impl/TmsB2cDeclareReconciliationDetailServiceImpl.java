@@ -307,7 +307,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         TransferLogisticsSupplierEntity transferLogisticsSupplierEntity = transferLogisticsSupplierService.getById(old.getLogisticsSupplierId());
         Optional.ofNullable(transferLogisticsSupplierEntity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中转物流商"));
 
-        LinkedList<String> thirdFieldList = cfgReconciliationFieldService.thirdFieldListName(Arrays.asList(DictBasicEnum.CFG_B2C_DECLARE_ERP_FIELD.getType()), transferLogisticsSupplierEntity.getSupplierId(), Boolean.TRUE);
+        LinkedList<String> thirdFieldList = cfgReconciliationFieldService.thirdFieldListName(Arrays.asList(CfgReconciliationTypeEnum.B2C_DECLARE.getCode()), transferLogisticsSupplierEntity.getSupplierId(), Boolean.TRUE);
         return thirdFieldList;
     }
 

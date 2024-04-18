@@ -147,4 +147,6 @@ public interface CfgReconciliationFieldService extends SuperService<CfgReconcili
      * @return LinkedList<String>
      */
     LinkedList<String> thirdFieldListName(List<String> typeList,String supplierId, boolean nullThrow);
+
+    List<CfgReconciliationFieldEntity> listByTypeList(List<String> typeList, String supplierId);
 }

@@ -379,6 +379,11 @@ public class CfgReconciliationFieldDTO implements Serializable {
          */
         private String remark;
 
+        /**
+         * 费用分类
+         */
+        private String dictCostCategory;
+
         public String combineUniqueCode(){
             return StrUtil.format("{}_{}", this.sourceType, this.sourceId);
         }

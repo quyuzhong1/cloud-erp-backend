@@ -51,6 +51,7 @@ import com.erp.server.tms.listener.FirstMileReconciliationStandardExcelListener;
 import com.erp.server.tms.mapper.TmsFirstMileReconciliationDetailMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
+import jnr.ffi.Struct;
 import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -412,9 +413,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             viewDTO.setStatusName(ReconciliationStatusEnum.getName(viewDTO.getStatus()));
             // 明细币别
             viewDTO.setCurrencySymbol(currencySymbol);
-//            viewDTO.setCurrency(currency);
-            // 来源单号=业务单号
-//            viewDTO.setBusinessCode(viewDTO.getSourceCode());
+            if (StringUtils.isBlank(viewDTO.getCurrency())){
+                viewDTO.setCurrency(currency);
+            }
             // 默认
             if (null == viewDTO.getStatus()) {
                 viewDTO.setStatus(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
@@ -660,8 +661,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 record.setBillingMethodName("");
             }
             List<DictCountryDTO.ListDTO> listDTOS = deliveryCountryMap.getOrDefault(record.getDeliveryId(), this.defaultCountry(record.getToCountry(), conuntryList));
-            DictCountryDTO.ListDTO toCountry = listDTOS.stream().findFirst().orElse(null);
-            DictCountryDTO.ListDTO fromCountry = listDTOS.stream().skip(1).findFirst().orElse(null);
+            DictCountryDTO.ListDTO toCountry = !listDTOS.isEmpty() ? listDTOS.get(0) : null;
+            DictCountryDTO.ListDTO fromCountry = listDTOS.size() > 1 ? listDTOS.get(1) : null;
             record.setToCountry(null == toCountry ? "" : toCountry.getId());
             record.setToCountryName(null == toCountry ? "" : toCountry.getNameCn());
             record.setFromCountry(null == fromCountry ? "" : fromCountry.getId());
@@ -901,7 +902,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                         updateListMap.put(erpFieldDropDownDTO.getSourceId(), oldUpdateDTO);
                     } else {
                         // 历史不存在新增
-                        TmsCostDetailDTO.UpdateDTO updateDTO = newCostUpdateDTO(categoryEnum, excelDTO.getCostValue(), erpFieldDropDownDTO);
+                        TmsCostDetailDTO.UpdateDTO updateDTO = newCostUpdateDTO(categoryEnum, excelDTO.getCostValue(), erpFieldDropDownDTO.getSourceId());
                         updateListMap.put(erpFieldDropDownDTO.getSourceId(), updateDTO);
                     }
                     // 加成和设置实际值
@@ -1122,12 +1123,12 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         }
         //字段配置信息
         List<CfgReconciliationFieldDTO.ErpFieldViewDTO> erpFieldList = cfgReconciliationFieldService.getByReconciliationType(CfgReconciliationTypeEnum.FIRST_MILE.getCode());
-        Map<String, CfgReconciliationFieldDTO.ErpFieldViewDTO> map = erpFieldList
-                .stream()
-                .collect(Collectors.toMap(CfgReconciliationFieldDTO.ErpFieldViewDTO::getThirdFieldName, Function.identity()));
-        if (ObjectUtil.isEmpty(map)) {
-            throw new ServiceException("未设置字段配置，请配置后导入");
+        //字段配置信息
+        List<CfgReconciliationFieldDTO.ErpFieldViewDTO> erpFieldResultList = erpFieldList.stream().filter(obj -> StrUtil.equals(obj.getThirdCode(), mainEntity.getLogisticsSupplierId())).collect(Collectors.toList());
+        if (ObjectUtil.isEmpty(erpFieldResultList)) {
+            throw new ServiceException("物流商未设置字段配置，请配置后导入");
         }
+        Map<String, CfgReconciliationFieldDTO.ErpFieldViewDTO> cfgErpFieldMap = erpFieldResultList.stream().collect(Collectors.toMap(CfgReconciliationFieldDTO.ErpFieldViewDTO::getThirdFieldName, Function.identity()));
 
         // 币种
         String currency = mainEntity.getCurrency();
@@ -1137,7 +1138,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         List<String> transportNoList = new ArrayList<>();
         int transportNoIndex = MathUtil.ZERO;
         for (int i = 0; i < headList.size(); i++) {
-            CfgReconciliationFieldDTO.ErpFieldViewDTO erpFieldViewDTO = map.get(headList.get(i));
+            CfgReconciliationFieldDTO.ErpFieldViewDTO erpFieldViewDTO = cfgErpFieldMap.get(headList.get(i));
             if (ObjectUtil.isEmpty(erpFieldViewDTO) || !StrUtil.equals(erpFieldViewDTO.getErpFieldCode(), "transportNo")) {
                 continue;
             }
@@ -1176,10 +1177,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .stream()
                 .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getTransportNo));
 
-        //配置信息
-        Map<String, CfgReconciliationFieldDTO.ErpFieldDropDownDTO> cfgErpFieldMap = cfgReconciliationFieldService.erpFieldList(Collections.singletonList(DictBasicEnum.CFG_FIRST_MILE_ERP_FIELD.getType()))
-                .stream()
-                .collect(Collectors.toMap(CfgReconciliationFieldDTO.ErpFieldDropDownDTO::getErpFieldName, Function.identity()));
 
         // 历史的明细费用ID
         Map<String, Map<String, TmsCostDetailDTO.UpdateDTO>> costDetailMap = this.convertUpdateDTOAndMap(oldDetailList);
@@ -1193,7 +1190,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 errorMsgList.add("未发现字段配置, 请联系管理员");
             }
             // 需要处理的每一列
-            Map<CfgReconciliationFieldDTO.ErpFieldDropDownDTO, String> handleColumnMap = new HashMap<>();
+            Map<CfgReconciliationFieldDTO.ErpFieldViewDTO, String> handleColumnMap = new HashMap<>();
 
             for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
                 if (entry.getKey().equalsIgnoreCase(Integer.toString(transportNoIndex))){
@@ -1210,7 +1207,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 //字段名称
                 String curFieldName = headList.get(Integer.parseInt(entry.getKey()));
 
-                CfgReconciliationFieldDTO.ErpFieldDropDownDTO erpFieldDropDownDTO = cfgErpFieldMap.get(curFieldName);
+                CfgReconciliationFieldDTO.ErpFieldViewDTO erpFieldDropDownDTO = cfgErpFieldMap.get(curFieldName);
                 if (null == erpFieldDropDownDTO) {
                     errorMsgList.add(StrUtil.format("未找到该字段配置项【{}】", curFieldName));
                     break;
@@ -1275,12 +1272,12 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     costDetailMap.getOrDefault(sourceId, new HashMap<>()) : actualListDTO.getUpdateList().stream().collect(Collectors.toMap(TmsCostDetailDTO.CommonDTO::getCfgCostId, Function.identity()));
 
 
-            for (Map.Entry<CfgReconciliationFieldDTO.ErpFieldDropDownDTO, String> entry : handleColumnMap.entrySet()) {
-                CfgReconciliationFieldDTO.ErpFieldDropDownDTO erpFieldDropDownDTO = entry.getKey();
+            for (Map.Entry<CfgReconciliationFieldDTO.ErpFieldViewDTO, String> entry : handleColumnMap.entrySet()) {
+                CfgReconciliationFieldDTO.ErpFieldViewDTO erpFieldDropDownDTO = entry.getKey();
                 String columnValueStr = entry.getValue();
                 // 设置实际为当前值
                 if (SourceTypeEnum.TMS_CFG_COST.getCode().equalsIgnoreCase(erpFieldDropDownDTO.getSourceType())) {
-                    DictCostCategoryEnum categoryEnum = DictCostCategoryEnum.getByCode(erpFieldDropDownDTO.getSourceCodeValue());
+                    DictCostCategoryEnum categoryEnum = DictCostCategoryEnum.getByCode(erpFieldDropDownDTO.getDictCostCategory());
                     // 检查费用类型是否已存在更新
                     TmsCostDetailDTO.UpdateDTO oldUpdateDTO = updateListMap.get(erpFieldDropDownDTO.getSourceId());
                     if (null != oldUpdateDTO) {
@@ -1296,14 +1293,14 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                         }
                     } else {
                         // 历史不存在新增
-                        TmsCostDetailDTO.UpdateDTO updateDTO = newCostUpdateDTO(categoryEnum, columnValueStr, erpFieldDropDownDTO);
+                        TmsCostDetailDTO.UpdateDTO updateDTO = newCostUpdateDTO(categoryEnum, columnValueStr, erpFieldDropDownDTO.getSourceId());
                         updateListMap.put(erpFieldDropDownDTO.getSourceId(), updateDTO);
                     }
                     // 加成和设置实际值
                     checkAndUpdateCfgCostValue(updateListMap, categoryEnum, actualListDTO);
                 } else if (SourceTypeEnum.DICT_BASIC.getCode().equalsIgnoreCase(erpFieldDropDownDTO.getSourceType())) {
                     // 根据字段名设置
-                    ReflectUtil.setFieldValue(actualListDTO, erpFieldDropDownDTO.getSourceCodeValue(), new BigDecimal(columnValueStr));
+                    ReflectUtil.setFieldValue(actualListDTO, erpFieldDropDownDTO.getErpFieldCode(), new BigDecimal(columnValueStr));
                 } else {
                     errorMsgList.add(StrUtil.format("配置类型不存在【{}】", erpFieldDropDownDTO.getSourceType()));
                     jsonObject.set("错误信息", FieldValidUtil.getMsgSort(errorMsgList));
@@ -1324,13 +1321,13 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     }
 
     @NotNull
-    private static TmsCostDetailDTO.UpdateDTO newCostUpdateDTO(DictCostCategoryEnum categoryEnum, String costValue, CfgReconciliationFieldDTO.ErpFieldDropDownDTO erpFieldDropDownDTO) {
+    private static TmsCostDetailDTO.UpdateDTO newCostUpdateDTO(DictCostCategoryEnum categoryEnum, String costValue, String cfgCostId) {
         TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
         updateDTO.setHasUpdate(true);
         updateDTO.setDictCostCategory(categoryEnum.getCode());
         updateDTO.setCostValue(MathUtil.valueOf(costValue));
         updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
-        updateDTO.setCfgCostId(erpFieldDropDownDTO.getSourceId());
+        updateDTO.setCfgCostId(cfgCostId);
         return updateDTO;
     }
 
