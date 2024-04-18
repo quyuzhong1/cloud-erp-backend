@@ -432,8 +432,8 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                 return resultList;
             }
             TmsB2cDeclareReconciliationDetailDTO.ViewDTO  viewDTO= BeanMapperUtils.map(TmsB2cDeclareReconciliationDetailDTO.ViewDTO.class,detailEntity);
-            viewDTO.setActualWeight(MathUtil.valueOf(reconciliationStandardExcelDTO.getActualWeight()));
-            viewDTO.setActualBillingWeight(MathUtil.valueOf(reconciliationStandardExcelDTO.getActualBillingWeight()));
+            viewDTO.setActualWeight(StrUtil.isBlank(reconciliationStandardExcelDTO.getActualWeight()) ? detailEntity.getActualWeight() : MathUtil.valueOf(reconciliationStandardExcelDTO.getActualWeight()));
+            viewDTO.setActualBillingWeight(StrUtil.isBlank(reconciliationStandardExcelDTO.getActualBillingWeight()) ? detailEntity.getActualBillingWeight() : MathUtil.valueOf(reconciliationStandardExcelDTO.getActualBillingWeight()));
             viewDTO.setActualWeightUnit(StrUtil.isBlank(reconciliationStandardExcelDTO.getActualWeightUnit()) ? UnitEnum.WeightUnitEnum.KG.getCode() : reconciliationStandardExcelDTO.getActualWeightUnit());
             viewDTO.setUpdateList(updateList);
             //费用处理
@@ -596,8 +596,8 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                 continue;
             }
             TmsB2cDeclareReconciliationDetailDTO.ViewDTO  viewDTO= BeanMapperUtils.map(TmsB2cDeclareReconciliationDetailDTO.ViewDTO.class,detailEntity);
-            viewDTO.setActualWeight(MathUtil.valueOf(excelDTO.getActualWeight()));
-            viewDTO.setActualBillingWeight(MathUtil.valueOf(excelDTO.getActualBillingWeight()));
+            viewDTO.setActualWeight(StrUtil.isBlank(excelDTO.getActualWeight()) ? detailEntity.getActualWeight() : MathUtil.valueOf(excelDTO.getActualWeight()));
+            viewDTO.setActualBillingWeight(StrUtil.isBlank(excelDTO.getActualBillingWeight()) ? detailEntity.getActualBillingWeight() : MathUtil.valueOf(excelDTO.getActualBillingWeight()));
             viewDTO.setActualWeightUnit(StrUtil.isBlank(excelDTO.getActualWeightUnit()) ? UnitEnum.WeightUnitEnum.KG.getCode() : excelDTO.getActualWeightUnit());
             viewDTO.setUpdateList(updateList);
 
