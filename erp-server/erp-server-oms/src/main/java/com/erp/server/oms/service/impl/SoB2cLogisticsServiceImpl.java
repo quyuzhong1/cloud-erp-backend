@@ -334,6 +334,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         lambdaUpdate()
                 .set(SoB2cLogisticsEntity::getCode, "")
                 .set(SoB2cLogisticsEntity::getTrackNo, "")
+                .in(SoB2cLogisticsEntity::getMainId, soIdList)
                 .update();
 
         //删除物流单
