@@ -468,7 +468,6 @@
     <select id="getInventoryInfoByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$InventoryViewQtyDTO">
         SELECT
             it.warehouse_id,
-            it.warehouse_location,
             it.sku_id,
             sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end)
             +
