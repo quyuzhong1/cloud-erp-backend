@@ -58,8 +58,8 @@
     <select id="paging" resultType="com.erp.model.tms.dto.ProductRegistrationDTO$PagingVO">
         select pr.id,
             pr.sku_id as skuId,
-            pr.declare_model as skuNo,
-            pr.spu,
+            pr.sku_no as skuNo,
+            pr.declare_model as spu,
             pr.declare_platform as declarePlatform,
             pr.status,
             pr.declare_name_cn as declareCnName,
