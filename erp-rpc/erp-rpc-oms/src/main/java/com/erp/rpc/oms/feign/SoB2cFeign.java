@@ -453,4 +453,14 @@ public interface SoB2cFeign {
      **/
     @PostMapping("/feign/soB2c/getDataCompareByCondition")
     List<WmsDataCompareTaskDTO.SoB2cDTO> getDataCompareByCondition(@RequestBody WmsDataCompareTaskDTO.SoOutstockDTO soOutstockDTO);
+
+    /**
+     * 清除订单物流信息的发货信息
+     * @Author Luo_WG
+     * @Date 2024/4/18 16:23
+     * @param soIdList
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/soB2c/clearB2cLogisticsCode")
+    Boolean clearB2cLogisticsCode(@RequestBody List<String> soIdList);
 }

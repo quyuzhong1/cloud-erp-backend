@@ -209,4 +209,6 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
     LogisticsChannelDTO.LogisticsChannelConstraintDTO getLogisticsChannelConstraint(String channelId, String country);
 
     List<BaseDropDownDTO.Tree> tree();
+
+    LogisticsChannelDTO.SignShipDTO getScaleChannelByChannelById(String logisticsChannelId, String dictPlatform);
 }

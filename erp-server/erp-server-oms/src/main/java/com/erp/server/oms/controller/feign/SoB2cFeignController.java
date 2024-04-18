@@ -579,4 +579,16 @@ public class SoB2cFeignController extends BaseController {
     public List<WmsDataCompareTaskDTO.SoB2cDTO> getDataCompareByCondition(@RequestBody WmsDataCompareTaskDTO.SoOutstockDTO soOutstockDTO) {
         return soB2cService.getDataCompareByCondition(soOutstockDTO);
     }
+
+    /**
+     * 清除订单物流信息的发货信息
+     * @Author Luo_WG
+     * @Date 2024/4/18 16:23
+     * @param soIdList
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/clearB2cLogisticsCode")
+    public Boolean clearB2cLogisticsCode(@RequestBody List<String> soIdList) {
+        return soB2cLogisticsService.clearB2cLogisticsCode(soIdList);
+    }
 }
