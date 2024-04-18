@@ -142,7 +142,13 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         if (ObjectUtil.isEmpty(listingInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
         }
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Arrays.asList(dto.getSkuNo()));
+        List<SkuVO> skuVOList;
+        if(StringUtils.isNotBlank(dto.getSkuId())){
+            skuVOList = plmTaskFeign.getSkuInfoByIds(Collections.singletonList(dto.getSkuId()));
+        } else {
+            skuVOList = plmTaskFeign.listBySkuNoList(Collections.singletonList(dto.getSkuNo()));
+        }
+
         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(dto.getSkuNo())).distinct().findFirst().orElse(null);
         if (null == skuVO) {
             throw new ServiceException("sku不存在");

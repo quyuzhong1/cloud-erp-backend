@@ -431,11 +431,21 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 printPickingViewList.add(viewDTO);
             }
         }
+        // 合并处理数量不相同的行
+        Map<SoB2cDeliveryDTO.PrintPickingViewDTO, Integer> mergedMap = printPickingViewList.stream()
+                .collect(Collectors.toMap(dto -> dto, SoB2cDeliveryDTO.PrintPickingViewDTO::getPickingQty, Integer::sum));
+        printPickingViewList =  mergedMap.entrySet().stream()
+                .map(entry -> {
+                    SoB2cDeliveryDTO.PrintPickingViewDTO dto = entry.getKey();
+                    dto.setPickingQty(entry.getValue());
+                    return dto;
+                })
+                .collect(Collectors.toList());
 
+        // 仓库+仓位排序
         List<SoB2cDeliveryDTO.PrintPickingViewDTO> resultList = printPickingViewList.stream()
-                .sorted(Comparator.comparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getSkuNo).reversed()
-                        .thenComparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseName).reversed()
-                        .thenComparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseLocation).reversed()
+                .sorted(Comparator.comparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseName)
+                        .thenComparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseLocation)
                 ).collect(Collectors.toList());
 
         return resultList;

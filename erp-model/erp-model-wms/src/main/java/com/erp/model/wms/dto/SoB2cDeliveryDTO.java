@@ -16,6 +16,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * <p>
@@ -498,6 +500,19 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            PrintPickingViewDTO that = (PrintPickingViewDTO) o;
+            return Objects.equals(skuId, that.skuId) && Objects.equals(skuNo, that.skuNo) && Objects.equals(productName, that.productName) && Objects.equals(warehouseId, that.warehouseId) && Objects.equals(warehouseName, that.warehouseName) && Objects.equals(warehouseLocation, that.warehouseLocation) && Objects.equals(remark, that.remark);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(skuId, skuNo, productName, warehouseId, warehouseName, warehouseLocation, remark);
+        }
     }
 
     /**

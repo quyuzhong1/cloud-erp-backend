@@ -13,6 +13,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.CommonConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -423,7 +424,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         parceInfo.setTotalQuantity(totalQuantity);
 
         //申报总价
-        BigDecimal totalPrice = ordersSkuList.stream().filter(s -> Objects.nonNull(s.getDeclarePrice())).map(LogisticsProductDTO.ProductDTO::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        BigDecimal totalPrice = ordersSkuList.stream().filter(s -> Objects.nonNull(s.getDestDeclarePrice())).map(LogisticsProductDTO.ProductDTO::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         parceInfo.setTotalPrice(totalPrice);
         //总重量 取包裹重量
 //        Integer totalWeight = skuInfoList.stream().filter(s -> Objects.nonNull(s.getWeight())).mapToInt(LogisticsProductDTO.ProductDTO::getWeight).sum();
@@ -586,7 +587,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     && StringUtils.isNotEmpty(country) && e.getCountry().equals(country)).findFirst().orElse(null);
 
         }
-        //未匹配到时，获取默认值
+        //存在默认值时，先取默认值
+        if (Objects.isNull(customs)){
+            customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
+                    && StringUtils.isNotEmpty(e.getCountry()) && CommonConstants.DEFAULT.equals(e.getCountry())).findFirst().orElse(null);
+        }
+        //未匹配到时，获取空值
         if (Objects.isNull(customs)){
             customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
                     && StringUtils.isEmpty(e.getCountry())).findFirst().orElse(null);
@@ -1003,15 +1009,15 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             }
             if(CollectionUtils.isNotEmpty(batchUpdateTrackNoDTO.getTrackNoList())){
                 String channelId = logisticsBillEntity.getChannelId();
-                LogisticsAuthDTO.ViewDTO view = logisticsAuthService.getViewByChannelId(channelId);
+                LogisticsAuthEntity authEntity = logisticsAuthService.getByChannelId(channelId);
                 for(String trackNo : batchUpdateTrackNoDTO.getTrackNoList()){
                     LogisticsBillDetailEntity detailEntity = new LogisticsBillDetailEntity();
                     detailEntity.setMainId(logisticsBillEntity.getId());
                     detailEntity.setTrackNo(trackNo);
                     detailEntity.setTrackQueryMode(LogisticsPlatformEnum.TRACK123.getCode());
                     detailEntity.setIsApiUpdate(true);
-                    if(Objects.nonNull(view)){
-                        detailEntity.setLogisticsAuthId(view.getId());
+                    if(StringUtils.isNotBlank(authEntity.getId())){
+                        detailEntity.setLogisticsAuthId(authEntity.getId());
                     }
                     addDetailEntityList.add(detailEntity);
                 }
