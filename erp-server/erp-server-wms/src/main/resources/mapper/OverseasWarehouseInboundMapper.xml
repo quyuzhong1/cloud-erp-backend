@@ -166,4 +166,47 @@
         FROM overseas_warehouse_inbound
         GROUP BY instock_status
     </select>
+    
+    <select id="getDataCompareByCondition" resultType="com.erp.model.wms.dto.WmsDataCompareTaskDTO$OverseasInboundDTO">
+		SELECT h.id,T.code source_code,
+			G.sku_no,
+			G.platform_sku_no,
+			T.to_warehouse_name,
+			h.receive_qty::VARCHAR receive_qty,
+			TO_CHAR( h.receive_time, 'YYYY-MM-DD' ) receive_time 
+		FROM
+			overseas_warehouse_inbound
+			T LEFT JOIN overseas_warehouse_inbound_detail G ON t.id = g.main_id 
+			left join overseas_warehouse_inbound_received h on g.id = h.detail_id 
+			<include refid="OverDataCompareByCondition"/>
+		    order by h.id limit #{pageSize}
+    </select>
+    
+    <select id="getDataCompareByConditionCount" resultType="java.lang.Integer">
+		SELECT count(h.id) 
+		FROM
+			overseas_warehouse_inbound
+			T LEFT JOIN overseas_warehouse_inbound_detail G ON t.id = g.main_id 
+			left join overseas_warehouse_inbound_received h on g.id = h.detail_id 
+			<include refid="OverDataCompareByCondition"/>
+    </select>
+    
+    <sql id="OverDataCompareByCondition">
+    	where T.is_deleted = 'f' 
+			AND G.is_deleted = 'f' and h.is_deleted = 'f'
+			<if test="params.id!=null and params.id!=''">
+			and h.id > #{params.id}
+			</if>
+			<if test="params.receiveDateList !=null and params.receiveDateList.size>0">
+            AND h.receive_time >= #{params.receiveDateList[0]} and
+            (#{params.receiveDateList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > h.receive_time
+        	</if>
+        	<if test="params.toWarehouseName!=null and params.toWarehouseName!=''">
+            AND t.to_warehouse_name = #{params.toWarehouseName}
+        	</if>
+			<if test="params.taskId!=null and params.taskId!=''">
+            and not exists (select id from wms_data_compare_temp where system_data_id = h.id and task_id = #{params.taskId})
+        	</if>
+	</sql>
 </mapper>

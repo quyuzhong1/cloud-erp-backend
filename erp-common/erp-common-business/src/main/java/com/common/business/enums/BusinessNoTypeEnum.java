@@ -70,8 +70,10 @@ public enum BusinessNoTypeEnum {
     CODE_FLD(56, "fld","委外发料单",BusinessNoConstant.FLD),
     CODE_SHD(57, "shd","送货单",BusinessNoConstant.SHD),
     CODE_DZD(58, "dzd","对账单",BusinessNoConstant.DZD),
-    CODE_ZZBG(56, "zzbg","中转报关",BusinessNoConstant.ZZBG),
-    CODE_ZB(57, "zb","组包预报",BusinessNoConstant.ZB),
+    CODE_ZZBG(59, "zzbg","中转报关",BusinessNoConstant.ZZBG),
+    CODE_ZB(60, "zb","组包预报",BusinessNoConstant.ZB),
+
+    CODE_SJDB(61, "sjdb","数据对比","SJDB"),
     ;
 
 
