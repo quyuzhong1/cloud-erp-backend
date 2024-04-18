@@ -424,6 +424,10 @@ public class FbaShipmentDTO implements Serializable {
          * 平台（后端用）
          */
         private String platform;
+        /**
+         * erp下拉的sku id (比skuNo优先)
+         */
+        private String skuId;
     }
 
     /**
