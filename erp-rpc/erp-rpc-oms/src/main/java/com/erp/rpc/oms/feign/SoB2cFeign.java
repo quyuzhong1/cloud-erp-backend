@@ -441,4 +441,14 @@ public interface SoB2cFeign {
 
     @PostMapping("/feign/soB2cLabel/saveSoB2cLabel")
     Boolean saveSoB2cLabel(@RequestBody List<SoB2cLabelDTO.UpdateDTO> dtoList);
+
+    /**
+     * 清除订单物流信息的发货信息
+     * @Author Luo_WG
+     * @Date 2024/4/18 16:23
+     * @param soIdList
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/soB2c/clearB2cLogisticsCode")
+    Boolean clearB2cLogisticsCode(@RequestBody List<String> soIdList);
 }
