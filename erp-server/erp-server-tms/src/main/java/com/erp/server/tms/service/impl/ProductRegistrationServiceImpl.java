@@ -174,7 +174,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                     addEntity.setPushInfo(pushMap);
                     addEntity.setPullInfo(pullMap);
                     ProductRegistrationEntity erpEntity = ProductRegistrationConverter.INSTANCE.convertToEntity(productDTO);
-                    BeanUtil.copyProperties(addEntity,erpEntity, CopyOptions.create().setIgnoreNullValue(true));
+                    BeanUtil.copyProperties(erpEntity,addEntity, CopyOptions.create().setIgnoreNullValue(true));
                     addList.add(addEntity);
                 }else{
                     //失败返回原因
@@ -350,7 +350,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                         addEntity.setDeclareSupplierName(transferLogisticsAuthEntity.getName());
                         addEntity.setDeclareCurrencySymbol(productDTO.getDeclareCurrencySymbol());
                         ProductRegistrationEntity erpEntity = ProductRegistrationConverter.INSTANCE.convertToEntity(productDTO);
-                        BeanUtil.copyProperties(addEntity,erpEntity, CopyOptions.create().setIgnoreNullValue(true));
+                        BeanUtil.copyProperties(erpEntity,addEntity, CopyOptions.create().setIgnoreNullValue(true));
                         Map<String, Object> pullMap = BeanUtil.beanToMap(queryResult.getData());
                         addEntity.setPullInfo(pullMap);
                         addList.add(addEntity);
@@ -358,7 +358,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                         productRegistrationEntity.setDeclareCurrencySymbol(productDTO.getDeclareCurrencySymbol());
                         BeanUtil.copyProperties(addEntity,productRegistrationEntity, CopyOptions.create().setIgnoreNullValue(true));
                         ProductRegistrationEntity erpEntity = ProductRegistrationConverter.INSTANCE.convertToEntity(productDTO);
-                        BeanUtil.copyProperties(productRegistrationEntity,erpEntity, CopyOptions.create().setIgnoreNullValue(true));
+                        BeanUtil.copyProperties(erpEntity,productRegistrationEntity, CopyOptions.create().setIgnoreNullValue(true));
                         Map<String, Object> pullMap = BeanUtil.beanToMap(queryResult.getData());
                         productRegistrationEntity.setPullInfo(pullMap);
                         updateList.add(productRegistrationEntity);
@@ -467,14 +467,14 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                     }
                     if(Objects.isNull(existEntity)){
                         ProductRegistrationEntity erpEntity = ProductRegistrationConverter.INSTANCE.convertToEntity(productDTO);
-                        BeanUtil.copyProperties(addEntity,erpEntity, CopyOptions.create().setIgnoreNullValue(true));
+                        BeanUtil.copyProperties(erpEntity,addEntity, CopyOptions.create().setIgnoreNullValue(true));
                         Map<String, Object> pullMap = BeanUtil.beanToMap(queryResult.getData());
                         addEntity.setPullInfo(pullMap);
                         addList.add(addEntity);
                     }else{
                         BeanUtil.copyProperties(addEntity,existEntity, CopyOptions.create().setIgnoreNullValue(true));
                         ProductRegistrationEntity erpEntity = ProductRegistrationConverter.INSTANCE.convertToEntity(productDTO);
-                        BeanUtil.copyProperties(existEntity,erpEntity, CopyOptions.create().setIgnoreNullValue(true));
+                        BeanUtil.copyProperties(erpEntity,existEntity, CopyOptions.create().setIgnoreNullValue(true));
                         Map<String, Object> pullMap = BeanUtil.beanToMap(queryResult.getData());
                         existEntity.setPullInfo(pullMap);
                         updateList.add(existEntity);
