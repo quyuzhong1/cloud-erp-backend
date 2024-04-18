@@ -8,6 +8,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,9 @@ public class TikTokShipOrder implements IPlatformService {
     @Resource
     private ShopInfoFeign shopInfoFeign;
 
+    @Resource
+    private TikTokSdkClientService tikTokSdkClientService;
+
     @Override
     public void shipOrder(PlatformShipOrderDTO dto) {
         SoB2cEntity entity = soB2cFeign.getById(dto.getSoB2cId());
@@ -32,7 +36,11 @@ public class TikTokShipOrder implements IPlatformService {
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(entity.getId());
         Map<String, Object> extendData = shopInfoEntity.getExtendData();
         Integer userType = Integer.valueOf(extendData.get("userType")+"");
+        if ("US".equalsIgnoreCase(shopInfoEntity.getDictCountryCode())) {
 
+        } else {
+
+        }
 
     }
 }
