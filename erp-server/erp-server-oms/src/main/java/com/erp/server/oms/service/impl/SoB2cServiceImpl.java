@@ -6424,4 +6424,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         });
         return splitSkuDTOS;
     }
+
+	@Override
+	public List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO> getDataCompareByCondition(
+			com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params) {
+		return baseMapper.getDataCompareByCondition(params);
+	}
 }

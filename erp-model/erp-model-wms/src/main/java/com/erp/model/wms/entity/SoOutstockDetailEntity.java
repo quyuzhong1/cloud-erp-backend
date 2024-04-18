@@ -134,6 +134,12 @@ public class SoOutstockDetailEntity extends BaseEntity<SoOutstockDetailEntity> {
      */
     @TableField("source_detail_id")
     private String sourceDetailId;
+    
+    /**
+     * 来源明细id
+     */
+    @TableField("platform_code")
+    private String platformCode;
 
     @TableField(exist = false)
     private String approveStatus;
