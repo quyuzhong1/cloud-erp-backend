@@ -174,6 +174,9 @@
                  <if test="params.customerId != null and params.customerId != ''">
                      c."id" = #{params.customerId}
                  </if>
+                <if test="params.customerName != null and params.customerName != ''">
+                    c."name" ILIKE concat('%',#{params.customerName}::text,'%')
+                </if>
                  <if test="params.customerName != null and params.customerName != ''">
                      order by
                      case when c."name" ILIKE concat(#{params.customerName}::text,'%') THEN 1
