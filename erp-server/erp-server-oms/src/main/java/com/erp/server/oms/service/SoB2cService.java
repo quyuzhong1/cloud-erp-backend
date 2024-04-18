@@ -835,4 +835,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @author Jim
      */
     BatchResultDTO skuMappingBatch(String soId);
+
+    List<SoB2cEntity> listWithIsIntercept();
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2024/4/16 15:07
+     * @param dto
+     * @param response
+     * @return Boolean
+     */
+    Boolean exportExcel(SoB2cDTO.PagingParamDTO dto, HttpServletResponse response);
 }

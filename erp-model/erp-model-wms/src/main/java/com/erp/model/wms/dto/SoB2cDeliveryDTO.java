@@ -352,13 +352,29 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private Boolean isPrintPicking;
         /**
+         * 拣货单状态 中文
+         */
+        private String printPickingName;
+        /**
          * 是否验货【可排序】
          */
         private Boolean isInspection;
         /**
+         * 验货状态 中文
+         */
+        private String inspectionName;
+        /**
          * 是否称重【可排序】
          */
         private Boolean isWeigh;
+        /**
+         * 称重状态 中文
+         */
+        private String weighName;
+        /**
+         * 称重重量
+         */
+        private BigDecimal weight;
         /**
          * skuId
          */
@@ -395,6 +411,12 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 发货时间【可排序】
          */
         private LocalDateTime deliveryTime;
+
+        /**
+         * 完成打印时间【可排序】
+         */
+        private LocalDateTime finishPrintTime;
+
 
         /**
          * 组包状态  not 不需要  wait 待组包   already 已经组包

@@ -1,6 +1,5 @@
 package com.erp.server.oms.convert;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.*;
 import com.erp.model.oms.entity.*;
 import org.mapstruct.Mapper;
@@ -8,7 +7,6 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.PostMapping;
 
 import java.math.BigDecimal;
 
@@ -61,6 +59,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "currency", source = "detailDTO.currency"),
             @Mapping(target = "exchangeRate", source = "detailDTO.exchangeRate"),
             @Mapping(target = "advicePrice", source = "detailDTO.advicePrice"),
+            @Mapping(target = "sourcePlatform", source = "detailDTO.sourcePlatform"),
             // 历史实体
             @Mapping(target = "mainId", source = "oldEntity.mainId"),
             @Mapping(target = "warehouseId", source = "oldEntity.warehouseId"),
@@ -77,6 +76,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "skuId", source = "skuId"),
             @Mapping(target = "skuNo", source = "skuNo"),
             @Mapping(target = "imageUrl", source = "imageUrl"),
+
     })
     SoB2cDetailEntity convertUpdateDetail(SoB2cDetailEntity oldEntity, PlatformOrderDetailDTO detailDTO, String skuId, String skuNo,String imageUrl);
 

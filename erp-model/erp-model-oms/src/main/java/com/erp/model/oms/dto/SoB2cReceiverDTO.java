@@ -62,7 +62,7 @@ public class SoB2cReceiverDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
+//        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
@@ -80,7 +80,7 @@ public class SoB2cReceiverDTO implements Serializable {
         /**
         * 买家id
         */
-        @NotBlank(message = "买家id不能为空")
+//        @NotBlank(message = "买家id不能为空")
         @Size(max = 19,message = "买家id最大长度不能超过19位")
         private String customerId;
 

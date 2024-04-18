@@ -81,6 +81,12 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     */
     @TableField("is_print_picking")
     private Boolean isPrintPicking;
+
+    /**
+     * 完成打印时间
+     */
+    @TableField("finish_print_time")
+    private LocalDateTime finishPrintTime;
     /**
     * 是否验货
     */

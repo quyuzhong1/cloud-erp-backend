@@ -33,6 +33,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -1381,6 +1382,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 //                viewReceiveDataDTO.setCityName(dictCityEntity.getName());
 //            }
 //        }
+        viewReceiveDataDTO.setCountryId(entity.getCountryId());
         if (StringUtils.isNotBlank(entity.getCountryId())) {
             DictCountryEntity dictCountryEntity = sysUserFeign.getCountryById(entity.getCountryId());
             if (ObjectUtils.isNotEmpty(dictCountryEntity)) {
@@ -1396,6 +1398,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
                 viewReceiveDataDTO.setReceiverTelNumber(viewDTO.getTelNumber());
                 viewReceiveDataDTO.setFirstAddress(viewDTO.getAddress());
                 viewReceiveDataDTO.setSecondAddress(viewDTO.getAddress());
+                viewReceiveDataDTO.setZipCode(viewDTO.getZipCode());
             }
         }
         //联系人
@@ -1483,6 +1486,36 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
                 .eq(CustomerB2cEntity::getSourceType, sourceType)
                 .last("LIMIT 1")
                 .one();
+    }
+
+    @Override
+    public PagingVO<CustomerB2CDTO.DropListDTO> customerDropDown(PagingDTO<CustomerB2CDTO.DropSearchDTO> pagingDTO) {
+        if(StringUtils.isEmpty(pagingDTO.getParams().getCustomerName())){
+            return new PagingVO<>();
+        }
+        Page<CustomerB2CDTO.DropListDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<CustomerB2CDTO.DropListDTO> pageData=  baseMapper.customerDropDown(query, pagingDTO.getParams());
+        buildCustomerDTO(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
+
+    /**
+     * 赋值
+     * @param records
+     */
+    private void buildCustomerDTO(List<CustomerB2CDTO.DropListDTO> records) {
+        if(CollectionUtils.isEmpty(records)){
+            return;
+        }
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        records.forEach(dropListDTO -> {
+            if (StringUtils.isNotEmpty(dropListDTO.getCountryId()) && CollectionUtils.isNotEmpty(countryList)){
+                DictCountryDTO.ListDTO listDTO = countryList.stream().filter(e -> dropListDTO.getCountryId().equals(e.getId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(listDTO)){
+                    dropListDTO.setCountryName(listDTO.getNameCn());
+                }
+            }
+        });
     }
 
     /**

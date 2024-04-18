@@ -83,6 +83,11 @@ public class CustomerB2cAddressEntity extends BaseEntity<CustomerB2cAddressEntit
     @TableField("type")
     private String type;
 
+    /**
+     * 邮编
+     */
+    @TableField("zip_code")
+    private String zipCode;
 
     public static final String MAIN_ID = "main_id";
 
