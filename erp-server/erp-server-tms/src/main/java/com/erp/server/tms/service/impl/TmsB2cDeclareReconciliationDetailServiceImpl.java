@@ -419,7 +419,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                     continue;
                 }
                 //存在费用并且数量大于0
-                if (ObjectUtil.isNotEmpty(erpFieldDropDownDTO)) {
+                if (ObjectUtil.isNotEmpty(erpFieldDropDownDTO) && StrUtil.isNotBlank(excelDTO.getCostValue())) {
                     TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
                     updateDTO.setCostValue(StrUtil.isBlank(excelDTO.getCostValue()) ? BigDecimal.ZERO : MathUtil.valueOf(excelDTO.getCostValue()));
                     updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
@@ -560,7 +560,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                     if (StrUtil.isNotBlank(erpFieldViewDTO.getErpFieldCode())) {
                         successJson.set(erpFieldViewDTO.getErpFieldCode(),String.valueOf(entry.getValue()));
                     }
-                    if (StrUtil.isBlank(erpFieldViewDTO.getErpFieldCode())) {
+                    if (StrUtil.isBlank(erpFieldViewDTO.getErpFieldCode()) && ObjectUtil.isNotEmpty(entry.getValue())) {
                         TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
                         updateDTO.setCfgCostId(erpFieldViewDTO.getSourceId());
                         updateDTO.setCostValue(MathUtil.valueOf(entry.getValue()));
