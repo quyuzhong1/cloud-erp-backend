@@ -116,6 +116,7 @@ public class SoB2cDeliveryController extends BaseController {
             menuCode = "wms:soB2cDelivery:paging",
             tableAlias = "sbd"
     )
+    @WebAdvanceQuery(handler = SoB2cDeliveryQueryHandler.class)
     public ApiResult exportExcel(@RequestBody @Validated PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto, HttpServletResponse response) {
         Boolean flag = soB2cDeliveryService.exportExcel(dto, response);
         return flag == true ? success() : failure();
