@@ -14,6 +14,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.DeliverTypeEnum;
@@ -100,7 +101,25 @@ public class SoB2cDeliveryController extends BaseController {
     public ApiResult<PagingVO<SoB2cDeliveryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
         return success(soB2cDeliveryService.paging(dto));
     }
-
+    /**
+     * 导出excel
+     * @Author zdy
+     * @Date 2024/4/18 16:51
+     * @param dto
+     * @param response
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出中转报关单")
+    @PostMapping(value = "/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:soB2cDelivery:paging",
+            tableAlias = "sbd"
+    )
+    public ApiResult exportExcel(@RequestBody @Validated PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto, HttpServletResponse response) {
+        Boolean flag = soB2cDeliveryService.exportExcel(dto, response);
+        return flag == true ? success() : failure();
+    }
 
     /**
      * 详情

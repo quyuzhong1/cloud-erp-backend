@@ -866,6 +866,11 @@ public class CustomerB2CDTO implements Serializable {
     @NoArgsConstructor
     public static class DropSearchDTO {
         /**
+         * 客户Id
+         */
+        private String customerId;
+
+        /**
          * 客户名称
          */
         private String customerName;

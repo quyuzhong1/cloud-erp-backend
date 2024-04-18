@@ -177,4 +177,12 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return BatchResultDTO
      */
     BatchResultDTO finishPrint(String id);
+
+    /**
+     * 导出列表
+     * @param dto
+     * @param response
+     * @return
+     */
+    Boolean exportExcel(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto, HttpServletResponse response);
 }

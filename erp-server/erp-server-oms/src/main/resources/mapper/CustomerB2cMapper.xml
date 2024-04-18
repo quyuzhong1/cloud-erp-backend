@@ -171,11 +171,16 @@
                  from customer_b2c c
                           left join customer_b2c_address a on a.main_id = c.id and a.is_deleted  = FALSE and a.disabled = FALSE
                  where c.is_deleted = FALSE and c.disabled = FALSE
-                 order by
+                 <if test="params.customerId != null and params.customerId != ''">
+                     c."id" = #{params.customerId}
+                 </if>
+                 <if test="params.customerName != null and params.customerName != ''">
+                     order by
                      case when c."name" ILIKE concat(#{params.customerName}::text,'%') THEN 1
-                          when c."name" ILIKE concat('%',#{params.customerName}::text) THEN 2
-                          when c."name" ILIKE concat('%',#{params.customerName}::text,'%') THEN 3
-                         end , c."name"
+                     when c."name" ILIKE concat('%',#{params.customerName}::text) THEN 2
+                     when c."name" ILIKE concat('%',#{params.customerName}::text,'%') THEN 3
+                     end , c."name"
+                 </if>
              ) customer
     </select>
 </mapper>

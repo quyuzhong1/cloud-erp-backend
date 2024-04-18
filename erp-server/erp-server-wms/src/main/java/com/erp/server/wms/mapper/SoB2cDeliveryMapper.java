@@ -40,4 +40,12 @@ public interface SoB2cDeliveryMapper extends BaseMapper<SoB2cDeliveryEntity> {
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.SoB2cDeliveryDTO.ListDTO>
      **/
     IPage<SoB2cDeliveryDTO.ListDTO> paging(Page query, @Param("params") SoB2cDeliveryDTO.PagingParamDTO params);
+
+    /**
+     * 列表查询
+     * @param params
+     * @return
+     */
+    List<SoB2cDeliveryDTO.ListDTO> list(@Param("params") SoB2cDeliveryDTO.PagingParamDTO params);
+
 }

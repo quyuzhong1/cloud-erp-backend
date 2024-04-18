@@ -26,11 +26,13 @@ import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -55,19 +57,13 @@ import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
 import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
-import com.erp.model.wms.dto.SoB2cDeliveryDTO;
-import com.erp.model.wms.dto.SoB2cDeliveryDetailDTO;
-import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.SoOutstockDetailDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
-import com.erp.model.wms.enums.DeliverTypeEnum;
-import com.erp.model.wms.enums.PickingTypeEnum;
-import com.erp.model.wms.enums.SoB2cDeliveryPrintTypeEnum;
-import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -841,6 +837,29 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return BatchResultDTO.success(soB2cDeliveryEntity.getId(), soB2cDeliveryEntity.getCode(), OperationTypeEnum.UPDATE);
     }
 
+    @Override
+    public Boolean exportExcel(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto, HttpServletResponse response) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        List<SoB2cDeliveryDTO.ListDTO> list = this.baseMapper.list(dto.getParams());
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        // 数据处理
+        fillList(list);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/b2cDeliveryOrderExport.xlsx";
+        String name = "发货单导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+        return Boolean.TRUE;
+    }
+
     /**
      * @description: 根据id集合更新修改状态
      * @author Will
@@ -987,6 +1006,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 record.setProductName(skuVO.getSkuName());
                 record.setWarehouseLocation(skuVO.getWarehouseLocation());
             }
+            record.setInspectionName(record.getIsInspection()? InspectionEnum.YES.getName(): InspectionEnum.NO.getName());
+            record.setWeighName(record.getIsWeigh()? WeightEnum.YES.getName(): WeightEnum.NO.getName());
+            record.setPrintPickingName(record.getIsPrintPicking()? PrintPickingEnum.YES.getName(): PrintPickingEnum.NO.getName());
         }
     }
 

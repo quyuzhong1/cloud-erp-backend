@@ -1,25 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.SoB2cDeliveryMapper">
-
-    <!--获取状态统计-->
-    <select id="tabList" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$TabListDTO">
-        SELECT
-        sbd.status AS tabFlag,
-        count(*) AS count
-        FROM so_b2c_delivery sbd
-        WHERE
-        is_deleted=FALSE
-
-        <!--数据权限-->
-        <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
-        GROUP BY sbd.status
-    </select>
-
-    <!--分页查询-->
-    <select id="paging" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$ListDTO">
+    <sql id="pageSql">
         SELECT
         sbd.id,
         sbd.code,
@@ -35,6 +17,7 @@
         sbd.is_print_picking AS isPrintPicking,
         sbd.is_inspection AS isInspection,
         sbd.is_weigh AS isWeigh,
+        sbd.weight AS weight,
         sbdd.sku_id,
         sbdd.sku_no AS skuNo,
         sbdd.delivery_qty AS deliveryQty,
@@ -61,5 +44,29 @@
             </foreach>
         </if>
         sbd.create_time desc
+    </sql>
+    <!--获取状态统计-->
+    <select id="tabList" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$TabListDTO">
+        SELECT
+        sbd.status AS tabFlag,
+        count(*) AS count
+        FROM so_b2c_delivery sbd
+        WHERE
+        is_deleted=FALSE
+
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY sbd.status
+    </select>
+
+    <!--分页查询-->
+    <select id="paging" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$ListDTO">
+        <include refid="pageSql"/>
+    </select>
+    <!--列表查询-->
+    <select id="list" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$ListDTO">
+        <include refid="pageSql"/>
     </select>
 </mapper>
