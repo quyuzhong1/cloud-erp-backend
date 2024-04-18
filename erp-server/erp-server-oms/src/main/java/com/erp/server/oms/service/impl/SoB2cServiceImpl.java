@@ -382,15 +382,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         calculateSizeByAdd(addDTO.getLogisticsDTO(), addDTO.getDetailList());
         //新增物流信息
         soB2cLogisticsService.add(addDTO.getLogisticsDTO(), soB2cEntity.getId());
-        //TODO 如果新增客户
-        if (Objects.nonNull(addDTO.getAddBuyer()) && addDTO.getAddBuyer()){
+        //如果新增客户
+        if (StringUtils.isBlank(addDTO.getReceiverDTO().getCustomerId())){
             CustomerB2CDTO.AddDTO dto = buildB2cCustomerAddDTO(addDTO,soB2cEntity.getId());
             String customerId = customerB2cService.add(dto);
             addDTO.getReceiverDTO().setCustomerId(customerId);
-        }else {
-            if (StringUtils.isBlank(addDTO.getReceiverDTO().getCustomerId())){
-                throw new ServiceException("买家id不能为空");
-            }
         }
         //新增买家信息
         soB2cReceiverService.add(addDTO.getReceiverDTO(), soB2cEntity.getId());
@@ -821,14 +817,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException("B2C销售订单表保存失败");
         }
         //是否新增b2c客户
-        if (Objects.nonNull(updateDTO.getAddBuyer()) && updateDTO.getAddBuyer()){
+        if (StringUtils.isBlank(updateDTO.getReceiverDTO().getCustomerId())){
             CustomerB2CDTO.AddDTO dto = buildB2cCustomerUpdateDTO(updateDTO);
             String customerId = customerB2cService.add(dto);
             updateDTO.getReceiverDTO().setCustomerId(customerId);
-        }else {
-            if (StringUtils.isBlank(updateDTO.getReceiverDTO().getCustomerId())){
-                throw new ServiceException("买家id不能为空");
-            }
         }
         //计算物流尺寸
         calculateSizeByUpdate(updateDTO.getLogisticsDTO(), updateDTO.getDetailList());
