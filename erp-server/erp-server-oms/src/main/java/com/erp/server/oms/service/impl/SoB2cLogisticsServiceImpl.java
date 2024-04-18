@@ -327,6 +327,30 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 .update();
     }
 
+    @Override
+    public SoB2cLogisticsEntity getSoB2cLogisticsByTrackNo(String trackNo) {
+        if (StringUtils.isBlank(trackNo)) {
+            return null;
+        }
+        return lambdaQuery().eq(SoB2cLogisticsEntity::getTrackNo, trackNo).last("LIMIT 1").one();
+    }
+
+    @Override
+    public Boolean clearB2cLogisticsCode(List<String> soIdList) {
+        if (CollectionUtils.isEmpty(soIdList)) {
+            return Boolean.FALSE;
+        }
+        //清空物流单号
+        lambdaUpdate()
+                .set(SoB2cLogisticsEntity::getCode, "")
+                .set(SoB2cLogisticsEntity::getTrackNo, "")
+                .in(SoB2cLogisticsEntity::getMainId, soIdList)
+                .update();
+
+        //删除物流单
+        return logisticsBillFeign.removeLogisticsBillBySourceId(soIdList);
+    }
+
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {
         LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
         addDTO.setShopId(mainEntity.getShopId());

@@ -132,7 +132,6 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     @TableField("logistic_type")
     private String logisticType;
 
-
     public static final String CODE = "code";
 
     public static final String STATUS = "status";

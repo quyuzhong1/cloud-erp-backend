@@ -14,6 +14,11 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.vo.SkuInfoSimpleVO;
+import com.erp.model.tms.dto.SettingForecastDTO;
+import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.dto.TransferDeclareDetailDTO;
+import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.tms.dto.*;
 import com.erp.model.wms.dto.SoOutstockDTO;
 
@@ -834,10 +839,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     BatchResultDTO skuMappingBatch(String soId);
 
+
     /**
-     * 修改订单物流面单
-     * @param soB2cLabelDTOList
-     * @return
+     * 计算明细重量
      */
-    Boolean updateLogisticsLabelBase64ById(List<LogisticsBillDTO.SoB2cLabelDTO> soB2cLabelDTOList);
+    List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> detailList, List<SkuInfoSimpleVO> skuList);
 }

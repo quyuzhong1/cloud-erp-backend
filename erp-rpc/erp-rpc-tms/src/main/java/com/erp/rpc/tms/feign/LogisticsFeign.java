@@ -83,4 +83,8 @@ public interface LogisticsFeign {
     LogisticsAddressEntity getLogisticsAddressById(@RequestParam("id")String id);
 
 
+    @GetMapping("/feign/logistics/getScaleChannelByChannelById")
+    LogisticsChannelDTO.SignShipDTO getScaleChannelByChannelById(@RequestParam("logisticsChannelId") String logisticsChannelId,
+                                                                 @RequestParam("dictPlatform") String dictPlatform
+    );
 }

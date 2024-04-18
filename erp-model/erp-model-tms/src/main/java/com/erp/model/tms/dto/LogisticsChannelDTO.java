@@ -2,6 +2,7 @@ package com.erp.model.tms.dto;
 
 import com.common.business.enums.UnitEnum;
 import com.common.core.enums.CurrencyEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -191,6 +192,7 @@ public class LogisticsChannelDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class SignShipDTO{
 
         private String channelId;

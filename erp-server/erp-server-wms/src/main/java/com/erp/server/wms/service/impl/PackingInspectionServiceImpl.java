@@ -8,6 +8,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -55,9 +56,6 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
 
     @Resource
     private RedisTemplate<String, String> redisTemplate;
-
-    @Resource
-    private SoOutstockService soOutstockService;
 
     @Resource
     private SoB2cFeign soB2cFeign;
@@ -117,6 +115,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                     scanSkuInfo.setSkuImageUrl(skuVO.getSkuImagesUrl());
                     scanSkuInfo.setSkuNo(skuVO.getSkuNo());
                     scanSkuInfo.setWarehouseLocation(skuVO.getWarehouseLocation());
+                    scanSkuInfo.setEan(skuVO.getEan());
                 }
             }
             addViewDTO.setSkuSpeciesQty(addViewDTO.getWaitScanSkuList().size()+addViewDTO.getScannedSkuList().size());
@@ -132,27 +131,51 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                 }
             }
             viewDTO = addViewDTO;
+            //跟踪号赋值
+            if(viewDTO.getTrackNo() == null){
+                List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
+                if(CollectionUtils.isNotEmpty(soB2cLogisticsEntityList)){
+                    SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntityList.get(0);
+                    viewDTO.setTrackNo(soB2cLogisticsEntity.getTrackNo());
+                }
+            }
         }
         if(StringUtils.isNotBlank(dto.getSkuNo())){
+            //可能扫描sku编号或ean码
+            List<PackingInspectionDTO.ViewDTO.ScanSkuInfo> waitScanList = viewDTO.getWaitScanSkuList();
+            PackingInspectionDTO.ViewDTO.ScanSkuInfo skuInfo = waitScanList.stream().filter(v->v.getSkuNo().equals(dto.getSkuNo())).findFirst().orElse(null);
+            PackingInspectionDTO.ViewDTO.ScanSkuInfo eanInfo = waitScanList.stream().filter(v->dto.getSkuNo().equals(v.getEan())).findFirst().orElse(null);
+            if(Objects.nonNull(skuInfo) && Objects.nonNull(eanInfo) && !skuInfo.getSkuId().equals(eanInfo.getSkuId())){
+                throw new ServiceException("有超过一个sku编号或ean码匹配，请确认");
+            }
+            if(Objects.isNull(dto.getScanQty())){
+                throw new ServiceException("扫描数量不能为空");
+            }
+            if(dto.getScanQty() <= 0){
+                throw new ServiceException("扫描数量必须大于0");
+            }
             //修改对应SKU扫描数量
-            Iterator<PackingInspectionDTO.ViewDTO.ScanSkuInfo> it = viewDTO.getWaitScanSkuList().iterator();
+            Iterator<PackingInspectionDTO.ViewDTO.ScanSkuInfo> it = waitScanList.iterator();
             List<PackingInspectionDTO.ViewDTO.ScanSkuInfo> scannedList = viewDTO.getScannedSkuList();
             boolean matchFlag = false;
             while (it.hasNext()) {
                 PackingInspectionDTO.ViewDTO.ScanSkuInfo scanSkuInfo = it.next();
-                if(dto.getSkuNo().equals(scanSkuInfo.getSkuNo())){
+                if(dto.getSkuNo().equals(scanSkuInfo.getSkuNo()) || dto.getSkuNo().equals(scanSkuInfo.getEan())){
                     matchFlag = true;
                     if(scanSkuInfo.getWaitScanQty() <= 0){
                         throw new ServiceException("SKU已验货完成，无需再次验货");
                     }
                     //更新已扫描的数据
-                    PackingInspectionDTO.ViewDTO.ScanSkuInfo scanned = scannedList.stream().filter(v->v.getSkuNo().equals(dto.getSkuNo()) && !v.getScannedQty().equals(v.getSaleQty())).findFirst().orElse(null);
+                    PackingInspectionDTO.ViewDTO.ScanSkuInfo scanned = scannedList.stream().filter(v->(v.getSkuNo().equals(dto.getSkuNo()) || dto.getSkuNo().equals(v.getEan())) && !v.getScannedQty().equals(v.getSaleQty())).findFirst().orElse(null);
                     if(Objects.isNull(scanned)){
                         viewDTO.getScannedSkuList().add(scanSkuInfo);
                     }else{
                         scanned.setScannedQty(scanSkuInfo.getSaleQty() - scanSkuInfo.getWaitScanQty());
                     }
-                    scanSkuInfo.setWaitScanQty(scanSkuInfo.getWaitScanQty()-1);
+                    if(dto.getScanQty() > scanSkuInfo.getWaitScanQty()){
+                        throw new ServiceException("扫描数量大于待扫描数量");
+                    }
+                    scanSkuInfo.setWaitScanQty(scanSkuInfo.getWaitScanQty()-dto.getScanQty());
                     scanSkuInfo.setScannedQty(scanSkuInfo.getSaleQty() - scanSkuInfo.getWaitScanQty());
                     //如果已扫描数等于销售数，放到已扫描队列
                     if(scanSkuInfo.getScannedQty().equals(scanSkuInfo.getSaleQty())){
@@ -162,11 +185,11 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                 }
             }
             if(!matchFlag){
-                PackingInspectionDTO.ViewDTO.ScanSkuInfo scanned = scannedList.stream().filter(v->v.getSkuNo().equals(dto.getSkuNo()) && v.getScannedQty().equals(v.getSaleQty())).findFirst().orElse(null);
+                PackingInspectionDTO.ViewDTO.ScanSkuInfo scanned = scannedList.stream().filter(v->(v.getSkuNo().equals(dto.getSkuNo())||dto.getSkuNo().equals(v.getEan())) && v.getScannedQty().equals(v.getSaleQty())).findFirst().orElse(null);
                 if(Objects.nonNull(scanned)){
                     throw new ServiceException("SKU已验货完成，无需再次验货");
                 }
-                throw new ServiceException("SKU不匹配，验货失败");
+                throw new ServiceException("SKU或EAN不匹配，验货失败");
             }
         }else{
             if(entity.getIsInspection()){

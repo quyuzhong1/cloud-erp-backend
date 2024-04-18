@@ -226,14 +226,15 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     }
 
     @Override
-    public LogisticsAuthDTO.ViewDTO getViewByChannelId(String channelId) {
+    public LogisticsAuthEntity getByChannelId(String channelId) {
         LogisticsChannelEntity channelEntity = logisticsChannelService.getById(channelId);
         if (Objects.nonNull(channelEntity)) {
-            return this.view(channelEntity.getMainId());
-
+            LogisticsAuthEntity logisticsAuthEntity = this.getByMainId(null,channelEntity.getMainId());
+            if(Objects.isNull(logisticsAuthEntity)){
+                return new LogisticsAuthEntity();
+            }
         }
-
-        return new LogisticsAuthDTO.ViewDTO();
+        return new LogisticsAuthEntity();
     }
 
 

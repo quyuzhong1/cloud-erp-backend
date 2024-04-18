@@ -9,6 +9,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
+import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
@@ -59,11 +60,13 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         if (CollectionUtils.isNotEmpty(detailList)) {
             String mainId = billEntity.getId();
             String channelId = billEntity.getChannelId();
-            LogisticsAuthDTO.ViewDTO view = logisticsAuthService.getViewByChannelId(channelId);
+            LogisticsAuthEntity authEntity = logisticsAuthService.getByChannelId(channelId);
             List<LogisticsBillDetailEntity> list = BeanMapper.copyList(detailList, LogisticsBillDetailEntity.class);
             list.forEach(l -> {
                 l.setMainId(mainId);
-                l.setLogisticsAuthId(view.getId());
+                if(StringUtils.isNotBlank(authEntity.getId())){
+                    l.setLogisticsAuthId(authEntity.getId());
+                }
             });
             //批量新增
             return this.saveBatch(list);

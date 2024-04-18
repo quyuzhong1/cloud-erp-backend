@@ -32,6 +32,14 @@ public interface SoB2cFeign {
     List<SoB2cLogisticsEntity> listSoB2cLogisticsByMainIdList(@RequestBody List<String> mainIdList);
 
     /**
+     * 根据跟踪单号查询订单物流信息
+     * @param trackNo
+     * @return
+     */
+    @PostMapping("/feign/soB2c/getSoB2cLogisticsByTrackNo")
+    SoB2cLogisticsEntity getSoB2cLogisticsByTrackNo(@RequestBody String trackNo);
+
+    /**
      * 根据订单id 获取到运费估算的参数值
      *
      * @param orderId
@@ -437,4 +445,14 @@ public interface SoB2cFeign {
 
     @PostMapping("/feign/soB2c/updateLogisticsLabelBase64ById")
     Boolean updateLogisticsLabelBase64ById(@RequestBody List<LogisticsBillDTO.SoB2cLabelDTO> soB2cLabelDTOList);
+
+    /**
+     * 清除订单物流信息的发货信息
+     * @Author Luo_WG
+     * @Date 2024/4/18 16:23
+     * @param soIdList
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/soB2c/clearB2cLogisticsCode")
+    Boolean clearB2cLogisticsCode(@RequestBody List<String> soIdList);
 }
