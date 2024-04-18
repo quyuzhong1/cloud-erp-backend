@@ -892,13 +892,44 @@ public class CustomerB2CDTO implements Serializable {
          */
         private String cityId;
         /**
+         * 城市名称
+         */
+        private String cityName;
+        /**
          * 国家id
          */
         private String countryId;
+        /**
+         * 国家名称
+         */
         private String countryName;
         /**
          * 邮编
          */
         private String zipCode;
+        /**
+         * 邮箱
+         */
+        private String email;
+        /**
+         * 第一地址
+         */
+        private String firstAddress;
+        /**
+         * 第二地址
+         */
+        private String secondAddress;
+        /**
+         * 收件人名称
+         */
+        private String receiverName;
+        /**
+         * 收件人电话
+         */
+        private String receiverTelNumber;
+        /**
+         * 电话
+         */
+        private String telNumber;
     }
 }
