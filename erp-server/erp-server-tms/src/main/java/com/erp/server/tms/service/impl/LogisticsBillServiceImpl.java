@@ -1062,4 +1062,19 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     public List<String> listSoOutIdByQuery(AdvanceQueryContainer advanceQueryContainer) {
         return baseMapper.listSoOutIdByQuery(advanceQueryContainer);
     }
+
+    @Override
+    public Boolean removeLogisticsBillBySourceId(List<String> sourceId) {
+        if (CollectionUtils.isEmpty(sourceId)){
+            return Boolean.FALSE;
+        }
+
+        //删除物流详情
+        List<LogisticsBillEntity> logisticsBillEntityList = this.listBySourceIds(sourceId);
+        List<String> ids = logisticsBillEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        logisticsBillDetailService.removeByMainIds(ids);
+
+        //删除主表
+        return lambdaUpdate().in(LogisticsBillEntity::getSourceId, sourceId).remove();
+    }
 }

@@ -12,8 +12,6 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
-import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.server.tms.service.LogisticsBillCostService;
@@ -240,5 +238,14 @@ public class LogisticsBillFeignController {
     @PostMapping("/listBillCostByOutstockIds")
     public List<LogisticsBillCostDTO.OutStockDTO> listBillCostByOutstockIds(@RequestBody List<String> ids){
         return logisticsBillCostService.listBillCostByOutstockIds(ids);
+    }
+
+    /**
+     * 根据sourceId删除物流单
+     * @return
+     */
+    @PostMapping("/removeLogisticsBillBySourceId")
+    public Boolean removeLogisticsBillBySourceId(@RequestBody List<String> sourceId) {
+        return logisticsBillService.removeLogisticsBillBySourceId(sourceId);
     }
 }
