@@ -1,19 +1,26 @@
 package com.erp.server.wms.sdk.delivery;
 
+import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.IPlatformService;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
+import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderUSParam;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -31,13 +38,27 @@ public class TikTokShipOrder implements IPlatformService {
 
     @Override
     public void shipOrder(PlatformShipOrderDTO dto) {
-        SoB2cEntity entity = soB2cFeign.getById(dto.getSoB2cId());
+        SoB2cDTO.ViewDTO view = soB2cFeign.view(dto.getSoB2cId());
+        if (ObjectUtil.isEmpty(view)) {
+            throw new ServiceException(ApiError.ERROR_92003);
+        }
 
-        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(entity.getId());
-        Map<String, Object> extendData = shopInfoEntity.getExtendData();
-        Integer userType = Integer.valueOf(extendData.get("userType")+"");
-        if ("US".equalsIgnoreCase(shopInfoEntity.getDictCountryCode())) {
+        TikTokShopInfoDTO tikTokShopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(view.getShopId());
 
+
+        List<SoB2cDetailDTO.ViewDTO> detailList = view.getDetailList();
+        List<String> sourceDetailIds = detailList.stream()
+                .filter(req -> StringUtils.isBlank(req.getSourcePlatform()))
+                .map(req -> req.getSourceDetailId())
+                .distinct()
+                .collect(Collectors.toList());
+
+        if ("US".equalsIgnoreCase(tikTokShopInfoDTO.getSite())) {
+            ShipOrderUSParam paramDTO = new ShipOrderUSParam();
+            paramDTO.setTrackingNumber(view.getLogisticsDTO().getCode());
+            paramDTO.setOrderLineItemIds(sourceDetailIds);
+
+            tikTokSdkClientService.sendTikTokShipOrderUS(tikTokShopInfoDTO, view.getPlatformCode(), paramDTO);
         } else {
 
         }

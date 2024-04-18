@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -245,7 +244,12 @@ public class SoB2cDetailDTO implements Serializable {
         */
         private BigDecimal exchangeRate;
 
-    }
+        /**
+        * 来源详情id
+        */
+        private String sourceDetailId;
+
+ }
 
     /**
     * 新增
