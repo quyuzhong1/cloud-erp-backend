@@ -138,25 +138,26 @@
         SELECT
         wlmd.id,
         wlmi.code,
-        wlmi.approve_status,
-        wlmi.warehouse_id,
+        wlmi.approve_status as approveStatus,
+        wlmi.warehouse_id as warehouseId,
         wlmi.warehouse_name,
-        wlmi.bill_date,
-        wlmi.approve_user_id,
-        wlmi.create_user_id,
+        wlmi.bill_date as billDate,
+        wlmi.approve_user_id as approveUserId,
+        wlmi.create_user_id as createUserId,
         wlmi.approve_user_name,
         wlmi.create_user_name,
-        wlmi.create_time,
-        wlmi.approve_time,
+        wlmi.create_time as createTime,
+        wlmi.approve_time as approveTime,
         wlmi.remark,
-        wlmd.sku_id,
+        wlmd.sku_id as skuId,
         wlmd.sku_no,
-        wlmd.out_warehouse_location,
-        wlmd.in_warehouse_location,
-        wlmd.qty
+        wlmd.out_warehouse_location as outWarehouseLocation,
+        wlmd.in_warehouse_location as inWarehouseLocation,
+        wlmd.qty as qty
         FROM warehouse_location_move_detail wlmd
         INNER JOIN warehouse_location_move_info wlmi ON wlmd.main_id = wlmi.id AND wlmd.is_deleted = FALSE
-        WHERE wlmi.is_deleted = FALSE
+        WHERE ${params.sqlMap.default}
+        and wlmi.is_deleted = FALSE
         AND wlmi.invalid_status = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and wlmi.approve_status in
@@ -191,12 +192,12 @@
                 (#{item})
             </foreach>
         </if>
-        <if test="params.sortList != null and params.sortList.size > 0">
+        ORDER BY <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        ORDER BY wlmi.create_time desc
+         wlmi.create_time desc
     </sql>
 
 </mapper>

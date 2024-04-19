@@ -11,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -90,6 +91,11 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
           * 页面高级查询
           */
          private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+         /**
+          * sqlMap 默认key default
+          */
+         private Map<String,String> sqlMap;
 
      }
     /**
