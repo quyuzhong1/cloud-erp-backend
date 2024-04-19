@@ -22,7 +22,7 @@ public interface BaoHongCreateOrderConverter {
     BaoHongCreateOrderConverter INSTANCE = Mappers.getMapper(BaoHongCreateOrderConverter.class);
 
     @Mappings({
-            @Mapping(target = "channel", constant = "2"),
+            @Mapping(target = "channel", constant = "1"),
             @Mapping(target = "oabCountry", source = "logisticsOrderVO.receiverInfoVO.country"),
             @Mapping(target = "smCode", source = "logisticsOrderVO.logisticsChannelEntity.code"),
             @Mapping(target = "referenceNo", source = "logisticsOrderVO.deliveryNo"),
