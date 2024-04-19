@@ -61,10 +61,6 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
         LogisticsOrderResponseVO responseVO = new LogisticsOrderResponseVO();
         //主信息
         CreateOrderInfo createOrderInfo = BaoHongCreateOrderConverter.INSTANCE.LogisticsOrderVOToCreateOrderInfo(logisticsOrderVO);
-        //信息修改 当物流单号为空时，渠道编码重置
-        if (StringUtils.isEmpty(createOrderInfo.getTrackingNumber())){
-            createOrderInfo.setChannel(0);
-        }
         //订单产品详情
         List<ProductDeatil> productDeatils = BaoHongCreateOrderConverter.INSTANCE.LogisticsProductVOToProductDeatil(logisticsOrderVO.getLogisticsProductVOList());
         createOrderInfo.setOrderProduct(productDeatils);
