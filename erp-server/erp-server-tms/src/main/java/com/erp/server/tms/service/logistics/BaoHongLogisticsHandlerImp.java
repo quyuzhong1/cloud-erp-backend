@@ -23,6 +23,7 @@ import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import com.sdk.tms.baohong.service.BaoHongService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -60,7 +61,10 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
         LogisticsOrderResponseVO responseVO = new LogisticsOrderResponseVO();
         //主信息
         CreateOrderInfo createOrderInfo = BaoHongCreateOrderConverter.INSTANCE.LogisticsOrderVOToCreateOrderInfo(logisticsOrderVO);
-
+        //信息修改 当物流单号为空时，渠道编码重置
+        if (StringUtils.isEmpty(createOrderInfo.getTrackingNumber())){
+            createOrderInfo.setChannel(0);
+        }
         //订单产品详情
         List<ProductDeatil> productDeatils = BaoHongCreateOrderConverter.INSTANCE.LogisticsProductVOToProductDeatil(logisticsOrderVO.getLogisticsProductVOList());
         createOrderInfo.setOrderProduct(productDeatils);

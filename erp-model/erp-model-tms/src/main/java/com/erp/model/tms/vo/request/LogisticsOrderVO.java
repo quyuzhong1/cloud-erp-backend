@@ -74,6 +74,10 @@ public class LogisticsOrderVO implements Serializable {
      */
     private String deliveryNo;
     /**
+     * 物流单号
+     */
+    private String trackNo;
+    /**
      * 收货人信息
      */
     private ReceiverInfoVO receiverInfoVO;

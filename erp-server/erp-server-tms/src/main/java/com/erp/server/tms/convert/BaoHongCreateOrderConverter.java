@@ -24,6 +24,7 @@ public interface BaoHongCreateOrderConverter {
     @Mappings({
             @Mapping(target = "channel", constant = "1"),
             @Mapping(target = "oabCountry", source = "logisticsOrderVO.receiverInfoVO.country"),
+            @Mapping(target = "trackingNumber", source = "trackNo"),
             @Mapping(target = "smCode", source = "logisticsOrderVO.logisticsChannelEntity.code"),
             @Mapping(target = "referenceNo", source = "logisticsOrderVO.deliveryNo"),
             @Mapping(target = "oabName", source = "logisticsOrderVO.receiverInfoVO.contact"),

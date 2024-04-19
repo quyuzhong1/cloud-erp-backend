@@ -437,6 +437,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder().authMap(authMap).
                 orderSource(sourceType).
+                trackNo(dto.getTrackNo()).
                 topUserKey(dto.getTopUserKey()).
                 oaid(dto.getOaid()).
                 deliveryNo(dto.getOrderCode()).
