@@ -94,11 +94,11 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         String retcustNumber = kingdeeReturnOrderEntity.getFRetcustNumber();
         String retcustName = kingdeeReturnOrderEntity.getFRetcustName();
         List<CustomerInfoEntity> customerInfoEntityList = customerFeign.getCustomerByCodeAndName(retcustNumber, retcustName);
-    	if(CollUtil.isEmpty(customerInfoEntityList)) {
-    		throw new ServiceException(String.format("通过客户编码：%s，客户名称：%s查询不到客户信息" , retcustNumber , retcustName));
-    	}else if(customerInfoEntityList.size() > 1){
-    		throw new ServiceException(String.format("通过客户编码：%s，客户名称：%s查询到多条客户信息" , retcustNumber , retcustName));
-    	}
+//    	if(CollUtil.isEmpty(customerInfoEntityList)) {
+//    		throw new ServiceException(String.format("通过客户编码：%s，客户名称：%s查询不到客户信息" , retcustNumber , retcustName));
+//    	}else if(customerInfoEntityList.size() > 1){
+//    		throw new ServiceException(String.format("通过客户编码：%s，客户名称：%s查询到多条客户信息" , retcustNumber , retcustName));
+//    	}
         
         List<KingdeeReturnOrderItemEntity> itemEntityList = kingdeeReturnOrderEntity.getItemEntityList();
         List<String> stockNumberList = itemEntityList.stream().map(KingdeeReturnOrderItemEntity::getFStockNumber).distinct().collect(Collectors.toList());
@@ -136,7 +136,9 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             instockEntity.setSoReturnId(kingdeeReturnOrderItemEntity.getFSOEntryId());
         }
         instockEntity.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
-        instockEntity.setCustomerId(customerInfoEntityList.get(0).getId());
+        if(CollUtil.isNotEmpty(customerInfoEntityList)) {
+        	instockEntity.setCustomerId(customerInfoEntityList.get(0).getId());
+        }
 		instockEntity.setCustomerName(retcustName);
         instockEntity.setId(IdWorker.getIdStr());
         instockEntity.setThirdCode(kingdeeReturnOrderEntity.getFEThirdBillNo());
