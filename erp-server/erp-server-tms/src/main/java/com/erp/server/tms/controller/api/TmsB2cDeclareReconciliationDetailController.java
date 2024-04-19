@@ -112,10 +112,6 @@ public class TmsB2cDeclareReconciliationDetailController extends BaseController 
                 return success();
             case CONFIG:
                 LinkedList<String> headerNameList = tmsB2cDeclareReconciliationDetailService.thirdFieldListName(dto);
-                // 不存在添加运单号作为第一个元素
-                if (!headerNameList.contains("销售订单号")){
-                    headerNameList.addFirst("销售订单号");
-                }
                 // 去重
                 String configExcelName = "templateConfig.xlsx";
                 ExcelUtil.downloadDynamicTemplate(headerNameList, configExcelName, response);
