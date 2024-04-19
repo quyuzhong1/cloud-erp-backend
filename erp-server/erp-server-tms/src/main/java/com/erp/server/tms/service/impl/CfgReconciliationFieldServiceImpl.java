@@ -30,6 +30,7 @@ import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
 import com.erp.model.tms.enums.CfgReconciliationTypeEnum;
 import com.erp.model.tms.enums.DictBasicEnum;
+import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.server.tms.convert.CfgReconciliationFieldConverter;
 import com.erp.server.tms.listener.CfgReconciliationFieldExcelListener;
 import com.erp.server.tms.mapper.CfgReconciliationFieldMapper;
@@ -216,8 +217,14 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
     @Override
     public List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> erpFieldList(List<String> reconciliationTypeList) {
         List<String> keyList = Arrays.asList(DictBasicEnum.CFG_FIRST_MILE_ERP_FIELD.getType(), DictBasicEnum.CFG_B2C_DECLARE_ERP_FIELD.getType());
+        List<CfgReconciliationTypeEnum> queryType = Arrays.stream(CfgReconciliationTypeEnum.values()).collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(reconciliationTypeList)) {
-            keyList = reconciliationTypeList;
+            queryType = reconciliationTypeList.stream()
+                    .map(CfgReconciliationTypeEnum::getByCode)
+                    .collect(Collectors.toList());
+            keyList = queryType.stream()
+                    .filter(Objects::nonNull).map(e -> e.getDictBasicEnum().getType())
+                    .collect(Collectors.toList());
         }
         // 查询字典
         List<DictBasicEntity> list = dictBasicService.getByKeyList(keyList);
@@ -225,15 +232,19 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> resultList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
             resultList = list.stream()
-                    .map(e -> new CfgReconciliationFieldDTO.ErpFieldDropDownDTO(e.getType(), e.getName(), SourceTypeEnum.DICT_BASIC.getCode(), e.getId(), e.getCode()))
-                    .collect(Collectors.toList());
+                    .map(e -> new CfgReconciliationFieldDTO.ErpFieldDropDownDTO(
+                            CfgReconciliationTypeEnum.getByDictBasicEnum(e.getType()).getCode(),
+                            e.getName(),
+                            SourceTypeEnum.DICT_BASIC.getCode(),
+                            e.getId(), e.getCode()
+                    )).collect(Collectors.toList());
         }
-        Map<String, CfgReconciliationTypeEnum> typeMap = Arrays.stream(CfgReconciliationTypeEnum.values())
+        Map<String, CfgReconciliationTypeEnum> typeMap = queryType
+                .stream()
                 .collect(Collectors.toMap(e -> e.getCostAttributionEnum().getCode(), Function.identity()));
 
-        List<String> finalKeyList = keyList;
-        List<String> dictCostAttributionList = Arrays.stream(CfgReconciliationTypeEnum.values())
-                .filter(e -> finalKeyList.contains(e.getCode()))
+        List<String> dictCostAttributionList = queryType
+                .stream()
                 .map(e -> e.getCostAttributionEnum().getCode())
                 .distinct()
                 .collect(Collectors.toList());

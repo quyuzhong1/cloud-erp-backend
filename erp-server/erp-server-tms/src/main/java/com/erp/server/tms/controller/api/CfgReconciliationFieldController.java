@@ -46,19 +46,20 @@ public class CfgReconciliationFieldController extends BaseController {
     private CfgReconciliationFieldService cfgReconciliationFieldService;
 
     /**
-    * 修改
-    * @author Jim
-    * {@code @date:}  2024-03-25
-    * @param dto DTO
-    * @return ApiResult
-    */
+     * 修改
+     *
+     * @param dto DTO
+     * @return ApiResult
+     * @author Jim
+     * {@code @date:}  2024-03-25
+     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "对账字段配置表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "tms:cfgReconciliationField:update",
-        serviceClass = CfgReconciliationFieldService.class,
-        keyIdName = "id")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:cfgReconciliationField:update",
+            serviceClass = CfgReconciliationFieldService.class,
+            keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated CfgReconciliationFieldDTO.UpdateDTO dto) {
         cfgReconciliationFieldService.update(dto);
         return success();
@@ -67,10 +68,10 @@ public class CfgReconciliationFieldController extends BaseController {
     /**
      * 分页
      *
-     * @author Jim
-     * {@code @date:}  2024-03-25
      * @param dto DTO
      * @return ApiResult
+     * @author Jim
+     * {@code @date:}  2024-03-25
      */
     @PostMapping("/paging")
     @WebAdvanceQuery(handler = CfgReconciliationFieldQueryHandler.class)
@@ -117,6 +118,7 @@ public class CfgReconciliationFieldController extends BaseController {
 
     /**
      * 查看详情
+     *
      * @param id DTO
      * @return ApiResult<List < BatchResultDTO>>
      * @author Jim
@@ -165,6 +167,7 @@ public class CfgReconciliationFieldController extends BaseController {
 
     /**
      * 导入
+     *
      * @author Jim
      * {@code @date:} 2024-03-25
      */
@@ -179,6 +182,7 @@ public class CfgReconciliationFieldController extends BaseController {
      * 数大臣字段列表
      * reconciliationType=核对类型(空=所有)
      * 来源/tms/common/enumDropDown?type=CfgReconciliationType
+     *
      * @author Jim
      * {@code @date:} 2024-03-25
      */
