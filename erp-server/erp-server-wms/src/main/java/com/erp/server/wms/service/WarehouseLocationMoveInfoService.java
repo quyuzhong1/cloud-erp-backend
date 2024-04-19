@@ -199,6 +199,16 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
     BatchResultDTO cancelProcess(String id);
 
     /**
+     * 撤销
+     *
+     * @param id
+     * @return
+     * @author hyj
+     * @date 2024/4/19 10:37
+     */
+    BatchResultDTO pcCancelProcess(String id);
+
+    /**
     * 审核通过回调方法
     * @param dto
     * @param entity

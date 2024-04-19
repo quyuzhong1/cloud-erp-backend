@@ -584,6 +584,47 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     }
 
     /**
+    * 撤销
+     * @author hyj
+     * @date 2024/4/19 10:37
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销仓位移动")
+    @PostMapping("/pc/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:cancelProcess",
+            serviceClass = WarehouseLocationMoveInfoService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> pcCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO cancelResult;
+            try {
+                cancelResult = warehouseLocationMoveInfoService.pcCancelProcess(id);
+            }catch (Exception e){
+                log.error("仓位移动主单撤回流程失败",e);
+                WarehouseLocationMoveDetailEntity warehouseLocationMoveDetailEntity = warehouseLocationMoveDetailService.getById(id);
+                if (ObjectUtil.isEmpty(warehouseLocationMoveDetailEntity)) {
+                    cancelResult = BatchResultDTO.fail(id, id, "仓位移动明细不存在, 撤回流程失败");
+                    resultDTOS.add(cancelResult);
+                    continue;
+                }
+                WarehouseLocationMoveInfoEntity entity = warehouseLocationMoveInfoService.getById(warehouseLocationMoveDetailEntity.getMainId());
+                if (ObjectUtil.isEmpty(entity)) {
+                    cancelResult = BatchResultDTO.fail(id, id, "仓位移动主单不存在, 撤回流程失败");
+                    resultDTOS.add(cancelResult);
+                    continue;
+                }
+                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(cancelResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
      * 作废
      * @author Luo_WG
      * @date: 2023/5/10 20:11

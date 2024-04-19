@@ -618,6 +618,37 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
+  /**
+    * 撤销
+    */
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO pcCancelProcess(String id) {
+        WarehouseLocationMoveDetailEntity warehouseLocationMoveDetailEntity = warehouseLocationMoveDetailService.getById(id);
+        String mainId = warehouseLocationMoveDetailEntity.getMainId();
+        WarehouseLocationMoveInfoEntity entity = super.getByIdOpt(mainId).orElseThrow(() -> new ServiceException("未找到仓位移动主单数据"));
+        // 只有审核中的单据允许撤销
+        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        // TODO 撤销流程
+        log.info("撤销 开始撤销流程，id：【{}】",mainId);
+
+        log.info("撤销 开始修改仓位移动主单状态，id：【{}】", mainId);
+        updateApproveStatus(mainId, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+        //操作日志
+        log.info("撤销 开始记录操作日志，id：【{}】", mainId);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "仓位移动主单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), mainId, "取消流程操作");
+        ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setBusinessId(entity.getId());
+        revokeDTO.setBusinessKey(ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
+        revokeDTO.setUserId(commonService.getUserInfo().getUid());
+        workflowFeign.revokeProcess(revokeDTO);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
