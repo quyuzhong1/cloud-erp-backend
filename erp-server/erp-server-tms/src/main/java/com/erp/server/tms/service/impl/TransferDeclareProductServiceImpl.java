@@ -127,7 +127,7 @@ public class TransferDeclareProductServiceImpl extends SuperServiceImpl<Transfer
             TransferDeclareProductEntity entity = new TransferDeclareProductEntity();
             BeanUtil.copyProperties(transferDeclareProductDTO, entity);
             entity.setFromDeclarePrice(transferDeclareProductDTO.getDeclarePrice());
-            entity.setFromCurrency(transferDeclareProductDTO.getCurrency());
+            entity.setFromCurrency(transferDeclareProductDTO.getDeclareCurrency());
             entity.setToDeclarePrice(transferDeclareProductDTO.getDestDeclarePrice());
             entity.setToCurrency(transferDeclareProductDTO.getDestCurrency());
             TransferDeclareDetailEntity transferDeclareDetailEntity = detailEntityMap.get(transferDeclareProductDTO.getSoId());
