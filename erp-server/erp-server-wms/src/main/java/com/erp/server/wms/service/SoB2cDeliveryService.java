@@ -84,6 +84,14 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      **/
     List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids);
 
+    /**
+     * 打印拣货单
+     * @Author Luo_WG
+     * @Date 2023/12/19 16:12
+     * @param ids
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    Boolean printPicking(List<String> ids);
 
     /**
      * 取消打印拣货单

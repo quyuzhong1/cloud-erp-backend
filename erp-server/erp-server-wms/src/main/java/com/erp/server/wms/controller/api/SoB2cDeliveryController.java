@@ -279,6 +279,19 @@ public class SoB2cDeliveryController extends BaseController {
     public ApiResult<List<SoB2cDeliveryDTO.PrintPickingViewDTO>> printPickingView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(soB2cDeliveryService.printPickingView(dto.getIds()));
     }
+    /**
+     * 打印拣货单
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/12/19 16:12
+     **/
+    @PostMapping("/printPicking")
+    public ApiResult printPicking(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = soB2cDeliveryService.printPicking(dto.getIds());
+        return flag ? success() : failure();
+    }
 
     /**
      * 取消打印拣货单
