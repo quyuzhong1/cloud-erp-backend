@@ -849,6 +849,21 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     }
 
+    @Override
+    public Boolean updateB2cDeliveryWeightBySoId(SoB2cDeliveryDTO.UpdateWeightDTO dto) {
+        List<SoB2cDeliveryEntity> deliveryEntityList = this.listBySoB2cId(dto.getSoId());
+        SoB2cDeliveryEntity deliveryEntity= deliveryEntityList.stream().filter(v->!v.getStatus().equals(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())).findFirst().orElse(null);
+        if(Objects.isNull(deliveryEntity)){
+            return false;
+        }
+        String msg = StrUtil.format("用户【{}】更新重量为{} ", commonService.getUserInfo().getUserName(),dto.getWeight()+dto.getWeightUnit());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), deliveryEntity.getId(), msg);
+        deliveryEntity.setWeight(dto.getWeight());
+        deliveryEntity.setWeightUnit(dto.getWeightUnit());
+        deliveryEntity.setIsWeigh(true);
+        return updateById(deliveryEntity);
+    }
+
     private List<SoB2cDeliveryEntity> listBySoB2cId(String soB2cId) {
         return this.lambdaQuery().eq(SoB2cDeliveryEntity::getSourceId, soB2cId).list();
     }

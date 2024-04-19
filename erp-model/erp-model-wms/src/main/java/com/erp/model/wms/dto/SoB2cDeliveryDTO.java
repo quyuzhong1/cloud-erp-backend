@@ -4,6 +4,7 @@ import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -118,6 +119,22 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 详情
          */
         private List<SoB2cDeliveryDetailDTO.ViewDTO> detailList;
+    }
+
+    /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class UpdateWeightDTO {
+
+        private String soId;
+
+        private BigDecimal weight;
+
+        private String weightUnit;
     }
 
     /**

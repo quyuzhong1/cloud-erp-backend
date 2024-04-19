@@ -700,7 +700,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @author Lambda
      * @create 2024-01-26 15:26
      */
-    PackageDTO.ScanResultDTO packageScan(String code);
+    PackageDTO.ScanResultDTO packageScan(PackageDTO.ScanDTO code);
     /**
      * 组包分页
      * @description

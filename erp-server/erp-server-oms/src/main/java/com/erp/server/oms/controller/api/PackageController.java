@@ -45,9 +45,9 @@ public class PackageController extends BaseController {
      * @author Lambda
      * @create 2024-01-26 14:35
      */
-    @GetMapping("/scan")
-    public ApiResult<PackageDTO.ScanResultDTO> scan(@RequestParam("code") String code) {
-        PackageDTO.ScanResultDTO scanResultDTO = soB2cService.packageScan(code);
+    @PostMapping("/scan")
+    public ApiResult<PackageDTO.ScanResultDTO> scan(@RequestBody @Validated PackageDTO.ScanDTO dto) {
+        PackageDTO.ScanResultDTO scanResultDTO = soB2cService.packageScan(dto);
         return success(scanResultDTO);
     }
 

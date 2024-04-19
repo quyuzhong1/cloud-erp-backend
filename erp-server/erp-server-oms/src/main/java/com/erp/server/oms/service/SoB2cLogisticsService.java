@@ -125,4 +125,6 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
     * @return java.util.List<com.erp.model.oms.entity.SoB2cLogisticsEntity>
     **/
    SoB2cLogisticsEntity getSoB2cLogisticsByTrackNo(String trackNo);
+
+    Boolean updateWeight(String soId,String logisticsId, BigDecimal weightByG);
 }

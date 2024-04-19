@@ -97,6 +97,19 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             }
             String msg = StrUtil.format("用户【{}】更新【{}】单据单号为【{}】称重出库完成", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "称重出库");
+
+            //转成g
+            BigDecimal weightByG = dto.getWeight();
+            if(UnitEnum.WeightUnitEnum.KG.getCode().equals(dto.getWeightUnit())){
+                weightByG = dto.getWeight().multiply(BigDecimal.valueOf(1000));
+            }
+
+            //更新B2c物流订单重量
+            List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
+            for (SoB2cLogisticsEntity v : soB2cLogisticsEntityList) {
+                v.setWeight(weightByG);
+            }
+            soB2cFeign.batchUpdateLogistics(soB2cLogisticsEntityList);
         }
         //自动发货
         if (isAutoDelivery && entity.getIsWeigh()) {

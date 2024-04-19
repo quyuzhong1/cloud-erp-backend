@@ -703,6 +703,7 @@
            sb.code AS soCode,
            sb.bill_status AS billStatus,
            sb.package_status AS packageStatus,
+           sbl.id as logisticsId,
            sbl.logistics_channel_id AS logisticsChannelId,
            sbl.track_no AS trackNo,
            sbl.code AS transportNo,
@@ -713,8 +714,11 @@
          WHERE sb.is_deleted = FALSE
          AND (sb.code = #{code}
                   OR
-              #{code} = ANY(string_to_array(sbl.code,','))
+              #{code} = ANY(string_to_array(sbl.track_no,','))
+             OR
+              #{code} = sbl.code
              )
+         limit 1
     </select>
 
     <!--分拨组包 分页-->

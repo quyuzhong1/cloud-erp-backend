@@ -174,4 +174,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @create 2024-01-26 10:17
      */
     void generateB2cSoOutstock(SoB2cDeliveryEntity entity);
+
+    Boolean updateB2cDeliveryWeightBySoId(SoB2cDeliveryDTO.UpdateWeightDTO dto);
 }
