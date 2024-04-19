@@ -56,8 +56,9 @@ public class TikTokShipOrder implements IPlatformService {
 
         List<SoB2cDetailDTO.ViewDTO> detailList = view.getDetailList();
         List<String> sourceDetailIds = detailList.stream()
-                .filter(req -> StringUtils.isBlank(req.getSourcePlatform()))
-                .map(req -> req.getSourceDetailId())
+                .filter(req -> StringUtils.isBlank(req.getSourcePlatform())
+                        && StringUtils.isNotBlank(req.getSourceDetailId())
+                ).map(req -> req.getSourceDetailId())
                 .distinct()
                 .collect(Collectors.toList());
         //获取销售渠道信息
