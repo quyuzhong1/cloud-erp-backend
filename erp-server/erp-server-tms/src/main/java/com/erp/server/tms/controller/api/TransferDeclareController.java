@@ -17,7 +17,10 @@ import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareEntity;
+import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
+import com.erp.server.tms.service.TransferDeclareDetailService;
 import com.erp.server.tms.service.TransferDeclareService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -26,7 +29,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 中转报关表
@@ -42,6 +47,9 @@ public class TransferDeclareController extends BaseController {
 
     @Resource
     private TransferDeclareService transferDeclareService;
+
+    @Resource
+    private TransferDeclareDetailService transferDeclareDetailService;
 
     /**
      * 分页列表查询
@@ -106,9 +114,21 @@ public class TransferDeclareController extends BaseController {
             menuCode = "tms:transferDeclare:update",
             serviceClass = TransferDeclareService.class,
             keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated TransferDeclareDTO.UpdateDTO dto) {
-        transferDeclareService.update(dto);
-        return success();
+    public ApiResult update(@RequestBody @Validated TransferDeclareDTO.UpdateDTO dto) {
+        Boolean flag = transferDeclareService.update(dto);
+        if (flag) {
+            //如果明细有移除需要根据明细上传状态修改主表上传状态
+            List<TransferDeclareDetailEntity> detailEntities = transferDeclareDetailService.listByMainIds(Arrays.asList(dto.getId()));
+            List<String> orderUploadStatusList = detailEntities.stream().map(req -> req.getOrderUploadStatus()).distinct().collect(Collectors.toList());
+            if (orderUploadStatusList.contains(TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
+                transferDeclareService.updateUploadStatus(dto.getId(), TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode());
+            } else if (orderUploadStatusList.contains(TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode())) {
+                transferDeclareService.updateUploadStatus(dto.getId(), TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode());
+            } else {
+                transferDeclareService.updateUploadStatus(dto.getId(), TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+            }
+        }
+        return flag ? success() : failure();
     }
 
     /**
@@ -277,7 +297,7 @@ public class TransferDeclareController extends BaseController {
     @PostMapping(value = "/retryOrderForecast")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:TransferDeclareService:retryOrderForecast",
+            menuCode = "tms:transferDeclare:upload",
             tableAlias = "td"
     )
     public ApiResult<List<BatchResultDTO>> retryOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -312,7 +332,7 @@ public class TransferDeclareController extends BaseController {
     @PostMapping(value = "/instockForecast")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:TransferDeclareService:instockForecast",
+            menuCode = "tms:transferDeclare:instockForecast",
             tableAlias = "td"
     )
     public ApiResult<List<BatchResultDTO>> instockForecast(@RequestBody @Validated List<BaseDTO.QtyDTO> dtos) {

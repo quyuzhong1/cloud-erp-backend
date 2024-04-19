@@ -124,4 +124,49 @@
             ${params.permissionSql}
         </if>
     </select>
+    
+    <select id="getDataCompareByCondition" resultType="com.erp.model.wms.dto.WmsDataCompareTaskDTO$FbaShipmentDTO">
+		 SELECT h.id,T.code,
+			T.shop_name,
+			G.sku_no,
+			G.msku,
+			h.receive_qty::VARCHAR receive_qty,
+			TO_CHAR(h.receive_date , 'YYYY-MM-DD') receive_date
+		FROM
+			fba_shipment
+			T LEFT JOIN fba_shipment_detail G ON T.ID = G.main_id 
+			left join fba_shipment_receive h on g.id = h.detail_id 
+		<include refid="FbaDataCompareByCondition"/>
+		 order by h.id limit #{pageSize}
+    </select>
+    
+    <select id="getDataCompareByConditionCount" resultType="java.lang.Integer">
+		 SELECT count(h.id)
+		FROM
+			fba_shipment
+			T LEFT JOIN fba_shipment_detail G ON T.ID = G.main_id 
+			left join fba_shipment_receive h on g.id = h.detail_id 
+		<include refid="FbaDataCompareByCondition"/>
+    </select>
+    
+    <sql id="FbaDataCompareByCondition">
+    	WHERE
+			T.is_deleted = 'f' 
+			AND G.is_deleted = 'f' 
+			and h.is_deleted = 'f' 
+			<if test="params.id!=null and params.id!=''">
+			and h.id > #{params.id}
+			</if>
+			<if test="params.receiveDateList !=null and params.receiveDateList.size>0">
+            AND h.receive_date >= #{params.receiveDateList[0]} and
+            (#{params.receiveDateList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > h.receive_date
+        	</if>
+        	<if test="params.shopName!=null and params.shopName!=''">
+            AND t.shop_name = #{params.shopName}
+        	</if>
+			<if test="params.taskId!=null and params.taskId!=''">
+            and not exists (select id from wms_data_compare_temp where system_data_id = h.id and task_id = #{params.taskId})
+        	</if>
+	</sql>
 </mapper>

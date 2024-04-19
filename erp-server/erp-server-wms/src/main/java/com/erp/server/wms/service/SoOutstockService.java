@@ -9,6 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -424,4 +425,5 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @date 2024-03-07
      */
     Boolean defaultHandleRetry(String soB2cId, List<SoB2cEntity> instantList);
+    
 }

@@ -98,6 +98,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "extendData", source = "dto.extendData"),
             @Mapping(target = "shopId",source = "dto.shopId"),
             @Mapping(target = "platformOrderCreateTime",source = "dto.platformOrderCreateTime"),
+            @Mapping(target = "remark", expression = "java(org.apache.commons.lang3.StringUtils.isBlank(oldEntity.getRemark()) ? dto.getRemark() : oldEntity.getRemark())"),
             // 历史实体
             @Mapping(target = "exchangeRate", source = "oldEntity.exchangeRate"),
             @Mapping(target = "code", source = "oldEntity.code"),
@@ -105,7 +106,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "platformCode", source = "oldEntity.platformCode"),
             @Mapping(target = "dictPlatform", source = "oldEntity.dictPlatform"),
             //@Mapping(target = "shopId", source = "oldEntity.shopId"),
-            @Mapping(target = "remark", source = "dto.remark"),
+            @Mapping(target = "remark", source = "oldEntity.remark"),
             @Mapping(target = "orgId", source = "oldEntity.orgId"),
             @Mapping(target = "orgName", source = "oldEntity.orgName"),
             @Mapping(target = "isIntercept", source = "oldEntity.isIntercept"),

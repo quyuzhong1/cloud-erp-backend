@@ -4,6 +4,7 @@ package com.erp.server.tms.rocketmq;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.service.LogisticsBillService;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,11 +34,16 @@ public class PlatformLabelPrintConsumerService implements RocketMQListener<Logis
     @Override
     public void onMessage(LogisticsBillDTO.PrintLogisticsWaybillDTO dto) {
         List<SoB2cDTO.WaybillDTO> waybillDTOList = logisticsBillService.printLogisticsWaybill(Arrays.asList(dto));
+        List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
         for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
-            LogisticsBillDTO.SoB2cLabelDTO soB2cLabelDTO = new LogisticsBillDTO.SoB2cLabelDTO();
-            soB2cLabelDTO.setSoB2cId(waybillDTO.getSoB2cId());
-            soB2cLabelDTO.setLogisticsBase64(StringUtils.join(waybillDTO.getLogisticsBase64(), ","));
-            soB2cFeign.updateLogisticsLabelBase64ById(Arrays.asList(soB2cLabelDTO));
+            for (String labelBase : waybillDTO.getDistributeBase64()) {
+                SoB2cLabelDTO.UpdateDTO updateDTO = new SoB2cLabelDTO.UpdateDTO();
+                updateDTO.setLogisticsLabelBase64(labelBase);
+                updateDTO.setMainId(waybillDTO.getSoB2cId());
+                dtoList.add(updateDTO);
+            }
         }
+        soB2cFeign.saveSoB2cLabel(dtoList);
     }
+
 }

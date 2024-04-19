@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -30,6 +31,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
@@ -58,6 +60,8 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -103,7 +107,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, SoOutstockEntity> implements SoOutstockService {
+public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, SoOutstockEntity> implements SoOutstockService , WmsDataCompareDbService<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> {
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -167,6 +171,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private SoB2cFeign soB2cFeign;
 
     @Resource
+    private ShopInfoFeign shopInfoFeign;
+    
+    @Resource
     private TransferDeclareFeign transferDeclareFeign;
 
     @Resource
@@ -177,6 +184,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private StocktakingProfitLossService stocktakingProfitLossService;
+    
+    @Resource
+    private OmsListingInfoFeign omsListingInfoFeign;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -2482,4 +2492,53 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
     }
 
+	@Override
+	public List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> getDataCompareByCondition(
+			com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params , Integer pageSize) {
+		if("0".equals(params.getId())) {
+			this.getParams(params);
+		}
+		return baseMapper.getDataCompareByCondition(params , pageSize);
+	}
+	
+	@Override
+	public Integer getDataCompareByConditionCount(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params) {
+		this.getParams(params);
+		return baseMapper.getDataCompareByConditionCount(params);
+	}
+	
+	private void getParams(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params) {
+		if(StringUtils.isBlank(params.getDictPlatform())) {
+			throw new ServiceException("销售出库单的系统数据范围【销售平台】不能为空");
+		}
+		
+		if(CollUtil.isEmpty(params.getBillDateList())) {
+			throw new ServiceException("销售出库单的系统数据范围【出库日期】不能为空");
+		}
+		
+		List<String> customerIdList = new ArrayList<>();
+		String shopId = params.getShopId();
+		if(StringUtils.isNotBlank(shopId)) {
+			ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
+			customerIdList.add(shopInfoEntity.getCustomerId());
+		}else {
+			ApiResult<List<ShopInfoEntity>> list = shopInfoFeign.list();
+			customerIdList = list.getData().stream().filter(s -> s.getCustomerId() != null).map(ShopInfoEntity::getCustomerId).collect(Collectors.toList());
+		}
+		
+		List<CustomerInfoEntity> customerInfoEntityList = customerFeign.listCustomerByIds(customerIdList);
+		List<String> customerNameList = customerInfoEntityList.stream().filter(c -> StringUtils.isNotBlank(c.getName())).map(CustomerInfoEntity::getName).collect(Collectors.toList());
+		if(CollUtil.isEmpty(customerNameList)) {
+			throw new ServiceException("选择的店铺未配置客户信息");
+		}
+		params.setCustomerNameList(customerNameList);
+		
+		String warehouseId = params.getWarehouseId();
+		if(StringUtils.isNotBlank(warehouseId)) {
+			WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
+			if(warehouseEntity != null) {
+				params.setWarehouseName(warehouseEntity.getName());
+			}
+		}
+	}
 }

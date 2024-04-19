@@ -21,6 +21,7 @@ import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.tms.dto.*;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
@@ -844,4 +845,11 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 计算明细重量
      */
     List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> detailList, List<SkuInfoSimpleVO> skuList);
+
+    /**
+     * 根据条件获取数据对比系统数据
+     * @param params
+     * @return
+     */
+    List<WmsDataCompareTaskDTO.SoB2cDTO> getDataCompareByCondition(WmsDataCompareTaskDTO.SoOutstockDTO params);
 }

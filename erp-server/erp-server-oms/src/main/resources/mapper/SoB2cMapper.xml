@@ -789,4 +789,32 @@
             </foreach>
         </if>
     </select>
+    
+    <select id="getDataCompareByCondition" resultType="com.erp.model.wms.dto.WmsDataCompareTaskDTO$SoB2cDTO">
+		SELECT T.code,
+			T.dict_platform,
+			h.NAME shop_name,
+			G.sku_no,
+			G.platform_sku_no
+		FROM
+			so_b2c
+			T LEFT JOIN so_b2c_detail G ON T.ID = G.main_id
+			LEFT JOIN shop_info h ON T.shop_id = h.ID 
+		WHERE
+			T.is_deleted = 'f' 
+			AND G.is_deleted = 'f' 
+			AND H.is_deleted = 'f'
+			<if test="params.soCodeList !=null and params.soCodeList.size>0">
+            AND t.code IN
+            <foreach collection="params.soCodeList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        	</if>
+        	<if test="params.dictPlatform!=null and params.dictPlatform!=''">
+            AND T.dict_platform = #{params.dictPlatform}
+        	</if>
+			<if test="params.shopName!=null and params.shopName!=''">
+            AND h.name = #{params.shopName}
+        	</if>
+    </select>
 </mapper>
