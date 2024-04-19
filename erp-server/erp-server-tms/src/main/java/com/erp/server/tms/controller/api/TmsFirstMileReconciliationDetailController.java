@@ -115,10 +115,6 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
             case CONFIG:
                 String supplierId =  tmsFirstMileReconciliationService.checkAndGetSupplier(dto.getId());
                 LinkedList<String> headerNameList = cfgReconciliationFieldService.thirdFieldListName(Collections.singletonList(CfgReconciliationTypeEnum.FIRST_MILE.getCode()), supplierId, true);
-                // 不存在添加运单号作为第一个元素
-                if (!headerNameList.contains("物流运单号")){
-                    headerNameList.addFirst("物流运单号");
-                }
                 // 去重
                 String configExcelName = "templateConfig.xlsx";
                 ExcelUtil.downloadDynamicTemplate(headerNameList, configExcelName, response);

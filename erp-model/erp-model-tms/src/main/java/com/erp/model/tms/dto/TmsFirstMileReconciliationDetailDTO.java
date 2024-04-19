@@ -134,6 +134,11 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private String currency;
 
         /**
+         * 币别名称
+         */
+        private String currencyName;
+
+        /**
          * 币别符号
          */
         private String currencySymbol;
@@ -265,6 +270,11 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 币别
          */
         private String currency;
+
+        /**
+         * 币别名称
+         */
+        private String currencyName;
 
         /**
          * 币别符号

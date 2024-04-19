@@ -354,7 +354,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     }
 
     @Override
-    public void fillDetailList(List<TmsFirstMileReconciliationDetailDTO.ListDTO> viewDTOList, String currency, String currencySymbol) {
+    public void fillDetailList(List<TmsFirstMileReconciliationDetailDTO.ListDTO> viewDTOList, String currency, CurrencyDTO.ViewDTO currencyViewDTO) {
         if (CollectionUtils.isEmpty(viewDTOList)) {
             return;
         }
@@ -415,7 +415,13 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             // 对账状态
             viewDTO.setStatusName(ReconciliationStatusEnum.getName(viewDTO.getStatus()));
             // 明细币别
-            viewDTO.setCurrencySymbol(currencySymbol);
+            if (null != currencyViewDTO){
+                viewDTO.setCurrencySymbol(currencyViewDTO.getSymbol());
+                viewDTO.setCurrencyName(currencyViewDTO.getName());
+            } else {
+                viewDTO.setCurrencySymbol("");
+                viewDTO.setCurrencyName("");
+            }
             if (StringUtils.isBlank(viewDTO.getCurrency())){
                 viewDTO.setCurrency(currency);
             }
@@ -770,7 +776,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
      * 标准版导入数据处理
      */
     private List<TmsFirstMileReconciliationDetailDTO.ListDTO> handleImportStandardData(List<FirstMileReconciliationStandardExcelDTO> successList,
-                                                                                       List<FirstMileReconciliationStandardExcelDTO> errorList, TmsFirstMileReconciliationEntity mainEntity) {
+                                                                                       List<FirstMileReconciliationStandardExcelDTO> errorList,
+                                                                                       TmsFirstMileReconciliationEntity mainEntity) {
         if (CollectionUtils.isEmpty(successList)) {
             return Collections.emptyList();
         }
@@ -778,7 +785,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> resultMap = new HashMap<>();
         // 币种
         String currency = mainEntity.getCurrency();
-        String currencySymbol = this.getCurrencySymbol(currency);
+        CurrencyDTO.ViewDTO currencyView = this.getCurrencyView(currency);
         // 对应物流单(可能未保存)
         List<String> transportNoList = successList.stream().map(FirstMileReconciliationStandardExcelDTO::getTransportNo).distinct().collect(Collectors.toList());
 
@@ -798,7 +805,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> viewDTOList = BeanMapperUtils.copyList(TmsFirstMileReconciliationDetailDTO.ListDTO.class, oldDetailList);
         // 补充基础信息
-        this.fillDetailList(viewDTOList, currency, currencySymbol);
+        this.fillDetailList(viewDTOList, currency, currencyView);
 
         // 按分组Map<物流运单号, Map<来源物流ID, 当前明细数组>>
 //        Map<String, Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>>> oldDbGroupMap = viewDTOList
@@ -941,9 +948,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     }
 
     @Override
-    public String getCurrencySymbol(String currency) {
+    public CurrencyDTO.ViewDTO getCurrencyView(String currency) {
         if (StringUtils.isBlank(currency)) {
-            return currency;
+            return null;
         }
 
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Collections.singletonList(currency));
@@ -952,8 +959,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .stream()
                 .filter(obj -> StrUtil.equals(obj.getId(), currency))
                 .findFirst()
-                .flatMap(obj -> Optional.ofNullable(obj.getSymbol()))
-                .orElse("");
+                .orElse(null);
 
     }
 
@@ -1135,7 +1141,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
         // 币种
         String currency = mainEntity.getCurrency();
-        String currencySymbol = this.getCurrencySymbol(currency);
+        CurrencyDTO.ViewDTO currencyViewDTO = this.getCurrencyView(currency);
 
         //物流运单号下标
         List<String> transportNoList = new ArrayList<>();
@@ -1168,7 +1174,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> viewDTOList = BeanMapperUtils.copyList(TmsFirstMileReconciliationDetailDTO.ListDTO.class, oldDetailList);
         // 补充基础信息
-        this.fillDetailList(viewDTOList, currency, currencySymbol);
+        this.fillDetailList(viewDTOList, currency, currencyViewDTO);
 
         // 按分组Map<物流运单号, Map<来源物流ID, 当前明细数组>>
 //        Map<String, Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>>> oldDbGroupMap = viewDTOList

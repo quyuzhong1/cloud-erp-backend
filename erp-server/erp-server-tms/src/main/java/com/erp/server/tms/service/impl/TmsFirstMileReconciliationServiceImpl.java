@@ -419,19 +419,12 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
-        String currencySymbol = "";
-        String currency = "";
+        CurrencyDTO.ViewDTO currencyView = null;
+        String currency = data.getCurrency();
         if (StringUtils.isNotBlank(data.getCurrency())) {
-            currency = data.getCurrency();
-            List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Collections.singletonList(data.getCurrency()));
-            //币别符号
-            currencySymbol = currencyList
-                    .stream()
-                    .filter(obj -> StrUtil.equals(obj.getId(), data.getCurrency()))
-                    .findFirst()
-                    .flatMap(obj -> Optional.ofNullable(obj.getSymbol()))
-                    .orElse("");
-            data.setCurrencySymbol(currencySymbol);
+            currencyView = tmsFirstMileReconciliationDetailService.getCurrencyView(currency);
+            data.setCurrencySymbol(null == currencyView ? "" : currencyView.getSymbol());
+            data.setCurrencyName(null == currencyView ? "" : currencyView.getName());
         }
         LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(data.getLogisticsSupplierId());
         if (null != supplierEntity){
@@ -448,7 +441,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> viewDTOList = BeanMapperUtils.copyList(TmsFirstMileReconciliationDetailDTO.ListDTO.class, detailEntityList);
 
-        tmsFirstMileReconciliationDetailService.fillDetailList(viewDTOList, currency, currencySymbol);
+        tmsFirstMileReconciliationDetailService.fillDetailList(viewDTOList, currency, currencyView);
 
         data.setDetailList(viewDTOList);
 
@@ -532,13 +525,13 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
             //对账周期
             data.setCycle(StrUtil.format("{}-{}", data.getStartDate(), data.getEndDate()));
             //币别符号
-            String currencySymbol = currencyList
+            CurrencyDTO.ViewDTO viewDTO = currencyList
                     .stream()
                     .filter(obj -> StrUtil.equals(obj.getId(), data.getCurrency()))
                     .findFirst()
-                    .flatMap(obj -> Optional.ofNullable(obj.getSymbol()))
-                    .orElse("");
-            data.setCurrencySymbol(currencySymbol);
+                    .orElse(null);
+            data.setCurrencySymbol(null == viewDTO ? "" : viewDTO.getSymbol());
+            data.setCurrencyName(null == viewDTO ? "" : viewDTO.getName());
 
             LogisticsSupplierEntity supplierEntity = supplierMap.get(data.getLogisticsSupplierId());
             if (null != supplierEntity){

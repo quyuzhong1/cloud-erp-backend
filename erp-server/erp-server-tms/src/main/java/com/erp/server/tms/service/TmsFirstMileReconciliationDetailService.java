@@ -1,6 +1,7 @@
 package com.erp.server.tms.service;
 
 import com.common.business.vo.PagingVO;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
@@ -113,7 +114,7 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      * @author Jim
      * @date: 2024-03-25
      */
-    void fillDetailList(List<TmsFirstMileReconciliationDetailDTO.ListDTO> viewDTOList, String currency, String currencySymbol);
+    void fillDetailList(List<TmsFirstMileReconciliationDetailDTO.ListDTO> viewDTOList, String currency, CurrencyDTO.ViewDTO currencyViewDTO);
 
     /**
      * 根据来源IDS返回:预估/实际/差异
@@ -127,7 +128,7 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
 
     void fillWaitReconciliationList(List<? extends TmsFirstMileReconciliationDetailDTO.ListDTO> records);
 
-    String getCurrencySymbol(String currency);
+    CurrencyDTO.ViewDTO getCurrencyView(String currency);
 
     void checkRemoveByMainId(String id);
 
