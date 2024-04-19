@@ -126,11 +126,11 @@ public class CfgReconciliationFieldController extends BaseController {
      */
     @LogViewService
     @GetMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
-            menuCode = "wms:cfgReconciliationField:view",
-            serviceClass = TmsFirstMileReconciliationService.class,
-            keyIdName = "id")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "warehouse_keeper_id",
+//            menuCode = "wms:cfgReconciliationField:view",
+//            serviceClass = TmsFirstMileReconciliationService.class,
+//            keyIdName = "id")
     public ApiResult<CfgReconciliationFieldDTO.ViewDTO> view(@RequestParam("id") String id) {
         CfgReconciliationFieldDTO.ViewDTO dto = cfgReconciliationFieldService.view(id);
         return success(dto);
