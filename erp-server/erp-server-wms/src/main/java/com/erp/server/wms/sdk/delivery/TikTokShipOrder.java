@@ -15,6 +15,9 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
+import com.sdk.oms.tiktok.dto.tiktok.ship.SelfShipmentBean;
+import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderOtherParam;
+import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderUS;
 import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderUSParam;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import lombok.extern.slf4j.Slf4j;
@@ -57,23 +60,30 @@ public class TikTokShipOrder implements IPlatformService {
                 .map(req -> req.getSourceDetailId())
                 .distinct()
                 .collect(Collectors.toList());
-
+        //获取销售渠道信息
+        LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = logisticsFeign.getScaleChannelByChannelById(
+                view.getLogisticsDTO().getLogisticsChannelId(),
+                PlatformDictEnum.TIK_TOK.getCode()
+        );
+        if (null == tmsScaleChannelShipDTO){
+            throw new ServiceException("找不到渠道信息");
+        }
         if ("US".equalsIgnoreCase(tikTokShopInfoDTO.getSite())) {
             ShipOrderUSParam paramDTO = new ShipOrderUSParam();
-            //获取销售渠道信息
-            LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = logisticsFeign.getScaleChannelByChannelById(
-                    view.getLogisticsDTO().getLogisticsChannelId(),
-                    PlatformDictEnum.TIK_TOK.getCode()
-            );
-            if (null == tmsScaleChannelShipDTO){
-                throw new ServiceException("找不到渠道信息");
-            }
             paramDTO.setTrackingNumber(view.getLogisticsDTO().getCode());
             paramDTO.setOrderLineItemIds(sourceDetailIds);
-            paramDTO.setShippingProviderId("");
-            tikTokSdkClientService.sendTikTokShipOrderUS(tikTokShopInfoDTO, view.getPlatformCode(), paramDTO);
+            paramDTO.setShippingProviderId(tmsScaleChannelShipDTO.getPlatformChannelId());
+            ShipOrderUS shipOrderUS = tikTokSdkClientService.sendTikTokShipOrderUS(tikTokShopInfoDTO, view.getPlatformCode(), paramDTO);
+            if (shipOrderUS.getCode() != 0) {
+                throw new ServiceException("TikTok标记发货失败");
+            }
         } else {
-
+            ShipOrderOtherParam paramDTO = new ShipOrderOtherParam();
+            SelfShipmentBean selfShipmentBean = new SelfShipmentBean();
+            selfShipmentBean.setTrackingNumber(view.getLogisticsDTO().getCode());
+            selfShipmentBean.setShippingProviderId(tmsScaleChannelShipDTO.getPlatformChannelId());
+            paramDTO.setSelfShipment(selfShipmentBean);
+            tikTokSdkClientService.sendTikTokShipOrderOther(tikTokShopInfoDTO, view.getLogisticsDTO().getPlatformPackageId(), paramDTO);
         }
 
     }

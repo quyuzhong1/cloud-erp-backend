@@ -48,6 +48,11 @@ public class SoB2cLogisticsDTO implements Serializable {
          * 包装辅料sku编码
          */
         private String accessoriesSkuNo;
+
+        /**
+         * 第三方平台订单包裹号
+         */
+        private String platformPackageId;
     }
 
     @Data
