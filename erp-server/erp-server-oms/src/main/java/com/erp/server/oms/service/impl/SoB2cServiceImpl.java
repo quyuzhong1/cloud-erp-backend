@@ -2736,7 +2736,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //产品信息
         List<String> skuIdList = data.getDetailList().stream().map(SoB2cDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         Map<String, SkuVO> skuVOMap = new HashMap<>();
-        List<SkuVO> skuList = plmTaskFeign.getSkuBaseByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuBaseByIds(skuIdList);
         if (CollectionUtils.isNotEmpty(skuList)) {
             skuVOMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
         }
@@ -2872,7 +2872,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //产品信息
         List<String> skuIdList = list.stream().flatMap(obj -> Stream.of(allDetailList.stream().map(SoB2cDetailEntity::getSkuId).toArray(String[]::new))).distinct().collect(Collectors.toList());
         Map<String, SkuVO> skuVOMap = new HashMap<>();
-        List<SkuVO> skuList = plmTaskFeign.getSkuBaseByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuBaseByIds(skuIdList);
         if (!CollectionUtils.isEmpty(skuList)) {
             skuVOMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
         }
@@ -3185,7 +3185,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //产品详细
         List<String> skuIdList = mergeMainList.stream().map(SoB2cDTO.MergeMainDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuBaseByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuBaseByIds(skuIdList);
         if (CollectionUtils.isEmpty(skuList)) {
             log.error("未发现产品详细，skuIdList = {}", skuIdList);
             throw new ServiceException(ApiError.ERROR_95084);
@@ -4583,7 +4583,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BigDecimal accessoriesCost = BigDecimal.ZERO;
         String accessoriesSkuId = soB2cLogisticsEntity.getAccessoriesSkuId();
         if (StringUtils.isNotBlank(soB2cLogisticsEntity.getAccessoriesSkuId())) {
-            List<SkuVO> list = plmTaskFeign.getSkuCostByIds(Arrays.asList(accessoriesSkuId));
+            List<SkuVO> list = plmTaskFeign.listSkuCostByIds(Arrays.asList(accessoriesSkuId));
             if (CollectionUtils.isNotEmpty(list)) {
                 accessoriesCost = MathUtil.multiply(list.get(0).getTargetTaxCost(), soB2cLogisticsEntity.getAccessoriesQty());
             }

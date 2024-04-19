@@ -307,7 +307,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
 
         //产品信息
         List<String> skuIds = sourceDetailList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuBaseByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuBaseByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
@@ -383,7 +383,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             throw new ServiceException(ApiError.ERROR_95163);
         }
         //产品信息
-        List<SkuVO> skuList = plmTaskFeign.getSkuBaseByIds(allSkuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuBaseByIds(allSkuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }

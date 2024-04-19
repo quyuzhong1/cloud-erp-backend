@@ -447,22 +447,22 @@ public class ProductSkuFeignController {
      * @author zdy
      * @date 2023-03-21 12:06
      */
-    @PostMapping("/getSkuBaseByIds")
-    public List<SkuVO> getSkuBaseByIds(@RequestBody List<String> skuIds) {
-        List<SkuVO> skuList = productDetailService.getSkuBaseByIds(skuIds);
+    @PostMapping("/listSkuBaseByIds")
+    public List<SkuVO> listSkuBaseByIds(@RequestBody List<String> skuIds) {
+        List<SkuVO> skuList = productDetailService.listSkuBaseByIds(skuIds);
         return skuList;
     }
     /**
-     * 根据skuid 集合获取到sku基础信息 + 费用信息
+     * 根据skuid 集合获取到sku基础信息 + 采购信息（产品采购信息+产品采购含税单价）
      *
      * @param skuIds
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      * @author zdy
      * @date 2023-03-21 12:06
      */
-    @PostMapping("/getSkuCostByIds")
-    public List<SkuVO> getSkuCostByIds(@RequestBody List<String> skuIds) {
-        List<SkuVO> skuList = productDetailService.getSkuCostByIds(skuIds);
+    @PostMapping("/listSkuCostByIds")
+    public List<SkuVO> listSkuCostByIds(@RequestBody List<String> skuIds) {
+        List<SkuVO> skuList = productDetailService.listSkuCostByIds(skuIds);
         return skuList;
     }
 }

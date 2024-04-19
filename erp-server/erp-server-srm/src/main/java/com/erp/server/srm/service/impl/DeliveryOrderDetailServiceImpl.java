@@ -160,7 +160,7 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         List<DeliveryOrderDetailEntity> detailEntityList = this.lambdaQuery().in(DeliveryOrderDetailEntity::getMainId, mainIds).list();
         List<DeliveryOrderDetailDTO.PrintDTO> printDTOList = BeanMapperUtils.copyList(DeliveryOrderDetailDTO.PrintDTO.class, detailEntityList);
         List<String> skuIdList = detailEntityList.stream().map(DeliveryOrderDetailEntity::getSkuId).collect(Collectors.toList());
-        Map<String,SkuVO> skuMap = plmTaskFeign.getSkuBaseByIds(skuIdList).stream().collect(Collectors.toMap(SkuVO::getSkuId,Function.identity(),(v1, v2)->v1));
+        Map<String,SkuVO> skuMap = plmTaskFeign.listSkuBaseByIds(skuIdList).stream().collect(Collectors.toMap(SkuVO::getSkuId,Function.identity(),(v1, v2)->v1));
         printDTOList.forEach(v->{
             SkuVO skuVO = skuMap.get(v.getSkuId());
             if(Objects.nonNull(skuVO)){

@@ -723,7 +723,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         }
         //产品信息
         List<String> skuIds = subcontractChangeDetailList.stream().map(SubcontractChangeDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuBaseByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuBaseByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }

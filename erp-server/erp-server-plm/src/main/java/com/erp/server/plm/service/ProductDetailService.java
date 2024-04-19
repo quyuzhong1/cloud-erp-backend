@@ -653,7 +653,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param skuIds
      * @return
      */
-    List<SkuVO> getSkuBaseByIds(List<String> skuIds);
+    List<SkuVO> listSkuBaseByIds(List<String> skuIds);
     /**
      * @description: 远程搜索包装辅料SKU
      * @author Will
@@ -670,5 +670,5 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @author zdy
      * @date 2023-03-21 12:06
      */
-    List<SkuVO> getSkuCostByIds(List<String> skuIds);
+    List<SkuVO> listSkuCostByIds(List<String> skuIds);
 }

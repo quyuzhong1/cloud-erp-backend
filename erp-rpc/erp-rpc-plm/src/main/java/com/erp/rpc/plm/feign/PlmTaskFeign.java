@@ -507,8 +507,8 @@ public interface PlmTaskFeign {
      * @author yl
      * @date 2023-03-21 12:06
      */
-    @PostMapping("feign/product/getSkuBaseByIds")
-    List<SkuVO> getSkuBaseByIds(@RequestBody List<String> skuIds);
+    @PostMapping("feign/product/listSkuBaseByIds")
+    List<SkuVO> listSkuBaseByIds(@RequestBody List<String> skuIds);
 
     /**
      * 根据skuid 集合获取到sku基础信息 + 费用信息
@@ -518,6 +518,6 @@ public interface PlmTaskFeign {
      * @author yl
      * @date 2023-03-21 12:06
      */
-    @PostMapping("feign/product/getSkuCostByIds")
-    List<SkuVO> getSkuCostByIds(@RequestBody List<String> skuIds);
+    @PostMapping("feign/product/listSkuCostByIds")
+    List<SkuVO> listSkuCostByIds(@RequestBody List<String> skuIds);
 }

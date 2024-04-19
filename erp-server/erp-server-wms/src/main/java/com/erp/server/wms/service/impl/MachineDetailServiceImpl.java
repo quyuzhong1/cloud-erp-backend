@@ -192,7 +192,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
 
         //SKU信息
         List<String> skuIds = newList.stream().map(MachineDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuBaseByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuBaseByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }

@@ -123,7 +123,7 @@ public class InitStockDetailServiceImpl extends SuperServiceImpl<InitStockDetail
         //添加操作日志
         List<InitStockDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
         List<String> skuIds = list.stream().map(InitStockDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuInfos = plmTaskFeign.getSkuBaseByIds(skuIds);
+        List<SkuVO> skuInfos = plmTaskFeign.listSkuBaseByIds(skuIds);
         // 此处修复，返回的记录按sku id不是唯一的了
         Map<String, List<SkuVO>> skuMap = skuInfos.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         for(int i = 0, length = list.size();i < length;i++) {

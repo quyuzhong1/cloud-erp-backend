@@ -1511,7 +1511,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             return list;
         }
         List<String> skuIds = list.stream().map(PurchaseOrderDTO.ViewSubcontractPoDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuBaseByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuBaseByIds(skuIds);
 
         for (PurchaseOrderDTO.ViewSubcontractPoDTO viewSubcontractPoDTO : list) {
             //产品名称
@@ -1904,7 +1904,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         contractDTO.setSumTaxAmount(sumTaxAmount);
         List<PurchaseOrderDTO.PurchaseContractDetailDTO> contractDetailList = new ArrayList<>();
         List<String> skuIdList = purchaseOrderDetailEntityList.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuBaseByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuBaseByIds(skuIdList);
         Integer sort = MathUtil.ZERO;
         for (PurchaseOrderDetailEntity detailEntity : purchaseOrderDetailEntityList) {
             sort++;

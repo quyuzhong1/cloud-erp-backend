@@ -119,7 +119,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @author yl
      * @date 2023-03-21 12:06
      */
-    List<SkuVO> getSkuBaseBySkuIds(@Param("skuIds") List<String> skuIds);
+    List<SkuVO> listSkuBaseBySkuIds(@Param("skuIds") List<String> skuIds);
 
     /**
      * 获取所有产品明细包括删除，用来同步到DMP
@@ -249,6 +249,15 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return List<SkuVO>
      */
     List<SkuVO> accessoriesSku(@Param("searchKeyword") String searchKeyword,@Param("state") Integer state);
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 采购信息（产品采购信息+产品采购含税单价）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuCostByIds(@Param("skuIds")List<String> skuIds);
 }
 
 
