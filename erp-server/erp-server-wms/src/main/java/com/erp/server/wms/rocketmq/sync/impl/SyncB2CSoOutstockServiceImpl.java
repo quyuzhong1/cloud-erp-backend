@@ -122,9 +122,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     	String customerName = entity.getFCustomerName();
     	List<CustomerInfoEntity> customerInfoEntityList = customerFeign.getCustomerByCodeAndName(customerNumber, customerName);
     	if(CollUtil.isEmpty(customerInfoEntityList)) {
-    		throw new ServiceException(String.format("通过客户编码：{}，客户名称：{}查询不到客户信息" , customerNumber , customerName));
+    		throw new ServiceException(String.format("通过客户编码：%s，客户名称：%s查询不到客户信息" , customerNumber , customerName));
     	}else if(customerInfoEntityList.size() > 1){
-    		throw new ServiceException(String.format("通过客户编码：{}，客户名称：{}查询到多条客户信息" , customerNumber , customerName));
+    		throw new ServiceException(String.format("通过客户编码：%s，客户名称：%s查询到多条客户信息" , customerNumber , customerName));
     	}
     	
     	SyncKingdeeDTO.B2CSoOutstockDTO result = new SyncKingdeeDTO.B2CSoOutstockDTO();

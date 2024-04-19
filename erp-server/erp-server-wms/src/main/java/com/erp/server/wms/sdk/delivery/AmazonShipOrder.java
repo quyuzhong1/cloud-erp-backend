@@ -125,8 +125,16 @@ public class AmazonShipOrder implements IPlatformService {
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
             }
-            if (detailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
-                throw new ServiceException("平台来源详情ID为空");
+            // 来源明细ID为空代表是手工添加的明细忽略
+            detailEntityList =  detailEntityList.stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getSourceDetailId()))
+                    .collect(Collectors.toList());
+//            if (detailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
+//                throw new ServiceException("平台来源详情ID为空");
+//            }
+            if (CollectionUtils.isEmpty(detailEntityList)) {
+                log.warn("订单【{}】所有明细来源ID为空,不请求亚马逊接口", mainEntity.getCode());
+                return;
             }
 
             //检查销售订单物流信息是否存在
