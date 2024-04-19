@@ -556,8 +556,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                 addEntity.getDeclarePrice().compareTo(productDTO.getDeclarePrice()) == 0 &&
                 addEntity.getGrossWeight().compareTo(productDTO.getGrossWeight()) == 0 &&
                 Objects.equals(addEntity.getDeclareNameCn(), productDTO.getDeclareChineseName()) &&
-                Objects.equals(addEntity.getCustomsCode(), productDTO.getCustomsCode()) &&
-                Objects.equals(addEntity.getDeclareElement(), productDTO.getDeclareElement());
+                Objects.equals(addEntity.getCustomsCode(), productDTO.getCustomsCode()) ;
 
     }
 
