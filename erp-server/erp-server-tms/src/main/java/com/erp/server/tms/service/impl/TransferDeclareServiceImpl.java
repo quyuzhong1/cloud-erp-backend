@@ -352,7 +352,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @GlobalTransactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> orderForecast(String id) {
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
-        List<TransferDeclareDTO.ShippingOrderDTO> shippingOrderDTOList = new ArrayList<>();
+        List<SoB2cErrorDTO.ShippingDTO> shippingOrderDTOList = new ArrayList<>();
         TransferDeclareEntity transferDeclareEntity = this.getById(id);
 
         if (TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(transferDeclareEntity.getUploadStatus())) {
@@ -364,7 +364,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         List<TransferDeclareDetailEntity> transferDeclareDetailList = transferDeclareDetailEntities.stream()
                 .filter(req -> TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode().equals(req.getOrderUploadStatus())
                         || TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode().equals(req.getOrderUploadStatus())
-        ).collect(Collectors.toList());
+                ).collect(Collectors.toList());
 
         //查询报关单包含的订单信息
         List<String> soIdList = transferDeclareDetailList.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
@@ -445,7 +445,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
                 if (result.getCode() == 200) {
                     //拿到第三方订单号，用于给订单赋值第三方平台发货单号
-                    TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO = new TransferDeclareDTO.ShippingOrderDTO();
+                    SoB2cErrorDTO.ShippingDTO shippingOrderDTO = new SoB2cErrorDTO.ShippingDTO();
                     shippingOrderDTO.setSoId(soB2cEntity.getId());
                     shippingOrderDTO.setShippingOrderNo(result.getData());
                     shippingOrderDTOList.add(shippingOrderDTO);
@@ -489,10 +489,6 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 resultDTOList.add(BatchResultDTO.fail(transferDeclareDetailEntity.getId(), transferDeclareDetailEntity.getSoCode(), msg));
             }
         }
-
-        //给订单赋值第三方平台发货单号
-        soB2cFeign.updateShippingOrderNo(shippingOrderDTOList);
-
         //处理订单异常信息
         SoB2cErrorDTO.AddAndDeleteDTO addAndDeleteDTO = new SoB2cErrorDTO.AddAndDeleteDTO();
         addAndDeleteDTO.setAddDTOList(soB2cErrorList);
