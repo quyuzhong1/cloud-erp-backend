@@ -153,7 +153,7 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
     @PostMapping("/waitPaging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "tms:tmsFirstMileReconciliationDetail:paging",
+            menuCode = "tms:tmsFirstMileReconciliationDetail:waitPaging",
             tableAlias = "tfmrd"
     )
     @WebAdvanceQuery(handler = TmsFirstMileReconciliationDetailQueryHandler.class)
@@ -173,7 +173,7 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
     @PostMapping("/addWaitList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "tms:tmsFirstMileReconciliationDetail:paging",
+            menuCode = "tms:tmsFirstMileReconciliationDetail:addWaitList",
             tableAlias = "tfmrd"
     )
     public ApiResult<List<TmsFirstMileReconciliationDetailDTO.ListDTO>> addWaitList(@RequestBody @Validated TmsFirstMileReconciliationDetailDTO.AddWaitListDTO dto) {
