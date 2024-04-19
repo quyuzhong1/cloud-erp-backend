@@ -12,6 +12,8 @@ import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.CustomerB2CDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.CustomerB2cEntity;
+import com.erp.model.plm.dto.ProductSkuDTO;
+import com.erp.model.workflow.dto.DictBasicDTO;
 import com.erp.server.oms.service.CustomerB2cAddressService;
 import com.erp.server.oms.service.CustomerB2cService;
 import org.apache.commons.lang3.StringUtils;
@@ -24,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * B2C销售管理-B2C客户管理
@@ -381,6 +384,16 @@ public class CustomerB2cController extends BaseController {
     @PostMapping("/viewReceiveData")
     public ApiResult<SoB2cDTO.ViewReceiveDataDTO> viewReceiveData(@RequestBody @Validated BaseIdDTO dto) {
         return success(customerB2cService.viewReceiveData(dto.getId()));
+    }
+
+    /**
+     * b2c客户下拉 支持搜索
+     * @param pagingDTO
+     * @return
+     */
+    @PostMapping("/drop/down")
+    public ApiResult<PagingVO<CustomerB2CDTO.DropListDTO>> customerDropDown(@RequestBody PagingDTO<CustomerB2CDTO.DropSearchDTO> pagingDTO) {
+        return success(customerB2cService.customerDropDown(pagingDTO));
     }
 
 }

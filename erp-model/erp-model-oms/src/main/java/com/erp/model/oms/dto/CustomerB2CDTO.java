@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -280,7 +281,10 @@ public class CustomerB2CDTO implements Serializable {
          */
         private List<String> payCodeList;
 
-
+        /**
+         * 审核状态
+         */
+        private ApproveStatusEnum approveStatus;
         /**
          * 结算方
          */
@@ -860,5 +864,76 @@ public class CustomerB2CDTO implements Serializable {
          * 数量
          */
         private Integer count;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DropSearchDTO {
+        /**
+         * 客户Id
+         */
+        private String customerId;
+
+        /**
+         * 客户名称
+         */
+        private String customerName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DropListDTO {
+        /**
+         * 客户id
+         */
+        private String customerId;
+        /**
+         * 客户名称
+         */
+        private String customerName;
+        /**
+         * 城市id
+         */
+        private String cityId;
+        /**
+         * 城市名称
+         */
+        private String cityName;
+        /**
+         * 国家id
+         */
+        private String countryId;
+        /**
+         * 国家名称
+         */
+        private String countryName;
+        /**
+         * 邮编
+         */
+        private String zipCode;
+        /**
+         * 邮箱
+         */
+        private String email;
+        /**
+         * 第一地址
+         */
+        private String firstAddress;
+        /**
+         * 第二地址
+         */
+        private String secondAddress;
+        /**
+         * 收件人名称
+         */
+        private String receiverName;
+        /**
+         * 收件人电话
+         */
+        private String receiverTelNumber;
+        /**
+         * 电话
+         */
+        private String telNumber;
     }
 }
