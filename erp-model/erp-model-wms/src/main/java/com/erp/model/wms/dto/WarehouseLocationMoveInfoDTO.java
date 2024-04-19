@@ -363,7 +363,7 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class PcUpdateDTO extends CommonDTO {
+    public static class PcUpdateDTO {
 
         /**
         * 主键id

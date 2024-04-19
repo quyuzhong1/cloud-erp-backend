@@ -117,7 +117,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
             InventoryDTO.PdaInventoryDTO inventoryByParam = inventoryByParams.stream().filter(req -> req.getWarehouseId().equals(warehouseId)
                     && req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
             if (pcShow) {
-                if ((ObjectUtil.isEmpty(detailEntity.getInWarehouseLocation()) && ObjectUtil.isEmpty(detailEntity.getInWarehouseLocation()))
+                if ((ObjectUtil.isEmpty(detailEntity.getInWarehouseLocation()) && ObjectUtil.isEmpty(detailEntity.getOutWarehouseLocation()))
                         || detailEntity.getInWarehouseLocation().equals(detailEntity.getOutWarehouseLocation())) {
                     throw new ServiceException(ApiError.ERROR_CANNOT_SAME_POSITION);
                 }
