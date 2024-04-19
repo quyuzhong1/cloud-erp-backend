@@ -160,7 +160,11 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PACKAGE_FORECAST.getCode(), id, "新增操作");
         packageForecastDetailService.add(id, addDTO.getDetailList());
 
-        return new BaseResultDTO.AddDTO(packageForecastEntity.getId(), code);
+        if(addDTO.getDetailList().stream().anyMatch(v->v.getSoCode().equals("XSDS24041800141"))){
+            throw new ServiceException("组包预报单保存失败");
+        }else{
+            return new BaseResultDTO.AddDTO(packageForecastEntity.getId(), code);
+        }
     }
 
     /**
