@@ -1655,7 +1655,7 @@
         pd.unit_name
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
-        WHERE pd.is_deleted = FALSE and pi.sale_method = '包材'
+        WHERE pd.is_deleted = FALSE and pi.sale_method like concat('%','包材','%')
         <if test="state!=null">
             AND pd.status=#{state}
         </if>
