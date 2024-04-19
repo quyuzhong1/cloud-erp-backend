@@ -199,6 +199,9 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         for (SoB2cErrorDTO.AddDTO addDTO : addAndDeleteDTO.getAddDTOList()) {
             this.add(addDTO);
         }
+        //给订单赋值第三方平台发货单号
+        soB2cService.updateShippingOrderNo(addAndDeleteDTO.getShippingOrderDTO());
+
     }
 
     /**

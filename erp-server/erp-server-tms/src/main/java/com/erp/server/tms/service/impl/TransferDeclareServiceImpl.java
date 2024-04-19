@@ -450,9 +450,6 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                     shippingOrderDTO.setShippingOrderNo(result.getData());
                     shippingOrderDTOList.add(shippingOrderDTO);
 
-                    //给订单赋值第三方平台发货单号
-                    soB2cFeign.updateShippingOrderNo(shippingOrderDTOList);
-
                     //上传成功
                     transferDeclareDetailService.updateOrderUploadStatus(transferDeclareDetailEntity.getId(), TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode(), result.getData(), "");
 
@@ -493,10 +490,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             }
         }
 
+        //给订单赋值第三方平台发货单号
+        soB2cFeign.updateShippingOrderNo(shippingOrderDTOList);
+
         //处理订单异常信息
         SoB2cErrorDTO.AddAndDeleteDTO addAndDeleteDTO = new SoB2cErrorDTO.AddAndDeleteDTO();
         addAndDeleteDTO.setAddDTOList(soB2cErrorList);
         addAndDeleteDTO.setDeleteDTOList(deleteDTOList);
+        addAndDeleteDTO.setShippingOrderDTO(shippingOrderDTOList);
         soB2cFeign.deleteAndAddErrorBatch(addAndDeleteDTO);
 
         //如果上传数量等于成功数量，修改主单据上传状态为成功
