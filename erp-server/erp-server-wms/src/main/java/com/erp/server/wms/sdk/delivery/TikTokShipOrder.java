@@ -10,6 +10,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
@@ -59,6 +60,14 @@ public class TikTokShipOrder implements IPlatformService {
 
         if ("US".equalsIgnoreCase(tikTokShopInfoDTO.getSite())) {
             ShipOrderUSParam paramDTO = new ShipOrderUSParam();
+            //获取销售渠道信息
+            LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = logisticsFeign.getScaleChannelByChannelById(
+                    view.getLogisticsDTO().getLogisticsChannelId(),
+                    PlatformDictEnum.TIK_TOK.getCode()
+            );
+            if (null == tmsScaleChannelShipDTO){
+                throw new ServiceException("找不到渠道信息");
+            }
             paramDTO.setTrackingNumber(view.getLogisticsDTO().getCode());
             paramDTO.setOrderLineItemIds(sourceDetailIds);
             paramDTO.setShippingProviderId("");
