@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -36,6 +37,7 @@ import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -261,6 +263,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private SoOutstockFeign soOutstockFeign;
+
+    @Resource
+    private MQProducerService mqProducerService;
+
+    @Resource
+    private SoB2cLabelService soB2cLabelService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -1336,6 +1344,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String trackNo = resultDTO.getTrackNoList().stream().collect(Collectors.joining(","));
             String transportNo = resultDTO.getTransportNo();
             soB2cLogisticsService.updateLogisticsCode(id, transportNo, trackNo);
+
+            //下单成功发送异步请求保存面单
+            LogisticsBillDTO.PrintLogisticsWaybillDTO waybillDTO = getPlatformWaybill(soB2cLogisticsEntity.getLogisticsChannelId(), entity, transportNo);
+            mqProducerService.asyncClassMsg(RocketMqTopic.ASYNC_GET_PLATFORM_LABEL_TOPIC, RocketMqTagEnum.ASYNC_GET_PLATFORM_LABEL_TAG.getName(), waybillDTO, IdUtil.simpleUUID());
+
             if (Boolean.TRUE.equals(isDelivery)) {
                 //提交发货
                 submitDelivery(id);
@@ -1366,6 +1379,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
     }
+
+    /**
+     * 组装打印面单需要的数据
+     * @param logisticsChannelId 订单渠道id
+     * @param soB2cEntity 订单信息
+     * @param transportNo 物流单号
+     * @return
+     */
+    private LogisticsBillDTO.PrintLogisticsWaybillDTO getPlatformWaybill(String logisticsChannelId, SoB2cEntity soB2cEntity, String transportNo) {
+        LogisticsBillDTO.PrintLogisticsWaybillDTO printLogisticsWaybill = new LogisticsBillDTO.PrintLogisticsWaybillDTO();
+        printLogisticsWaybill.setChannelId(logisticsChannelId);
+        printLogisticsWaybill.setB2cSoId(soB2cEntity.getId());
+        printLogisticsWaybill.setDeliveryNo(soB2cEntity.getCode());
+        printLogisticsWaybill.setShopId(soB2cEntity.getShopId());
+        printLogisticsWaybill.setTransportNo(transportNo);
+        return printLogisticsWaybill;
+    }
+
 
     /**
      * 组装生成物流单数据
@@ -5396,6 +5427,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //物流信息
         List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cLogisticsService.listByMainIds(soIds);
+
+        //标签信息
+        List<SoB2cLabelEntity> soB2cLabelEntities = soB2cLabelService.listSoB2cLabelByMainIds(soIds);
         List<PrintWayBillPdfDTO> resultList = new ArrayList<>();
         for (SoB2cEntity soB2cEntity : soB2cEntities) {
             PrintWayBillPdfDTO printWayBillPdfDTO = new PrintWayBillPdfDTO();
@@ -5403,6 +5437,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             printWayBillPdfDTO.setSoCode(soB2cEntity.getCode());
             printWayBillPdfDTO.setAmount(soB2cEntity.getAmount());
             printWayBillPdfDTO.setRemark(soB2cEntity.getRemark());
+            List<String> base64List = soB2cLabelEntities.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).map(req -> req.getLogisticsLabelBase64()).collect(Collectors.toList());
+            printWayBillPdfDTO.setLogisticsLabelBase64List(base64List);
             printWayBillPdfDTO.setPrintTime(cn.hutool.core.date.DateUtil.format(LocalDateTime.now(), "yyyy-MM-dd HH:mm:ss"));
             //店铺信息
             ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getId().equals(soB2cEntity.getShopId())).findFirst().orElse(null);
@@ -5422,6 +5458,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 printWayBillPdfDTO.setTransportNo(logisticsEntity.getCode());
                 printWayBillPdfDTO.setChannelName(logisticsEntity.getLogisticsChannelName());
                 printWayBillPdfDTO.setWeight(logisticsEntity.getWeight());
+                printWayBillPdfDTO.setLogisticsChannelId(logisticsEntity.getLogisticsChannelId());
             }
             resultList.add(printWayBillPdfDTO);
         }

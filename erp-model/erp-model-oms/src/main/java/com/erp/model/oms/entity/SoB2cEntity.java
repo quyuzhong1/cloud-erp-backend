@@ -12,7 +12,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -267,8 +266,6 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
 
     @TableField("extend_data")
     private String extendData;
-
-
 
     public static final String CODE = "code";
 

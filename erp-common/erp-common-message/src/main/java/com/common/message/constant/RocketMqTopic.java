@@ -110,4 +110,9 @@ public class RocketMqTopic {
      */
     public static final String AMZ_REPORT_TASK_TOPIC = "${spring.cloud.nacos.discovery.namespace}-amz_report_task_topic";
 
+    /**
+     * 异步获取平台打印面单标签
+     */
+    public static final String ASYNC_GET_PLATFORM_LABEL_TOPIC = "${spring.cloud.nacos.discovery.namespace}-async_get_platform_label_topic";
+
 }

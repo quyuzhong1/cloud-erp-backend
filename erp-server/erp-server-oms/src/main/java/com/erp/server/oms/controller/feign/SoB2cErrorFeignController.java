@@ -118,5 +118,4 @@ public class SoB2cErrorFeignController extends BaseController {
     void deleteAndAddErrorBatch(@RequestBody SoB2cErrorDTO.AddAndDeleteDTO addAndDeleteDTO) {
         soB2cErrorService.deleteAndAddErrorBatch(addAndDeleteDTO);
     }
-
 }

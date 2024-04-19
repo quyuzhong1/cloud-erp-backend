@@ -604,8 +604,6 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 店铺id
          */
         private String shopId;
-
-        private String logisticType;
     }
 
     /**
