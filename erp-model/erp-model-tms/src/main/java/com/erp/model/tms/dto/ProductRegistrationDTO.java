@@ -462,25 +462,6 @@ public class ProductRegistrationDTO implements Serializable {
     }
 
     /**
-     * 查询数据
-     */
-    @Data
-    @NoArgsConstructor
-    public static class QueryDTO  {
-
-        private String transferLogisticsSupplierId;
-
-
-        private List<String>  skuIdList;
-
-        /**
-         * 备案状态
-         */
-        private String status;
-
-    }
-
-    /**
     * 修改
     */
     @Data
