@@ -133,10 +133,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
     public Boolean update(TmsB2cDeclareReconciliationDTO.UpdateDTO updateDTO) {
         TmsB2cDeclareReconciliationEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "b2c报关对账单"));
-        // 待提交和审核不通过允许修改
-        if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
-        }
+
         TmsB2cDeclareReconciliationEntity tmsB2cDeclareReconciliationEntity =  BeanMapperUtils.map(TmsB2cDeclareReconciliationEntity.class, updateDTO);
 
         // 数据处理
