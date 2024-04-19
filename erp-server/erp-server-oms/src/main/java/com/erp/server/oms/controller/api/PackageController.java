@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -16,6 +17,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 分拨组包
@@ -72,9 +74,9 @@ public class PackageController extends BaseController {
      * @return
      */
     @PostMapping("/merge")
-    public ApiResult merge(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = packageService.mergePackage(dto.getIds());
-        return result ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> merge(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> result = packageService.mergePackage(dto.getIds());
+        return result.stream().allMatch(BatchResultDTO::getSuccess) ? success(result) : failure(result);
     }
 
 }
