@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 import lombok.Data;
@@ -85,6 +86,10 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
          * 创建时间
          */
          private List<String>  createTimeList;
+         /**
+          * 页面高级查询
+          */
+         private List<AdvanceQueryDTO> advanceQueryDTOList;
 
      }
     /**
@@ -347,6 +352,40 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         private Boolean pcShow = false;
     }
 
+    /**
+    * 修改
+    */
+    @Data
+    @NoArgsConstructor
+    public static class PcUpdateDTO extends CommonDTO {
+
+        /**
+        * 主键id
+        */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 仓位移动明细
+         */
+        @NotEmpty(message = "仓位移动明细不能为空")
+        private List<WarehouseLocationMoveDetailDTO.UpdateDTO> detailList;
+        /**
+         * 是否是pc端访问
+         */
+        private Boolean pcShow = false;
+
+        /**
+         * 仓库id
+         */
+        @Size(max = 19,message = "仓库id最大长度不能超过19位")
+        private String warehouseId;
+        /**
+         * 单据时间
+         */
+        private LocalDate billDate;
+    }
+
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
@@ -529,6 +568,10 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
          */
         private String  id;
 
+        /**
+         * 明细id
+         */
+        private String detailId;
         /**
          * 单据编号
          */

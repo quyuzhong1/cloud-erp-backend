@@ -52,7 +52,7 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
     * @param dto
     * @return
     */
-    Boolean pcUpdate(WarehouseLocationMoveInfoDTO.UpdateDTO dto);
+    Boolean pcUpdate(WarehouseLocationMoveInfoDTO.PcUpdateDTO dto);
 
       /**
       * 分页列表查询

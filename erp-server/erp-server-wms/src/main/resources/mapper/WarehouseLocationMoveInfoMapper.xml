@@ -105,8 +105,9 @@
 
 
     <select id="getDetail" resultType="com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO$PdaPcViewDTO">
-        SELECT
+        SELECT distinct
         wlmd.id,
+        wlmi.id as detailId,
         wlmi.code,
         wlmi.approve_status,
         wlmi.warehouse_id,
