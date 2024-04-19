@@ -390,6 +390,11 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         //拆分的订单产品信息
         List<TransferDeclareProductEntity> transferDeclareProductEntities = transferDeclareProductService.listByDeclareIds(Arrays.asList(id));
 
+        //订单异常信息
+        List<SoB2cErrorDTO.AddDTO> soB2cErrorList = new ArrayList<>();
+
+        //需要删除的异常信息
+        List<SoB2cErrorDTO.DeleteDTO> deleteDTOList = new ArrayList<>();
         //下单
         for (TransferDeclareDetailEntity transferDeclareDetailEntity : transferDeclareDetailList) {
             TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
@@ -447,12 +452,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
                     //上传成功
                     transferDeclareDetailService.updateOrderUploadStatus(transferDeclareDetailEntity.getId(), TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode(), result.getData(), "");
-                    //删除订单异常记录
+
+                    //记录需要删除的订单异常记录
                     SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
                     deleteDTO.setMainId(soB2cEntity.getId());
                     deleteDTO.setType(SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
-                    soB2cFeign.deleteError(deleteDTO);
-
+                    deleteDTOList.add(deleteDTO);
                     resultDTOList.add(BatchResultDTO.success(transferDeclareDetailEntity.getId(), transferDeclareDetailEntity.getSoCode(), "上传成功"));
                 } else {
                     String msg = String.format("订单预报失败：%s",result.getMsg());
@@ -464,7 +469,10 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                     addDTO.setType(SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
                     addDTO.setMessage(msg);
                     addDTO.setParamJson(soB2cEntity.getId());
-                    soB2cFeign.addSoB2cError(addDTO);
+
+                    //异常订单
+                    soB2cErrorList.add(addDTO);
+
                     resultDTOList.add(BatchResultDTO.fail(transferDeclareDetailEntity.getId(), transferDeclareDetailEntity.getSoCode(), msg));
                 }
             }catch (Exception e){
@@ -477,10 +485,21 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 addDTO.setType(SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
                 addDTO.setMessage(msg);
                 addDTO.setParamJson(soB2cEntity.getId());
-                soB2cFeign.addSoB2cError(addDTO);
+                soB2cErrorList.add(addDTO);
                 resultDTOList.add(BatchResultDTO.fail(transferDeclareDetailEntity.getId(), transferDeclareDetailEntity.getSoCode(), msg));
             }
         }
+
+        //删除订单异常记录
+        if (CollectionUtils.isNotEmpty(deleteDTOList)) {
+            soB2cFeign.deleteErrorBatch(deleteDTOList);
+        }
+
+        //异常订单
+        if (CollectionUtils.isNotEmpty(soB2cErrorList)) {
+            soB2cFeign.addErrorBatch(soB2cErrorList);
+        }
+
         //给订单赋值第三方平台发货单号
         soB2cFeign.updateShippingOrderNo(shippingOrderDTOList);
 

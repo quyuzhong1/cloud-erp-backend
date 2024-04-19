@@ -3838,12 +3838,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
                 platformShipOrderDTO.setSoB2cId(id);
                 platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+                paramJson = JSONObject.toJSONString(platformShipOrderDTO);
                 try {
                     PlatformSaveHandler.shipOrder(platformShipOrderDTO);
                 } catch (Exception e) {
                     throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
                 }
-                paramJson = JSONObject.toJSONString(platformShipOrderDTO);
             }
         } catch (Exception e) {
             message = e.getMessage();
