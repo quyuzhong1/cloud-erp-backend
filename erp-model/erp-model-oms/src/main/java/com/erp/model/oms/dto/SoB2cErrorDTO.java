@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.erp.model.tms.dto.TransferDeclareDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -88,6 +89,11 @@ public class SoB2cErrorDTO implements Serializable {
          * 删除的数据
          */
         private List<SoB2cErrorDTO.DeleteDTO> deleteDTOList;
+
+        /**
+         * 订单标记报关单信息
+         */
+        private List<TransferDeclareDTO.ShippingOrderDTO> shippingOrderDTO;
 
     }
 
