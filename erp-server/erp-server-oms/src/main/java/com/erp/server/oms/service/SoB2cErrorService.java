@@ -103,20 +103,11 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
     Boolean deleteDetail(SoB2cErrorDTO.DeleteDetailDTO dto);
 
     /**
-     * 批量添加
+     * 删除新增异常信息
      * @Author Luo_WG
-     * @Date 2024/4/19 9:55
-     * @param dtoList
+     * @Date 2024/4/19 10:54
+     * @param addAndDeleteDTO
      * @return void
      **/
-    void addErrorBatch(List<SoB2cErrorDTO.AddDTO> dtoList);
-
-    /**
-     * 清除订单异常
-     * @Author Luo_WG
-     * @Date 2024/4/19 10:12
-     * @param deleteDTOList
-     * @return void
-     **/
-    void deleteErrorBatch(List<SoB2cErrorDTO.DeleteDTO> deleteDTOList);
+    void deleteAndAddErrorBatch(SoB2cErrorDTO.AddAndDeleteDTO addAndDeleteDTO);
 }

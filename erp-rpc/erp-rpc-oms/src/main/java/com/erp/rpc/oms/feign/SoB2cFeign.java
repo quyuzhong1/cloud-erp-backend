@@ -453,22 +453,12 @@ public interface SoB2cFeign {
     Boolean clearB2cLogisticsCode(@RequestBody List<String> soIdList);
 
     /**
-     * 批量添加
-     * @Author Luo_WG
-     * @Date 2024/4/19 9:54
-     * @param dtoList
-     * @return void
-     **/
-    @PostMapping("/feign/soB2cError/addErrorBatch")
-    void addErrorBatch(@RequestBody List<SoB2cErrorDTO.AddDTO> dtoList);
-
-    /**
-     * 清除订单异常
+     * 清除新增订单异常
      * @Author Luo_WG
      * @Date 2024/4/19 10:12
-     * @param deleteDTOList
+     * @param addAndDeleteDTO
      * @return void
      **/
-    @PostMapping("/feign/soB2cError/deleteErrorBatch")
-    void deleteErrorBatch(@RequestBody List<SoB2cErrorDTO.DeleteDTO> deleteDTOList);
+    @PostMapping("/feign/soB2cError/deleteAndAddErrorBatch")
+    void deleteAndAddErrorBatch(@RequestBody SoB2cErrorDTO.AddAndDeleteDTO addAndDeleteDTO);
 }

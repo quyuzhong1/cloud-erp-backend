@@ -490,15 +490,11 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             }
         }
 
-        //删除订单异常记录
-        if (CollectionUtils.isNotEmpty(deleteDTOList)) {
-            soB2cFeign.deleteErrorBatch(deleteDTOList);
-        }
-
-        //异常订单
-        if (CollectionUtils.isNotEmpty(soB2cErrorList)) {
-            soB2cFeign.addErrorBatch(soB2cErrorList);
-        }
+        //处理订单异常信息
+        SoB2cErrorDTO.AddAndDeleteDTO addAndDeleteDTO = new SoB2cErrorDTO.AddAndDeleteDTO();
+        addAndDeleteDTO.setAddDTOList(soB2cErrorList);
+        addAndDeleteDTO.setDeleteDTOList(deleteDTOList);
+        soB2cFeign.deleteAndAddErrorBatch(addAndDeleteDTO);
 
         //给订单赋值第三方平台发货单号
         soB2cFeign.updateShippingOrderNo(shippingOrderDTOList);
