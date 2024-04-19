@@ -52,7 +52,7 @@ public class PackageForecastFeignController extends BaseController {
                 packageForecastService.add(item);
             } catch (Exception e) {
                 log.error("添加组包预报异常 {}", e.getMessage());
-                item.getDetailList().forEach(v-> resultDTOList.add(BatchResultDTO.fail(v.getSoId(),v.getSoCode(), StrUtil.format("添加组包预报异常 {}", ExceptionUtil.getSimpleMessage(e)))));
+                item.getDetailList().forEach(v-> resultDTOList.add(BatchResultDTO.fail(item.getLogisticsSupplierId(),v.getSoCode(), StrUtil.format("添加组包预报异常 {}", ExceptionUtil.getSimpleMessage(e)))));
             }
         }
 
