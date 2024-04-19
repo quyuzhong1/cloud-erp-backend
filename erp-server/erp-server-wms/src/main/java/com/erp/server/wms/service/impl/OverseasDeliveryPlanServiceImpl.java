@@ -826,7 +826,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
                     detailAddDto.setNetWeight(skuVO.getNetWeight());
                     detailAddDto.setProductSizeLength(skuVO.getProductLength());
                     detailAddDto.setProductSizeWidth(skuVO.getProductWidth());
-                    detailAddDto.setProductSizeHeight(skuVO.getProductLength());
+                    detailAddDto.setProductSizeHeight(skuVO.getProductHeight());
                 }
                 //暂无仓位
                 detailAddDto.setWarehouseLocation("");

@@ -5590,6 +5590,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 scanResult.setLogisticsChannelName(baseDTO.getName());
                 scanResult.setLogisticsSupplierId(baseDTO.getMainId());
                 scanResult.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
+                scanResult.setLogisticsSupplierShortName(baseDTO.getLogisticsSupplierShortName());
             }
 
         }
@@ -5618,6 +5619,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 item.setLogisticsChannelName(base.getName());
                 item.setLogisticsSupplierId(base.getLogisticsSupplierId());
                 item.setLogisticsSupplierName(base.getLogisticsSupplierName());
+                item.setLogisticsSupplierShortName(base.getLogisticsSupplierShortName());
             }
         }
 
