@@ -400,6 +400,8 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		WmsDataCompareTaskEntity wmsDataCompareTaskEntity = this.getById(id);
 		if(wmsDataCompareTaskEntity == null) {
 			throw new ServiceException("任务id不存在");
+        }else if(StringUtils.isBlank(wmsDataCompareTaskEntity.getImportDataMapping())) {
+        	throw new ServiceException("对比映射未配置");
         }
 		this.update(Wrappers.<WmsDataCompareTaskEntity>lambdaUpdate().eq(WmsDataCompareTaskEntity::getId, id)
 				.eq(WmsDataCompareTaskEntity::getStatus, "init")
@@ -484,12 +486,14 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				List<List<String>> value = allDatas.getValue();
 				WmsDataCompareImportEntity wmsDataCompareImportEntity = wmsDataCompareImportService.getById(importId);
 				Integer currParseOffset = wmsDataCompareImportEntity.getCurrParseOffset();
-				if(currParseOffset == value.size()) {
+				if(currParseOffset >= value.size()) {
 					wmsDataCompareImportService.update(Wrappers.<WmsDataCompareImportEntity>lambdaUpdate().eq(WmsDataCompareImportEntity::getId, importId)
 							.eq(WmsDataCompareImportEntity::getParseStatus, WmsDataCompareImportParseStatusEnum.WAIT.getCode())
 							.set(WmsDataCompareImportEntity::getParseStatus, WmsDataCompareImportParseStatusEnum.FINISH.getCode()));
 				}else {
-					value = value.subList(currParseOffset, value.size());
+					if(currParseOffset >= 1) {
+						value = value.subList(currParseOffset, value.size());
+					}
 					List<List<List<String>>> partitionList = Lists.partition(value, 1000);
 					int i = 1;
 					for(List<List<String>> partition : partitionList) {
@@ -537,6 +541,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 							wmsDataCompareTempEntity.setPkFieldValue(sb.length() > 0 ? sb.toString().substring(1) : "");
 							wmsDataCompareTempEntityList.add(wmsDataCompareTempEntity);
 						}
+						currParseOffset = currParseOffset + wmsDataCompareTempEntityList.size();
 						wmsDataCompareTaskService.saveTempTable(importId , wmsDataCompareTempEntityList , currParseOffset , i == partitionList.size());
 						i = i + 1;
 					}
@@ -717,7 +722,6 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				List<WmsDataCompareTempEntity> wmsDataCompareTempEntityList = wmsDataCompareTempService.lambdaQuery().eq(WmsDataCompareTempEntity::getTaskId, id)
 						   .in(WmsDataCompareTempEntity::getCompareResult, Arrays.asList(WmsDataCompareTempCompareResultEnum.EXCEED.getCode() 
 								   , WmsDataCompareTempCompareResultEnum.MISS.getCode() , WmsDataCompareTempCompareResultEnum.DIFF.getCode()))
-						   .orderByAsc(WmsDataCompareTempEntity::getCompareResult)
 						   .list();
 				if(CollUtil.isNotEmpty(wmsDataCompareTempEntityList)) {
 					Map<String, List<WmsDataCompareTempEntity>> pkTempMaps = wmsDataCompareTempEntityList.stream().collect(Collectors.groupingBy(WmsDataCompareTempEntity::getPkFieldValue));
@@ -725,6 +729,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					for(Map.Entry<String, List<WmsDataCompareTempEntity>> pkTempMap : pkTempMaps.entrySet()) {
 						wmsDataCompareTempEntityList.add(pkTempMap.getValue().get(0));
 					}
+					wmsDataCompareTempEntityList.sort((w1 , w2) -> w1.getCompareResult().compareTo(w2.getCompareResult()));
 					
 					List<ImportDataMappingDTO> importDataMappingDTOList = JSON.parseArray(wmsDataCompareTaskEntity.getImportDataMapping() , WmsDataComparePlanDTO.ImportDataMappingDTO.class);
 					String billType = wmsDataCompareTaskEntity.getBillType();
@@ -858,7 +863,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		wmsDataCompareTempService.saveBatch(wmsDataCompareTempEntityList);
 		wmsDataCompareImportService.update(Wrappers.<WmsDataCompareImportEntity>lambdaUpdate().eq(WmsDataCompareImportEntity::getId, importId)
 				.set(isLast , WmsDataCompareImportEntity::getParseStatus, WmsDataCompareImportParseStatusEnum.FINISH.getCode())
-				.set(WmsDataCompareImportEntity::getCurrParseOffset, currParseOffset + wmsDataCompareTempEntityList.size()));
+				.set(WmsDataCompareImportEntity::getCurrParseOffset, currParseOffset));
 	}
 	
 	@Override
