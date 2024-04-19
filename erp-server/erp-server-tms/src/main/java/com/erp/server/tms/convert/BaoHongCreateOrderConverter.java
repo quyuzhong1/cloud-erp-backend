@@ -48,7 +48,7 @@ public interface BaoHongCreateOrderConverter {
             @Mapping(target = "productSku", source = "logisticsProductVO.skuNo"),
             @Mapping(target = "productTitleEn", source = "logisticsProductVO.declareEnglishName"),
             @Mapping(target = "opQuantity", source = "logisticsProductVO.quantity"),
-            @Mapping(target = "purposeDeclaredValue", source = "logisticsProductVO.declarePrice", qualifiedByName = "bigDecimalToStr"),
+            @Mapping(target = "purposeDeclaredValue", source = "logisticsProductVO.destDeclarePrice", qualifiedByName = "bigDecimalToStr"),
     })
     ProductDeatil LogisticsProductVOToProductDeatil(LogisticsProductVO logisticsProductVO);
     List<ProductDeatil> LogisticsProductVOToProductDeatil(List<LogisticsProductVO> logisticsProductVO);
