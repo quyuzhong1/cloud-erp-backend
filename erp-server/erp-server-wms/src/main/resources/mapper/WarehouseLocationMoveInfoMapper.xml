@@ -136,7 +136,8 @@
 
     <sql id="list">
         SELECT
-        wlmd.id,
+        wlmi.id,
+        wlmd.id as detailId,
         wlmi.code,
         wlmi.approve_status as approveStatus,
         wlmi.warehouse_id as warehouseId,
