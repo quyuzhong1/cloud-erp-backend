@@ -1668,8 +1668,8 @@
             )
             ORDER BY CASE
             WHEN pd.sku_no ILIKE concat(#{searchKeyword}::text,'%') THEN 1
-            WHEN pd.name ILIKE concat(#{searchKeyword}::text,'%') THEN 1
-            ELSE 2
+            WHEN pd.name ILIKE concat(#{searchKeyword}::text,'%') THEN 2
+            ELSE 3
             END,
             LENGTH(pd.sku_no), LENGTH(pd.name),
             pd.sku_no, pd.name;
