@@ -37,11 +37,11 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
             }
 
             // 待处理
-            if (SoB2cDeliveryStatusEnum.WAIT_HANDLE.equals(searchType)) {
+            if (SoB2cDeliveryStatusEnum.WAIT_HANDLE.getStatus().equals(searchType)) {
                 super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getStatus());
             }
             //拣货中
-            if (SoB2cDeliveryStatusEnum.PICKING.equals(searchType)) {
+            if (SoB2cDeliveryStatusEnum.PICKING.getStatus().equals(searchType)) {
                 super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.PICKING.getStatus());
             }
             //虚假发货
