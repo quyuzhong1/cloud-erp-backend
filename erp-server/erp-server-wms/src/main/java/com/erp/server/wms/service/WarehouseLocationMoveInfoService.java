@@ -45,6 +45,14 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
     * @return
     */
     Boolean update(WarehouseLocationMoveInfoDTO.UpdateDTO dto);
+    /**
+    * 修改
+    * @author Luo_WG
+    * @date: 2023-08-24
+    * @param dto
+    * @return
+    */
+    Boolean pcUpdate(WarehouseLocationMoveInfoDTO.UpdateDTO dto);
 
       /**
       * 分页列表查询
@@ -125,6 +133,16 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
     BatchResultDTO submit(String id);
 
     /**
+     * 提交审核
+     *
+     * @param id
+     * @return
+     * @author hyj
+     * @date 2024/4/19 9:32
+     */
+    BatchResultDTO pcSubmit(String id);
+
+    /**
     * 审核
     * @author Luo_WG
     * @date: 2023-08-24
@@ -134,6 +152,16 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
     BatchResultDTO approve(ApproveOneDTO dto);
 
     /**
+     * 审核
+     *
+     * @param dto
+     * @return
+     * @author hyj
+     * @date 2024/4/19 9:32
+     */
+    BatchResultDTO pcApprove(ApproveOneDTO dto);
+
+    /**
     * 反审核
     * @author Luo_WG
     * @date: 2023-08-24
@@ -141,6 +169,16 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
     * @return
     */
     BatchResultDTO disApprove(String id);
+
+    /**
+     * 反审核
+     *
+     * @param id
+     * @return
+     * @author hyj
+     * @date 2024/4/19 9:32
+     */
+    BatchResultDTO pcDisApprove(String id);
 
     /**
     * 删除
@@ -196,4 +234,12 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
      * @return Boolean
      */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 删除-pc端
+     * @author hyj
+     * @date 2024/4/19 9:25
+     * @param id
+     */
+    BatchResultDTO pcDelete(String id);
 }

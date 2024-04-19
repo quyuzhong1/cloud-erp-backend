@@ -3,7 +3,9 @@ package com.erp.server.wms.controller.pda;
 
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.erp.server.wms.service.TransferInfoService;
+import com.erp.server.wms.service.WarehouseLocationMoveDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -51,6 +53,9 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
 
     @Autowired
     private WarehouseLocationMoveInfoService warehouseLocationMoveInfoService;
+
+    @Autowired
+    private WarehouseLocationMoveDetailService warehouseLocationMoveDetailService;
 
     /**
     * 新增
@@ -111,7 +116,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
         keyIdName = "id")
     public ApiResult pcUpdate(@RequestBody @Validated WarehouseLocationMoveInfoDTO.UpdateDTO dto) {
         dto.setPcShow(true);
-        warehouseLocationMoveInfoService.update(dto);
+        warehouseLocationMoveInfoService.pcUpdate(dto);
         return success();
     }
 
@@ -278,6 +283,41 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     }
 
     /**
+    * 提交审核
+    * @author Luo_WG
+    * @date:  2023-08-24
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交仓位移动")
+    @PostMapping("/pc/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:submit",
+            serviceClass = WarehouseLocationMoveInfoService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> pcSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO submit;
+            try {
+                submit = warehouseLocationMoveInfoService.pcSubmit(id);
+            }catch (Exception e){
+                log.error("仓位移动主单 提交审核失败",e);
+                WarehouseLocationMoveInfoEntity entity = warehouseLocationMoveInfoService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, id, "仓位移动主单不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
     * 审核
     * @author Luo_WG
     * @date:  2023-08-24
@@ -372,6 +412,130 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
             }catch (Exception e){
                 log.error("仓位移动主单删除失败",e);
                 WarehouseLocationMoveInfoEntity entity = warehouseLocationMoveInfoService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "仓位移动主单不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+    * 审核
+    * @author Luo_WG
+    * @date:  2023-08-24
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核仓位移动")
+    @PostMapping("/pc/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:approve",
+            serviceClass = WarehouseLocationMoveInfoService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> pcApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : ids) {
+            BatchResultDTO approveResult;
+            try {
+                approveResult = warehouseLocationMoveInfoService.pcApprove(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+            }catch (Exception e){
+                log.error("仓位移动审核失败",e);
+                WarehouseLocationMoveDetailEntity warehouseLocationMoveDetailEntity = warehouseLocationMoveDetailService.getById(id);
+                if (ObjectUtil.isEmpty(warehouseLocationMoveDetailEntity)) {
+                    approveResult = BatchResultDTO.fail(id, id, "仓位移动明细不存在, 审核失败");
+                    resultDTOS.add(approveResult);
+                    continue;
+                }
+                WarehouseLocationMoveInfoEntity entity = warehouseLocationMoveInfoService.getById(warehouseLocationMoveDetailEntity.getMainId());
+                if (ObjectUtil.isEmpty(entity)) {
+                    approveResult = BatchResultDTO.fail(id, id, "仓位移动主单不存在, 审核失败");
+                    resultDTOS.add(approveResult);
+                    continue;
+                }
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(approveResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+    * 反审核
+    * @author Luo_WG
+    * @date:  2023-08-24
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核仓位移动")
+    @PostMapping("/pc/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:disApprove",
+            serviceClass = WarehouseLocationMoveInfoService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> pcDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO disApproveResult;
+            try {
+                disApproveResult = warehouseLocationMoveInfoService.pcDisApprove(id);
+            }catch (Exception e){
+                log.error("仓位移动主单反审核失败",e);
+                WarehouseLocationMoveDetailEntity warehouseLocationMoveDetailEntity = warehouseLocationMoveDetailService.getById(id);
+                if (ObjectUtil.isEmpty(warehouseLocationMoveDetailEntity)) {
+                    disApproveResult = BatchResultDTO.fail(id, id, "仓位移动明细不存在, 反审核失败");
+                    resultDTOS.add(disApproveResult);
+                    continue;
+                }
+                WarehouseLocationMoveInfoEntity entity = warehouseLocationMoveInfoService.getById(warehouseLocationMoveDetailEntity.getMainId());
+                if (ObjectUtil.isEmpty(entity)) {
+                    disApproveResult = BatchResultDTO.fail(id, id, "仓位移动主单不存在, 反审核失败");
+                    resultDTOS.add(disApproveResult);
+                    continue;
+                }
+                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(disApproveResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+    * 删除
+    * @author Luo_WG
+    * @date:  2023-08-24
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除仓位移动")
+    @PostMapping("/pc/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:delete",
+            serviceClass = WarehouseLocationMoveInfoService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> pcDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = warehouseLocationMoveInfoService.pcDelete(id);
+            }catch (Exception e){
+                log.error("仓位移动主单删除失败",e);
+                WarehouseLocationMoveDetailEntity warehouseLocationMoveDetailEntity = warehouseLocationMoveDetailService.getById(id);
+                if (ObjectUtil.isEmpty(warehouseLocationMoveDetailEntity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "仓位移动明细不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                WarehouseLocationMoveInfoEntity entity = warehouseLocationMoveInfoService.getById(warehouseLocationMoveDetailEntity.getMainId());
                 if (ObjectUtil.isEmpty(entity)) {
                     deleteResult = BatchResultDTO.fail(id, id, "仓位移动主单不存在, 删除失败");
                     resultDTOS.add(deleteResult);
