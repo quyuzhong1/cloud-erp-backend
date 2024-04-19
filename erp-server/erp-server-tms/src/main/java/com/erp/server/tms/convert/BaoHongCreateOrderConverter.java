@@ -28,7 +28,7 @@ public interface BaoHongCreateOrderConverter {
             @Mapping(target = "referenceNo", source = "logisticsOrderVO.deliveryNo"),
             @Mapping(target = "oabName", source = "logisticsOrderVO.receiverInfoVO.contact"),
             @Mapping(target = "oabCompany", source = "logisticsOrderVO.receiverInfoVO.companyName"),
-            @Mapping(target = "oabState", source = "logisticsOrderVO.receiverInfoVO.district"),
+            @Mapping(target = "oabState", source = "logisticsOrderVO.receiverInfoVO.province"),
             @Mapping(target = "oabCity", source = "logisticsOrderVO.receiverInfoVO.city"),
             @Mapping(target = "oabPostcode", source = "logisticsOrderVO.receiverInfoVO.zipCode"),
             @Mapping(target = "oabStreetAddress1", source = "logisticsOrderVO.receiverInfoVO.addressFirst"),
