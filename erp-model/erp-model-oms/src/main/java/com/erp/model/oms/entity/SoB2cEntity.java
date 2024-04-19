@@ -8,14 +8,15 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Objects;
 
 
@@ -384,5 +385,17 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
             }
         }
         return false;
+    }
+
+    /**
+     * 自发货订单是否已有发货单? true=有，false=无
+     * 如果订单状态是(待发货/已发货/部分发货)=已有发货单
+     */
+    public boolean hasB2cSelfDelivery() {
+        return Arrays.asList(
+                SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode(),
+                SoB2cBillStatusEnum.ENUM_SHIPPED.getCode(),
+                SoB2cBillStatusEnum.ENUM_PARTIAL_SHIPPED.getCode()
+        ).contains(this.billStatus) && !this.hasPlatformWarehouseOrder() ;
     }
 }
