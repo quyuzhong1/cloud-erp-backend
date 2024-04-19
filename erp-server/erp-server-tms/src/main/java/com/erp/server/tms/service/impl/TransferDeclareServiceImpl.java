@@ -352,7 +352,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @GlobalTransactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> orderForecast(String id) {
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
-        List<SoB2cErrorDTO.ShippingDTO> shippingOrderDTOList = new ArrayList<>();
+//        List<SoB2cErrorDTO.ShippingDTO> shippingOrderDTOList = new ArrayList<>();
+        List<TransferDeclareDTO.ShippingOrderDTO> shippingOrderDTOList = new ArrayList<>();
         TransferDeclareEntity transferDeclareEntity = this.getById(id);
 
         if (TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(transferDeclareEntity.getUploadStatus())) {
@@ -445,7 +446,11 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
                 if (result.getCode() == 200) {
                     //拿到第三方订单号，用于给订单赋值第三方平台发货单号
-                    SoB2cErrorDTO.ShippingDTO shippingOrderDTO = new SoB2cErrorDTO.ShippingDTO();
+/*                    SoB2cErrorDTO.ShippingDTO shippingOrderDTO = new SoB2cErrorDTO.ShippingDTO();
+                    shippingOrderDTO.setSoId(soB2cEntity.getId());
+                    shippingOrderDTO.setShippingOrderNo(result.getData());
+                    shippingOrderDTOList.add(shippingOrderDTO);*/
+                    TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO = new TransferDeclareDTO.ShippingOrderDTO();
                     shippingOrderDTO.setSoId(soB2cEntity.getId());
                     shippingOrderDTO.setShippingOrderNo(result.getData());
                     shippingOrderDTOList.add(shippingOrderDTO);
@@ -490,11 +495,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             }
         }
         //处理订单异常信息
-        SoB2cErrorDTO.AddAndDeleteDTO addAndDeleteDTO = new SoB2cErrorDTO.AddAndDeleteDTO();
+/*        SoB2cErrorDTO.AddAndDeleteDTO addAndDeleteDTO = new SoB2cErrorDTO.AddAndDeleteDTO();
         addAndDeleteDTO.setAddDTOList(soB2cErrorList);
         addAndDeleteDTO.setDeleteDTOList(deleteDTOList);
         addAndDeleteDTO.setShippingOrderDTO(shippingOrderDTOList);
-        soB2cFeign.deleteAndAddErrorBatch(addAndDeleteDTO);
+        soB2cFeign.deleteAndAddErrorBatch(addAndDeleteDTO);*/
+
+        //给订单赋值第三方平台发货单号
+        soB2cFeign.updateShippingOrderNo(shippingOrderDTOList);
 
         //如果上传数量等于成功数量，修改主单据上传状态为成功
         long count = resultDTOList.stream().filter(req -> req.getSuccess()).count();
