@@ -78,11 +78,11 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
         List<String> errorMsgList = new ArrayList<>();
         WarehouseLocationMoveInfoDTO.PcAddDTO pcAddDTO = new WarehouseLocationMoveInfoDTO.PcAddDTO();
         List<WarehouseLocationMoveDetailDTO.AddDTO> detailList = new ArrayList<>();
-        //基础验证
-        List<String> msgList = FieldValidUtil.fieldValid(moveInfoExcelDTO);
-        if (CollectionUtils.isNotEmpty(msgList)) {
-            errorMsgList.addAll(msgList);
-        }
+//        //基础验证
+//        List<String> msgList = FieldValidUtil.fieldValid(moveInfoExcelDTO);
+//        if (CollectionUtils.isNotEmpty(msgList)) {
+//            errorMsgList.addAll(msgList);
+//        }
 
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {

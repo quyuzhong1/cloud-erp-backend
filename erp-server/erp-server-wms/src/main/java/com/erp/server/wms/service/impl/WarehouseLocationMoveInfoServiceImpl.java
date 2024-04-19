@@ -296,7 +296,9 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         for (WarehouseLocationMoveInfoDTO.PdaPcListDTO pdaPcListDTO : itemDTOList) {
             pdaPcListDTO.setApproveStatusName(ApproveStatusEnum.getName(pdaPcListDTO.getApproveStatus()));
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(pdaPcListDTO.getSkuId())).findFirst().orElse(null);
-            pdaPcListDTO.setProductName(skuVO.getSkuName());
+            if (Objects.nonNull(skuVO)) {
+                pdaPcListDTO.setProductName(skuVO.getSkuName());
+            }
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(pdaPcListDTO.getWarehouseId()) && req.getCode().equals(pdaPcListDTO.getInWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             pdaPcListDTO.setInWarehouseLocationName(warehouseLocationEntity.getName());
             WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(pdaPcListDTO.getWarehouseId()) && req.getCode().equals(pdaPcListDTO.getOutWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
@@ -956,7 +958,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         MoveInfoExcelListener excelListenerUtil = new MoveInfoExcelListener(this, warehouseService, plmTaskFeign);
         try {
-            EasyExcel.read(excelFile.getInputStream(), WarehouseExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(excelFile.getInputStream(), MoveInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入错误！", e);
             return Boolean.FALSE;
@@ -964,7 +966,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         List<MoveInfoExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (errorList.size() > 0) {
             String fileName = "错误信息";
-            ExcelUtil.export(fileName, "warehouseMoveInfoError", errorList, WarehouseExcelDTO.class, response);
+            ExcelUtil.export(fileName, "warehouseMoveInfoError", errorList, MoveInfoExcelDTO.class, response);
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
