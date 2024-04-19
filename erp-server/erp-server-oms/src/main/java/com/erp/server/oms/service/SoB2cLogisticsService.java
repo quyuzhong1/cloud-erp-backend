@@ -134,4 +134,6 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
     * @return java.lang.Boolean
     **/
    Boolean clearB2cLogisticsCode(List<String> soIdList);
+
+    Boolean updateWeight(String soId,String logisticsId, BigDecimal weightByG);
 }

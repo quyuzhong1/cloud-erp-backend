@@ -5657,8 +5657,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public PackageDTO.ScanResultDTO packageScan(String code) {
-        PackageDTO.ScanResultDTO scanResult = baseMapper.packageScanByCode(code);
+    public PackageDTO.ScanResultDTO packageScan(PackageDTO.ScanDTO scanDTO) {
+        PackageDTO.ScanResultDTO scanResult = baseMapper.packageScanByCode(scanDTO.getCode());
         if (Objects.isNull(scanResult)) {
             throw new ServiceException("未找到对应单号");
         }
@@ -5674,6 +5674,43 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException("仅待发货的可操作组包");
         }
 
+        if(Objects.nonNull(scanDTO.getWeight())){
+            if(scanDTO.getWeight().compareTo(BigDecimal.ZERO) <= 0){
+                throw new ServiceException("重量必须大于0");
+            }
+            if(StringUtils.isBlank(scanDTO.getWeightUnit())){
+                throw new ServiceException("重量单位不能为空");
+            }
+            if(!UnitEnum.WeightUnitEnum.G.getCode().equals(scanDTO.getWeightUnit()) && !UnitEnum.WeightUnitEnum.KG.getCode().equals(scanDTO.getWeightUnit())){
+                throw new ServiceException("重量单位仅支持g和kg");
+            }
+
+            //转成g
+            BigDecimal weightByG = scanDTO.getWeight();
+            if(UnitEnum.WeightUnitEnum.KG.getCode().equals(scanDTO.getWeightUnit())){
+                weightByG = scanDTO.getWeight().multiply(BigDecimal.valueOf(1000));
+            }
+            // 更新订单重量
+            if(StringUtils.isNotBlank(scanResult.getLogisticsId())){
+                soB2cLogisticsService.updateWeight(scanResult.getSoId(),scanResult.getLogisticsId(),weightByG);
+            }
+            // 更新发货单重量
+            SoB2cDeliveryDTO.UpdateWeightDTO dto = SoB2cDeliveryDTO.UpdateWeightDTO.builder()
+                    .soId(scanResult.getSoId())
+                    .weight(scanDTO.getWeight())
+                    .weightUnit(scanDTO.getWeightUnit())
+                    .build();
+            soB2cDeliveryFeign.updateB2cDeliveryWeightBySoId(dto);
+            scanResult.setWeight(weightByG);
+        }
+
+        //查询发货单
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntityList = soB2cDeliveryFeign.listBySourceId(Arrays.asList(scanResult.getSoId()));
+        SoB2cDeliveryEntity deliveryEntity = soB2cDeliveryEntityList.stream().filter(v->!v.getStatus().equals(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())).findFirst().orElse(null);
+        if(Objects.nonNull(deliveryEntity)){
+            scanResult.setWeightStatus(deliveryEntity.getIsWeigh()?"已称重":"未称重");
+        }
+
         scanResult.setWeightUnit(UnitEnum.WeightUnitEnum.G.getCode());
         //物流渠道id
         String logisticsChannelId = scanResult.getLogisticsChannelId();
@@ -5684,7 +5721,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 scanResult.setLogisticsSupplierId(baseDTO.getMainId());
                 scanResult.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
             }
-
         }
         return scanResult;
     }
