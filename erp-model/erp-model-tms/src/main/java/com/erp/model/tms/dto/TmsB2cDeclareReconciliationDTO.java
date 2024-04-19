@@ -153,6 +153,12 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
         private String currency;
 
         /**
+         * 币别名称
+         */
+        private String currencyName;
+
+
+        /**
          * 币别符号
          */
         private String currencySymbol;

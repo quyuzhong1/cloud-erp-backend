@@ -546,8 +546,11 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
             //对账周期
             data.setCycle(StrUtil.format("{}-{}",data.getStartDate(),data.getEndDate()));
             //币别符号
-            String currencySymbol = currencyList.stream().filter(obj -> StrUtil.equals(obj.getId(), data.getCurrency())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
-            data.setCurrencySymbol(currencySymbol);
+            CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(obj -> StrUtil.equals(obj.getId(), data.getCurrency())).findFirst().orElse(null);
+            if(ObjectUtil.isNotEmpty(viewDTO)) {
+                data.setCurrencySymbol(viewDTO.getSymbol());
+                data.setCurrencyName(viewDTO.getName());
+            }
         }
     }
     /**
