@@ -60,7 +60,7 @@ public class TmsFirstMileReconciliationJob {
             endDate = LocalDate.parse(jsonObject.getStr("endDate"));
         }
 
-        if (null != startDate && null != endDate) {
+        if (null == startDate && null == endDate) {
             //查询系统配置
             CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.RECONCILIATION_CYCLE.getCode());
             if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
