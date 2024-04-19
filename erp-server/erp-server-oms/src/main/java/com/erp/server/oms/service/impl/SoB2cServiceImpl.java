@@ -3842,7 +3842,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 try {
                     PlatformSaveHandler.shipOrder(platformShipOrderDTO);
                 } catch (Exception e) {
-                    throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
+                    throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
                 }
             }
         } catch (Exception e) {
@@ -3855,7 +3855,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             addError.setMessage(message);
             soB2cErrorService.add(addError);
             log.error("销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), e.getMessage());
-            throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
+            throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
         }
         //修改状态为虚假发货
         List<String> ids = deliveryEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());

@@ -938,7 +938,7 @@ public enum ApiError implements Serializable {
     ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),
     DELIVERY_NOT_COMBINATION_NOT_MACHINE(92116,"组合SKU不包含销售套装BOM，无需下推加工单"),
     IS_DELIVERY_NOT_UPDATE_MAPPING(92116,"已下推发货单，不允许修改发货信息"),
-    PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，更新平台订单发货状态失败！"),
+    PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，更新平台订单发货状态失败！,错误信息【{}】"),
     NOT_ADD_SO_B2C_DELIVERY(92117,"订单【{}】已生成过发货单，不可以重复新增！"),
     ORDER_IS_INTERCEPT_NOT_UPDATE(92118,"订单【{}】已发起拦截已被冻结，禁止变更状态"),
     SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态虚假发货，已发货，取消发货的数据不允许操作虚假发货"),
