@@ -35,9 +35,9 @@
            pbs.sku_id as skuId,
            pbs.sku_no as skuNo,
            pbs.quantity as quantity,
-           pp.product_length / 10 as length,
-           pp.product_width / 10 as width,
-           pp.product_height / 10 as height,
+           pp.product_length as length,
+           pp.product_width as width,
+           pp.product_height as height,
            pd.name as skuName,
            pd.unit_name as unitName
         from product_bom_info pbi
@@ -63,9 +63,9 @@
         pbs.sku_id as skuId,
         pbs.sku_no as skuNo,
         pbs.quantity as quantity,
-        pp.product_length /10 as productLength,
-        pp.product_width /10 as productWidth,
-        pp.product_height /10 as productHeight,
+        pp.product_length as productLength,
+        pp.product_width as productWidth,
+        pp.product_height as productHeight,
         pd.name as skuName,
         pd.unit_name as unitName
         from product_bom_info pbi
@@ -184,9 +184,9 @@
         pbs.sku_id as skuId,
         pbs.sku_no as skuNo,
         pbs.quantity as quantity,
-        pp.product_length /10 as productLength,
-        pp.product_width /10 as productWidth,
-        pp.product_height /10 as productHeight,
+        pp.product_length as productLength,
+        pp.product_width as productWidth,
+        pp.product_height as productHeight,
         pd.name as skuName,
         pd.unit_name as unitName
         from product_bom_info pbi

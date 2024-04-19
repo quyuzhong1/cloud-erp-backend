@@ -23,6 +23,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
@@ -679,9 +680,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(generateDeliverView.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
                 detailAdd.setSkuId(skuVO.getSkuId());
                 detailAdd.setNetWeight(skuVO.getNetWeight());
-                detailAdd.setProductSizeLength(skuVO.getProductLength());
-                detailAdd.setProductSizeWidth(skuVO.getProductWidth());
-                detailAdd.setProductSizeHeight(skuVO.getProductHeight());
+                detailAdd.setProductSizeLength(LengthConverterUtil.mmToCm(skuVO.getProductLength()));
+                detailAdd.setProductSizeWidth(LengthConverterUtil.mmToCm(skuVO.getProductWidth()));
+                detailAdd.setProductSizeHeight(LengthConverterUtil.mmToCm(skuVO.getProductHeight()));
 
                 detailAdd.setWarehouseLocation(generateDeliverView.getWarehouseLocation());
                 detailAdd.setSourceDetailId(generateDeliverView.getId());
