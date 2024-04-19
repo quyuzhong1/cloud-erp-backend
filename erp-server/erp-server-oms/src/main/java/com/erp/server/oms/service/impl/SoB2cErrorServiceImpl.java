@@ -1,22 +1,9 @@
 package com.erp.server.oms.service.impl;
-import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
-import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
-import com.erp.model.oms.entity.SoB2cReceiverEntity;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.model.tms.dto.TransferDeclareDTO;
-import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
-import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.mapper.SoB2cErrorMapper;
@@ -30,11 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -207,6 +191,19 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         return true;
     }
 
+    @Override
+    public void addErrorBatch(List<SoB2cErrorDTO.AddDTO> dtoList) {
+        for (SoB2cErrorDTO.AddDTO addDTO : dtoList) {
+            this.add(addDTO);
+        }
+    }
+
+    @Override
+    public void deleteErrorBatch(List<SoB2cErrorDTO.DeleteDTO> deleteDTOList) {
+        for (SoB2cErrorDTO.DeleteDTO deleteDTO : deleteDTOList) {
+            this.delete(deleteDTO);
+        }
+    }
 
     /**
     * 新增修改处理数据

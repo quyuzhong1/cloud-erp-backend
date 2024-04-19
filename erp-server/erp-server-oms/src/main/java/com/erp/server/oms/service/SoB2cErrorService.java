@@ -1,9 +1,7 @@
 package com.erp.server.oms.service;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.oms.entity.SoB2cErrorEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.SoB2cErrorEntity;
 
 import java.util.List;
 
@@ -103,4 +101,22 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
      * 根据明细ID删除
      */
     Boolean deleteDetail(SoB2cErrorDTO.DeleteDetailDTO dto);
+
+    /**
+     * 批量添加
+     * @Author Luo_WG
+     * @Date 2024/4/19 9:55
+     * @param dtoList
+     * @return void
+     **/
+    void addErrorBatch(List<SoB2cErrorDTO.AddDTO> dtoList);
+
+    /**
+     * 清除订单异常
+     * @Author Luo_WG
+     * @Date 2024/4/19 10:12
+     * @param deleteDTOList
+     * @return void
+     **/
+    void deleteErrorBatch(List<SoB2cErrorDTO.DeleteDTO> deleteDTOList);
 }

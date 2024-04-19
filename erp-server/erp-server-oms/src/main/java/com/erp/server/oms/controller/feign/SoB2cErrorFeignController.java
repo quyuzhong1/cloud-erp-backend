@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * B2C销售订单异常表
@@ -104,6 +105,30 @@ public class SoB2cErrorFeignController extends BaseController {
         mainDto.setMainId(dto.getMainId());
         Boolean mainDelete = soB2cErrorService.delete(mainDto);
         return detailResult && mainDelete;
+    }
+
+    /**
+     * 批量添加
+     * @Author Luo_WG
+     * @Date 2024/4/19 9:54
+     * @param dtoList
+     * @return void
+     **/
+    @PostMapping("/addErrorBatch")
+    void addErrorBatch(@RequestBody List<SoB2cErrorDTO.AddDTO> dtoList) {
+        soB2cErrorService.addErrorBatch(dtoList);
+    }
+
+    /**
+     * 清除订单异常
+     * @Author Luo_WG
+     * @Date 2024/4/19 10:12
+     * @param deleteDTOList
+     * @return void
+     **/
+    @PostMapping("/deleteErrorBatch")
+    void deleteErrorBatch(@RequestBody List<SoB2cErrorDTO.DeleteDTO> deleteDTOList) {
+        soB2cErrorService.deleteErrorBatch(deleteDTOList);
     }
 
 }
