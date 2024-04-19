@@ -22,8 +22,8 @@ public enum DictBasicEnum {
     DICT_COST_ATTRIBUTION("dictCostAttribution", "费用归属"),
     DICT_COST_CATEGORY("dictCostCategory", "费用分类"),
 
-    CFG_B2C_DECLARE_ERP_FIELD("cfgB2cDeclareErpField", "B2C报关对账单-数大臣字段"),
-    CFG_FIRST_MILE_ERP_FIELD("cfgFirstMileErpField", "头程对账单-数大臣字段"),
+    CFG_B2C_DECLARE_ERP_FIELD("b2cDeclare", "B2C报关对账单-数大臣字段"),
+    CFG_FIRST_MILE_ERP_FIELD("firstMile", "头程对账单-数大臣字段"),
     DECLARE_DECLARE_TYPE("declareDeclareType", "报关单-报关类型"),
     DECLARE_SUPERVISION_METHOD("declareSupervisionMethod", "报关单-监管方式"),
     DECLARE_NATURE_LEVY("declareNatureLevy", "报关单-征免性质"),
