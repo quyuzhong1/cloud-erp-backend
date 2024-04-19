@@ -277,7 +277,7 @@ public class TransferDeclareController extends BaseController {
     @PostMapping(value = "/retryOrderForecast")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:TransferDeclareService:retryOrderForecast",
+            menuCode = "tms:TransferDeclareService:retryOrderForecast",
             tableAlias = "td"
     )
     public ApiResult<List<BatchResultDTO>> retryOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -312,7 +312,7 @@ public class TransferDeclareController extends BaseController {
     @PostMapping(value = "/instockForecast")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:TransferDeclareService:instockForecast",
+            menuCode = "tms:TransferDeclareService:instockForecast",
             tableAlias = "td"
     )
     public ApiResult<List<BatchResultDTO>> instockForecast(@RequestBody @Validated List<BaseDTO.QtyDTO> dtos) {
