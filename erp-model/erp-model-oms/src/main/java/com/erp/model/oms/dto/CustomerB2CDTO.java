@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -280,7 +281,10 @@ public class CustomerB2CDTO implements Serializable {
          */
         private List<String> payCodeList;
 
-
+        /**
+         * 审核状态
+         */
+        private ApproveStatusEnum approveStatus;
         /**
          * 结算方
          */
