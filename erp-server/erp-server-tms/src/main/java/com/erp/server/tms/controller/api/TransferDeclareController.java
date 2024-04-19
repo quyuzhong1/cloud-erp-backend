@@ -277,7 +277,7 @@ public class TransferDeclareController extends BaseController {
     @PostMapping(value = "/retryOrderForecast")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "tms:TransferDeclareService:retryOrderForecast",
+            menuCode = "tms:TransferDeclareService:upload",
             tableAlias = "td"
     )
     public ApiResult<List<BatchResultDTO>> retryOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
