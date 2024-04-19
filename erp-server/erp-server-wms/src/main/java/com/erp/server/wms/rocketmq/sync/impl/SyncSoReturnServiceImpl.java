@@ -95,9 +95,9 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         String retcustName = kingdeeReturnOrderEntity.getFRetcustName();
         List<CustomerInfoEntity> customerInfoEntityList = customerFeign.getCustomerByCodeAndName(retcustNumber, retcustName);
     	if(CollUtil.isEmpty(customerInfoEntityList)) {
-    		throw new ServiceException(String.format("通过客户编码：{}，客户名称：{}查询不到客户信息" , retcustNumber , retcustName));
+    		throw new ServiceException(String.format("通过客户编码：%s，客户名称：%s查询不到客户信息" , retcustNumber , retcustName));
     	}else if(customerInfoEntityList.size() > 1){
-    		throw new ServiceException(String.format("通过客户编码：{}，客户名称：{}查询到多条客户信息" , retcustNumber , retcustName));
+    		throw new ServiceException(String.format("通过客户编码：%s，客户名称：%s查询到多条客户信息" , retcustNumber , retcustName));
     	}
         
         List<KingdeeReturnOrderItemEntity> itemEntityList = kingdeeReturnOrderEntity.getItemEntityList();
