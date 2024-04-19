@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -192,16 +191,13 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     }
 
     @Override
-    public void addErrorBatch(List<SoB2cErrorDTO.AddDTO> dtoList) {
-        for (SoB2cErrorDTO.AddDTO addDTO : dtoList) {
-            this.add(addDTO);
-        }
-    }
-
-    @Override
-    public void deleteErrorBatch(List<SoB2cErrorDTO.DeleteDTO> deleteDTOList) {
-        for (SoB2cErrorDTO.DeleteDTO deleteDTO : deleteDTOList) {
+    public void deleteAndAddErrorBatch(SoB2cErrorDTO.AddAndDeleteDTO addAndDeleteDTO) {
+        for (SoB2cErrorDTO.DeleteDTO deleteDTO : addAndDeleteDTO.getDeleteDTOList()) {
             this.delete(deleteDTO);
+        }
+
+        for (SoB2cErrorDTO.AddDTO addDTO : addAndDeleteDTO.getAddDTOList()) {
+            this.add(addDTO);
         }
     }
 

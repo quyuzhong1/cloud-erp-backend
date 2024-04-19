@@ -108,27 +108,15 @@ public class SoB2cErrorFeignController extends BaseController {
     }
 
     /**
-     * 批量添加
-     * @Author Luo_WG
-     * @Date 2024/4/19 9:54
-     * @param dtoList
-     * @return void
-     **/
-    @PostMapping("/addErrorBatch")
-    void addErrorBatch(@RequestBody List<SoB2cErrorDTO.AddDTO> dtoList) {
-        soB2cErrorService.addErrorBatch(dtoList);
-    }
-
-    /**
-     * 清除订单异常
+     * 删除新增订单异常信息
      * @Author Luo_WG
      * @Date 2024/4/19 10:12
-     * @param deleteDTOList
+     * @param addAndDeleteDTO
      * @return void
      **/
-    @PostMapping("/deleteErrorBatch")
-    void deleteErrorBatch(@RequestBody List<SoB2cErrorDTO.DeleteDTO> deleteDTOList) {
-        soB2cErrorService.deleteErrorBatch(deleteDTOList);
+    @PostMapping("/deleteAndAddErrorBatch")
+    void deleteAndAddErrorBatch(@RequestBody SoB2cErrorDTO.AddAndDeleteDTO addAndDeleteDTO) {
+        soB2cErrorService.deleteAndAddErrorBatch(addAndDeleteDTO);
     }
 
 }
