@@ -341,6 +341,16 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         return logisticsBillFeign.removeLogisticsBillBySourceId(soIdList);
     }
 
+    @Override
+    public Boolean updateWeight(String soId,String id, BigDecimal weightByG) {
+        String msg = StrUtil.format("用户【{}】更新重量为{} ", commonService.getUserInfo().getUserName(),weightByG+"g");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soId, msg);
+        return lambdaUpdate()
+                .set(SoB2cLogisticsEntity::getWeight, weightByG)
+                .eq(SoB2cLogisticsEntity::getId, id)
+                .update();
+    }
+
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {
         LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
         addDTO.setShopId(mainEntity.getShopId());

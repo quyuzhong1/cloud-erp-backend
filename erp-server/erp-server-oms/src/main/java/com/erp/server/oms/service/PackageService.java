@@ -38,5 +38,5 @@ public interface PackageService  {
      * @param ids 为销售订单id
      * @return
      */
-    Boolean mergePackage(List<String> ids);
+    List<BatchResultDTO> mergePackage(List<String> ids);
 }

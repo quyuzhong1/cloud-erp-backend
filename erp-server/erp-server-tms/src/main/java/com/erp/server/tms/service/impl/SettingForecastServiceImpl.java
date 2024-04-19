@@ -234,7 +234,7 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
                 if (Objects.isNull(enableTransferTime)) {
                     transferStatus = TransferStatusEnum.WAIT.getCode();
                 } else {
-                    if (orderTime.compareTo(enablePackageTime) > 0) {
+                    if (orderTime.compareTo(enableTransferTime) > 0) {
                         transferStatus = TransferStatusEnum.WAIT.getCode();
                     }
                 }

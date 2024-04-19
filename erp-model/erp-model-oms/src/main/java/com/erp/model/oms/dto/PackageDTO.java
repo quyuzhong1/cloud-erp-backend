@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -64,6 +65,10 @@ public class PackageDTO implements Serializable {
          */
         private String logisticsChannelId;
 
+        /**
+         * b2c物流单Id
+         */
+        private String logisticsId;
 
         /**
          * 渠道id
@@ -89,7 +94,33 @@ public class PackageDTO implements Serializable {
          */
         private String billStatus;
 
+        /**
+         * 称重状态
+         */
+        private String weightStatus;
+    }
 
+    /**
+     * 分页条件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ScanDTO{
+        /**
+         * 单号
+         */
+        @NotBlank(message = "单号不能为空")
+        private String code;
+
+        /**
+         * 重量
+         */
+        private BigDecimal weight;
+
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
     }
 
     /**

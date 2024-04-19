@@ -659,7 +659,10 @@ public class LogisticsBillDTO implements Serializable {
          * 销售平台
          */
         private String salesPlatform;
-
+        /**
+         * 物流单号
+         */
+        private String trackNo;
 
         /**
          * 收货人
@@ -972,4 +975,21 @@ public class LogisticsBillDTO implements Serializable {
 
     }
 
+
+    /**
+     * 打印物流面单参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SoB2cLabelDTO {
+        /**
+         * 销售单id
+         */
+        private String soB2cId;
+
+        /**
+         * 物流面单base64格式
+         */
+        private List<String> logisticsBase64;
+    }
 }

@@ -1,5 +1,8 @@
 package com.erp.server.wms.controller.feign;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.validator.ValidList;
 import com.common.core.controller.BaseController;
 import com.erp.model.wms.dto.PackageForecastDTO;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -41,17 +45,18 @@ public class PackageForecastFeignController extends BaseController {
      * @return
      */
     @PostMapping("/add")
-    public Boolean add(@RequestBody @Validated ValidList<PackageForecastDTO.AddDTO> list) {
+    public List<BatchResultDTO> add(@RequestBody @Validated ValidList<PackageForecastDTO.AddDTO> list) {
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
         for (PackageForecastDTO.AddDTO item : list) {
             try {
                 packageForecastService.add(item);
             } catch (Exception e) {
                 log.error("添加组包预报异常 {}", e.getMessage());
+                item.getDetailList().forEach(v-> resultDTOList.add(BatchResultDTO.fail(item.getLogisticsSupplierId(),v.getSoCode(), StrUtil.format("添加组包预报异常 {}", ExceptionUtil.getSimpleMessage(e)))));
             }
-
         }
 
-        return Boolean.TRUE;
+        return resultDTOList;
     }
 
 

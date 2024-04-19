@@ -159,4 +159,38 @@
          </if>
          GROUP BY approve_status
     </select>
+    <select id="customerDropDown" resultType="com.erp.model.oms.dto.CustomerB2CDTO$DropListDTO">
+        select customerId,customerName,cityId,countryId,receiverName,receiverTelNumber,firstAddress,secondAddress,zipCode,email,telNumber
+        from (
+                 select
+                     c."id" as customerId,
+                     c."name" as customerName,
+                     c.city_id as cityId,
+                     c.country_id as countryId,
+                     a.person as receiverName,
+                     a.tel_number as receiverTelNumber,
+                     a.address as firstAddress,
+                     a.address as secondAddress,
+                     a.zip_code as zipCode,
+                     cbc.email as email,
+                     cbc.tel_number as telNumber
+                 from customer_b2c c
+                          left join customer_b2c_address a on a.main_id = c.id and a.is_deleted  = FALSE and a.disabled = FALSE and a.is_default = true
+                          left join customer_b2c_contact cbc on cbc.main_id = c.id and cbc.is_deleted  = FALSE and cbc.disabled = FALSE and cbc.is_default = true
+                 where c.is_deleted = FALSE and c.disabled = FALSE
+                 <if test="params != null and params.customerId != null and params.customerId != ''">
+                     and c."id" = #{params.customerId}
+                 </if>
+                <if test="params != null and params.customerName != null and params.customerName != ''">
+                    and c."name" ILIKE concat('%',#{params.customerName}::text,'%')
+                </if>
+                 <if test="params != null and params.customerName != null and params.customerName != ''">
+                     order by
+                     case when c."name" ILIKE concat(#{params.customerName}::text,'%') THEN 1
+                     when c."name" ILIKE concat('%',#{params.customerName}::text) THEN 2
+                     when c."name" ILIKE concat('%',#{params.customerName}::text,'%') THEN 3
+                     end , c."name"
+                 </if>
+             ) customer
+    </select>
 </mapper>

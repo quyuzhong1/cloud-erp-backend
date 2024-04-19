@@ -1,9 +1,11 @@
 package com.erp.server.sys.controller.api;
 
 import java.time.Duration;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +14,10 @@ import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.utils.RedisUtil;
 import com.common.core.controller.BaseController;
 import com.erp.model.sys.entity.DictBasicEntity;
@@ -45,9 +49,9 @@ public class SysWebVersionController extends BaseController implements CommandLi
     
     @CrossOrigin
 	@GetMapping(value = "/update")
-    public String update() throws Exception {
+    public String update(@RequestParam(value = "isDeteleToken" , required = false) Boolean isDeteleToken) throws Exception {
     	int count = 0;
-		while(!dealUpdate()) {
+		while(!dealUpdate(isDeteleToken)) {
 			if(count >= 30) {
 				return "update web version fail";
 			}
@@ -57,6 +61,7 @@ public class SysWebVersionController extends BaseController implements CommandLi
         return "update web version success";
     }
     
+    @CrossOrigin
 	@RequestMapping(value = "/sse" , produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<String>> getEvents() {
         return Flux.interval(Duration.ofSeconds(2))
@@ -67,11 +72,17 @@ public class SysWebVersionController extends BaseController implements CommandLi
                         .build());
     }
     
-    private boolean dealUpdate() {
+    private boolean dealUpdate(Boolean isDeteleToken) {
     	try {
 			redisUtil.del(WEB_VERSION_REDISKEY);
 			dictBasicService.lambdaUpdate().eq(DictBasicEntity::getType, WEB_VERSION_TYPE).setSql(" value = value::int + 1 ").update();
 			redisUtil.del(WEB_VERSION_REDISKEY);
+			if(isDeteleToken != null && isDeteleToken) {
+				Collection<String> keys = redisUtil.keys(RedisCacheConstants.LOGIN_TOKEN_KEY + "*");
+				if(CollUtil.isNotEmpty(keys)) {
+					redisUtil.del(keys.toArray(new String[] {}));
+				}
+			}
 			webVersion = "";
 		} catch (Exception e) {
 			log.error("更新前端打包版本失败" , e);

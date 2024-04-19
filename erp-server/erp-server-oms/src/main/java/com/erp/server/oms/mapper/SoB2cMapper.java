@@ -149,4 +149,12 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @return
      */
     List<WmsDataCompareTaskDTO.SoB2cDTO> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.SoOutstockDTO params);
+    /**
+     * @description: 导出excel
+     * @author Will
+     * @date: 2024/4/16 15:10
+     * @param params
+     * @return List<ExcelExportDTO>
+     */
+    List<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("params") SoB2cDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
 }

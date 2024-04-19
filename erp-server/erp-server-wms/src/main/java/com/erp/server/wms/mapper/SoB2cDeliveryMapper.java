@@ -29,7 +29,7 @@ public interface SoB2cDeliveryMapper extends BaseMapper<SoB2cDeliveryEntity> {
      * @param searchParam
      * @return java.util.List<com.erp.model.wms.dto.SoB2cDeliveryDTO.TabListDTO>
      **/
-    List<SoB2cDeliveryDTO.TabListDTO> tabList(SoB2cDeliveryDTO.PagingParamDTO searchParam);
+    List<SoB2cDeliveryDTO.TabListDTO> tabList(@Param("params") SoB2cDeliveryDTO.PagingParamDTO searchParam);
 
     /**
      * 分页查询
@@ -40,4 +40,12 @@ public interface SoB2cDeliveryMapper extends BaseMapper<SoB2cDeliveryEntity> {
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.SoB2cDeliveryDTO.ListDTO>
      **/
     IPage<SoB2cDeliveryDTO.ListDTO> paging(Page query, @Param("params") SoB2cDeliveryDTO.PagingParamDTO params);
+
+    /**
+     * 列表查询
+     * @param params
+     * @return
+     */
+    List<SoB2cDeliveryDTO.ListDTO> list(@Param("params") SoB2cDeliveryDTO.PagingParamDTO params);
+
 }

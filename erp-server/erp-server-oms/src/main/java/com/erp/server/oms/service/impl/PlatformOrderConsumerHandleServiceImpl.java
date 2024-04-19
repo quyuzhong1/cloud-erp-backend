@@ -95,7 +95,12 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 //            return;
 //        }
         // 亚马逊, 跳过MFN时，地址为空的订单
-        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform()) && this.checkHasMfnOrderAndNoAddress(dto) ) {
+        // 已作废的MFN订单, 地址允许为空
+        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())
+                && this.checkHasMfnOrderAndNoAddress(dto)
+                && null != dto.getInvalidStatus()
+                && !dto.getInvalidStatus()
+        ) {
             log.warn("亚马逊卖家自发货订单无地址暂不新增：单号={}", dto.getPlatformCode());
             return;
         }

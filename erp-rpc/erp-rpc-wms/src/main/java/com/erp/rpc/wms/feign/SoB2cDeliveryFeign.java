@@ -42,6 +42,14 @@ public interface SoB2cDeliveryFeign {
     Boolean addSoB2cDelivery(@RequestBody SoB2cDeliveryDTO.AddDTO dto);
 
     /**
+     * 添加发货单
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/soB2cDelivery/updateB2cDeliveryWeightBySoId")
+    Boolean updateB2cDeliveryWeightBySoId(@RequestBody SoB2cDeliveryDTO.UpdateWeightDTO dto);
+
+    /**
      * 虚假发货
      * @Author Luo_WG
      * @Date 2023/12/27 15:30

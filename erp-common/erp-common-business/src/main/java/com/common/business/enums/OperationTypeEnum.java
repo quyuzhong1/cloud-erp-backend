@@ -17,6 +17,7 @@ public enum OperationTypeEnum {
 
     ADD("add", "添加"),
     SUBMIT("submit", "提交操作"),
+    UPDATE("update", "更新操作"),
     APPROVE_PASS("approve_pass", "单据审核通过操作"),
     APPROVE_REJECT("approve_reject", "单据审核不通过操作"),
     DISAPPROVE("disapprove", "反审核"),

@@ -437,6 +437,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder().authMap(authMap).
                 orderSource(sourceType).
+                trackNo(dto.getTrackNo()).
                 topUserKey(dto.getTopUserKey()).
                 oaid(dto.getOaid()).
                 deliveryNo(dto.getOrderCode()).
@@ -948,9 +949,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     throw new ServiceException(ApiError.PRINT_WAYBILL_ERROR, datum.getMessage());
                 }
             }
+            //获取标签信息
+            List<String> logisticsBase64 = labelList.getData().stream().map(req -> req.getBase64()).distinct().collect(Collectors.toList());
 
-            waybillDTO.setLogisticsBase64(labelList.getData().get(0).getBase64());
-            waybillDTO.setDistributeBase64(labelList.getData().get(0).getBase64());
+
+            waybillDTO.setLogisticsBase64(logisticsBase64);
+            waybillDTO.setDistributeBase64(logisticsBase64);
             waybillDTO.setSoB2cId(dto.getB2cSoId());
             waybillDTO.setTrackNo(getLabelVO.getTrackNo());
             waybillDTO.setTransportNo(getLabelVO.getTransportNo());
