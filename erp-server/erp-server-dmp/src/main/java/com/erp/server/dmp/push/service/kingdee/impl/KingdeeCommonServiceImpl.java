@@ -408,6 +408,12 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         return audit;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean handleAudit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, Integer type) {
+        //根据状态审核
+        return this.updateApproved(apiUtils, platformEntity, map, type, KingdeeDocStatusEnum.APPROVED, Boolean.TRUE);
+    }
 
     /**
      * @param map
@@ -436,27 +442,34 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             //当审核状态非已审核时继续审核
             audit(map, apiUtils, id, type);
         }
-        //更新业务单据状态
-        kingdeeCommonService.updateBusinessSyncKingdeeStatus(type, map.get("id").toString(), SyncStatusEnum.SUCCESS_SYNC.getCode(), id,"");
         return Boolean.TRUE;
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean handleUnAudit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, Integer type) {
         //根据状态反审核
         return this.updateApproved(apiUtils, platformEntity, map, type, KingdeeDocStatusEnum.REAPPROVE, Boolean.TRUE);
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean unAudit(KingdeeApiUtils apiUtils, String id) {
-        //审核中或已审核则要先反审
+        //已审核则要先反审
         ArrayList<String> ids = new ArrayList<>();
         ids.add(id);
         apiUtils.unAuditById(ids);
         //反审核成功操作日志
         log.info("反审核成功,数据【{}】", id);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean cancelAssign(KingdeeApiUtils apiUtils, String id) {
+        //审核中需要撤销
+        ArrayList<String> ids = new ArrayList<>();
+        ids.add(id);
+        apiUtils.cancelAssign(ids);
+        //撤销成功
+        log.info("撤销成功,数据【{}】", id);
         return Boolean.TRUE;
     }
 
@@ -742,10 +755,17 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         }
         //重新审核
         if (KingdeeDocStatusEnum.REAPPROVE.equals(docStatusEnum)) {
+     /*       //审核中需要撤销
+            if (StrUtil.equals(KingdeeDocStatusEnum.APPROVING.getCode(), documentStatus)) {
+                return this.cancelAssign(apiUtils,syncKingdeeId);
+            }*/
             return this.unAudit(apiUtils, syncKingdeeId);
         }
         //审核通过
         if (KingdeeDocStatusEnum.APPROVED.equals(docStatusEnum)) {
+            if (StrUtil.equals(KingdeeDocStatusEnum.SAVED.getCode(), documentStatus) || StrUtil.equals(KingdeeDocStatusEnum.REAPPROVE.getCode(), documentStatus)) {
+                return this.submit(map, apiUtils, syncKingdeeId, type);
+            }
             return this.audit(map, apiUtils, syncKingdeeId, type);
         }
         return Boolean.TRUE;
