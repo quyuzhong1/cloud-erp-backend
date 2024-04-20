@@ -86,8 +86,10 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
          * 移动数量
          */
         private Integer qty;
-
-
+        /**
+         * 取货仓位
+         */
+        private String WarehouseId;
     }
 
     @Data

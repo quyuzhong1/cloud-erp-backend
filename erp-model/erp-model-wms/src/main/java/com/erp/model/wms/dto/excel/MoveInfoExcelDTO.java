@@ -63,7 +63,7 @@ public class MoveInfoExcelDTO implements Serializable {
     /**
      * 错误信息
      */
-    @ColumnWidth(200)
+    @ColumnWidth(50)
     @ExcelProperty(value = "错误信息", index = 6)
     private String errorMsg;
 }

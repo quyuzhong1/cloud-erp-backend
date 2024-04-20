@@ -466,6 +466,11 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         private String  id;
 
         /**
+         * 明细id
+         */
+        private String  detailId;
+
+        /**
          * 单据编号
          */
         private String code;

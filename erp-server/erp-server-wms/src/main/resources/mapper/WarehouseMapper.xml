@@ -305,7 +305,7 @@
         name
         FROM warehouse  WHERE is_deleted=false and approve_status = 'approve'
         <if test="nameList != null and nameList.size > 0">
-            and w.id in
+            and name in
             <foreach collection="nameList" item="name" open="(" close=")" separator=",">
                 #{name}
             </foreach>

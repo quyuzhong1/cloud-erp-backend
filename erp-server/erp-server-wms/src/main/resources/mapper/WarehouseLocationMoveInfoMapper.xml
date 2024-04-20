@@ -166,6 +166,12 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.ids != null and params.ids.size != ''">
+            and wlmd.id in
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
         <if test="params.billDateList != null and params.billDateList.size > 0">
             and wlmi.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wlmi.bill_date
         </if>

@@ -736,11 +736,11 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
             viewDTO.setUnitName(skuVO.getUnitName());
             viewDTO.setSkuImg(skuVO.getSkuImagesUrl());
             viewDTO.setProductName(skuVO.getSkuName());
+            viewDTO.setWarehouseId(warehouseLocationMoveInfoEntity.getWarehouseId());
             WarehouseLocationEntity inWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(data.getWarehouseId()) && req.getCode().equals(viewDTO.getInWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             viewDTO.setInWarehouseLocationName(inWarehouseLocationEntity.getName());
             WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(data.getWarehouseId()) && req.getCode().equals(viewDTO.getOutWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             viewDTO.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
-
         }
 
         data.setDetailList(detailList);
