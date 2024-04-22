@@ -1,5 +1,6 @@
 package com.erp.server.tms.listener;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
@@ -48,9 +49,15 @@ public class DeclareReconciliationConfigExcelListener extends AnalysisEventListe
     */
     @Override
     public void invoke(Map<Integer,String>  map, AnalysisContext analysisContext) {
-        JSONObject excelDTO = new JSONObject(map);
         List<String> errorMsgList = new ArrayList<>();
-
+        //当导入的最后一列数据都是空时map无值导致表头size和map.size不一致，所以需要添加表头一致的数据
+        for (Map.Entry<Integer,String> entry : headMap.entrySet()) {
+            String value = map.get(entry.getKey());
+            if (ObjectUtil.isEmpty(value)) {
+                map.put(entry.getKey(),"");
+            }
+        }
+        JSONObject excelDTO = new JSONObject(map);
         //添加数据用于判断是否为空
         dataList.add(excelDTO);
         //存在错误数据则直接返回
