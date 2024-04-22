@@ -4,14 +4,11 @@ package com.erp.server.wms.controller.pda;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.erp.server.wms.query.MarehouseMoveInfoQueryHandler;
 import com.erp.server.wms.service.TransferInfoService;
 import com.erp.server.wms.service.WarehouseLocationMoveDetailService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -685,7 +682,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
             menuCode = "wms:pdaWarehouseLocationMoveInfo:pc:view",
             serviceClass = WarehouseLocationMoveInfoService.class,
             keyIdName = "id")
-    public ApiResult<WarehouseLocationMoveInfoDTO.PdaPcViewDTO> pcView(@RequestParam("id") String id) {
+    public ApiResult<WarehouseLocationMoveInfoDTO.PcViewDTO> pcView(@RequestParam("id") String id) {
         return success(warehouseLocationMoveInfoService.pcView(id));
     }
 

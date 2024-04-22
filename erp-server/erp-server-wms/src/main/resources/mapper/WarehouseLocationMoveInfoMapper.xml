@@ -104,14 +104,16 @@
     </select>
 
 
-    <select id="getDetail" resultType="com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO$PdaPcViewDTO">
+    <select id="getDetail" resultType="com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO$DetailViewDTO">
         SELECT distinct
         wlmd.id,
         wlmi.id as detailId,
         wlmi.code,
         wlmi.approve_status,
-        wlmi.warehouse_id,
-        wlmi.warehouse_name,
+        wlmd.warehouse_id,
+        wlmd.warehouse_name,
+        wlmi.warehouse_id as infoWarehouseId,
+        wlmi.warehouse_name as infoWarehouseName,
         wlmi.bill_date,
         wlmi.approve_user_id,
         wlmi.create_user_id,
@@ -130,7 +132,7 @@
         WHERE wlmi.is_deleted = FALSE
         AND wlmi.invalid_status = FALSE
         <if test="id != null and id != ''">
-            and wlmd.id = #{id}
+            and wlmi.id = #{id}
         </if>
     </select>
 
@@ -140,8 +142,10 @@
         wlmd.id as detailId,
         wlmi.code,
         wlmi.approve_status as approveStatus,
-        wlmi.warehouse_id as warehouseId,
-        wlmi.warehouse_name,
+        wlmi.warehouse_id as infoWarehouseId,
+        wlmi.warehouse_name as infoWarehouseName,
+        wlmd.warehouse_id as warehouseId,
+        wlmd.warehouse_name,
         wlmi.bill_date as billDate,
         wlmi.approve_user_id as approveUserId,
         wlmi.create_user_id as createUserId,
@@ -166,7 +170,7 @@
                 #{item}
             </foreach>
         </if>
-        <if test="params.ids != null and params.ids.size != ''">
+        <if test="params.detailIds != null and params.detailIds.size != ''">
             and wlmd.id in
             <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
                 #{item}

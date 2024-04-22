@@ -4,10 +4,13 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.WarehouseLocationMoveDetailMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -26,6 +29,9 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 仓位移动明细表 服务实现类
@@ -45,6 +51,8 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     private InventoryService inventoryService;
     @Autowired
     private WarehouseService warehouseService;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -126,6 +134,17 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
                 throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR, detailEntity.getSkuNo());
             }
             detailEntity.setMainId(mainId);
+            if (pcShow) {
+                List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(detailEntity.getWarehouseId()));
+                WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(req -> req.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+                detailEntity.setWarehouseName(updateDTO.getName());
+                detailEntity.setInventoryOrgId(updateDTO.getOrgId());
+                //获取核算公司
+                SysAccountingCompanyEntity companyEntity = sysUserFeign.getCompanyById(updateDTO.getOrgId());
+                if (ObjectUtil.isNotEmpty(companyEntity)) {
+                    detailEntity.setInventoryOrgName(companyEntity.getCompanyName());
+                }
+            }
         }
 
         //添加操作日志

@@ -3,16 +3,16 @@ package com.erp.model.wms.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.Serializable;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import javax.validation.constraints.NotEmpty;
@@ -84,6 +84,10 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
          */
          private List<String>  createUserIdList;
          /**
+         * 明细id
+         */
+         private List<String>  detailIds;
+         /**
          * 创建时间
          */
          private List<String>  createTimeList;
@@ -129,6 +133,15 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         * 仓库名称
         */
         private String warehouseName;
+        /**
+        * 仓库id--兼容移动端pda历史数据
+        */
+        private String infoWarehouseId;
+
+        /**
+        * 仓库名称--兼容移动端pda历史数据
+        */
+        private String infoWarehouseName;
 
         /**
         * 库存组织id
@@ -170,6 +183,19 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         * 创建人名称
         */
         private String createUserName;
+
+        public String getWarehouseId() {
+            if (StringUtils.isBlank(warehouseId)){
+                return infoWarehouseId;
+            }
+            return warehouseId;
+        }
+        public String getWarehouseName() {
+            if (StringUtils.isBlank(warehouseName)){
+                return infoWarehouseName;
+            }
+            return warehouseId;
+        }
     }
 
     /**
@@ -182,6 +208,10 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         * 勾选的id集合
         */
         private List<String> ids;
+        /**
+        * 勾选的明细id集合
+        */
+        private List<String> detailIds;
         /**
          * 审核状态
          */
@@ -277,6 +307,54 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
          * 明细信息
          */
         private List<WarehouseLocationMoveDetailDTO.ViewDTO> detailList;
+    }
+    /**
+    * 详情
+    */
+    @Data
+    @NoArgsConstructor
+    public static class PcViewDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 单据编号
+        */
+        private String code;
+
+        /**
+        * 审核状态
+        */
+        private String approveStatus;
+
+
+        /**
+        * 审核人id
+        */
+        private String approveUserId;
+
+        /**
+        * 审核人名称
+        */
+        private String approveUserName;
+
+        /**
+        * 审核时间
+        */
+        private LocalDateTime approveTime;
+
+        /**
+        * 审核时间
+        */
+        private LocalDate billDate;
+
+        /**
+         * 明细信息
+         */
+        private List<DetailViewDTO> detailList;
     }
 
     /**
@@ -572,7 +650,7 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PdaPcViewDTO {
+    public static class DetailViewDTO {
 
         /**
          * 主键id
@@ -638,6 +716,16 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         private String warehouseName;
 
         /**
+         * 仓库id--兼容移动端pda历史数据
+         */
+        private String infoWarehouseId;
+
+        /**
+         * 仓库名称--兼容移动端pda历史数据
+         */
+        private String infoWarehouseName;
+
+        /**
          * 产品明细数量
          */
         private Integer detailCount;
@@ -693,6 +781,19 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
          * 冻结库存
          */
         private Integer frozenQty = 0;
+
+        public String getWarehouseId() {
+            if (StringUtils.isBlank(warehouseId)){
+                return infoWarehouseId;
+            }
+            return warehouseId;
+        }
+        public String getWarehouseName() {
+            if (StringUtils.isBlank(warehouseName)){
+                return infoWarehouseName;
+            }
+            return warehouseId;
+        }
     }
 
     /**

@@ -45,6 +45,10 @@ public class ApproveOneDTO extends PermissionsDTO {
     private Boolean isNeedProcess;
 
 
+    /**
+     * 是否是pc端访问
+     */
+    private Boolean pcShow = false;
 
 
 

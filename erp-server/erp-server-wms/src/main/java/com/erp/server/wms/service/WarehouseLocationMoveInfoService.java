@@ -4,7 +4,6 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO;
 import com.common.business.vo.PagingVO;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -103,7 +102,7 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
       * @date 2024/4/17 11:25
       * @param id
       */
-     WarehouseLocationMoveInfoDTO.PdaPcViewDTO pcView(String id);
+     WarehouseLocationMoveInfoDTO.PcViewDTO pcView(String id);
 
      /**
      * 新增并提交审核
