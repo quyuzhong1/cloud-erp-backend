@@ -383,11 +383,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             }
             // 移除实际费用
             if (!CollectionUtils.isEmpty(delActualCostIds)){
-                tmsCostDetailService.lambdaUpdate()
-                        .set(TmsCostDetailEntity::getCostValue, BigDecimal.ZERO)
-                        .eq(TmsCostDetailEntity::getType, LogisticsBillCostTypeEnum.ACTUAL.getCode())
-                        .in(TmsCostDetailEntity::getMainId, delActualCostIds)
-                        .update();
+                tmsCostDetailService.updateActual0ByMainId(delActualCostIds);
             }
         }
         // 修改或添加实际费用
@@ -1077,6 +1073,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         if (!this.updateBatchById(detailEntityList)) {
             throw new ServiceException("批量删除失败, 请重试");
         }
+        List<String> mainIds = detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
 
         List<String> sourceIds = detailEntityList.stream()
                 .map(TmsFirstMileReconciliationDetailEntity::getSourceId)
@@ -1085,7 +1082,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         this.changeLogisticsBillCost(sourceIds, ReconciliationStatusEnum.TO_BE_GENERATED.getCode());
 
         // 移除实际明细
-        List<TmsCostDetailEntity> tmsCostDetailList = tmsCostDetailService.lambdaQuery().in(TmsCostDetailEntity::getMainId, sourceIds)
+        List<TmsCostDetailEntity> tmsCostDetailList = tmsCostDetailService.lambdaQuery().in(TmsCostDetailEntity::getMainId, mainIds)
                 .eq(TmsCostDetailEntity::getType, LogisticsBillCostTypeEnum.ACTUAL.getCode())
                 .list();
         if (CollectionUtils.isEmpty(tmsCostDetailList)) {
@@ -1109,8 +1106,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         if (!logisticsBillCostService.updateBatchById(logisticsBillCostList)) {
             throw new ServiceException("批量更新物流单相关失败, 请重试");
         }
-        // 移除实际费用
-
+        // 移除物流单实际明细
+        List<String> costIds = logisticsBillCostList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        tmsCostDetailService.updateActual0ByMainId(costIds);
     }
 
     @Override

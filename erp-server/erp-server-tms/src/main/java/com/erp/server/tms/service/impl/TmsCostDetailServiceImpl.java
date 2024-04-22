@@ -283,4 +283,12 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         return list;
     }
 
+    @Override
+    public boolean updateActual0ByMainId(List<String> delActualCostIds) {
+        return this.lambdaUpdate()
+                .set(TmsCostDetailEntity::getCostValue, BigDecimal.ZERO)
+                .eq(TmsCostDetailEntity::getType, LogisticsBillCostTypeEnum.ACTUAL.getCode())
+                .in(TmsCostDetailEntity::getMainId, delActualCostIds)
+                .update();
+    }
 }
