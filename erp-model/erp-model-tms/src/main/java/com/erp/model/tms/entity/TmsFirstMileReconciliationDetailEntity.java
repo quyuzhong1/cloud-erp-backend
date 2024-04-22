@@ -6,9 +6,11 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 
+import com.erp.model.tms.dto.TmsCostDetailDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -188,6 +190,12 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
      */
     @TableField("confirm_user_name")
     private String confirmUserName;
+
+    /**
+     * 费用编辑（导入数据返回）
+     */
+    @TableField(exist = false)
+    private List<TmsCostDetailDTO.UpdateDTO> updateList;
 
 
     public void setTotalLogisticsCost(){

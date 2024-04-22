@@ -15,10 +15,7 @@ import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.mapper.TmsCostDetailMapper;
-import com.erp.server.tms.service.LogisticsBillCostService;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.TmsB2cDeclareReconciliationDetailService;
-import com.erp.server.tms.service.TmsCostDetailService;
+import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +23,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -54,6 +52,9 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
 
     @Autowired
     private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
+
+    @Resource
+    private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
 
     @Override
     public Boolean batchAdd(List<TmsCostDetailDTO.AddDTO> costDetailList, String mainId, DictCostAttributionEnum dictCostAttributionEnum) {
@@ -206,7 +207,14 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         String currency;
         switch (dictCostAttributionEnum) {
             case FIRST_MILE:
-                currency = CurrencyEnum.CNY.getCurrencyCode();
+                // 头程对账单
+                currency = tmsFirstMileReconciliationDetailService.getCurrencyById(mainId);
+                // TODO 根据类型区分
+                // 头程物流单
+                if (null == currency){
+                    LogisticsBillCostEntity costEntity = logisticsBillCostService.getById(mainId);
+                    currency = null == costEntity ? "" : costEntity.getCurrency();
+                }
                break;
             case SELF_DELIVER:
                 LogisticsBillCostEntity mainEntity = logisticsBillCostService.getById(mainId);
