@@ -8,6 +8,7 @@ import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 
@@ -106,7 +107,7 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      * @author Jim
      * @date: 2024-03-25
      */
-    Boolean update(List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList, String mainId);
+    Boolean update(List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList, TmsFirstMileReconciliationEntity mainEntity);
 
     /**
      * 补充明细信息

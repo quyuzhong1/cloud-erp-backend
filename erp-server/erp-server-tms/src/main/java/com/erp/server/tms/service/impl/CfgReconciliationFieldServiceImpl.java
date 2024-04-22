@@ -345,7 +345,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
 
     @Override
     public LinkedList<String> erpFieldListName(List<String> typeList, boolean nullThrow) {
-        List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> list = this.erpFieldList(Collections.singletonList(DictBasicEnum.CFG_FIRST_MILE_ERP_FIELD.getType()));
+        List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> list = this.erpFieldList(Collections.singletonList(CfgReconciliationTypeEnum.FIRST_MILE.getCode()));
         if (CollectionUtils.isEmpty(list)){
             if (nullThrow){
                 throw new ServiceException("配置字段缺失，请联系管理员");

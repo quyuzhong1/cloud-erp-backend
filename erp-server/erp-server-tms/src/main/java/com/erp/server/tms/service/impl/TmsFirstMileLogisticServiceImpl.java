@@ -1161,7 +1161,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         List<String> sourceIds = Collections.singletonList(curListDTO.getSourceId());
         this.updateReconciliation(sourceIds, ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
 
-        return BatchResultDTO.success(id, id, OperationTypeEnum.ADD);
+        return BatchResultDTO.success(id, curListDTO.getTransportNo(), OperationTypeEnum.ADD);
     }
 
     @Override

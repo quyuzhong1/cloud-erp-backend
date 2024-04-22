@@ -190,6 +190,11 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
     private String confirmUserName;
 
 
+    public void setTotalLogisticsCost(){
+        this.setTotalLogisticsCost(this.shippingCost.add(this.declareCost).add(this.otherCost));
+    }
+
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SOURCE_ID = "source_id";

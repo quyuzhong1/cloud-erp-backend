@@ -123,7 +123,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 //            throw new ServiceException("头程对账单保存失败");
 //        }
         // 修改明细数据（包含增删改）
-        tmsFirstMileReconciliationDetailService.update(updateDTO.getDetailList(), old.getId());
+        tmsFirstMileReconciliationDetailService.update(updateDTO.getDetailList(), old);
 
         // 记录主单操作日志
         log.info("编辑 开始记录头程对账单日志数据，单号：【{}】", tmsFirstMileReconciliationEntity.getCode());

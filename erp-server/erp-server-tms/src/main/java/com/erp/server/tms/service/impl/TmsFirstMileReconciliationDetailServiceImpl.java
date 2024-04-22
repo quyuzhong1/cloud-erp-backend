@@ -283,10 +283,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean update(List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList, String mainId) {
+    public Boolean update(List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList, TmsFirstMileReconciliationEntity mainEntity) {
 //        if (CollectionUtils.isEmpty(detailList)) {
 //            return Boolean.TRUE;
 //        }
+        String mainId = mainEntity.getId();
         List<TmsFirstMileReconciliationDetailEntity> list = BeanMapperUtils.copyList(TmsFirstMileReconciliationDetailEntity.class, detailList);
 
         //原明细数据被删除的需要清除mainId
@@ -312,8 +313,17 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             deleteSourceIds = deleteList.stream()
                     .map(TmsFirstMileReconciliationDetailEntity::getSourceId)
                     .collect(Collectors.toList());
-            ;
         }
+
+        // 更新总数
+        BigDecimal totalCost = list.stream().filter(e -> DetailReconciliationTypeEnum.ACTUAL.getCode().equalsIgnoreCase(e.getType()))
+                .map(TmsFirstMileReconciliationDetailEntity::getTotalLogisticsCost)
+                .reduce(BigDecimal::add)
+                .orElse(BigDecimal.ZERO);
+        mainEntity.setTotalCost(totalCost);
+
+
+        tmsFirstMileReconciliationService.updateById(mainEntity);
 
         log.info("编辑 开始修改头程对账单数据，id：【{}】", mainId);
         boolean save = super.saveOrUpdateBatch(list);
@@ -506,6 +516,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             TmsFirstMileReconciliationDetailDTO.ListDTO actualListDTO,
             TmsFirstMileReconciliationDetailDTO.ListDTO diffListDTO
     ) {
+        // 重新计算实际总数
+        actualListDTO.setTotalLogisticsCost(actualListDTO.getShippingCost().add(actualListDTO.getDeclareCost()).add(actualListDTO.getOtherCost()));
         // 重新计算差异值
         // 总物流费用
         diffListDTO.setTotalLogisticsCost(estimatedListDTO.getTotalLogisticsCost().subtract(actualListDTO.getTotalLogisticsCost()));
@@ -818,7 +830,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getTransportNo));
 
         //配置信息
-        Map<String, CfgReconciliationFieldDTO.ErpFieldDropDownDTO> cfgErpFieldMap = cfgReconciliationFieldService.erpFieldList(Collections.singletonList(DictBasicEnum.CFG_FIRST_MILE_ERP_FIELD.getType()))
+        Map<String, CfgReconciliationFieldDTO.ErpFieldDropDownDTO> cfgErpFieldMap = cfgReconciliationFieldService.erpFieldList(Collections.singletonList(CfgReconciliationTypeEnum.FIRST_MILE.getCode()))
                 .stream()
                 .collect(Collectors.toMap(CfgReconciliationFieldDTO.ErpFieldDropDownDTO::getErpFieldName, Function.identity()));
 

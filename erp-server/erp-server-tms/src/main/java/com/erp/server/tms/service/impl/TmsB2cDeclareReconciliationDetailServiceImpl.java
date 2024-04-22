@@ -395,7 +395,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         List<TmsB2cDeclareReconciliationDetailEntity> oldDetailList = this.listMainIdList(Arrays.asList(oldMainEntity.getId()));
 
         //配置信息
-        List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> erpFieldList = cfgReconciliationFieldService.erpFieldList(Arrays.asList(DictBasicEnum.CFG_B2C_DECLARE_ERP_FIELD.getType()));
+        List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> erpFieldList = cfgReconciliationFieldService.erpFieldList(Arrays.asList(CfgReconciliationTypeEnum.B2C_DECLARE.getCode()));
 
         Map<String, List<DeclareReconciliationStandardExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(DeclareReconciliationStandardExcelDTO::getSoCode));
         for ( Map.Entry<String, List<DeclareReconciliationStandardExcelDTO>> entry : map.entrySet()) {
