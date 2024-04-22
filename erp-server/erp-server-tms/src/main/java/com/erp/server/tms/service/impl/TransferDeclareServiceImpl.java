@@ -597,6 +597,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             soB2cFeign.batchAddSoB2cError(batchAdd);
             resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), e.getMessage()));
         }
+
+
         return resultDTOList;
     }
 
@@ -809,7 +811,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         soB2cFeign.updateShippingOrderNo(shippingOrderDTOList);
         //如果上传数量等于成功数量，修改主单据上传状态为成功
         long count = resultDTOList.stream().filter(BatchResultDTO::getSuccess).count();
-        if (count > 0){
+        if (count > 0L){
             List<TransferDeclareDetailEntity> transferDeclareDetailList = transferDeclareDetailService.listByMainIds(Collections.singletonList(transferDeclareEntity.getId()));
             List<TransferDeclareDetailEntity> collect = transferDeclareDetailList.stream()
                     .filter(e -> !e.getSoId().equals(soB2cEntity.getId()) && TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(e.getOrderUploadStatus()))
