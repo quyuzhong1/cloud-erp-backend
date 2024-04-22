@@ -719,6 +719,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
             menuCode = "wms:pdaWarehouseLocationMoveInfo:pc:export",
             serviceClass = WarehouseLocationMoveInfoService.class,
             keyIdName = "id")
+    @WebAdvanceQuery(handler = MarehouseMoveInfoQueryHandler.class)
     public void listExport(@RequestBody WarehouseLocationMoveInfoDTO.ExportDTO dto, HttpServletResponse response) {
         warehouseLocationMoveInfoService.listExport(dto,response);
     }
