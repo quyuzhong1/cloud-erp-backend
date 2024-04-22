@@ -523,7 +523,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
             if (null == supplierEntity){
                 throw new ServiceException("物流商不存在");
             }
-            entity.setThirdFieldName(supplierEntity.getSupplierName());
+            entity.setThirdName(supplierEntity.getSupplierName());
         }
 
         // 设置来源ERP字段名

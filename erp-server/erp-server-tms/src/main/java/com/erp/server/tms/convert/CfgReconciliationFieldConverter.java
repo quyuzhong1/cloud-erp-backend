@@ -41,7 +41,7 @@ public interface CfgReconciliationFieldConverter {
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "reconciliationType", source = "cfgReconciliationTypeEnum.code"),
             @Mapping(target = "thirdName", source = "supplierEntity.supplierName"),
-            @Mapping(target = "thirdCode", source = "supplierEntity.supplierId"),
+            @Mapping(target = "thirdCode", source = "supplierEntity.id"),
             @Mapping(target = "thirdFieldName", source = "importExcelDTO.thirdFieldName"),
             @Mapping(target = "sourceType", source = "erpFieldDTO.sourceType"),
             @Mapping(target = "sourceId", source = "erpFieldDTO.sourceId"),
