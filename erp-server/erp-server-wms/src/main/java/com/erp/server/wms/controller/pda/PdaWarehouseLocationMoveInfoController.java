@@ -441,7 +441,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
             serviceClass = WarehouseLocationMoveInfoService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> pcApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
-        return approve(dto);
+//        return approve(dto);
 //        List<String> ids = dto.getIds();
 //        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
 //        for (String id : ids) {
@@ -467,6 +467,25 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
 //            resultDTOS.add(approveResult);
 //        }
 //        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : ids) {
+            BatchResultDTO approveResult;
+            try {
+                approveResult = warehouseLocationMoveInfoService.pcApprove(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+            }catch (Exception e){
+                log.error("仓位移动主单审核失败",e);
+                WarehouseLocationMoveInfoEntity entity = warehouseLocationMoveInfoService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    approveResult = BatchResultDTO.fail(id, id, "仓位移动主单不存在, 审核失败");
+                    resultDTOS.add(approveResult);
+                    continue;
+                }
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(approveResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
