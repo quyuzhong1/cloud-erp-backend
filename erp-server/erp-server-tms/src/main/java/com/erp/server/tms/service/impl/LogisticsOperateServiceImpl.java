@@ -75,9 +75,9 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
         DmpPushTaskEntity dmpPushTaskEntity = new DmpPushTaskEntity();
         dmpPushTaskEntity.setSourcePlatformName(PlatformEnum.ERP_TMS.getDesc());
         dmpPushTaskEntity.setSourceType(businessType);
-        dmpPushTaskEntity.setSourceId(sourceId);
-        dmpPushTaskEntity.setSourceCode(logisticsPlatform);
-        dmpPushTaskEntity.setTargetPlatformName(LogisticsPlatformEnum.getByCode(logisticsPlatform).getName());
+        dmpPushTaskEntity.setSourceId(authId);
+        dmpPushTaskEntity.setSourceCode(sourceId);
+        dmpPushTaskEntity.setTargetPlatformName(logisticsPlatform);
         //请求状态（0请求中 1请求成功 2请求失败）
         if (RequestStatusEnums.SUCCESS.getCode().equals(status)) {
             dmpPushTaskEntity.setStatus(SyncStatusEnum.SUCCESS_SYNC.getCode());
