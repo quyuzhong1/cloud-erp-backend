@@ -810,16 +810,16 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         //更新发货单号及订单状态
         soB2cFeign.updateShippingOrderNo(shippingOrderDTOList);
         //如果上传数量等于成功数量，修改主单据上传状态为成功
-        long count = resultDTOList.stream().filter(BatchResultDTO::getSuccess).count();
-        if (count > 0L){
+//        long count = resultDTOList.stream().filter(BatchResultDTO::getSuccess).count();
+//        if (count > 0L){
             List<TransferDeclareDetailEntity> transferDeclareDetailList = transferDeclareDetailService.listByMainIds(Collections.singletonList(transferDeclareEntity.getId()));
             List<TransferDeclareDetailEntity> collect = transferDeclareDetailList.stream()
-                    .filter(e -> !e.getSoId().equals(soB2cEntity.getId()) && !TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(e.getOrderUploadStatus()))
+                    .filter(e -> StringUtils.isEmpty(e.getOrderUploadStatus()) || !TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(e.getOrderUploadStatus()))
                     .collect(Collectors.toList());
             if (CollectionUtils.isEmpty(collect)) {
                 this.updateUploadStatus(id, TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode());
             }
-        }
+//        }
         return resultDTOList;
     }
 
