@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -292,6 +293,7 @@ public class ProductCertificateDTO implements Serializable {
         /**
          * 证书文件
          */
+        @JSONField(serialize = false)
         private MultipartFile multipartFile;
 
         /**
