@@ -96,4 +96,17 @@ public class SoB2cDeliveryFeignController extends BaseController {
         Boolean flag = soB2cDeliveryService.updateStatus(ids, status);
         return flag;
     }
+
+    /**
+     * 虚假发货
+     * @Author Luo_WG
+     * @Date 2023/12/27 16:00
+     * @param ids 发货单id
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/falseDeliveryBatch")
+    public Boolean falseDeliveryBatch(@RequestBody List<String> ids) {
+        Boolean flag = soB2cDeliveryService.falseDeliveryBatch(ids);
+        return flag;
+    }
 }

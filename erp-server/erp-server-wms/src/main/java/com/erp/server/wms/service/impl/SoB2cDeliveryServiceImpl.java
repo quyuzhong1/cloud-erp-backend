@@ -340,12 +340,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
                 platformShipOrderDTO.setSoB2cId(entity.getSourceId());
                 platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-                try {
-                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-                } catch (Exception e) {
-                    log.error("销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
-                    throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
-                }
+                PlatformSaveHandler.shipOrder(platformShipOrderDTO);
             }
         } catch (Exception e) {
             log.error("销售单【{}】 标记发货失败 >>>错误信息{}", e.getMessage());
@@ -953,6 +948,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_1015);
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean falseDeliveryBatch(List<String> ids) {
+        for (String id : ids) {
+            this.falseDelivery(id);
         }
         return Boolean.TRUE;
     }
