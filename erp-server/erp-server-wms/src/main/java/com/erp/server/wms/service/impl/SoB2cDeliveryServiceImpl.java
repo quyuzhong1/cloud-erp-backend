@@ -286,17 +286,21 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 }
             }
         }
+
+        //获取一个当前时间当作发货时间
+        LocalDateTime deliveryTime = LocalDateTime.now();
+
         //修改发货状态
         lambdaUpdate()
                 .set(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.SHIPPED.getCode())
-                .set(SoB2cDeliveryEntity::getDeliveryTime, LocalDateTime.now())
+                .set(SoB2cDeliveryEntity::getDeliveryTime, deliveryTime)
                 .eq(SoB2cDeliveryEntity::getId, id).update();
 
         //修改订单状态待发货
         SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
         updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
         updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-        updateDeliveryTimeDTO.setDeliveryTime(LocalDateTime.now());
+        updateDeliveryTimeDTO.setDeliveryTime(deliveryTime);
         soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
 
         // 操作日志

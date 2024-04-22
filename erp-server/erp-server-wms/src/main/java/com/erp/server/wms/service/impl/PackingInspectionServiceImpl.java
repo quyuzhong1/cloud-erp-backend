@@ -7,6 +7,7 @@ import com.alibaba.fastjson.TypeReference;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -19,6 +20,7 @@ import com.erp.model.wms.dto.PackingInspectionDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.PackingInspectionOperationEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
@@ -32,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -225,12 +228,24 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                     StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
                 return viewDTO;
             }
+
+            //获取一个当前时间当作发货时间
+            LocalDateTime deliveryTime = LocalDateTime.now();
+
             //将发货状态更新为已发货
-            entity.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            entity.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getCode());
+            entity.setDeliveryTime(deliveryTime);
             if (!soB2cDeliveryService.updateById(entity)) {
                 throw new ServiceException("发货单更新失败");
             }
-            soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()),SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+
+            //修改订单状态待发货
+            SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
+            updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
+            updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            updateDeliveryTimeDTO.setDeliveryTime(LocalDateTime.now());
+            soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
+
             //出库
             soB2cDeliveryService.generateB2cSoOutstock(entity);
         }
