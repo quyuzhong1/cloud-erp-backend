@@ -186,7 +186,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
                 .select("SUM(COALESCE(cost_value,0)) as cost_value", TmsCostDetailEntity.MAIN_ID, TmsCostDetailEntity.CFG_COST_ID)
                 .eq(TmsCostDetailEntity.TYPE, logisticsBillCostType)
                 .in(TmsCostDetailEntity.MAIN_ID, logisticsBillIds)
-                .in(TmsCostDetailEntity.SOURCE_TYPE, sourceType)
+                .in(StringUtils.isNotBlank(sourceType), TmsCostDetailEntity.SOURCE_TYPE, sourceType)
                 .groupBy(TmsCostDetailEntity.MAIN_ID, TmsCostDetailEntity.CFG_COST_ID)
                 .list();
     }

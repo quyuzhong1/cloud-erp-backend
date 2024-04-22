@@ -341,6 +341,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         for (LogisticsBillCostEntity entity : billEntityList) {
             TmsFirstMileReconciliationDetailEntity actualDetailEntity = actualMap.get(entity.getLogisticsBillId());
             if (null == actualDetailEntity) {
+                // 移除
                 entity.setReconciliationStatus(ReconciliationStatusEnum.TO_BE_GENERATED.getCode());
                 continue;
             }
@@ -367,12 +368,26 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             // 更新费用信息
             logisticsBillCostService.updateBatchById(billEntityList);
             // 更新明细信息
+            List<String> delActualCostIds = new LinkedList<>();
             for (LogisticsBillCostEntity costEntity : billEntityList) {
+                // 检查历史明细是否需要移除
+                if (ReconciliationStatusEnum.TO_BE_GENERATED.getCode().equalsIgnoreCase(costEntity.getReconciliationStatus())){
+                    delActualCostIds.add(costEntity.getId());
+                    continue;
+                }
                 List<TmsCostDetailDTO.UpdateDTO> updateList = costEntity.getUpdateList();
                 if (CollectionUtils.isEmpty(updateList)) {
                     continue;
                 }
                 tmsCostDetailService.batchUpdate(updateList, costEntity.getId(), DictCostAttributionEnum.FIRST_MILE);
+            }
+            // 移除实际费用
+            if (!CollectionUtils.isEmpty(delActualCostIds)){
+                tmsCostDetailService.lambdaUpdate()
+                        .set(TmsCostDetailEntity::getCostValue, BigDecimal.ZERO)
+                        .eq(TmsCostDetailEntity::getType, LogisticsBillCostTypeEnum.ACTUAL.getCode())
+                        .in(TmsCostDetailEntity::getMainId, delActualCostIds)
+                        .update();
             }
         }
         // 修改或添加实际费用
@@ -676,7 +691,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
         List<TmsCostDetailEntity> costList = tmsCostDetailService.sumCostByMainIdAndCostId(LogisticsBillCostTypeEnum.ESTIMATED.getCode(),
                 billIdCostIdMap.values(),
-                SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode()
+                null
         );
 
         // 计费方式
