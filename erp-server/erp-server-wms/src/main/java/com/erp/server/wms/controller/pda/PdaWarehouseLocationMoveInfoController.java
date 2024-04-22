@@ -755,8 +755,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
 
     @LogAction(value = LogActionEnum.IMPORT, desc = "仓位移动导入")
     @PostMapping("/importFile")
-    public ApiResult importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean flag = warehouseLocationMoveInfoService.importFile(excelFile,response);
-        return flag == true ? success() : failure();
+    public ApiResult<WarehouseLocationMoveInfoDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        return success(warehouseLocationMoveInfoService.importFile(excelFile,response));
     }
 }

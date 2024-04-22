@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.ApproveType;
 import com.common.business.enums.*;
@@ -11,6 +12,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
@@ -48,6 +50,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -1014,20 +1017,34 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+    public WarehouseLocationMoveInfoDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
         MoveInfoExcelListener excelListenerUtil = new MoveInfoExcelListener(this, warehouseService, plmTaskFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), MoveInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (Exception e) {
-            log.error("导入错误！", e);
-            return Boolean.FALSE;
+        } catch (IOException e) {
+            log.error("导入错误！", e);  throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！",e);
+            throw new ServiceException(ApiError.ERROR_1016);
         }
+        //验证导入数据是否为空
+        List<MoveInfoExcelDTO> allList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(allList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        WarehouseLocationMoveInfoDTO.ImportDTO importDTO = new WarehouseLocationMoveInfoDTO.ImportDTO();
+        List<WarehouseLocationMoveInfoDTO.PcAddDTO> successList = excelListenerUtil.getSuccessList();
+        String url = "";
         List<MoveInfoExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (errorList.size() > 0) {
-            String fileName = "错误信息";
-            ExcelUtil.export(fileName, "warehouseMoveInfoError", errorList, MoveInfoExcelDTO.class, response);
-            return Boolean.FALSE;
+            String fileName = "仓位移动导入错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "warehouseMoveInfoError", errorList, MoveInfoExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
         }
-        return Boolean.TRUE;
+        importDTO.setSuccessList(successList);
+        importDTO.setErrorUrl(url);
+        return importDTO;
     }
 }
