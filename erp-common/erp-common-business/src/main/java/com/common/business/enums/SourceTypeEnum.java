@@ -115,6 +115,8 @@ public enum SourceTypeEnum {
     TRANSFER_DECLARE("transferDeclare", "中转报关","transfer_declare"),
     DICT_BASIC("dictBasic", "字典","dict_basic"),
     TMS_CFG_COST("tmsCfgCost", "费用管理配置","tms_cfg_cost"),
+    LOGISTICS_BILL_COST("logisticsBillCost", "自发货物流费用","logistics_bill_cost"),
+
 
     //Mabang
     MABANG_FBA_DELIVERY("MB_FBA_DELIVERY", "马帮FBA发货单",""),

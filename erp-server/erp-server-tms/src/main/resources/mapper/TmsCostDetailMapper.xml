@@ -45,7 +45,7 @@
                MAX(CASE WHEN lbc.type = 'actual' then lbc.cost_value end ) as actualCost,
                cc.dict_cost_category as costCode,
                cc.cost_name as costName
-        from tms_logistics_bill_cost_detail lbc
+        from tms_cost_detail lbc
                  inner join tms_cfg_cost cc on cc.id = lbc.cfg_cost_id and cc.is_deleted =false
         where lbc.main_id = #{id}
           and lbc.is_deleted = false
@@ -65,7 +65,7 @@
                 lbc.cfg_cost_id,
                 lbc.currency,
                 lbc.type
-        from tms_logistics_bill_cost_detail lbc
+        from tms_cost_detail lbc
         inner join tms_cfg_cost cc on cc.id = lbc.cfg_cost_id and cc.is_deleted =false
         where  lbc.is_deleted = false and lbc.main_id in
         <foreach collection="mainIdList" separator="," item="item" open="(" close=")" >

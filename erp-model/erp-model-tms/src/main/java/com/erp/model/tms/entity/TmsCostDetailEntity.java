@@ -12,9 +12,7 @@ import java.math.BigDecimal;
 
 
 /**
- * <p>
  * 自发货费用明细
- * </p>
  *
  * @author will
  * @since 2024-03-20
@@ -22,7 +20,7 @@ import java.math.BigDecimal;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("tms_logistics_bill_cost_detail")
+@TableName("tms_cost_detail")
 public class TmsCostDetailEntity extends BaseEntity<TmsCostDetailEntity> {
 
     /**
@@ -57,6 +55,11 @@ public class TmsCostDetailEntity extends BaseEntity<TmsCostDetailEntity> {
     @TableField("type")
     private String type;
 
+    /**
+     * 来源类型，SourceTypeEnum枚举
+     */
+    @TableField("source_type")
+    private String sourceType;
 
     public static final String MAIN_ID = "main_id";
 
@@ -73,6 +76,8 @@ public class TmsCostDetailEntity extends BaseEntity<TmsCostDetailEntity> {
     public static final String CFG_COST_ID = "cfg_cost_id";
 
     public static final String TYPE = "type";
+
+    public static final String SOURCE_TYPE = "source_type";
 
     @Override
     public Serializable pkVal() {

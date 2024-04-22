@@ -523,6 +523,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 updateDTO.setCostValue(new BigDecimal(excelDTO.getCostValue()));
                 updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
                 updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
+                updateDTO.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
                 updateDetailList.add(updateDTO);
             }
             if (CollectionUtils.isEmpty(updateDetailList)) {

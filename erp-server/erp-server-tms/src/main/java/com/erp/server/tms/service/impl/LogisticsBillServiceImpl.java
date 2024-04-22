@@ -790,6 +790,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 costDetailAddDTO.setCfgCostId(tmsCfgCostList.get(0).getId());
                 costDetailAddDTO.setCostValue(viewDTO.getTotalShippingCost());
                 costDetailAddDTO.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+                costDetailAddDTO.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
                 addDTO.setCostDetailList(Arrays.asList(costDetailAddDTO));
             }
         }

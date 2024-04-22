@@ -1,7 +1,8 @@
 package com.erp.model.tms.dto;
 
-import lombok.*;
-import lombok.experimental.Accessors;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
@@ -192,6 +193,11 @@ public class TmsCostDetailDTO implements Serializable {
          * 类型（estimated预估、actual实际）
          */
         private String type;
+
+        /**
+         * 来源类型，SourceTypeEnum枚举
+         */
+        private String sourceType;
     }
 
 
