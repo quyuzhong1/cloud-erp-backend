@@ -1,7 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.SoB2cDeliveryMapper">
+    <sql id="pageSql">
+        SELECT
+        sbd.id,
+        sbd.code,
+        sbd.source_id,
+        sbd.dict_platform AS dictPlatform,
+        sbd.shop_id,
+        sbd.shop_name AS shopName,
+        sbd.so_code AS soCode,
+        sbd.status,
+        sbd.picking_type AS pickingType,
+        sbd.logistics_channel_id,
+        sbd.logistics_channel_name AS logisticsChannelName,
+        sbd.is_print_picking AS isPrintPicking,
+        sbd.is_inspection AS isInspection,
+        sbd.is_weigh AS isWeigh,
+        sbd.weight AS weight,
+        sbdd.sku_id,
+        sbdd.sku_no AS skuNo,
+        sbdd.delivery_qty AS deliveryQty,
+        sbdd.warehouse_id,
+        sbdd.warehouse_name AS warehouseName,
+        sbdd.warehouse_location AS warehouseLocation,
+        sbd.create_time AS createTime,
+        sbd.delivery_time AS deliveryTime,
+        sbd.finish_print_time as finishPrintTime
+        FROM so_b2c_delivery sbd
+        LEFT JOIN so_b2c_delivery_detail sbdd ON sbd.id = sbdd.main_id AND sbd.is_deleted = FALSE
+        WHERE ${params.sqlMap.default}
+        AND sbdd.is_deleted = FALSE
 
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <!--排序-->
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sbd.create_time desc
+    </sql>
     <!--获取状态统计-->
     <select id="tabList" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$TabListDTO">
         SELECT
@@ -20,45 +63,10 @@
 
     <!--分页查询-->
     <select id="paging" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$ListDTO">
-        SELECT
-        sbd.id,
-        sbd.code,
-        sbd.source_id,
-        sbd.dict_platform AS dictPlatform,
-        sbd.shop_id,
-        sbd.shop_name AS shopName,
-        sbd.so_code AS soCode,
-        sbd.status,
-        sbd.picking_type AS pickingType,
-        sbd.logistics_channel_id,
-        sbd.logistics_channel_name AS logisticsChannelName,
-        sbd.is_print_picking AS isPrintPicking,
-        sbd.is_inspection AS isInspection,
-        sbd.is_weigh AS isWeigh,
-        sbdd.sku_id,
-        sbdd.sku_no AS skuNo,
-        sbdd.delivery_qty AS deliveryQty,
-        sbdd.warehouse_id,
-        sbdd.warehouse_name AS warehouseName,
-        sbdd.warehouse_location AS warehouseLocation,
-        sbd.create_time AS createTime,
-        sbd.delivery_time AS deliveryTime
-        FROM so_b2c_delivery sbd
-        LEFT JOIN so_b2c_delivery_detail sbdd ON sbd.id = sbdd.main_id AND sbd.is_deleted = FALSE
-        WHERE ${params.sqlMap.default}
-        AND sbdd.is_deleted = FALSE
-
-        <!--数据权限-->
-        <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
-        <!--排序-->
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        sbd.create_time desc
+        <include refid="pageSql"/>
+    </select>
+    <!--列表查询-->
+    <select id="list" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$ListDTO">
+        <include refid="pageSql"/>
     </select>
 </mapper>

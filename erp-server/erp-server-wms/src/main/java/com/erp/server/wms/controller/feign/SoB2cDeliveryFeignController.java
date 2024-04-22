@@ -38,7 +38,12 @@ public class SoB2cDeliveryFeignController extends BaseController {
         List<SoB2cDeliveryDetailEntity> list = soB2cDeliveryDetailService.listBySoDetailIds(soDetailIdList);
         return list;
     }
- 
+
+    @PostMapping("/updateB2cDeliveryWeightBySoId")
+    public Boolean updateB2cDeliveryWeightBySoId(@RequestBody SoB2cDeliveryDTO.UpdateWeightDTO dto) {
+        return soB2cDeliveryService.updateB2cDeliveryWeightBySoId(dto);
+    }
+
      /** 
       * @description 添加B2C发货单
       * @param dto

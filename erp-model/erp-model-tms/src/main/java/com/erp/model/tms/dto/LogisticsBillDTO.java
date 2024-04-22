@@ -659,6 +659,10 @@ public class LogisticsBillDTO implements Serializable {
          * 销售平台
          */
         private String salesPlatform;
+        /**
+         * 物流单号
+         */
+        private String trackNo;
 
         /**
          * 物流类型

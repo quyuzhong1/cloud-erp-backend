@@ -32,6 +32,7 @@
         <result column="logistics_channel_name" property="logisticsChannelName"/>
     </resultMap>
 
+
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         sb2c.id,
@@ -78,6 +79,79 @@
         sb2c.create_time as createTime
     </sql>
 
+    <!-- 通用查询结果列 -->
+    <sql id="Export_Column_List">
+        sb2c.id,
+        sb2c.code,
+        sb2c.dict_platform as dictPlatform,
+        si.name as shopName,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
+             else sb2cl.actual_shipping_cost
+        end
+        as shippingCost,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency
+             else sb2cl.actual_shipping_currency
+        end
+        as shippingCostCurrency,
+        sb2c.platform_code as platformCode,
+        sb2c.approve_status as approveStatus,
+        sb2c.bill_status as billStatus,
+        sb2c.amount as amount,
+        sb2c.currency as currency,
+        sb2c.pay_time as payTime,
+        sb2c.exchange_rate as exchangeRate,
+        sb2c.dict_pay_method as dictPayMethod,
+        sb2cd.platform_spu_no as platformSpuNo,
+        sb2cd.platform_sku_no as platformSkuNo,
+        sb2cd.sku_id as skuId,
+        sb2cd.sku_no as skuNo,
+        sb2cd.qty,
+        sb2cd.tax_cost as taxCost,
+        sb2cd.amount as sourceAmount,
+        sb2cd.currency as sourceCurrency,
+        ROUND(sb2cd.amount * sb2cd.exchange_rate,4) as baseAmount,
+        sb2cd.warehouse_id as warehouseId,
+        sb2cd.warehouse_name as warehouseName,
+        sb2cd.warehouse_location as warehouseLocation,
+        sb2c.buyer_remark as buyerRemark,
+        sb2c.remark as remark,
+        sb2cl.name,
+        sb2cl.logistics_channel_name as logisticsChannelName,
+        sb2cl.code as logisticsCode,
+        sb2cl.delivery_time as deliveryTime,
+        sb2cl.estimated_shipping_cost as estimatedShippingCost,
+        sb2cl.estimated_shipping_currency as estimatedShippingCurrency,
+        sb2cl.actual_shipping_cost as actualShippingCost,
+        sb2cl.actual_shipping_currency as actualShippingCurrency,
+        sb2cl.weight,
+        sb2cl.accessories_sku_id as accessoriesSkuId,
+        sb2cl.accessories_sku_no as accessoriesSkuNo,
+        sb2cl.accessories_qty as accessoriesQty,
+        sb2cl.accessories_nw as accessoriesNw,
+        sb2cl.accessories_cost as accessoriesCost,
+        sb2cl.accessories_cost_currency as accessoriesCostCurrency,
+        sb2cl.length,
+        sb2cl.width,
+        sb2cl.height,
+        sb2cr.login_id as loginId,
+        sb2cr.name as buyerName,
+        sb2cr.email,
+        sb2cr.tel_number as telNumber,
+        sb2cr.first_address as firstAddress,
+        sb2cr.second_address as secondAddress,
+        sb2cr.full_address as fullAddress,
+        sb2cr.country_name as countryName,
+        sb2cr.city_name as cityName,
+        sb2cr.province_name as provinceName,
+        sb2cr.district_name as districtName,
+        sb2cr.receiver_name as receiverName,
+        sb2cr.receiver_tel_number as receiverTelNumber,
+        sb2cr.post_code as postCode,
+        sb2cr.receiver_tax_no as receiverTaxNo,
+        si.country_name as countryName,
+        sbrc.categoryNames
+    </sql>
+
     <!-- 列表分页查询 -->
     <select id="paging" resultType="com.erp.model.oms.dto.SoB2cDTO$ListDTO">
         select
@@ -89,154 +163,12 @@
         where
         ${params.sqlMap.default}
         and sb2c.is_deleted = false
-            <if test="params.code != null and params.code != '' ">
-                and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
-            </if>
-            <if test="params.platformCode != null and params.platformCode != '' ">
-                and sb2c.platform_code iLIKE concat('%',#{params.platformCode}::text,'%')
-            </if>
-            <if test="params.invalidStatus != null ">
-                and sb2c.invalid_status = #{params.invalidStatus}
-            </if>
-            <if test="(params.platformSkuNo != null and params.platformSkuNo != '') or (params.platformSpuNo != null and params.platformSpuNo != '') or (params.labelList != null and params.labelList.size > 0 and params.labelList.contains('aliexpressTaxed'))">
-                and exists ( select id from so_b2c_detail where is_deleted = false and main_id = sb2c.id
-                <!-- 平台sku -->
-                <if test="params.platformSkuNo != null and params.platformSkuNo != '' ">
-                    and platform_sku_no iLIKE concat('%',#{params.platformSkuNo}::text,'%')
-                </if>
-                <!-- 平台产品id -->
-                <if test="params.platformSpuNo != null and params.platformSpuNo != '' ">
-                    and platform_spu_no iLIKE concat('%',#{params.platformSpuNo}::text,'%')
-                </if>
-                <if test="params.labelList != null and params.labelList.size > 0 and params.labelList.contains('aliexpressTaxed')">
-                    and (label_json ~ 'U_TAXED' or label_json ~ 'I_TAXED')
-                </if>
-                )
-            </if>
-            <if test="params.platformList != null and params.platformList.size > 0">
-                and sb2c.dict_platform in
-                <foreach collection="params.platformList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.categoryList != null and params.categoryList.size > 0">
-                and sb2c.id in (
-                    select so_b2c_id from so_b2c_ref_category  where is_deleted = false and category_id in
-                    <foreach collection="params.categoryList" item="item" open="(" separator="," close=")">
-                        #{item}
-                    </foreach>
-                )
-            </if>
-            <if test="params.shopIdList != null and params.shopIdList.size > 0">
-                and sb2c.shop_id in
-                <foreach collection="params.shopIdList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.countryList != null and params.countryList.size > 0">
-                and si.dict_country_code in
-                <foreach collection="params.countryList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                and sb2c.approve_status in
-                <foreach collection="params.approveStatusList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.billStatusList != null and params.billStatusList.size > 0">
-                and sb2c.bill_status in
-                <foreach collection="params.billStatusList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.payStatusList != null and params.payStatusList.size > 0">
-                and sb2c.pay_status in
-                <foreach collection="params.payStatusList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <!-- 组包状态 -->
-            <if test="params.packageStatusList != null and params.packageStatusList.size > 0">
-                and sb2c.package_status in
-                <foreach collection="params.packageStatusList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-
-            <!-- 中转状态 -->
-            <if test="params.transferStatusList != null and params.transferStatusList.size > 0">
-                and sb2c.transfer_status in
-                <foreach collection="params.transferStatusList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-
-            <if test="params.abnormalTypeList != null and params.abnormalTypeList.size > 0">
-                and sb2c.abnormal_type in
-                <foreach collection="params.abnormalTypeList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <!-- 异常订单类型 -->
-            <if test="params.orderErrorTypeList != null and params.orderErrorTypeList.size > 0">
-                and sb2c.sign_order_error in
-                <foreach collection="params.orderErrorTypeList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <!-- 是否异常订单 -->
-            <if test="params.isOrderError != null ">
-                and sb2c.sign_order_error !=''
-            </if>
-            <if test="params.tabFlag != null and params.tabFlag == 'pending'">
-                and (sb2c.approve_status in ('waitSubmit','reject') or (sb2c.approve_status = 'approve' and sb2c.abnormal_type = 'distributionReject'))
-            </if>
-            <if test="params.labelList != null and params.labelList.size > 0">
-                <foreach collection="params.labelList" item="item">
-                    <if test="item == 'frozen'">
-                        and (sb2c.label_json ~ 'RISK_CONTROL' or sb2c.label_json ~ 'IN_FROZEN' or sb2c.label_json ~
-                        'Unfulfillable')
-                    </if>
-                    <if test="item == 'fba'">
-                        and sb2c.label_json ~ 'AFN'
-                    </if>
-                    <if test="item == 'manual'">
-                        and sb2c.source_type = 'selfAdd'
-                    </if>
-                    <if test="item == 'intercept'">
-                        and sb2c.is_intercept = true
-                    </if>
-                    <if test="item == 'split'">
-                        and exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type = 'split' and sbf.target_id = sb2c.id)
-                    </if>
-                    <if test="item == 'merge'">
-                        and exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type = 'merge' and sbf.target_id = sb2c.id )
-                    </if>
-                    <if test="item== 'aliexpressTaxed'">
-                        and (sb2cd.label_json ~ 'U_TAXED' or sb2cd.label_json ~ 'I_TAXED')
-                    </if>
-                    <if test="item == 'cainiaoWarehouse'">
-                        and sb2c.label_json ~ 'cainiaoInternationalWarehouse'
-                    </if>
-                    <if test="item == 'aliexpressAePlus'">
-                        and sb2c.label_json ~ 'AE_PLUS'
-                    </if>
-                    <if test="item == 'aliexpressUpExpress'">
-                        and sb2c.label_json ~ 'HBA_UP_EXPRESS'
-                    </if>
-                    <if test="item == 'leadTenTime'">
-                        and sb2c.label_json ~ 'leadTimeTag#10'
-                    </if>
-                </foreach>
-            </if>
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
-            </if>
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
-                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
-            </if>
+        <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
+            and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
+        </if>
+        <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
+            and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
+        </if>
         order by sb2c.id desc
     </select>
 
@@ -246,40 +178,8 @@
         count(distinct sb2c.id)
         from so_b2c sb2c
         <where>
-            sb2c.is_deleted = false
-            <if test="params.invalidStatus != null ">
-                and sb2c.invalid_status = #{params.invalidStatus}
-            </if>
-            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                and sb2c.approve_status in
-                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.billStatusList != null and params.billStatusList.size > 0">
-                and sb2c.bill_status in
-                <foreach collection="params.billStatusList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.payStatusList != null and params.payStatusList.size > 0">
-                and sb2c.pay_status in
-                <foreach collection="params.payStatusList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.abnormalTypeList != null and params.abnormalTypeList.size > 0">
-                and sb2c.abnormal_type in
-                <foreach collection="params.abnormalTypeList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.isOrderError != null ">
-                   and sb2c.sign_order_error !=''
-            </if>
-            <if test="params.tabFlag != null and params.tabFlag == 'pending'">
-                and (sb2c.approve_status in ('waitSubmit','reject') or (sb2c.approve_status = 'approve' and sb2c.abnormal_type = 'distributionReject'))
-            </if>
+            ${params.sqlMap.default}
+            and sb2c.is_deleted = false
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
                 and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
             </if>
@@ -703,6 +603,7 @@
            sb.code AS soCode,
            sb.bill_status AS billStatus,
            sb.package_status AS packageStatus,
+           sbl.id as logisticsId,
            sbl.logistics_channel_id AS logisticsChannelId,
            sbl.track_no AS trackNo,
            sbl.code AS transportNo,
@@ -713,8 +614,11 @@
          WHERE sb.is_deleted = FALSE
          AND (sb.code = #{code}
                   OR
-              #{code} = ANY(string_to_array(sbl.code,','))
+              #{code} = ANY(string_to_array(sbl.track_no,','))
+             OR
+              #{code} = sbl.code
              )
+         limit 1
     </select>
 
     <!--分拨组包 分页-->
@@ -789,7 +693,7 @@
             </foreach>
         </if>
     </select>
-    
+
     <select id="getDataCompareByCondition" resultType="com.erp.model.wms.dto.WmsDataCompareTaskDTO$SoB2cDTO">
 		SELECT T.code,
 			T.dict_platform,
@@ -799,10 +703,10 @@
 		FROM
 			so_b2c
 			T LEFT JOIN so_b2c_detail G ON T.ID = G.main_id
-			LEFT JOIN shop_info h ON T.shop_id = h.ID 
+			LEFT JOIN shop_info h ON T.shop_id = h.ID
 		WHERE
-			T.is_deleted = 'f' 
-			AND G.is_deleted = 'f' 
+			T.is_deleted = 'f'
+			AND G.is_deleted = 'f'
 			AND H.is_deleted = 'f'
 			<if test="params.soCodeList !=null and params.soCodeList.size>0">
             AND t.code IN
@@ -816,5 +720,30 @@
 			<if test="params.shopName!=null and params.shopName!=''">
             AND h.name = #{params.shopName}
         	</if>
+    </select>
+
+    <!-- B2C销售订单导出 -->
+    <select id="exportExcel" resultType="com.erp.model.oms.dto.SoB2cDTO$ExcelExportDTO">
+        select
+        <include refid="Export_Column_List"></include>
+        from so_b2c sb2c
+        inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
+        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        left join (
+            select so_b2c_id,array_to_string(array_agg(category_name), ',') as categoryNames from so_b2c_ref_category where is_deleted = false group by so_b2c_id
+        ) sbrc on sb2c.id = sbrc.so_b2c_id
+        <where>
+            ${params.sqlMap.default}
+            and sb2c.is_deleted = false
+            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
+                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
+            </if>
+            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
+                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
+            </if>
+        </where>
+        order by sb2c.id desc
     </select>
 </mapper>

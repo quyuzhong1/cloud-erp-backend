@@ -67,6 +67,14 @@ public interface SoB2cFeign {
     /**
      * 根据主表id查询B2C订单主表信息
      *
+     * @return
+     */
+    @PostMapping("/feign/soB2c/listWithIsIntercept")
+    List<SoB2cEntity> listWithIsIntercept();
+
+    /**
+     * 根据主表id查询B2C订单主表信息
+     *
      * @param soId
      * @return
      */

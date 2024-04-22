@@ -897,6 +897,19 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
+     * 远程搜索包装辅料SKU
+     * @author Will
+     * @date: 2024/4/18 14:17
+     * @param searchKeyword
+     * @return ApiResult<List<SkuVO>>
+     */
+    @GetMapping("/search/accessoriesSku")
+    public ApiResult<List<SkuVO>> accessoriesSku(String searchKeyword) {
+        List<SkuVO> skuList = productDetailService.accessoriesSku(searchKeyword);
+        return success(skuList);
+    }
+
+    /**
      * 搜索sku
      *
      * @return com.common.core.vo.ApiResult

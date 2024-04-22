@@ -4,6 +4,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
+import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.mapper.SoB2cErrorMapper;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -199,6 +201,10 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         for (SoB2cErrorDTO.AddDTO addDTO : addAndDeleteDTO.getAddDTOList()) {
             this.add(addDTO);
         }
+
+        //给订单赋值第三方平台发货单号
+        List<TransferDeclareDTO.ShippingOrderDTO> shippingOrderDTOList = BeanMapperUtils.copyList(TransferDeclareDTO.ShippingOrderDTO.class, addAndDeleteDTO.getShippingOrderDTO());
+        soB2cService.updateShippingOrderNo(shippingOrderDTOList);
     }
 
     /**

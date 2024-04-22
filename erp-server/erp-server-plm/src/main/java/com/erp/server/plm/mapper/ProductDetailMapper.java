@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
@@ -120,7 +119,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @author yl
      * @date 2023-03-21 12:06
      */
-    List<SkuVO> getSkuInfoBySkuIds(@Param("skuIds") List<String> skuIds);
+    List<SkuVO> getSkuBaseBySkuIds(@Param("skuIds") List<String> skuIds);
 
     /**
      * 获取所有产品明细包括删除，用来同步到DMP
@@ -241,6 +240,15 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * 根据SkuIds获取SKU简单信息
      */
     List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(@Param("skuIds") List<String> skuIds);
+    /**
+     * @description: 远程搜索包装辅料SKU
+     * @author Will
+     * @date: 2024/4/18 14:18
+     * @param searchKeyword
+     * @param state
+     * @return List<SkuVO>
+     */
+    List<SkuVO> accessoriesSku(@Param("searchKeyword") String searchKeyword,@Param("state") Integer state);
 }
 
 

@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -50,6 +49,11 @@ public class SoB2cDTO implements Serializable {
         private String tabFlag;
 
         /**
+         * 类型名称
+         */
+        private String tabFlagName;
+
+        /**
          * 数量
          */
         private Integer count;
@@ -96,88 +100,6 @@ public class SoB2cDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
-
-        /**
-         * 搜索类型（all全部，payment待付款，pending待处理，approveIng审核中，inDistribution配货中，waitShipped代发货，shipped已发货，frozen冻结中，invalid已作废）
-         */
-        private String tabFlag;
-        /**
-         * 销售单号
-         */
-        private String code;
-        /**
-         * 平台订单号
-         */
-        private String platformCode;
-        /**
-         * 作废状态
-         */
-        private Boolean invalidStatus;
-
-        /**
-         * 组包状态 （soB2cPackageStatus 字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-         */
-        private List<String> packageStatusList;
-
-        /**
-         * 中转状态 （soB2cTransferStatus 字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-         */
-        private List<String> transferStatusList;
-        /**
-         * 平台集合（platform字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-         */
-        private List<String> platformList;
-        /**
-         * 店铺id集合 http://172.16.100.11:3002/project/110/interface/api/16513
-         */
-        private List<String> shopIdList;
-        /**
-         * 国家id集合 http://172.16.100.11:3002/project/36/interface/api/13390
-         */
-        private List<String> countryList;
-        /**
-         * 平台sku
-         */
-        private String platformSkuNo;
-        /**
-         * 平台产品id
-         */
-        private String platformSpuNo;
-        /**
-         * 审核状态
-         */
-        private List<String> approveStatusList;
-        /**
-         * 订单状态 （soB2cBillStatus字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-         */
-        private List<String> billStatusList;
-        /**
-         * 付款状态 （soB2cPayStatus字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-         */
-        private List<String> payStatusList;
-        /**
-         * 分类集合 http://172.16.100.11:3002/project/110/interface/api/19699
-         */
-        private List<String> categoryList;
-        /**
-         * 标签集合 （soB2cLable字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-         */
-        private List<String> labelList;
-        /**
-         * 异常信息集合（soB2cAbnormalType字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-         */
-        private List<String> abnormalTypeList;
-
-        /**
-         * 异常订单（b2cOrderErrorType字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-         */
-        private List<String> orderErrorTypeList;
-
-
-        /**
-         * 是否异常订单 前端不用赋值
-         */
-        private Boolean isOrderError;
     }
 
     /**
@@ -367,7 +289,7 @@ public class SoB2cDTO implements Serializable {
          */
         private String sourceId;
         /**
-         * 来源类型
+         * 来源类型，（selfAdd,ERP新增；soB2c，平台新增）
          */
         private String sourceType;
         /**
@@ -495,17 +417,6 @@ public class SoB2cDTO implements Serializable {
         private Boolean isAliexpressPlatformWarehouseOrder;
     }
 
-    /**
-     * 导出Excel
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ExportDTO extends PagingParamDTO {
-        /**
-         * 勾选的id集合
-         */
-        private List<String> ids;
-    }
 
     /**
      * 详情
@@ -832,16 +743,16 @@ public class SoB2cDTO implements Serializable {
          */
         private Boolean isPass;
         private String id;
-        
+
         private Map<String,Object> map;
-        
+
         private List<SoB2cDetailEntity> soB2cDetailList;
 
         /**
          * 是否自动获取跟踪单号
          */
         private Boolean autoGetTrackNo;
-        
+
 
 
     }
@@ -862,6 +773,10 @@ public class SoB2cDTO implements Serializable {
          * 物流信息
          */
         private SoB2cLogisticsDTO.UpdateDTO logisticsDTO;
+        /**
+         * 是否添加买家 true 添加 ，false/null 不添加
+         */
+        private Boolean addBuyer;
         /**
          * 买家信息
          */
@@ -1687,7 +1602,14 @@ public class SoB2cDTO implements Serializable {
          * 城市名称
          */
         private String cityName;
-
+        /**
+         * 邮编
+         */
+        private String zipCode;
+        /**
+         * 国家id
+         */
+        private String countryId;
         /**
          * 国家名称
          */
@@ -1991,6 +1913,403 @@ public class SoB2cDTO implements Serializable {
          * 发货时间
          */
         private LocalDateTime deliveryTime;
+    }
+
+
+    /**
+     * 分页列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExcelExportDTO {
+        /**
+         * 销售订单id
+         */
+        private String id;
+
+        /**
+         * 单据编码
+         */
+        private String code;
+
+        /**
+         * 销售平台
+         */
+        private String dictPlatform;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
+         * 实际运费(优先实际、没有取预估)
+         */
+        private BigDecimal shippingCost;
+
+        /**
+         * 实际运费币别
+         */
+        private String shippingCostCurrency;
+
+
+        /**
+         * 总利润
+         */
+        private BigDecimal totalProfit;
+
+        /**
+         * 利润币别（列表默认人民币）
+         */
+        private String profitCurrency;
+
+        /**
+         * 利润率
+         */
+        private BigDecimal profitRate;
+
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 单据状态
+         */
+        private String billStatus;
+
+        /**
+         * 单据状态名称
+         */
+        private String billStatusName;
+
+        /**
+         * 订单金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 币别（原币）
+         */
+        private String currency;
+
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+
+        /**
+         * 付款时间
+         */
+        private LocalDateTime payTime;
+
+        /**
+         * 付款方式
+         */
+        private String dictPayMethod;
+
+        /**
+         * 付款方式名称
+         */
+        private String dictPayMethodName;
+
+        /**
+         * 平台产品ID
+         */
+        private String platformSpuNo;
+
+        /**
+         * 平台SKU
+         */
+        private String platformSkuNo;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 产品skuId
+         */
+        private String skuId;
+
+        /**
+         * 产品sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 规格属性
+         */
+        private String variantProperty;
+
+        /**
+         * 含税成本
+         */
+        private BigDecimal taxCost;
+
+        /**
+         * 订单原币金额
+         */
+        private BigDecimal sourceAmount;
+
+        /**
+         * 币别（原币）
+         */
+        private String sourceCurrency;
+
+        /**
+         * 订单本位币金额
+         */
+        private BigDecimal baseAmount;
+
+        /**
+         * 出货仓库id
+         */
+        private String  warehouseId;
+
+        /**
+         * 出货仓库
+         */
+        private String  warehouseName;
+
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+
+        /**
+         * 买家备注
+         */
+        private String buyerRemark;
+
+        /**
+         * 订单备注
+         */
+        private String remark;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
+
+
+        /**
+         * 订单分类名称
+         */
+        private String categoryNames;
+
+        //----------------------------------------------------------物流信息-----------------------------------------------------
+
+        /**
+         * 物流渠道名
+         */
+        private String logisticsChannelName;
+
+
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 包装辅料sku编码
+         */
+        private String accessoriesSkuNo;
+
+        /**
+         * 物流跟踪单
+         */
+        private String logisticsCode;
+
+        /**
+         * 买家自选物流名称
+         */
+        private String name;
+
+        /**
+         * 发货时间
+         */
+        private LocalDateTime deliveryTime;
+
+        /**
+         * 预估运费
+         */
+        private BigDecimal estimatedShippingCost;
+
+        /**
+         * 预估运费币别
+         */
+        private String estimatedShippingCurrency;
+
+        /**
+         * 实际运费
+         */
+        private BigDecimal actualShippingCost;
+
+        /**
+         * 实际运费币别
+         */
+        private String actualShippingCurrency;
+
+        /**
+         * 包装重量
+         */
+        private BigDecimal weight;
+
+        /**
+         * 包装辅料skuId http://172.16.100.11:3002/project/47/interface/api/19600
+         */
+        private String accessoriesSkuId;
+
+        /**
+         * 包装辅料数量
+         */
+        private Integer accessoriesQty;
+
+        /**
+         * 包装辅料净重
+         */
+        private BigDecimal accessoriesNw;
+
+        /**
+         * 包装辅料费
+         */
+        private BigDecimal accessoriesCost;
+
+        /**
+         * 包装辅料费币别
+         */
+        private String accessoriesCostCurrency;
+
+        /**
+         * 长
+         */
+        private BigDecimal length;
+
+        /**
+         * 宽
+         */
+        private BigDecimal width;
+
+        /**
+         * 高
+         */
+        private BigDecimal height;
+
+        //-------------------------------------------- 买家信息 ---------------------------------------------------------------------------------------
+
+        /**
+         * 买家全名
+         */
+        private String buyerName;
+
+        /**
+         * 买家登录id
+         */
+        private String loginId;
+
+        /**
+         * 买家id
+         */
+        private String customerId;
+
+        /**
+         * 邮箱
+         */
+        private String email;
+
+        /**
+         * 买家电话
+         */
+        private String telNumber;
+
+        /**
+         * 收货地址1
+         */
+        private String firstAddress;
+
+        /**
+         * 收货地址2
+         */
+        private String secondAddress;
+
+        /**
+         * 城市名称
+         */
+        private String cityName;
+
+        /**
+         * 国家 来源 http://172.16.100.11:3002/project/36/interface/api/13390
+         */
+        private String country;
+
+        /**
+         *省/州
+         */
+        private String provinceName;
+
+        /**
+         *区
+         */
+        private String districtName;
+
+        /**
+         * 收货人名称
+         */
+        private String receiverName;
+
+        /**
+         * 收货人电话
+         */
+        private String receiverTelNumber;
+
+        /**
+         * 邮编
+         */
+        private String postCode;
+
+        /**
+         * 街道详细地址
+         */
+        private String fullAddress;
+
+        /**
+         * 收件人税号
+         */
+        private String receiverTaxNo;
+
+
+        //get方法
+        private String getLengthStr () {
+            return this.length.stripTrailingZeros().toPlainString();
+        }
+        private String getWidthStr () {
+            return this.width.stripTrailingZeros().toPlainString();
+        }
+        private String getHeightStr () {
+            return this.height.stripTrailingZeros().toPlainString();
+        }
     }
 
     /**

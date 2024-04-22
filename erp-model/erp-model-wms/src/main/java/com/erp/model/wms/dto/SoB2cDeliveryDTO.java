@@ -6,6 +6,7 @@ import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -17,7 +18,6 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -122,6 +122,22 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 详情
          */
         private List<SoB2cDeliveryDetailDTO.ViewDTO> detailList;
+    }
+
+    /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class UpdateWeightDTO {
+
+        private String soId;
+
+        private BigDecimal weight;
+
+        private String weightUnit;
     }
 
     /**
@@ -362,13 +378,29 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private Boolean isPrintPicking;
         /**
+         * 拣货单状态 中文
+         */
+        private String printPickingName;
+        /**
          * 是否验货【可排序】
          */
         private Boolean isInspection;
         /**
+         * 验货状态 中文
+         */
+        private String inspectionName;
+        /**
          * 是否称重【可排序】
          */
         private Boolean isWeigh;
+        /**
+         * 称重状态 中文
+         */
+        private String weighName;
+        /**
+         * 称重重量
+         */
+        private BigDecimal weight;
         /**
          * skuId
          */
@@ -405,6 +437,12 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 发货时间【可排序】
          */
         private LocalDateTime deliveryTime;
+
+        /**
+         * 完成打印时间【可排序】
+         */
+        private LocalDateTime finishPrintTime;
+
 
         /**
          * 组包状态  not 不需要  wait 待组包   already 已经组包

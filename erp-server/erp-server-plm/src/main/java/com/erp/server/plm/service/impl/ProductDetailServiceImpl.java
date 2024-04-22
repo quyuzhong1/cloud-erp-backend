@@ -2725,7 +2725,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(skuIds)) {
             return Collections.emptyList();
         }
-        List<SkuVO> skuList = baseMapper.getSkuInfoBySkuIds(skuIds);
+        List<SkuVO> skuList = baseMapper.getSkuBaseBySkuIds(skuIds);
         if (CollUtil.isNotEmpty(skuList)) {
             List<ProductPackEntity> productPackList = productPackService.findBySkuIds(skuIds);
             Map<String, List<ProductPackEntity>> productPackMap = Maps.newHashMap();
@@ -4035,7 +4035,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //没有子集获取父级
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomBySkuIds(Arrays.asList(skuId));
         List<String> skuIds = bomChildrenSkuDTOS.stream().map(req -> req.getParentSkuId()).distinct().collect(Collectors.toList());
-        List<SkuVO> skuInfoBySkuIds = this.getSkuInfoBySkuIds(skuIds);
+        List<SkuVO> skuInfoBySkuIds = baseMapper.getSkuBaseBySkuIds(skuIds);
         if (CollectionUtils.isNotEmpty(skuInfoBySkuIds)) {
             List<String> parentSkuIds = skuInfoBySkuIds.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
             List<BomChildrenSkuDTO> sonSkuList = bomSkuService.listBomChildBySkuIds(parentSkuIds);
@@ -4237,5 +4237,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
         return skuList;
+    }
+
+    @Override
+    public List<SkuVO> accessoriesSku(String searchKeyword) {
+        return baseMapper.accessoriesSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
+
+    }
+
+    @Override
+    public List<SkuVO> getSkuBaseByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getSkuBaseBySkuIds(skuIds);
     }
 }

@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.lang.Dict;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -306,7 +307,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             String skuNO= null == oldEntity ? "" : oldEntity.getSkuNo();
             String imageUrl= null == oldEntity ? "" : oldEntity.getImageUrl();
             // 历史不为空不更新
-            if(null != mappingDTO && null != oldEntity && StringUtils.isBlank(skuNO) && StringUtils.isBlank(skuId)){
+            if(null != mappingDTO && StringUtils.isBlank(skuNO) && StringUtils.isBlank(skuId)){
                 skuId = mappingDTO.checkAndGetProductSkuId();
                 skuNO = mappingDTO.checkAndGetProductSkuNo();
                 imageUrl = mappingDTO.checkAndGetProductImageUrl();
@@ -639,8 +640,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             //平台SKU
             SkuMappingDTO.ListSkuDTO platformListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId()) && obj.getDictPlatform().equals(soB2cEntity.getDictPlatform())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(platformListSkuDTO)) {
+                // 非平台下载的订单
+                if (!SourceTypeEnum.SO_B2C.getCode().equalsIgnoreCase(soB2cEntity.getSourceType())) {
                 detailEntity.setPlatformSkuNo(platformListSkuDTO.getPlatformSkuNo());
                 detailEntity.setPlatformSpuNo(platformListSkuDTO.getPlatformSpuNo());
+                }
             } else {
                 detailEntity.setPlatformSkuNo("");
                 detailEntity.setPlatformSpuNo("");

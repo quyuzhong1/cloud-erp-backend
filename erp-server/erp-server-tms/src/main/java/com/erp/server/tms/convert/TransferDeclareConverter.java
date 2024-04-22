@@ -21,7 +21,7 @@ public interface TransferDeclareConverter {
             @Mapping(target = "skuNo", source = "skuNo"),
             @Mapping(target = "qty", source = "qty"),
             @Mapping(target = "productTitleEn", source = "declareEnglishName"),
-            @Mapping(target = "purposeDeclaredValue", source = "declarePrice"),
+            @Mapping(target = "purposeDeclaredValue", source = "toDeclarePrice"),
     })
     TransferLogisticsCreateOrderReq.ProductDetail declareProductEntityToCreateOrderReq(TransferDeclareProductEntity declareProductEntity);
     List<TransferLogisticsCreateOrderReq.ProductDetail> declareProductEntityToCreateOrderReq(List<TransferDeclareProductEntity> declareProductEntity);

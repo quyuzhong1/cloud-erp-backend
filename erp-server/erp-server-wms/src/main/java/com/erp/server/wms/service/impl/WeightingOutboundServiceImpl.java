@@ -97,6 +97,19 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             }
             String msg = StrUtil.format("用户【{}】更新【{}】单据单号为【{}】称重出库完成", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "称重出库");
+
+            //转成g
+            BigDecimal weightByG = dto.getWeight();
+            if(UnitEnum.WeightUnitEnum.KG.getCode().equals(dto.getWeightUnit())){
+                weightByG = dto.getWeight().multiply(BigDecimal.valueOf(1000));
+            }
+
+            //更新B2c物流订单重量
+            List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
+            for (SoB2cLogisticsEntity v : soB2cLogisticsEntityList) {
+                v.setWeight(weightByG);
+            }
+            soB2cFeign.batchUpdateLogistics(soB2cLogisticsEntityList);
         }
         //自动发货
         if (isAutoDelivery && entity.getIsWeigh()) {
@@ -123,10 +136,15 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void reset(String id) {
         SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
         if (Objects.isNull(entity)) {
             throw new ServiceException("查询的发货单为空");
+        }
+        SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
+        if(ObjectUtil.isEmpty(soB2cEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
         entity.setIsWeigh(false);
         entity.setWeightUnit(UnitEnum.WeightUnitEnum.G.getCode());
@@ -134,6 +152,14 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
         if (!soB2cDeliveryService.updateById(entity)) {
             throw new ServiceException("发货单更新失败");
         }
+
+        //更新B2c物流订单重量
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
+        for (SoB2cLogisticsEntity v : soB2cLogisticsEntityList) {
+            v.setWeight(BigDecimal.ZERO);
+        }
+        soB2cFeign.batchUpdateLogistics(soB2cLogisticsEntityList);
+
     }
 
     private WeightingOutboundDTO.ViewDTO buildViewDTO(SoB2cDeliveryEntity entity,String transferStatus,String orderUploadStatus, String trackNo) {

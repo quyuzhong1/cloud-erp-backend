@@ -104,6 +104,10 @@ public class PlatformOrderDetailDTO {
      * 平台包裹号
      */
     private String platformPackageId;
+    /**
+     *来源平台
+     */
+    private String sourcePlatform = "thirdPlatform";
 
 
 }
