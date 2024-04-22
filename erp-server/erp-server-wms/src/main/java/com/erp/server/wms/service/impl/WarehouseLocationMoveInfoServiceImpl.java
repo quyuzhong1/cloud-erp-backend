@@ -251,7 +251,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
             updateDto.setDetailList(Arrays.asList(detail));
             updateDto.setWarehouseId(detail.getWarehouseId());
             updateDto.setPcShow(true);
-            warehouseLocationMoveDetailService.update(updateDto, detail.getId());
+            warehouseLocationMoveDetailService.update(updateDto, warehouseLocationMoveInfoEntity.getId());
         });
 
         return Boolean.TRUE;
