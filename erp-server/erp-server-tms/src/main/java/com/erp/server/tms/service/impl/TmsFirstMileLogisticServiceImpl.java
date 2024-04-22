@@ -1192,7 +1192,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                     resultDTOS.add(updateResult);
                     continue;
                 }
-                updateResult = BatchResultDTO.fail(id, entity.getId(), e.getMessage());
+                updateResult = BatchResultDTO.fail(id, entity.getTransportNo(), e.getMessage());
             }
             resultDTOS.add(updateResult);
         }
