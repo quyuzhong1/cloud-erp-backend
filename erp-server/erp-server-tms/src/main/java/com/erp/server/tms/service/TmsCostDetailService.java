@@ -73,7 +73,7 @@ public interface TmsCostDetailService extends SuperService<TmsCostDetailEntity> 
     /**
      * 根据主表id和配置id统计每个配置id的费用
      */
-    List<TmsCostDetailEntity> sumCostByMainIdAndCostId(String logisticsBillCostType, Collection<String> logisticsBillIds);
+    List<TmsCostDetailEntity> sumCostByMainIdAndCostId(String logisticsBillCostType, Collection<String> logisticsBillIds, String sourceType);
     /**
      * @description: 根据费用配置id集合查询
      * @author Will

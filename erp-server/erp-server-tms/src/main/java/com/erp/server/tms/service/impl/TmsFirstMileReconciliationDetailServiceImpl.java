@@ -547,19 +547,19 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         actualListDTO.setTotalLogisticsCost(actualListDTO.getShippingCost().add(actualListDTO.getDeclareCost()).add(actualListDTO.getOtherCost()));
         // 重新计算差异值
         // 总物流费用
-        diffListDTO.setTotalLogisticsCost(estimatedListDTO.getTotalLogisticsCost().subtract(actualListDTO.getTotalLogisticsCost()));
+        diffListDTO.setTotalLogisticsCost(actualListDTO.getTotalLogisticsCost().subtract(estimatedListDTO.getTotalLogisticsCost()));
         // 实际重量【箱包装重量】
-        diffListDTO.setActualWeight(estimatedListDTO.getActualWeight().subtract(actualListDTO.getActualWeight()));
+        diffListDTO.setActualWeight(actualListDTO.getActualWeight().subtract(estimatedListDTO.getActualWeight()));
         // 体积重
-        diffListDTO.setVolumeWeight(estimatedListDTO.getVolumeWeight().subtract(actualListDTO.getVolumeWeight()));
+        diffListDTO.setVolumeWeight(actualListDTO.getVolumeWeight().subtract(estimatedListDTO.getVolumeWeight()));
         // 计费重
-        diffListDTO.setBillingWeight(estimatedListDTO.getBillingWeight().subtract(actualListDTO.getBillingWeight()));
+        diffListDTO.setBillingWeight(actualListDTO.getBillingWeight().subtract(estimatedListDTO.getBillingWeight()));
         // 物流运费用【预计物流费用】
-        diffListDTO.setShippingCost(estimatedListDTO.getShippingCost().subtract(actualListDTO.getShippingCost()));
+        diffListDTO.setShippingCost(actualListDTO.getShippingCost().subtract(estimatedListDTO.getShippingCost()));
         // 报关费用【预计报关费用】
-        diffListDTO.setDeclareCost(estimatedListDTO.getDeclareCost().subtract(actualListDTO.getDeclareCost()));
+        diffListDTO.setDeclareCost(actualListDTO.getDeclareCost().subtract(estimatedListDTO.getDeclareCost()));
         // 其他费用【预计其他费用】
-        diffListDTO.setOtherCost(estimatedListDTO.getOtherCost().subtract(actualListDTO.getOtherCost()));
+        diffListDTO.setOtherCost(actualListDTO.getOtherCost().subtract(estimatedListDTO.getOtherCost()));
     }
 
 
@@ -649,7 +649,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .stream()
                 .collect(Collectors.toMap(LogisticsBillCostEntity::getLogisticsBillId, BaseEntity::getId));
 
-        List<TmsCostDetailEntity> costList = tmsCostDetailService.sumCostByMainIdAndCostId(LogisticsBillCostTypeEnum.ESTIMATED.getCode(), billIdCostIdMap.values());
+        List<TmsCostDetailEntity> costList = tmsCostDetailService.sumCostByMainIdAndCostId(LogisticsBillCostTypeEnum.ESTIMATED.getCode(),
+                billIdCostIdMap.values(),
+                SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode()
+        );
 
         // 计费方式
         List<String> channelIds = records.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getLogisticsChannelId).distinct().collect(Collectors.toList());
@@ -1107,7 +1110,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
         // mainId关联到sourceId分组
         return tmsCostDetailList.stream()
-                .map(e -> new TmsCostDetailDTO.UpdateDTO(e.getId(),e.getDictCostCategory(), e.getCostValue(), e.getCfgCostId(), e.getType() ))
+                .map(e -> new TmsCostDetailDTO.UpdateDTO(e.getId(),e.getDictCostCategory(), e.getCostValue(), e.getCfgCostId(), e.getType(), SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode()))
                 .collect(Collectors.groupingBy(e -> sourceIdDetailMap.entrySet().stream()
                                 .filter(entry -> entry.getValue().contains(e.getId()))
                                 .map(Map.Entry::getKey)

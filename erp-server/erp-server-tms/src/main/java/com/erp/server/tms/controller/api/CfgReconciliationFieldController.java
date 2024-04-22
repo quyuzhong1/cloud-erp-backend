@@ -18,6 +18,7 @@ import com.erp.model.tms.entity.CfgReconciliationFieldEntity;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.server.tms.query.CfgReconciliationFieldQueryHandler;
 import com.erp.server.tms.service.CfgReconciliationFieldService;
+import com.erp.server.tms.service.LogisticsSupplierService;
 import com.erp.server.tms.service.TmsFirstMileReconciliationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -44,6 +45,8 @@ public class CfgReconciliationFieldController extends BaseController {
 
     @Resource
     private CfgReconciliationFieldService cfgReconciliationFieldService;
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
 
     /**
      * 修改
@@ -189,6 +192,15 @@ public class CfgReconciliationFieldController extends BaseController {
     @PostMapping("/erpFieldList")
     public ApiResult<?> erpFieldList(@RequestBody List<String> reconciliationTypeList) {
         List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> list = cfgReconciliationFieldService.erpFieldList(reconciliationTypeList);
+        return success(list);
+    }
+
+    /**
+     * 物流商列表supperId
+     */
+    @GetMapping("/logisticsSupplierList")
+    public ApiResult<List<BaseDropDownDTO.SupplierDisabledDTO>> listLogisticsSupplier(@RequestParam(name = "reconciliationTypeList", required = false) List<String> reconciliationTypeList) {
+        List<BaseDropDownDTO.SupplierDisabledDTO> list = cfgReconciliationFieldService.logisticsSupplierList(reconciliationTypeList);
         return success(list);
     }
 

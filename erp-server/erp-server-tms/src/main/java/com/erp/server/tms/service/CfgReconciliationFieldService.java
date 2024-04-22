@@ -1,5 +1,6 @@
 package com.erp.server.tms.service;
 
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
@@ -149,4 +150,6 @@ public interface CfgReconciliationFieldService extends SuperService<CfgReconcili
     LinkedList<String> thirdFieldListName(List<String> typeList,String supplierId, boolean nullThrow);
 
     List<CfgReconciliationFieldEntity> listByTypeList(List<String> typeList, String supplierId);
+
+    List<BaseDropDownDTO.SupplierDisabledDTO> logisticsSupplierList(List<String> reconciliationTypeList);
 }

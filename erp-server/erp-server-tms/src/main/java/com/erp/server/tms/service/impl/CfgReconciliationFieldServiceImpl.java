@@ -7,6 +7,7 @@ import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
@@ -19,18 +20,18 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportDTO;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportExcelDTO;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldImportExcelDTO;
-import com.erp.model.tms.entity.CfgReconciliationFieldEntity;
-import com.erp.model.tms.entity.DictBasicEntity;
-import com.erp.model.tms.entity.LogisticsSupplierEntity;
-import com.erp.model.tms.entity.TmsCfgCostEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.CfgReconciliationTypeEnum;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
+import com.erp.rpc.wms.feign.ScmDictFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.tms.convert.CfgReconciliationFieldConverter;
 import com.erp.server.tms.listener.CfgReconciliationFieldExcelListener;
 import com.erp.server.tms.mapper.CfgReconciliationFieldMapper;
@@ -69,6 +70,10 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
     private DictBasicService dictBasicService;
     @Resource
     private TmsCfgCostService tmsCfgCostService;
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
+    @Resource
+    private TransferLogisticsSupplierService transferLogisticsSupplierService;
 
     /**
      * 修改
@@ -320,7 +325,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
                 TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(obj -> StrUtil.equals(obj.getId(), fieldEntity.getSourceId()))
                         .findFirst()
                         .orElse(null);
-                if (null != tmsCfgCostEntity){
+                if (null != tmsCfgCostEntity) {
                     erpFieldViewDTO.setErpFieldName(tmsCfgCostEntity.getCostName());
                     erpFieldViewDTO.setDictCostCategory(tmsCfgCostEntity.getDictCostCategory());
                 }
@@ -346,8 +351,8 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
     @Override
     public LinkedList<String> erpFieldListName(List<String> typeList, boolean nullThrow) {
         List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> list = this.erpFieldList(Collections.singletonList(CfgReconciliationTypeEnum.FIRST_MILE.getCode()));
-        if (CollectionUtils.isEmpty(list)){
-            if (nullThrow){
+        if (CollectionUtils.isEmpty(list)) {
+            if (nullThrow) {
                 throw new ServiceException("配置字段缺失，请联系管理员");
             } else {
                 return new LinkedList<>();
@@ -361,10 +366,10 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
     }
 
     @Override
-    public LinkedList<String> thirdFieldListName(List<String> typeList,String supplierId, boolean nullThrow) {
+    public LinkedList<String> thirdFieldListName(List<String> typeList, String supplierId, boolean nullThrow) {
         List<CfgReconciliationFieldEntity> list = listByTypeList(typeList, supplierId);
-        if (CollectionUtils.isEmpty(list)){
-            if (nullThrow){
+        if (CollectionUtils.isEmpty(list)) {
+            if (nullThrow) {
                 throw new ServiceException("配置字段缺失，请联系管理员");
             } else {
                 return new LinkedList<>();
@@ -378,19 +383,50 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
     }
 
     /**
+     * @param typeList
+     * @return List<CfgReconciliationFieldEntity>
      * @description:
      * @author Will
      * @date: 2024/4/18 16:11
-     * @param typeList
-     * @return List<CfgReconciliationFieldEntity>
      */
     @Override
     public List<CfgReconciliationFieldEntity> listByTypeList(List<String> typeList, String supplierId) {
-       return lambdaQuery()
-               .in(CollectionUtils.isNotEmpty(typeList),CfgReconciliationFieldEntity::getReconciliationType,typeList)
-               .eq(StrUtil.isNotBlank(supplierId),CfgReconciliationFieldEntity::getThirdCode,supplierId)
-               .eq(CfgReconciliationFieldEntity::getStatus,Boolean.TRUE)
-               .list();
+        return lambdaQuery()
+                .in(CollectionUtils.isNotEmpty(typeList), CfgReconciliationFieldEntity::getReconciliationType, typeList)
+                .eq(StrUtil.isNotBlank(supplierId), CfgReconciliationFieldEntity::getThirdCode, supplierId)
+                .eq(CfgReconciliationFieldEntity::getStatus, Boolean.TRUE)
+                .list();
+    }
+
+    @Override
+    public List<BaseDropDownDTO.SupplierDisabledDTO> logisticsSupplierList(List<String> reconciliationTypeList) {
+        List<BaseDropDownDTO.SupplierDisabledDTO> resulList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(reconciliationTypeList)){
+            reconciliationTypeList = Arrays.stream(CfgReconciliationTypeEnum.values())
+                    .map(CfgReconciliationTypeEnum::getCode)
+                    .collect(Collectors.toList());
+        }
+
+        if (reconciliationTypeList.contains(CfgReconciliationTypeEnum.B2C_DECLARE.getCode())) {
+            List<TransferLogisticsSupplierEntity> list = transferLogisticsSupplierService.lambdaQuery()
+                    .list();
+            List<BaseDropDownDTO.SupplierDisabledDTO> currentList = list.stream()
+                    .map(e -> new BaseDropDownDTO.SupplierDisabledDTO(e.getSupplierId(), e.getSupplierName(), e.getDisabled()))
+                    .distinct()
+                    .collect(Collectors.toList());
+            resulList.addAll(currentList);
+        } else if (reconciliationTypeList.contains(CfgReconciliationTypeEnum.FIRST_MILE.getCode())) {
+            List<LogisticsSupplierEntity> list = logisticsSupplierService.lambdaQuery()
+                    .list();
+            List<BaseDropDownDTO.SupplierDisabledDTO> currentList = list.stream()
+                    .map(e -> new BaseDropDownDTO.SupplierDisabledDTO(e.getSupplierId(), e.getSupplierName(), e.getDisabled()))
+                    .distinct()
+                    .collect(Collectors.toList());
+            resulList.addAll(currentList);
+        }
+        return resulList.stream()
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     private void handleImportCfgReconciliationFieldFile(List<CfgReconciliationFieldImportExcelDTO> successList, List<CfgReconciliationFieldImportExcelDTO> errorList) {
@@ -452,7 +488,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
                 errorList.add(importExcelDTO);
                 continue;
             }
-            if (!erpFieldDTO.getReconciliationType().equalsIgnoreCase(cfgReconciliationTypeEnum.getCode())){
+            if (!erpFieldDTO.getReconciliationType().equalsIgnoreCase(cfgReconciliationTypeEnum.getCode())) {
                 importExcelDTO.setErrorMsg(StrUtil.format("【{}】数大臣字段不属于【{}】核对类型", importExcelDTO.getErpFieldName(), cfgReconciliationTypeEnum.getName()));
                 errorList.add(importExcelDTO);
                 continue;
@@ -518,12 +554,16 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
             throw new ServiceException("配置核对类型不存在");
         }
         // 当前对账类型是否校验物流商
-        if (CfgReconciliationTypeEnum.checkSupplier(typeEnum)){
-            LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(entity.getThirdCode());
-            if (null == supplierEntity){
+        if (CfgReconciliationTypeEnum.checkSupplier(typeEnum)) {
+            BaseDropDownDTO.SupplierDisabledDTO supplierDisabledDTO = null;
+            List<BaseDropDownDTO.SupplierDisabledDTO> supplierEntityList = this.logisticsSupplierList(Collections.singletonList(entity.getReconciliationType()));
+            if (CollectionUtils.isNotEmpty(supplierEntityList)) {
+                supplierDisabledDTO = supplierEntityList.stream().filter(e -> e.getSupplierId().equals(entity.getThirdCode())).findFirst().orElse(null);
+            }
+            if (null == supplierDisabledDTO) {
                 throw new ServiceException("物流商不存在");
             }
-            entity.setThirdName(supplierEntity.getSupplierName());
+            entity.setThirdName(supplierDisabledDTO.getValue());
         }
 
         // 设置来源ERP字段名

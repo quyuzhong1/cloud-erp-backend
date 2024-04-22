@@ -2,6 +2,7 @@ package com.erp.model.tms.dto;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -140,7 +141,7 @@ public class CfgReconciliationFieldDTO implements Serializable {
 
         /**
          * 物流商
-         * 来源接口: <a href="http://172.16.100.11:3002/project/128/interface/api/28051">物流商列接口</a>
+         * 来源接口: <a href="http://172.16.100.11:3002/project/83/interface/api/31895">物流商列接口</a>
          */
         @NotBlank(message = "物流商不能为空")
         @Size(max = 64, message = "物流商最大长度不能超过64位")
@@ -148,7 +149,7 @@ public class CfgReconciliationFieldDTO implements Serializable {
 
         /**
          * 物流商代号
-         * 来源接口: <a href="http://172.16.100.11:3002/project/128/interface/api/28051">物流商列接口</a>
+         * 来源接口: <a href="http://172.16.100.11:3002/project/83/interface/api/31895">物流商列接口</a>
          */
         @NotBlank(message = "物流商代号不能为空")
         @Size(max = 19, message = "物流商代号最大长度不能超过19位")
@@ -263,13 +264,13 @@ public class CfgReconciliationFieldDTO implements Serializable {
 
         /**
          * ERP字段来源类型
-         * 来源接口: <a href="http://172.16.100.11:3002/project/128/interface/api/31515">数大臣字段列表</a>
+         * 来源接口: <a href="http://172.16.100.11:3002/project/128/interface/api/31887">数大臣字段列表</a>
          */
         private String sourceType;
 
         /**
          * ERP字段来源ID
-         * 来源接口: <a href="http://172.16.100.11:3002/project/128/interface/api/31515">数大臣字段列表</a>
+         * 来源接口: <a href="http://172.16.100.11:3002/project/128/interface/api/31887">数大臣字段列表</a>
          */
         private String sourceId;
 

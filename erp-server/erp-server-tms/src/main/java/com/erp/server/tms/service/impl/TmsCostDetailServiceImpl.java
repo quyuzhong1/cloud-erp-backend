@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -176,7 +178,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
     }
 
     @Override
-    public List<TmsCostDetailEntity> sumCostByMainIdAndCostId(String logisticsBillCostType, Collection<String> logisticsBillIds) {
+    public List<TmsCostDetailEntity> sumCostByMainIdAndCostId(String logisticsBillCostType, Collection<String> logisticsBillIds, String sourceType) {
         if (CollectionUtils.isEmpty(logisticsBillIds)){
             return Collections.emptyList();
         }
@@ -184,6 +186,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
                 .select("SUM(COALESCE(cost_value,0)) as cost_value", TmsCostDetailEntity.MAIN_ID, TmsCostDetailEntity.CFG_COST_ID)
                 .eq(TmsCostDetailEntity.TYPE, logisticsBillCostType)
                 .in(TmsCostDetailEntity.MAIN_ID, logisticsBillIds)
+                .in(TmsCostDetailEntity.SOURCE_TYPE, sourceType)
                 .groupBy(TmsCostDetailEntity.MAIN_ID, TmsCostDetailEntity.CFG_COST_ID)
                 .list();
     }
@@ -207,13 +210,15 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         String currency;
         switch (dictCostAttributionEnum) {
             case FIRST_MILE:
-                // 头程对账单
-                currency = tmsFirstMileReconciliationDetailService.getCurrencyById(mainId);
-                // TODO 根据类型区分
-                // 头程物流单
-                if (null == currency){
+                String sourceType = list.stream().map(TmsCostDetailEntity::getSourceType).distinct().findFirst().orElse(null);
+                if (SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode().equalsIgnoreCase(sourceType)){
+                    // 头程对账单
+                    currency = tmsFirstMileReconciliationDetailService.getCurrencyById(mainId);
+                } else if (SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode().equalsIgnoreCase(sourceType)){
                     LogisticsBillCostEntity costEntity = logisticsBillCostService.getById(mainId);
                     currency = null == costEntity ? "" : costEntity.getCurrency();
+                } else {
+                    currency = "";
                 }
                break;
             case SELF_DELIVER:

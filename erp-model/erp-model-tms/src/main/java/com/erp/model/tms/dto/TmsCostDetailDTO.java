@@ -160,10 +160,16 @@ public class TmsCostDetailDTO implements Serializable {
          */
         private String dictCostCategory;
 
-        public UpdateDTO(String id, String dictCostCategory, BigDecimal costValue, String cfgCostId, String type) {
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        public UpdateDTO(String id, String dictCostCategory, BigDecimal costValue, String cfgCostId, String type, String sourceType) {
             this.id = id;
             this.hasUpdate = false;
             this.dictCostCategory = dictCostCategory;
+            this.sourceType = sourceType;
             super.costValue = costValue;
             super.cfgCostId = cfgCostId;
             super.type = type;

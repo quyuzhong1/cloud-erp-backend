@@ -117,6 +117,8 @@ public enum SourceTypeEnum {
     TMS_CFG_COST("tmsCfgCost", "费用管理配置","tms_cfg_cost"),
     LOGISTICS_BILL_COST("logisticsBillCost", "自发货物流费用","logistics_bill_cost"),
     FIRST_MILE_LOGISTICS_BILL_COST("firstMileLogisticsBillCost", "头程物流费用","logistics_bill_cost"),
+    LOGISTICS_BILL("logisticsBill", "物流单","logistics_bill"),
+    TMS_FIRST_MILE_RECONCILIATION("tmsFirstMileReconciliation", "头程对账单","tms_first_mile_reconciliation"),
 
 
     //Mabang
@@ -159,7 +161,6 @@ public enum SourceTypeEnum {
     TRANSFER_LOGISTICS_PRINT_LABEL("transferLogisticsPrintLabel", "物流报关商打印标签","dmp_pull_task"),
     FM_DECLARE_BILL("fmDeclareBill", "头程报关单","tms_declare_bill"),
     B2B_DECLARE_BILL("b2bDeclareBill", "B2B报关单","tms_declare_bill"),
-    LOGISTICS_BILL("logisticsBill", "物流单","logistics_bill"),
 
 
     // 亚马逊相关
