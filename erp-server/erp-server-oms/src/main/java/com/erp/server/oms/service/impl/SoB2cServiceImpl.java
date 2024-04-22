@@ -3088,9 +3088,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (StrUtil.isNotBlank(detailDTO.getWarehouseId())) {
                     //缺货订单
                     if ((SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(data.getBillStatus())
-                            || SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(data.getBillStatus()))
-                            && !ignoreInventorySkuIds.contains(detailDTO.getSkuId())) {
-                        Boolean isOutStock = isOutStock(bomChildrenList, inventoryList, detailDTO);
+                            || SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(data.getBillStatus()))) {
+                        Boolean isOutStock = isOutStock(bomChildrenList, inventoryList, detailDTO,ignoreInventorySkuIds);
                         detailLabelDTO.setIsOutStock(isOutStock);
                     }
                 }
@@ -3131,7 +3130,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @return Boolean
      */
     private Boolean isOutStock (List<BomChildrenSkuDTO> bomChildrenList,List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList
-            ,SoB2cDetailDTO.ListDTO detailDTO) {
+            ,SoB2cDetailDTO.ListDTO detailDTO,List<String> ignoreInventorySkuIds) {
         //判断是否是组合品
         Boolean isCombination = Boolean.FALSE;
         long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailDTO.getSkuId())).count();
@@ -3142,7 +3141,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Boolean isOutStock = Boolean.FALSE;
         //费销售套装bom判断父级SKU是否够使用
         if (!isCombination ) {
-            return detailDTO.getQty() > detailDTO.getUseableQty() ? Boolean.TRUE : Boolean.FALSE;
+            return detailDTO.getQty() > detailDTO.getUseableQty() && !ignoreInventorySkuIds.contains(detailDTO.getSkuId());
         }
         //销售套装bom需要判断子件库存是否够使用
         List<BomChildrenSkuDTO> childList = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailDTO.getSkuId())
@@ -3159,8 +3158,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
                     .orElse(MathUtil.ZERO);
-            if (detailDTO.getQty() * childrenSkuDTO.getQuantity() > childUseableQty) {
+            if ((detailDTO.getQty() * childrenSkuDTO.getQuantity() > childUseableQty) && !ignoreInventorySkuIds.contains(childrenSkuDTO.getSkuId())) {
                 isOutStock = Boolean.TRUE;
+                break;
             }
         }
         return isOutStock;
@@ -3178,7 +3178,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @return Boolean
      */
     private Boolean isChildOutStock (List<BomChildrenSkuDTO> bomChildrenList,List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList
-            ,List<SoB2cDetailDTO.WaitDeliveryQtyDTO> waitDeliveryQtyList,SoB2cDetailEntity detailEntity) {
+            ,List<SoB2cDetailDTO.WaitDeliveryQtyDTO> waitDeliveryQtyList,SoB2cDetailEntity detailEntity,List<String> ignoreInventorySkuIds) {
 
         //判断是否是组合品
         Boolean isCombination = Boolean.FALSE;
@@ -3201,7 +3201,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             && StrUtil.equals(obj.getWarehouseId(), detailEntity.getWarehouseId())
                             && StrUtil.equals(obj.getWarehouseLocation(), detailEntity.getWarehouseLocation()))
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
-            return (detailEntity.getQty() > useableQty - waitDeliveryQty);
+            return (detailEntity.getQty() > useableQty - waitDeliveryQty) && !ignoreInventorySkuIds.contains(detailEntity.getSkuId());
         }
         //销售套装bom需要判断子件库存是否够使用
         List<BomChildrenSkuDTO> childList = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailEntity.getSkuId())
@@ -3223,7 +3223,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             && StrUtil.equals(obj.getWarehouseId(), detailEntity.getWarehouseId())
                             && StrUtil.equals(obj.getWarehouseLocation(), detailEntity.getWarehouseLocation()))
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
-            isOutStock =  (detailEntity.getQty() * childrenSkuDTO.getQuantity() > childUseableQty - waitDeliveryQty);
+
+           //缺货则赋值
+           if ((detailEntity.getQty() * childrenSkuDTO.getQuantity() > childUseableQty - waitDeliveryQty)
+                   && !ignoreInventorySkuIds.contains(childrenSkuDTO.getSkuId())) {
+               isOutStock = Boolean.TRUE;
+               break;
+           }
         }
         return isOutStock;
     }
@@ -3705,7 +3711,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             map.put("packageMultiSize",detailPackageMultiSize);
 
             //是否缺货
-            Boolean isOutStock = ignoreInventorySkuIds.contains(detailEntity.getSkuId()) ? Boolean.FALSE : isChildOutStock(bomChildrenList, inventoryList,waitDeliveryQtyList, detailEntity);
+            Boolean isOutStock = isChildOutStock(bomChildrenList, inventoryList,waitDeliveryQtyList, detailEntity,ignoreInventorySkuIds);
             detailMap.put("isOutStock", isOutStock);
 
 
