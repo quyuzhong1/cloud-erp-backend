@@ -67,12 +67,12 @@ public class TmsCostDetailDTO implements Serializable {
         /**
          * 实际费用
          */
-        private BigDecimal actualCost;
+        private BigDecimal actualFee;
 
         /**
          * 差异
          */
-        private BigDecimal costDiff;
+        private BigDecimal feeDifference;
 
     }
 

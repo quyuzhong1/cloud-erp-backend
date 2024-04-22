@@ -154,8 +154,8 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         }
         List<TmsCostDetailDTO.CostCompareDTO> costCompareDTOList = baseMapper.getCostCompareListById(id);
         costCompareDTOList.forEach(v->{
-            if(Objects.nonNull(v.getActualCost()) && Objects.nonNull(v.getEstimatedFee())){
-                v.setCostDiff(v.getEstimatedFee().subtract(v.getActualCost()));
+            if(Objects.nonNull(v.getActualFee()) && Objects.nonNull(v.getEstimatedFee())){
+                v.setFeeDifference(v.getEstimatedFee().subtract(v.getActualFee()));
             }
         });
         return costCompareDTOList;
