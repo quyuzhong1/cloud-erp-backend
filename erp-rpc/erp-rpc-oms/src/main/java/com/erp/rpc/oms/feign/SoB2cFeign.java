@@ -389,7 +389,7 @@ public interface SoB2cFeign {
 
     /**
      * 修改订单的第三方物流单号
-     * @Author Luo_WG
+     * @Author zdy
      * @Date 2024/1/29 17:04
      * @param shippingOrderDTO
      * @return java.lang.Boolean

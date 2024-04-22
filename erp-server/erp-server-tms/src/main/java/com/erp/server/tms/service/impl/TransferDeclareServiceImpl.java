@@ -702,7 +702,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @GlobalTransactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> retryOrderForecast(String id) {
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
-//        List<TransferDeclareDTO.ShippingOrderDTO> shippingOrderDTOList = new ArrayList<>();
+        List<TransferDeclareDTO.ShippingOrderDTO> shippingOrderDTOList = new ArrayList<>();
         TransferDeclareEntity transferDeclareEntity = this.getBySoId(id);
         if (Objects.isNull(transferDeclareEntity)){
             throw new ServiceException(ApiError.ERROR_TRANSFER_DECLARE_NOT_EXIST);
@@ -773,6 +773,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 .buyInsurance(0)
                 .productDetailList(productDetails)
                 .build();
+        TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO = new TransferDeclareDTO.ShippingOrderDTO();
+        shippingOrderDTO.setSoId(soB2cEntity.getId());
+        shippingOrderDTO.setType(SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
         try {
             //下单
             ApiResult<String> result = service.createOrder(orderReq, authEntity.getId());
@@ -780,42 +783,30 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             if (result.getCode() == 200) {
                 //拿到第三方订单号，用于给订单赋值第三方平台发货单号
                 //给订单赋值第三方平台发货单号 同时删除异常标识
-                TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO = new TransferDeclareDTO.ShippingOrderDTO();
                 shippingOrderDTO.setShippingOrderNo(result.getData());
-                shippingOrderDTO.setSign(SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
-                shippingOrderDTO.setSoId(soB2cEntity.getId());
-                soB2cFeign.updateShippingOrderNoBySoId(shippingOrderDTO);
+                shippingOrderDTO.setSign("");
                 //上传成功
                 transferDeclareDetailService.updateOrderUploadStatus(transferDeclareDetailEntity.getId(), TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode(), result.getData(), "");
-
                 resultDTOList.add(BatchResultDTO.success(transferDeclareDetailEntity.getId(), transferDeclareDetailEntity.getSoCode(), "上传成功"));
             } else {
                 String msg = String.format("订单预报失败：%s",result.getMsg());
                 //上传失败
                 transferDeclareDetailService.updateOrderUploadStatus(transferDeclareDetailEntity.getId(), TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode(), "", result.getMsg());
-                //记录订单预报异常
-                SoB2cErrorDTO.AddDTO addDTO = new SoB2cErrorDTO.AddDTO();
-                addDTO.setMainId(soB2cEntity.getId());
-                addDTO.setType(SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
-                addDTO.setMessage(msg);
-                addDTO.setParamJson(soB2cEntity.getId());
-                soB2cFeign.addSoB2cError(addDTO);
+                shippingOrderDTO.setMessage(msg);
+                shippingOrderDTO.setSign(SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
                 resultDTOList.add(BatchResultDTO.fail(transferDeclareDetailEntity.getId(), transferDeclareDetailEntity.getSoCode(), msg));
             }
         }catch (Exception e){
             String msg = String.format("订单预报失败：%s",e.getMessage());
             //上传失败
             transferDeclareDetailService.updateOrderUploadStatus(transferDeclareDetailEntity.getId(), TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode(), "", e.getMessage());
-            //记录订单预报异常
-            SoB2cErrorDTO.AddDTO addDTO = new SoB2cErrorDTO.AddDTO();
-            addDTO.setMainId(soB2cEntity.getId());
-            addDTO.setType(SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
-            addDTO.setMessage(msg);
-            addDTO.setParamJson(soB2cEntity.getId());
-            soB2cFeign.addSoB2cError(addDTO);
+            shippingOrderDTO.setMessage(msg);
+            shippingOrderDTO.setSign(SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
             resultDTOList.add(BatchResultDTO.fail(transferDeclareDetailEntity.getId(), transferDeclareDetailEntity.getSoCode(), msg));
         }
-
+        shippingOrderDTOList.add(shippingOrderDTO);
+        //更新发货单号及订单状态
+        soB2cFeign.updateShippingOrderNo(shippingOrderDTOList);
         //如果上传数量等于成功数量，修改主单据上传状态为成功
         long count = resultDTOList.stream().filter(BatchResultDTO::getSuccess).count();
         if (count > 0){
