@@ -242,7 +242,7 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
      * @param response
      * @return Boolean
      */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    WarehouseLocationMoveInfoDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
 
     /**
      * 删除-pc端

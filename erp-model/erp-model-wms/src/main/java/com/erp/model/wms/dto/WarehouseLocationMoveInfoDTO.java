@@ -241,6 +241,19 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         private List<String>  createTimeList;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<WarehouseLocationMoveInfoDTO.PcAddDTO> successList;
+
+        /**
+         * 错误url
+         */
+        private String errorUrl;
+    }
     /**
     * 详情
     */

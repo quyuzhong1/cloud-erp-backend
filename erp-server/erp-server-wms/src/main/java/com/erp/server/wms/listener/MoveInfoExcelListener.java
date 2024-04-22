@@ -18,6 +18,8 @@ import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.CleanSkuDto;
 import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
+import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO;
@@ -45,16 +47,25 @@ import java.util.stream.Collectors;
 public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDTO> {
 
     private WarehouseService warehouseService;
+    /**
+     * 导入正确数据
+     */
+    private List<WarehouseLocationMoveInfoDTO.PcAddDTO> successList = new ArrayList<>();
+
+
+
+    /**
+     * 导入数据，用于判断导入是否为空
+     */
+    private List<MoveInfoExcelDTO> allList = new ArrayList<>();
+    /**
+     * 导入错误数据
+     */
+    private List<MoveInfoExcelDTO> errorList = new ArrayList<>();
 
     private WarehouseLocationMoveInfoService warehouseLocationMoveInfoService;
 
     private PlmTaskFeign plmTaskFeign;
-
-
-    /**
-     * 错误信息
-     */
-    private List<MoveInfoExcelDTO> errorList = new ArrayList<>();
 
 
     public MoveInfoExcelListener(WarehouseLocationMoveInfoService warehouseLocationMoveInfoService, WarehouseService warehouseService, PlmTaskFeign plmTaskFeign) {
@@ -75,14 +86,12 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void invoke(MoveInfoExcelDTO moveInfoExcelDTO, AnalysisContext analysisContext) {
+        //添加数据用于判断是否为空
+        allList.add(moveInfoExcelDTO);
+
         List<String> errorMsgList = new ArrayList<>();
         WarehouseLocationMoveInfoDTO.PcAddDTO pcAddDTO = new WarehouseLocationMoveInfoDTO.PcAddDTO();
         List<WarehouseLocationMoveDetailDTO.AddDTO> detailList = new ArrayList<>();
-//        //基础验证
-//        List<String> msgList = FieldValidUtil.fieldValid(moveInfoExcelDTO);
-//        if (CollectionUtils.isNotEmpty(msgList)) {
-//            errorMsgList.addAll(msgList);
-//        }
         if (StringUtils.isBlank(moveInfoExcelDTO.getSkuNo())) {
             errorMsgList.add("SKU不能为空");
         }
@@ -101,7 +110,6 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
                 errorMsgList.add("系统中不存在此sku编号");
             }
             locationMoveDetailEntity.setSkuId(productDetailDTO.getId());
-
         }
 
         if (!StrUtils.isDigit(String.valueOf(moveInfoExcelDTO.getQty())) || ObjectUtil.isEmpty(moveInfoExcelDTO.getQty())) {
@@ -157,6 +165,7 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
             errorList.add(moveInfoExcelDTO);
             return;
         }
+        successList.add(pcAddDTO);
 
         //保存的数据
         warehouseLocationMoveInfoService.pcAdd(pcAddDTO);
@@ -178,5 +187,12 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
 
     public List<MoveInfoExcelDTO> getErrorList() {
         return errorList;
+    }
+    public List<WarehouseLocationMoveInfoDTO.PcAddDTO> getSuccessList() {
+        return successList;
+    }
+
+    public List<MoveInfoExcelDTO> getAllList() {
+        return allList;
     }
 }
