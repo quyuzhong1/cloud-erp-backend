@@ -1,5 +1,6 @@
 package com.sdk.oms.tiktok.dto;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.business.dto.JobTaskDTO;
@@ -63,7 +64,12 @@ public class TikTokListingDTO extends CleanBaseDTO {
         // 平台产品名称
         resultDto.setPlatformProductName(dataBean.getTitle());
         //图片
-        resultDto.setProductImageUrl(dataBean.getMainImages().get(0).getThumbUrls().get(0));
+        if (CollectionUtil.isNotEmpty(dataBean.getMainImages().get(0).getThumbUrls())) {
+            resultDto.setProductImageUrl(dataBean.getMainImages().get(0).getThumbUrls().get(0));
+        } else {
+            resultDto.setProductImageUrl(dataBean.getMainImages().get(0).getUrls().get(0));
+        }
+
         resultDto.setShopId(dto.getShopId());
         resultDto.setPlatformUpdateTime(LocalDateTime.now());
 

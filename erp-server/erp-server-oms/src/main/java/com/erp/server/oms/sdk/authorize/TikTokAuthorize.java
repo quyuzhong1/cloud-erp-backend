@@ -168,7 +168,7 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         shopAuth.setToken(tokenDTO.getAccessToken());
         shopAuth.setAccessToken(tokenDTO.getAccessToken());
         shopAuth.setRefreshToken(tokenDTO.getRefreshToken());
-        shopAuth.setAppClientId(cfgAppClient.getId());
+        shopAuth.setAppClientId(cfgAppClient.getClientId());
         shopAuth.setExpiresIn(tokenDTO.getAccessTokenExpireIn());
         // token 过期时间为7天 ，提前一小时过期
         LocalDateTime localDateTime = LocalDateTime.now().plusDays(7L);
@@ -199,7 +199,7 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         shopInfoDTO.setAccessToken(tokenDTO.getAccessToken());
         shopInfoDTO.setSite(tokenDTO.getSellerBaseRegion());
         shopInfoDTO.setShopCipher(tokenDTO.getShopCipher());
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE.getCode(), shopId);
+        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.TIK_TOK.getCode(), shopId);
         redisUtil.set(tokenKey, shopInfoDTO, 7L*3600L*24L);
 
         redisUtil.del(stateKey);

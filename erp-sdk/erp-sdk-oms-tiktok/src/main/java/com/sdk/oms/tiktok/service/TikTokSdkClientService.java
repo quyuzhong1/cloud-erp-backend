@@ -361,9 +361,7 @@ public class TikTokSdkClientService {
                         url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
-            if (StringUtil.isBlank(listingDTO.getData().getNextPageToken())) {
-                break;
-            }
+
             pageToken = listingDTO.getData().getNextPageToken();
             //获取到所有客户的产品id
             List<String> productIds = listingDTO.getData().getProducts().stream().map(req -> req.getFid()).distinct().collect(Collectors.toList());
@@ -372,6 +370,9 @@ public class TikTokSdkClientService {
             List<ListingViewDTO> listingViewDTOS = this.listItemView(productIds, shopInfoDTO);
             resultsBeanList.addAll(listingViewDTOS);
 
+            if (StringUtil.isBlank(listingDTO.getData().getNextPageToken())) {
+                break;
+            }
         }
 
         if (CollectionUtils.isEmpty(resultsBeanList)) {
