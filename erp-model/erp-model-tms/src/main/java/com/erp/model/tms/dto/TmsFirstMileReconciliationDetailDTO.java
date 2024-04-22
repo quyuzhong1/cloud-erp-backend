@@ -458,6 +458,11 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         @Size(max = 255, message = "备注最大长度不能超过255位")
         private String remark;
 
+        /**
+         * 费用编辑（导入数据返回）
+         */
+        private List<TmsCostDetailDTO.UpdateDTO> updateList;
+
 
     }
 

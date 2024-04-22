@@ -3,12 +3,14 @@ package com.erp.model.tms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.tms.dto.TmsCostDetailDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 
 /**
@@ -114,6 +116,12 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
      */
     @TableField("weight_logistics")
     private BigDecimal weightLogistics;
+
+    /**
+     * 费用编辑（导入数据返回）
+     */
+    @TableField(exist = false)
+    private List<TmsCostDetailDTO.UpdateDTO> updateList;
 
     public static final String RECONCILIATION_STATUS = "reconciliation_status";
 
