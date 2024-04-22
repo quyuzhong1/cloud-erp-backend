@@ -33,10 +33,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
-import com.erp.model.tms.dto.TmsCostDetailDTO;
-import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
-import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.FirstMileReconciliationStandardExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
@@ -91,9 +88,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     private OperateLogService operateLogService;
     @Resource
     private CommonService commonService;
-    @Lazy
-    @Resource
-    private ShippingTemplateService shippingTemplateService;
     @Resource
     private SysDictFeign sysDictFeign;
     @Resource
@@ -119,6 +113,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
     @Resource
     private DocNoGenHelper docNoGenHelper;
+    @Resource
+    private LogisticsChannelService logisticsChannelService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -419,19 +415,19 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         }
         // 计费方式
         List<String> channelIds = viewDTOList.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getLogisticsChannelId).distinct().collect(Collectors.toList());
-        List<ShippingTemplateEntity> templateList = shippingTemplateService.getByChannelIds(channelIds);
-        Map<String, List<ShippingTemplateEntity>> templateMap = templateList.stream()
-                .collect(Collectors.groupingBy(ShippingTemplateEntity::getLogisticsChannelId));
+        Map<String, LogisticsChannelEntity> channelMap = logisticsChannelService.listByIds(channelIds)
+                .stream()
+                .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
 
         for (TmsFirstMileReconciliationDetailDTO.ListDTO viewDTO : viewDTOList) {
-            if (null == viewDTO.getBillingMethod()) {
-                // 计费方式
-                List<ShippingTemplateEntity> shippingTemplateList = templateMap.get(viewDTO.getLogisticsChannelId());
-                if (!CollectionUtils.isEmpty(shippingTemplateList)) {
-                    ShippingTemplateEntity shippingTemplateEntity = shippingTemplateList.stream().findFirst().orElse(null);
-                    viewDTO.setBillingMethod(shippingTemplateEntity.getBillingMethod());
-                    viewDTO.setBillingMethodName(EnumMessage.getNameByCode(ShippingBillingMethodEnum.class, shippingTemplateEntity.getBillingMethod()));
-                }
+            // 计费方式
+            LogisticsChannelEntity logisticsChannelEntity = channelMap.get(viewDTO.getLogisticsChannelId());
+            if (null != logisticsChannelEntity) {
+                viewDTO.setBillingMethod(logisticsChannelEntity.getFeeRule());
+                viewDTO.setBillingMethodName(ShippingFeeRuleEnum.getName(logisticsChannelEntity.getFeeRule()));
+            } else {
+                viewDTO.setBillingMethod("");
+                viewDTO.setBillingMethodName("");
             }
             if (StringUtils.isBlank(viewDTO.getSourceType())) {
                 viewDTO.setSourceType(SourceTypeEnum.LOGISTICS_BILL.getCode());
@@ -658,9 +654,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
         // 计费方式
         List<String> channelIds = records.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getLogisticsChannelId).distinct().collect(Collectors.toList());
-        List<ShippingTemplateEntity> templateList = shippingTemplateService.getByChannelIds(channelIds);
-        Map<String, List<ShippingTemplateEntity>> templateMap = templateList.stream()
-                .collect(Collectors.groupingBy(ShippingTemplateEntity::getLogisticsChannelId));
+        Map<String, LogisticsChannelEntity> channelMap = logisticsChannelService.listByIds(channelIds)
+                .stream()
+                .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
 
         // 国家信息
         List<DictCountryDTO.ListDTO> conuntryList = sysUserFeign.countryList();
@@ -709,12 +705,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             FmLogisticTrackStatusEnum statusEnum = FmLogisticTrackStatusEnum.getNameByCode(record.getTransportStatus());
             record.setTransportStatusName(null == statusEnum ? "" : statusEnum.getName());
             // 计费方式
-            /// 历史还是当前
-            List<ShippingTemplateEntity> shippingTemplateList = templateMap.get(record.getLogisticsChannelId());
-            if (!CollectionUtils.isEmpty(shippingTemplateList)) {
-                ShippingTemplateEntity shippingTemplateEntity = shippingTemplateList.stream().findFirst().orElse(null);
-                record.setBillingMethod(shippingTemplateEntity.getBillingMethod());
-                record.setBillingMethodName(EnumMessage.getNameByCode(ShippingBillingMethodEnum.class, shippingTemplateEntity.getBillingMethod()));
+            LogisticsChannelEntity logisticsChannelEntity = channelMap.get(record.getLogisticsChannelId());
+            if (null != logisticsChannelEntity) {
+                record.setBillingMethod(logisticsChannelEntity.getFeeRule());
+                record.setBillingMethodName(ShippingFeeRuleEnum.getName(logisticsChannelEntity.getFeeRule()));
             } else {
                 record.setBillingMethod("");
                 record.setBillingMethodName("");
