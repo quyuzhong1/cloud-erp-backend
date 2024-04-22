@@ -58,4 +58,11 @@ public class ApproveOneDTO extends PermissionsDTO {
         this.comment = comment;
 
     }
+
+    public ApproveOneDTO (String id,String type,String comment,Boolean isNeedProcess) {
+        this.id = id;
+        this.type = type;
+        this.comment = comment;
+        this.isNeedProcess = isNeedProcess;
+    }
 }
