@@ -103,8 +103,8 @@ public class OrdersBean {
     private boolean isCod;
     @JsonProperty("is_on_hold_order")
     private boolean isOnHoldOrder;
-    @JsonProperty("is_replacement_order")
-    private boolean isReplacementOrder;
+/*    @JsonProperty("is_replacement_order")
+    private boolean isReplacementOrder;*/
     @JsonProperty("is_sample_order")
     private boolean isSampleOrder;
     @JsonProperty("need_upload_invoice")

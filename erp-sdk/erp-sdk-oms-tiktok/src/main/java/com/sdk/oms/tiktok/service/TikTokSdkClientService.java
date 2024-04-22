@@ -1,6 +1,5 @@
 package com.sdk.oms.tiktok.service;
 
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
@@ -21,7 +20,6 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.sdk.oms.tiktok.constant.TikTokConstant;
@@ -468,7 +466,7 @@ public class TikTokSdkClientService {
         StringBuffer sb = new StringBuffer();
         while (true) {
             //组装授权url
-            String path = "order/" + TikTokConstant.VERSION + "/orders/search";
+            String path = "/order/" + TikTokConstant.VERSION + "/orders/search";
 
             // 定义查询参数
             Map<String, Object> params = new HashMap<>();
@@ -531,9 +529,6 @@ public class TikTokSdkClientService {
                         url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
-            if (StringUtil.isBlank(orderDTO.getData().getNextPageToken())) {
-                break;
-            }
             pageToken = orderDTO.getData().getNextPageToken();
             //获取到所有客户的产品id
             List<String> orderIds = orderDTO.getData().getOrders().stream().map(req -> req.getFid()).distinct().collect(Collectors.toList());
@@ -541,6 +536,10 @@ public class TikTokSdkClientService {
             //根据订单id查询订单详情信息
             List<OrderViewDTO> orderViewDTOS = this.listOrderView(orderIds, shopInfoDTO);
             resultsBeanList.addAll(orderViewDTOS);
+
+            if (StringUtil.isBlank(orderDTO.getData().getNextPageToken())) {
+                break;
+            }
         }
 
         if (CollectionUtils.isEmpty(resultsBeanList)) {
@@ -561,7 +560,7 @@ public class TikTokSdkClientService {
         String url = TikTokConstant.URL;
 
         //组装授权url
-        String path = "order/" + TikTokConstant.VERSION + "/orders";
+        String path = "/order/" + TikTokConstant.VERSION + "/orders";
 
         //服务密钥
         String secret = shopInfoDTO.getClientSecret();
@@ -574,7 +573,7 @@ public class TikTokSdkClientService {
             Map<String, Object> params = new HashMap<>();
             params.put("access_token", shopInfoDTO.getAccessToken());
             params.put("app_key", shopInfoDTO.getClientId());
-            params.put("ids", list);
+            params.put("ids", StringUtil.join(list, ","));
             params.put("shop_cipher", shopInfoDTO.getShopCipher());
             params.put("shop_id", "");
             String timestamp = System.currentTimeMillis() / 1000 + "";
@@ -601,20 +600,21 @@ public class TikTokSdkClientService {
             }
 
             //解析数据
-            ObjectMapper objectMapper = new ObjectMapper();
-            List<OrderViewDTO> dataList = null;
+/*            ObjectMapper objectMapper = new ObjectMapper();
+            OrderViewDTO orderViewDTO = null;
             try {
-                dataList = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), new TypeReference<List<OrderViewDTO>>() {});
+                orderViewDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), OrderViewDTO.class);
+
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
                 log.error("调用url={},入参params={}, TikTok订单详情数据解析失败，返回值 responseMap={}", url+path, params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok订单详情数据解析失败，返回值 responseMap={}",
                         url+path, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
-            if(CollectionUtil.isEmpty(dataList)){
+            if(CollectionUtil.isEmpty(orderViewDTO)){
                 break;
             }
-            resultsBeanList.addAll(dataList);
+            resultsBeanList.addAll(dataList);*/
 
         }
         return resultsBeanList;
