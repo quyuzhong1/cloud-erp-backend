@@ -116,6 +116,7 @@ public enum SourceTypeEnum {
     DICT_BASIC("dictBasic", "字典","dict_basic"),
     TMS_CFG_COST("tmsCfgCost", "费用管理配置","tms_cfg_cost"),
     LOGISTICS_BILL_COST("logisticsBillCost", "自发货物流费用","logistics_bill_cost"),
+    FIRST_MILE_LOGISTICS_BILL_COST("firstMileLogisticsBillCost", "头程物流费用","logistics_bill_cost"),
 
 
     //Mabang
