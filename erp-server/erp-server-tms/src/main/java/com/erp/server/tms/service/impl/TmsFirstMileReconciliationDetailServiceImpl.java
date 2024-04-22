@@ -21,7 +21,6 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.core.constant.EnumMessage;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -605,10 +604,17 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             if (sourceListMap.containsKey(listDTO.getSourceId())) {
                 Map<String, TmsFirstMileReconciliationDetailEntity> oldEntityMap = sourceListMap.get(listDTO.getSourceId());
                 if (!CollectionUtils.isEmpty(oldEntityMap)) {
+                    // 数据库的明细
                     TmsFirstMileReconciliationDetailEntity detailEntity = oldEntityMap.values().stream().findFirst().orElse(null);
                     String status = detailEntity.getStatus();
+                    // 提交的明细
+                    List<TmsFirstMileReconciliationDetailEntity> detailList = sourceDetailMap.getOrDefault(listDTO.getSourceId(), new ArrayList<>());
+                    TmsFirstMileReconciliationDetailEntity sourceDetailEntity = detailList.stream().findFirst().orElse(null);
+                    if (null == sourceDetailEntity){
+                        throw new ServiceException("数据异常:提交的明细为空");
+                    }
                     // 非确认状态校验
-                    if (ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equalsIgnoreCase(status) || status.equalsIgnoreCase(listDTO.getStatus())) {
+                    if (ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equalsIgnoreCase(status) || status.equalsIgnoreCase(sourceDetailEntity.getStatus())) {
                         continue;
                     } else {
                         throw new ServiceException("仅{待确认}可提交确认,物流运单号=" + listDTO.getTransportNo());
@@ -909,14 +915,14 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             }
 
             CfgReconciliationFieldDTO.ErpFieldDropDownDTO erpFieldDropDownDTO = cfgErpFieldMap.getOrDefault(excelDTO.getCostName(), null);
-            if (null == erpFieldDropDownDTO) {
-                excelDTO.setErrorMsg(StrUtil.format("字段配置中未找到费用项【{}】", excelDTO.getCostName()));
-                errorList.add(excelDTO);
-                continue;
-            }
+//            if (null == erpFieldDropDownDTO) {
+//                excelDTO.setErrorMsg(StrUtil.format("字段配置中未找到费用项【{}】", excelDTO.getCostName()));
+//                errorList.add(excelDTO);
+//                continue;
+//            }
 
             //存在费用并且数量大于0
-            if (MathUtil.compareTo(MathUtil.valueOf(excelDTO.getCostValue()), MathUtil.ZERO) <= MathUtil.ZERO) {
+            if (null != erpFieldDropDownDTO && MathUtil.compareTo(MathUtil.valueOf(excelDTO.getCostValue()), MathUtil.ZERO) <= MathUtil.ZERO) {
                 excelDTO.setErrorMsg(StrUtil.format("费用金额【{}】必须大于0", excelDTO.getCostValue()));
                 errorList.add(excelDTO);
                 continue;
@@ -939,54 +945,71 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 //如果当前没有就取历史
                 Map<String, TmsCostDetailDTO.UpdateDTO> updateListMap = CollectionUtils.isEmpty(actualListDTO.getUpdateList()) ?
                         costDetailMap.getOrDefault(entry.getKey(), new HashMap<>()) : actualListDTO.getUpdateList().stream().collect(Collectors.toMap(TmsCostDetailDTO.CommonDTO::getCfgCostId, Function.identity()));
-                // 设置实际为当前值
-                if (SourceTypeEnum.TMS_CFG_COST.getCode().equalsIgnoreCase(erpFieldDropDownDTO.getSourceType())) {
-                    DictCostCategoryEnum categoryEnum = DictCostCategoryEnum.getByCode(erpFieldDropDownDTO.getSourceCodeValue());
-                    // 检查费用类型是否已存在更新
-                    TmsCostDetailDTO.UpdateDTO oldUpdateDTO = updateListMap.get(erpFieldDropDownDTO.getSourceId());
-                    if (null != oldUpdateDTO) {
-                        if (oldUpdateDTO.isHasUpdate()) {
-                            excelDTO.setErrorMsg(StrUtil.format("当前页面费用已存在【{}】", erpFieldDropDownDTO.getSourceCodeValue()));
-                            errorList.add(excelDTO);
-                            continue;
-                        } else {
-                            oldUpdateDTO.setHasUpdate(true);
-                            oldUpdateDTO.setCostValue(MathUtil.valueOf(excelDTO.getCostValue()));
-                        }
-                        updateListMap.put(erpFieldDropDownDTO.getSourceId(), oldUpdateDTO);
-                    } else {
-                        // 历史不存在新增
-                        TmsCostDetailDTO.UpdateDTO updateDTO = newCostUpdateDTO(categoryEnum, excelDTO.getCostValue(), erpFieldDropDownDTO.getSourceId());
-                        updateListMap.put(erpFieldDropDownDTO.getSourceId(), updateDTO);
+                if (null != erpFieldDropDownDTO){
+                    // 设置实际为当前值
+                    if (checkAndSetCostValueAndDictBasic(errorList, excelDTO, erpFieldDropDownDTO, updateListMap, actualListDTO, sourceTypeGroupMap)){
+                        continue;
                     }
-                    // 加成和设置实际值
-                    checkAndUpdateCfgCostValue(updateListMap, categoryEnum, actualListDTO);
-
-                    // 根据字段名设置
-                    List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> dictBasticList = sourceTypeGroupMap.get(SourceTypeEnum.DICT_BASIC.getCode());
-                    if (!CollectionUtils.isEmpty(dictBasticList)) {
-                        for (CfgReconciliationFieldDTO.ErpFieldDropDownDTO fieldDropDownDTO : dictBasticList) {
-                            Object value = ReflectUtil.getFieldValue(excelDTO, fieldDropDownDTO.getSourceCodeValue());
-                            if (null != value) {
-                                ReflectUtil.setFieldValue(actualListDTO, fieldDropDownDTO.getSourceCodeValue(), value);
-                            }
-                        }
-                    }
-                } else if (SourceTypeEnum.DICT_BASIC.getCode().equalsIgnoreCase(erpFieldDropDownDTO.getSourceType())) {
-                    // 根据字段名设置
-                    Object value = ReflectUtil.getFieldValue(excelDTO, erpFieldDropDownDTO.getSourceCodeValue());
-                    ReflectUtil.setFieldValue(actualListDTO, erpFieldDropDownDTO.getSourceCodeValue(), value);
                 } else {
-                    excelDTO.setErrorMsg(StrUtil.format("配置类型不存在【{}】", erpFieldDropDownDTO.getSourceType()));
-                    errorList.add(excelDTO);
-                    continue;
+                    // 根据字段名设置
+                    checkAndSetDictBasic(excelDTO, sourceTypeGroupMap, actualListDTO);
                 }
+
                 // 重新计算差异
                 generateDiff(estimatedListDTO, actualListDTO, diffListDTO);
                 // 添加明细信息
                 actualListDTO.setUpdateList(new LinkedList<>(updateListMap.values()));
                 // 添加到当前结果
                 resultMap.put(excelDTO.getTransportNo(), Arrays.asList(estimatedListDTO, actualListDTO, diffListDTO));
+            }
+        }
+    }
+
+    private static boolean checkAndSetCostValueAndDictBasic(List<FirstMileReconciliationStandardExcelDTO> errorList, FirstMileReconciliationStandardExcelDTO excelDTO, CfgReconciliationFieldDTO.ErpFieldDropDownDTO erpFieldDropDownDTO, Map<String, TmsCostDetailDTO.UpdateDTO> updateListMap, TmsFirstMileReconciliationDetailDTO.ListDTO actualListDTO, Map<String, List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO>> sourceTypeGroupMap) {
+        if (SourceTypeEnum.TMS_CFG_COST.getCode().equalsIgnoreCase(erpFieldDropDownDTO.getSourceType())) {
+            DictCostCategoryEnum categoryEnum = DictCostCategoryEnum.getByCode(erpFieldDropDownDTO.getSourceCodeValue());
+            // 检查费用类型是否已存在更新
+            TmsCostDetailDTO.UpdateDTO oldUpdateDTO = updateListMap.get(erpFieldDropDownDTO.getSourceId());
+            if (null != oldUpdateDTO) {
+                if (oldUpdateDTO.isHasUpdate()) {
+                    excelDTO.setErrorMsg(StrUtil.format("当前页面费用已存在【{}】", erpFieldDropDownDTO.getSourceCodeValue()));
+                    errorList.add(excelDTO);
+                    return true;
+                } else {
+                    oldUpdateDTO.setHasUpdate(true);
+                    oldUpdateDTO.setCostValue(MathUtil.valueOf(excelDTO.getCostValue()));
+                }
+                updateListMap.put(erpFieldDropDownDTO.getSourceId(), oldUpdateDTO);
+            } else {
+                // 历史不存在新增
+                TmsCostDetailDTO.UpdateDTO updateDTO = newCostUpdateDTO(categoryEnum, excelDTO.getCostValue(), erpFieldDropDownDTO.getSourceId());
+                updateListMap.put(erpFieldDropDownDTO.getSourceId(), updateDTO);
+            }
+            // 加成和设置实际值
+            checkAndUpdateCfgCostValue(updateListMap, categoryEnum, actualListDTO);
+
+            // 根据字段名设置
+            checkAndSetDictBasic(excelDTO, sourceTypeGroupMap, actualListDTO);
+        } else if (SourceTypeEnum.DICT_BASIC.getCode().equalsIgnoreCase(erpFieldDropDownDTO.getSourceType())) {
+            // 根据字段名设置
+            Object value = ReflectUtil.getFieldValue(excelDTO, erpFieldDropDownDTO.getSourceCodeValue());
+            ReflectUtil.setFieldValue(actualListDTO, erpFieldDropDownDTO.getSourceCodeValue(), value);
+        } else {
+            excelDTO.setErrorMsg(StrUtil.format("配置类型不存在【{}】", erpFieldDropDownDTO.getSourceType()));
+            errorList.add(excelDTO);
+            return true;
+        }
+        return false;
+    }
+
+    private static void checkAndSetDictBasic(FirstMileReconciliationStandardExcelDTO excelDTO, Map<String, List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO>> sourceTypeGroupMap, TmsFirstMileReconciliationDetailDTO.ListDTO actualListDTO) {
+        List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> dictBasticList = sourceTypeGroupMap.get(SourceTypeEnum.DICT_BASIC.getCode());
+        if (!CollectionUtils.isEmpty(dictBasticList)) {
+            for (CfgReconciliationFieldDTO.ErpFieldDropDownDTO fieldDropDownDTO : dictBasticList) {
+                Object value = ReflectUtil.getFieldValue(excelDTO, fieldDropDownDTO.getSourceCodeValue());
+                if (null != value) {
+                    ReflectUtil.setFieldValue(actualListDTO, fieldDropDownDTO.getSourceCodeValue(), value);
+                }
             }
         }
     }
