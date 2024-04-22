@@ -743,7 +743,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
                 transferDTO.setQty(detailEntity.getQty());
                 transferDTO.setSkuId(detailEntity.getSkuId());
                 transferDTO.setSkuNo(detailEntity.getSkuNo());
-                transferDTO.setWarehouseId(infoEntity.getWarehouseId());
+                transferDTO.setWarehouseId(dto.getPcShow()?detailEntity.getWarehouseId():infoEntity.getWarehouseId());
 //            transferDTO.setWarehouseLocation("");
                 transferDTO.setInventoryStatus(InventoryStatusEnum.USABLE);
                 transferDTOList.add(transferDTO);
