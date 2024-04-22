@@ -248,6 +248,9 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
 
             //出库
             soB2cDeliveryService.generateB2cSoOutstock(entity);
+
+            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", commonService.getUserInfo().getUserName(), "包装验货", entity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
         }
         return viewDTO;
     }

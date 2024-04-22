@@ -142,6 +142,9 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
 
             soB2cDeliveryService.generateB2cSoOutstock(entity);
 
+            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", commonService.getUserInfo().getUserName(), "称重出库", entity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "称重出库");
+
         }
         return this.buildViewDTO(entity,soB2cEntity.getTransferStatus(),declareDetailEntity.getOrderUploadStatus(), trackNo);
     }
