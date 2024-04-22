@@ -140,7 +140,7 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     public List<SoB2cErrorEntity> getByMainIdsAndType(List<String> mainIds, String errorType) {
         return this.lambdaQuery().in(SoB2cErrorEntity::getMainId, mainIds)
                 .eq(SoB2cErrorEntity::getType, errorType)
-                .orderByDesc(SoB2cErrorEntity::getCreateTime).groupBy(SoB2cErrorEntity::getMainId).list();
+                .orderByDesc(SoB2cErrorEntity::getCreateTime).list();
     }
 
     @Override
