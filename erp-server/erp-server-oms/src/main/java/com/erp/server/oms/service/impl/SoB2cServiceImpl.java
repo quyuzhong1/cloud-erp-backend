@@ -3920,6 +3920,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
                 paramJson = JSONObject.toJSONString(platformShipOrderDTO);
                 PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+                List<String> ids = deliveryEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+                soB2cDeliveryFeign.falseDeliveryBatch(ids);
             }
         } catch (Exception e) {
             log.error("销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
