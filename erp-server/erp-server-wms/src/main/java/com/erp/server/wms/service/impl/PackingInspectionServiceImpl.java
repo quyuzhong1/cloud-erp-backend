@@ -4,6 +4,8 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
+import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.handler.PlatformSaveHandler;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
@@ -227,6 +229,20 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             if (StrUtil.equals(soB2cEntity.getTransferStatus(), TransferStatusEnum.WAIT.getCode()) || StrUtil.equals(declareDetailEntity.getOrderUploadStatus(), TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
                     StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
                 return viewDTO;
+            }
+
+            //调用第三方平台SDK发货
+            try {
+                if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+                    //调用第三方平台SDK发货
+                    PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+                    platformShipOrderDTO.setSoB2cId(entity.getSourceId());
+                    platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+                }
+            } catch (Exception e) {
+                log.error("销售单【{}】 标记发货失败 >>>错误信息{}", e.getMessage());
+                throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
             }
 
             //获取一个当前时间当作发货时间
