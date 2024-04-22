@@ -1,21 +1,15 @@
 package com.erp.server.tms.convert;
 
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldImportExcelDTO;
 import com.erp.model.tms.entity.CfgReconciliationFieldEntity;
-import com.erp.model.tms.entity.DictBasicEntity;
-import com.erp.model.tms.entity.LogisticsSupplierEntity;
-import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.CfgReconciliationTypeEnum;
-import com.sdk.tms.track123.dto.PlatformTrackDetail;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * 转换
@@ -40,8 +34,8 @@ public interface CfgReconciliationFieldConverter {
             @Mapping(target = "isDeleted", ignore = true),
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "reconciliationType", source = "cfgReconciliationTypeEnum.code"),
-            @Mapping(target = "thirdName", source = "supplierEntity.supplierName"),
-            @Mapping(target = "thirdCode", source = "supplierEntity.id"),
+            @Mapping(target = "thirdName", source = "supplierEntity.value"),
+            @Mapping(target = "thirdCode", source = "supplierEntity.supplierId"),
             @Mapping(target = "thirdFieldName", source = "importExcelDTO.thirdFieldName"),
             @Mapping(target = "sourceType", source = "erpFieldDTO.sourceType"),
             @Mapping(target = "sourceId", source = "erpFieldDTO.sourceId"),
@@ -49,6 +43,6 @@ public interface CfgReconciliationFieldConverter {
     })
     CfgReconciliationFieldEntity combineAddEntity(CfgReconciliationFieldImportExcelDTO importExcelDTO,
                                                   CfgReconciliationTypeEnum cfgReconciliationTypeEnum,
-                                                  LogisticsSupplierEntity supplierEntity,
+                                                  BaseDropDownDTO.SupplierDisabledDTO supplierEntity,
                                                   CfgReconciliationFieldDTO.ErpFieldDropDownDTO erpFieldDTO);
 }

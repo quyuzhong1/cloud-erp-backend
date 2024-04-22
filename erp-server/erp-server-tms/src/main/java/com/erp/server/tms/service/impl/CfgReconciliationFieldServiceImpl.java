@@ -415,7 +415,8 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
                     .distinct()
                     .collect(Collectors.toList());
             resulList.addAll(currentList);
-        } else if (reconciliationTypeList.contains(CfgReconciliationTypeEnum.FIRST_MILE.getCode())) {
+        }
+        if (reconciliationTypeList.contains(CfgReconciliationTypeEnum.FIRST_MILE.getCode())) {
             List<LogisticsSupplierEntity> list = logisticsSupplierService.lambdaQuery()
                     .list();
             List<BaseDropDownDTO.SupplierDisabledDTO> currentList = list.stream()
@@ -438,9 +439,9 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
                 .collect(Collectors.toMap(CfgReconciliationTypeEnum::getName, Function.identity()));
 
         // 物流商Map
-        Map<String, List<LogisticsSupplierEntity>> supplierMap = logisticsSupplierService.list()
+        Map<String, List<BaseDropDownDTO.SupplierDisabledDTO>> supplierMap = this.logisticsSupplierList(null)
                 .stream()
-                .collect(Collectors.groupingBy(LogisticsSupplierEntity::getSupplierName));
+                .collect(Collectors.groupingBy(BaseDropDownDTO.SupplierDisabledDTO::getSupplierId));
 
         // 数大臣字段配置
         Map<String, List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO>> allErpFieldName = this.erpFieldList(null)
@@ -457,14 +458,14 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
             CfgReconciliationTypeEnum cfgReconciliationTypeEnum = inStockTypeMap.get(importExcelDTO.getReconciliationTypeName());
 
             // 物流商Map
-            List<LogisticsSupplierEntity> supplierEntities = supplierMap.get(importExcelDTO.getThirdName());
+            List<BaseDropDownDTO.SupplierDisabledDTO> supplierEntities = supplierMap.get(importExcelDTO.getThirdName());
             if (CollectionUtils.isEmpty(supplierEntities)) {
                 importExcelDTO.setErrorMsg(StrUtil.format("【{}】物流商不存在", importExcelDTO.getThirdName()));
                 errorList.add(importExcelDTO);
                 continue;
             }
-            LogisticsSupplierEntity supplierEntity = supplierEntities.stream()
-                    .filter(e -> e.getSupplierName().equalsIgnoreCase(importExcelDTO.getThirdName()))
+            BaseDropDownDTO.SupplierDisabledDTO supplierEntity = supplierEntities.stream()
+                    .filter(e -> e.getValue().equalsIgnoreCase(importExcelDTO.getThirdName()))
                     .findFirst()
                     .orElse(null);
             if (null == supplierEntity) {
