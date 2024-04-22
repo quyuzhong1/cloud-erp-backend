@@ -3133,7 +3133,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ,SoB2cDetailDTO.ListDTO detailDTO,List<String> ignoreInventorySkuIds) {
         //判断是否是组合品
         Boolean isCombination = Boolean.FALSE;
-        long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailDTO.getSkuId())).count();
+        long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailDTO.getSkuId())&& BomTypeEnum.COMBINATION.getType().equals(e.getType())).count();
         if (count > 0) {
             isCombination = Boolean.TRUE;
         }
@@ -3147,7 +3147,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<BomChildrenSkuDTO> childList = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailDTO.getSkuId())
                         && BomTypeEnum.COMBINATION.getType().equals(e.getType()))
                 .collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(childList)) {
+        if (CollectionUtils.isEmpty(childList)) {
             return Boolean.TRUE;
         }
         for (BomChildrenSkuDTO childrenSkuDTO : childList) {
@@ -3207,7 +3207,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<BomChildrenSkuDTO> childList = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailEntity.getSkuId())
                         && BomTypeEnum.COMBINATION.getType().equals(e.getType()))
                 .collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(childList)) {
+        if (CollectionUtils.isEmpty(childList)) {
             return Boolean.TRUE;
         }
         for (BomChildrenSkuDTO childrenSkuDTO : childList) {
