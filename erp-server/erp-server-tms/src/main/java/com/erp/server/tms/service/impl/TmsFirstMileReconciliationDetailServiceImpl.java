@@ -947,11 +947,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             }
 
             CfgReconciliationFieldDTO.ErpFieldDropDownDTO erpFieldDropDownDTO = cfgErpFieldMap.getOrDefault(excelDTO.getCostName(), null);
-//            if (null == erpFieldDropDownDTO) {
-//                excelDTO.setErrorMsg(StrUtil.format("字段配置中未找到费用项【{}】", excelDTO.getCostName()));
-//                errorList.add(excelDTO);
-//                continue;
-//            }
+            if (null == erpFieldDropDownDTO && StringUtils.isNotBlank(excelDTO.getCostName()) && StringUtils.isNotBlank(excelDTO.getCostValue())) {
+                excelDTO.setErrorMsg(StrUtil.format("字段配置中未找到费用项【{}】", excelDTO.getCostName()));
+                errorList.add(excelDTO);
+                continue;
+            }
 
             //存在费用并且数量大于0
             if (null != erpFieldDropDownDTO && MathUtil.compareTo(MathUtil.valueOf(excelDTO.getCostValue()), MathUtil.ZERO) <= MathUtil.ZERO) {
