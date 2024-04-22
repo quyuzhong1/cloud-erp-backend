@@ -98,11 +98,10 @@ public class TikTokSdkClientService {
 
         //请求头
         Map<String, String> headerMap = new HashMap<>();
-        headerMap.put("content-type", "application/x-www-form-urlencoded");
-        headerMap.put("accept", "application/json");
+        headerMap.put("content-type", "application/json");
 
         //发起POST请求
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.POST);
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
         if (!Objects.equals(apiResult.getCode(), 200)) {
             log.error("调用url={},入参params={}, TikTok授权失败，返回值 responseMap={}", baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult));
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok授权失败，返回值 responseMap={}",
@@ -116,7 +115,7 @@ public class TikTokSdkClientService {
             throw new RuntimeException(StrUtil.format("返回值 responseMap={}，转换成实体错误", apiResult.getData()));
         }
 
-        if (StringUtil.isBlank(tikTokTokenDTO.getData().getAccessToken())) {
+        if (!"success".equalsIgnoreCase(tikTokTokenDTO.getMessage())) {
             throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.TIK_TOK.getName(), JSONUtil.toJsonStr(apiResult));
         }
         TokenDTO tokenDTO = tikTokTokenDTO.getData();
@@ -133,7 +132,7 @@ public class TikTokSdkClientService {
 
 
     public TikTokShopAuthDTO getAuthorizedShops(Map<String, String> paramMap, String accessToken) {
-        String url = paramMap.get("baseUrl");
+        String url = TikTokConstant.URL;
         String path = "/authorization/" + TikTokConstant.VERSION + "/shops";
         String clientSecret = paramMap.get("clientSecret");
         String clientId = paramMap.get("clientId");
@@ -154,6 +153,15 @@ public class TikTokSdkClientService {
         String sign = EncryptionUtils.generateSHA256(input, clientSecret);
         //加入sign入参
         params.put("sign", sign);
+
+/*        StringBuffer sb = new StringBuffer();
+        //组装url
+        sb.append(url);
+        sb.append(path);
+        sb.append("?app_key=" + params.get("app_key") + "");
+        sb.append("&sign=" + params.get("sign") + "");
+        sb.append("&timestamp=" + params.get("timestamp") + "");
+        sb.append("&version=" + params.get("version") + "");*/
 
         //拉取数据
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
