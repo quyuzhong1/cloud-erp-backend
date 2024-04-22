@@ -58,4 +58,10 @@ public interface WarehouseLocationMoveInfoMapper extends BaseMapper<WarehouseLoc
      * @return
      */
     List<WarehouseLocationMoveInfoDTO.DetailViewDTO> getDetail(@Param("id") String id);
+    /**
+     * 展示详情-PC端
+     * @param id
+     * @return
+     */
+    WarehouseLocationMoveInfoDTO.DetailViewDTO findOne(@Param("id") String id);
 }

@@ -329,6 +329,10 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         * 审核状态
         */
         private String approveStatus;
+        /**
+        * 审核状态
+        */
+        private String approveStatusName;
 
 
         /**
@@ -547,6 +551,16 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
          * 明细id
          */
         private String  detailId;
+
+        /**
+         * 仓库id--兼容移动端pda历史数据
+         */
+        private String infoWarehouseId;
+
+        /**
+         * 仓库名称--兼容移动端pda历史数据
+         */
+        private String infoWarehouseName;
 
         /**
          * 单据编号

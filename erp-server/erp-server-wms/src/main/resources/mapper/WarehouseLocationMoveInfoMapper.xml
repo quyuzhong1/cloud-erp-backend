@@ -106,8 +106,8 @@
 
     <select id="getDetail" resultType="com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO$DetailViewDTO">
         SELECT distinct
-        wlmd.id,
-        wlmi.id as detailId,
+        wlmi.id,
+        wlmd.id as detailId,
         wlmi.code,
         wlmi.approve_status,
         wlmd.warehouse_id,
@@ -121,7 +121,7 @@
         wlmi.create_user_name,
         wlmi.create_time,
         wlmi.approve_time,
-        wlmi.remark,
+        wlmd.remark,
         wlmd.sku_id,
         wlmd.sku_no,
         wlmd.out_warehouse_location,
@@ -129,6 +129,25 @@
         wlmd.qty
         FROM warehouse_location_move_detail wlmd
         INNER JOIN warehouse_location_move_info wlmi ON wlmd.main_id = wlmi.id AND wlmd.is_deleted = FALSE
+        WHERE wlmi.is_deleted = FALSE
+        AND wlmi.invalid_status = FALSE
+        <if test="id != null and id != ''">
+            and wlmi.id = #{id}
+        </if>
+    </select>
+    <select id="findOne" resultType="com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO$DetailViewDTO">
+        SELECT distinct
+        wlmi.id,
+        wlmi.code,
+        wlmi.approve_status,
+        wlmi.bill_date,
+        wlmi.approve_user_id,
+        wlmi.create_user_id,
+        wlmi.approve_user_name,
+        wlmi.create_user_name,
+        wlmi.create_time,
+        wlmi.approve_time
+        FROM warehouse_location_move_info wlmi
         WHERE wlmi.is_deleted = FALSE
         AND wlmi.invalid_status = FALSE
         <if test="id != null and id != ''">
@@ -153,7 +172,7 @@
         wlmi.create_user_name,
         wlmi.create_time as createTime,
         wlmi.approve_time as approveTime,
-        wlmi.remark,
+        wlmd.remark,
         wlmd.sku_id as skuId,
         wlmd.sku_no,
         wlmd.out_warehouse_location as outWarehouseLocation,

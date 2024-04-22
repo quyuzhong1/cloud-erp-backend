@@ -333,6 +333,8 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         //feign获取产品信息
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuList);
         List<String> warehouseIds = itemDTOList.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
+        List<String> infoWarehouseIds = itemDTOList.stream().map(req -> req.getInfoWarehouseId()).distinct().collect(Collectors.toList());
+        warehouseIds.addAll(infoWarehouseIds);
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
         for (WarehouseLocationMoveInfoDTO.PdaPcListDTO pdaPcListDTO : itemDTOList) {
             pdaPcListDTO.setApproveStatusName(ApproveStatusEnum.getName(pdaPcListDTO.getApproveStatus()));
@@ -344,6 +346,10 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
             pdaPcListDTO.setInWarehouseLocationName(warehouseLocationEntity.getName());
             WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(pdaPcListDTO.getWarehouseId()) && req.getCode().equals(pdaPcListDTO.getOutWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             pdaPcListDTO.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
+            if (StringUtils.isBlank(pdaPcListDTO.getWarehouseId())){
+                pdaPcListDTO.setWarehouseId(pdaPcListDTO.getInfoWarehouseId());
+                pdaPcListDTO.setWarehouseName(pdaPcListDTO.getInfoWarehouseName());
+            }
         }
         return new PagingVO(pageData);
     }
@@ -791,9 +797,10 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     }
     @Override
     public WarehouseLocationMoveInfoDTO.PcViewDTO pcView(String id) {
-        WarehouseLocationMoveInfoEntity warehouseLocationMoveInfoEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到仓位移动主单数据"));
+        WarehouseLocationMoveInfoDTO.DetailViewDTO viewDTO = Optional.ofNullable(baseMapper.findOne(id)).orElseThrow(() -> new ServiceException("未找到仓位移动主单数据"));
         WarehouseLocationMoveInfoDTO.PcViewDTO pcViewDTO = new WarehouseLocationMoveInfoDTO.PcViewDTO();
-        BeanMapperUtils.copy(warehouseLocationMoveInfoEntity, pcViewDTO);
+        BeanMapperUtils.copy(viewDTO, pcViewDTO);
+        pcViewDTO.setApproveStatusName(ApproveStatusEnum.getName(pcViewDTO.getApproveStatus()));
         List<WarehouseLocationMoveInfoDTO.DetailViewDTO> detailViewDTOs = baseMapper.getDetail(id);
         detailViewDTOs.stream().forEach(detailViewDTO -> {
             String skuId = detailViewDTO.getSkuId();
