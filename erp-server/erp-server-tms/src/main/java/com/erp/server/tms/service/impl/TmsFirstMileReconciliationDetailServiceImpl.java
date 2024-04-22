@@ -355,7 +355,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             entity.setBillingWeight(actualDetailEntity.getVolumeWeight().max(actualDetailEntity.getActualWeight()));
             // 设置实际费用明细
             if (!CollectionUtils.isEmpty(actualDetailEntity.getUpdateList())){
-                entity.setUpdateList(actualDetailEntity.getUpdateList());
+                List<TmsCostDetailDTO.UpdateDTO> updateList = BeanMapperUtils.copyList(TmsCostDetailDTO.UpdateDTO.class, actualDetailEntity.getUpdateList());
+                updateList.forEach(e-> e.setSourceType(SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode()));
+                entity.setUpdateList(updateList);
             }
 
             if (billIds.contains(entity.getLogisticsBillId())) {
@@ -1383,6 +1385,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         updateDTO.setHasUpdate(true);
         updateDTO.setDictCostCategory(categoryEnum.getCode());
         updateDTO.setCostValue(MathUtil.valueOf(costValue));
+        updateDTO.setSourceType(SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode());
         updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
         updateDTO.setCfgCostId(cfgCostId);
         return updateDTO;
