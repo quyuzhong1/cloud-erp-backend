@@ -5955,7 +5955,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //批量更新订单信息
         if (CollectionUtils.isNotEmpty(list)){
             list.forEach(shippingOrderDTO -> {
-                this.lambdaUpdate().set(SoB2cEntity::getShippingOrderNo, shippingOrderDTO.getShippingOrderNo()).set(SoB2cEntity::getSignOrderError, shippingOrderDTO.getSign())
+                this.lambdaUpdate()
+                        .set(StringUtils.isNotBlank(shippingOrderDTO.getShippingOrderNo()),SoB2cEntity::getShippingOrderNo, shippingOrderDTO.getShippingOrderNo())
+                        .set(SoB2cEntity::getSignOrderError, shippingOrderDTO.getSign())
                         .eq(SoB2cEntity::getId, shippingOrderDTO.getSoId()).update();
             });
         }
