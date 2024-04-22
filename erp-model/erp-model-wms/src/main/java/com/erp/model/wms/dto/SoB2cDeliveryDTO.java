@@ -393,6 +393,14 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private BigDecimal weight;
         /**
+         * 重量+单位
+         */
+        private String weightName;
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+        /**
          * skuId
          */
         private String skuId;
