@@ -30,6 +30,8 @@ public interface TransferDeclareConverter {
             @Mapping(target = "price", source = "destDeclarePrice"),
             @Mapping(target = "declarePrice", source = "declarePrice"),
             @Mapping(target = "quantity", source = "qty"),
+            @Mapping(target = "grossWeight", source = "grossWeight"),
+            @Mapping(target = "weight", source = "weight"),
             @Mapping(target = "declareCurrency", source = "currency"),
             @Mapping(target = "amount", ignore = true),
             @Mapping(target = "childOrderId", ignore = true),
