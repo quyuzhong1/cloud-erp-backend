@@ -3713,14 +3713,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void removeSignError(String id, String sign) {
-        SoB2cEntity soB2cEntity = this.getById(id);
-        if (Objects.nonNull(soB2cEntity)) {
-            String signOrderError = soB2cEntity.getSignOrderError();
-            if (signOrderError.equals(sign)) {
-                this.lambdaUpdate().set(SoB2cEntity::getSignOrderError, "").
-                        eq(SoB2cEntity::getId, id).update(new SoB2cEntity());
-            }
-        }
+        this.lambdaUpdate().set(SoB2cEntity::getSignOrderError, "")
+                .eq(SoB2cEntity::getId, id).eq(SoB2cEntity::getSignOrderError,sign).update();
+//        SoB2cEntity soB2cEntity = this.getById(id);
+//        if (Objects.nonNull(soB2cEntity)) {
+//            String signOrderError = soB2cEntity.getSignOrderError();
+//            if (signOrderError.equals(sign)) {
+//                this.lambdaUpdate().set(SoB2cEntity::getSignOrderError, "").
+//                        eq(SoB2cEntity::getId, id).update(new SoB2cEntity());
+//            }
+//        }
     }
 
 
@@ -5913,9 +5915,48 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public Boolean updateShippingOrderNo(List<TransferDeclareDTO.ShippingOrderDTO> list) {
-        for (TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO : list) {
-            this.lambdaUpdate().set(SoB2cEntity::getShippingOrderNo, shippingOrderDTO.getShippingOrderNo()).
-                    eq(SoB2cEntity::getId, shippingOrderDTO.getSoId()).update(new SoB2cEntity());
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.TRUE;
+        }
+        TransferDeclareDTO.ShippingOrderDTO dto = list.stream().filter(e -> StringUtils.isNotBlank(e.getType())).findFirst().orElse(null);
+        if (Objects.isNull(dto) || StringUtils.isBlank(dto.getType())) {
+            //数据类型必填，为空时直接返回
+            return Boolean.TRUE;
+        }
+        List<String> soIds = list.stream().map(TransferDeclareDTO.ShippingOrderDTO::getSoId).collect(Collectors.toList());
+        List<SoB2cErrorEntity> errorList = soB2cErrorService.getByMainIdsAndType(soIds, dto.getType());
+        List<String> deleteErrorIds = new ArrayList<>();
+        List<SoB2cErrorEntity> addOrUpdateErrors = new ArrayList<>();
+
+        list.forEach(shippingOrderDTO -> {
+            //成功还是失败
+            if (StringUtils.isBlank(shippingOrderDTO.getSign())) {
+                deleteErrorIds.add(shippingOrderDTO.getSoId());
+            } else {
+                SoB2cErrorEntity error = errorList.stream().filter(e -> e.getMainId().equals(shippingOrderDTO.getSoId())).findFirst().orElse(new SoB2cErrorEntity());
+                error.setMainId(shippingOrderDTO.getSoId())
+                        .setType(shippingOrderDTO.getType())
+                        .setMessage(shippingOrderDTO.getMessage())
+                        .setParamJson(shippingOrderDTO.getSoId());
+                addOrUpdateErrors.add(error);
+            }
+        });
+        //更新或添加记录
+        if (CollectionUtils.isNotEmpty(addOrUpdateErrors)){
+            soB2cErrorService.saveOrUpdateBatch(addOrUpdateErrors);
+        }
+        //删除失败记录
+        if (CollectionUtils.isNotEmpty(deleteErrorIds)){
+            soB2cErrorService.removeByIds(deleteErrorIds);
+        }
+        //批量更新订单信息
+        if (CollectionUtils.isNotEmpty(list)){
+            list.forEach(shippingOrderDTO -> {
+                this.lambdaUpdate()
+                        .set(StringUtils.isNotBlank(shippingOrderDTO.getShippingOrderNo()),SoB2cEntity::getShippingOrderNo, shippingOrderDTO.getShippingOrderNo())
+                        .set(SoB2cEntity::getSignOrderError, shippingOrderDTO.getSign())
+                        .eq(SoB2cEntity::getId, shippingOrderDTO.getSoId()).update();
+            });
         }
         return Boolean.TRUE;
     }
@@ -5941,7 +5982,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (!success) {
                 log.error("异常订单重试拉取速卖通订单失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
             }
-            AliExpressAscpFfoQueryResponse result = com.alibaba.fastjson.JSONObject.parseObject(response.getBody(), AliExpressAscpFfoQueryResponse.class);
+            AliExpressAscpFfoQueryResponse result = JSONObject.parseObject(response.getBody(), AliExpressAscpFfoQueryResponse.class);
             DataListBean dataList = result.getAliexpressAscpFfoQueryResponse().getResult().getDataList();
             if (ObjectUtil.isNotEmpty(dataList)) {
                 List<ErpFulfillmentForwardDtoBean> erpFulfillmentForwardDto = dataList.getErpFulfillmentForwardDto();
@@ -6668,8 +6709,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
 	@Override
-	public List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoB2cDTO> getDataCompareByCondition(
-			com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params) {
+	public List<WmsDataCompareTaskDTO.SoB2cDTO> getDataCompareByCondition(
+			WmsDataCompareTaskDTO.SoOutstockDTO params) {
 		return baseMapper.getDataCompareByCondition(params);
 	}
 }

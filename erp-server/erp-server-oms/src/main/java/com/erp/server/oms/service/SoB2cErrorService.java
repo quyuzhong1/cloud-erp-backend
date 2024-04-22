@@ -70,6 +70,14 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
     SoB2cErrorEntity getByMainIdAndType(String mainId, String errorType);
 
     /**
+     * 批量获取错误信息
+     * @param mainIds
+     * @param errorType
+     * @return
+     */
+    List<SoB2cErrorEntity> getByMainIdsAndType(List<String> mainIds, String errorType);
+
+    /**
      * 根据code 和类型删除
      * @description
      * @param type
