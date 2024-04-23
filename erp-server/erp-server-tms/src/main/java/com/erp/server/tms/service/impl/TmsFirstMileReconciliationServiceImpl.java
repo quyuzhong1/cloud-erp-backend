@@ -71,6 +71,8 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
     @Resource
     private LogisticsSupplierService logisticsSupplierService;
+    @Resource
+    private TmsFirstMileLogisticService tmsFirstMileLogisticService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -297,6 +299,13 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
+        // 反审核恢复已确认
+        List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (!CollectionUtils.isEmpty(detailEntityList)){
+            List<String> sourceIds = detailEntityList.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
+            tmsFirstMileLogisticService.updateReconciliation(sourceIds, ReconciliationStatusEnum.CONFIRMED.getCode());
+        }
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "头程对账单");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
@@ -377,6 +386,14 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         updateForApprove(entity.getId(), approveStatus.getStatus(), dto.getComment());
         // 明细数据处理 上下游数据处理
 
+        // 审核通过修改头程物流单已对账
+        if (ApproveStatusEnum.APPROVE.equals(approveStatus)){
+            List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+            if (!CollectionUtils.isEmpty(detailEntityList)){
+                List<String> sourceIds = detailEntityList.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
+                tmsFirstMileLogisticService.updateReconciliation(sourceIds, ReconciliationStatusEnum.RECONCILED.getCode());
+            }
+        }
         return Boolean.TRUE;
     }
 
