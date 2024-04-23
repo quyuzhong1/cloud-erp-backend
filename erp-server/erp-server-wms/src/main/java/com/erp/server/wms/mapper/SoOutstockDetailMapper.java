@@ -1,6 +1,7 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -42,4 +43,13 @@ public interface SoOutstockDetailMapper extends BaseMapper<SoOutstockDetailEntit
      * @return List<SoOutstockDetailEntity>
      */
     List<SoOutstockDetailEntity> listBySoDetailIds(@Param("soDetailIdList")List<String> soDetailIdList);
+
+    /**
+     * 根据主表id分组sku查询发货及待装箱数
+     * @Author Luo_WG
+     * @Date 2024/3/21 14:14
+     * @param mainId
+     * @return java.util.List<com.erp.model.wms.dto.SoOutstockDTO.GroupSkuDTO>
+     **/
+    List<SoOutstockDTO.GroupSkuDTO> listGroupSkuByMainId(@Param("mainId") String mainId);
 }

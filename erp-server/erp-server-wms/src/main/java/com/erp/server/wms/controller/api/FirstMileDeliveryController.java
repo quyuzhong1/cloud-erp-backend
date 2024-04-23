@@ -2,9 +2,8 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.validator.ValidList;
-import com.erp.model.wms.dto.FirstMileCartonDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.server.wms.query.FirstMileDeliveryQueryHandler;
@@ -474,7 +473,7 @@ public class FirstMileDeliveryController extends BaseController {
      **/
     @PostMapping("/packingSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "头程发货单装箱保存")
-    public ApiResult packingSave(@RequestBody @Validated FirstMileDeliveryDTO.FirstMileCartonAdd dto) {
+    public ApiResult packingSave(@RequestBody @Validated WmsCartonDTO.WmsCartonAdd dto) {
         Boolean flag = firstMileDeliveryService.packingSave(dto);
         return flag ? success() : failure();
     }
@@ -487,9 +486,9 @@ public class FirstMileDeliveryController extends BaseController {
      * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
      **/
     @GetMapping("/packingView")
-    public ApiResult<FirstMileDeliveryDTO.FirstMileCartonView> packingView(@RequestParam("id") String id) {
-        FirstMileDeliveryDTO.FirstMileCartonView firstMileCartonView = firstMileDeliveryService.packingView(id);
-        return success(firstMileCartonView);
+    public ApiResult<WmsCartonDTO.WmsCartonView> packingView(@RequestParam("id") String id) {
+        WmsCartonDTO.WmsCartonView wmsCartonView = firstMileDeliveryService.packingView(id);
+        return success(wmsCartonView);
     }
 
     /**
@@ -500,8 +499,8 @@ public class FirstMileDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @GetMapping("/listPacking")
-    public ApiResult<FirstMileCartonDTO.ListPackingDTO> listPacking(@RequestParam("id") String id) {
-        FirstMileCartonDTO.ListPackingDTO result = firstMileDeliveryService.listPacking(id);
+    public ApiResult<WmsCartonDTO.ListPackingDTO> listPacking(@RequestParam("id") String id) {
+        WmsCartonDTO.ListPackingDTO result = firstMileDeliveryService.listPacking(id);
         return success(result);
     }
 
@@ -532,6 +531,7 @@ public class FirstMileDeliveryController extends BaseController {
             tableAlias = "fd"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "头程发货单导出装箱清单Excel")
+    @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
     public ApiResult exportPacking(@RequestBody @Validated FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
         firstMileDeliveryService.exportPacking(dto, response);
         return success();
@@ -569,6 +569,17 @@ public class FirstMileDeliveryController extends BaseController {
     @PostMapping("/importPacking")
     public ApiResult importPacking(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = firstMileDeliveryService.importFile(excelFile, response);
+        return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 生成状态更新为无需生成
+     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "生成状态更新")
+    @PostMapping("/generateStatusUpdate")
+    public ApiResult generateStatusUpdate(@RequestBody FirstMileDeliveryDTO.GenerateStatusUpdateDTO dto) {
+        Boolean result = firstMileDeliveryService.generateStatusUpdate(dto);
         return result == true ? success() : failure();
     }
 }

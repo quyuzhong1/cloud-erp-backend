@@ -37,6 +37,11 @@ public class TransferDeclareEntity extends BaseEntity<TransferDeclareEntity> {
     @TableField("plan_transfer_date")
     private LocalDate planTransferDate;
     /**
+     * 入库预报日期
+     */
+    @TableField("instock_forecast_date")
+    private LocalDate instockForecastDate;
+    /**
     * 上传状态（批次）
     */
     @TableField("upload_status")

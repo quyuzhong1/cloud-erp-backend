@@ -42,17 +42,9 @@ public interface FirstMileDeliveryDetailMapper extends BaseMapper<FirstMileDeliv
      * 根据主表id分组查询发货单已包装发货及待装箱数
      * @Author Luo_WG
      * @Date 2023/11/30 11:30
-     * @param mainId
+     * @param sourceId
      * @return java.util.List<com.erp.model.wms.dto.FirstMileDeliveryDTO.GroupSkuDTO>
      **/
-    List<FirstMileDeliveryDTO.GroupSkuDTO> listCartonGroupSkuByMainId(@Param("mainId") String mainId, @Param("boxSpecNo") Integer boxSpecNo);
+    List<FirstMileDeliveryDTO.GroupSkuDTO> listCartonGroupSkuBySourceId(@Param("sourceId") String sourceId, @Param("boxSpecNo") Integer boxSpecNo);
 
-    /**
-     * 查询包装信息
-     * @Author Luo_WG
-     * @Date 2023/12/1 14:46
-     * @param mainId
-     * @return java.util.List<com.erp.model.wms.dto.FirstMileDeliveryDTO.PackDateDTO>
-     **/
-    List<FirstMileDeliveryDTO.PackDateDTO> listPackDate(@Param("mainId") String mainId);
 }

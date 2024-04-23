@@ -49,7 +49,7 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
         if (RequestStatusEnums.SUCCESS.getCode().equals(status)) {
             dmpPullTaskEntity.setStatus(SyncStatusEnum.SUCCESS_SYNC.getCode());
         } else {
-            dmpPullTaskEntity.setStatus(SyncStatusEnum.FAILED_SYNC.getCode());
+            dmpPullTaskEntity.setStatus(SyncStatusEnum.NO_NEED_SYNC.getCode());
         }
         dmpPullTaskEntity.setMqTopic("");
         dmpPullTaskEntity.setMqTag("");
@@ -75,14 +75,14 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
         DmpPushTaskEntity dmpPushTaskEntity = new DmpPushTaskEntity();
         dmpPushTaskEntity.setSourcePlatformName(PlatformEnum.ERP_TMS.getDesc());
         dmpPushTaskEntity.setSourceType(businessType);
-        dmpPushTaskEntity.setSourceId(authId);
+        dmpPushTaskEntity.setSourceId(sourceId);
         dmpPushTaskEntity.setSourceCode(sourceId);
         dmpPushTaskEntity.setTargetPlatformName(logisticsPlatform);
         //请求状态（0请求中 1请求成功 2请求失败）
         if (RequestStatusEnums.SUCCESS.getCode().equals(status)) {
             dmpPushTaskEntity.setStatus(SyncStatusEnum.SUCCESS_SYNC.getCode());
         } else {
-            dmpPushTaskEntity.setStatus(SyncStatusEnum.FAILED_SYNC.getCode());
+            dmpPushTaskEntity.setStatus(SyncStatusEnum.NO_NEED_SYNC.getCode());
         }
         dmpPushTaskEntity.setMqTopic("");
         dmpPushTaskEntity.setMqTag("");

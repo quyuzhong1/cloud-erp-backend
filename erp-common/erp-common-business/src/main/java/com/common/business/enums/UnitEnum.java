@@ -3,7 +3,7 @@ package com.common.business.enums;
 import com.common.core.constant.EnumMessage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.ToString;
+import lombok.NoArgsConstructor;
 
 /**
  * 单位枚举
@@ -19,24 +19,46 @@ public enum UnitEnum {
      * 重量单位枚举
      */
     @Getter
+    @NoArgsConstructor
     @AllArgsConstructor
     public enum WeightUnitEnum implements EnumMessage{
         G("g","g"),
         KG("kg","kg")
         ;
-        private final String code;
-        private final String name;
+        public  String code;
+        public  String name;
+
+        @Override
+        public String getCode() {
+            return this.code;
+        }
+
+        @Override
+        public String getName() {
+            return this.name;
+        }
     }
 
     /**
      * 时间单位枚举
      */
     @Getter
+    @NoArgsConstructor
     @AllArgsConstructor
     public enum TimeUnitEnum implements EnumMessage{
         DAY("day","天")
         ;
-        private final String code;
-        private final String name;
+        public  String code;
+        public  String name;
+
+        @Override
+        public String getCode() {
+            return this.code;
+        }
+
+        @Override
+        public String getName() {
+            return this.name;
+        }
     }
 }

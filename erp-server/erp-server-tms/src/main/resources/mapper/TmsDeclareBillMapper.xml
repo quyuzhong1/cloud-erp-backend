@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.TmsDeclareBillMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.TmsDeclareBillEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="source_type" property="sourceType" />
+       <result column="declare_status" property="declareStatus" />
+       <result column="delivery_type" property="businessType" />
+       <result column="country" property="country" />
+       <result column="net_weight" property="netWeight" />
+       <result column="gross_weight" property="grossWeight" />
+       <result column="declare_date" property="declareDate" />
+       <result column="declare_type" property="declareType" />
+       <result column="pre_input_no" property="preInputNo" />
+       <result column="dest_customs" property="destCustoms" />
+       <result column="sender_id" property="senderId" />
+       <result column="export_customs_name" property="exportCustomsName" />
+       <result column="export_date" property="exportDate" />
+       <result column="receiver_name" property="receiverName" />
+       <result column="dict_supervision_method" property="dictSupervisionMethod" />
+       <result column="dict_nature_levy" property="dictNatureLevy" />
+       <result column="license_no" property="licenseNo" />
+       <result column="trading_area" property="tradingArea" />
+       <result column="to_area" property="toArea" />
+       <result column="to_port" property="toPort" />
+       <result column="export_port" property="exportPort" />
+       <result column="dict_pack_type" property="dictPackType" />
+       <result column="dict_transaction_method" property="dictTransactionMethod" />
+       <result column="remark" property="remark" />
+       <result column="shipping_fee" property="shippingFee" />
+       <result column="insurance_fee" property="insuranceFee" />
+       <result column="other_fee" property="otherFee" />
+       <result column="box_qty" property="boxQty" />
+       <result column="merge_source_id" property="mergeSourceId" />
+        <result column="country_name" property="countryName" />
+        <result column="source_id" property="sourceId" />
+        <result column="source_code" property="sourceCode" />
+        <result column="transport_no" property="transportNo" />
+        <result column="type" property="type" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, source_type,type,transport_no, source_id,source_code,declare_status, country_name, business_type, country, net_weight, gross_weight, declare_date, declare_type, pre_input_no, dest_customs, sender_id, export_customs_name, export_date, receiver_name, dict_supervision_method, dict_nature_levy, license_no, trading_area, to_area, to_port, export_port, dict_pack_type, dict_transaction_method, remark, shipping_fee, insurance_fee, other_fee, box_qty, merge_source_id
+    </sql>
+    <select id="tabList" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$TabListDTO">
+        SELECT db.declare_status as tabFlag,
+               count(1)   as count
+        FROM tms_declare_bill db
+        where db.is_deleted = false
+          and db.type = #{code}
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        group by db.declare_status
+    </select>
+    <select id="paging" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$PagingVO">
+        SELECT  db.id,
+                db.source_code as  sourceCode,
+                db.code,
+                (select count(distinct dbd.sku_id) from tms_declare_bill_detail dbd where dbd.is_deleted = false and dbd.main_id = db.id) as goodsQty,
+                db.merge_source_id as mergeSourceId,
+                case when db.merge_source_id !='' then true else false end as isMerged,
+                db.declare_status as declareStatus,
+                db.business_type as businessType,
+                db.country,
+                db.country_name as  countryName,
+                db.box_qty as  boxQty,
+                db.net_weight as  netWeight,
+                db.gross_weight as  grossWeight,
+                db.declare_date as   declareDate,
+                db.declare_type as   declareType,
+                db.create_user_name as   createUserName,
+                db.create_time as   createTime
+        from  tms_declare_bill  db
+        where
+            ${params.sqlMap.default}
+          and db.is_deleted = false
+        and db.type = #{params.type}
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        db.create_time DESC
+    </select>
+
+    <select id="statistics" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$StatisticsAllDTO">
+        SELECT  EXTRACT(year FROM db.declare_date),  EXTRACT(month FROM db.declare_date) as month,
+        count(1)
+        from tms_declare_bill db
+        where db.is_deleted = false
+        <if test="params.declareStatus != null and params.declareStatus != ''">
+            and  db.declare_status = #{params.declareStatus}
+        </if>
+        <if test="params.type != null and params.type != ''">
+            and  db.type = #{params.type}
+        </if>
+        <if test="params.beginDate != null">
+            and db.declare_date >= #{params.beginDate}
+        </if>
+        <if test="params.endDate != null ">
+            and db.declare_date <![CDATA[<=]]>  #{params.endDate}
+        </if>
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        group by EXTRACT(month FROM db.declare_date), EXTRACT(year FROM db.declare_date)
+        order by  EXTRACT(year FROM db.declare_date), EXTRACT(month FROM db.declare_date)
+    </select>
+    <select id="exportDeclare" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$ExportDTO">
+        select
+            db.id,
+            db.type,
+            db.source_code as   sourceCode,
+            db.pre_input_no as  preInputNo,
+            db.dest_customs as  destCustoms,
+            db.sender_id as   senderId,
+            db.export_customs_name as   exportCustomsName,
+            db.export_date as   exportDate,
+            db.declare_date as   declareDate,
+            db.receiver_name as    receiverName,
+            db.transport_no as     transportNo,
+            db.dict_supervision_method as   dictSupervisionMethod,
+            db.dict_nature_levy as      dictNatureLevy,
+            db.license_no as        licenseNo,
+            db.code,
+            db.trading_area as       tradingArea,
+            db.to_area as            toArea,
+            db.to_port as             toPort,
+            db.export_port as         exportPort,
+            db.dict_pack_type as        dictPackType,
+            db.box_qty as              boxQty,
+            db.gross_weight as         grossWeight,
+            db.net_weight as           netWeight,
+            db.dict_transaction_method as dict_transaction_method,
+            db.remark,
+            db.shipping_fee as          shippingFee,
+            db.insurance_fee as          insuranceFee,
+            db.other_fee as             otherFee,
+            db.country_name as countryName
+        from tms_declare_bill db
+        where   ${params.sqlMap.default}
+          and db.is_deleted = false
+          and db.type = #{params.type}
+        and db.declare_status in
+        <foreach collection="params.exportDeclareStatus" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        db.create_time DESC
+    </select>
+
+
+</mapper>

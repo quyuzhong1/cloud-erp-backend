@@ -230,6 +230,14 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         return lambdaQuery().in(TransferDeclareDetailEntity::getLogisticsChannelId,logisticsChannelIdList).list();
     }
 
+    @Override
+    public List<TransferDeclareDetailEntity> listBySoCodeList(List<String> soCodeList) {
+        if (CollectionUtils.isEmpty(soCodeList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(TransferDeclareDetailEntity::getSoCode,soCodeList).list();
+    }
+
     /**
      * 新增修改处理数据
      */

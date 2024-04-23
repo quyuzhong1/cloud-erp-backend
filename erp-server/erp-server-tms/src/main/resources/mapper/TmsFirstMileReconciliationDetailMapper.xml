@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.TmsFirstMileReconciliationDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_type" property="sourceType" />
+       <result column="source_code" property="sourceCode" />
+       <result column="track_no" property="transportNo" />
+       <result column="relation_code" property="relationCode" />
+       <result column="shop_id" property="shopId" />
+       <result column="shop_name" property="shopName" />
+       <result column="from_country" property="fromCountry" />
+       <result column="to_country" property="toCountry" />
+       <result column="receive_date" property="receiveDate" />
+       <result column="billing_method" property="billingMethod" />
+       <result column="billing_method_name" property="billingMethodName" />
+       <result column="type" property="type" />
+       <result column="total_logistics_cost" property="totalLogisticsCost" />
+       <result column="actual_weight" property="actualWeight" />
+       <result column="actual_weight_unit" property="actualWeightUnit" />
+       <result column="volume_weight" property="volumeWeight" />
+       <result column="volume_weight_unit" property="volumeWeightUnit" />
+       <result column="billing_weight" property="billingWeight" />
+       <result column="billing_weight_unit" property="billingWeightUnit" />
+       <result column="actual_shipping_cost" property="shippingCost" />
+       <result column="actual_declare_cost" property="declareCost" />
+       <result column="actual_other_cost" property="otherCost" />
+       <result column="remark" property="remark" />
+       <result column="status" property="status" />
+       <result column="confirm_date" property="confirmDate" />
+       <result column="confirm_user_id" property="confirmUserId" />
+       <result column="confirm_user_name" property="confirmUserName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        main_id,
+        source_id,
+        source_type,
+        source_code,
+        track_no,
+        relation_code,
+         shop_id, shop_name,
+         from_country,
+         to_country,
+          receive_date,
+           billing_method,
+           billing_method_name,
+           type,
+           total_logistics_cost,
+            actual_weight,
+            actual_weight_unit,
+            volume_weight,
+            volume_weight_unit,
+            billing_weight,
+            billing_weight_unit,
+            actual_shipping_cost,
+            actual_declare_cost,
+            actual_other_cost,
+            remark,
+            status,
+            confirm_date,
+            confirm_user_id,
+            confirm_user_name
+    </sql>
+
+    <sql id="Clause_Column_List">
+        tfmr.id,
+        tfmr.create_user_id,
+        tfmr.create_user_name,
+        tfmr.create_time,
+        tfmr.update_user_id,
+        tfmr.update_user_name,
+        tfmr.update_time,
+        tfmr.version,
+        tfmr.is_deleted,
+        tfmr.main_id,
+        tfmr.source_id,
+        tfmr.source_type,
+        tfmr.source_code,
+        tfmr.track_no,
+        tfmr.relation_code,
+         shop_id, tfmr.shop_name,
+         tfmr.from_country,
+         tfmr.to_country,
+          tfmr.receive_date,
+           tfmr.billing_method,
+           tfmr.billing_method_name,
+           tfmr.type,
+           tfmr.total_logistics_cost,
+            tfmr.actual_weight,
+            tfmr.actual_weight_unit,
+            tfmr.volume_weight,
+            tfmr.volume_weight_unit,
+            tfmr.billing_weight,
+            tfmr.billing_weight_unit,
+            tfmr.actual_shipping_cost,
+            tfmr.actual_declare_cost,
+            tfmr.actual_other_cost,
+            tfmr.remark,
+            tfmr.status,
+            tfmr.confirm_date,
+            tfmr.confirm_user_id,
+            tfmr.confirm_user_name
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO$ListDTO">
+        select
+        <include refid="Base_Column_List" />
+         from tms_first_mile_reconciliation_detail tfmrd
+        <where>
+            ${params.sqlMap.default}
+            and tfmrd.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            tfmrd.id desc
+        </where>
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO$ExportDetailDTO">
+        select
+        tfmr.code,
+        tfmr.approve_status,
+        tfmr.approve_user_id,
+        tfmr.approve_user_name,
+        tfmr.reconciliation_date,
+        tfmr.submit_date,
+        tfmr.approve_date,
+        tfmr.start_date,
+        tfmr.end_date,
+        tfmr.logistics_supplier_id,
+        tfmr.logistics_supplier_name,
+        tfmr.currency,
+        tfmr.exchange_rate,
+          tfmrd.*
+        from tms_first_mile_reconciliation_detail tfmrd
+        left join tms_first_mile_reconciliation tfmr on tfmrd.main_id = tfmr.id
+        <where>
+            tfmrd.is_deleted = false and tfmrd.main_id in
+            <foreach collection="params.mainIdList" open="(" close=")" separator="," item="item">
+                #{item}
+            </foreach>
+            ORDER BY
+            tfmrd.source_id,
+            CASE
+            TYPE
+            WHEN 'estimated' THEN 1
+            WHEN 'actual' THEN 2
+            WHEN 'diff' THEN 3
+            END
+        </where>
+    </select>
+
+    <select id="getCurrencyById" resultType="java.lang.String">
+        select
+        tfmr.currency
+        from tms_first_mile_reconciliation tfmr
+        inner join tms_first_mile_reconciliation_detail tfmrd on tfmr.id = tfmrd.main_id and tfmrd.is_deleted = false
+        <where>
+            tfmr.is_deleted = false and tfmrd.id = #{id}
+        </where>
+    </select>
+</mapper>

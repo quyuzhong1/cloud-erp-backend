@@ -2,11 +2,11 @@ package com.erp.server.tms.service;
 
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.dto.LogisticsTrackBaseDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
-import org.checkerframework.checker.units.qual.A;
 
 import java.io.IOException;
 import java.util.List;
@@ -91,7 +91,7 @@ public interface LogisticsService {
     ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsQueryVO) throws IOException;
 
     /**
-     * 轨迹查询
+     * 小包轨迹查询
      *
      * @param logisticsTrackVO
      * @return
@@ -99,11 +99,27 @@ public interface LogisticsService {
     ApiResult<List<LogisticsTrackEntity>> getTrack(LogisticsTrackVO logisticsTrackVO);
 
     /**
+     * 海运轨迹查询
+     *
+     * @param oceanTrackRequestList
+     * @return
+     */
+    ApiResult<List<LogisticsTrackEntity>> getOceanTrack(List<LogisticsTrackBaseDTO.OceanTrackRequestDTO> oceanTrackRequestList);
+
+
+    /**
      * 物流单号注册
      * @param registerTrackVO
      * @return
      */
     ApiResult<List<RegisterResponseVO>> registerLogisticsNumber(RegisterTrackVO registerTrackVO);
+
+    /**
+     * 海运物流单号注册
+     * @param list
+     * @return
+     */
+    ApiResult<List<RegisterResponseVO>> oceanRegisterLogisticsNumber(List<LogisticsTrackBaseDTO.OceanRegisterRequestDTO> list);
 
     /**
      * 渠道查询

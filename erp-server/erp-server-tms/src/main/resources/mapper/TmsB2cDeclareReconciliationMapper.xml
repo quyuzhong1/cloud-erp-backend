@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.TmsB2cDeclareReconciliationMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="reconciliation_date" property="reconciliationDate" />
+       <result column="submit_date" property="submitDate" />
+       <result column="approve_date" property="approveDate" />
+       <result column="start_date" property="startDate" />
+       <result column="end_date" property="endDate" />
+       <result column="logistics_supplier_id" property="logisticsSupplierId" />
+       <result column="logistics_supplier_name" property="logisticsSupplierName" />
+       <result column="currency" property="currency" />
+       <result column="exchange_rate" property="exchangeRate" />
+       <result column="reason" property="reason" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        tbdr.id,
+        tbdr.create_user_id as createUserId,
+        tbdr.create_user_name as createUserName,
+        tbdr.create_time as createTime,
+        tbdr.update_user_id as updateUserId,
+        tbdr.update_user_name as updateUserName,
+        tbdr.update_time as updateTime,
+        tbdr.version,
+        tbdr.is_deleted as isDeleted,
+        tbdr.code,
+        tbdr.approve_status as approveStatus,
+        tbdr.approve_user_id as approveUserId,
+        tbdr.approve_user_name as approveUserName,
+        tbdr.reconciliation_date as reconciliationDate,
+        tbdr.submit_date as submitDate,
+        tbdr.approve_date as approveDate,
+        tbdr.start_date as startDate,
+        tbdr.end_date as endDate,
+        tbdr.logistics_supplier_id as logisticsSupplierId,
+        tbdr.logistics_supplier_name as logisticsSupplierName,
+        tbdr.currency, exchange_rate as exchangeRate,
+        tbdr.reason,
+        tbdrd.actualBillingWeight,
+        tbdrd.actualWeightUnit,
+        tbdrd.actualShippingCost,
+        tbdrd.actualDeclareCost,
+        tbdrd.actualOtherCost,
+        (tbdrd.actualShippingCost + tbdrd.actualDeclareCost + tbdrd.actualOtherCost) as totalCost
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO$ListDTO">
+        select
+               <include refid="Base_Column_List" />
+        from tms_b2c_declare_reconciliation tbdr
+        left join (
+            select
+                   sum(actual_billing_weight) as actualBillingWeight,
+                   max(actual_weight_unit) as actualWeightUnit,
+                   sum(actual_shipping_cost) as actualShippingCost,
+                   sum(actual_declare_cost) as actualDeclareCost,
+                   sum(actual_other_cost) as actualOtherCost,
+                   main_id
+            from tms_b2c_declare_reconciliation_detail where is_deleted = false group by main_id
+        ) tbdrd on tbdr.id = tbdrd.main_id
+        <where>
+            ${params.sqlMap.default}
+            and tbdr.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            tbdr.id desc
+        </where>
+
+    </select>
+
+    <!-- 导出查询 -->
+    <select id="listExport" resultType="com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+        from tms_b2c_declare_reconciliation tbdr
+        left join (
+        select
+        sum(actual_billing_weight) as actualBillingWeight,
+        max(actual_weight_unit) as actualWeightUnit,
+        sum(actual_shipping_cost) as actualShippingCost,
+        sum(actual_declare_cost) as actualDeclareCost,
+        sum(actual_other_cost) as actualOtherCost,
+        main_id
+        from tms_b2c_declare_reconciliation_detail where is_deleted = false group by main_id
+        ) tbdrd on tbdr.id = tbdrd.main_id
+        <where>
+        ${params.sqlMap.default}
+        and tbdr.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        tbdr.id desc
+        </where>
+    </select>
+
+    <!-- tab列表 -->
+    <select id="tabList" resultType="com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO$TabListDTO">
+        SELECT
+        tbdr.approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  tms_b2c_declare_reconciliation tbdr
+        WHERE tbdr.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY tbdr.approve_status
+    </select>
+
+</mapper>

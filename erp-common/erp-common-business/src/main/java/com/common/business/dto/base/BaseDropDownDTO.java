@@ -158,4 +158,28 @@ public class BaseDropDownDTO implements Serializable {
         }
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class SupplierDisabledDTO{
+
+        /**
+         * 编码
+         */
+        private String supplierId;
+        /**
+         * 值
+         */
+        private String value;
+        /**
+         * 启用/禁用
+         */
+        private Boolean disabled;
+        public SupplierDisabledDTO(String supplierId, String value, Boolean disabled) {
+            this.supplierId = supplierId;
+            this.value = value;
+            this.disabled = disabled;
+        }
+    }
+
 }

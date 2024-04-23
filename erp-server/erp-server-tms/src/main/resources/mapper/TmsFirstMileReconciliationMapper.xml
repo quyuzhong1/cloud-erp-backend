@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.TmsFirstMileReconciliationMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.TmsFirstMileReconciliationEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="reconciliation_date" property="reconciliationDate" />
+       <result column="submit_date" property="submitDate" />
+       <result column="approve_date" property="approveDate" />
+       <result column="start_date" property="startDate" />
+       <result column="end_date" property="endDate" />
+       <result column="logistics_supplier_id" property="logisticsSupplierId" />
+       <result column="logistics_supplier_name" property="logisticsSupplierName" />
+       <result column="currency" property="currency" />
+       <result column="exchange_rate" property="exchangeRate" />
+       <result column="total_cost" property="totalCost" />
+       <result column="reason" property="reason" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        tfmr.id AS id,
+        tfmr.create_user_id AS createUserId,
+        tfmr.create_user_name AS createUserName,
+        tfmr.create_time AS createTime,
+        tfmr.update_user_id AS updateUserId,
+        tfmr.update_user_name AS updateUserName,
+        tfmr.update_time AS updateTime,
+        tfmr.VERSION AS VERSION,
+        tfmr.is_deleted AS isDeleted,
+        TO_CHAR(tfmr.start_date, 'YYYY-MM-DD') || '-' || TO_CHAR(tfmr.end_date, 'YYYY-MM-DD') AS CYCLE,
+        tfmr.code AS code,
+        tfmr.approve_status AS approveStatus,
+        tfmr.approve_user_id AS approveUserId,
+        tfmr.approve_user_name AS approveUserName,
+        tfmr.reconciliation_date AS reconciliationDate,
+        tfmr.submit_date AS submitDate,
+        tfmr.approve_date AS approveDate,
+        tfmr.start_date AS startDate,
+        tfmr.end_date AS endDate,
+        tfmr.logistics_supplier_id AS logisticsSupplierId,
+        tfmr.logistics_supplier_name AS logisticsSupplierName,
+        tfmr.currency AS currency,
+        tfmr.exchange_rate AS exchangeRate,
+        tfmr.total_cost AS totalCost,
+        tfmr.reason AS reason,
+        COALESCE(tfmrd.actualBillingWeight, 0) AS actualBillingWeight,
+        COALESCE(tfmrd.actualWeightUnit, 'kg') AS actualWeightUnit,
+        COALESCE(tfmrd.actualBillingWeightUnit, 'kg') AS actualBillingWeightUnit,
+        COALESCE(tfmrd.actualShippingCost, 0) AS actualShippingCost,
+        COALESCE(tfmrd.actualDeclareCost, 0) AS actualDeclareCost,
+        COALESCE(tfmrd.actualOtherCost, 0) AS actualOtherCost,
+        COALESCE(tfmrd.totalCost, 0) AS totalCostDetail
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDTO$ListDTO">
+        select
+        <include refid="Base_Column_List"/>
+        FROM
+        tms_first_mile_reconciliation tfmr
+        LEFT JOIN (
+        SELECT
+            SUM(billing_weight) AS actualBillingWeight,
+            MAX(actual_weight_unit) AS actualWeightUnit,
+            MAX(billing_weight_unit) AS actualBillingWeightUnit,
+            SUM(shipping_cost) AS actualShippingCost,
+            SUM(declare_cost) AS actualDeclareCost,
+            SUM(other_cost) AS actualOtherCost,
+            SUM(total_logistics_cost) AS totalCost,
+        main_id
+        FROM
+        tms_first_mile_reconciliation_detail
+        WHERE
+        is_deleted = FALSE
+        AND TYPE = 'actual'
+        GROUP BY
+        main_id
+        ) tfmrd ON tfmr.id = tfmrd.main_id
+        <where>
+            ${params.sqlMap.default}
+            and tfmr.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            tfmr.id desc
+        </where>
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from tms_first_mile_reconciliation where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDTO$ListDTO">
+        select
+        <include refid="Base_Column_List" />
+        FROM
+        tms_first_mile_reconciliation tfmr
+        LEFT JOIN (
+        SELECT
+        SUM(billing_weight) AS actualBillingWeight,
+        MAX(actual_weight_unit) AS actualWeightUnit,
+        MAX(billing_weight_unit) AS actualBillingWeightUnit,
+        SUM(shipping_cost) AS actualShippingCost,
+        SUM(declare_cost) AS actualDeclareCost,
+        SUM(other_cost) AS actualOtherCost,
+        SUM(total_logistics_cost) AS totalCost,
+        main_id
+        FROM
+        tms_first_mile_reconciliation_detail
+        WHERE
+        is_deleted = FALSE
+        AND TYPE = 'actual'
+        GROUP BY
+        main_id
+        ) tfmrd ON tfmr.id = tfmrd.main_id
+        <where>
+            ${params.sqlMap.default}
+            and tfmr.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            tfmr.id desc
+        </where>
+    </select>
+    <select id="tabList" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  tms_first_mile_reconciliation
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+</mapper>

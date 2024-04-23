@@ -18,10 +18,7 @@
        <result column="actual_weight" property="actualWeight" />
        <result column="volume_weight" property="volumeWeight" />
        <result column="billing_weight" property="billingWeight" />
-       <result column="estimated_shipping_cost " property="estimatedShippingCost" />
        <result column="billing_weight_logistics" property="billingWeightLogistics" />
-       <result column="actual_shipping_cost" property="actualShippingCost" />
-       <result column="diff_shipping_cost" property="diffShippingCost" />
        <result column="currency" property="currency" />
        <result column="remark" property="remark" />
     </resultMap>
@@ -62,6 +59,8 @@
             lbc.reconciliation_status as reconciliationStatus,
             lc.name as channelName,
             lbc.transport_no as transportNo,
+            lbc.track_no as trackNo,
+            lbc.logistics_bill_detail_id,
             lbd.transportStatus,
             lbc.actual_weight as actualWeight,
             lbc.volume_weight as volumeWeight,
@@ -104,9 +103,22 @@
                     #{item}
                 </foreach>
             </if>
+            <if test="params.trackNoList != null and params.trackNoList.size > 0">
+                and lbc.track_no in
+                <foreach collection="params.trackNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
             <if test="params.reconciliationStatusList != null and params.reconciliationStatusList.size > 0">
                 and lbc.reconciliation_status in
                 <foreach collection="params.reconciliationStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <!--需要排除的订单类型-->
+            <if test="params.excludeOrderTypeList !=null and params.excludeOrderTypeList.size>0">
+                AND lb.order_type not in
+                <foreach collection="params.excludeOrderTypeList" item="item" open="(" separator="," close=")">
                     #{item}
                 </foreach>
             </if>
@@ -174,6 +186,8 @@
             lb.source_type as sourceType,
             lbc.reconciliation_status as reconciliationStatus,
             lc.name as channelName,
+            lbc.track_no,
+            lbc.logistics_bill_detail_id,
             lbc.transport_no as transportNo,
             lbd.transportStatus,
             lbc.actual_weight as actualWeight,

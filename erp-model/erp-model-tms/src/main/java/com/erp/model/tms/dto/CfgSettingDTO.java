@@ -3,10 +3,10 @@ package com.erp.model.tms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -29,11 +29,29 @@ public class CfgSettingDTO implements Serializable {
     public static class ViewDTO {
 
         /**
-         * 物流产品信息-目的国申报价
+         * 申报规则
          */
         @Valid
         private List<CfgSettingValueDTO.LogisticsProductDestDeclarePrice> logisticsProductDestDeclarePrices;
 
+        /**
+         * 通知管理
+         */
+        @Valid
+        private CfgSettingValueDTO.NoticeDTO noticeDTO;
+
+        /**
+         * 对账周期
+         */
+        @Valid
+        private CfgSettingValueDTO.ReconciliationCycleDTO reconciliationCycleDTO;
+
+
+        /**
+         * 单据生成
+         */
+        @Valid
+        private CfgSettingValueDTO.BillAutoAddDTO billAutoAddDTO;
     }
 
     /**
@@ -66,11 +84,29 @@ public class CfgSettingDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-         * 物流产品信息-目的国申报价
+         * 申报规则
          */
         @Valid
         private List<CfgSettingValueDTO.LogisticsProductDestDeclarePrice> logisticsProductDestDeclarePrices;
 
+        /**
+         * 通知管理
+         */
+        @Valid
+        private CfgSettingValueDTO.NoticeDTO noticeDTO;
+
+        /**
+         * 对账周期
+         */
+        @Valid
+        private CfgSettingValueDTO.ReconciliationCycleDTO reconciliationCycleDTO;
+
+
+        /**
+         * 单据生成
+         */
+        @Valid
+        private CfgSettingValueDTO.BillAutoAddDTO billAutoAddDTO;
     }
 
 
