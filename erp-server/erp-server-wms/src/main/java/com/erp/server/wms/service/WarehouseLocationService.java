@@ -27,7 +27,7 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @return
      */
     List<WarehouseLocationDTO.LocationListDTO> select(String warehouseId);
-
+    List<WarehouseLocationDTO.WarehouseLocationListDTO> selectByWarehouseIds(List<String> warehouseIds);
     /**
      * 引用仓位分区
      * @param ids

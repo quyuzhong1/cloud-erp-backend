@@ -79,6 +79,51 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         return dataList;
     }
 
+    @Override
+    public List<WarehouseLocationDTO.WarehouseLocationListDTO> selectByWarehouseIds(List<String> warehouseIds) {
+        if (CollUtil.isEmpty(warehouseIds)) {
+            return Lists.newArrayList();
+        }
+        List<WarehouseLocationEntity> list = lambdaQuery().in(WarehouseLocationEntity::getWarehouseId, warehouseIds).list();
+        if (CollUtil.isEmpty(list)) {
+            return Lists.newArrayList();
+        }
+        Map<String, List<WarehouseLocationEntity>> warehouseLocationMap = list.stream().collect(Collectors.groupingBy(WarehouseLocationEntity::getWarehouseId));
+        List<WarehouseLocationDTO.WarehouseLocationListDTO> resultList = Lists.newArrayListWithExpectedSize(warehouseLocationMap.size());
+        //填充仓库及仓位
+        for (String warehouseId : warehouseIds) {
+            WarehouseLocationDTO.WarehouseLocationListDTO warehouseLocationListDTO = new WarehouseLocationDTO.WarehouseLocationListDTO();
+            warehouseLocationListDTO.setWarehouseId(warehouseId);
+            List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationMap.get(warehouseId);
+            List<WarehouseLocationDTO.LocationListDTO> dataList;
+
+            if (CollectionUtils.isNotEmpty(warehouseLocationList)) {
+                dataList = Lists.newArrayListWithExpectedSize(warehouseLocationList.size());
+                // 让空仓位排前面
+                warehouseLocationList = warehouseLocationList.stream().sorted(Comparator.comparing(WarehouseLocationEntity::getCode)).collect(Collectors.toList());
+                warehouseLocationList.stream().forEach(warehouseLocation -> {
+                    WarehouseLocationDTO.LocationListDTO data = new WarehouseLocationDTO.LocationListDTO();
+                    data.setId(warehouseLocation.getId());
+                    data.setCode(warehouseLocation.getCode());
+                    data.setName(warehouseLocation.getName());
+                    data.setStatus(warehouseLocation.getStatus());
+                    WarehouseLocationStatusEnum warehouseLocationStatus = WarehouseLocationStatusEnum.getByCode(data.getStatus());
+                    data.setStatusName(WarehouseLocationStatusEnum.getName(data.getStatus()));
+                    data.setCanCheck(Boolean.TRUE);
+                    if (Objects.equals(warehouseLocation.getDisabled(), Boolean.TRUE) || Objects.equals(warehouseLocationStatus, WarehouseLocationStatusEnum.STOP)) {
+                        data.setCanCheck(Boolean.FALSE);
+                    }
+                    dataList.add(data);
+                });
+            } else {
+                dataList = new ArrayList<>();
+            }
+            warehouseLocationListDTO.setLocationList(dataList);
+            resultList.add(warehouseLocationListDTO);
+        }
+        return resultList;
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void quoteLocation(List<String> ids) {
