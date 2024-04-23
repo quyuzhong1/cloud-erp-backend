@@ -1,5 +1,7 @@
 package com.erp.server.plm.schedule;
 
+import cn.hutool.core.collection.CollectionUtil;
+import com.common.business.utils.CollectionUtils;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.plm.rocketmq.sync.dmp.SyncProductService;
@@ -8,6 +10,7 @@ import com.erp.server.plm.rocketmq.sync.wms.WmsSyncProductService;
 import com.erp.server.plm.service.NoticeMessageService;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductInfoService;
+import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +18,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -89,5 +93,21 @@ public class PlmJob {
 //    @PostConstruct
     public void newProductToDmp() {
         syncProductService.syncNewProductToDmp();
+    }
+
+    /**
+     * 计算sku目的国申报单价
+     */
+    @XxlJob("recalDestDeclarePrice")
+    public void recalDestDeclarePrice(){
+        XxlJobHelper.log("recalDestDeclarePrice start : {}", LocalDateTime.now());
+        List<ProductDetailEntity> details = productDetailService.getProductDetailByDestDeclarePrice();
+        if (CollectionUtil.isNotEmpty(details)){
+            details.forEach(productDetailEntity -> {
+                XxlJobHelper.log("recalDestDeclarePrice : {}", productDetailEntity.getId());
+                productDetailService.recalDestDeclarePrice(productDetailEntity);
+            });
+        }
+        XxlJobHelper.log("recalDestDeclarePrice end : {}", LocalDateTime.now());
     }
 }

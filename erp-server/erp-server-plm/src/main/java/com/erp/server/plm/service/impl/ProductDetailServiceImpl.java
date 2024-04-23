@@ -2100,7 +2100,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return true;
     }
 
-    private void recalDestDeclarePrice(ProductDetailEntity entity) {
+    @Override
+    public void recalDestDeclarePrice(ProductDetailEntity entity) {
         if (Objects.isNull(entity)) {
             return;
         }
@@ -2126,7 +2127,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //汇率
             BigDecimal exchangeRate = BigDecimal.ONE;
             if (StrUtil.isNotBlank(skuCostDTO.getCurrency()) && !CurrencyEnum.CNY.getCurrencyCode().equals(skuCostDTO.getCurrency())) {
-                exchangeRate = dmpTaskFeign.getRate(skuCostDTO.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
+                exchangeRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
             }
             if (Objects.isNull(exchangeRate)) {
                 return;
@@ -2142,7 +2143,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (Objects.isNull(skuCostDTO.getCostDate())) {
                 return;
             }
-            BigDecimal usdRate = dmpTaskFeign.getRate(skuCostDTO.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
+            BigDecimal usdRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
             if (Objects.isNull(usdRate)) {
                 return;
             }
@@ -4917,6 +4918,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public List<SkuVO> accessoriesSku(String searchKeyword) {
         return baseMapper.accessoriesSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
 
+    }
+    /**
+     * 获取已审核sku 未计算目的国申报价数据
+     * @return
+     */
+    @Override
+    public List<ProductDetailEntity> getProductDetailByDestDeclarePrice() {
+        return baseMapper.getProductDetailByDestDeclarePrice();
     }
 
     @Override
