@@ -783,5 +783,35 @@
             </if>
         order by tf.skuId,tf.warehouseId
     </select>
+    
+    <select id="listDailyInventoryQty"
+            resultType="com.erp.model.wms.dto.inventory.InventoryReportDTO$ListDailyInventoryDTO">
+        select
+        sum(tf.qty) as balanceQty,
+        tf.sku_id as skuId,
+        tf.warehouse_id as warehouseId
+        from transaction_flow tf
+		WHERE
+		tf.is_deleted = false and tf.dict_inventory_status in ('frozen' , 'usable')
+		<if test="params.dateType != null and params.dateType != '' and params.dateType == 'approveDate'">
+              and (#{params.date}::TIMESTAMP + INTERVAL '1 DAY' ) > tf.trade_time
+        </if>
+        <if test="params.dateType != null and params.dateType != '' and params.dateType == 'billDate'">
+            and (#{params.date}::TIMESTAMP + INTERVAL '1 DAY' ) > tf.bill_date
+        </if>
+        <if test="params.skuIdList != null and params.skuIdList.size != ''">
+                and tf.sku_id in
+                <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+        </if>
+        <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+            and tf.warehouse_id in
+            <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        group by tf.sku_id,tf.warehouse_id
+    </select>
 
 </mapper>

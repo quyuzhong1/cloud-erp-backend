@@ -553,25 +553,25 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         Map<String, InventoryReportDTO.ListDailyInventoryDTO> warehouseIdSkuStartMaps = new HashMap<>();
         Map<String, InventoryReportDTO.ListDailyInventoryDTO> warehouseIdSkuEndMaps = new HashMap<>();
         
-        List<String> warehouseIdList = dataList.stream().filter(i -> StringUtils.isNotBlank(i.getWarehouseId())).map(InventoryDTO.InOutStockSummaryPagingViewDTO::getWarehouseId).collect(Collectors.toList());
-        List<String> skuNoList = dataList.stream().filter(i -> StringUtils.isNotBlank(i.getSkuNo())).map(InventoryDTO.InOutStockSummaryPagingViewDTO::getSkuNo).collect(Collectors.toList());
-		if(CollUtil.isNotEmpty(warehouseIdList) && CollUtil.isNotEmpty(skuNoList)) {
+        List<String> warehouseIdList = dataList.stream().filter(i -> StringUtils.isNotBlank(i.getWarehouseId()))
+        		.map(InventoryDTO.InOutStockSummaryPagingViewDTO::getWarehouseId).distinct().collect(Collectors.toList());
+		if(CollUtil.isNotEmpty(warehouseIdList) && CollUtil.isNotEmpty(skuIds)) {
 			// 查询期初库存
 	        InventoryReportDTO.DailyInventoryParamDTO startParams = new InventoryReportDTO.DailyInventoryParamDTO();
 	        startParams.setDateType(paramDTO.getDateType());
 	        startParams.setWarehouseIdList(warehouseIdList);
-			startParams.setSkuNoList(skuNoList);
+			startParams.setSkuIdList(skuIds);
 	        startParams.setDate(paramDTO.getDateList().get(0).minusDays(1L));
-	        List<InventoryReportDTO.ListDailyInventoryDTO> startList = baseMapper.listDailyInventory(startParams);
+	        List<InventoryReportDTO.ListDailyInventoryDTO> startList = baseMapper.listDailyInventoryQty(startParams);
 	        if(CollUtil.isNotEmpty(startList)) {
-	        	warehouseIdSkuStartMaps = startList.stream().collect(Collectors.toMap(s -> s.getWarehouseId() + "_" + s.getSkuNo(), s -> s));
+	        	warehouseIdSkuStartMaps = startList.stream().collect(Collectors.toMap(s -> s.getWarehouseId() + "_" + s.getSkuId(), s -> s));
 	        }
 	        
 	        // 查询结余库存
 	        startParams.setDate(paramDTO.getDateList().get(1));
-	        List<InventoryReportDTO.ListDailyInventoryDTO> endList = baseMapper.listDailyInventory(startParams);
+	        List<InventoryReportDTO.ListDailyInventoryDTO> endList = baseMapper.listDailyInventoryQty(startParams);
 	        if(CollUtil.isNotEmpty(endList)) {
-	        	warehouseIdSkuEndMaps = startList.stream().collect(Collectors.toMap(s -> s.getWarehouseId() + "_" + s.getSkuNo(), s -> s));
+	        	warehouseIdSkuEndMaps = endList.stream().collect(Collectors.toMap(s -> s.getWarehouseId() + "_" + s.getSkuId(), s -> s));
 	        }
 		}
         for(InventoryDTO.InOutStockSummaryPagingViewDTO data : dataList) {
