@@ -12,8 +12,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.*;
-import com.erp.model.tms.dto.LogisticsAuthDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
@@ -31,7 +29,6 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -70,11 +67,13 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         }
         String mainId = billEntity.getId();
         String channelId = billEntity.getChannelId();
-        LogisticsAuthDTO.ViewDTO view = logisticsAuthService.getViewByChannelId(channelId);
+        LogisticsAuthEntity authEntity = logisticsAuthService.getByChannelId(channelId);
         List<LogisticsBillDetailEntity> list = BeanMapper.copyList(detailList, LogisticsBillDetailEntity.class);
         list.forEach(l -> {
             l.setMainId(mainId);
-            l.setLogisticsAuthId(view.getId());
+            if(StringUtils.isNotBlank(authEntity.getId())){
+                l.setLogisticsAuthId(authEntity.getId());
+            }
         });
         //批量新增
         this.saveBatch(list);
@@ -175,15 +174,6 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         page.setSize(query.getSize());
         page.setCurrent(query.getCurrent());
         IPage<LogisticsBillDetailEntity> result = baseMapper.getTrackPage(page, query);
-        return new PagingVO<>(result.getRecords(), (int) result.getTotal(), (int) result.getSize(), (int) result.getCurrent());
-    }
-
-    @Override
-    public PagingVO<LogisticsTrackDTO.UpdateTrackDTO> getTrackDtoPage(LogisticsBillDetailQueryDTO query) {
-        Page<LogisticsTrackDTO.UpdateTrackDTO> page = new Page<>();
-        page.setSize(query.getSize());
-        page.setCurrent(query.getCurrent());
-        IPage<LogisticsTrackDTO.UpdateTrackDTO> result = baseMapper.getTrackDtoPage(page, query);
         return new PagingVO<>(result.getRecords(), (int) result.getTotal(), (int) result.getSize(), (int) result.getCurrent());
     }
 
