@@ -119,15 +119,6 @@ public class DropDownListController extends BaseController {
     }
 
 
-    /**
-     * 所有物流商供应商下拉列
-     */
-    @GetMapping("/supplier/allLogisticsList")
-    public ApiResult<List<BaseDropDownDTO.SupplierDisabledDTO>> allLogisticsList() {
-        List<BaseDropDownDTO.SupplierDisabledDTO> list = supplierService.allLogisticsList();
-        return success(list);
-    }
-
 
     /**
      * 获取供应商阶段列表
