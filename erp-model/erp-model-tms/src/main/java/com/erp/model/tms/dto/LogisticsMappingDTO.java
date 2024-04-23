@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -99,5 +100,23 @@ public class LogisticsMappingDTO implements Serializable {
         private String standardOrderType;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SearchParamDTO {
+
+        /**
+         * 销售平台
+         */
+        @NotBlank(message = "销售平台不能为空")
+        private String salesPlatform;
+
+        /**
+         * 物流渠道id
+         */
+        @NotBlank(message = "物流渠道id不能为空")
+        private String logisticsSaleChannelId;
+    }
 
 }

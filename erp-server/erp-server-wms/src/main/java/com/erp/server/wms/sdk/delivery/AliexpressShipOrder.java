@@ -1,17 +1,23 @@
 package com.erp.server.wms.sdk.delivery;
 
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.StandardOrderTypeEnum;
 import com.common.business.service.IPlatformService;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.dto.LogisticsMappingDTO;
+import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.oms.aliexpress.dto.request.DeclareDeliverRequest;
 import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.tms.feign.LogisticsMappingFeign;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +37,9 @@ public class AliexpressShipOrder implements IPlatformService {
     @Resource
     private AliExpressOrderService aliExpressOrderService;
 
+    @Resource
+    private LogisticsMappingFeign logisticsMappingFeign;
+
     @Override
     public void shipOrder(PlatformShipOrderDTO dto) {
         String soB2cId = dto.getSoB2cId();
@@ -41,9 +50,14 @@ public class AliexpressShipOrder implements IPlatformService {
             //获取渠道信息
             LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getSignShipInfoByChannelById(channelId);
 
+            //获取渠道标发单号
+            String standardOrderType = getStandardOrderType(PlatformDictEnum.ALI_EXPRESS.getCode(), signShipOrderDTO.getLogisticsChannelId());
+            String logisticsNo = StrUtil.equals(StandardOrderTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
+                    ? signShipOrderDTO.getLogisticsTransportNo() : signShipOrderDTO.getLogisticsTrackNo();
+
             DeclareDeliverRequest request = DeclareDeliverRequest.builder().
                     outRef(signShipOrderDTO.getPlatformCode()).
-                    logisticsNo(signShipOrderDTO.getLogisticsTransportNo()).
+                    logisticsNo(logisticsNo).
                     shopId(signShipOrderDTO.getShopId()).
                     shopName(signShipOrderDTO.getShopName()).
                     serviceName(tmsSignShipDTO.getSaleChannelSupplierName()).
@@ -54,5 +68,14 @@ public class AliexpressShipOrder implements IPlatformService {
         }
 
 
+    }
+
+    @Override
+    public String getStandardOrderType(String platform,String logisticsChannelId) {
+        LogisticsMappingEntity logisticsMappingEntity = logisticsMappingFeign.getByLogisticsMappingParam(new LogisticsMappingDTO.SearchParamDTO(platform, logisticsChannelId));
+        if (ObjectUtil.isEmpty(logisticsMappingEntity) || StrUtil.isBlank(logisticsMappingEntity.getStandardOrderType())) {
+            throw new ServiceException("操作失败，渠道标发单号为空");
+        }
+        return logisticsMappingEntity.getStandardOrderType();
     }
 }

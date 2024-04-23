@@ -24,6 +24,11 @@ public class WalmartShipDTO {
     private String soCode;
 
     /**
+     * 物流运单号
+     */
+    private String transportNo;
+
+    /**
      * 物流跟踪单号
      */
     private String trackNo;
@@ -42,6 +47,11 @@ public class WalmartShipDTO {
      * 物流商code
      */
     private String logisticsPlatformCode;
+
+    /**
+     *  标发订单类型（transportNo运单号、trackNo跟踪号）
+     */
+    private String standardOrderType;
 
     /**
      * 明细信息

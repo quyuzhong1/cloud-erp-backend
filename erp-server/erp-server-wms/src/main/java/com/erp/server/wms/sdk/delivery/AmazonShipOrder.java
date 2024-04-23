@@ -1,33 +1,39 @@
 package com.erp.server.wms.sdk.delivery;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.StandardOrderTypeEnum;
 import com.common.business.service.IPlatformService;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
-import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cRefEntity;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.dto.LogisticsMappingDTO;
+import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.tms.feign.LogisticsMappingFeign;
 import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
-import com.erp.sdk.oms.amz.spapi.model.orders.*;
+import com.erp.sdk.oms.amz.spapi.model.orders.ConfirmShipmentOrderItem;
+import com.erp.sdk.oms.amz.spapi.model.orders.ConfirmShipmentOrderItemsList;
+import com.erp.sdk.oms.amz.spapi.model.orders.ConfirmShipmentRequest;
+import com.erp.sdk.oms.amz.spapi.model.orders.PackageDetail;
 import com.erp.server.wms.service.DictBasicService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -36,7 +42,10 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -53,6 +62,9 @@ public class AmazonShipOrder implements IPlatformService {
     private DictBasicService dictBasicService;
     @Resource
     private LogisticsFeign logisticsFeign;
+
+    @Resource
+    private LogisticsMappingFeign logisticsMappingFeign;
 
     @Override
     public void shipOrder(PlatformShipOrderDTO dto) {
@@ -172,8 +184,14 @@ public class AmazonShipOrder implements IPlatformService {
             packageDetail.setCarrierName(tmsScaleChannelShipDTO.getSaleChannelSupplierName());
             // 物流服务商=物流渠道名称
             packageDetail.setShippingMethod(tmsScaleChannelShipDTO.getSaleChannelSupplierName());
+
+            //获取渠道标发单号
+            String standardOrderType = getStandardOrderType(PlatformDictEnum.AMAZON.getCode(), tmsScaleChannelShipDTO.getChannelId());
+            String trackingNumber = StrUtil.equals(StandardOrderTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
+                    ? logisticsEntity.getCode() : logisticsEntity.getTrackNo();
+
             // 物流运单号
-            packageDetail.setTrackingNumber(logisticsEntity.getCode());
+            packageDetail.setTrackingNumber(trackingNumber);
 
             // 发货时间
             String shipDateTime = DateUtil.plus8SameUtcOffset(LocalDateTime.now()).toString();
@@ -204,5 +222,14 @@ public class AmazonShipOrder implements IPlatformService {
                 throw new ServiceException("亚马逊标记发货失败:" + e.getMessage());
             }
         }
+    }
+
+    @Override
+    public String getStandardOrderType(String platform,String logisticsChannelId) {
+        LogisticsMappingEntity logisticsMappingEntity = logisticsMappingFeign.getByLogisticsMappingParam(new LogisticsMappingDTO.SearchParamDTO(platform, logisticsChannelId));
+        if (ObjectUtil.isEmpty(logisticsMappingEntity) || StrUtil.isBlank(logisticsMappingEntity.getStandardOrderType())) {
+            throw new ServiceException("操作失败，渠道标发单号为空");
+        }
+        return logisticsMappingEntity.getStandardOrderType();
     }
 }
