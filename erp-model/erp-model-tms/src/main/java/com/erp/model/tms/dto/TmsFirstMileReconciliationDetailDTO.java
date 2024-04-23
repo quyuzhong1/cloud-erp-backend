@@ -1,6 +1,7 @@
 package com.erp.model.tms.dto;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 
 import com.common.business.dto.AdvanceQueryDTO;
@@ -147,6 +148,51 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 汇率
          */
         private BigDecimal exchangeRate;
+
+        /**
+         * 实际重量【箱包装重量】带单位
+         */
+        private String actualWeightWithUnit;
+
+        /**
+         * 体积重带单位
+         */
+        private String volumeWeightWithUnit;
+
+        /**
+         * 计费重带单位
+         */
+        private BigDecimal billingWeightWithUnit;
+
+        public String getActualWeightWithUnit() {
+            BigDecimal actualWeight = this.getActualWeight();
+            if (null == actualWeight){
+                return "0".concat(this.getActualWeightUnit());
+            }
+            return actualWeight.setScale(2, RoundingMode.DOWN)
+                    .stripTrailingZeros().toString()
+                    .concat(this.getActualWeightUnit());
+        }
+
+        public String getBillingWeightWithUnit() {
+            BigDecimal billingWeight = this.getBillingWeight();
+            if (null == billingWeight){
+                return "0".concat(this.getBillingWeightUnit());
+            }
+            return billingWeight.setScale(2, RoundingMode.DOWN)
+                    .stripTrailingZeros().toString()
+                    .concat(this.getBillingWeightUnit());
+        }
+
+        public String getVolumeWeightWithUnit() {
+            BigDecimal volumeWeight = this.getVolumeWeight();
+            if (null == volumeWeight){
+                return "0".concat(this.getVolumeWeightUnit());
+            }
+            return volumeWeight.setScale(2, RoundingMode.DOWN)
+                    .stripTrailingZeros().toString()
+                    .concat(this.getVolumeWeightUnit());
+        }
     }
 
     /**

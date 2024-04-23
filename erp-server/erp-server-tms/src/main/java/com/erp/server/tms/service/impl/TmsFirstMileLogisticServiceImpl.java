@@ -27,6 +27,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -34,6 +35,7 @@ import com.erp.model.oms.enums.FmDeliveryLogisticsStatusEnum;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.SysPostUserEntity;
 import com.erp.model.sys.vo.FsBatchSendMessageDTO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
@@ -1146,7 +1148,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
             LocalDate startDate = dateList.get(0);
             LocalDate endDate = dateList.get(1);
-            mainKey = StrUtil.format("{}_{]_{}_{}", logisticsSupplierId, curListDTO.getCurrency(), startDate, endDate);
+            mainKey = StrUtil.format("{}_{}_{}_{}", logisticsSupplierId, curListDTO.getCurrency(), startDate, endDate);
             // 之前已添加账单
             reconciliationEntity = currentMainEntityMap.get(mainKey);
             if (null == reconciliationEntity){
@@ -1159,6 +1161,22 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 currenAddMainEntity = true;
             }
         }
+        CurrencyDTO.ViewDTO currencyView = null;
+        if (StringUtils.isNotBlank(reconciliationEntity.getCurrency())) {
+            currencyView = tmsFirstMileReconciliationDetailService.getCurrencyView(reconciliationEntity.getCurrency());
+        }
+
+        // 当前提交可能存在上次一事务的历史明细
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> oldListDTO = new LinkedList<>();
+        if (null != reconciliationEntity.getId()){
+            // 查询历史明细
+            List<TmsFirstMileReconciliationDetailEntity> oldDetailEntityList = tmsFirstMileReconciliationDetailService.listByMainIds(Collections.singletonList(reconciliationEntity.getId()));
+            if (CollectionUtils.isNotEmpty(oldDetailEntityList)){
+                oldListDTO = BeanMapperUtils.copyList(TmsFirstMileReconciliationDetailDTO.ListDTO.class, oldDetailEntityList);
+                tmsFirstMileReconciliationDetailService.fillDetailList(oldListDTO, reconciliationEntity.getCurrency(), currencyView);
+            }
+        }
+
         // 保存头程对账单
         tmsFirstMileReconciliationService.saveOrUpdate(reconciliationEntity);
 
@@ -1173,9 +1191,19 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> saveListDTO = tmsFirstMileReconciliationDetailService.generateAllTypeDTO(curListDTO);
         TmsFirstMileReconciliationDTO.UpdateDTO updateDTO = new TmsFirstMileReconciliationDTO.UpdateDTO();
         updateDTO.setId(reconciliationEntity.getId());
-        List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailDTOList = TmsFirstMileReconciliationConverter.INSTANCE.convertDetailDTOList(saveListDTO);
+
+        List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailDTOList;
+        if (CollectionUtils.isNotEmpty(oldListDTO)){
+            // 添加历史明细
+            oldListDTO.addAll(saveListDTO);
+            detailDTOList = TmsFirstMileReconciliationConverter.INSTANCE.convertDetailDTOList(oldListDTO);
+        } else {
+            detailDTOList = TmsFirstMileReconciliationConverter.INSTANCE.convertDetailDTOList(saveListDTO);
+        }
         updateDTO.setDetailList(detailDTOList);
-        tmsFirstMileReconciliationService.update(updateDTO);
+//        tmsFirstMileReconciliationService.update(updateDTO);
+        // 修改明细数据（包含增删改）
+        tmsFirstMileReconciliationDetailService.update(updateDTO.getDetailList(), reconciliationEntity);
 
         // 更新已成功对账单
         List<String> sourceIds = Collections.singletonList(curListDTO.getSourceId());
