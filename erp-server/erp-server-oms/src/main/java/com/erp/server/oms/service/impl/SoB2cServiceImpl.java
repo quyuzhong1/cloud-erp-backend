@@ -3915,11 +3915,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         try {
             if (this.checkPlatformShipOrder(id)) {
                 //调用第三方平台SDK发货
-                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-                platformShipOrderDTO.setSoB2cId(id);
-                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-                paramJson = JSONObject.toJSONString(platformShipOrderDTO);
-                PlatformSaveHandler.shipOrder(platformShipOrderDTO);
                 List<String> ids = deliveryEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
                 soB2cDeliveryFeign.falseDeliveryBatch(ids);
             }
