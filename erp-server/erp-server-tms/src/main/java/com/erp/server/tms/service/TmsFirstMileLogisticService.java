@@ -127,7 +127,7 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
     /**
      * 生成物流单
      */
-    BatchResultDTO singleGenerateReconciliation(String id, String reconciliationId, List<LocalDate> dateList);
+    BatchResultDTO singleGenerateReconciliation(String id, String reconciliationId, List<LocalDate> dateList, Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap);
 
     /**
      * 更新对账状态

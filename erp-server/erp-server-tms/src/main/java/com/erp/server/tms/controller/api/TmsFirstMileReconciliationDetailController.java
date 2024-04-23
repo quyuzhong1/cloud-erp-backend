@@ -29,6 +29,7 @@ import com.erp.server.tms.query.TmsB2cDeclareReconciliationDetailQueryHandler;
 import com.erp.server.tms.query.TmsFirstMileReconciliationDetailQueryHandler;
 import com.erp.server.tms.query.TmsFirstMileReconciliationQueryHandler;
 import com.erp.server.tms.service.CfgReconciliationFieldService;
+import com.erp.server.tms.service.LogisticsSupplierService;
 import com.erp.server.tms.service.TmsFirstMileReconciliationDetailService;
 import com.erp.server.tms.service.TmsFirstMileReconciliationService;
 import jnr.ffi.annotations.In;
@@ -63,6 +64,8 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
     private CfgReconciliationFieldService cfgReconciliationFieldService;
     @Resource
     private TmsFirstMileReconciliationService tmsFirstMileReconciliationService;
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
 
 
     /**
@@ -113,8 +116,13 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
                 ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
                 return success();
             case CONFIG:
-                String supplierId =  tmsFirstMileReconciliationService.checkAndGetSupplier(dto.getId());
+                String logisticSupplierId =  tmsFirstMileReconciliationService.checkAndGetSupplier(dto.getId());
+                // SCM来源物流商ID
+                String supplierId = logisticsSupplierService.getByIdOpt(logisticSupplierId).orElseThrow(() -> new ServiceException("物流供应商不存在")).getSupplierId();
                 LinkedList<String> headerNameList = cfgReconciliationFieldService.thirdFieldListName(Collections.singletonList(CfgReconciliationTypeEnum.FIRST_MILE.getCode()), supplierId, true);
+                if (!headerNameList.contains("物流运单号")){
+                    headerNameList.addFirst("物流运单号");
+                }
                 // 去重
                 String configExcelName = "templateConfig.xlsx";
                 ExcelUtil.downloadDynamicTemplate(headerNameList, configExcelName, response);

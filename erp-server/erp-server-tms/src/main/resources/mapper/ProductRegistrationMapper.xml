@@ -84,7 +84,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        pr.latest_time DESC
+        pr.latest_time DESC ,pr.create_time desc
     </select>
 
 </mapper>
