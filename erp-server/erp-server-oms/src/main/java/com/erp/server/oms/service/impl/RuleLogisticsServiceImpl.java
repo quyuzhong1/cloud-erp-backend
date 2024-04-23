@@ -241,6 +241,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
                 ruleMatchResult.setAutoGetTrackNo(item.getAutoGetTrackNo());
                 ruleMatchResult.setLogisticsChannelId(item.getLogisticsChannelId());
                 ruleMatchResult.setLogisticsChannelName(item.getLogisticsChannelName());
+                ruleMatchResult.setName(item.getName());
                 return ruleMatchResult;
             }
 
