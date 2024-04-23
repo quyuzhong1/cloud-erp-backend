@@ -862,10 +862,6 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                 throw new ServiceException(ApiError.ERROR_DECLARE_RECONCILIATION_ADD_DETAIL,declareReconciliationEntity.getCode(),declareReconciliationEntity.getLogisticsSupplierName());
             }
 
-            if (!StrUtil.equals(entity.getStatus(),old.getStatus()) &&  !StrUtil.equals(old.getStatus(), TmsB2cDeclareReconciliationStatusEnum.TO_BE_CONFIRM.getCode())) {
-                throw new ServiceException("只有待对账数据支持更新对账");
-            }
-
             entity.setMainId(mainId);
             //操作日志
             operateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode(),mainId,"",String.format("【%s】",old.getSoCode()));
