@@ -1,33 +1,37 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.model.tms.dto.CfgSettingDTO;
+import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
-import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.CfgSettingEnum;
-import com.erp.model.tms.dto.CfgSettingValueDTO;
+import com.erp.model.tms.enums.DictBasicEnum;
+import com.erp.model.wms.enums.ReconciliationTypeEnum;
 import com.erp.server.tms.mapper.CfgSettingMapper;
 import com.erp.server.tms.service.CfgSettingService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.DictBasicService;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.CfgSettingDTO;
-import java.util.*;
-import com.common.core.enums.ApiError;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 /**
  * <p>
  * 系统配置管理 服务实现类
@@ -86,8 +90,40 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(cfgSetting.getKey());
         switch (cfgSettingEnum) {
             case LOGISTICS_PRODUCT_DEST_DECLARE_PRICE:
+                //无值时默认给null
+                if (ObjectUtil.isEmpty(cfgSetting.getDataJson())) {
+                    viewDTO.setLogisticsProductDestDeclarePrices(null);
+                    break;
+                }
                 List<CfgSettingValueDTO.LogisticsProductDestDeclarePrice> prices = JSONUtil.toList(cfgSetting.getDataJson().getJSONArray("data"), CfgSettingValueDTO.LogisticsProductDestDeclarePrice.class);
                 viewDTO.setLogisticsProductDestDeclarePrices(prices);
+                break;
+            case NOTIC:
+                //无值时默认给null
+                if (ObjectUtil.isEmpty(cfgSetting.getDataJson())) {
+                    viewDTO.setNoticeDTO(null);
+                    break;
+                }
+                CfgSettingValueDTO.NoticeDTO noticeDTO = JSONUtil.toBean(cfgSetting.getDataJson(),CfgSettingValueDTO.NoticeDTO.class);
+                viewDTO.setNoticeDTO(noticeDTO);
+                break;
+            case RECONCILIATION_CYCLE:
+                //无值时默认给null
+                if (ObjectUtil.isEmpty(cfgSetting.getDataJson())) {
+                    viewDTO.setReconciliationCycleDTO(null);
+                    break;
+                }
+                CfgSettingValueDTO.ReconciliationCycleDTO reconciliationCycleDTO = JSONUtil.toBean(cfgSetting.getDataJson(),CfgSettingValueDTO.ReconciliationCycleDTO.class);
+                viewDTO.setReconciliationCycleDTO(reconciliationCycleDTO);
+                break;
+            case BILL_AUTO_ADD:
+                //无值时默认给null
+                if (ObjectUtil.isEmpty(cfgSetting.getDataJson())) {
+                    viewDTO.setBillAutoAddDTO(null);
+                    break;
+                }
+                CfgSettingValueDTO.BillAutoAddDTO billAutoAddDTO = JSONUtil.toBean(cfgSetting.getDataJson(),CfgSettingValueDTO.BillAutoAddDTO.class);
+                viewDTO.setBillAutoAddDTO(billAutoAddDTO);
                 break;
             default:
                 break;
@@ -143,6 +179,23 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case LOGISTICS_PRODUCT_DEST_DECLARE_PRICE:
                 JSONArray jsonArray = JSONUtil.parseArray(addDTO.getLogisticsProductDestDeclarePrices());
                 jsonObject.putOpt("data", jsonArray);
+                break;
+            case NOTIC:
+                 jsonObject = JSONUtil.parseObj(addDTO.getNoticeDTO());
+                break;
+            case RECONCILIATION_CYCLE:
+                //周期时清空日期
+                if (ObjectUtil.isNotEmpty(addDTO.getReconciliationCycleDTO()) && ReconciliationTypeEnum.CREAT_BY_MONTH.getCode().equals(addDTO.getReconciliationCycleDTO().getDeclareReconciliationType())) {
+                    addDTO.getReconciliationCycleDTO().setDeclareReconciliationDate(null);
+                }
+                //周期时清空日期
+                if (ObjectUtil.isNotEmpty(addDTO.getReconciliationCycleDTO()) && ReconciliationTypeEnum.CREAT_BY_MONTH.getCode().equals(addDTO.getReconciliationCycleDTO().getFirstMileReconciliationType())) {
+                    addDTO.getReconciliationCycleDTO().setFirstMileReconciliationDate(null);
+                }
+                jsonObject = JSONUtil.parseObj(addDTO.getReconciliationCycleDTO());
+                break;
+            case BILL_AUTO_ADD:
+                jsonObject = JSONUtil.parseObj(addDTO.getBillAutoAddDTO());
                 break;
             default:
                 break;

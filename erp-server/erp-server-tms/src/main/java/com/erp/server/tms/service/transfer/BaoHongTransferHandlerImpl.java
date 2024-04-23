@@ -4,10 +4,8 @@ import com.common.business.annotation.TransferLogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
-import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
-import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
-import com.erp.model.tms.dto.transfer.TransferLogisticsProductDTO;
+import com.common.core.enums.CurrencyEnum;
+import com.erp.model.tms.dto.transfer.*;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.server.tms.convert.BaoHongConverter;
@@ -17,9 +15,13 @@ import com.sdk.tms.baohong.api.order.CreateOrderInfo;
 import com.sdk.tms.baohong.api.order.OrderDataArr;
 import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.api.product.DataRow;
+import com.sdk.tms.baohong.api.product.ProductRow;
+import com.sdk.tms.baohong.api.product.RecordItemRequest;
+import com.sdk.tms.baohong.api.product.RecordItemResponse;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import com.sdk.tms.baohong.service.BaoHongService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
@@ -58,6 +60,19 @@ public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
         return success(transferLogisticsChannelEntityList);
     }
 
+    @Override
+    protected ApiResult<String> createProduct(TransferLogisticsCreateProductReq createProductReq) {
+        if(CurrencyEnum.CNY.getCurrencyCode().equals(createProductReq.getCurrencyCode())){
+            createProductReq.setCurrencyCode(CurrencyEnum.RMB.getCurrencyCode());
+        }
+        RecordItemRequest recordItemRequest  = BaoHongConverter.INSTANCE.createProductConvert(createProductReq);
+        BaoHongResponse<RecordItemResponse> result = baoHongService.filingProduct(recordItemRequest);
+        if(isFailure(result)){
+            return failure(result.getMessage());
+        }
+        return success(result.getData().getMessage());
+    }
+
 
     @Override
     protected ApiResult<List<ProductRegistrationEntity>> getAllProductInfo() {
@@ -67,6 +82,16 @@ public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
         }
         List<ProductRegistrationEntity> transferLogisticsChannelEntityList = BaoHongConverter.INSTANCE.productRegistrationConvert(baoHongResponse.getData());
         return success(transferLogisticsChannelEntityList);
+    }
+
+    @Override
+    protected ApiResult<ProductRegistrationEntity> getProductBySku(String skuNo) {
+        BaoHongResponse<ProductRow> baoHongResponse = baoHongService.getProductInfo(skuNo);
+        if(isFailure(baoHongResponse)){
+            return failure(baoHongResponse.getMessage());
+        }
+        ProductRegistrationEntity entity = BaoHongConverter.INSTANCE.productInfoConvert(baoHongResponse.getData());
+        return success(entity);
     }
 
     @Override

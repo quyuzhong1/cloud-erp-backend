@@ -107,6 +107,14 @@ public interface TransferDeclareDetailService extends SuperService<TransferDecla
      **/
     Boolean updateOutstockStatus(TransferDeclareDTO.UpdateOutstockStatusDTO dto);
     /**
+     * @description: 根据销售订单编号集合查询中专报关
+     * @author Will
+     * @date: 2024/3/27 12:13
+     * @param soCodeList
+     * @return List<TransferDeclareDetailEntity>
+     */
+    List<TransferDeclareDetailEntity> listBySoCodeList(List<String> soCodeList);
+    /**
      * @description: 根据物流渠道id集合查询
      * @author Will
      * @date: 2024/4/1 12:32

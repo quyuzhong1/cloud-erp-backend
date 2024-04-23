@@ -63,4 +63,6 @@ public interface ShippingTemplateMapper extends BaseMapper<ShippingTemplateEntit
      * @return ShippingTemplateEntity
      */
     ShippingTemplateEntity getByChannelId(@Param("channelId") String channelId);
+
+    List<ShippingTemplateEntity> getByChannelIds(@Param("channelIds") List<String> channelIds);
 }

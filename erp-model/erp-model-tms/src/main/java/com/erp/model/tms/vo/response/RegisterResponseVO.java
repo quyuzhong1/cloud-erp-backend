@@ -23,4 +23,10 @@ public class RegisterResponseVO implements Serializable {
     private Boolean trackStatus;
     private String code;
     private String msg;
+
+
+    /**
+     * 平台订单生成单号
+     */
+    private String orderNo;
 }

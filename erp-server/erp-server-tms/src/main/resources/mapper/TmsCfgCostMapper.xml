@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.TmsCfgCostMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.TmsCfgCostEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="dict_cost_attribution" property="dictCostAttribution" />
+       <result column="dict_cost_category" property="dictCostCategory" />
+       <result column="cost_name" property="costName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id as createUserId,
+        create_user_name as createUserName,
+        create_time as createTime,
+        update_user_id as updateUserId,
+        update_user_name as updateUserName,
+        update_time as updateTime,
+        version,
+        is_deleted as isDeleted,
+        dict_cost_attribution as dictCostAttribution,
+        dict_cost_category as dictCostCategory ,
+        cost_name as costName,
+        is_default as isDefault
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.tms.dto.TmsCfgCostDTO$ListDTO">
+        select
+               <include refid="Base_Column_List" />
+        from tms_cfg_cost tcc
+        <where>
+            ${params.sqlMap.default}
+            and tcc.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            tcc.id desc
+        </where>
+    </select>
+
+
+</mapper>

@@ -6,6 +6,7 @@ import com.erp.model.plm.dto.DictControllerDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -20,6 +21,13 @@ public interface BasicDictService extends IService<BasicDictEntity> {
     Boolean saveOrUpdateDict(List<BasicDictDTO> dtos);
 
     List<BasicDictEntity>  listByType(String type);
+
+    /**
+     * key = value,value = name
+     * @param type
+     * @return
+     */
+    Map<String,String>  mapByType(String type);
 
     /**
      * 根据类型和值查询字典信息

@@ -40,7 +40,7 @@ public interface LogisticsBaseService {
      *
      * @param platformType
      */
-    List<BatchResultDTO> processTrackData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records);
+    List<BatchResultDTO> processTrackData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records,String transportType);
 
     /**
      * 注册物流单号
@@ -49,9 +49,9 @@ public interface LogisticsBaseService {
      * @param records
      * @return
      */
-    List<BatchResultDTO> processRegisterData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records);
+    List<BatchResultDTO> processRegisterData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records,String transportType);
 
-    List<BatchResultDTO> batchUpdateTrackInfo(List<LogisticsTrackDTO.UpdateTrackDTO> dtos);
+    List<BatchResultDTO> batchUpdateTrackInfo(List<LogisticsTrackDTO.UpdateTrackDTO> dtos,String transportType);
 
     /**
      * 同步虾皮渠道

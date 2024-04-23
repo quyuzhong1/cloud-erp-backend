@@ -2,7 +2,7 @@ package com.erp.server.oms.query;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.query.AbstractQueryHandler;
-import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
+import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import org.springframework.stereotype.Component;
 
 /**
@@ -30,15 +30,15 @@ public class SoReturnQueryHandler extends AbstractQueryHandler {
      */
     public String getTabSql (Object value) {
         //待审核
-        if (SOReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(value)) {
+        if (SoReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(value)) {
             super.buildDefaultDTO("sr.approve_status", ApproveStatusEnum.APPROVE_ING.getCode());
         }
         //已审核
-        if (SOReturnChangeListTypeEnum.APPROVE.getCode().equals(value)) {
+        if (SoReturnChangeListTypeEnum.APPROVE.getCode().equals(value)) {
             super.buildDefaultDTO("sr.approve_status", ApproveStatusEnum.APPROVE.getCode());
         }
         //不通过
-        if (SOReturnChangeListTypeEnum.REJECT.getCode().equals(value)) {
+        if (SoReturnChangeListTypeEnum.REJECT.getCode().equals(value)) {
             super.buildDefaultDTO("sr.approve_status", ApproveStatusEnum.REJECT.getCode());
         }
         return super.getSplicingSQL();

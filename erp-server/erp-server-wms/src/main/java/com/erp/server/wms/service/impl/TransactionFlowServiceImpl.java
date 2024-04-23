@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -30,7 +31,9 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.ExportTransactionFlowDTO;
 import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryDTO.InOutStockSummaryPagingViewDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
+import com.erp.model.wms.dto.inventory.InventoryReportDTO.ListDailyInventoryDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.entity.InventoryHisEntity;
@@ -47,6 +50,7 @@ import com.erp.server.wms.service.*;
 import com.google.common.collect.Maps;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
@@ -263,15 +267,20 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Override
     public void exportSummaryExcel(InventoryDTO.ExcelInOutStockSummarySearchParamDTO param, HttpServletResponse response) {
-        // 查询数据
-        List<InventoryDTO.InOutStockSummaryPagingViewDTO> dataList = this.baseMapper.exportSummaryList(param);
-
-        // 填充数据
-        InventoryDTO.InOutStockSummarySearchParamDTO paramD = BeanMapperUtils.map(InventoryDTO.InOutStockSummarySearchParamDTO.class, param);
-        fillTransactionSummary(dataList,paramD);
+//        // 查询数据
+//        List<InventoryDTO.InOutStockSummaryPagingViewDTO> dataList = this.baseMapper.exportSummaryList(param);
+//
+//        // 填充数据
+//        InventoryDTO.InOutStockSummarySearchParamDTO paramD = BeanMapperUtils.map(InventoryDTO.InOutStockSummarySearchParamDTO.class, param);
+//        fillTransactionSummary(dataList,paramD);
+    	PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO> pagingParamDTO = new PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO>();
+    	pagingParamDTO.setParams(BeanUtil.copyProperties(param, InventoryDTO.InOutStockSummarySearchParamDTO.class));
+    	pagingParamDTO.setPageSize(-1);
 
         // 导出
-        exportTransactionSummaryExcel(dataList, response);
+        PagingVO<InOutStockSummaryPagingViewDTO> pagingSummary = this.pagingSummary(pagingParamDTO);
+		List<InOutStockSummaryPagingViewDTO> dataList = (List<InOutStockSummaryPagingViewDTO>)pagingSummary.getList();
+		exportTransactionSummaryExcel(dataList, response);
     }
 
     @Override
@@ -540,6 +549,31 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         // 此处修复，返回的记录按sku id不是唯一的了
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         Map<String,WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
+        
+        Map<String, InventoryReportDTO.ListDailyInventoryDTO> warehouseIdSkuStartMaps = new HashMap<>();
+        Map<String, InventoryReportDTO.ListDailyInventoryDTO> warehouseIdSkuEndMaps = new HashMap<>();
+        
+        List<String> warehouseIdList = dataList.stream().filter(i -> StringUtils.isNotBlank(i.getWarehouseId()))
+        		.map(InventoryDTO.InOutStockSummaryPagingViewDTO::getWarehouseId).distinct().collect(Collectors.toList());
+		if(CollUtil.isNotEmpty(warehouseIdList) && CollUtil.isNotEmpty(skuIds)) {
+			// 查询期初库存
+	        InventoryReportDTO.DailyInventoryParamDTO startParams = new InventoryReportDTO.DailyInventoryParamDTO();
+	        startParams.setDateType(paramDTO.getDateType());
+	        startParams.setWarehouseIdList(warehouseIdList);
+			startParams.setSkuIdList(skuIds);
+	        startParams.setDate(paramDTO.getDateList().get(0).minusDays(1L));
+	        List<InventoryReportDTO.ListDailyInventoryDTO> startList = baseMapper.listDailyInventoryQty(startParams);
+	        if(CollUtil.isNotEmpty(startList)) {
+	        	warehouseIdSkuStartMaps = startList.stream().collect(Collectors.toMap(s -> s.getWarehouseId() + "_" + s.getSkuId(), s -> s));
+	        }
+	        
+	        // 查询结余库存
+	        startParams.setDate(paramDTO.getDateList().get(1));
+	        List<InventoryReportDTO.ListDailyInventoryDTO> endList = baseMapper.listDailyInventoryQty(startParams);
+	        if(CollUtil.isNotEmpty(endList)) {
+	        	warehouseIdSkuEndMaps = endList.stream().collect(Collectors.toMap(s -> s.getWarehouseId() + "_" + s.getSkuId(), s -> s));
+	        }
+		}
         for(InventoryDTO.InOutStockSummaryPagingViewDTO data : dataList) {
             if(skuMap.containsKey(data.getSkuId())) {
                 SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
@@ -551,29 +585,21 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
                 data.setWarehouseName(warehouseDetail.getName());
             }
-            // 查询期初库存
-            InventoryReportDTO.DailyInventoryParamDTO startParams = new InventoryReportDTO.DailyInventoryParamDTO();
-            startParams.setDateType(paramDTO.getDateType());
-            startParams.setWarehouseIdList(Arrays.asList(data.getWarehouseId()));
-            startParams.setSkuNoList(Arrays.asList(data.getSkuNo()));
-            startParams.setDate(paramDTO.getDateList().get(0).minusDays(1L));
-            List<InventoryReportDTO.ListDailyInventoryDTO> startList = baseMapper.listDailyInventory(startParams);
+            
             Integer initQty = MathUtil.ZERO;
-            if (CollectionUtils.isNotEmpty(startList)) {
-                initQty = startList.get(0).getBalanceQty();
+            Integer balanceQty = MathUtil.ZERO;
+            if(StringUtils.isNotBlank(data.getWarehouseId()) && StringUtils.isNotBlank(data.getSkuId())) {
+            	String qtyKey = data.getWarehouseId() + "_" + data.getSkuId();
+                ListDailyInventoryDTO listDailyInventoryDTO = warehouseIdSkuStartMaps.get(qtyKey);
+    			if (listDailyInventoryDTO != null) {
+                    initQty = listDailyInventoryDTO.getBalanceQty();
+                }
+    			listDailyInventoryDTO = warehouseIdSkuEndMaps.get(qtyKey);
+                if (listDailyInventoryDTO != null) {
+                    balanceQty = listDailyInventoryDTO.getBalanceQty();
+                }
             }
             data.setInitQty(initQty);
-            // 查询结余库存
-            InventoryReportDTO.DailyInventoryParamDTO endParams = new InventoryReportDTO.DailyInventoryParamDTO();
-            endParams.setDateType(paramDTO.getDateType());
-            endParams.setWarehouseIdList(Arrays.asList(data.getWarehouseId()));
-            endParams.setSkuNoList(Arrays.asList(data.getSkuNo()));
-            endParams.setDate(paramDTO.getDateList().get(1));
-            List<InventoryReportDTO.ListDailyInventoryDTO> endList = baseMapper.listDailyInventory(endParams);
-            Integer balanceQty = MathUtil.ZERO;
-            if (CollectionUtils.isNotEmpty(endList)) {
-                balanceQty = endList.get(0).getBalanceQty();
-            }
             data.setBalanceQty(balanceQty);
         }
     }

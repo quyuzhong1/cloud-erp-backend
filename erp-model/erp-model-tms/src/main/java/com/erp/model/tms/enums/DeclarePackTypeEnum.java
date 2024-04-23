@@ -1,0 +1,37 @@
+package com.erp.model.tms.enums;
+
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
+import com.fasterxml.jackson.annotation.JsonValue;
+
+public enum DeclarePackTypeEnum implements EnumMessage {
+    CARTON("carton","纸箱"),
+    ;
+
+    /**
+     * 类型
+     */
+    @EnumValue
+    @JsonValue
+    private String code;
+    /**
+     * 名称
+     */
+    private String name;
+
+
+    DeclarePackTypeEnum(String code, String name) {
+        this.code = code;
+        this.name = name;
+    }
+
+    @Override
+    public String getCode() {
+        return code;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+}
