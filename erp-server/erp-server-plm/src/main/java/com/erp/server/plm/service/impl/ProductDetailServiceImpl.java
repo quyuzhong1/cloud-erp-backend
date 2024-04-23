@@ -4279,6 +4279,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return skuList;
     }
 
+    @Override
+    public List<SkuVO> listSkuProductByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuProductByIds(skuIds);
+        return skuList;
+    }
+
     /**
      * 基础信息
      * @param skuIds

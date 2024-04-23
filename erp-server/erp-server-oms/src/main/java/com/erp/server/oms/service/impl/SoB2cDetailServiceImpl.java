@@ -560,7 +560,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
         //产品信息
         List<String> skuIds = list.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             log.error("未找到SKU，warehouseIds = {}",skuList);
             throw new ServiceException(ApiError.ERROR_95084);

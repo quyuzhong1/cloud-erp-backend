@@ -258,6 +258,15 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @date 2023-03-21 12:06
      */
     List<SkuVO> listSkuCostByIds(@Param("skuIds")List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 产品信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuProductByIds(@Param("skuIds") List<String> skuIds);
 }
 
 

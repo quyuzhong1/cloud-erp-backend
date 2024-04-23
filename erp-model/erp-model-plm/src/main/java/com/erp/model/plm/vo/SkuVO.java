@@ -25,7 +25,9 @@ public class SkuVO implements Serializable {
     private String skuId;
 
     private String productId;
-
+    /**
+     * ean码
+     */
     private String ean;
 
     /**

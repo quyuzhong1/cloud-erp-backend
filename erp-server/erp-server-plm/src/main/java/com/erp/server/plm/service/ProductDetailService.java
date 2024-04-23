@@ -671,4 +671,13 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @date 2023-03-21 12:06
      */
     List<SkuVO> listSkuCostByIds(List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku产品信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author yl
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuProductByIds(List<String> skuIds);
 }
