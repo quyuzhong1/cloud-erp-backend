@@ -19,7 +19,6 @@ import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.*;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
-import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
@@ -1300,8 +1299,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         //操作日志
-        String msg = "B2C销售订单配货,物流方式【{}】,仓库【{}】";
-        operateLogService.addModuleOperateLog(StrUtil.format(msg, soB2cLogisticsEntity.getName(), updateDTO.getName()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "手动配货");
+        String msg = "B2C销售订单配货,物流渠道【{}】,仓库【{}】";
+        operateLogService.addModuleOperateLog(StrUtil.format(msg, StrUtil.isBlank(soB2cLogisticsEntity.getLogisticsChannelName()) ? "" : soB2cLogisticsEntity.getLogisticsChannelName(), StrUtil.isBlank(updateDTO.getName()) ? "" : updateDTO.getName()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "手动配货");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动配货");
     }
 
