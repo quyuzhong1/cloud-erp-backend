@@ -43,10 +43,10 @@ public class LogisticsMappingEntity extends BaseEntity<LogisticsMappingEntity> {
     private String logisticsSaleChannelId;
 
     /**
-     * 标发订单类型（运单号、跟踪号）
+     * 标记发货订单类型（transportNo运单号、trackNo跟踪号）
      */
-    @TableField("standard_order_type")
-    private String standardOrderType;
+    @TableField("order_delivery_mark_type")
+    private String orderDeliveryMarkType;
 
 
     public static final String LOGISTICS_CHANNEL_ID = "logistics_channel_id";

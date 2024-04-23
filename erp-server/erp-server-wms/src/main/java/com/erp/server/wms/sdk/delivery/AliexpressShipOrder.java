@@ -4,8 +4,8 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.StandardOrderTypeEnum;
 import com.common.business.service.IPlatformService;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -51,8 +51,8 @@ public class AliexpressShipOrder implements IPlatformService {
             LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getSignShipInfoByChannelById(channelId);
 
             //获取渠道标发单号
-            String standardOrderType = getStandardOrderType(PlatformDictEnum.ALI_EXPRESS.getCode(), signShipOrderDTO.getLogisticsChannelId());
-            String logisticsNo = StrUtil.equals(StandardOrderTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
+            String standardOrderType = getOrderDeliveryMarkType(PlatformDictEnum.ALI_EXPRESS.getCode(), signShipOrderDTO.getLogisticsChannelId());
+            String logisticsNo = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
                     ? signShipOrderDTO.getLogisticsTransportNo() : signShipOrderDTO.getLogisticsTrackNo();
 
             DeclareDeliverRequest request = DeclareDeliverRequest.builder().
@@ -71,11 +71,11 @@ public class AliexpressShipOrder implements IPlatformService {
     }
 
     @Override
-    public String getStandardOrderType(String platform,String logisticsChannelId) {
+    public String getOrderDeliveryMarkType(String platform, String logisticsChannelId) {
         LogisticsMappingEntity logisticsMappingEntity = logisticsMappingFeign.getByLogisticsMappingParam(new LogisticsMappingDTO.SearchParamDTO(platform, logisticsChannelId));
-        if (ObjectUtil.isEmpty(logisticsMappingEntity) || StrUtil.isBlank(logisticsMappingEntity.getStandardOrderType())) {
+        if (ObjectUtil.isEmpty(logisticsMappingEntity) || StrUtil.isBlank(logisticsMappingEntity.getOrderDeliveryMarkType())) {
             throw new ServiceException("操作失败，渠道标发单号为空");
         }
-        return logisticsMappingEntity.getStandardOrderType();
+        return logisticsMappingEntity.getOrderDeliveryMarkType();
     }
 }

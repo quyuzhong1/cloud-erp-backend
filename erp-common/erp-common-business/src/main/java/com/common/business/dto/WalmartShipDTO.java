@@ -49,9 +49,9 @@ public class WalmartShipDTO {
     private String logisticsPlatformCode;
 
     /**
-     *  标发订单类型（transportNo运单号、trackNo跟踪号）
+     *  标记发货订单类型（transportNo运单号、trackNo跟踪号）
      */
-    private String standardOrderType;
+    private String orderDeliveryMarkType;
 
     /**
      * 明细信息

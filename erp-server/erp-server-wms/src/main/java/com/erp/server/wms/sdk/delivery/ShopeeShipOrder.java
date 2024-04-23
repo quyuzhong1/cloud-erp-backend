@@ -33,11 +33,11 @@ public class ShopeeShipOrder implements IPlatformService {
     }
 
     @Override
-    public String getStandardOrderType(String platform,String logisticsChannelId) {
+    public String getOrderDeliveryMarkType(String platform, String logisticsChannelId) {
         LogisticsMappingEntity logisticsMappingEntity = logisticsMappingFeign.getByLogisticsMappingParam(new LogisticsMappingDTO.SearchParamDTO(platform, logisticsChannelId));
-        if (ObjectUtil.isEmpty(logisticsMappingEntity) || StrUtil.isBlank(logisticsMappingEntity.getStandardOrderType())) {
+        if (ObjectUtil.isEmpty(logisticsMappingEntity) || StrUtil.isBlank(logisticsMappingEntity.getOrderDeliveryMarkType())) {
             throw new ServiceException("操作失败，渠道标发单号为空");
         }
-        return logisticsMappingEntity.getStandardOrderType();
+        return logisticsMappingEntity.getOrderDeliveryMarkType();
     }
 }

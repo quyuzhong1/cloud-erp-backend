@@ -93,11 +93,11 @@ public class LogisticsMappingDTO implements Serializable {
         private String salesPlatform;
 
         /**
-         * 标发订单类型（transportNo运单号、trackNo跟踪号）
+         * 标记发货订单类型（transportNo运单号、trackNo跟踪号）
          */
         @NotBlank(message = "标发订单类型不能为空")
         @Size(max = 30,message = "标发订单类型最大长度不能超过32位")
-        private String standardOrderType;
+        private String orderDeliveryMarkType;
     }
 
 

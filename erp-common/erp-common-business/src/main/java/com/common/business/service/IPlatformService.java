@@ -22,5 +22,5 @@ public interface IPlatformService {
      * @param logisticsChannelId
      * @return
      */
-    String getStandardOrderType(String platform,String logisticsChannelId);
+    String getOrderDeliveryMarkType(String platform, String logisticsChannelId);
 }

@@ -10,12 +10,12 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * @version 1.0
  * @date 2024/4/23 15:49
  */
-public enum StandardOrderTypeEnum implements EnumMessage {
+public enum OrderDeliveryMarkTypeEnum implements EnumMessage {
     TRANSPORT_NO("transportNo","运单号"),
     TRACK_NO("trackNo","跟踪号"),
     ;
 
-    StandardOrderTypeEnum(String code, String name) {
+    OrderDeliveryMarkTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }

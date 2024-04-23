@@ -8,8 +8,8 @@ import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.WalmartShipOrderDetailDTO;
+import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.StandardOrderTypeEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -302,7 +302,7 @@ public class WalmartSdkClientService {
             trackingInfo.setMethodCode("Value");
             trackingInfo.setTrackingURL("https://www.walmart.com/tracking?tracking_id="+ dto.getTrackNo() +"");
             //获取渠道标发单号
-            String trackingNumber = StrUtil.equals(StandardOrderTypeEnum.TRANSPORT_NO.getCode(),dto.getStandardOrderType())
+            String trackingNumber = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),dto.getOrderDeliveryMarkType())
                     ? dto.getTransportNo() : dto.getTrackNo();
 
             trackingInfo.setTrackingNumber(trackingNumber);
