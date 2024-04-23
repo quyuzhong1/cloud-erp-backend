@@ -11,6 +11,7 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
@@ -182,6 +183,9 @@ public class SoB2cDeliveryController extends BaseController {
                     resultDTOS.add(result);
                     continue;
                 }else{
+                    if(ApiError.NOT_TRANSFER_DECLARE.msg.equals(e.getMessage())){
+                        type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+                    }
                     SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                     addError.setType(type);
                     addError.setParamJson(deliveryType);

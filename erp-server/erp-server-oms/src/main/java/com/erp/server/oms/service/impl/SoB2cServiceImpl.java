@@ -3987,6 +3987,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cDetailService.updateIsMatchWarehouseRule(detailIdList);
             return Boolean.FALSE;
         }
+        if(StringUtils.isNotBlank(ruleMatchResult.getName())){
+            String msg = StrUtil.format("自动匹配仓库规则成功，规则名称：{}", ruleMatchResult.getName());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), id, "配货操作");
+        }
         //更新明细仓库信息
         String warehouseId = ruleMatchResult.getWarehouseId();
         //返回了仓库则更新仓库为空的数据
@@ -4049,6 +4053,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         soB2cLogisticsService.updateById(b2cLogistics);
                     }
                 }
+            }
+            if(StringUtils.isNotBlank(matchResult.getName())){
+                String msg = StrUtil.format("自动匹配物流规则成功，规则名称：{}", matchResult.getName());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), id, "配货操作");
             }
             //状态更新为配货中
             updateBillStatusAndMatchLogistics(id, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION,Boolean.TRUE);
@@ -5607,6 +5615,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cDetailService.updateIsMatchWarehouseRule(detailIdList);
         } else {
             isRuleMatch = Boolean.TRUE;
+            if(StringUtils.isNotBlank(ruleMatchResult.getName())){
+                String msg = StrUtil.format("自动匹配仓库规则成功，规则名称：{}", ruleMatchResult.getName());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), id, "配货操作");
+            }
             //更新明细仓库信息
             String warehouseId = ruleMatchResult.getWarehouseId();
             //返回了仓库则更新仓库为空的数据
