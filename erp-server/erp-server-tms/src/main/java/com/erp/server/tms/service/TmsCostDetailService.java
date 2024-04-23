@@ -82,4 +82,6 @@ public interface TmsCostDetailService extends SuperService<TmsCostDetailEntity> 
      * @return List<TmsCostDetailEntity> 
      */
     List<TmsCostDetailEntity> listByCfgCostIdList(List<String> cfgCostIdList);
+
+    boolean updateActual0ByMainId(List<String> delActualCostIds);
 }
