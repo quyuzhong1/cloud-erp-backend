@@ -120,6 +120,11 @@ public class PackageDTO implements Serializable {
          */
         private Boolean disabled;
 
+        /**
+         * 销售平台
+         */
+        private String dictPlatform;
+
     }
 
     /**
