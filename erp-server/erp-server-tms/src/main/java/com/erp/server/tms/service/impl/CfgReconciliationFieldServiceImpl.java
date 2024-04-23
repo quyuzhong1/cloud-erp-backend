@@ -441,11 +441,11 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         // 物流商Map
         Map<String, List<BaseDropDownDTO.SupplierDisabledDTO>> supplierMap = this.logisticsSupplierList(null)
                 .stream()
-                .collect(Collectors.groupingBy(BaseDropDownDTO.SupplierDisabledDTO::getSupplierId));
+                .collect(Collectors.groupingBy(BaseDropDownDTO.SupplierDisabledDTO::getValue));
 
         // 数大臣字段配置
-        Map<String, List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO>> allErpFieldName = this.erpFieldList(null)
-                .stream().collect(Collectors.groupingBy(CfgReconciliationFieldDTO.ErpFieldDropDownDTO::getErpFieldName));
+        Map<String, List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO>> allErpFieldNameGroupMap = this.erpFieldList(null)
+                .stream().collect(Collectors.groupingBy(CfgReconciliationFieldDTO.ErpFieldDropDownDTO::getReconciliationType));
 
         // 已映射的信息(已成功的添加到次Map)
         // 唯一键：一个物流商+同一个数大臣字段仅可创建一个
@@ -474,9 +474,9 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
                 continue;
             }
             // 数大臣字段配置
-            List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> currentFieldList = allErpFieldName.get(importExcelDTO.getErpFieldName());
+            List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> currentFieldList = allErpFieldNameGroupMap.get(cfgReconciliationTypeEnum.getCode());
             if (CollectionUtils.isEmpty(currentFieldList)) {
-                importExcelDTO.setErrorMsg(StrUtil.format("【{}】数大臣字段不存在", importExcelDTO.getErpFieldName()));
+                importExcelDTO.setErrorMsg(StrUtil.format("【{}】 当前对账核对类型数大臣字段不存在", importExcelDTO.getErpFieldName()));
                 errorList.add(importExcelDTO);
                 continue;
             }

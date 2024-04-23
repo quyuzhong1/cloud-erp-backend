@@ -279,9 +279,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList, TmsFirstMileReconciliationEntity mainEntity) {
-//        if (CollectionUtils.isEmpty(detailList)) {
-//            return Boolean.TRUE;
-//        }
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException("明细不能为空");
+        }
         String mainId = mainEntity.getId();
         List<TmsFirstMileReconciliationDetailEntity> list = BeanMapperUtils.copyList(TmsFirstMileReconciliationDetailEntity.class, detailList);
 

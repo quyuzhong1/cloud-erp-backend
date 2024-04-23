@@ -1089,7 +1089,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO singleGenerateReconciliation(String id, String reconciliationId, List<LocalDate> dateList) {
+    public BatchResultDTO singleGenerateReconciliation(String id, String reconciliationId, List<LocalDate> dateList, Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap) {
         // 校验物理商是否一致
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailList = this.listReconciliationByMainIds(Collections.singletonList(id));
         if (CollectionUtils.isEmpty(sourceDetailList)){
@@ -1110,7 +1110,13 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 //        String currency = sourceDetailList.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getCurrency).findFirst().orElse("");
         tmsFirstMileReconciliationDetailService.fillWaitReconciliationList(sourceDetailList);
         TmsFirstMileReconciliationDetailDTO.ListDTO curListDTO = sourceDetailList.stream().findFirst().orElse(null);
+        if (null == curListDTO){
+            throw new ServiceException("数据异常, 明细为空");
+        }
 
+        // 是否当前新增账单
+        boolean currenAddMainEntity = false;
+        String mainKey = "";
         // 查询对账单ID
         TmsFirstMileReconciliationEntity reconciliationEntity = null;
         if (StringUtils.isNotBlank(reconciliationId)){
@@ -1140,14 +1146,27 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
             LocalDate startDate = dateList.get(0);
             LocalDate endDate = dateList.get(1);
-            TmsFirstMileReconciliationEntity existEntity = tmsFirstMileReconciliationService.getByGenerate(logisticsSupplierId, startDate, endDate, curListDTO.getCurrency());
-            if (null != existEntity){
-                throw new ServiceException("当前周期和币种的对账单已存在");
+            mainKey = StrUtil.format("{}_{]_{}_{}", logisticsSupplierId, curListDTO.getCurrency(), startDate, endDate);
+            // 之前已添加账单
+            reconciliationEntity = currentMainEntityMap.get(mainKey);
+            if (null == reconciliationEntity){
+                TmsFirstMileReconciliationEntity existEntity = tmsFirstMileReconciliationService.getByGenerate(logisticsSupplierId, startDate, endDate, curListDTO.getCurrency());
+                if (null != existEntity){
+                    throw new ServiceException("当前周期和币种的对账单已存在");
+                }
+                reconciliationEntity = new TmsFirstMileReconciliationEntity(code,startDate, endDate, logisticsSupplierId, curListDTO.getCurrency());
+                // 当前新增
+                currenAddMainEntity = true;
             }
-            reconciliationEntity = new TmsFirstMileReconciliationEntity(code,startDate, endDate, logisticsSupplierId, curListDTO.getCurrency());
         }
         // 保存头程对账单
         tmsFirstMileReconciliationService.saveOrUpdate(reconciliationEntity);
+
+        if (currenAddMainEntity){
+            // 添加到当前账单记录
+            currentMainEntityMap.put(mainKey, reconciliationEntity);
+        }
+
 
         // 保存明细
         // 生成实际和差异记录
@@ -1180,10 +1199,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     @Override
     public List<BatchResultDTO> generateReconciliation(TmsFirstMileLogisticDTO.GenerateReconciliationDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        // 当前添加的主账单记录
+        Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap = new HashMap<>();
         for (String id : dto.getIds()) {
             BatchResultDTO updateResult;
             try {
-                updateResult = this.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList());
+                updateResult = this.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap);
             } catch (Exception e) {
                 log.error("头程对账生成失败", e);
                 LogisticsBillEntity entity = this.getById(id);
