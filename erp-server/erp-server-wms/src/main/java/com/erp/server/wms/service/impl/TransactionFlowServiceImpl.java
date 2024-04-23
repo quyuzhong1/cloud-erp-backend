@@ -559,8 +559,10 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 			// 查询期初库存
 	        InventoryReportDTO.DailyInventoryParamDTO startParams = new InventoryReportDTO.DailyInventoryParamDTO();
 	        startParams.setDateType(paramDTO.getDateType());
-	        startParams.setWarehouseIdList(warehouseIdList);
-			startParams.setSkuIdList(skuIds);
+	        if(skuIds.size() <= 100) {//经过UAT测试，当大于100个sku条件查询时，比没条件慢
+	        	startParams.setWarehouseIdList(warehouseIdList);
+	        	startParams.setSkuIdList(skuIds);
+	        }
 	        startParams.setDate(paramDTO.getDateList().get(0).minusDays(1L));
 	        List<InventoryReportDTO.ListDailyInventoryDTO> startList = baseMapper.listDailyInventoryQty(startParams);
 	        if(CollUtil.isNotEmpty(startList)) {
