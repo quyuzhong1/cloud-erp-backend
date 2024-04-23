@@ -95,6 +95,12 @@ public class SettingForecastEntity extends BaseEntity<SettingForecastEntity> {
     private String transferLogisticsChannelName;
 
     /**
+     * 是否自动预报  true 是
+     */
+    @TableField("is_auto_forecast")
+    private Boolean isAutoForecast;
+
+    /**
      * 物流渠道id集合
      */
     @TableField(exist = false)
