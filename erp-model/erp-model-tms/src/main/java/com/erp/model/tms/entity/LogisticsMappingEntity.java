@@ -1,13 +1,13 @@
 package com.erp.model.tms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -42,7 +42,11 @@ public class LogisticsMappingEntity extends BaseEntity<LogisticsMappingEntity> {
     @TableField("logistics_sale_channel_id")
     private String logisticsSaleChannelId;
 
-
+    /**
+     * 标发订单类型（运单号、跟踪号）
+     */
+    @TableField("standard_order_type")
+    private String standardOrderType;
 
 
     public static final String LOGISTICS_CHANNEL_ID = "logistics_channel_id";
