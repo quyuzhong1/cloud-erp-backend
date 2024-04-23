@@ -58,7 +58,6 @@
         source_id,
         source_type,
         source_code,
-        track_no,
         relation_code,
          shop_id,
           shop_name,
@@ -67,7 +66,7 @@
           receive_date,
            billing_method,
            billing_method_name,
-           type,
+           "type",
            total_logistics_cost,
             actual_weight,
             actual_weight_unit,
@@ -75,14 +74,18 @@
             volume_weight_unit,
             billing_weight,
             billing_weight_unit,
-            actual_shipping_cost,
-            actual_declare_cost,
-            actual_other_cost,
+            shipping_cost,
+            declare_cost,
+            other_cost,
             remark,
             status,
             confirm_date,
             confirm_user_id,
-            confirm_user_name
+            confirm_user_name,
+            relation_code,
+            transport_status,
+            logistics_channel_id,
+            transport_no
     </sql>
 
     <sql id="Clause_Column_List">
@@ -188,7 +191,11 @@
         tfmrd.status,
         tfmrd.confirm_date,
         tfmrd.confirm_user_id,
-        tfmrd.confirm_user_name
+        tfmrd.confirm_user_name,
+        tfmrd.relation_code,
+        tfmrd.transport_status,
+        tfmrd.logistics_channel_id,
+        tfmrd.transport_no
         from tms_first_mile_reconciliation_detail tfmrd
         left join tms_first_mile_reconciliation tfmr on tfmrd.main_id = tfmr.id
         <where>
@@ -214,6 +221,26 @@
         inner join tms_first_mile_reconciliation_detail tfmrd on tfmr.id = tfmrd.main_id and tfmrd.is_deleted = false
         <where>
             tfmr.is_deleted = false and tfmrd.id = #{id}
+        </where>
+    </select>
+
+    <select id="listByMainIdsBySort" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from tms_first_mile_reconciliation_detail
+        <where>
+            is_deleted = false and main_id in
+            <foreach collection="mainIds" open="(" close=")" separator="," item="item">
+                #{item}
+            </foreach>
+            ORDER BY
+            source_id,
+            CASE
+            "type"
+            WHEN 'estimated' THEN 1
+            WHEN 'actual' THEN 2
+            WHEN 'diff' THEN 3
+            END
         </where>
     </select>
 </mapper>

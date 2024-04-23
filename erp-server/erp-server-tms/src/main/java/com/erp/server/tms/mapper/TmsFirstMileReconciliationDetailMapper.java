@@ -27,4 +27,6 @@ public interface TmsFirstMileReconciliationDetailMapper extends BaseMapper<TmsFi
     List<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> listExport(@Param("params") TmsFirstMileReconciliationDetailDTO.ExportDTO param);
 
     String getCurrencyById(@Param("id") String id);
+
+    List<TmsFirstMileReconciliationDetailEntity> listByMainIdsBySort(@Param("mainIds") List<String> mainIds);
 }

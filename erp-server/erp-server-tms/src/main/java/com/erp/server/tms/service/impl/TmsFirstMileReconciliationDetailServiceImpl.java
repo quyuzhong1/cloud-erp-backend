@@ -236,11 +236,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         if (CollUtil.isEmpty(list)) {
             return;
         }
-        // 明细数据处理
-        fillWaitReconciliationList(list);
 
-        // 主数据处理
-        fillMainInfo(list);
+        // 数据填充处理
+        fillExportInfo(list);
 
         // 导出数据
         String excelPath = "excel/tmsFirstMileReconciliationDetail.xlsx";
@@ -255,10 +253,17 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         }
     }
 
-    private void fillMainInfo(List<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> list) {
+    private void fillExportInfo(List<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> list) {
         List<String> supplierIds = list.stream().map(TmsFirstMileReconciliationDetailDTO.ExportDetailDTO::getLogisticsSupplierId).distinct().collect(Collectors.toList());
         // 物流商
         Map<String, LogisticsSupplierEntity> supplierMap = logisticsSupplierService.mapByIds(supplierIds);
+
+        // 计费方式
+        List<String> channelIds = list.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getLogisticsChannelId).distinct().collect(Collectors.toList());
+        Map<String, LogisticsChannelEntity> channelMap = logisticsChannelService.listByIds(channelIds)
+                .stream()
+                .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
+
 
         for (TmsFirstMileReconciliationDetailDTO.ExportDetailDTO data : list) {
             //审核状态名称
@@ -266,6 +271,23 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             LogisticsSupplierEntity supplierEntity = supplierMap.get(data.getLogisticsSupplierId());
             // 物流商
             data.setLogisticsSupplierName(null == supplierEntity ? "" : supplierEntity.getSupplierName());
+
+            // 计费方式
+            LogisticsChannelEntity logisticsChannelEntity = channelMap.get(data.getLogisticsChannelId());
+            if (null != logisticsChannelEntity) {
+                data.setBillingMethod(logisticsChannelEntity.getFeeRule());
+                data.setBillingMethodName(ShippingFeeRuleEnum.getName(logisticsChannelEntity.getFeeRule()));
+            } else {
+                data.setBillingMethod("");
+                data.setBillingMethodName("");
+            }
+
+            // 待对账类型
+            data.setTypeName(DetailReconciliationTypeEnum.getNameByCode(data.getType()));
+
+            // 对账状态
+            data.setStatusName(ReconciliationStatusEnum.getName(data.getStatus()));
+
         }
     }
 
@@ -1559,5 +1581,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     @Override
     public String getCurrencyById(String mainId) {
         return baseMapper.getCurrencyById(mainId);
+    }
+
+    @Override
+    public List<TmsFirstMileReconciliationDetailEntity> listByMainIdsBySort(List<String> mainIds) {
+        return baseMapper.listByMainIdsBySort(mainIds);
     }
 }
