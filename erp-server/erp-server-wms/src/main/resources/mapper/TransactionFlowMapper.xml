@@ -354,20 +354,20 @@
                 </if>
 
             </where>
-            group by tf.warehouse_id, tf.sku_id) tf LEFT JOIN product_detail pd ON pd.id = tf.sku_id LEFT JOIN product_info pi ON pd.product_id = pi.id 
+            group by tf.warehouse_id, tf.sku_id ORDER BY tf.warehouse_id, tf.sku_id) tf LEFT JOIN product_detail pd ON pd.id = tf.sku_id LEFT JOIN product_info pi ON pd.product_id = pi.id 
             <if test="params.spuNoList != null and params.spuNoList.size != ''">
                     where pi.spu_no in
                     <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
                         #{item}
                     </foreach>
                 </if>
-            ) m ORDER BY
+            ) m 
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-                    m.warehouse_name asc,m.sku_no asc
+                    
     </select>
 
     <select id="exportSummaryList" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$InOutStockSummaryPagingViewDTO">
