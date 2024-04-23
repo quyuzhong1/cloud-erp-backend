@@ -351,6 +351,8 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
             pdaPcListDTO.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
             if (StringUtils.isBlank(pdaPcListDTO.getWarehouseId())){
                 pdaPcListDTO.setWarehouseId(pdaPcListDTO.getInfoWarehouseId());
+            }
+            if (StringUtils.isBlank(pdaPcListDTO.getWarehouseName())){
                 pdaPcListDTO.setWarehouseName(pdaPcListDTO.getInfoWarehouseName());
             }
         }

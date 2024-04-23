@@ -90,8 +90,9 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         }
         Map<String, List<WarehouseLocationEntity>> warehouseLocationMap = list.stream().collect(Collectors.groupingBy(WarehouseLocationEntity::getWarehouseId));
         List<WarehouseLocationDTO.WarehouseLocationListDTO> resultList = Lists.newArrayListWithExpectedSize(warehouseLocationMap.size());
+        List<String> warehouseList = warehouseIds.stream().distinct().collect(Collectors.toList());
         //填充仓库及仓位
-        for (String warehouseId : warehouseIds) {
+        for (String warehouseId : warehouseList) {
             WarehouseLocationDTO.WarehouseLocationListDTO warehouseLocationListDTO = new WarehouseLocationDTO.WarehouseLocationListDTO();
             warehouseLocationListDTO.setWarehouseId(warehouseId);
             List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationMap.get(warehouseId);
