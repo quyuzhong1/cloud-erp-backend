@@ -60,6 +60,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.*;
+import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.SettingForecastEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
@@ -5752,6 +5753,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (already.equals(packageStatus)) {
             throw new ServiceException("订单单号已组包完成，无法重复组包");
         }
+        //扫描判断：扫描判断是否平台取消以及拦截单【异常提示：订单单号被拦截/取消，不可组包操作】
+        
+
+
         String billStatus = scanResult.getBillStatus();
         //待发货
         String waitShipped = SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
@@ -5814,6 +5819,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
             }
         }
+
+
         return scanResult;
     }
 
