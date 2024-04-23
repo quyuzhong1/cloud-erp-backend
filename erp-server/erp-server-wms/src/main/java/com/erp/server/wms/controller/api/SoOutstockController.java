@@ -496,9 +496,10 @@ public class SoOutstockController extends BaseController {
         if (PackingStatusEnum.PACKING.getCode().equals(packingStatus)) {
             SoOutstockEntity entity = soOutstockService.getById(dto.getId());
             CfgSettingEntity cfgSetting = cfgSettingFeign.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
-
+            if (ObjectUtil.isEmpty(cfgSetting)) {
+                return StringUtils.isNotBlank(packingStatus) ? success() : failure();
+            }
             CfgSettingValueDTO.BillAutoAddDTO billAutoAddDTO = JSONUtil.toBean(cfgSetting.getDataJson(),CfgSettingValueDTO.BillAutoAddDTO.class);
-
             if (!"CN".equalsIgnoreCase(entity.getCountry()) && billAutoAddDTO.getIsAutoB2BDeclare()) {
                 //如果装箱完成自动生成报关单
                 TmsDeclareBillDTO.AddDTO addDTO = new TmsDeclareBillDTO.AddDTO();
