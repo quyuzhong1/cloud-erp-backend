@@ -279,9 +279,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList, TmsFirstMileReconciliationEntity mainEntity) {
-//        if (CollectionUtils.isEmpty(detailList)) {
-//            return Boolean.TRUE;
-//        }
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException("明细不能为空");
+        }
         String mainId = mainEntity.getId();
         List<TmsFirstMileReconciliationDetailEntity> list = BeanMapperUtils.copyList(TmsFirstMileReconciliationDetailEntity.class, detailList);
 
@@ -988,7 +988,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 }
 
                 // 重新计算差异
-                generateDiff(estimatedListDTO, actualListDTO, diffListDTO);
+                generateDiffAndCheckConfirm(estimatedListDTO, actualListDTO, diffListDTO);
                 // 添加明细信息
                 actualListDTO.setUpdateList(new LinkedList<>(updateListMap.values()));
                 // 添加到当前结果
@@ -1418,7 +1418,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     break;
                 }
                 // 重新计算差异
-                generateDiff(estimatedListDTO, actualListDTO, diffListDTO);
+                generateDiffAndCheckConfirm(estimatedListDTO, actualListDTO, diffListDTO);
                 // 添加明细信息
                 actualListDTO.setUpdateList(new LinkedList<>(updateListMap.values()));
                 // 添加到当前结果

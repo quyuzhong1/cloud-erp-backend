@@ -168,7 +168,14 @@
             <foreach collection="params.mainIdList" open="(" close=")" separator="," item="item">
                 #{item}
             </foreach>
-            order by tfmrd.id desc
+            ORDER BY
+            tfmrd.source_id,
+            CASE
+            TYPE
+            WHEN 'estimated' THEN 1
+            WHEN 'actual' THEN 2
+            WHEN 'diff' THEN 3
+            END
         </where>
     </select>
 
