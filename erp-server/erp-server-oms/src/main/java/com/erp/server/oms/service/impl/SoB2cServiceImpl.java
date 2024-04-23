@@ -5208,8 +5208,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //存在的物流渠道
         String existChannelId = soB2cLogisticsEntity.getLogisticsChannelId();
-        //表示不一样 就要改过
-        Boolean isUpdate = !logisticsChannelId.equals(existChannelId);
         //存在的物流单 code
         String code = soB2cLogisticsEntity.getCode();
         LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(logisticsChannelId);
@@ -5223,20 +5221,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     referenceNumber(entity.getCode()).build();
             ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
             //取消失败
-            if (!cancelResult.isSuccess()) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAI, code);
+            if (!cancelResult.isSuccess() && !"功能未开放".equals(cancelResult.getMsg())) {
+                soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
+                log.error("{}原因是：{}", ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAIL.msg, cancelResult.getMsg());
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAIL, entity.getCode());
             }
         }
-        if (isUpdate) {
-            soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
-            soB2cLogisticsEntity.setLogisticsChannelName(logisticsChannel.getName());
-            soB2cLogisticsEntity.setCode("");
-            entity.setIsMatchLogisticsRule(Boolean.TRUE);
-            this.updateById(entity);
-            //物流信息更新
-            return soB2cLogisticsService.updateById(soB2cLogisticsEntity);
-        }
-        return true;
+        soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
+        soB2cLogisticsEntity.setLogisticsChannelName(logisticsChannel.getName());
+        soB2cLogisticsEntity.setCode("");
+        entity.setIsMatchLogisticsRule(Boolean.TRUE);
+        this.updateById(entity);
+        //物流信息更新
+        return soB2cLogisticsService.updateById(soB2cLogisticsEntity);
 
     }
 
