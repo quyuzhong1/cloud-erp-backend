@@ -817,7 +817,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                     .filter(e -> !e.getSoId().equals(soB2cEntity.getId()) && !TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(e.getOrderUploadStatus()))
                     .collect(Collectors.toList());
             if (CollectionUtils.isEmpty(collect)) {
-                this.updateUploadStatus(id, TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+                this.updateUploadStatus(transferDeclareEntity.getId(), TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode());
             }
         }
         return resultDTOList;
