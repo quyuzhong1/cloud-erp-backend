@@ -103,11 +103,6 @@ public class TmsWarehouseMappingController extends BaseController {
      * @return ApiResult<ViewDTO>
      */
     @GetMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:tmsWarehouseMapping:view",
-            serviceClass = TmsWarehouseMappingService.class,
-            keyIdName = "id")
     @LogViewService
     public ApiResult<TmsWarehouseMappingDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(tmsWarehouseMappingService.view(id));
