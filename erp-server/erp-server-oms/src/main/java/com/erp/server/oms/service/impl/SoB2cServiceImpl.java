@@ -62,6 +62,7 @@ import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.SettingForecastEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -5793,6 +5794,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 scanResult.setLogisticsChannelName(baseDTO.getName());
                 scanResult.setLogisticsSupplierId(baseDTO.getMainId());
                 scanResult.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
+
+                //中转物流商
+                SettingForecastEntity settingForecastEntity = forecastFeign.getSettingForecastByLogisticsSupplierId(scanResult.getLogisticsSupplierId());
+                if (ObjectUtil.isNotEmpty(settingForecastEntity)) {
+                    scanResult.setTransferLogisticsSupplierId(settingForecastEntity.getTransferLogisticsSupplierId());
+                    scanResult.setTransferLogisticsSupplierName(settingForecastEntity.getTransferLogisticsSupplierName());
+                }
             }
         }
         return scanResult;

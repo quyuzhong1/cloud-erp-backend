@@ -83,6 +83,18 @@ public class SettingForecastEntity extends BaseEntity<SettingForecastEntity> {
 
 
     /**
+     * 中转商渠道id
+     */
+    @TableField("transfer_logistics_channel_id")
+    private String transferLogisticsChannelId;
+
+    /**
+     * 中转商渠道名
+     */
+    @TableField("transfer_logistics_channel_name")
+    private String transferLogisticsChannelName;
+
+    /**
      * 物流渠道id集合
      */
     @TableField(exist = false)

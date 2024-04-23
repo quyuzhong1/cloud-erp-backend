@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -98,6 +99,27 @@ public class PackageDTO implements Serializable {
          * 称重状态
          */
         private String weightStatus;
+
+        /**
+         * 中转物流商Id
+         */
+        private String transferLogisticsSupplierId;
+
+        /**
+         * 中转物流商中文名
+         */
+        private String transferLogisticsSupplierName;
+
+        /**
+         * 是否自动出库
+         */
+        private Boolean isAutoOut;
+
+        /**
+         * 是否禁用自动出库 false 未禁用
+         */
+        private Boolean disabled;
+
     }
 
     /**
@@ -121,6 +143,12 @@ public class PackageDTO implements Serializable {
          * 重量单位
          */
         private String weightUnit;
+
+        /**
+         * 是否自动出库
+         */
+        @NotNull(message = "是否自动出库不能为空")
+        private Boolean isAutoOut;
     }
 
     /**
