@@ -1015,10 +1015,8 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         }
     }
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
     public WarehouseLocationMoveInfoDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
-        MoveInfoExcelListener excelListenerUtil = new MoveInfoExcelListener(this, warehouseService, plmTaskFeign);
+        MoveInfoExcelListener excelListenerUtil = new MoveInfoExcelListener(this, warehouseService, warehouseLocationService, plmTaskFeign, inventoryService);
         try {
             EasyExcel.read(excelFile.getInputStream(), MoveInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
@@ -1033,7 +1031,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
             throw new ServiceException(ApiError.ERROR_95123);
         }
         WarehouseLocationMoveInfoDTO.ImportDTO importDTO = new WarehouseLocationMoveInfoDTO.ImportDTO();
-        List<WarehouseLocationMoveInfoDTO.PcAddDTO> successList = excelListenerUtil.getSuccessList();
+        List<WarehouseLocationMoveInfoDTO.DetailViewDTO> successList = excelListenerUtil.getSuccessList();
         String url = "";
         List<MoveInfoExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (errorList.size() > 0) {

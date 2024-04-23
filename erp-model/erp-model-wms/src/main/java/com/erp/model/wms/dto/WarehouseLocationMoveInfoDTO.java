@@ -6,6 +6,8 @@ import java.time.LocalDateTime;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
+
+import jnr.ffi.annotations.In;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -247,7 +249,7 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         /**
          * 成功返回数据
          */
-        private List<WarehouseLocationMoveInfoDTO.PcAddDTO> successList;
+        private List<WarehouseLocationMoveInfoDTO.DetailViewDTO> successList;
 
         /**
          * 错误url
@@ -653,7 +655,7 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         /**
          * 调拨数量
          */
-        private String qty;
+        private Integer qty;
         /**
          * 仓位
          */
@@ -776,7 +778,7 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         /**
          * 调拨数量
          */
-        private String qty;
+        private Integer qty;
         /**
          * 仓位
          */

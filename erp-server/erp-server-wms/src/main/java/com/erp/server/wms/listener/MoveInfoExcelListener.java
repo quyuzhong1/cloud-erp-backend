@@ -1,6 +1,7 @@
 
 package com.erp.server.wms.listener;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.context.AnalysisContext;
@@ -21,19 +22,22 @@ import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO;
 import com.erp.model.wms.dto.excel.MoveInfoExcelDTO;
 import com.erp.model.wms.dto.excel.MoveInfoExcelDTO;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.wms.service.WarehouseLocationMoveInfoService;
-import com.erp.server.wms.service.WarehouseMappingService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
+import com.google.common.collect.Lists;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.json.JsonObject;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -45,13 +49,14 @@ import java.util.stream.Collectors;
  * @Created by yl
  */
 public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDTO> {
+    private WarehouseLocationService warehouseLocationService;
 
+    private InventoryService inventoryService;
     private WarehouseService warehouseService;
     /**
      * 导入正确数据
      */
-    private List<WarehouseLocationMoveInfoDTO.PcAddDTO> successList = new ArrayList<>();
-
+    private List<WarehouseLocationMoveInfoDTO.DetailViewDTO> successList = new ArrayList<>();
 
 
     /**
@@ -68,10 +73,14 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
     private PlmTaskFeign plmTaskFeign;
 
 
-    public MoveInfoExcelListener(WarehouseLocationMoveInfoService warehouseLocationMoveInfoService, WarehouseService warehouseService, PlmTaskFeign plmTaskFeign) {
+    public MoveInfoExcelListener(WarehouseLocationMoveInfoService warehouseLocationMoveInfoService,
+                                 WarehouseService warehouseService, WarehouseLocationService warehouseLocationService,
+                                 PlmTaskFeign plmTaskFeign, InventoryService inventoryService) {
         this.warehouseLocationMoveInfoService = warehouseLocationMoveInfoService;
         this.warehouseService = warehouseService;
+        this.warehouseLocationService = warehouseLocationService;
         this.plmTaskFeign = plmTaskFeign;
+        this.inventoryService = inventoryService;
     }
 
     /**
@@ -95,21 +104,24 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
         if (StringUtils.isBlank(moveInfoExcelDTO.getSkuNo())) {
             errorMsgList.add("SKU不能为空");
         }
-        WarehouseLocationMoveDetailEntity locationMoveDetailEntity = new WarehouseLocationMoveDetailEntity();
+        WarehouseLocationMoveInfoDTO.DetailViewDTO pcViewDTO = new WarehouseLocationMoveInfoDTO.DetailViewDTO();
 
         //查看sku是否存在
         if (StringUtils.isNotBlank(moveInfoExcelDTO.getSkuNo())) {
             if (!StrUtils.isLetterDigit(moveInfoExcelDTO.getSkuNo())) {
                 errorMsgList.add("SKU只能包含字母和数字");
+            } else {
+                //根据sku编号查询sku
+                Map<String, String> skuParams = new HashMap<>();
+                skuParams.put("skuNo", moveInfoExcelDTO.getSkuNo());
+                ProductDetailDTO productDetailDTO = plmTaskFeign.getSkuByParam(skuParams);
+                if (ObjectUtils.isEmpty(productDetailDTO)) {
+                    errorMsgList.add("系统中不存在此sku编号");
+                }
+                pcViewDTO.setSkuId(productDetailDTO.getId());
+                pcViewDTO.setSkuNo(productDetailDTO.getSkuNo());
+                pcViewDTO.setProductName(productDetailDTO.getName());
             }
-            //根据sku编号查询sku
-            Map<String, String> skuParams = new HashMap<>();
-            skuParams.put("skuNo", moveInfoExcelDTO.getSkuNo());
-            ProductDetailDTO productDetailDTO = plmTaskFeign.getSkuByParam(skuParams);
-            if (ObjectUtils.isEmpty(productDetailDTO)) {
-                errorMsgList.add("系统中不存在此sku编号");
-            }
-            locationMoveDetailEntity.setSkuId(productDetailDTO.getId());
         }
 
         if (!StrUtils.isDigit(String.valueOf(moveInfoExcelDTO.getQty())) || ObjectUtil.isEmpty(moveInfoExcelDTO.getQty())) {
@@ -125,50 +137,75 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
 //            errorMsgList.add("上架仓位不能为空");
 //        }
 
-        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.getByNames(Arrays.asList(moveInfoExcelDTO.getWarehouseName(),
-                moveInfoExcelDTO.getOutWarehouseLocationName(),
-                moveInfoExcelDTO.getInWarehouseLocationName()));
-        if (CollectionUtils.isEmpty(warehouseList)) {
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.getByNames(Arrays.asList(moveInfoExcelDTO.getWarehouseName()));
+        if (CollectionUtils.isEmpty(warehouseList) && Objects.isNull(warehouseList.get(0))) {
             errorMsgList.add("仓库名称不存在");
         }
-        Map<String, List<WarehouseDTO.ListDTO>> nameMap = warehouseList.stream().collect(Collectors.groupingBy(WarehouseDTO.ListDTO::getName));
-        if (ObjectUtil.isEmpty(nameMap.get(moveInfoExcelDTO.getWarehouseName()))
-                || StringUtils.isBlank(nameMap.get(moveInfoExcelDTO.getWarehouseName()).get(0).getId())) {
-            errorMsgList.add("仓库名称不存在");
+//        Map<String, List<WarehouseDTO.ListDTO>> nameMap = warehouseList.stream().collect(Collectors.groupingBy(WarehouseDTO.ListDTO::getName));
+//        if (ObjectUtil.isEmpty(nameMap.get(moveInfoExcelDTO.getWarehouseName()))
+//                || StringUtils.isBlank(nameMap.get(moveInfoExcelDTO.getWarehouseName()).get(0).getId())) {
+//            errorMsgList.add("仓库名称不存在");
+//        }
+        //根据仓库获取仓位
+        List<WarehouseLocationDTO.LocationListDTO> warehouseLocationList = warehouseLocationService.select(warehouseList.get(0).getId());
+        if (CollUtil.isEmpty(warehouseLocationList)) {
+            errorMsgList.add("当前仓库没有仓位");
         }
-        if (StringUtils.isNotBlank(moveInfoExcelDTO.getOutWarehouseLocationName())
-                && (ObjectUtil.isEmpty(nameMap.get(moveInfoExcelDTO.getOutWarehouseLocationName()))
-                || StringUtils.isBlank(nameMap.get(moveInfoExcelDTO.getOutWarehouseLocationName()).get(0).getId()))) {
+        Map<String, List<WarehouseLocationDTO.LocationListDTO>> locationMap = warehouseLocationList.stream().collect(Collectors.groupingBy(WarehouseLocationDTO.LocationListDTO::getName));
+        if (Objects.isNull(locationMap.get(moveInfoExcelDTO.getOutWarehouseLocationName()))) {
             errorMsgList.add("取货仓位不存在");
         }
-        if (StringUtils.isNotBlank(moveInfoExcelDTO.getOutWarehouseLocationName())
-                && (ObjectUtil.isEmpty(nameMap.get(moveInfoExcelDTO.getInWarehouseLocationName()))
-                || StringUtils.isBlank(nameMap.get(moveInfoExcelDTO.getInWarehouseLocationName()).get(0).getId()))) {
+        if (Objects.isNull(locationMap.get(moveInfoExcelDTO.getInWarehouseLocationName()))) {
             errorMsgList.add("上架仓位不存在");
         }
 
-        pcAddDTO.setWarehouseId((StringUtils.isNotBlank(moveInfoExcelDTO.getWarehouseName())
-                && Objects.nonNull(nameMap.get(moveInfoExcelDTO.getWarehouseName())) && Objects.nonNull(nameMap.get(moveInfoExcelDTO.getWarehouseName()).get(0))
-                && StringUtils.isNotBlank(nameMap.get(moveInfoExcelDTO.getWarehouseName()).get(0).getId())) ?
-                nameMap.get(moveInfoExcelDTO.getWarehouseName()).get(0).getId() : "");
-        locationMoveDetailEntity.setOutWarehouseLocation(StringUtils.isNotBlank(moveInfoExcelDTO.getInWarehouseLocationName()) ? "" : nameMap.get(moveInfoExcelDTO.getWarehouseName()).get(0).getId());
-        locationMoveDetailEntity.setInWarehouseLocation(StringUtils.isNotBlank(moveInfoExcelDTO.getOutWarehouseLocationName()) ? "" : nameMap.get(moveInfoExcelDTO.getInWarehouseLocationName()).get(0).getId());
-        locationMoveDetailEntity.setSkuNo(moveInfoExcelDTO.getSkuNo());
-        locationMoveDetailEntity.setQty(moveInfoExcelDTO.getQty());
-        List<WarehouseLocationMoveDetailDTO.AddDTO> detailList1 = pcAddDTO.getDetailList();
-        WarehouseLocationMoveDetailDTO.AddDTO addDTO = new WarehouseLocationMoveDetailDTO.AddDTO();
-        BeanMapperUtils.copy(locationMoveDetailEntity, addDTO);
-        pcAddDTO.setDetailList(Arrays.asList(addDTO));
+        pcAddDTO.setWarehouseId((CollectionUtils.isEmpty(warehouseList) && Objects.isNull(warehouseList.get(0))) ? "" : warehouseList.get(0).getId());
+        pcViewDTO.setOutWarehouseLocationName(moveInfoExcelDTO.getOutWarehouseLocationName());
+        pcViewDTO.setOutWarehouseLocation(StringUtils.isBlank(moveInfoExcelDTO.getOutWarehouseLocationName()) ? ""
+                : (Objects.nonNull(locationMap) && Objects.nonNull(locationMap.get(moveInfoExcelDTO.getOutWarehouseLocationName()))
+                && Objects.nonNull(locationMap.get(moveInfoExcelDTO.getOutWarehouseLocationName()).get(0))
+                && Objects.nonNull(locationMap.get(moveInfoExcelDTO.getOutWarehouseLocationName()).get(0).getId())
+                ? locationMap.get(moveInfoExcelDTO.getOutWarehouseLocationName()).get(0).getId() : ""));
+        pcViewDTO.setInWarehouseLocation(StringUtils.isBlank(moveInfoExcelDTO.getInWarehouseLocationName()) ? ""
+                : (Objects.nonNull(locationMap) && Objects.nonNull(locationMap.get(moveInfoExcelDTO.getInWarehouseLocationName()))
+                && Objects.nonNull(locationMap.get(moveInfoExcelDTO.getInWarehouseLocationName()).get(0))
+                && Objects.nonNull(locationMap.get(moveInfoExcelDTO.getInWarehouseLocationName()).get(0).getId())
+                ? locationMap.get(moveInfoExcelDTO.getInWarehouseLocationName()).get(0).getId() : ""));
+        pcViewDTO.setInWarehouseLocationName(moveInfoExcelDTO.getInWarehouseLocationName());
+        pcViewDTO.setSkuNo(moveInfoExcelDTO.getSkuNo());
+        pcViewDTO.setQty(moveInfoExcelDTO.getQty());
+        pcViewDTO.setRemark(moveInfoExcelDTO.getRemark());
+        pcViewDTO.setWarehouseId((CollectionUtils.isEmpty(warehouseList) && Objects.isNull(warehouseList.get(0))) ? "" : warehouseList.get(0).getId());
+        pcViewDTO.setWarehouseName((CollectionUtils.isEmpty(warehouseList) && Objects.isNull(warehouseList.get(0))) ? "" : warehouseList.get(0).getName());
+        //设置库存
+        if (StringUtils.isNotBlank(moveInfoExcelDTO.getSkuNo()) && StringUtils.isNotBlank(pcViewDTO.getSkuId())
+                && CollectionUtils.isEmpty(warehouseList) && Objects.isNull(warehouseList.get(0))) {
+            InventoryDTO.InventoryBySkuIdAndWarehouseDTO inventoryBySkuIdAndWarehouseDTO = new InventoryDTO.InventoryBySkuIdAndWarehouseDTO();
+            inventoryBySkuIdAndWarehouseDTO.setWarehouseId(warehouseList.get(0).getId());
+            inventoryBySkuIdAndWarehouseDTO.setSkuId(warehouseList.get(0).getId());
+            inventoryBySkuIdAndWarehouseDTO.setWarehouseLocation(pcViewDTO.getOutWarehouseLocation());
+            List<InventoryDTO.InventoryViewQtyDTO> inventoryQtys = inventoryService.getInventoryQty(Arrays.asList(inventoryBySkuIdAndWarehouseDTO));
+            inventoryQtys.stream().forEach(inventoryQtyDTO -> {
+                pcViewDTO.setUsableQty(inventoryQtyDTO.getUsableQty());
+                pcViewDTO.setFrozenQty(inventoryQtyDTO.getFrozenQty());
+                pcViewDTO.setRealQty(inventoryQtyDTO.getRealQty());
+            });
+        }
+
+//        List<WarehouseLocationMoveDetailDTO.AddDTO> detailList1 = pcAddDTO.getDetailList();
+//        WarehouseLocationMoveDetailDTO.AddDTO addDTO = new WarehouseLocationMoveDetailDTO.AddDTO();
+//        BeanMapperUtils.copy(pdaPcListDTO, addDTO);
+//        pcAddDTO.setDetailList(Arrays.asList(addDTO));
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             moveInfoExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(moveInfoExcelDTO);
             return;
         }
-        successList.add(pcAddDTO);
+        successList.add(pcViewDTO);
 
-        //保存的数据
-        warehouseLocationMoveInfoService.pcAdd(pcAddDTO);
+//        //保存的数据
+//        warehouseLocationMoveInfoService.pcAdd(pcAddDTO);
     }
 
 
@@ -188,7 +225,8 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
     public List<MoveInfoExcelDTO> getErrorList() {
         return errorList;
     }
-    public List<WarehouseLocationMoveInfoDTO.PcAddDTO> getSuccessList() {
+
+    public List<WarehouseLocationMoveInfoDTO.DetailViewDTO> getSuccessList() {
         return successList;
     }
 
