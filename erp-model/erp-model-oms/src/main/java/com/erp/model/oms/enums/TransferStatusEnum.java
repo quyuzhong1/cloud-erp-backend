@@ -14,6 +14,8 @@ public enum TransferStatusEnum implements EnumMessage {
     NOT("not","不需要"),
     WAIT("wait","待中转"),
     ALREADY("already","已中转"),
+    SUCCESS("success","预报成功"),
+    FAILURE("failure","预报失败"),
     ;
 
     /**

@@ -5754,7 +5754,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException("订单单号已组包完成，无法重复组包");
         }
         //扫描判断：扫描判断是否平台取消以及拦截单【异常提示：订单单号被拦截/取消，不可组包操作】
-        
+        if (TransferStatusEnum.WAIT.getCode().equals(scanResult.getForcastStatus())
+                || TransferStatusEnum.FAILURE.getCode().equals(scanResult.getForcastStatus())) {
+            throw new ServiceException("订单单号被取消不可组包，预报成功才可以组包");
+        }
+        if (scanResult.getIsIntercept()) {
+            throw new ServiceException("订单被拦截，不可组包操作");
+        }
+
+
 
 
         String billStatus = scanResult.getBillStatus();

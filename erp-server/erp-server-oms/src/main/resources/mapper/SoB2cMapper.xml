@@ -608,7 +608,8 @@
            sbl.track_no AS trackNo,
            sbl.code AS transportNo,
            sbl.weight AS weight,
-           sb.dict_platform
+           sb.forcast_status,
+           sb.is_intercept
          FROM so_b2c sb
          LEFT JOIN so_b2c_logistics sbl
          ON sb.id = sbl.main_id AND sbl.is_deleted = FALSE

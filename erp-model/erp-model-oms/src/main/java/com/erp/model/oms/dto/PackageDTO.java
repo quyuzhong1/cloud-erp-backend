@@ -121,9 +121,14 @@ public class PackageDTO implements Serializable {
         private Boolean disabled;
 
         /**
-         * 销售平台
+         * 预报状态
          */
-        private String dictPlatform;
+        private String forcastStatus;
+
+        /**
+         * 是否拦截
+         */
+        private Boolean isIntercept;
 
     }
 
