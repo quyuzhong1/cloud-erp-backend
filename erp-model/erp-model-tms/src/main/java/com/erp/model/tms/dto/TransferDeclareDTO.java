@@ -292,6 +292,10 @@ public class TransferDeclareDTO implements Serializable {
          */
         private String planTransferDate;
         /**
+         * 入库预报日期（推送保宏入库预报成功的日期）
+         */
+        private String instockForecastDate;
+        /**
          * 上传状态(批次)
          */
         private String uploadBatchStatus;

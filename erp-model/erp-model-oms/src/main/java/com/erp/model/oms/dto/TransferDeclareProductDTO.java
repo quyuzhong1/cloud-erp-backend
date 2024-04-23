@@ -48,6 +48,10 @@ public class TransferDeclareProductDTO implements Serializable {
     /**
      * 产品sku编号
      */
+    private String skuId;
+    /**
+     * 产品sku编号
+     */
     private String skuNo;
     private String skuId;
 

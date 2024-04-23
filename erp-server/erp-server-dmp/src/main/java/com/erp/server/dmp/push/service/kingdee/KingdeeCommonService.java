@@ -87,6 +87,18 @@ public interface KingdeeCommonService {
     Boolean submit( Map<String, Object> map, KingdeeApiUtils apiUtils, String id, Integer type);
 
     /**
+     * @description: 审核（判断状态）
+     * @author Will
+     * @date: 2024/4/19 15:48
+     * @param platformEntity
+     * @param map
+     * @param apiUtils
+     * @param type
+     * @return Boolean
+     */
+    Boolean handleAudit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, Integer type);
+
+    /**
      * @param map
      * @param apiUtils
      * @param id
@@ -97,7 +109,7 @@ public interface KingdeeCommonService {
      */
     Boolean audit(Map<String, Object> map, KingdeeApiUtils apiUtils, String id, Integer type);
     /**
-     * @description: 审核（判断状态）
+     * @description: 反审核（判断状态）
      * @author Will
      * @date: 2023/9/25 15:25
      * @param apiUtils
@@ -117,6 +129,16 @@ public interface KingdeeCommonService {
      * @date: 2023/3/3 14:07
      */
     Boolean unAudit( KingdeeApiUtils apiUtils, String id);
+
+    /**
+     * 撤销
+     * @author Will
+     * @date: 2024/4/19 15:43
+     * @param apiUtils
+     * @param id
+     * @return Boolean
+     */
+    Boolean cancelAssign(KingdeeApiUtils apiUtils, String id);
 
     /**
      * @param apiUtils

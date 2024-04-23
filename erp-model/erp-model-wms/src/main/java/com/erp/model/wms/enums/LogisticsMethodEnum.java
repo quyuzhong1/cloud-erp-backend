@@ -76,6 +76,18 @@ public enum LogisticsMethodEnum implements EnumMessage {
     }
 
     /**
+     * 通过code查询
+     * LogisticsMethodEnum
+     * 枚举
+     */
+    public static LogisticsMethodEnum getByName(String name) {
+        return Stream.of(LogisticsMethodEnum.values())
+                .filter(e -> e.getName().equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
      * LogisticsMethodEnum
      * 枚举解析器
      */

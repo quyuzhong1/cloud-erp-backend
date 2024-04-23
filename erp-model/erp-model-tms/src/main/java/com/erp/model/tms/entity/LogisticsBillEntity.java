@@ -1,5 +1,6 @@
 package com.erp.model.tms.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 
@@ -77,7 +78,7 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     /**
     * 下单时间
     */
-    @TableField("order_time")
+    @TableField(value = "order_time", updateStrategy = FieldStrategy.IGNORED)
     private LocalDateTime orderTime;
     /**
     * 发货时间
@@ -101,11 +102,42 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     @TableField("order_type")
     private String orderType;
 
+    /**
+     * 柜号
+     */
+    @TableField("counter_no")
+    private String counterNo;
 
 
+    /**
+     * 发票状态
+     */
+    @TableField("invoices_status")
+    private String invoicesStatus;
 
+    /**
+     * 运输方式
+     */
+    @TableField("shipping_method")
+    private String shippingMethod;
 
+    /**
+     * 物流商id
+     */
+    @TableField("logistics_supplier_id")
+    private String logisticsSupplierId;
 
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
+    /**
+     * 开船时间
+     */
+    @TableField("ship_time")
+    private LocalDateTime shipTime;
 
     public static final String SALES_PLATFORM = "sales_platform";
 

@@ -1,5 +1,6 @@
 package com.erp.server.tms.schedule;
 
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
@@ -54,70 +55,77 @@ public class ProductRegistrationJob {
      */
     @XxlJob("syncProductRegistration")
     public void syncProductRegistrationInfo() {
-        //所有的备案信息
-        List<ProductRegistrationEntity> productRegistrationList = productRegistrationService.list();
-        List<TransferLogisticsSupplierDTO.AuthDTO> authList = transferLogisticsSupplierService.listAllAuth();
-        String already = TransferLogisticsAuthStatusEnum.ALREADY.getCode();
-        List<TransferLogisticsSupplierDTO.AuthDTO> alreadyAuthList = authList.stream().
-                filter(a -> !a.getDisabled() && already.equals(a.getAuthStatus())).collect(Collectors.toList());
-        List<ProductRegistrationEntity> saveOrUpdateList = new ArrayList<>(20);
-        for (TransferLogisticsSupplierDTO.AuthDTO item : alreadyAuthList) {
-            try {
-                String authId = item.getAuthId();
-                ApiResult<List<ProductRegistrationEntity>> result = transferLogisticsService.getAllProductInfo(authId);
-                Boolean isSuccess = result.isSuccess();
-                if (!isSuccess) {
-                    continue;
-                }
-                List<ProductRegistrationEntity> findProductRegistrationList = result.getData();
-                for (ProductRegistrationEntity entity : findProductRegistrationList) {
-                    String skuNo = entity.getSkuNo();
-                    String platform = entity.getDeclarePlatform();
-                    String status = entity.getStatus();
-                    ProductRegistrationEntity dbEntity = productRegistrationList.stream().
-                            filter(
-                                    p -> p.getSkuNo().equals(skuNo) && p.getDeclarePlatform().equals(platform)).
-                            findFirst().orElse(null);
-                    if (dbEntity != null) {
-                        //状态是否一致
-                        String dbStatus = dbEntity.getStatus();
-                        //不一致修改
-                        if (!status.equals(dbStatus)) {
-                            dbEntity.setStatus(status);
-                            saveOrUpdateList.add(dbEntity);
-                        }
-
-                    } else {
-                        ProductRegistrationEntity addEntity = new ProductRegistrationEntity();
-                        addEntity.setSkuNo(skuNo);
-                        addEntity.setStatus(status);
-                        addEntity.setDeclarePlatform(platform);
-                        saveOrUpdateList.add(addEntity);
-                    }
-
-                }
-            } catch (Exception e) {
-                log.error("同步产品备案信息失败 {}", e.getMessage());
+        //查询审核通过的报关物流商
+        List<BaseDropDownDTO.DisabledDTO> supplierList = transferLogisticsSupplierService.listAlreadyAll();
+        for (BaseDropDownDTO.DisabledDTO supplier : supplierList) {
+            if(!supplier.getDisabled()){
+                productRegistrationService.pullAllProduct(supplier.getCode());
             }
         }
-        List<ProductRegistrationEntity> addList = saveOrUpdateList.stream().
-                filter(s -> StringUtils.isBlank(s.getSkuId())).collect(Collectors.toList());
-        List<String> addSkuNoList = addList.stream().map(ProductRegistrationEntity::getSkuNo).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(addSkuNoList)) {
-            List<ProductDetailEntity> skuList = plmTaskFeign.listBySkuNos(addSkuNoList);
-            for (ProductRegistrationEntity item : addList) {
-                String skuNo = item.getSkuNo();
-                ProductDetailEntity detailEntity = skuList.stream().filter(s -> skuNo.equals(s.getSkuNo())).
-                        findFirst().orElse(null);
-                if (detailEntity != null) {
-                    item.setSkuId(detailEntity.getId());
-                    item.setProductName(detailEntity.getName());
-                }
-            }
-        }
-        if (CollectionUtils.isNotEmpty(saveOrUpdateList)) {
-            productRegistrationService.saveOrUpdateBatch(saveOrUpdateList);
-        }
+//        //所有的备案信息
+//        List<ProductRegistrationEntity> productRegistrationList = productRegistrationService.list();
+//        List<TransferLogisticsSupplierDTO.AuthDTO> authList = transferLogisticsSupplierService.listAllAuth();
+//        String already = TransferLogisticsAuthStatusEnum.ALREADY.getCode();
+//        List<TransferLogisticsSupplierDTO.AuthDTO> alreadyAuthList = authList.stream().
+//                filter(a -> !a.getDisabled() && already.equals(a.getAuthStatus())).collect(Collectors.toList());
+//        List<ProductRegistrationEntity> saveOrUpdateList = new ArrayList<>(20);
+//        for (TransferLogisticsSupplierDTO.AuthDTO item : alreadyAuthList) {
+//            try {
+//                String authId = item.getAuthId();
+//                ApiResult<List<ProductRegistrationEntity>> result = transferLogisticsService.getAllProductInfo(authId);
+//                Boolean isSuccess = result.isSuccess();
+//                if (!isSuccess) {
+//                    continue;
+//                }
+//                List<ProductRegistrationEntity> findProductRegistrationList = result.getData();
+//                for (ProductRegistrationEntity entity : findProductRegistrationList) {
+//                    String skuNo = entity.getSkuNo();
+//                    String platform = entity.getDeclarePlatform();
+//                    String status = entity.getStatus();
+//                    ProductRegistrationEntity dbEntity = productRegistrationList.stream().
+//                            filter(
+//                                    p -> p.getSkuNo().equals(skuNo) && p.getDeclarePlatform().equals(platform)).
+//                            findFirst().orElse(null);
+//                    if (dbEntity != null) {
+//                        //状态是否一致
+//                        String dbStatus = dbEntity.getStatus();
+//                        //不一致修改
+//                        if (!status.equals(dbStatus)) {
+//                            dbEntity.setStatus(status);
+//                            saveOrUpdateList.add(dbEntity);
+//                        }
+//
+//                    } else {
+//                        ProductRegistrationEntity addEntity = new ProductRegistrationEntity();
+//                        addEntity.setSkuNo(skuNo);
+//                        addEntity.setStatus(status);
+//                        addEntity.setDeclarePlatform(platform);
+//                        saveOrUpdateList.add(addEntity);
+//                    }
+//
+//                }
+//            } catch (Exception e) {
+//                log.error("同步产品备案信息失败 {}", e.getMessage());
+//            }
+//        }
+//        List<ProductRegistrationEntity> addList = saveOrUpdateList.stream().
+//                filter(s -> StringUtils.isBlank(s.getSkuId())).collect(Collectors.toList());
+//        List<String> addSkuNoList = addList.stream().map(ProductRegistrationEntity::getSkuNo).collect(Collectors.toList());
+//        if (CollectionUtils.isNotEmpty(addSkuNoList)) {
+//            List<ProductDetailEntity> skuList = plmTaskFeign.listBySkuNos(addSkuNoList);
+//            for (ProductRegistrationEntity item : addList) {
+//                String skuNo = item.getSkuNo();
+//                ProductDetailEntity detailEntity = skuList.stream().filter(s -> skuNo.equals(s.getSkuNo())).
+//                        findFirst().orElse(null);
+//                if (detailEntity != null) {
+//                    item.setSkuId(detailEntity.getId());
+//                    item.setProductName(detailEntity.getName());
+//                }
+//            }
+//        }
+//        if (CollectionUtils.isNotEmpty(saveOrUpdateList)) {
+//            productRegistrationService.saveOrUpdateBatch(saveOrUpdateList);
+//        }
 
     }
 }

@@ -4,6 +4,7 @@ import com.common.business.mapper.BigDecimalMapperWork;
 import com.common.business.mapper.BooleanMapperWork;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
+import com.erp.model.tms.dto.transfer.TransferLogisticsCreateProductReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
@@ -17,6 +18,8 @@ import com.sdk.tms.baohong.api.order.OrderDataArr;
 import com.sdk.tms.baohong.api.order.ProductDeatil;
 import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.api.product.DataRow;
+import com.sdk.tms.baohong.api.product.ProductRow;
+import com.sdk.tms.baohong.api.product.RecordItemRequest;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -43,9 +46,18 @@ public interface BaoHongConverter {
     List<TransferLogisticsChannelEntity> transferLogisticsChannelConvert(List<SmRow> data);
 
     @Mappings({
-            @Mapping(target = "skuNo", source = "productSku"),
-            @Mapping(target = "status", expression = "java(com.common.core.constant.EnumMessage.getByCode(com.sdk.tms.baohong.enums.BaoHongEnum.ProductStatusEnum.class,data.getProductStatus()).getProductRegistrationStatusEnum().getCode())"),
             @Mapping(target = "declarePlatform", constant = "BaoHong"),
+            @Mapping(target = "skuNo", source = "productSku"),
+            @Mapping(target = "goodId", source = "goodsId"),
+            @Mapping(target = "customBarcode", source = "productBarcode"),
+            @Mapping(target = "productName", source = "productTitle"),
+            @Mapping(target = "productNameEn", source = "productTitleEn"),
+            @Mapping(target = "status", expression = "java(com.common.core.constant.EnumMessage.getByCode(com.sdk.tms.baohong.enums.BaoHongEnum.ProductStatusEnum.class,data.getProductStatus()).getProductRegistrationStatusEnum().getCode())"),
+            @Mapping(target = "declareNameCn", source = "hsGoodsName"),
+            @Mapping(target = "customsCode", source = "hsCode"),
+            @Mapping(target = "grossWeight", expression = "java(new BigDecimal(data.getProductWeight()).multiply(java.math.BigDecimal.valueOf(1000)))"),
+            @Mapping(target = "declarePrice", source = "productDeclaredValue"),
+            @Mapping(target = "currency", source = "currencyCode"),
     })
     ProductRegistrationEntity productRegistrationConvert(DataRow data);
     List<ProductRegistrationEntity> productRegistrationConvert(List<DataRow> data);
@@ -135,4 +147,37 @@ public interface BaoHongConverter {
     })
     LogisticsSaleChannelEntity channelConvert(SmRow data);
     List<LogisticsSaleChannelEntity> channelConvert(List<SmRow> data);
+
+    @Mappings({
+            @Mapping(target = "declaredValue", source = "declaredValue",qualifiedByName = "bigDecimalToFloat"),
+            @Mapping(target = "weight", source = "weight",qualifiedByName = "bigDecimalToFloat"),
+            @Mapping(target = "length", source = "length",qualifiedByName = "bigDecimalToFloat"),
+            @Mapping(target = "width", source = "width",qualifiedByName = "bigDecimalToFloat"),
+            @Mapping(target = "height", source = "height",qualifiedByName = "bigDecimalToFloat"),
+            @Mapping(target = "hasBattery", source = "hasBattery",qualifiedByName = "boolToInteger"),
+            @Mapping(target = "firstQauntity", source = "firstQauntity",qualifiedByName = "bigDecimalToFloat"),
+            @Mapping(target = "batteryType", expression = "java(com.sdk.tms.baohong.enums.BaoHongEnum.BatteryEnum.getCodeByErp(createProductReq.getProductProperty()))"),
+            @Mapping(target = "secondQauntity", source = "secondQauntity",qualifiedByName = "bigDecimalToFloat")
+    })
+    RecordItemRequest createProductConvert(TransferLogisticsCreateProductReq createProductReq);
+
+
+    @Mappings({
+            @Mapping(target = "declarePlatform", constant = "BaoHong"),
+            @Mapping(target = "skuNo", source = "productSku"),
+            @Mapping(target = "customBarcode", source = "productBarcode"),
+            @Mapping(target = "productName", source = "productTitle"),
+            @Mapping(target = "productNameEn", source = "productTitleEn"),
+            @Mapping(target = "status", expression = "java(com.common.core.constant.EnumMessage.getByCode(com.sdk.tms.baohong.enums.BaoHongEnum.ProductStatusEnum.class,data.getProductStatus()).getProductRegistrationStatusEnum().getCode())"),
+            @Mapping(target = "declareNameCn", source = "hsGoodsName"),
+            @Mapping(target = "customsCode", source = "hsCode"),
+            @Mapping(target = "grossWeight", expression = "java(new BigDecimal(data.getProductWeight()).multiply(java.math.BigDecimal.valueOf(1000)))"),
+            @Mapping(target = "declarePrice", source = "productDeclaredValue"),
+            @Mapping(target = "isParts", source = "isAccessories",qualifiedByName="strToBooleanByNum"),
+            @Mapping(target = "isInvoice", source = "hasInvoice",qualifiedByName = "strToBooleanByNum"),
+            @Mapping(target = "currency", source = "currencyCode"),
+            @Mapping(target = "declareElement", source = "modelSerial"),
+            @Mapping(target = "failureReason", source = "rejectReason"),
+    })
+    ProductRegistrationEntity productInfoConvert(ProductRow data);
 }

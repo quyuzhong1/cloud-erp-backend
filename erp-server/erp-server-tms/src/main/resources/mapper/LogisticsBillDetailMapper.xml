@@ -22,23 +22,60 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        main_id, track_status, track_no,track_time,track_query_mode,track_enable,logistics_auth_id,register_status,register_result
+        lbd.id,
+        lbd.create_user_id,
+        lbd.create_user_name,
+        lbd.create_time,
+        lbd.update_user_id,
+        lbd.update_user_name,
+        lbd.update_time,
+        lbd.version,
+        lbd.is_deleted,
+        lbd.main_id,
+        lbd.track_status,
+        lbd.track_no,
+        lbd.track_time,
+        lbd.track_query_mode,
+        lbd.track_enable,
+        lbd.logistics_auth_id,
+        lbd.register_status,
+        lbd.register_result
     </sql>
 
     <select id="getTrackPage" resultMap="BaseResultMap">
-        select <include refid="Base_Column_List"></include>
-            from logistics_bill_detail
+        select <include refid="Base_Column_List" />
+            from logistics_bill_detail lbd
+        inner join logistics_bill lb on lbd.main_id = lb.id and lb.is_deleted = false
+        where lbd.track_status != 'sign'
+        and lbd.is_deleted = false and lbd.track_no != ''
+        <if test="query.transportType != null and query.transportType != '' and query.transportType == 'expressDelivery'">
+            and lbd.order_type in ('B2B','B2C')
+        </if>
+        <if test="query.transportType != null and query.transportType != '' and query.transportType == 'ocean'">
+            and lbd.order_type = 'firstMile'
+        </if>
+        <if test="query.trackQueryMode != null and query.trackQueryMode != ''">
+            and lbd.track_query_mode = #{query.trackQueryMode}
+        </if>
+        <if test="query.registerStatus != null">
+            and lbd.register_status = #{query.registerStatus}
+        </if>
+        <if test="query.trackEnable != null">
+            and lbd.track_enable = #{query.trackEnable}
+        </if>
+        order by lbd.track_time desc
+    </select>
+    <select id="getTrackDtoPage" resultType="com.erp.model.tms.dto.LogisticsTrackDTO$UpdateTrackDTO">
+        select id,track_no
+        from logistics_bill_detail
         where track_status != 'sign'
         and is_deleted = false and track_no != ''
+        <if test="query.transportType != null and query.transportType != '' and query.transportType == 'expressDelivery'">
+            and lbd.order_type in ('B2B','B2C')
+        </if>
+        <if test="query.transportType != null and query.transportType != '' and query.transportType == 'ocean'">
+            and lbd.order_type = 'firstMile'
+        </if>
         <if test="query.trackQueryMode != null and query.trackQueryMode != ''">
             and track_query_mode = #{query.trackQueryMode}
         </if>

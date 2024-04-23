@@ -14,6 +14,8 @@ import org.apache.commons.lang3.StringUtils;
  * @Created by yl
  */
 public enum LogisticTrackStatusEnum implements EnumMessage {
+    WAIT_ORDER("waitOrder","待下单","waitOrder","待下单"),
+    ORDERED("ordered","已下单","ordered","已下单"),
     NOT_FIND("notFind","查询不到","notFind","查询不到"),
     WAIT_COLLECT("waitCollect","等待揽收","trackIng","运输途中"),
     TRACK_ING("trackIng","运输途中","trackIng","运输途中"),
@@ -84,5 +86,18 @@ public enum LogisticTrackStatusEnum implements EnumMessage {
         }
         return "";
     }
+
+    public static String getGroupName(String code) {
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
+        for (LogisticTrackStatusEnum item : LogisticTrackStatusEnum.values()) {
+            if (code.equals(item.getCode())) {
+                return item.getName();
+            }
+        }
+        return "";
+    }
+
 
 }

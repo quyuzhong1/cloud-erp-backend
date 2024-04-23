@@ -259,6 +259,21 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     @TableField("logistics_channel_id")
     private String logisticsChannelId;
 
+    /**
+     * 装箱状态 notPacking：未装箱，packing：已装箱
+     * 枚举：PackingStatusEnum
+     */
+    @TableField("packing_status")
+    private String packingStatus;
+
+
+    /**
+     * 报关状态
+     * 枚举：DeclareStatusEnum
+     */
+    @TableField("declare_status")
+    private String declareStatus;
+
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;
 

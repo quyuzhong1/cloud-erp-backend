@@ -650,9 +650,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             List<FbaShipmentDTO.GenerateDeliverView> shipmentList = entry.getValue();
             //映射字段
             FirstMileDeliveryDTO.AddDTO addDTO = FbaShipmentConverter.INSTANCE.fbaGenerateDeliverViewToDeliveryAdd(shipmentList.get(0));
-            FirstMileDeliveryLogisticsDTO.AddDTO logisticsAddDTO = new FirstMileDeliveryLogisticsDTO.AddDTO();
-            logisticsAddDTO.setLogisticsRemark("");
-            logisticsAddDTO.setTrackingNoList(new ArrayList<>());
+
             addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
             addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
             //设置仓库名称
@@ -692,7 +690,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 detailAddList.add(detailAdd);
             }
             addDTO.setDetailList(detailAddList);
-            addDTO.setLogisticsView(logisticsAddDTO);
             if (isSubmit) {
                 firstMileDeliveryService.addAndSubmit(addDTO);
             } else {
