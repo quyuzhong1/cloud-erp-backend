@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.dmp.mapper.DmpPullTaskMapper">
+<mapper namespace="com.erp.server.dmp.mapper.DmpPushTaskHistoryMapper">
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpPullTaskEntity">
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpPushTaskHistoryEntity">
        <result column="id" property="id" />
        <result column="create_time" property="createTime" />
        <result column="create_user_id" property="createUserId" />
@@ -16,9 +16,15 @@
        <result column="mq_topic" property="mqTopic" />
        <result column="mq_tag" property="mqTag" />
        <result column="mq_data" property="mqData" />
+       <result column="status" property="status" />
+       <result column="return_msg" property="returnMsg" />
        <result column="last_sync_time" property="lastSyncTime" />
        <result column="source_platform_name" property="sourcePlatformName" />
+       <result column="source_type" property="sourceType" />
        <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="retry_times" property="retryTimes" />
+       <result column="sync_operate" property="syncOperate" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -32,33 +38,14 @@
         update_user_name,
         version,
         is_deleted,
-        target_platform_name, mq_topic, mq_tag, mq_data, status, return_msg, last_sync_time, source_platform_name, source_type, source_id, source_code, retry_times
+        target_platform_name, mq_topic, mq_tag, mq_data, status, return_msg, last_sync_time, source_platform_name, source_type, source_id, source_code, retry_times, sync_operate
     </sql>
 
-    <delete id="deleteByIds">
-        delete from dmp_pull_task where id in
-        <foreach collection="ids" item="item" open="(" separator="," close=")">
-            #{item}
-        </foreach>
-    </delete>
-
-    <!-- 根据状态分组查询数量 -->
-    <select id="listStatusCount" resultType="com.erp.model.dmp.dto.DmpPullTaskDTO$TabListDTO">
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpPushTaskDTO$ListDTO">
         select
-        dpt.status as tabFlag,
-        count(dpt.id) as count
-        from dmp_pull_task dpt
-        where dpt.is_deleted = false
-        <if test="permissionSql != null and permissionSql != ''">
-            ${permissionSql}
-        </if>
-        group by dpt.status
-    </select>
-
-    <select id="paging" resultType="com.erp.model.dmp.dto.DmpPullTaskDTO$ListDTO">
-        select
-        <include refid="Base_Column_List"></include>
-        from dmp_pull_task
+            <include refid="Base_Column_List"></include>
+        from dmp_push_task_history
         where is_deleted = false
         <if test="params.sourceTypeList != null and params.sourceTypeList.size > 0 ">
             and source_type in
@@ -94,11 +81,23 @@
         order by id desc
     </select>
 
+    <!-- 根据状态分组查询数量 -->
+    <select id="getStatusCount" resultType="com.erp.model.dmp.dto.DmpPushTaskDTO$TabListDTO">
+        select
+            -1 as tabFlag,
+            count(dpt.id) as count
+        from dmp_push_task_history dpt
+        where dpt.is_deleted = false
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
+    </select>
+
     <!-- 导出查询 -->
-    <select id="listExportExcel" resultType="com.erp.model.dmp.dto.DmpPullTaskDTO$ListDTO">
+    <select id="listExportExcel" resultType="com.erp.model.dmp.dto.DmpPushTaskDTO$ListDTO">
         select
         <include refid="Base_Column_List"></include>
-        from dmp_pull_task
+        from dmp_push_task_history
         where is_deleted = false
         <if test="params.ids != null and params.ids.size > 0">
             and id in
@@ -140,5 +139,32 @@
             ${params.permissionSql}
         </if>
         order by id desc
+    </select>
+
+
+    <select id="getEntityByCondition" resultType="com.erp.model.dmp.entity.DmpPushTaskEntity">
+        select <include refid="Base_Column_List"/>
+            from  dmp_push_task_history
+        <where>
+            <if test="params.sourceType != null and params.sourceType != ''">
+                and source_type = #{params.sourceType}
+            </if>
+            <if test="params.sourceId != null and params.sourceId != ''">
+                and source_id = #{params.sourceId}
+            </if>
+            <if test="params.sourcePlatformName != null and params.sourcePlatformName != ''">
+                and source_platform_name = #{params.sourcePlatformName}
+            </if>
+            <if test="params.targetPlatformName != null and params.targetPlatformName != ''">
+                and target_platform_name = #{params.targetPlatformName}
+            </if>
+            <if test="params.mqTopic != null and params.mqTopic != ''">
+                and mq_topic = #{params.mqTopic}
+            </if>
+            <if test="params.mqTag != null and params.mqTag != ''">
+                and mq_tag = #{params.mqTag}
+            </if>
+        </where>
+        limit 1
     </select>
 </mapper>
