@@ -568,6 +568,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     private void generateDiffAndCheckConfirm(TmsFirstMileReconciliationDetailDTO.ListDTO estimatedListDTO,
                                              TmsFirstMileReconciliationDetailDTO.ListDTO actualListDTO,
                                              TmsFirstMileReconciliationDetailDTO.ListDTO diffListDTO) {
+        // 重新计算实际计费重
+        actualListDTO.setBillingWeight(actualListDTO.getActualWeight().max(actualListDTO.getVolumeWeight()));
+
         // 重新计算差异
         generateDiff(estimatedListDTO, actualListDTO, diffListDTO);
         // 比较值是否都一致
