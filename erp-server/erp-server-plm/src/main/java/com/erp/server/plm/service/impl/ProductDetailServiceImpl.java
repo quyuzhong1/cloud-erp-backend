@@ -2160,6 +2160,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productLogistics.setDestCurrency(CurrencyEnum.USD.getCurrencyCode());
             productLogistics.setDestCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
             productLogisticsService.updateById(productLogistics);
+            log.info("更新目的国申报价 sku:{},目的国申报价：{}",entity.getSkuNo(), resultDestDeclarePrice);
         }
     }
 
