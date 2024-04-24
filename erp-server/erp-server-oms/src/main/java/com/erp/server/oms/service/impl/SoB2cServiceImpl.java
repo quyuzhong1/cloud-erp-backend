@@ -108,6 +108,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -6801,6 +6802,49 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //更新操作同个事务
         service.updateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors);
         return resultDTOList;
+    }
+
+    @Override
+    public List<BatchResultDTO> autoOrderForecast(List<String> soIdList) {
+        List<SoB2cEntity> soB2cEntityList = listByIds(soIdList);
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cLogisticsService.listByMainIds(soIdList);
+        soB2cLogisticsEntityList = soB2cLogisticsEntityList.stream().filter(v->StringUtils.isNotBlank(v.getCode()) && StringUtils.isNotBlank(v.getLogisticsChannelId())).collect(Collectors.toList());
+        List<String> channelIds = soB2cLogisticsEntityList.stream().map(SoB2cLogisticsEntity::getLogisticsChannelId).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(channelIds) || CollectionUtils.isEmpty(soB2cLogisticsEntityList)){
+            return new ArrayList<>();
+        }
+        List<LogisticsChannelDTO.BaseDTO> channelList = logisticsFeign.listChannelInfoById(channelIds);
+        List<String> logisticSupplierIds = channelList.stream().map(v->v.getMainId()).distinct().collect(Collectors.toList());
+        //预报设置
+        List<SettingForecastEntity> settingForecastEntityList = forecastFeign.getSettingForecastByLogisticsSupplierIdList(logisticSupplierIds);
+        settingForecastEntityList = settingForecastEntityList.stream().filter(v->v.getIsAutoForecast() && StringUtils.isNotBlank(v.getTransferLogisticsChannelId()) && StringUtils.isNotBlank(v.getTransferLogisticsSupplierId())).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(settingForecastEntityList)){
+            return new ArrayList<>();
+        }
+        //根据物流商分类
+        List<SoB2cDTO.TransferDeclareDTO> transferDeclareDTOList = new ArrayList<>();
+        for (SoB2cEntity soB2cEntity : soB2cEntityList) {
+            SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntityList.stream().filter(v->v.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(new SoB2cLogisticsEntity());
+            LogisticsChannelDTO.BaseDTO channelDTO = channelList.stream().filter(v->v.getId().equals(soB2cLogisticsEntity.getLogisticsChannelId())).findFirst().orElse(new LogisticsChannelDTO.BaseDTO());
+            SettingForecastEntity settingForecastEntity = settingForecastEntityList.stream().filter(v->v.getLogisticsSupplierId().equals(channelDTO.getMainId())).findFirst().orElse(null);
+            if(Objects.isNull(settingForecastEntity)){
+                continue;
+            }
+            SoB2cDTO.TransferDeclareDTO existDTO = transferDeclareDTOList.stream().filter(v->v.getTransferLogisticsSupplierId().equals(settingForecastEntity.getTransferLogisticsSupplierId()) && v.getTransferLogisticsChannelId().equals(settingForecastEntity.getTransferLogisticsChannelId())).findFirst().orElse(null);
+            if(Objects.isNull(existDTO)){
+                existDTO = new SoB2cDTO.TransferDeclareDTO();
+                List<String> ids = new ArrayList<>();
+                ids.add(soB2cEntity.getId());
+                existDTO.setIds(ids);
+                existDTO.setTransferLogisticsSupplierId(settingForecastEntity.getTransferLogisticsSupplierId());
+                existDTO.setTransferLogisticsChannelId(settingForecastEntity.getTransferLogisticsChannelId());
+                transferDeclareDTOList.add(existDTO);
+            }else{
+                existDTO.getIds().add(soB2cEntity.getId());
+            }
+        }
+        transferDeclareDTOList.forEach(this::orderForecast);
+        return null;
     }
 
     @Override

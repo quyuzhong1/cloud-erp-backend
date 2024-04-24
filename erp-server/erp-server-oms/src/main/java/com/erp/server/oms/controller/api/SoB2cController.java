@@ -12,6 +12,7 @@ import com.common.core.anno.LogAction;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
@@ -597,6 +598,15 @@ public class SoB2cController extends BaseController {
     @Idempotent
     public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        if(dto.getIds().size()>100){
+            throw new ServiceException("批量提交发货数量不能超过100");
+        }
+        //订单自动预报 不影响提交发货流程
+        try {
+            soB2cService.autoOrderForecast(dto.getIds());
+        }catch (Exception e){
+            log.error("订单自动预报",e);
+        }
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
