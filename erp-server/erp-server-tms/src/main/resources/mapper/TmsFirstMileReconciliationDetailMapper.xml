@@ -33,9 +33,9 @@
        <result column="volume_weight_unit" property="volumeWeightUnit" />
        <result column="billing_weight" property="billingWeight" />
        <result column="billing_weight_unit" property="billingWeightUnit" />
-       <result column="actual_shipping_cost" property="shippingCost" />
-       <result column="actual_declare_cost" property="declareCost" />
-       <result column="actual_other_cost" property="otherCost" />
+       <result column="shipping_cost" property="shippingCost" />
+       <result column="declare_cost" property="declareCost" />
+       <result column="other_cost" property="otherCost" />
        <result column="remark" property="remark" />
        <result column="status" property="status" />
        <result column="confirm_date" property="confirmDate" />
