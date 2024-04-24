@@ -14,6 +14,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -171,11 +172,13 @@ public class AmazonShipOrder implements IPlatformService {
                 throw new ServiceException("未找到店铺授权:" + mainEntity.getShopId());
             }
 
-            //TODO, 检查订单是否已经取消
-            Boolean flag = Boolean.TRUE;
-
-
-
+            Boolean isCancel = mainEntity.getIsCancel();
+            if (!isCancel) {
+                //TODO, 检查订单平台订单是否已经取消
+                isCancel = Boolean.TRUE;
+            }
+            //取消则需要自动发起订单拦截
+            deliveryIntercept(mainEntity.getId(),isCancel);
 
             ConfirmShipmentRequest body = new ConfirmShipmentRequest();
             AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
@@ -237,5 +240,13 @@ public class AmazonShipOrder implements IPlatformService {
             throw new ServiceException("操作失败，渠道标发单号为空");
         }
         return logisticsMappingEntity.getOrderDeliveryMarkType();
+    }
+
+    @Override
+    public void deliveryIntercept(String soB2cId,Boolean isCancel) {
+        if (isCancel) {
+            //订单拦截
+            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cId, "平台取消"));
+        }
     }
 }

@@ -23,4 +23,12 @@ public interface IPlatformService {
      * @return
      */
     String getOrderDeliveryMarkType(String platform, String logisticsChannelId);
+
+
+    /**
+     * 订单取消后发货单拦截
+     * @param soB2cId
+     * @return
+     */
+    void deliveryIntercept(String soB2cId,Boolean isCancel);
 }

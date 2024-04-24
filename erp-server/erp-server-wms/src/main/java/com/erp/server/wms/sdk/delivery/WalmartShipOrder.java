@@ -9,6 +9,7 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.IPlatformService;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.tms.dto.LogisticsMappingDTO;
 import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -60,5 +61,13 @@ public class WalmartShipOrder implements IPlatformService {
             throw new ServiceException("操作失败，渠道标发单号为空");
         }
         return logisticsMappingEntity.getOrderDeliveryMarkType();
+    }
+
+    @Override
+    public void deliveryIntercept(String soB2cId,Boolean isCancel) {
+        if (isCancel) {
+            //订单拦截
+            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cId, "平台取消"));
+        }
     }
 }

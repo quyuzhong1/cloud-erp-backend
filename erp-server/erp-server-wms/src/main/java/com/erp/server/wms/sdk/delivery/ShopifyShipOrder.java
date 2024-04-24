@@ -11,6 +11,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.IPlatformService;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -215,5 +216,13 @@ public class ShopifyShipOrder implements IPlatformService {
             throw new ServiceException("操作失败，渠道标发单号为空");
         }
         return logisticsMappingEntity.getOrderDeliveryMarkType();
+    }
+
+    @Override
+    public void deliveryIntercept(String soB2cId,Boolean isCancel) {
+        if (isCancel) {
+            //订单拦截
+            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cId, "平台取消"));
+        }
     }
 }

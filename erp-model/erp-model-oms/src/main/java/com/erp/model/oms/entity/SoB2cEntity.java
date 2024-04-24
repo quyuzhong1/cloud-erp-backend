@@ -275,6 +275,18 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("is_match_warehouse_rule")
     private Boolean isMatchWarehouseRule;
 
+    /**
+     * 平台订单状态
+     */
+    @TableField("platform_order_status")
+    private Boolean platformOrderStatus;
+
+    /**
+     * 平台是否取消
+     */
+    @TableField("is_cancel")
+    private Boolean isCancel;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

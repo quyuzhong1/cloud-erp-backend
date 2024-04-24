@@ -78,4 +78,12 @@ public class AliexpressShipOrder implements IPlatformService {
         }
         return logisticsMappingEntity.getOrderDeliveryMarkType();
     }
+
+    @Override
+    public void deliveryIntercept(String soB2cId,Boolean isCancel) {
+        if (isCancel) {
+            //订单拦截
+            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cId, "平台取消"));
+        }
+    }
 }
