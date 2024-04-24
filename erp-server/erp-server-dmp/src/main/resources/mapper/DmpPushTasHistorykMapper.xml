@@ -65,12 +65,6 @@
         <if test="params.sourcePlatformName != null and params.sourcePlatformName != '' ">
             and source_platform_name = #{params.sourcePlatformName}
         </if>
-        <if test="params.statusList != null and params.statusList.size > 0">
-            and status in
-            <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
         <if test="params.lastSyncTime != null and params.lastSyncTime.size > 0">
             and last_sync_time >= #{params.lastSyncTime[0]} and  (#{params.lastSyncTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > last_sync_time
         </if>
@@ -123,12 +117,6 @@
             </if>
             <if test="params.sourcePlatformName != null and params.sourcePlatformName != '' ">
                 and source_platform_name = #{params.sourcePlatformName}
-            </if>
-            <if test="params.statusList != null and params.statusList != '' ">
-                and status in
-                <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
             </if>
             <if test="params.lastSyncTime != null and params.lastSyncTime.size > 0">
                 and last_sync_time >= #{params.lastSyncTime[0]} and  (#{params.lastSyncTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > last_sync_time
