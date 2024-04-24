@@ -155,7 +155,6 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             moveInfoEntity.setBillDate(pcAddDTO.getBillDate());
             moveInfoEntity.setWarehouseId(viewDTO.getWarehouseId());
             handleData(moveInfoEntity);
-
             WarehouseLocationMoveDTO.AddDTO addDTO = new WarehouseLocationMoveDTO.AddDTO();
             addDTO.setDetailList(Arrays.asList(detail));
             addDTO.setWarehouseId(viewDTO.getWarehouseId());
@@ -222,8 +221,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
         // 数据处理
         log.info("编辑 开始修改仓位移动主单数据，单号：【{}】", old.getCode());
-        boolean save = super.updateById(warehouseLocationMoveEntity);
-        if(!save) {
+        int i = baseMapper.updateById(warehouseLocationMoveEntity);
+        if(i<=0) {
             throw new ServiceException("仓位移动主单保存失败");
         }
 

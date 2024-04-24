@@ -1251,6 +1251,8 @@ public enum ApiError implements Serializable {
     ORDER_UPLOAD_SUCCESS_NOT_DELETE(94040,"订单【{}】上传成功不能删除"),
     ERROR_LOGISTICS_MAX_LIMIT_NOT_EMPTY(94041,"长宽高单个值不能为空，需大于0"),
     ERROR_CANNOT_SAME_POSITION(94100,"取货和上架仓位不能是同一个仓位"),
+    ERROR_OUT_WAREHOUSELOCATION_NOT_FOUND(94101,"取货仓位不存在"),
+    ERROR_IN_WAREHOUSELOCATION_NOT_FOUND(94102,"上架仓位不存在"),
 
     // 亚马逊公用异常
     ERROR_MARKETPLACE_UNAUTHORIZED(100000,"亚马逊店铺已被禁用:{}"),

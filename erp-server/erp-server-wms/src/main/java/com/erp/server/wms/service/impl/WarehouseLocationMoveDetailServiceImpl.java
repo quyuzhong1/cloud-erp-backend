@@ -9,6 +9,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.WarehouseLocationMoveDetailMapper;
@@ -51,6 +52,8 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     private InventoryService inventoryService;
     @Autowired
     private WarehouseService warehouseService;
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
     @Resource
     private SysUserFeign sysUserFeign;
 
@@ -120,16 +123,24 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
             paramDTO.setOrgId(warehouseEntity.getOrgId());
             paramDTO.setWarehouseId(warehouseId);
             paramDTO.setSkuIds(Arrays.asList(detailEntity.getSkuId()));
-            paramDTO.setWarehouseLocations(Arrays.asList(detailEntity.getOutWarehouseLocation()));
-            List<InventoryDTO.PdaInventoryDTO> inventoryByParams = inventoryService.getInventoryByParam(paramDTO);
-            InventoryDTO.PdaInventoryDTO inventoryByParam = inventoryByParams.stream().filter(req -> req.getWarehouseId().equals(warehouseId)
-                    && req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
             if (pcShow) {
                 if ((ObjectUtil.isEmpty(detailEntity.getInWarehouseLocation()) && ObjectUtil.isEmpty(detailEntity.getOutWarehouseLocation()))
                         || detailEntity.getInWarehouseLocation().equals(detailEntity.getOutWarehouseLocation())) {
                     throw new ServiceException(ApiError.ERROR_CANNOT_SAME_POSITION);
                 }
+                //获取仓位
+                WarehouseLocationEntity outWarehouseLocation = warehouseLocationService.getByIdOpt(detailEntity.getOutWarehouseLocation())
+                        .orElseThrow(() -> new ServiceException(ApiError.ERROR_OUT_WAREHOUSELOCATION_NOT_FOUND));
+                WarehouseLocationEntity inWarehouseLocation = warehouseLocationService.getByIdOpt(detailEntity.getInWarehouseLocation())
+                        .orElseThrow(() -> new ServiceException(ApiError.ERROR_IN_WAREHOUSELOCATION_NOT_FOUND));
+                detailEntity.setOutWarehouseLocation(outWarehouseLocation.getCode());
+                detailEntity.setInWarehouseLocation(inWarehouseLocation.getCode());
             }
+            paramDTO.setWarehouseLocations(Arrays.asList(detailEntity.getOutWarehouseLocation()));
+            List<InventoryDTO.PdaInventoryDTO> inventoryByParams = inventoryService.getInventoryByParam(paramDTO);
+            InventoryDTO.PdaInventoryDTO inventoryByParam = inventoryByParams.stream().filter(req -> req.getWarehouseId().equals(warehouseId)
+                    && req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+
             if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getUsableQty()) {
                 throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR, detailEntity.getSkuNo());
             }
