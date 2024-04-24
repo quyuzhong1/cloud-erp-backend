@@ -186,7 +186,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             if (CollectionUtils.isEmpty(updateList)) {
                 continue;
             }
-            tmsCostDetailService.batchUpdate(updateList,detailEntity.getId(),DictCostAttributionEnum.DECLARE);
+            tmsCostDetailService.batchUpdate(updateList,detailEntity.getId(),DictCostAttributionEnum.DECLARE,Boolean.FALSE);
         }
         //更新报关明细实际费用
         updateDeclareReconciliationDetailCost(list);

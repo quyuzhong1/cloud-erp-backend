@@ -38,7 +38,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     * @param dto
     * @return
     */
-    Boolean update(LogisticsBillCostDTO.UpdateDTO dto);
+    Boolean update(LogisticsBillCostDTO.UpdateDTO dto,Boolean isImport);
 
     /**
      * @description: tab列表

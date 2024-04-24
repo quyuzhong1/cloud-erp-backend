@@ -32,7 +32,10 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.tms.dto.*;
+import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
+import com.erp.model.tms.dto.TmsCostDetailDTO;
+import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
+import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.dto.excel.FirstMileReconciliationStandardExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
@@ -401,7 +404,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 if (CollectionUtils.isEmpty(updateList)) {
                     continue;
                 }
-                tmsCostDetailService.batchUpdate(updateList, costEntity.getId(), DictCostAttributionEnum.FIRST_MILE);
+                tmsCostDetailService.batchUpdate(updateList, costEntity.getId(), DictCostAttributionEnum.FIRST_MILE,Boolean.FALSE);
             }
             // 移除实际费用
             if (!CollectionUtils.isEmpty(delActualCostIds)){
@@ -1577,7 +1580,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             if (CollectionUtils.isEmpty(updateList)) {
                 continue;
             }
-            tmsCostDetailService.batchUpdate(updateList, detailEntity.getId(), DictCostAttributionEnum.FIRST_MILE);
+            tmsCostDetailService.batchUpdate(updateList, detailEntity.getId(), DictCostAttributionEnum.FIRST_MILE,Boolean.FALSE);
         }
     }
 

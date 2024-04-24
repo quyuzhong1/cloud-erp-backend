@@ -417,7 +417,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             costDetailList.add(dto);
         }
         updateCostDTO.setCostDetailList(costDetailList);
-        logisticsBillCostService.update(updateCostDTO);
+        logisticsBillCostService.update(updateCostDTO,Boolean.FALSE);
 
         //更新发货单物流状态
         if(!oldOutstockId.equals(updateDTO.getOutstockId())){
