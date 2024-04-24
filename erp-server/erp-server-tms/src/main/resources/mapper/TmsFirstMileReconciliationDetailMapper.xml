@@ -41,7 +41,7 @@
        <result column="confirm_date" property="confirmDate" />
        <result column="confirm_user_id" property="confirmUserId" />
        <result column="confirm_user_name" property="confirmUserName" />
-       <result column="relation_code" property="relationCode" />
+       <result column="business_code" property="businessCode" />
        <result column="transport_status" property="transportStatus" />
        <result column="logistics_channel_id" property="logisticsChannelId" />
        <result column="transport_no" property="transportNo" />
@@ -86,7 +86,7 @@
             confirm_date,
             confirm_user_id,
             confirm_user_name,
-            relation_code,
+            business_code,
             transport_status,
             logistics_channel_id,
             transport_no
