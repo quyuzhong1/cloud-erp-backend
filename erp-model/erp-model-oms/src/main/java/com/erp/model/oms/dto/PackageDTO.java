@@ -134,6 +134,11 @@ public class PackageDTO implements Serializable {
          * 中转商渠道名
          */
         private String transferLogisticsChannelName;
+
+        /**
+         * 销售平台
+         */
+        private String dictPlatform;
     }
 
     /**
@@ -265,5 +270,23 @@ public class PackageDTO implements Serializable {
          * 国家名
          */
         private String countryName;
+    }
+
+
+    /**
+     * 组包预报
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MergePackageDTO{
+        /**
+         * 单据id
+         */
+        private List<String> ids;
+
+        /**
+         * 是否自动出库
+         */
+        private Boolean isAutoOut;
     }
 }

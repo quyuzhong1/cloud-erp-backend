@@ -685,7 +685,8 @@
         sbl.track_no AS trackNo,
         sbl.weight AS weight,
         sbl.transfer_logistics_supplier_id,
-        sbl.transfer_logistics_channel_id
+        sbl.transfer_logistics_channel_id,
+        sb.dict_platform
         FROM so_b2c sb
         LEFT JOIN so_b2c_logistics sbl
         ON sb.id = sbl.main_id AND sbl.is_deleted = FALSE

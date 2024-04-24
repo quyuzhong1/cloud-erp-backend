@@ -38,6 +38,7 @@ import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.oms.dto.PackageDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -952,6 +953,58 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     public Boolean falseDeliveryBatch(List<String> ids) {
         for (String id : ids) {
             this.falseDelivery(id);
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean addDeliveryLog(List<SoB2cDeliveryEntity> deliveryEntities) {
+        for (SoB2cDeliveryEntity entity : deliveryEntities) {
+            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", commonService.getUserInfo().getUserName(), "组包预报", entity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "称重出库");
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean mergePackageDelivery(List<String> soIdList) {
+
+        //记录需要虚假发货的订单id
+        List<String> deliverySoIdList = new ArrayList<>();
+        for (String soId : soIdList) {
+            Boolean flag = soB2cFeign.checkPlatformShipOrder(soId);
+            if (flag) {
+                deliverySoIdList.add(soId);
+            }
+        }
+        //查询发货单
+        List<SoB2cDeliveryEntity> deliveryEntities = this.listBySourceIds(soIdList);
+
+        //调用第三方平台SDK发货
+        try {
+            this.falseDeliveryBatch(deliverySoIdList);
+        } catch (Exception e) {
+            log.error("销售单【{}】 标记发货失败 >>>错误信息{}", e.getMessage());
+            SoB2cEntity entity = soB2cFeign.getById(deliveryEntities.get(0).getSourceId());
+            throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
+        }
+
+        //获取一个当前时间当作发货时间
+        LocalDateTime deliveryTime = LocalDateTime.now();
+
+        //将发货状态更新为已发货
+        for (SoB2cDeliveryEntity deliveryEntity : deliveryEntities) {
+            deliveryEntity.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getCode());
+            deliveryEntity.setDeliveryTime(deliveryTime);
+        }
+
+        //将发货状态更新为已发货
+        if (!this.updateBatchById(deliveryEntities)) {
+            throw new ServiceException("发货单更新失败");
+        }
+        for (SoB2cDeliveryEntity deliveryEntity : deliveryEntities) {
+            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", commonService.getUserInfo().getUserName(), "组包称重", deliveryEntity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), deliveryEntity.getId(), "组包称重");
         }
         return Boolean.TRUE;
     }
