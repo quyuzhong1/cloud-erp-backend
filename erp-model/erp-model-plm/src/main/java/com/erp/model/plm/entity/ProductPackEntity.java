@@ -26,17 +26,17 @@ public class ProductPackEntity extends BaseEntity implements Serializable {
     /**
      * 产品尺寸长
      */
-    @TableField(value = "product_length")
+    @TableField(value = "product_length", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal productLength;
     /**
      * 产品尺寸宽
      */
-    @TableField(value = "product_width")
+    @TableField(value = "product_width", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal productWidth;
     /**
      * 产品尺寸高
      */
-    @TableField(value = "product_height")
+    @TableField(value = "product_height", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal productHeight;
 
     @TableField(value = "product_size")
@@ -57,17 +57,17 @@ public class ProductPackEntity extends BaseEntity implements Serializable {
     /**
      * 箱规长
      */
-    @TableField(value = "box_length")
+    @TableField(value = "box_length", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal boxLength;
     /**
      * 箱规宽
      */
-    @TableField(value = "box_width")
+    @TableField(value = "box_width", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal boxWidth;
     /**
      * 箱规高
      */
-    @TableField(value = "box_height")
+    @TableField(value = "box_height", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal boxHeight;
 
     /**
