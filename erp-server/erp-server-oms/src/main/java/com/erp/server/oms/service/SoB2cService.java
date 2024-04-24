@@ -19,7 +19,6 @@ import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
-import com.erp.model.tms.dto.*;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 
@@ -345,7 +344,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @Author Jim
      * @since 2023-11-10
      **/
-    SoB2cEntity getByPlatformInfo(String platformCode, String dictPlatform, String shopId);
+    SoB2cEntity getByPlatformInfo(String platformCode, String dictPlatform, String shopId, String code);
 
     Map<String,Object> getJson(String id);
 
@@ -821,7 +820,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @date 2024-03-07
      * @author Jim
      */
-    List<SoB2cEntity> getByPlatformCodeList(List<String> platformCodeList, String dictPlatform, String shopId);
+    List<SoB2cEntity> getByPlatformCodeList(List<String> platformCodeList, String dictPlatform, String shopId, String sourceType);
 
     /**
      * 根据销售出库单信息检查和补充

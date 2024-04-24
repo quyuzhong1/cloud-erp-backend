@@ -567,9 +567,10 @@ public class SoB2cFeignController extends BaseController {
     @GetMapping("/getByPlatformCode")
     public List<SoB2cEntity> getByPlatformCode(@RequestParam("platformCodeList") List<String> platformCodeList,
                                                @RequestParam("dictPlatform") String dictPlatform,
-                                               @RequestParam("shopId") String shopId
+                                               @RequestParam("shopId") String shopId,
+                                               @RequestParam("sourceType") String sourceType
     ){
-        return soB2cService.getByPlatformCodeList(platformCodeList, dictPlatform, shopId);
+        return soB2cService.getByPlatformCodeList(platformCodeList, dictPlatform, shopId, sourceType);
     }
 
     /**
