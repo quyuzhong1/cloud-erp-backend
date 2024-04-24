@@ -1090,6 +1090,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 record.setIsIntercept(soB2cEntity.getIsIntercept());
                 record.setPackageStatus(soB2cEntity.getPackageStatus());
                 record.setTransferStatus(soB2cEntity.getTransferStatus());
+                record.setOrderRemark(soB2cEntity.getRemark());
             }
             //平台名称
             PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(record.getDictPlatform());
