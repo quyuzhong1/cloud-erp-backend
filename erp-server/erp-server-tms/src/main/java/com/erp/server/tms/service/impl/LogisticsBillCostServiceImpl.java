@@ -120,7 +120,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(LogisticsBillCostDTO.UpdateDTO updateDTO) {
+    public Boolean update(LogisticsBillCostDTO.UpdateDTO updateDTO,Boolean isImport) {
         LogisticsBillCostEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
         //赋值
@@ -149,7 +149,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             throw new ServiceException("自发货费用保存失败");
         }
         //更新费用明细
-        tmsCostDetailService.batchUpdate(updateDTO.getCostDetailList(),logisticsBillCostEntity.getId(),DictCostAttributionEnum.SELF_DELIVER);
+        tmsCostDetailService.batchUpdate(updateDTO.getCostDetailList(),logisticsBillCostEntity.getId(),DictCostAttributionEnum.SELF_DELIVER,isImport);
 
         // 记录主单操作日志
         log.info("编辑 开始记录自发货费用日志数据，id：【{}】", logisticsBillCostEntity.getId());
@@ -556,7 +556,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             updateDataDTO.setBillingWeightLogistics(new BigDecimal(billCostExcelDTO.getBillingWeightLogistics()));
             updateDataDTO.setCurrency(StrUtil.isBlank(billCostExcelDTO.getCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : billCostExcelDTO.getCurrency());
             updateDataDTO.setCostDetailList(updateDetailList);
-            this.update(updateDataDTO);
+            this.update(updateDataDTO,Boolean.TRUE);
         }
     }
 
@@ -583,7 +583,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 errorMsgList.add("未找到出库单和物流跟踪单号对应的物流单明细");
             }
             //物流费用单
-            LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> obj.getLogisticsBillId().equals(logisticsBillEntity.getId())).findFirst().orElse(null);
+            LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> obj.getLogisticsBillId().equals(logisticsBillEntity.getId()) && StrUtil.equals(excelDTO.getTrackNo(),obj.getTrackNo())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(logisticsBillCostEntity)) {
                 errorMsgList.add("未找到出库单和运输单号对应的物流费用单");
             }

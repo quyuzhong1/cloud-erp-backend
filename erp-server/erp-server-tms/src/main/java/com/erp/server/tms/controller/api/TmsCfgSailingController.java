@@ -103,11 +103,6 @@ public class TmsCfgSailingController extends BaseController {
      * @return ApiResult<ViewDTO>
      */
     @GetMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:tmsCfgSailing:view",
-            serviceClass = TmsCfgSailingService.class,
-            keyIdName = "id")
     @LogViewService
     public ApiResult<TmsCfgSailingDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(tmsCfgSailingService.view(id));
