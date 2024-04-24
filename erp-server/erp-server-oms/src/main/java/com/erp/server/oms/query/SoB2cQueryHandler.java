@@ -147,6 +147,19 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                 return getQueryAllSql();
             }
         }
+        /**
+         * B2C订单待处理类型归类,SoB2cWaitHandleTypeEnum枚举
+         * 审核不通过（自动）：订单审核状态为审核不通过，不通过原因是自动审核条件不通过或拦截成功后自动不通过
+         * 审核不通过（人工）：订单审核状态为审核不通过，不通过原因是人工审核条件不通过
+         * 订单反审核：订单审核状态为待提交，待提交原因是人工反审核
+         * 仓库规则不通过：订单状态是待配货，待配货原因是仓库规则不通过（注意区分没有走仓库规则的数据）
+         * 物流规则不通过：订单状态是待配货，待配货原因是物流规则不通过
+         */
+        if ("waitHandle".equals(field))  {
+
+        }
+
+
         return null;
     }
 
