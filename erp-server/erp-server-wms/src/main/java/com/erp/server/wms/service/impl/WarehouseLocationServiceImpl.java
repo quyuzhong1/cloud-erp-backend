@@ -170,6 +170,13 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode()).last("limit 1");
         return baseMapper.selectOne(lambdaQuery);
     }
+    @Override
+    public WarehouseLocationEntity findLocationById(String id) {
+        LambdaQueryWrapper<WarehouseLocationEntity> lambdaQuery = new LambdaQueryWrapper<WarehouseLocationEntity>()
+                .eq(WarehouseLocationEntity::getId, id)
+                .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode()).last("limit 1");
+        return baseMapper.selectOne(lambdaQuery);
+    }
 
     @Override
     public List<WarehouseLocationEntity> listByWarehouseIdAndCode(List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> listParam) {

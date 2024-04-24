@@ -51,6 +51,16 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     WarehouseLocationEntity findByWarehouseIdAndCode(String warehouseId, String code);
 
     /**
+     * 根据id获取
+     *
+     * @param id
+     * @return
+     * @author hyj
+     * @date 2024/4/24 10:37
+     */
+    WarehouseLocationEntity findLocationById(String id);
+
+    /**
      * @description: 根据仓库id和库位集合查询
      * @author Will
      * @date: 2023/8/2 17:51

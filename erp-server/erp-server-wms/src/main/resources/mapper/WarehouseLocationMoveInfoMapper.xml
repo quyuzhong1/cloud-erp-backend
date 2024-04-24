@@ -47,7 +47,7 @@
             wlmi.warehouse_name,
             wlmi.create_time
         FROM warehouse_location_move_detail wlmd
-        INNER JOIN warehouse_location_move_info wlmi ON wlmd.main_id = wlmi.id AND wlmd.is_deleted = FALSE
+        INNER JOIN warehouse_location_move wlmi ON wlmd.main_id = wlmi.id AND wlmd.is_deleted = FALSE
         WHERE wlmi.is_deleted = FALSE
         AND wlmi.invalid_status = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
@@ -78,7 +78,7 @@
         select
         count(distinct wlmi.id)
         FROM warehouse_location_move_detail wlmd
-        INNER JOIN warehouse_location_move_info wlmi ON wlmd.main_id = wlmi.id AND wlmd.is_deleted = FALSE
+        INNER JOIN warehouse_location_move wlmi ON wlmd.main_id = wlmi.id AND wlmd.is_deleted = FALSE
         WHERE wlmi.is_deleted = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and wlmi.approve_status in
@@ -128,7 +128,7 @@
         wlmd.in_warehouse_location,
         wlmd.qty
         FROM warehouse_location_move_detail wlmd
-        INNER JOIN warehouse_location_move_info wlmi ON wlmd.main_id = wlmi.id AND wlmd.is_deleted = FALSE
+        INNER JOIN warehouse_location_move wlmi ON wlmd.main_id = wlmi.id AND wlmd.is_deleted = FALSE
         WHERE wlmi.is_deleted = FALSE
         AND wlmi.invalid_status = FALSE
         <if test="id != null and id != ''">
@@ -147,7 +147,7 @@
         wlmi.create_user_name,
         wlmi.create_time,
         wlmi.approve_time
-        FROM warehouse_location_move_info wlmi
+        FROM warehouse_location_move wlmi
         WHERE wlmi.is_deleted = FALSE
         AND wlmi.invalid_status = FALSE
         <if test="id != null and id != ''">
@@ -179,7 +179,7 @@
         wlmd.in_warehouse_location as inWarehouseLocation,
         wlmd.qty as qty
         FROM warehouse_location_move_detail wlmd
-        INNER JOIN warehouse_location_move_info wlmi ON wlmd.main_id = wlmi.id AND wlmd.is_deleted = FALSE
+        INNER JOIN warehouse_location_move wlmi ON wlmd.main_id = wlmi.id AND wlmd.is_deleted = FALSE
         WHERE ${params.sqlMap.default}
         and wlmi.is_deleted = FALSE
         AND wlmi.invalid_status = FALSE

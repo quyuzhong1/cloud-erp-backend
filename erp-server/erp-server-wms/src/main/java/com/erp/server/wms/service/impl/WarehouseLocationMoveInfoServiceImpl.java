@@ -131,12 +131,6 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException("产品信息不能为空");
         }
-//        List<WarehouseLocationMoveInfoDTO.ViewDTO> viewDTOS = BeanMapperUtils.copyList(WarehouseLocationMoveInfoDTO.ViewDTO.class, detailList);
-//        String warehourseId = Optional.ofNullable(viewDTOS.stream().map(WarehouseLocationMoveInfoDTO.ViewDTO::getWarehouseId).findFirst()).orElseThrow(()->new ServiceException("仓库不能为空")).get();
-//        pcAddDTO.setWarehouseId(warehourseId);
-//        WarehouseLocationMoveInfoDTO.AddDTO addDTO = new WarehouseLocationMoveInfoDTO.AddDTO();
-//        BeanUtils.copyProperties(pcAddDTO, addDTO);
-//        return add(addDTO);
         WarehouseLocationMoveInfoEntity warehouseLocationMoveInfoEntity = new WarehouseLocationMoveInfoEntity();
         BeanMapperUtils.copy(pcAddDTO, warehouseLocationMoveInfoEntity);
         if (StringUtils.isBlank(warehouseLocationMoveInfoEntity.getId()) && ObjectUtil.isNull(warehouseLocationMoveInfoEntity.getBillDate())) {
@@ -258,44 +252,6 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         });
 
         return Boolean.TRUE;
-
-
-//        List<WarehouseLocationMoveInfoDTO.ViewDTO> viewDTOS = BeanMapperUtils.copyList(WarehouseLocationMoveInfoDTO.ViewDTO.class, detailList);
-//        String warehourseId = Optional.ofNullable(viewDTOS.stream().map(WarehouseLocationMoveInfoDTO.ViewDTO::getWarehouseId).findFirst()).orElseThrow(()->new ServiceException("仓库不能为空")).get();
-//        pcUpdateDTO.setWarehouseId(warehourseId);
-//        WarehouseLocationMoveInfoDTO.UpdateDTO updateDTO = new WarehouseLocationMoveInfoDTO.UpdateDTO();
-//        BeanUtils.copyProperties(pcUpdateDTO, updateDTO);
-//        return update(updateDTO);
-//        WarehouseLocationMoveDetailEntity warehouseLocationMoveDetailEntity = warehouseLocationMoveDetailService.getByIdOpt(pcUpdateDTO.getId()).orElseThrow(() -> new ServiceException("未找到仓位移动明细数据"));
-//        String mainId = warehouseLocationMoveDetailEntity.getMainId();
-//        WarehouseLocationMoveInfoEntity old = super.getById(mainId);
-//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "仓位移动主单"));
-//        // 待提交和审核不通过允许修改
-//        if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-//            throw new ServiceException(ApiError.ERROR_1029);
-//        }
-//        WarehouseLocationMoveInfoEntity warehouseLocationMoveInfoEntity =  BeanMapperUtils.map(WarehouseLocationMoveInfoEntity.class, pcUpdateDTO);
-//        if (pcUpdateDTO.getPcShow() && StringUtils.isBlank(pcUpdateDTO.getWarehouseId())) {
-//            List<WarehouseLocationMoveInfoDTO.ViewDTO> listDTOS = BeanMapperUtils.copyList(WarehouseLocationMoveInfoDTO.ViewDTO.class, pcUpdateDTO.getDetailList());
-//            String warehouseId = listDTOS.stream().map(WarehouseLocationMoveInfoDTO.ViewDTO::getWarehouseId).distinct().findFirst().orElse(null);
-//            if (StringUtils.isBlank(warehouseId)) {
-//                throw new ServiceException(ApiError.ERROR_99001);
-//            }
-//        }
-//        // 数据处理
-//        handleData(warehouseLocationMoveInfoEntity);
-//        log.info("编辑 开始修改仓位移动主单数据，单号：【{}】", old.getCode());
-//        boolean save = super.updateById(warehouseLocationMoveInfoEntity);
-//        if(!save) {
-//            throw new ServiceException("仓位移动主单保存失败");
-//        }
-//        // 修改明细数据（包含增删改）
-//        warehouseLocationMoveDetailService.update(pcUpdateDTO, warehouseLocationMoveInfoEntity.getId());
-//        // 记录主单操作日志
-//        log.info("编辑 开始记录仓位移动主单日志数据，单号：【{}】", warehouseLocationMoveInfoEntity.getCode());
-//        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), warehouseLocationMoveInfoEntity.getCode(), "仓位移动主单");
-//        operateLogService.addModuleOperateLogByObj(old, warehouseLocationMoveInfoEntity, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), warehouseLocationMoveInfoEntity.getId(), msg);
-//        return Boolean.TRUE;
     }
 
     @Override
@@ -525,25 +481,6 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     public BatchResultDTO pcApprove(ApproveOneDTO dto) {
         dto.setPcShow(true);
         return approve(dto);
-//        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
-//        if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-//            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
-//        }
-//        WarehouseLocationMoveDetailEntity warehouseLocationMoveDetailEntity = warehouseLocationMoveDetailService.getByIdOpt(dto).orElseThrow(() -> new ServiceException("未找到仓位移动明细数据"));
-//        WarehouseLocationMoveInfoEntity warehouseLocationMoveInfoEntity = super.getByIdOpt(warehouseLocationMoveDetailEntity.getMainId()).orElseThrow(()->new ServiceException("未找到仓位移动主单数据"));
-//
-//        WarehouseLocationMoveInfoEntity entity = getById(warehouseLocationMoveInfoEntity.getId());
-//        // 审核中的数据允许审核
-//        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-//            throw new ServiceException(ApiError.ERROR_98006);
-//        }
-//        // 调用流程审核
-//        approveProcess(entity, dto);
-//        // 操作日志
-//        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "仓位移动主单", approveType.getName(), dto.getComment());
-//        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "审核操作");
-//        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
-//        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
     /**
