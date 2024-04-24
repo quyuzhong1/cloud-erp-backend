@@ -1,0 +1,102 @@
+package com.erp.server.wms.controller.feign;
+
+import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.enums.DataAttributeEnum;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.server.wms.service.CfgAmzFulfillmentCenterService;
+import com.erp.server.wms.service.FirstMileDeliveryService;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 头程发货单feign
+ **/
+@RestController
+@RequestMapping("feign/firstMileDelivery")
+public class WmsFirstMileDeliveryController {
+
+
+    @Resource
+    private FirstMileDeliveryService firstMileDeliveryService;
+    @Resource
+    private CfgAmzFulfillmentCenterService cfgAmzFulfillmentCenterService;
+
+    /**
+     * 根据入参查询单据数量
+     **/
+    @PostMapping("/getGenerateLogisticDTO")
+    public List<FirstMileDeliveryDTO.GenerateLogisticDTO> getGenerateLogisticDTO(@RequestBody FirstMileDeliveryDTO.GenerateLogisticReqDTO dto) {
+        return firstMileDeliveryService.getGenerateLogisticDTO(dto);
+    }
+
+    /**
+     * 更新状态
+     **/
+    @PostMapping("/updateStatus")
+    public Boolean updateStatus(@RequestBody FirstMileDeliveryDTO.UpdateStatusDTO dto) {
+        return firstMileDeliveryService.updateStatus(dto);
+    }
+
+    /**
+     * 统计
+     * @param dto
+     * @return
+     */
+    @PostMapping("/logisticStatistics")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:fbaDelivery:paging",
+            tableAlias = "md"
+    )
+    public List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(@RequestBody FirstMileDeliveryDTO.StatisticsReq dto){
+        return firstMileDeliveryService.logisticStatistics(dto);
+    }
+
+
+    /**
+     * 高级查询
+     * @param
+     * @return
+     */
+    @PostMapping("/advanceQuery")
+    @WebAdvanceQuery
+    public List<FirstMileDeliveryEntity> advanceQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer){
+        return firstMileDeliveryService.advanceQuery(advanceQueryContainer);
+    }
+
+    /**
+     * 查询可以生成报关单的发货单
+     **/
+    @PostMapping("/getCanGenerateDeclare")
+    public List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeclare(@RequestBody TmsDeclareBillDTO.QuerySourceDTO dto) {
+        return firstMileDeliveryService.getCanGenerateDeclare(dto);
+    }
+    /**
+     * 查询可以生成报关单的发货单
+     **/
+    @PostMapping("/listByIds")
+    List<FirstMileDeliveryEntity> listByIds(@RequestBody List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
+            return new ArrayList<>();
+        }
+        return firstMileDeliveryService.listByIds(ids);
+    }
+
+
+    /**
+     * 亚马逊仓库中心配置
+     */
+    @GetMapping("/feign/firstMileDelivery/getCfgAmzCenter")
+    List<CfgAmzFulfillmentCenterEntity> getCfgAmzCenter(){
+        return cfgAmzFulfillmentCenterService.list();
+    }
+}

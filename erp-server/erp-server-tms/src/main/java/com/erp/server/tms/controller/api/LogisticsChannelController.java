@@ -2,25 +2,21 @@ package com.erp.server.tms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
-import com.erp.model.tms.dto.ShippingTemplateDTO;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.server.tms.service.LogisticsChannelService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.LogisticsChannelService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.tms.dto.LogisticsChannelDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,8 +66,6 @@ public class LogisticsChannelController extends BaseController {
     }
 
 
-
-
     /**
      * 物流渠道详情
      *
@@ -119,8 +113,8 @@ public class LogisticsChannelController extends BaseController {
      * @date: 2023/11/10 9:57
      */
     @PostMapping("/listLogisticsChannel")
-    public ApiResult<List<LogisticsChannelDTO.ListSelectDTO>> listLogisticsChannel(@RequestBody @Validated LogisticsChannelDTO.IdsDTO dto) {
-        return success(logisticsChannelService.listLogisticsChannel(dto.getIds()));
+    public ApiResult<List<LogisticsChannelDTO.ListSelectDTO>> listLogisticsChannel(@RequestBody @Validated LogisticsChannelDTO.ParamDTO dto) {
+        return success(logisticsChannelService.listLogisticsChannel(dto));
     }
 
 

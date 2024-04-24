@@ -218,6 +218,10 @@ public class RuleDeliveryWarehouseDTO implements Serializable {
 
         private Map<String,Object> map;
 
+        /**
+         * 规则名称
+         */
+        private String name;
 
 
 

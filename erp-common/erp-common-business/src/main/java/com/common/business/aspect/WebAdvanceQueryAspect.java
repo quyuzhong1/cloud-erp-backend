@@ -77,7 +77,7 @@ public class WebAdvanceQueryAspect {
         advanceQueryDTOMap.forEach((key,val)->{
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("1 = 1 ");
-            if(val.size() > 1 || StringUtils.isNotBlank(val.get(0).getField()) ||  StringUtils.isNotBlank(val.get(0).getCompare())){
+            if(val.size() > 1 || (StringUtils.isNotBlank(val.get(0).getField()) &&  StringUtils.isNotBlank(val.get(0).getCompare()))){
                 stringBuilder.append(" and ");
             }
             val .get(val.size() - 1).setCompareSymbol("");

@@ -47,6 +47,31 @@
         st.type
     </sql>
 
+    <!-- 查询结果列 -->
+    <sql id="Column_List_Channel">
+        st.id,
+        st.create_user_id as createUserId,
+        st.create_user_name as createUserName,
+        st.create_time as createTime,
+        st.update_user_id as updateUserId,
+        st.update_user_name as updateUserName,
+        st.update_time as updateTime,
+        st.version,
+        st.is_deleted as isDeleted,
+        st.name,
+        st.billing_method as billingMethod,
+        st.currency,
+        st.weight_unit as weightUnit,
+        st.price_binary as priceBinary,
+        st.volume_setting as volumeSetting,
+        st.effective_date as effectiveDate,
+        st.expire_date as expireDate,
+        st.disabled,
+        st.type,
+        strc.logistics_channel_id as logisticsChannelId
+    </sql>
+
+
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.tms.dto.ShippingTemplateDTO$ListDTO">
         select
@@ -175,6 +200,20 @@
         <where>
             st.is_deleted = false and strc.logistics_channel_id = #{channelId}
             LIMIT 1
+        </where>
+    </select>
+
+    <select id="getByChannelIds" resultType="com.erp.model.tms.entity.ShippingTemplateEntity">
+        select
+        <include refid="Column_List_Channel"/>
+        from shipping_template st
+        inner join shipping_template_ref_channel strc on st.id = strc.main_id and strc.is_deleted = false
+        <where>
+            st.is_deleted = false and strc.is_deleted = false and strc.logistics_channel_id in
+            <foreach collection="channelIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+
         </where>
     </select>
 

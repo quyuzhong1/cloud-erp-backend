@@ -38,7 +38,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     * @param dto
     * @return
     */
-    Boolean update(LogisticsBillCostDTO.UpdateDTO dto);
+    Boolean update(LogisticsBillCostDTO.UpdateDTO dto,Boolean isImport);
 
     /**
      * @description: tab列表
@@ -92,6 +92,26 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     Boolean exportExcel(LogisticsBillCostDTO.ExportExcelParamDTO dto, HttpServletResponse response);
 
     Boolean invalidByLogisticsBillId(String logisticsBillId);
+
+    LogisticsBillCostEntity getByLogisticsBillId(String Id);
+    /**
+     * @description: 查询详情
+     * @author Will
+     * @date: 2024/3/25 11:46
+     * @param id
+     * @return ViewDTO
+     */
+    LogisticsBillCostDTO.ViewDTO view(String id);
+    /**
+     * @description: 根据物流单Id集合删除
+     * @author Will
+     * @date: 2024/3/25 14:11
+     * @param logisticsBillDetailIdList
+
+     */
+    void deleteByLogisticsBillDetailIdList(List<String> logisticsBillDetailIdList);
+
+    List<LogisticsBillCostEntity> listByLogisticsBillIdList(List<String> mainIdList);
 
     /**
      * 根据销售出库单 获取销售出库单自发货费用列表

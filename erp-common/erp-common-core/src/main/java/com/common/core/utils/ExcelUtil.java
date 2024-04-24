@@ -10,23 +10,26 @@ import com.alibaba.excel.write.metadata.WriteTable;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.metadata.style.WriteFont;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.*;
 import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
-import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.common.core.enums.ApiError.EXCEL_PARSING_FIELD_EXCEPTION;
@@ -235,6 +238,20 @@ public class ExcelUtil {
 
     }
 
+
+    public static File exportFile(String fileName, String sheetName, List<?> dataResult, List<String> heads) {
+        List<List<String>> hs = new ArrayList<>();
+        for (String s : heads) {
+            hs.add(Arrays.asList(s));
+        }
+        File tempDirectory = FileUtils.getTempDirectory();
+        File filePath = new File(tempDirectory,fileName);
+        //生成本地文件
+        EasyExcel.write(filePath).head(hs).sheet(sheetName).doWrite(dataResult);
+        return filePath;
+
+    }
+
     /**
      * 导出数据为excel文件（按内容自适应列宽）
      *
@@ -416,5 +433,61 @@ public class ExcelUtil {
             }
         }
         return filedValue;
+    }
+
+
+    /**
+     * 模板下载
+     * @param path 代码Excel文件路径
+     * @param excelName Excel文件名
+     * @param response 响应体
+     */
+    public static void downloadTemplate(String path, String excelName, HttpServletResponse response) {
+        try (InputStream inputStream =  new DefaultResourceLoader().getResource(path).getInputStream();
+             XSSFWorkbook wb = new XSSFWorkbook(inputStream)) {
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+        } catch (Exception e) {
+            log.error(" downloadTemplate 下载失败 e={}", e.getMessage());throw new ServiceException(ApiError.ERROR_95131);
+        }
+    }
+
+    /**
+     * 动态模板下载
+     * @param headerName 动态列表名称>
+     * @param configExcelName Excel文件名
+     * @param response 响应体
+     */
+    public static void downloadDynamicTemplate(LinkedList<String> headerName, String configExcelName, HttpServletResponse response) {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            // 创建工作表
+            Sheet sheet = wb.createSheet("sheet1");
+            Row row = sheet.createRow(0); // 创建第一行
+            // 写入数据
+            for (int i = 0; i < headerName.size(); i++) {
+                Cell cell = row.createCell(i); // 创建单元格
+                cell.setCellValue(headerName.get(i)); // 写入名称
+                // 自适应列宽
+                // 计算内容宽度并设置单元格宽度
+                int contentWidth = headerName.get(i).getBytes(StandardCharsets.UTF_8).length * 256; // 中文字符宽度按照字节数计算
+                sheet.setColumnWidth(0, Math.max(sheet.getColumnWidth(0), contentWidth)); // 设置列宽度
+            }
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(configExcelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+        } catch (Exception e) {
+            log.error(" downloadTemplate 下载失败 e={}", e.getMessage());throw new ServiceException(ApiError.ERROR_95131);
+        }
     }
 }

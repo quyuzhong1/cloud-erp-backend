@@ -58,7 +58,7 @@
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             <#noparse>
-            ${permissionSql}
+            ${params.permissionSql}
             </#noparse>
         </if>
         GROUP BY approve_status
