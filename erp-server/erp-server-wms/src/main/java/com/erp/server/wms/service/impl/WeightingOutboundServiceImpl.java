@@ -94,6 +94,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
 
             entity.setWeight(dto.getWeight());
             entity.setWeightUnit(dto.getWeightUnit());
+            entity.setWeighingTime(LocalDateTime.now());
             entity.setIsWeigh(true);
             if (!soB2cDeliveryService.updateById(entity)) {
                 throw new ServiceException("发货单更新失败");
@@ -175,6 +176,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
         entity.setIsWeigh(false);
         entity.setWeightUnit(UnitEnum.WeightUnitEnum.G.getCode());
         entity.setWeight(BigDecimal.ZERO);
+        entity.setWeighingTime(null);
         if (!soB2cDeliveryService.updateById(entity)) {
             throw new ServiceException("发货单更新失败");
         }

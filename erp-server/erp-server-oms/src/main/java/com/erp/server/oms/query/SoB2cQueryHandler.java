@@ -252,6 +252,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         //订单异常
         if (SoB2cTabEnum.ENUM_ORDER_ERROR.getCode().equals(value)) {
             super.buildSplicingSQLDTO("sb2c.sign_order_error", QueryConditionEnum.NE,"", QueryDataTypeEnum.STRING);
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
         if (CollectionUtils.isNotEmpty(approveStatusList)) {
             super.buildDefaultDTO("sb2c.approve_status", approveStatusList);
