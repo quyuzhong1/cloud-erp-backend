@@ -5085,7 +5085,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         log.debug("===== start saveOrUpdateEntity:{}", dto);
         SoB2cEntity oldEntity = null;
         try {
-            oldEntity = this.getByPlatformInfo(dto.getPlatformCode(), dto.getDictPlatform(), dto.getShopId());
+            oldEntity = this.getByPlatformInfo(dto.getPlatformCode(), dto.getDictPlatform(), dto.getShopId(), SourceTypeEnum.SO_B2C.getCode());
         } catch (Exception e) {
             log.error("查询订单异常：{}", e.getMessage());
         }
@@ -5235,11 +5235,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public SoB2cEntity getByPlatformInfo(String platformCode, String dictPlatform, String shopId) {
+    public SoB2cEntity getByPlatformInfo(String platformCode, String dictPlatform, String shopId, String sourceType) {
         return lambdaQuery()
                 .eq(SoB2cEntity::getPlatformCode, platformCode)
                 .eq(SoB2cEntity::getDictPlatform, dictPlatform)
                 .eq(SoB2cEntity::getShopId, shopId)
+                .eq(SoB2cEntity::getSourceType, sourceType)
                 .last("LIMIT 1")
                 .one();
     }
@@ -6531,7 +6532,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public List<SoB2cEntity> getByPlatformCodeList(List<String> platformCodeList, String dictPlatform, String shopId) {
+    public List<SoB2cEntity> getByPlatformCodeList(List<String> platformCodeList, String dictPlatform, String shopId, String sourceType) {
         if (CollectionUtils.isEmpty(platformCodeList)){
             return Collections.emptyList();
         }
@@ -6539,6 +6540,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .in(SoB2cEntity::getPlatformCode, platformCodeList)
                 .eq(StringUtils.isNotBlank(shopId), SoB2cEntity::getShopId, shopId)
                 .eq(SoB2cEntity::getDictPlatform, dictPlatform)
+                .eq(SoB2cEntity::getSourceType, sourceType)
                 .list();
     }
 
@@ -6546,7 +6548,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean checkAndFillBySoOutStock(PlatformSoOutStockDTO dto) {
-        List<SoB2cEntity> soB2cEntityList = this.getByPlatformCodeList(Collections.singletonList(dto.getPlatformCode()), dto.getDictPlatform(), dto.getShopId());
+        List<SoB2cEntity> soB2cEntityList = this.getByPlatformCodeList(Collections.singletonList(dto.getPlatformCode()), dto.getDictPlatform(), dto.getShopId(), SourceTypeEnum.SO_B2C.getCode());
         SoB2cEntity soB2cEntity = soB2cEntityList.stream().findFirst().orElse(null);
         if (null == soB2cEntity){
             return false;
