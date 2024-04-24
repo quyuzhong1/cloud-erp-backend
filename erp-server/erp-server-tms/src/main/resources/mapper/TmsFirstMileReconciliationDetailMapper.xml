@@ -33,14 +33,18 @@
        <result column="volume_weight_unit" property="volumeWeightUnit" />
        <result column="billing_weight" property="billingWeight" />
        <result column="billing_weight_unit" property="billingWeightUnit" />
-       <result column="actual_shipping_cost" property="shippingCost" />
-       <result column="actual_declare_cost" property="declareCost" />
-       <result column="actual_other_cost" property="otherCost" />
+       <result column="shipping_cost" property="shippingCost" />
+       <result column="declare_cost" property="declareCost" />
+       <result column="other_cost" property="otherCost" />
        <result column="remark" property="remark" />
        <result column="status" property="status" />
        <result column="confirm_date" property="confirmDate" />
        <result column="confirm_user_id" property="confirmUserId" />
        <result column="confirm_user_name" property="confirmUserName" />
+       <result column="business_code" property="businessCode" />
+       <result column="transport_status" property="transportStatus" />
+       <result column="logistics_channel_id" property="logisticsChannelId" />
+       <result column="transport_no" property="transportNo" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -58,15 +62,15 @@
         source_id,
         source_type,
         source_code,
-        track_no,
         relation_code,
-         shop_id, shop_name,
+         shop_id,
+          shop_name,
          from_country,
          to_country,
           receive_date,
            billing_method,
            billing_method_name,
-           type,
+           "type",
            total_logistics_cost,
             actual_weight,
             actual_weight_unit,
@@ -74,14 +78,18 @@
             volume_weight_unit,
             billing_weight,
             billing_weight_unit,
-            actual_shipping_cost,
-            actual_declare_cost,
-            actual_other_cost,
+            shipping_cost,
+            declare_cost,
+            other_cost,
             remark,
             status,
             confirm_date,
             confirm_user_id,
-            confirm_user_name
+            confirm_user_name,
+            business_code,
+            transport_status,
+            logistics_channel_id,
+            transport_no
     </sql>
 
     <sql id="Clause_Column_List">
@@ -98,9 +106,9 @@
         tfmr.source_id,
         tfmr.source_type,
         tfmr.source_code,
-        tfmr.track_no,
         tfmr.relation_code,
-         shop_id, tfmr.shop_name,
+         tfmr.shop_id,
+         tfmr.shop_name,
          tfmr.from_country,
          tfmr.to_country,
           tfmr.receive_date,
@@ -147,28 +155,82 @@
 
     <select id="listExport" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO$ExportDetailDTO">
         select
-        tfmr.code,
-        tfmr.approve_status,
-        tfmr.approve_user_id,
-        tfmr.approve_user_name,
-        tfmr.reconciliation_date,
-        tfmr.submit_date,
-        tfmr.approve_date,
-        tfmr.start_date,
-        tfmr.end_date,
-        tfmr.logistics_supplier_id,
-        tfmr.logistics_supplier_name,
-        tfmr.currency,
-        tfmr.exchange_rate,
-          tfmrd.*
+        tfmr.id AS id,
+        tfmr.create_user_id AS createUserId,
+        tfmr.create_user_name AS createUserName,
+        tfmr.create_time AS createTime,
+        tfmr.update_user_id AS updateUserId,
+        tfmr.update_user_name AS updateUserName,
+        tfmr.update_time AS updateTime,
+        tfmr.VERSION AS VERSION,
+        tfmr.is_deleted AS isDeleted,
+        TO_CHAR(tfmr.start_date, 'YYYY-MM-DD') || '-' || TO_CHAR(tfmr.end_date, 'YYYY-MM-DD') AS CYCLE,
+        tfmr.code AS code,
+        tfmr.approve_status AS approveStatus,
+        tfmr.approve_user_id AS approveUserId,
+        tfmr.approve_user_name AS approveUserName,
+        tfmr.reconciliation_date AS reconciliationDate,
+        tfmr.submit_date AS submitDate,
+        tfmr.approve_date AS approveDate,
+        tfmr.start_date AS startDate,
+        tfmr.end_date AS endDate,
+        tfmr.logistics_supplier_id AS logisticsSupplierId,
+        tfmr.logistics_supplier_name AS logisticsSupplierName,
+        tfmr.currency AS currency,
+        tfmr.exchange_rate AS exchangeRate,
+        tfmr.total_cost AS totalCost,
+        tfmr.reason AS reason,
+        tfmrd.main_id,
+        tfmrd.source_id,
+        tfmrd.source_type,
+        tfmrd.source_code,
+        tfmrd.relation_code,
+        tfmrd.shop_id,
+        tfmrd.shop_name,
+        tfmrd.from_country,
+        tfmrd.to_country,
+        tfmrd.receive_date,
+        tfmrd.billing_method,
+        tfmrd.billing_method_name,
+        tfmrd.type,
+        tfmrd.total_logistics_cost,
+        tfmrd.actual_weight,
+        tfmrd.actual_weight_unit,
+        tfmrd.volume_weight,
+        tfmrd.volume_weight_unit,
+        tfmrd.billing_weight,
+        tfmrd.billing_weight_unit,
+        tfmrd.shipping_cost,
+        tfmrd.declare_cost,
+        tfmrd.other_cost,
+        tfmrd.remark,
+        tfmrd.status,
+        tfmrd.confirm_date,
+        tfmrd.confirm_user_id,
+        tfmrd.confirm_user_name,
+        tfmrd.relation_code,
+        tfmrd.transport_status,
+        tfmrd.logistics_channel_id,
+        tfmrd.transport_no
         from tms_first_mile_reconciliation_detail tfmrd
         left join tms_first_mile_reconciliation tfmr on tfmrd.main_id = tfmr.id
         <where>
-            tfmrd.is_deleted = false and tfmrd.main_id in
+            ${params.sqlMap.default}
+            and tfmrd.is_deleted = false and tfmrd.main_id in
             <foreach collection="params.mainIdList" open="(" close=")" separator="," item="item">
                 #{item}
             </foreach>
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
             ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            tfmr.id desc,
             tfmrd.source_id,
             CASE
             TYPE
@@ -186,6 +248,26 @@
         inner join tms_first_mile_reconciliation_detail tfmrd on tfmr.id = tfmrd.main_id and tfmrd.is_deleted = false
         <where>
             tfmr.is_deleted = false and tfmrd.id = #{id}
+        </where>
+    </select>
+
+    <select id="listByMainIdsBySort" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from tms_first_mile_reconciliation_detail
+        <where>
+            is_deleted = false and main_id in
+            <foreach collection="mainIds" open="(" close=")" separator="," item="item">
+                #{item}
+            </foreach>
+            ORDER BY
+            source_id,
+            CASE
+            "type"
+            WHEN 'estimated' THEN 1
+            WHEN 'actual' THEN 2
+            WHEN 'diff' THEN 3
+            END
         </where>
     </select>
 </mapper>
