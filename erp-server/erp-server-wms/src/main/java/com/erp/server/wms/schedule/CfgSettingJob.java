@@ -132,7 +132,7 @@ public class CfgSettingJob {
         Integer timeOutTotalCount = qcInfoService.countTotalNotQc(qcParamDTO);
 
         //消息头
-        String title = StrUtil.format(NoticeMsgConstant.FS_QC_SETTING_HEAD,totalCount,hasQcCount,viewQcOverviewDTO.getCompletionRate(),notQcCount,notQcTotalCount,timeOutTotalCount);
+        String title = StrUtil.format(NoticeMsgConstant.FS_QC_SETTING_HEAD,totalCount,hasQcCount,viewQcOverviewDTO.getCompletionRate().stripTrailingZeros().toPlainString() + "%",notQcCount,notQcTotalCount,timeOutTotalCount);
         noticeMsgInfoDTO.setTitle(title);
         //消息体
         String msgContent = StrUtil.format(NoticeMsgConstant.FS_QC_SETTING_CONTENT,"质检通知", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
