@@ -36,6 +36,7 @@
            pbs.sku_no as skuNo,
            pbs.quantity as quantity,
            pp.product_size as productSize,
+           pp.gross_weight as grossWeight,
            pd.name as skuName,
            pd.unit_name as unitName
         from product_bom_info pbi
