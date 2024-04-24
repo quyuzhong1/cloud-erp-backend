@@ -103,8 +103,9 @@ public class PlmJob {
         XxlJobHelper.log("recalDestDeclarePrice start : {}", LocalDateTime.now());
         List<ProductDetailEntity> details = productDetailService.getProductDetailByDestDeclarePrice();
         if (CollectionUtil.isNotEmpty(details)){
+            XxlJobHelper.log("重算目的国申报价sku数量：{}", details.size());
             details.forEach(productDetailEntity -> {
-                XxlJobHelper.log("recalDestDeclarePrice : {}", productDetailEntity.getId());
+                XxlJobHelper.log("recalDestDeclarePrice : skuId:{},skuNo:{}", productDetailEntity.getId(),productDetailEntity.getSkuNo());
                 productDetailService.recalDestDeclarePrice(productDetailEntity);
             });
         }
