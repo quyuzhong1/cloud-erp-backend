@@ -171,6 +171,12 @@ public class AmazonShipOrder implements IPlatformService {
                 throw new ServiceException("未找到店铺授权:" + mainEntity.getShopId());
             }
 
+            //TODO, 检查订单是否已经取消
+            Boolean flag = Boolean.TRUE;
+
+
+
+
             ConfirmShipmentRequest body = new ConfirmShipmentRequest();
             AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
             body.setMarketplaceId(marketplaceEnum.getMarketplaceId());
