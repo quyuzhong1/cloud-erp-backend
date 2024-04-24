@@ -237,6 +237,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         List<TmsFirstMileLogisticDTO.LogisticFee> logisticFeeList = addDTO.getLogisticFeeList();
         List<TmsCostDetailDTO.AddDTO> costDetailList = new ArrayList<>();
         for (TmsFirstMileLogisticDTO.LogisticFee logisticFee : logisticFeeList) {
+            if(StringUtils.isBlank(logisticFee.getCfgCostId())){
+                continue;
+            }
             BigDecimal fee = logisticFee.getEstimatedFee();
             if(logisticFee.getCfgCostId().equals(defaultCost.getId()) && Objects.isNull(fee) && StringUtils.isNotBlank(addDTO.getLogisticsChannelId())){
                 try {
