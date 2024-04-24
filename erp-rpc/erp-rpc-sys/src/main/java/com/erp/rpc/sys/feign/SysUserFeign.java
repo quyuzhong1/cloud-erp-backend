@@ -87,15 +87,6 @@ public interface SysUserFeign {
     List<String> getRoleIdList(@RequestBody String userId);
 
     /**
-     * 查询左菜单栏
-     *
-     * @param roleIds
-     * @return
-     */
-    @PostMapping("feign/user/findLeftMenuByRoleIds")
-    List<SysMenuVO> findLeftMenuByRoleIds(@RequestBody List<String> roleIds);
-
-    /**
      * 根据第三方平台 以及union id 获取用户id
      */
     @PostMapping("feign/user/getUserIdByThird")

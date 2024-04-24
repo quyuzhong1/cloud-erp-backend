@@ -167,19 +167,6 @@ public class SysUserFeignController extends BaseController {
     public void updateSysUserTime(@RequestBody List<String> userIdList) {
       sysUserInfoService.updateSysUserTime(userIdList);
     }
-
-    /**
-     * 查询左菜单栏
-     *
-     * @param roleIds
-     * @return
-     */
-    @PostMapping("/findLeftMenuByRoleIds")
-    public List<SysMenuVO> findLeftMenuByRoleIds(@RequestBody List<String> roleIds) {
-        return sysRoleMenuService.findLeftMenuByRoleIds(roleIds);
-    }
-
-
     /**
      * 根据第三方绑定的关系 获取用户信息
      *

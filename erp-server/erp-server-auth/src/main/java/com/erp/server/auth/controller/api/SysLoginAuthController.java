@@ -59,16 +59,7 @@ public class SysLoginAuthController extends BaseController {
     @LogAction(value = LogActionEnum.LOGIN, desc = "ERP登录")
     @RequestMapping("/accountLogin")
     public ApiResult<?> accountLogin(@RequestBody @Validated AccountLoginDTO loginDTO, HttpServletRequest request) {
-        return loginAuthService.processLogin(loginDTO, UserTypeEnum.ERP, request);
-    }
-
-    /**
-     * srm登录
-     */
-    @LogAction(value = LogActionEnum.LOGIN, desc = "SRM登录")
-    @RequestMapping("/srmAccountLogin")
-    public ApiResult<?> srmAccountLogin(@RequestBody @Validated AccountLoginDTO loginDTO, HttpServletRequest request) {
-        return loginAuthService.processLogin(loginDTO, UserTypeEnum.SRM, request);
+        return loginAuthService.processLogin(loginDTO, request);
     }
 
     /**
