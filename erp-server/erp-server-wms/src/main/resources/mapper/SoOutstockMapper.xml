@@ -310,7 +310,6 @@
 			so_outstock
 			T LEFT JOIN so_outstock_detail G ON T.ID = G.main_id 
 		<include refid="SoDataCompareByCondition"/>
-        	order by g.id limit #{pageSize}
     </select>
     
     <select id="getDataCompareByConditionCount" resultType="java.lang.Integer">
