@@ -107,7 +107,7 @@
                     and wr.approve_time::timestamp + '1 day' >= qb.qc_finish_time::timestamp
                 </if>
                 <if test="params.isTimeOut == true">
-                    and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status = 'waitQc'))
+                    and qb.qc_status != 'exemption'  and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status = 'waitQc'))
                 </if>
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
