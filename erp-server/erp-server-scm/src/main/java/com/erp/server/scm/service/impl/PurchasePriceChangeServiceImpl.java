@@ -265,7 +265,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         //获取明细信息
         List<PurchasePriceChangeDetailDTO.ViewDTO> purchasePriceDetailList = purchasePriceChangeDetailService.getByPriceChangeId(id);
         List<String> skuIds = purchasePriceDetailList.stream().map(PurchasePriceChangeDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuNoList = plmTaskFeign.listSkuBaseByIds(skuIds);
+        List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
 
         //获取供应商
         List<String> supplierIds = purchasePriceDetailList.stream().map(req -> req.getSupplierId()).distinct().collect(Collectors.toList());
@@ -723,7 +723,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         List<PurchasePriceChangeExportExcelDTO> resultList = new ArrayList<>(viewList.size());
 
         List<String> skuIds = viewList.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuNoList = plmTaskFeign.listSkuBaseByIds(skuIds);
+        List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
 
         //采购价目变更详情id
         List<String> changeDetailIdList = viewList.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getChangeDetailId).collect(Collectors.toList());

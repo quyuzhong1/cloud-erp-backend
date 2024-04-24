@@ -647,13 +647,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return
      */
     List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(List<String> skuIds);
-
-    /**
-     * 根据skuId获取sku基础信息
-     * @param skuIds
-     * @return
-     */
-    List<SkuVO> listSkuBaseByIds(List<String> skuIds);
     /**
      * @description: 远程搜索包装辅料SKU
      * @author Will
@@ -680,4 +673,13 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @date 2023-03-21 12:06
      */
     List<SkuVO> listSkuProductByIds(List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku产品信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author yl
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuInfoByIds(List<String> skuIds);
 }

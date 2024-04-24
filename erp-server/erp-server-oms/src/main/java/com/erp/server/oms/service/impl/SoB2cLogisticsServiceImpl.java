@@ -113,7 +113,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         String accessoriesSkuId = entity.getAccessoriesSkuId();
         String accessoriesSkuNo = "";
         if (StringUtils.isNotBlank(accessoriesSkuId)) {
-            List<SkuVO> skuList = plmTaskFeign.listSkuBaseByIds(Arrays.asList(entity.getAccessoriesSkuId()));
+            List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(Arrays.asList(entity.getAccessoriesSkuId()));
             if (CollectionUtils.isNotEmpty(skuList)) {
                 accessoriesSkuNo = skuList.get(0).getSkuNo();
             }

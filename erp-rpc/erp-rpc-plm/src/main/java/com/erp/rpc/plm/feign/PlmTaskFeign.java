@@ -500,17 +500,6 @@ public interface PlmTaskFeign {
     List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(@RequestBody List<String> skuIds);
 
     /**
-     * 根据skuid 集合获取到sku基础信息
-     *
-     * @param skuIds
-     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
-     * @author yl
-     * @date 2023-03-21 12:06
-     */
-    @PostMapping("feign/product/listSkuBaseByIds")
-    List<SkuVO> listSkuBaseByIds(@RequestBody List<String> skuIds);
-
-    /**
      * 根据skuid 集合获取到sku产品信息
      *
      * @param skuIds
@@ -531,4 +520,15 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/listSkuCostByIds")
     List<SkuVO> listSkuCostByIds(@RequestBody List<String> skuIds);
+
+    /**
+     * 根据skuid 集合获取到sku信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author yl
+     * @date 2023-03-21 12:06
+     */
+    @PostMapping("feign/product/listSkuInfoByIds")
+    List<SkuVO> listSkuInfoByIds(@RequestBody List<String> skuIds);
 }

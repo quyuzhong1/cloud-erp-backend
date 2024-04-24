@@ -7,6 +7,7 @@ public class RedisKeyConstant {
     public static final String MABANG_STOCK_SKU_LIST_KEY = "SKU:MABANG_STOCK_SKU_KEY";
 
     public static final String MABANG_FINANCIAL_SKU_LIST_KEY = "SKU:MABANG_FINANCIAL_SKU_KEY";
+    public static final String LIST_SKU_INFO = "SKU:LIST_SKU_INFO";
 
     //催办
     public static String PRESS="_PRESS";

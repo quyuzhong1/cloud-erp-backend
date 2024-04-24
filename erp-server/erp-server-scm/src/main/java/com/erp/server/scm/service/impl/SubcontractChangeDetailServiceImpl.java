@@ -211,7 +211,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
             throw new ServiceException(ApiError.ERROR_95163);
         }
         //产品信息
-        List<SkuVO> skuList = plmTaskFeign.listSkuBaseByIds(allSkuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(allSkuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
