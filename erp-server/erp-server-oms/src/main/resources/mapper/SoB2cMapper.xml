@@ -598,22 +598,22 @@
 
     <!--查询组包扫描的数据 根据code-->
     <select id="packageScanByCode" resultType="com.erp.model.oms.dto.PackageDTO$ScanResultDTO">
-         SELECT
-           sb.id AS soId,
-           sb.code AS soCode,
-           sb.bill_status AS billStatus,
-           sb.package_status AS packageStatus,
-           sbl.id as logisticsId,
-           sbl.logistics_channel_id AS logisticsChannelId,
-           sbl.track_no AS trackNo,
-           sbl.code AS transportNo,
-           sbl.weight AS weight,
-           sb.is_intercept
-         FROM so_b2c sb
-         LEFT JOIN so_b2c_logistics sbl
-         ON sb.id = sbl.main_id AND sbl.is_deleted = FALSE
-         WHERE sb.is_deleted = FALSE
-         AND (sb.code = #{code}
+        SELECT
+        sb.id AS soId,
+        sb.code AS soCode,
+        sb.bill_status AS billStatus,
+        sb.package_status AS packageStatus,
+        sbl.logistics_channel_id AS logisticsChannelId,
+        sbl.code AS transportNo,
+        sbl.track_no AS trackNo,
+        sbl.weight AS weight,
+        sbl.transfer_logistics_supplier_id,
+        sbl.transfer_logistics_channel_id
+        FROM so_b2c sb
+        LEFT JOIN so_b2c_logistics sbl
+        ON sb.id = sbl.main_id AND sbl.is_deleted = FALSE
+        WHERE sb.is_deleted = FALSE
+        AND (sb.code = #{code}
                   OR
               #{code} = ANY(string_to_array(sbl.track_no,','))
              OR
@@ -631,6 +631,7 @@
             sb.package_status AS packageStatus,
             sbl.logistics_channel_id AS logisticsChannelId,
             sbl.code AS trackNo,
+            sbl.track_no AS trackNo,
             sbl.weight AS weight,
             sbr.receiver_name AS receiverName,
             sbr.country_name AS countryName,
@@ -682,7 +683,9 @@
         sbl.logistics_channel_id AS logisticsChannelId,
         sbl.code AS transportNo,
         sbl.track_no AS trackNo,
-        sbl.weight AS weight
+        sbl.weight AS weight,
+        sbl.transfer_logistics_supplier_id,
+        sbl.transfer_logistics_channel_id
         FROM so_b2c sb
         LEFT JOIN so_b2c_logistics sbl
         ON sb.id = sbl.main_id AND sbl.is_deleted = FALSE

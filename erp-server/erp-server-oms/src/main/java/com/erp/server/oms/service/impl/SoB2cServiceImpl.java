@@ -63,7 +63,10 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.SettingForecastEntity;
+import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
+import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
+import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -281,6 +284,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private WarehouseLocationFeign warehouseLocationFeign;
+
+    @Resource
+    private TransferLogisticsFeign transferLogisticsFeign;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -5750,23 +5756,38 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.isNull(scanResult)) {
             throw new ServiceException("未找到对应单号");
         }
-       Boolean isAutoOut = scanDTO.getIsAutoOut();
+
         String packageStatus = scanResult.getPackageStatus();
         String already = PackageStatusEnum.ALREADY.getCode();
         if (already.equals(packageStatus)) {
             throw new ServiceException("订单单号已组包完成，无法重复组包");
         }
-        //扫描判断：扫描判断是否平台取消以及拦截单【异常提示：订单单号被拦截/取消，不可组包操作】
-        if (TransferStatusEnum.WAIT.getCode().equals(scanResult.getForcastStatus())
-                || TransferStatusEnum.FAILURE.getCode().equals(scanResult.getForcastStatus())) {
-            throw new ServiceException("订单单号被取消不可组包，预报成功才可以组包");
-        }
-        if (scanResult.getIsIntercept()) {
-            throw new ServiceException("订单被拦截，不可组包操作");
-        }
 
 
         SoB2cEntity entity = this.getById(scanResult.getSoId());
+
+
+        //扫描判断：扫描判断是否平台取消以及拦截单【异常提示：订单单号被拦截/取消，不可组包操作】
+        if (TransferStatusEnum.WAIT.getCode().equals(scanResult.getForcastStatus())
+                || TransferStatusEnum.FAILURE.getCode().equals(scanResult.getForcastStatus())) {
+            //校验订单状态中转状态为待中转/上传失败，扫描识别后非成功状态若勾选则取消勾选并禁用，若未勾选则直接禁用
+            if (scanResult.getIsAutoOut()) {
+                scanResult.setIsAutoOut(Boolean.FALSE);
+            }
+            scanResult.setDisabled(Boolean.TRUE);
+        }
+
+        TransferLogisticsStatusEnum platformTransferStatus = transferLogisticsFeign.getPlatformTransferStatus(scanResult.getTransferLogisticsSupplierId(), entity.getShippingOrderNo());
+        if (ObjectUtil.isEmpty(platformTransferStatus)
+                || TransferLogisticsStatusEnum.DELETED.getCode().equals(platformTransferStatus.getCode())
+                || TransferLogisticsStatusEnum.UNUSUAL.getCode().equals(platformTransferStatus.getCode())
+        ) {
+            throw new ServiceException("单据对应的物流商单号被拦截/取消/异常，不可组包操作");
+        }
+
+        if (entity.getIsIntercept()) {
+            throw new ServiceException("订单被拦截，不可组包操作");
+        }
 
         String billStatus = scanResult.getBillStatus();
         //待发货
@@ -5817,13 +5838,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String logisticsChannelId = scanResult.getLogisticsChannelId();
         if (StringUtils.isNotBlank(logisticsChannelId)) {
 
+            //查询对应的中转服务商
+            TransferLogisticsSupplierEntity supplierEntity = transferLogisticsFeign.getLogisticsSupplierById(scanResult.getTransferLogisticsSupplierId());
+            if (ObjectUtil.isNotEmpty(supplierEntity)) {
+                scanResult.setTransferLogisticsSupplierName(supplierEntity.getSupplierName());
+            }
 
-            SettingForecastDTO.FindSettingForecastDTO settingForecastDTO = new SettingForecastDTO.FindSettingForecastDTO();
-            settingForecastDTO.setLogisticsChannelId(logisticsChannelId);
-            SettingForecastDTO.ForecastStatusDTO forecastStatusDTO = forecastFeign.getByLogisticsChannelId(settingForecastDTO);
-            if (ObjectUtil.isNotEmpty(forecastStatusDTO)) {
-                scanResult.setTransferLogisticsChannelId(forecastStatusDTO.getTransferLogisticsChannelId());
-                scanResult.setTransferLogisticsChannelName(forecastStatusDTO.getTransferLogisticsChannelName());
+            //查询中转服务商对应的渠道
+            List<TransferLogisticsChannelEntity> logisticsChannelEntityList = transferLogisticsFeign.listLogisticsChannelByMainId(Arrays.asList(scanResult.getTransferLogisticsSupplierId()));
+            if (CollectionUtils.isNotEmpty(logisticsChannelEntityList)) {
+                TransferLogisticsChannelEntity transferLogisticsChannelEntity = logisticsChannelEntityList.stream().filter(req -> scanResult.getTransferLogisticsChannelId().equals(req.getId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(transferLogisticsChannelEntity)) {
+                    scanResult.setTransferLogisticsChannelName(transferLogisticsChannelEntity.getName());
+                }
             }
 
             LogisticsChannelDTO.BaseDTO baseDTO = logisticsFeign.getChannelInfoById(logisticsChannelId);
@@ -5831,13 +5858,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 scanResult.setLogisticsChannelName(baseDTO.getName());
                 scanResult.setLogisticsSupplierId(baseDTO.getMainId());
                 scanResult.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
-
-                //中转物流商
-                SettingForecastEntity settingForecastEntity = forecastFeign.getSettingForecastByLogisticsSupplierId(scanResult.getLogisticsSupplierId());
-                if (ObjectUtil.isNotEmpty(settingForecastEntity)) {
-                    scanResult.setTransferLogisticsSupplierId(settingForecastEntity.getTransferLogisticsSupplierId());
-                    scanResult.setTransferLogisticsSupplierName(settingForecastEntity.getTransferLogisticsSupplierName());
-                }
             }
         }
 

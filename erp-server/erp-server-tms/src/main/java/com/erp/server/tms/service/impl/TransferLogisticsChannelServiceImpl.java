@@ -9,19 +9,21 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
+import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.entity.TransferDeclareEntity;
+import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
+import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.server.tms.convert.TransferLogisticsChannelConverter;
+import com.erp.server.tms.handler.TransferLogisticsRegistry;
 import com.erp.server.tms.mapper.TransferLogisticsChannelMapper;
-import com.erp.server.tms.service.CommonService;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.TransferDeclareService;
-import com.erp.server.tms.service.TransferLogisticsChannelService;
+import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +51,10 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
     private CommonService commonService;
     @Autowired
     private TransferDeclareService transferDeclareService;
+    @Autowired
+    private TransferLogisticsRegistry transferLogisticsRegistry;
+    @Autowired
+    private TransferLogisticsAuthService transferLogisticsAuthService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -203,6 +209,22 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
             return this.updateById(transferLogisticsChannelEntity);
         }
         return this.save(transferLogisticsChannelEntity);
+    }
+
+    @Override
+    public TransferLogisticsStatusEnum getPlatformTransferStatus(String shippingOrderNo, String transferLogisticsSupplierId) {
+        //查询授权信息
+        TransferLogisticsAuthEntity authEntity = transferLogisticsAuthService.getByMainId("", transferLogisticsSupplierId);
+        if (ObjectUtil.isEmpty(authEntity)) {
+            new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
+        }
+
+        TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
+        ApiResult<TransferLogisticsOrderDTO> result = service.getOrderByCode(shippingOrderNo, authEntity.getId());
+        if (result.getCode() == 200) {
+            return result.getData().getOrderStatusEnum();
+        }
+        return null;
     }
 
     /**

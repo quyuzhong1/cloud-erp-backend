@@ -82,7 +82,6 @@ public class PackageServiceImpl implements PackageService {
                 item.setLogisticsSupplierId(logisticsChannel.getLogisticsSupplierId());
                 item.setLogisticsSupplierName(logisticsChannel.getLogisticsSupplierName());
             }
-
         }
 
         Map<String, List<PackageDTO.ScanResultDTO>> map = list.stream().filter(s -> StringUtils.isNotBlank(s.getLogisticsSupplierId())).
@@ -112,6 +111,7 @@ public class PackageServiceImpl implements PackageService {
 
         return result;
     }
+
 
 
 }

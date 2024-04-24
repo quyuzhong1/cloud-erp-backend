@@ -126,11 +126,6 @@ public class PackageDTO implements Serializable {
         private String forcastStatus;
 
         /**
-         * 是否拦截
-         */
-        private Boolean isIntercept;
-
-        /**
          * 中转商渠道id
          */
         private String transferLogisticsChannelId;
@@ -166,7 +161,6 @@ public class PackageDTO implements Serializable {
         /**
          * 是否自动出库
          */
-        @NotNull(message = "是否自动出库不能为空")
         private Boolean isAutoOut;
     }
 
