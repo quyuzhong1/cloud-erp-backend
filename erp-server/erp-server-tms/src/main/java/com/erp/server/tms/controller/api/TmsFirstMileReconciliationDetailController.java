@@ -198,6 +198,7 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
             tableAlias = "tfmrd"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "头程对账单导出Excel数据")
+    @WebAdvanceQuery(handler = TmsFirstMileReconciliationQueryHandler.class)
     public void exportList(@RequestBody @Validated TmsFirstMileReconciliationDetailDTO.ExportDTO dto, HttpServletResponse response) {
         tmsFirstMileReconciliationDetailService.exportList(dto, response);
     }
