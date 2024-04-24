@@ -2,6 +2,7 @@ package com.erp.rpc.tms.feign;
 
 
 import com.common.business.dto.base.BaseIdDTO;
+import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
@@ -61,4 +62,8 @@ public interface TransferLogisticsFeign {
     @GetMapping("/getPlatformTransferStatus")
     TransferLogisticsStatusEnum getPlatformTransferStatus(@RequestParam("shippingOrderNo") String shippingOrderNo,
                                                           @RequestParam("transferLogisticsSupplierId") String transferLogisticsSupplierId);
+
+
+    @PostMapping("/feign/transferLogistics/listByTransferChannelIds")
+    List<TransferLogisticsChannelDTO.ListSelectDTO> listByTransferChannelIds(@RequestBody List<String> channelIds);
 }

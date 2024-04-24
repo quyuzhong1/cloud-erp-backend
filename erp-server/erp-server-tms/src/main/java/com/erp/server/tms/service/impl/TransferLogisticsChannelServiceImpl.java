@@ -96,7 +96,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
 
     @Override
     public List<TransferLogisticsChannelDTO.ListSelectDTO> listLogisticsChannel(List<String> logisticsSupplierIds) {
-        return baseMapper.listLogisticsChannel(logisticsSupplierIds);
+        return baseMapper.listLogisticsChannel(logisticsSupplierIds,new ArrayList<>());
     }
 
     @Override
@@ -191,6 +191,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
     public List<BaseDropDownDTO.DisabledDTO> listByLogisticsSupplierId(String transferLogisticsSupplierId) {
         List<TransferLogisticsChannelEntity> channelList = this.listByMainIds(Arrays.asList(transferLogisticsSupplierId));
         List<BaseDropDownDTO.DisabledDTO> resultList = TransferLogisticsChannelConverter.INSTANCE.convertByChannelDown(channelList);
+        Collections.sort(resultList, Comparator.comparing(BaseDropDownDTO.DisabledDTO::getDisabled));
         return resultList;
     }
 
@@ -225,6 +226,11 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
             return result.getData().getOrderStatusEnum();
         }
         return null;
+    }
+
+    @Override
+    public List<TransferLogisticsChannelDTO.ListSelectDTO> listByTransferChannelIds(List<String> channelIds) {
+        return baseMapper.listLogisticsChannel(new ArrayList<>(),channelIds);
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.erp.rpc.tms.feign;
 
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -54,4 +55,7 @@ public interface TransferDeclareFeign {
      */
     @PostMapping("/feign/transferDeclare/listByLogisticsChannelIdList")
     List<TransferDeclareDetailEntity> listByLogisticsChannelIdList(@RequestBody List<String> logisticsChannelIdList);
+
+    @PostMapping("/feign/transferDeclare/b2cOrderForecast")
+    TransferDeclareDTO.ShippingOrderDTO b2cOrderForecast(@RequestBody TransferDeclareDTO.B2cOrderForecastDTO b2cOrderForecastDTO);
 }

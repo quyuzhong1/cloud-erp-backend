@@ -50,6 +50,12 @@
                 #{item}
             </foreach>
         </if>
+        <if test="transferChannelIds != null and transferChannelIds.size > 0">
+            and lc.id in
+            <foreach collection="transferChannelIds" open="(" close=")" item="item" separator=",">
+                #{item}
+            </foreach>
+        </if>
         order by lc.disabled asc,lc.id desc
     </select>
 

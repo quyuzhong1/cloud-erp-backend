@@ -135,6 +135,17 @@ public class SoB2cLogisticsEntity extends BaseEntity<SoB2cLogisticsEntity> {
     @TableField("height")
     private BigDecimal height;
 
+    /**
+     * 中转物流商id
+     */
+    @TableField("transfer_logistics_supplier_id")
+    private String transferLogisticsSupplierId;
+
+    /**
+     * 中转商渠道id
+     */
+    @TableField("transfer_logistics_channel_id")
+    private String transferLogisticsChannelId;
 
     public static final String MAIN_ID = "main_id";
 

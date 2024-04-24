@@ -28,7 +28,7 @@ public interface TransferLogisticsChannelMapper extends BaseMapper<TransferLogis
      * @param logisticsSupplierIds
      * @return java.util.List<com.erp.model.tms.dto.TransferLogisticsChannelDTO.ListSelectDTO>
      **/
-    List<TransferLogisticsChannelDTO.ListSelectDTO> listLogisticsChannel(@Param("logisticsSupplierIds") List<String> logisticsSupplierIds);
+    List<TransferLogisticsChannelDTO.ListSelectDTO> listLogisticsChannel(@Param("logisticsSupplierIds") List<String> logisticsSupplierIds,@Param("transferChannelIds") List<String> transferChannelIds);
 
     /**
      * 根据供应商id 获取启用禁用的列表

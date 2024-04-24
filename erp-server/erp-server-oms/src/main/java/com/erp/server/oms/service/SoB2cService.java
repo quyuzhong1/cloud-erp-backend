@@ -869,4 +869,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return Boolean
      */
     Boolean updateIsMatchWarehouseRuleById(String id);
+
+    List<BatchResultDTO> orderForecast(SoB2cDTO.TransferDeclareDTO dto);
 }

@@ -929,6 +929,14 @@ public class SoB2cController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+    /**
+     * 订单预报
+     */
+    @PostMapping("/orderForecast")
+    public ApiResult<List<BatchResultDTO>> orderForecast(@RequestBody @Validated SoB2cDTO.TransferDeclareDTO dto) {
+        List<BatchResultDTO> resultDTOS = soB2cService.orderForecast(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
     /**
      * 中转报关

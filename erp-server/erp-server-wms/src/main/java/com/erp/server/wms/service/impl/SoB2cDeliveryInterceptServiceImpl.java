@@ -28,6 +28,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
@@ -41,6 +42,7 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
+import com.erp.rpc.tms.feign.TransferLogisticsFeign;
 import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.rpc.wms.feign.ThirdWarehouseFeign;
 import com.erp.server.wms.mapper.SoB2cDeliveryInterceptMapper;
@@ -105,6 +107,9 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
     @Resource
     private ThirdWarehouseFeign thirdWarehouseFeign;
+
+    @Resource
+    private TransferLogisticsFeign transferLogisticsFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -236,6 +241,17 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         }
 
         SoB2cEntity soB2cEntity = soB2cEntityList.get(0);
+
+        //校验中转状态
+        if (TransferStatusEnum.SUCCESS.getCode().equals(soB2cEntity.getTransferStatus()) ) {
+            List<TransferLogisticsChannelDTO.ListSelectDTO> transferList = transferLogisticsFeign.listByTransferChannelIds(Arrays.asList(soB2cLogisticsEntities.get(0).getTransferLogisticsChannelId()));
+            String transferInfo = "";
+            if(CollectionUtils.isNotEmpty(transferList)){
+                transferInfo = transferList.get(0).getTransferLogisticSupplierName() + "-" +transferList.get(0).getName();
+            }
+            throw new ServiceException(StrUtil.format("订单{}已经预报给{}，请取消预报后操作",soB2cEntity.getCode(),transferInfo));
+        }
+
         LogisticsBillDTO.CancelBillDTO dto = LogisticsBillDTO.CancelBillDTO.builder()
                 .channelId(entity.getLogisticsChannelId())
                 .transportNo(entity.getTransportNo())
@@ -319,7 +335,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                     //已组包
                     String alreadyPackage = PackageStatusEnum.ALREADY.getCode();
                     //已中转
-                    String alreadyTransfer = TransferStatusEnum.ALREADY.getCode();
+                    String alreadyTransfer = TransferStatusEnum.SUCCESS.getCode();
                     if (alreadyPackage.equals(packageStatus) || alreadyTransfer.equals(transferStatus)) {
                         throw new ServiceException(ApiError.ALREADY_PACKAGE_TRANSFER_NOT_INTERCEPT, entity.getCode());
                     }

@@ -25,6 +25,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
@@ -106,6 +107,7 @@ import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -287,6 +289,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private TransferLogisticsFeign transferLogisticsFeign;
+
+    @Resource
+    @Lazy
+    private SoB2cServiceImpl service;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -1234,6 +1240,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //选择了渠道则更新
         if (StrUtil.isNotBlank(logisticsChannelId)) {
             if (Boolean.TRUE.equals(isCover)) {
+                //预报成功不支持配货
+                if (TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())) {
+                    throw new ServiceException(StrUtil.format("B2C销售订单【{}】已预报成功不可更换渠道", entity.getCode()));
+                }
+
                 //如果有物流单号 就要去取消
                 if (StringUtils.isNotBlank(code)) {
                     //已存在的渠道为空
@@ -1559,6 +1570,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //校验是冻结
         if (entity.getIsFrozen()) {
             throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, entity.getCode());
+        }
+
+        //校验中转状态
+        if (TransferStatusEnum.FAILURE.getCode().equals(entity.getTransferStatus()) || TransferStatusEnum.WAIT.getCode().equals(entity.getTransferStatus())) {
+            throw new ServiceException(StrUtil.format("{}未成功预报无法提交发货",entity.getCode()));
         }
 
         //物流渠道
@@ -4314,8 +4330,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         String unit = UnitEnum.WeightUnitEnum.G.getCode();
 
-        String alreadyTransfer = TransferStatusEnum.ALREADY.getCode();
-        String alreadyTransferCode = soB2cList.stream().filter(s -> alreadyTransfer.equals(s.getTransferStatus())).map(SoB2cEntity::getCode).collect(Collectors.joining(","));
+        String alreadyTransfer = TransferStatusEnum.SUCCESS.getCode();
+        String alreadyTransferCode = soB2cList.stream().filter(s -> !alreadyTransfer.equals(s.getTransferStatus())).map(SoB2cEntity::getCode).collect(Collectors.joining(","));
         if (StringUtils.isNotBlank(alreadyTransferCode)) {
             throw new ServiceException(ApiError.ERROR_WAIT_TRANSFER, alreadyTransferCode);
         }
@@ -4383,13 +4399,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         for (TransferDeclareDTO.AddDTO item : transferDeclareList) {
             try {
                 BaseResultDTO.AddDTO result = transferDeclareFeign.add(item);
-                if (StringUtils.isNotBlank(result.getId())) {
-                    List<String> soIdList=item.getDetailList().stream().map(TransferDeclareDetailDTO.AddDTO::getSoId).collect(Collectors.toList());
-                    UpdateStateDTO.UpdateByStrStatusDTO dto = new UpdateStateDTO.UpdateByStrStatusDTO();
-                    dto.setStatus(TransferStatusEnum.ALREADY.getCode());
-                    dto.setIds(soIdList);
-                    this.updateTransferStatus(dto);
-                }
             } catch (Exception e) {
                 log.error("中转报关单生成失败，错误信息 {}", e.getMessage());
             }
@@ -4462,6 +4471,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> billStatusList = Arrays.asList(waitDistribution, inDistribution);
         if (!billStatusList.contains(billStatus)) {
             throw new ServiceException(ApiError.B2C_NOT_DISAPPROVE);
+        }
+        //预报成功不支持反审核
+        if (TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),StrUtil.format("B2C销售订单【{}】已预报成功不支持反审核", entity.getCode()));
         }
 
         ApproveStatusEnum waitSubmit = ApproveStatusEnum.WAIT_SUBMIT;
@@ -6718,6 +6731,97 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         return lambdaUpdate().eq(SoB2cEntity::getId,id).set(SoB2cEntity::getIsMatchWarehouseRule,Boolean.FALSE).update();
     }
+
+    @Override
+    public List<BatchResultDTO> orderForecast(SoB2cDTO.TransferDeclareDTO dto) {
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        List<SoB2cEntity> soB2cEntityList = listByIds(dto.getIds());
+        List<String> ids = soB2cEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cLogisticsService.listByMainIds(ids);
+        List<SoB2cReceiverEntity> soReceiiveEntityList = soB2cReceiverService.listByMainIds(ids);
+        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoEntityList = shopInfoService.listByIds(shopIds);
+        List<TransferDeclareProductDTO> allTransferDeclareProductDTOList = getTransferDeclareProductBySoIds(ids);
+        List<SoB2cEntity> updateList = new ArrayList<>();
+        List<String> deleteErrorIds = new ArrayList<>();
+        List<SoB2cErrorEntity> errorList = soB2cErrorService.getByMainIdsAndType(ids, SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
+        List<SoB2cErrorEntity> addOrUpdateErrors = new ArrayList<>();
+        for (SoB2cEntity soB2cEntity : soB2cEntityList) {
+            SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntityList.stream().filter(v->v.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
+            if(Objects.isNull(soB2cLogisticsEntity)){
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"未找到物流信息"));
+                continue;
+            }
+            if(StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId()) || StringUtils.isBlank(soB2cLogisticsEntity.getCode())){
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"仅可操作有物流渠道+物流单号的单据"));
+                continue;
+            }
+            SoB2cReceiverEntity soB2cReceiverEntity = soReceiiveEntityList.stream().filter(v->v.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
+            if(Objects.isNull(soB2cReceiverEntity)){
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"未找到买家信息"));
+                continue;
+            }
+            List<TransferDeclareProductDTO> transferDeclareProductDTOList = allTransferDeclareProductDTOList.stream().filter(v->v.getSoId().equals(soB2cEntity.getId())).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(transferDeclareProductDTOList)){
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"sku明细为空"));
+                continue;
+            }
+            if(!TransferStatusEnum.WAIT.getCode().equals(soB2cEntity.getTransferStatus()) && !TransferStatusEnum.FAILURE.getCode().equals(soB2cEntity.getTransferStatus())){
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"仅可操作中转状态为待中转/预报失败的单据"));
+                continue;
+            }
+
+            ShopInfoEntity shopInfo = shopInfoEntityList.stream().filter(v->v.getId().equals(soB2cEntity.getShopId())).findFirst().orElse(new ShopInfoEntity());
+            TransferDeclareDTO.B2cOrderForecastDTO b2cOrderForecastDTO = TransferDeclareDTO.B2cOrderForecastDTO.builder()
+                    .soB2cEntity(soB2cEntity)
+                    .soB2cLogisticsEntity(soB2cLogisticsEntity)
+                    .soB2cReceiverEntity(soB2cReceiverEntity)
+                    .shopInfoEntity(shopInfo)
+                    .transferDeclareProductDTOList(transferDeclareProductDTOList)
+                    .build();
+            TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO = transferDeclareFeign.b2cOrderForecast(b2cOrderForecastDTO);
+            SoB2cErrorEntity error = errorList.stream().filter(e -> e.getMainId().equals(shippingOrderDTO.getSoId())).findFirst().orElse(new SoB2cErrorEntity());
+            //成功--更新销售订单 第三方单号，删除异常信息 ；失败--更新销售订单异常标识，新增异常信息
+            if(shippingOrderDTO.getSuccess()){
+                soB2cEntity.setShippingOrderNo(shippingOrderDTO.getShippingOrderNo());
+                soB2cEntity.setTransferStatus(TransferStatusEnum.SUCCESS.getCode());
+                if(StringUtils.isNotBlank(error.getId())){
+                    deleteErrorIds.add(error.getId());
+                }
+            }else{
+                soB2cEntity.setTransferStatus(TransferStatusEnum.FAILURE.getCode());
+                if(StringUtils.isNotBlank(shippingOrderDTO.getSign())){
+                    soB2cEntity.setSignOrderError(shippingOrderDTO.getSign());
+                    error.setMainId(shippingOrderDTO.getSoId())
+                            .setType(shippingOrderDTO.getType())
+                            .setMessage(shippingOrderDTO.getMessage())
+                            .setParamJson(shippingOrderDTO.getSoId());
+                    addOrUpdateErrors.add(error);
+                }
+                resultDTOList.add(BatchResultDTO.fail(shippingOrderDTO.getSoId(),shippingOrderDTO.getCode(),shippingOrderDTO.getMessage()));
+            }
+            updateList.add(soB2cEntity);
+        }
+        //更新操作同个事务
+        service.updateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors);
+        return resultDTOList;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void updateSoAndError(List<SoB2cEntity> updateB2cList ,List<String> deleteErrorIds, List<SoB2cErrorEntity> addOrUpdateErrors){
+        //更新或添加异常记录
+        if (CollectionUtils.isNotEmpty(addOrUpdateErrors)){
+            soB2cErrorService.saveOrUpdateBatch(addOrUpdateErrors);
+        }
+        //删除失败异常记录
+        if (CollectionUtils.isNotEmpty(deleteErrorIds)){
+            soB2cErrorService.removeByIds(deleteErrorIds);
+        }
+        if(CollectionUtils.isNotEmpty(updateB2cList)){
+            this.updateBatchById(updateB2cList);
+        }
+    }
+
 
     /**
      * @description: 导出数据处理

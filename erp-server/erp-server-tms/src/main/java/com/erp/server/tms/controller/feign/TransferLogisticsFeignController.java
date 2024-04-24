@@ -2,16 +2,20 @@ package com.erp.server.tms.controller.feign;
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.anno.LogSystemModule;
+import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.server.tms.service.TransferLogisticsChannelService;
+import com.erp.server.tms.service.TransferLogisticsChannelService;
 import com.erp.server.tms.service.TransferLogisticsSupplierService;
+import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -73,5 +77,17 @@ public class TransferLogisticsFeignController {
     public TransferLogisticsStatusEnum getPlatformTransferStatus(@RequestParam("shippingOrderNo") String shippingOrderNo,
                                                                  @RequestParam("transferLogisticsSupplierId") String transferLogisticsSupplierId) {
         return transferLogisticsChannelService.getPlatformTransferStatus(shippingOrderNo, transferLogisticsSupplierId);
+    }
+
+    /**
+     * 根据物流渠道id 获取到对应列表
+     * @return
+     */
+    @PostMapping("/listByTransferChannelIds")
+    public List<TransferLogisticsChannelDTO.ListSelectDTO> listByTransferChannelIds(@RequestBody List<String> channelIds){
+        if(CollectionUtils.isEmpty(channelIds)){
+            return new ArrayList<>();
+        }
+        return transferLogisticsChannelService.listByTransferChannelIds(channelIds);
     }
 }

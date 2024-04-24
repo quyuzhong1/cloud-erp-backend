@@ -138,4 +138,6 @@ public interface TransferLogisticsChannelService extends SuperService<TransferLo
      **/
     TransferLogisticsStatusEnum getPlatformTransferStatus(String shippingOrderNo, String transferLogisticsSupplierId);
 
+
+    List<TransferLogisticsChannelDTO.ListSelectDTO> listByTransferChannelIds(List<String> channelIds);
 }
