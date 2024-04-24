@@ -5781,7 +5781,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         SoB2cEntity entity = this.getById(scanResult.getSoId());
 
-
         //扫描判断：扫描判断是否平台取消以及拦截单【异常提示：订单单号被拦截/取消，不可组包操作】
         if (TransferStatusEnum.WAIT.getCode().equals(scanResult.getForcastStatus())
                 || TransferStatusEnum.FAILURE.getCode().equals(scanResult.getForcastStatus())) {
