@@ -276,6 +276,8 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
         List<String> logisticsChannelIdList = settingForecastChannelList.stream().filter(obj -> StrUtil.equals(dto.getId(), obj.getMainId()))
                 .map(SettingForecastChannelEntity::getLogisticsChannelId).collect(Collectors.toList());
         dto.setLogisticsChannelIdList(logisticsChannelIdList);
+        dto.setTransferLogisticsChannelId(entity.getTransferLogisticsChannelId());
+        dto.setIsAutoForecast(entity.getIsAutoForecast());
         return dto;
     }
 

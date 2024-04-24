@@ -151,11 +151,6 @@ public class SettingForecastDTO implements Serializable {
         private String transferLogisticsChannelId;
 
         /**
-         * 中转商渠道名
-         */
-        private String transferLogisticsChannelName;
-
-        /**
          * 是否自动预报  true 是
          */
         @NotNull(message = "是否自动预报不能为空")
