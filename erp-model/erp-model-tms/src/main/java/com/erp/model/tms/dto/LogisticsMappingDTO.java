@@ -94,6 +94,7 @@ public class LogisticsMappingDTO implements Serializable {
 
         /**
          * 标记发货订单类型（transportNo运单号、trackNo跟踪号）
+         * 来源 http://172.16.100.11:3002/project/128/interface/api/25522  key=orderDeliveryMarkType
          */
         @NotBlank(message = "标发订单类型不能为空")
         @Size(max = 30,message = "标发订单类型最大长度不能超过32位")
