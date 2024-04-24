@@ -40,7 +40,9 @@
         enable_transfer_time,
         declare_platform,
         transfer_logistics_supplier_id,
-        transfer_logistics_supplier_name
+        transfer_logistics_supplier_name,
+        transfer_logistics_channel_id,
+        transfer_logistics_channel_name
     </sql>
 
     <select id="getByLogisticsChannelId" resultType="com.erp.model.tms.entity.SettingForecastEntity">

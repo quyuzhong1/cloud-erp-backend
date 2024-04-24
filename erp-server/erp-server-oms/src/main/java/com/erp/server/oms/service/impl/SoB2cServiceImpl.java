@@ -19,6 +19,7 @@ import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.*;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
@@ -63,6 +64,7 @@ import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.SettingForecastEntity;
+import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -108,6 +110,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -5748,6 +5751,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.isNull(scanResult)) {
             throw new ServiceException("未找到对应单号");
         }
+       Boolean isAutoOut = scanDTO.getIsAutoOut();
         String packageStatus = scanResult.getPackageStatus();
         String already = PackageStatusEnum.ALREADY.getCode();
         if (already.equals(packageStatus)) {
@@ -5763,7 +5767,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
 
-
+        SoB2cEntity entity = this.getById(scanResult.getSoId());
 
         String billStatus = scanResult.getBillStatus();
         //待发货
@@ -5813,6 +5817,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //物流渠道id
         String logisticsChannelId = scanResult.getLogisticsChannelId();
         if (StringUtils.isNotBlank(logisticsChannelId)) {
+
+
+            SettingForecastDTO.FindSettingForecastDTO settingForecastDTO = new SettingForecastDTO.FindSettingForecastDTO();
+            settingForecastDTO.setLogisticsChannelId(logisticsChannelId);
+            SettingForecastDTO.ForecastStatusDTO forecastStatusDTO = forecastFeign.getByLogisticsChannelId(settingForecastDTO);
+            if (ObjectUtil.isNotEmpty(forecastStatusDTO)) {
+                scanResult.setTransferLogisticsChannelId(forecastStatusDTO.getTransferLogisticsChannelId());
+                scanResult.setTransferLogisticsChannelName(forecastStatusDTO.getTransferLogisticsChannelName());
+            }
+
+
+
             LogisticsChannelDTO.BaseDTO baseDTO = logisticsFeign.getChannelInfoById(logisticsChannelId);
             if (Objects.nonNull(baseDTO)) {
                 scanResult.setLogisticsChannelName(baseDTO.getName());
@@ -5828,7 +5844,55 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
 
+        //自动发货
+        /*if (isAutoOut && PackageStatusEnum.ALREADY.getCode().equals(entity.getPackageStatus())) {
 
+            //如果是待上传或上传失败则直接返回
+            if (TransferStatusEnum.WAIT.getCode().equals(scanResult.getForcastStatus())
+                    || TransferStatusEnum.FAILURE.getCode().equals(scanResult.getForcastStatus())) {
+                //校验订单状态中转状态为待中转/上传失败，扫描识别后非成功状态若勾选则取消勾选并禁用，若未勾选则直接禁用
+                if (scanResult.getIsAutoOut()) {
+                    scanResult.setIsAutoOut(Boolean.FALSE);
+                }
+                scanResult.setDisabled(Boolean.TRUE);
+                return scanResult;
+            }
+            //调用第三方平台SDK发货
+            try {
+                if (this.checkPlatformShipOrder(entity.getSourceId())) {
+                    //调用第三方平台SDK发货
+                    PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+                    platformShipOrderDTO.setSoB2cId(entity.getSourceId());
+                    platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+                }
+            } catch (Exception e) {
+                log.error("销售单【{}】 标记发货失败 >>>错误信息{}", e.getMessage());
+                throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
+            }
+
+            //获取一个当前时间当作发货时间
+            LocalDateTime deliveryTime = LocalDateTime.now();
+
+            //将发货状态更新为已发货
+            entity.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getCode());
+            entity.setDeliveryTime(deliveryTime);
+            if (!soB2cDeliveryService.updateById(entity)) {
+                throw new ServiceException("发货单更新失败");
+            }
+            //修改订单状态待发货
+            SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
+            updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
+            updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            updateDeliveryTimeDTO.setDeliveryTime(deliveryTime);
+            soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
+
+            soB2cDeliveryService.generateB2cSoOutstock(entity);
+
+            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", commonService.getUserInfo().getUserName(), "称重出库", entity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "称重出库");
+
+        }*/
         return scanResult;
     }
 

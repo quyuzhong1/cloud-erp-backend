@@ -130,6 +130,15 @@ public class PackageDTO implements Serializable {
          */
         private Boolean isIntercept;
 
+        /**
+         * 中转商渠道id
+         */
+        private String transferLogisticsChannelId;
+
+        /**
+         * 中转商渠道名
+         */
+        private String transferLogisticsChannelName;
     }
 
     /**

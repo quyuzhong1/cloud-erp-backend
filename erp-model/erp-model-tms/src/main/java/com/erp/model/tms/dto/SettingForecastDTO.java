@@ -192,12 +192,20 @@ public class SettingForecastDTO implements Serializable {
          */
         private String declarePlatformName;
 
-
         /**
          * 渠道名称
          */
         private String LogisticsChannelName;
 
+        /**
+         * 中转商渠道id
+         */
+        private String transferLogisticsChannelId;
+
+        /**
+         * 中转商渠道名
+         */
+        private String transferLogisticsChannelName;
     }
 
     @Data

@@ -165,6 +165,8 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
             LogisticsPlatformEnum declarePlatformEnum = LogisticsPlatformEnum.getByCode(declarePlatform);
             String declarePlatformName = Objects.nonNull(declarePlatformEnum) ? declarePlatformEnum.getName() : "";
             forecastStatus.setDeclarePlatformName(declarePlatformName);
+            forecastStatus.setTransferLogisticsChannelId(entity.getTransferLogisticsChannelId());
+            forecastStatus.setTransferLogisticsChannelName(entity.getTransferLogisticsChannelName());
             return forecastStatus;
         }
 
