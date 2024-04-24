@@ -574,7 +574,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 errorMsgList.add("未找到出库单和物流跟踪单号对应的物流单明细");
             }
             //物流费用单
-            LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> obj.getLogisticsBillId().equals(logisticsBillEntity.getId())).findFirst().orElse(null);
+            LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> obj.getLogisticsBillId().equals(logisticsBillEntity.getId()) && StrUtil.equals(excelDTO.getTrackNo(),obj.getTrackNo())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(logisticsBillCostEntity)) {
                 errorMsgList.add("未找到出库单和运输单号对应的物流费用单");
             }
