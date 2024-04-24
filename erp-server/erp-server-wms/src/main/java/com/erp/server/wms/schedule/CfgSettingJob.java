@@ -34,6 +34,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,7 +66,7 @@ public class CfgSettingJob {
     private QcInfoService qcInfoService;
 
     /**
-     * 质检飞书通知
+     * 质检超时飞书通知
      * @author Will
      * @date: 2024/4/10 16:19
      * @return ReturnT<String>
@@ -84,6 +85,11 @@ public class CfgSettingJob {
             XxlJobHelper.log("未设置发送时间，无需发送通知");
             return ReturnT.SUCCESS;
         }
+        if (!(dto.getSendTime().getHour() == LocalTime.now().getHour() && dto.getSendTime().getMinute() == LocalTime.now().getMinute())) {
+            XxlJobHelper.log("未到设置发送时间，无需发送通知");
+            return ReturnT.SUCCESS;
+        }
+
         List<String> noticeUserIdList = new ArrayList<>();
         //岗位处理
         if (CollectionUtils.isNotEmpty(dto.getPostIdList())) {
