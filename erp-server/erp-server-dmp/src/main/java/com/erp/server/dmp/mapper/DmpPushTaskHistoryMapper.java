@@ -50,10 +50,4 @@ public interface DmpPushTaskHistoryMapper extends BaseMapper<DmpPushTaskHistoryE
      * @return
      */
     DmpPushTaskEntity getEntityByCondition(@Param("params") DmpPushTaskEntity params);
-
-
-    /**
-     * 删除历史表数据
-     */
-    void deleteByIds(List<String> ids);
 }
