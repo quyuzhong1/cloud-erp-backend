@@ -3,42 +3,24 @@ package com.erp.server.wms.listener;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.core.enums.ApiError;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
-import com.erp.model.plm.dto.CleanSkuDto;
 import com.erp.model.plm.dto.ProductDetailDTO;
-import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
-import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
-import com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO;
-import com.erp.model.wms.dto.excel.MoveInfoExcelDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.excel.MoveInfoExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
-import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.*;
-import com.google.common.collect.Lists;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
-import javax.json.JsonObject;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -56,7 +38,7 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
     /**
      * 导入正确数据
      */
-    private List<WarehouseLocationMoveInfoDTO.DetailViewDTO> successList = new ArrayList<>();
+    private List<WarehouseLocationMoveDTO.DetailViewDTO> successList = new ArrayList<>();
 
 
     /**
@@ -68,15 +50,15 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
      */
     private List<MoveInfoExcelDTO> errorList = new ArrayList<>();
 
-    private WarehouseLocationMoveInfoService warehouseLocationMoveInfoService;
+    private WarehouseLocationMoveService warehouseLocationMoveService;
 
     private PlmTaskFeign plmTaskFeign;
 
 
-    public MoveInfoExcelListener(WarehouseLocationMoveInfoService warehouseLocationMoveInfoService,
+    public MoveInfoExcelListener(WarehouseLocationMoveService warehouseLocationMoveService,
                                  WarehouseService warehouseService, WarehouseLocationService warehouseLocationService,
                                  PlmTaskFeign plmTaskFeign, InventoryService inventoryService) {
-        this.warehouseLocationMoveInfoService = warehouseLocationMoveInfoService;
+        this.warehouseLocationMoveService = warehouseLocationMoveService;
         this.warehouseService = warehouseService;
         this.warehouseLocationService = warehouseLocationService;
         this.plmTaskFeign = plmTaskFeign;
@@ -99,12 +81,12 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
         allList.add(moveInfoExcelDTO);
 
         List<String> errorMsgList = new ArrayList<>();
-        WarehouseLocationMoveInfoDTO.PcAddDTO pcAddDTO = new WarehouseLocationMoveInfoDTO.PcAddDTO();
+        WarehouseLocationMoveDTO.PcAddDTO pcAddDTO = new WarehouseLocationMoveDTO.PcAddDTO();
         List<WarehouseLocationMoveDetailDTO.AddDTO> detailList = new ArrayList<>();
         if (StringUtils.isBlank(moveInfoExcelDTO.getSkuNo())) {
             errorMsgList.add("SKU不能为空");
         }
-        WarehouseLocationMoveInfoDTO.DetailViewDTO pcViewDTO = new WarehouseLocationMoveInfoDTO.DetailViewDTO();
+        WarehouseLocationMoveDTO.DetailViewDTO pcViewDTO = new WarehouseLocationMoveDTO.DetailViewDTO();
 
         //查看sku是否存在
         if (StringUtils.isNotBlank(moveInfoExcelDTO.getSkuNo())) {
@@ -130,22 +112,11 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
         if (StringUtils.isBlank(moveInfoExcelDTO.getWarehouseName())) {
             errorMsgList.add("仓库名称不能为空");
         }
-//        if (StringUtils.isBlank(moveInfoExcelDTO.getOutWarehouseLocationName())) {
-//            errorMsgList.add("取货仓位不能为空");
-//        }
-//        if (StringUtils.isBlank(moveInfoExcelDTO.getInWarehouseLocationName())) {
-//            errorMsgList.add("上架仓位不能为空");
-//        }
 
         List<WarehouseDTO.ListDTO> warehouseList = warehouseService.getByNames(Arrays.asList(moveInfoExcelDTO.getWarehouseName()));
         if (CollectionUtils.isEmpty(warehouseList) && Objects.isNull(warehouseList.get(0))) {
             errorMsgList.add("仓库名称不存在");
         }
-//        Map<String, List<WarehouseDTO.ListDTO>> nameMap = warehouseList.stream().collect(Collectors.groupingBy(WarehouseDTO.ListDTO::getName));
-//        if (ObjectUtil.isEmpty(nameMap.get(moveInfoExcelDTO.getWarehouseName()))
-//                || StringUtils.isBlank(nameMap.get(moveInfoExcelDTO.getWarehouseName()).get(0).getId())) {
-//            errorMsgList.add("仓库名称不存在");
-//        }
         //根据仓库获取仓位
         List<WarehouseLocationDTO.LocationListDTO> warehouseLocationList = warehouseLocationService.select(warehouseList.get(0).getId());
         if (CollUtil.isEmpty(warehouseLocationList)) {
@@ -191,11 +162,6 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
                 pcViewDTO.setRealQty(inventoryQtyDTO.getRealQty());
             });
         }
-
-//        List<WarehouseLocationMoveDetailDTO.AddDTO> detailList1 = pcAddDTO.getDetailList();
-//        WarehouseLocationMoveDetailDTO.AddDTO addDTO = new WarehouseLocationMoveDetailDTO.AddDTO();
-//        BeanMapperUtils.copy(pdaPcListDTO, addDTO);
-//        pcAddDTO.setDetailList(Arrays.asList(addDTO));
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             moveInfoExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -203,9 +169,6 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
             return;
         }
         successList.add(pcViewDTO);
-
-//        //保存的数据
-//        warehouseLocationMoveInfoService.pcAdd(pcAddDTO);
     }
 
 
@@ -226,7 +189,7 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
         return errorList;
     }
 
-    public List<WarehouseLocationMoveInfoDTO.DetailViewDTO> getSuccessList() {
+    public List<WarehouseLocationMoveDTO.DetailViewDTO> getSuccessList() {
         return successList;
     }
 

@@ -1,8 +1,8 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.WarehouseLocationMoveInfoEntity;
+import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.common.business.vo.PagingVO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,7 +17,7 @@ import java.util.List;
  * @author Luo_WG
  * @since 2023-08-24
  */
-public interface WarehouseLocationMoveInfoService extends SuperService<WarehouseLocationMoveInfoEntity> {
+public interface WarehouseLocationMoveService extends SuperService<WarehouseLocationMoveEntity> {
 
     /**
     * 新增
@@ -26,7 +26,7 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
     * @param dto
     * @return
     */
-    String add(WarehouseLocationMoveInfoDTO.AddDTO dto);
+    String add(WarehouseLocationMoveDTO.AddDTO dto);
 
     /**
      * 新增-pc端
@@ -35,7 +35,7 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
      * @author hyj
      * @date 2024/4/18 15:00
      */
-    String pcAdd(WarehouseLocationMoveInfoDTO.PcAddDTO pcAddDTO);
+    String pcAdd(WarehouseLocationMoveDTO.PcAddDTO pcAddDTO);
     /**
     * 修改
     * @author Luo_WG
@@ -43,7 +43,7 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
     * @param dto
     * @return
     */
-    Boolean update(WarehouseLocationMoveInfoDTO.UpdateDTO dto);
+    Boolean update(WarehouseLocationMoveDTO.UpdateDTO dto);
     /**
     * 修改
     * @author Luo_WG
@@ -51,42 +51,42 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
     * @param dto
     * @return
     */
-    Boolean pcUpdate(WarehouseLocationMoveInfoDTO.PcUpdateDTO dto);
+    Boolean pcUpdate(WarehouseLocationMoveDTO.PcUpdateDTO dto);
 
       /**
       * 分页列表查询
       * @author Luo_WG
       * @date: 2023-08-24
       * @param pagingParamDTO
-      * @return PagingVO<WarehouseLocationMoveInfoDTO.ListDTO>>
+      * @return PagingVO<WarehouseLocationMoveDTO.ListDTO>>
       */
-      PagingVO<WarehouseLocationMoveInfoDTO.ListDTO> paging(PagingDTO<WarehouseLocationMoveInfoDTO.PagingParamDTO> pagingParamDTO);
+      PagingVO<WarehouseLocationMoveDTO.ListDTO> paging(PagingDTO<WarehouseLocationMoveDTO.PagingParamDTO> pagingParamDTO);
     /**
      * 列表查询-pc端
      * @author hyj
      * @date 2024/4/12 16:46
      * @param pagingParamDTO
-     * @return ApiResult<PagingVO<WarehouseLocationMoveInfoDTO.ListDTO>>
+     * @return ApiResult<PagingVO<WarehouseLocationMoveDTO.ListDTO>>
      */
-      PagingVO<WarehouseLocationMoveInfoDTO.ListDTO> pcPaging(PagingDTO<WarehouseLocationMoveInfoDTO.PagingParamDTO> pagingParamDTO);
+      PagingVO<WarehouseLocationMoveDTO.ListDTO> pcPaging(PagingDTO<WarehouseLocationMoveDTO.PagingParamDTO> pagingParamDTO);
 
      /**
      * 状态统计
      * @author Luo_WG
      * @date: 2023-08-24
      * @param dto
-     * @return List<WarehouseLocationMoveInfoDTO.TabListDTO>>
+     * @return List<WarehouseLocationMoveDTO.TabListDTO>>
      */
-     List<WarehouseLocationMoveInfoDTO.PdaTabListDTO> tabList(PermissionsDTO dto);
+     List<WarehouseLocationMoveDTO.PdaTabListDTO> tabList(PermissionsDTO dto);
 
      /**
       * pc端状态统计
       * @author hyj
       * @date 2024/4/12 10:54
       * @param dto
-      * @return List<WarehouseLocationMoveInfoDTO.TabListDTO>>
+      * @return List<WarehouseLocationMoveDTO.TabListDTO>>
       */
-     List<WarehouseLocationMoveInfoDTO.PdaTabListDTO> pcTabList(PermissionsDTO dto);
+     List<WarehouseLocationMoveDTO.PdaTabListDTO> pcTabList(PermissionsDTO dto);
 
      /**
      * 详情
@@ -95,14 +95,14 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
      * @param id
      * @return
      */
-     WarehouseLocationMoveInfoDTO.ViewDTO view(String id);
+     WarehouseLocationMoveDTO.ViewDTO view(String id);
      /**
       * 详情
       * @author hyj
       * @date 2024/4/17 11:25
       * @param id
       */
-     WarehouseLocationMoveInfoDTO.PcViewDTO pcView(String id);
+     WarehouseLocationMoveDTO.PcViewDTO pcView(String id);
 
      /**
      * 新增并提交审核
@@ -111,7 +111,7 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
      * @param dto
      * @return
      */
-     void addAndSubmit(WarehouseLocationMoveInfoDTO.AddDTO dto);
+     void addAndSubmit(WarehouseLocationMoveDTO.AddDTO dto);
 
      /**
      * 修改并提交审核
@@ -120,7 +120,7 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
      * @param dto
      * @return
      */
-     void updateAndSubmit(WarehouseLocationMoveInfoDTO.UpdateDTO dto);
+     void updateAndSubmit(WarehouseLocationMoveDTO.UpdateDTO dto);
 
      /**
      * 提交审核
@@ -213,7 +213,7 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
     * @param entity
     * @return
     */
-    Boolean approveEnd(ApproveOneDTO dto, WarehouseLocationMoveInfoEntity entity);
+    Boolean approveEnd(ApproveOneDTO dto, WarehouseLocationMoveEntity entity);
 
     /**
      * 作废
@@ -232,7 +232,7 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
      * @param response
      * @return Boolean
      */
-    void listExport(WarehouseLocationMoveInfoDTO.ExportDTO dto, HttpServletResponse response);
+    void listExport(WarehouseLocationMoveDTO.ExportDTO dto, HttpServletResponse response);
 
     /**
      * @description: 导入
@@ -242,7 +242,7 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
      * @param response
      * @return Boolean
      */
-    WarehouseLocationMoveInfoDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
+    WarehouseLocationMoveDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
 
     /**
      * 删除-pc端

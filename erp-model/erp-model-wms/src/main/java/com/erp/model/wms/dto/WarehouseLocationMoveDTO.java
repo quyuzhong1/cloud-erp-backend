@@ -7,7 +7,6 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 
-import jnr.ffi.annotations.In;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -29,7 +28,7 @@ import javax.validation.constraints.NotEmpty;
 */
 @Data
 @NoArgsConstructor
-public class WarehouseLocationMoveInfoDTO implements Serializable {
+public class WarehouseLocationMoveDTO implements Serializable {
 
 
      /**
@@ -249,7 +248,7 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         /**
          * 成功返回数据
          */
-        private List<WarehouseLocationMoveInfoDTO.DetailViewDTO> successList;
+        private List<WarehouseLocationMoveDTO.DetailViewDTO> successList;
 
         /**
          * 错误url

@@ -25,7 +25,7 @@ import com.common.business.enums.ApproveStatusEnum;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("warehouse_location_move")
-public class WarehouseLocationMoveInfoEntity extends BaseEntity<WarehouseLocationMoveInfoEntity> {
+public class WarehouseLocationMoveEntity extends BaseEntity<WarehouseLocationMoveEntity> {
 
     /**
     * 单据编号

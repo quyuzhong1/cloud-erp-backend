@@ -6,7 +6,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
@@ -57,7 +57,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void add(WarehouseLocationMoveInfoDTO.AddDTO addDTO, String mainId) {
+    public void add(WarehouseLocationMoveDTO.AddDTO addDTO, String mainId) {
         List<WarehouseLocationMoveDetailEntity> warehouseLocationMoveDetailEntities = BeanMapperUtils.copyList(WarehouseLocationMoveDetailEntity.class, addDTO.getDetailList());
 
         // 数据处理
@@ -75,7 +75,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(WarehouseLocationMoveInfoDTO.UpdateDTO dto, String mainId) {
+    public Boolean update(WarehouseLocationMoveDTO.UpdateDTO dto, String mainId) {
         if (CollectionUtils.isEmpty(dto.getDetailList())) {
             throw new ServiceException(ApiError.ERROR_1040, SourceTypeEnum.SO_B2C.getName());
         }
