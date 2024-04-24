@@ -5,9 +5,7 @@ import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.common.business.threadlocal.AdvanceQueryContext;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cPayStatusEnum;
-import com.erp.model.oms.enums.SoB2cTabEnum;
+import com.erp.model.oms.enums.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
@@ -156,11 +154,32 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
          * 物流规则不通过：订单状态是待配货，待配货原因是物流规则不通过
          */
         if ("waitHandle".equals(field))  {
-
+            //审核不通过（自动）
+            if (SoB2cWaitHandleTypeEnum.APPROVE_REJECT.getCode().equals(value)) {
+                super.buildDefaultDTO("sb2c.approve_status", Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+                super.buildDefaultDTO("sb2c.abnormal_type", Arrays.asList(SoB2cAbnormalTypeEnum.ENUM_APPROVE_REJECT.getCode()));
+            }
+            //审核不通过（手动）
+            if (SoB2cWaitHandleTypeEnum.MANUAL_REJECT.getCode().equals(value)) {
+                super.buildDefaultDTO("sb2c.approve_status", Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+                super.buildDefaultDTO("sb2c.abnormal_type", Arrays.asList(SoB2cAbnormalTypeEnum.ENUM_MANUAL_REJECT.getCode()));
+            }
+            //订单反审核
+            if (SoB2cWaitHandleTypeEnum.WAIT_SUBMIT.getCode().equals(value)) {
+                super.buildDefaultDTO("sb2c.approve_status", Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
+            }
+            //仓库规则不通过
+            if (SoB2cWaitHandleTypeEnum.WAREHOUSE_RULE_REJECT.getCode().equals(value)) {
+                super.buildSplicingSQLDTO("sb2c.is_match_warehouse_rule", QueryConditionEnum.EQ,Boolean.FALSE, QueryDataTypeEnum.BOOLEAN);
+                super.buildDefaultDTO("sb2c.abnormal_type", Arrays.asList(SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT.getCode()));
+            }
+            //物流规则不通过
+            if (SoB2cWaitHandleTypeEnum.LOGISTICS_RULE_REJECT.getCode().equals(value)) {
+                super.buildSplicingSQLDTO("sb2c.is_match_logistics_rule", QueryConditionEnum.EQ,Boolean.FALSE, QueryDataTypeEnum.BOOLEAN);
+                super.buildDefaultDTO("sb2c.abnormal_type", Arrays.asList(SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT.getCode()));
+            }
         }
-
-
-        return null;
+         return null;
     }
 
 

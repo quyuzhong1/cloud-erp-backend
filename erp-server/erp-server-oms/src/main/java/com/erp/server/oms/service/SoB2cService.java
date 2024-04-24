@@ -8,7 +8,6 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
@@ -19,7 +18,6 @@ import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
-import com.erp.model.tms.dto.*;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 
@@ -863,4 +861,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return Boolean
      */
     Boolean exportExcel(SoB2cDTO.PagingParamDTO dto, HttpServletResponse response);
+    /**
+     * @description: 更新主表仓库匹配规则
+     * @author Will
+     * @date: 2024/4/24 12:02
+     * @param id
+     * @return Boolean
+     */
+    Boolean updateIsMatchWarehouseRuleById(String id);
 }

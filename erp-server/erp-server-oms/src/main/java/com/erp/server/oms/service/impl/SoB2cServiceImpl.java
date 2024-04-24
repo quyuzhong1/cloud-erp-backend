@@ -61,7 +61,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.*;
-import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.SettingForecastEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
@@ -3988,7 +3987,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             updateWarehouseAbnormalType(id, SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT);
             //明细设置仓库规则不匹配
             List<String> detailIdList = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseId())).map(SoB2cDetailEntity::getId).collect(Collectors.toList());
-            soB2cDetailService.updateIsMatchWarehouseRule(detailIdList);
+            soB2cDetailService.updateIsMatchWarehouseRule(id,detailIdList);
             return Boolean.FALSE;
         }
         if(StringUtils.isNotBlank(ruleMatchResult.getName())){
@@ -5616,7 +5615,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             updateWarehouseAbnormalType(id, SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT);
             //明细设置仓库规则不匹配
             List<String> detailIdList = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseId())).map(SoB2cDetailEntity::getId).collect(Collectors.toList());
-            soB2cDetailService.updateIsMatchWarehouseRule(detailIdList);
+            soB2cDetailService.updateIsMatchWarehouseRule(id,detailIdList);
         } else {
             isRuleMatch = Boolean.TRUE;
             if(StringUtils.isNotBlank(ruleMatchResult.getName())){
@@ -6688,6 +6687,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean updateIsMatchWarehouseRuleById(String id) {
+        if (ObjectUtil.isEmpty(id)) {
+            return Boolean.TRUE;
+        }
+        return lambdaUpdate().eq(SoB2cEntity::getId,id).set(SoB2cEntity::getIsMatchWarehouseRule,Boolean.FALSE).update();
     }
 
     /**

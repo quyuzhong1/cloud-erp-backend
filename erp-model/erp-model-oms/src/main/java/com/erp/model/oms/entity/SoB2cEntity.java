@@ -269,6 +269,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("extend_data")
     private String extendData;
 
+    /**
+     * 是否匹配仓库规则
+     */
+    @TableField("is_match_warehouse_rule")
+    private Boolean isMatchWarehouseRule;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

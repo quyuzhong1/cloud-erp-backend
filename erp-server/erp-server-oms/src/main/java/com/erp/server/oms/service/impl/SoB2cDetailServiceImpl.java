@@ -1,6 +1,5 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.lang.Dict;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -25,7 +24,6 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
-import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -37,7 +35,6 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cDetailMapper;
 import com.erp.server.oms.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -455,10 +452,16 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     }
 
     @Override
-    public Boolean updateIsMatchWarehouseRule(List<String> detailIdList) {
+    public Boolean updateIsMatchWarehouseRule(String mainId,List<String> detailIdList) {
         if (CollectionUtils.isEmpty(detailIdList)) {
             return Boolean.TRUE;
         }
+        //更新主表库存匹配状态
+        Boolean isMatchWarehouseRule = soB2cService.updateIsMatchWarehouseRuleById(mainId);
+        if (!isMatchWarehouseRule) {
+            throw new ServiceException(ApiError.SO_B2C_IS_MATCH_WAREHOUSE_RULE);
+        }
+
         return  lambdaUpdate()
                 .in(SoB2cDetailEntity::getId,detailIdList)
                 .set(SoB2cDetailEntity::getIsMatchWarehouseRule,Boolean.FALSE)

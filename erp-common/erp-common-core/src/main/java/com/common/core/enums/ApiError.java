@@ -1175,6 +1175,7 @@ public enum ApiError implements Serializable {
     IS_NOT_B2C_NOT_UPDATE_MAPPING(92134,"非平台来源的B2C销售订单不可修改映射关系"),
 
     SKU_MAPPING_INVENTORY_INSUFFICIENT(92135,"需要扣除的映射关系SKU【{}】可用库存不足"),
+    SO_B2C_IS_MATCH_WAREHOUSE_RULE(92136,"仓库匹配规则更新失败"),
 
 
     /**
