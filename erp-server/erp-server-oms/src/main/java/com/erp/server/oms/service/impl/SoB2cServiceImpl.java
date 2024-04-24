@@ -62,10 +62,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.*;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.tms.entity.SettingForecastEntity;
-import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
-import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.tms.vo.response.CancelResponseVO;
@@ -6802,6 +6799,69 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             updateList.add(soB2cEntity);
         }
+        //更新操作同个事务
+        service.updateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors);
+        return resultDTOList;
+    }
+
+    @Override
+    public List<BatchResultDTO> cancelOrderForecast(List<String> ids) {
+        List<SoB2cEntity> soB2cEntityList = listByIds(ids);
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cLogisticsService.listByMainIds(ids);
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        List<String> soCodeList = soB2cEntityList.stream().map(SoB2cEntity::getCode).distinct().collect(Collectors.toList());
+        List<TransferDeclareDetailEntity> transferDeclareDetailEntityList = transferDeclareFeign.listBySoCodeList(soCodeList);
+        List<SoB2cEntity> updateList = new ArrayList<>();
+        List<String> deleteErrorIds = new ArrayList<>();
+        List<SoB2cErrorEntity> errorList = soB2cErrorService.getByMainIdsAndType(ids, SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode());
+        List<SoB2cErrorEntity> addOrUpdateErrors = new ArrayList<>();
+        for (SoB2cEntity soB2cEntity : soB2cEntityList) {
+            if(!TransferStatusEnum.SUCCESS.getCode().equals(soB2cEntity.getTransferStatus())){
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"仅可操作预报成功订单的单据"));
+                continue;
+            }
+            if(PackageStatusEnum.ALREADY.getCode().equals(soB2cEntity.getPackageStatus())){
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"已组包不可操作"));
+                continue;
+            }
+            TransferDeclareDetailEntity transferDeclareDetailEntity = transferDeclareDetailEntityList.stream().filter(v->v.getSoCode().equals(soB2cEntity.getCode())).findFirst().orElse(null);
+            if(Objects.nonNull(transferDeclareDetailEntity)){
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"已生成入库预报不可操作"));
+                continue;
+            }
+            SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntityList.stream().filter(v->v.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
+            if(Objects.isNull(soB2cLogisticsEntity)){
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"物流单为空"));
+                continue;
+            }
+            if(StringUtils.isBlank(soB2cEntity.getShippingOrderNo())){
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"第三方平台号为空"));
+                continue;
+            }
+            if(StringUtils.isBlank(soB2cLogisticsEntity.getTransferLogisticsSupplierId())){
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"中转报关商为空"));
+                continue;
+            }
+            SoB2cErrorEntity error = errorList.stream().filter(e -> e.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(new SoB2cErrorEntity());
+            TransferLogisticsStatusEnum transferLogisticsStatusEnum = transferLogisticsFeign.getPlatformTransferStatus(soB2cEntity.getShippingOrderNo(),soB2cLogisticsEntity.getTransferLogisticsSupplierId());
+
+            //保宏不支持接口拦截，只能线下，通过查询订单状态判断订单是否已经取消
+            if (transferLogisticsStatusEnum == TransferLogisticsStatusEnum.DELETED){
+                soB2cEntity.setTransferStatus(TransferStatusEnum.WAIT.getCode());
+                updateList.add(soB2cEntity);
+                if(StringUtils.isNotBlank(error.getId())){
+                    deleteErrorIds.add(error.getId());
+                }
+            }else{
+                error.setMainId(soB2cEntity.getId())
+                        .setType(SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode())
+                        .setMessage("订单预报拦截失败，请联系物流同事取消删除后再操作")
+                        .setParamJson(soB2cEntity.getId());
+                addOrUpdateErrors.add(error);
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"订单预报拦截失败，请联系物流同事取消删除后再操作"));
+            }
+        }
+
         //更新操作同个事务
         service.updateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors);
         return resultDTOList;

@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
+import com.erp.model.tms.entity.TransferDeclareEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,6 +46,12 @@ public interface TransferDeclareFeign {
     @PostMapping("/feign/transferDeclare/updateOutstockStatus")
     Boolean updateOutstockStatus(@RequestBody TransferDeclareDTO.UpdateOutstockStatusDTO dto);
 
+
+    /**
+     * @description: 根据销售订单id
+     */
+    @PostMapping("/feign/transferDeclare/listBySoCodeList")
+    List<TransferDeclareDetailEntity> listBySoCodeList(@RequestBody List<String> soCodeList);
 
     /**
      * @description: 根据物流渠道id查询

@@ -939,6 +939,15 @@ public class SoB2cController extends BaseController {
     }
 
     /**
+     * 取消订单预报
+     */
+    @PostMapping("/cancelOrderForecast")
+    public ApiResult<List<BatchResultDTO>> cancelOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = soB2cService.cancelOrderForecast(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
      * 中转报关
      *
      * @param dto

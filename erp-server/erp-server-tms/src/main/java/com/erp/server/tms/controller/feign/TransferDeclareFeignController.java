@@ -5,6 +5,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
+import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.server.tms.service.TransferDeclareDetailService;
 import com.erp.server.tms.service.TransferDeclareService;
 import lombok.extern.slf4j.Slf4j;
@@ -84,5 +85,13 @@ public class TransferDeclareFeignController {
     @PostMapping("/feign/transferDeclare/b2cOrderForecast")
     public TransferDeclareDTO.ShippingOrderDTO b2cOrderForecast(@RequestBody @Validated TransferDeclareDTO.B2cOrderForecastDTO b2cOrderForecastDTO) {
         return transferDeclareService.b2cOrderForecast(b2cOrderForecastDTO);
+    }
+
+    /**
+     * 通过销售单id查询
+     */
+    @PostMapping("/feign/transferDeclare/listBySoCodeList")
+    public List<TransferDeclareDetailEntity> listBySoCodeList(@RequestBody List<String> soCodeList){
+        return transferDeclareDetailService.listBySoCodeList(soCodeList);
     }
 }
