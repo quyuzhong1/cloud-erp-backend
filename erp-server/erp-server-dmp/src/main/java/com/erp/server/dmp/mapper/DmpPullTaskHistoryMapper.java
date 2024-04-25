@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
-import com.erp.model.dmp.entity.DmpPullTaskEntity;
+import com.erp.model.dmp.entity.DmpPullTaskHistoryEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
@@ -22,16 +22,12 @@ import java.util.List;
  */
 @Repository
 @Mapper
-public interface DmpPullTaskMapper extends BaseMapper<DmpPullTaskEntity> {
+public interface DmpPullTaskHistoryMapper extends BaseMapper<DmpPullTaskHistoryEntity> {
 
     /**
-     * @description:根据状态分组查询数量
-     * @author Will
-     * @date: 2023/10/17 14:47
-     * @param permissionSql
-     * @return List<TabListDTO>
+     * @description:查询已归档数量
      */
-    List<DmpPullTaskDTO.TabListDTO> listStatusCount(@Param("permissionSql")String permissionSql);
+    DmpPullTaskDTO.TabListDTO getStatusCount(@Param("permissionSql")String permissionSql);
     /**
      * @description: 分页查询
      * @author Will
@@ -50,5 +46,4 @@ public interface DmpPullTaskMapper extends BaseMapper<DmpPullTaskEntity> {
      */
     List<DmpPullTaskDTO.ListDTO> listExportExcel(@Param("params") DmpPullTaskDTO.ParamDTO dto);
 
-    void deleteByIds(List<String> ids);
 }

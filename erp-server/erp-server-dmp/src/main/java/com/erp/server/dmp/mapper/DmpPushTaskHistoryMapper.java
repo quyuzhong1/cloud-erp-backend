@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.entity.DmpPushTaskHistoryEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -20,7 +21,7 @@ import java.util.List;
  * @since 2023-09-06
  */
 @Mapper
-public interface DmpPushTaskMapper extends BaseMapper<DmpPushTaskEntity> {
+public interface DmpPushTaskHistoryMapper extends BaseMapper<DmpPushTaskHistoryEntity> {
 
     /**
      * @description: 分页查询
@@ -32,13 +33,9 @@ public interface DmpPushTaskMapper extends BaseMapper<DmpPushTaskEntity> {
      */
     IPage<DmpPushTaskDTO.ListDTO> paging(Page query, @Param("params") DmpPushTaskDTO.ParamDTO params);
     /**
-     * @description:
-     * @author Will
-     * @date: 2023/10/13 14:19
-     * @param permissionSql
-     * @return List<TabListDTO>
+     * @description:获取已归档数量
      */
-    List<DmpPushTaskDTO.TabListDTO> listStatusCount( @Param("permissionSql")String permissionSql);
+    DmpPushTaskDTO.TabListDTO getStatusCount( @Param("permissionSql")String permissionSql);
     /**
      * @description: 导出查询
      * @author Will
@@ -53,6 +50,4 @@ public interface DmpPushTaskMapper extends BaseMapper<DmpPushTaskEntity> {
      * @return
      */
     DmpPushTaskEntity getEntityByCondition(@Param("params") DmpPushTaskEntity params);
-
-    void deleteByIds(List<String> ids);
 }

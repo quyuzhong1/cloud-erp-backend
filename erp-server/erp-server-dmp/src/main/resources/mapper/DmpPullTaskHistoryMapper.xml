@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.dmp.mapper.DmpPullTaskMapper">
+<mapper namespace="com.erp.server.dmp.mapper.DmpPullTaskHistoryMapper">
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpPullTaskEntity">
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpPullTaskHistoryEntity">
        <result column="id" property="id" />
        <result column="create_time" property="createTime" />
        <result column="create_user_id" property="createUserId" />
@@ -35,30 +35,22 @@
         target_platform_name, mq_topic, mq_tag, mq_data, status, return_msg, last_sync_time, source_platform_name, source_type, source_id, source_code, retry_times
     </sql>
 
-    <delete id="deleteByIds">
-        delete from dmp_pull_task where id in
-        <foreach collection="ids" item="item" open="(" separator="," close=")">
-            #{item}
-        </foreach>
-    </delete>
-
     <!-- 根据状态分组查询数量 -->
-    <select id="listStatusCount" resultType="com.erp.model.dmp.dto.DmpPullTaskDTO$TabListDTO">
+    <select id="getStatusCount" resultType="com.erp.model.dmp.dto.DmpPullTaskDTO$TabListDTO">
         select
-        dpt.status as tabFlag,
+        -1 as tabFlag,
         count(dpt.id) as count
-        from dmp_pull_task dpt
+        from dmp_pull_task_history dpt
         where dpt.is_deleted = false
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
         </if>
-        group by dpt.status
     </select>
 
     <select id="paging" resultType="com.erp.model.dmp.dto.DmpPullTaskDTO$ListDTO">
         select
         <include refid="Base_Column_List"></include>
-        from dmp_pull_task
+        from dmp_pull_task_history
         where is_deleted = false
         <if test="params.sourceTypeList != null and params.sourceTypeList.size > 0 ">
             and source_type in
@@ -78,12 +70,6 @@
         <if test="params.sourcePlatformName != null and params.sourcePlatformName != '' ">
             and source_platform_name = #{params.sourcePlatformName}
         </if>
-        <if test="params.statusList != null and params.statusList.size > 0">
-            and status in
-            <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
         <if test="params.lastSyncTime != null and params.lastSyncTime.size > 0">
             and last_sync_time >= #{params.lastSyncTime[0]} and  (#{params.lastSyncTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > last_sync_time
         </if>
@@ -98,7 +84,7 @@
     <select id="listExportExcel" resultType="com.erp.model.dmp.dto.DmpPullTaskDTO$ListDTO">
         select
         <include refid="Base_Column_List"></include>
-        from dmp_pull_task
+        from dmp_pull_task_history
         where is_deleted = false
         <if test="params.ids != null and params.ids.size > 0">
             and id in
@@ -124,12 +110,6 @@
             </if>
             <if test="params.sourcePlatformName != null and params.sourcePlatformName != '' ">
                 and source_platform_name = #{params.sourcePlatformName}
-            </if>
-            <if test="params.statusList != null and params.statusList != '' ">
-                and status in
-                <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
             </if>
             <if test="params.lastSyncTime != null and params.lastSyncTime.size > 0">
                 and last_sync_time >= #{params.lastSyncTime[0]} and  (#{params.lastSyncTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > last_sync_time

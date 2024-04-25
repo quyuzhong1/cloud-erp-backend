@@ -9,8 +9,11 @@ import com.common.business.enums.SyncStatusEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.server.dmp.service.DmpPullTaskHistoryService;
 import com.erp.server.dmp.service.DmpPullTaskService;
+import com.erp.server.dmp.service.DmpPushTaskHistoryService;
 import com.erp.server.dmp.service.DmpPushTaskService;
+import com.erp.server.dmp.service.impl.DmpPushTaskHistoryServiceImpl;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -20,6 +23,7 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,6 +48,11 @@ public class DmpSyncTaskJob {
 
     @Autowired
     private MQProducerService mqProducerService;
+
+    @Resource
+    private DmpPullTaskHistoryService dmpPullTaskHistoryService;
+    @Resource
+    private DmpPushTaskHistoryService dmpPushTaskHistoryService;
 
     /**
      * DMP推送同步任务消息到其他平台
@@ -140,14 +149,7 @@ public class DmpSyncTaskJob {
                     //待推送的走查询推送
                     dmpPushTaskService.batchFindDataSync(Arrays.asList(recordEntity.getId()));
                 } else {
-                    String mqData = recordEntity.getMqData();
-                    JSONObject jsonObject = JSONUtil.parseObj(mqData);
-                    jsonObject.set("dmpSyncTaskId", recordEntity.getId());
-                    SendResult result = mqProducerService.syncClassMsg(recordEntity.getMqTopic(), recordEntity.getMqTag(),
-                            JSONUtil.toJsonStr(jsonObject), recordEntity.getSourceId());
-                    if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                        throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-                    }
+                    DmpPushTaskHistoryServiceImpl.sendMq(recordEntity.getMqData(), recordEntity.getId(), mqProducerService, recordEntity.getMqTopic(), recordEntity.getMqTag(), recordEntity.getSourceId());
                 }
             } catch (Exception e){
                 String sourceTypeName = SourceTypeEnum.getName(recordEntity.getSourceType());
@@ -160,6 +162,26 @@ public class DmpSyncTaskJob {
             dmpPushTaskService.updateBatchById(updateList);
         }
         XxlJobHelper.log("DmpPushTaskJob end");
+        return ReturnT.SUCCESS;
+    }
+
+    /**
+     * 归档DMP推送同步任务
+     * @return
+     */
+    @XxlJob("SyncPushTaskHistoryJob")
+    public ReturnT<String> syncPushTaskHistory() {
+        dmpPushTaskHistoryService.syncPushTaskHistory();
+        return ReturnT.SUCCESS;
+    }
+
+    /**
+     * 归档DMP推送同步任务
+     * @return
+     */
+    @XxlJob("SyncPullTaskHistoryJob")
+    public ReturnT<String> syncPullTaskHistory() {
+        dmpPullTaskHistoryService.syncPullTaskHistory();
         return ReturnT.SUCCESS;
     }
 
