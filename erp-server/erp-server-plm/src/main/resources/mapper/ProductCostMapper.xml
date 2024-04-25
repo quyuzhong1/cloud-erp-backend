@@ -42,6 +42,6 @@
         LEFT JOIN product_cost pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pc.sku_id = pp.sku_id AND pp.is_deleted = FALSE
         WHERE pd.id = #{skuId} AND pd.is_deleted = FALSE
-        ORDER BY pd.id desc
+        ORDER BY pc.update_time
     </select>
 </mapper>
