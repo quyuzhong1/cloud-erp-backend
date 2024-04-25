@@ -24,7 +24,8 @@ public enum AppClientEnum  {
     ALI_EXPRESS_TOKEN("aliExpressToken","sales","AliExpress"),
     AMAZON_AUTHORIZE("amazonAuthorize","sales","Amazon"),
     AMAZON_ACCESS_TOKEN("amazonAccessToken","sales","Amazon"),
-
+    MERCADO_AUTHORIZE("mercadoAuthorize","sales","mercadolibre"),
+    MERCADO_ACCESS_TOKEN("mercadoAccessToken","sales","mercadolibre"),
 
     // 物流平台
     TRACK123_AUTHORIZE("track123Authorize","logistics","TRACK123"),

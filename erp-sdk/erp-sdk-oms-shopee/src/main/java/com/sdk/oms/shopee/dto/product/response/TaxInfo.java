@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.product.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -18,35 +18,35 @@ import java.io.Serializable;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = false)
 public class TaxInfo implements Serializable {
-    @JSONField(name = "ncm")
+    @Alias( "ncm")
     private String ncm;
-    @JSONField(name = "diff_state_cfop")
+    @Alias( "diff_state_cfop")
     private String diffStateCfop;
 
-    @JSONField(name = "csosn")
+    @Alias( "csosn")
     private String csosn;
 
-    @JSONField(name = "origin")
+    @Alias( "origin")
     private String origin;
 
-    @JSONField(name = "cest")
+    @Alias( "cest")
     private String cest;
 
-    @JSONField(name = "measure_unit")
+    @Alias( "measure_unit")
     private String measureUnit;
 
-    @JSONField(name = "invoice_option")
+    @Alias( "invoice_option")
     private String invoiceOption;
 
-    @JSONField(name = "vat_rate")
+    @Alias( "vat_rate")
     private String vatRate;
 
-    @JSONField(name = "hs_code")
+    @Alias( "hs_code")
     private String hsCode;
 
-    @JSONField(name = "tax_code")
+    @Alias( "tax_code")
     private String taxCode;
-    @JSONField(name = "tax_type")
+    @Alias( "tax_type")
     private int taxType;
 
 }

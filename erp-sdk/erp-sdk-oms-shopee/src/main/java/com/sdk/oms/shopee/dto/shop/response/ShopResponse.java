@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.shop.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -14,35 +14,35 @@ import java.io.Serializable;
  */
 @Data
 public class ShopResponse implements Serializable {
-    @JSONField(name = "shop_name")
+    @Alias( "shop_name")
     private String shopName;
-    @JSONField(name = "region")
+    @Alias( "region")
     private String region;
-    @JSONField(name = "status")
+    @Alias( "status")
     private String status;
-    @JSONField(name = "is_cb")
+    @Alias( "is_cb")
     private Boolean isCb;
-    @JSONField(name = "is_cnsc")
+    @Alias( "is_cnsc")
     private Boolean isCnsc;
-    @JSONField(name = "shop_cbsc")
+    @Alias( "shop_cbsc")
     private String shopCbsc;
-    @JSONField(name = "is_3pf")
+    @Alias( "is_3pf")
     private String is3pf;
-    @JSONField(name = "request_id")
+    @Alias( "request_id")
     private String requestId;
-    @JSONField(name = "auth_time")
+    @Alias( "auth_time")
     private Long authTime;
-    @JSONField(name = "expire_time")
+    @Alias( "expire_time")
     private Long expireTime;
-    @JSONField(name = "is_sip")
+    @Alias( "is_sip")
     private Boolean isSip;
-    @JSONField(name = "is_upgraded_cbsc")
+    @Alias( "is_upgraded_cbsc")
     private Boolean isUpgradedCbsc;
-    @JSONField(name = "merchant_id")
+    @Alias( "merchant_id")
     private Integer merchant_id;
 
-    @JSONField(name = "error")
+    @Alias( "error")
     private String error;
-    @JSONField(name = "message")
+    @Alias( "message")
     private String message;
 }

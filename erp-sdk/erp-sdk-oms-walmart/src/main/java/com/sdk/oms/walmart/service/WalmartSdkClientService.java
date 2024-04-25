@@ -4,10 +4,8 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.JobTaskDTO;
-import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.WalmartShipOrderDetailDTO;
 import com.common.business.enums.PlatformDictEnum;
@@ -21,8 +19,6 @@ import com.sdk.oms.walmart.dto.WalmartShopInfoDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartOrderDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartShipOrderDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartTokenDTO;
-import com.sdk.oms.walmart.dto.walmart.item.ItemResponseBean;
-import com.sdk.oms.walmart.dto.walmart.order.OrderBean;
 import com.sdk.oms.walmart.dto.walmart.ship.*;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -337,8 +333,8 @@ public class WalmartSdkClientService {
 
     private Response doSend(Request request) throws Exception {
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                .connectTimeout(1, TimeUnit.SECONDS)//设置连接超时时间
-                .readTimeout(1, TimeUnit.SECONDS)//设置读取超时时间
+                .connectTimeout(5, TimeUnit.SECONDS)//设置连接超时时间
+                .readTimeout(5, TimeUnit.SECONDS)//设置读取超时时间
                 .build();
         Response response = okHttpClient.newCall(request).execute();
         return response;

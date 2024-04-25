@@ -4,6 +4,7 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
@@ -22,6 +23,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -39,6 +41,7 @@ import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -48,6 +51,7 @@ import com.erp.server.tms.convert.TransferDeclareConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
 import com.erp.server.tms.service.*;
+import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -56,6 +60,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -127,6 +132,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Autowired
     private LogisticsBillService logisticsBillService;
 
+
+    @Resource
+    private MercadoSdkClientService mercadoSdkClientService;
+
+    @Resource
+    private LogisticsOperateService logisticsOperateService;
 
     @Autowired
     private PlmTaskFeign plmTaskFeign;
@@ -382,12 +393,20 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         BigDecimal minCustomsAmount = channelConstraintDTO.getMinCustomsAmount();
 
         LogisticsAddressTypeEnum deliverType = LogisticsAddressTypeEnum.DELIVER;
-        //发货人信息
-        List<LogisticsAddressEntity> addressList = logisticsAddressService.listByChannelIdAndShopId(channelId, dto.getShopId());
-        List<LogisticsAddressEntity> deliverList = addressList.stream().filter(a -> deliverType.equals(a.getType())).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(deliverList)) {
-            throw new ServiceException(ApiError.ERROR_CHANNEL_ADDRESS_NOT_EXIST, logisticsChannel.getName(), LogisticsAddressTypeEnum.DELIVER.getName());
+
+        //物流类型是中转发货则使用中转地址类型
+        if (StringUtils.isNotBlank(dto.getLogisticType()) && LogisticsAddressTypeEnum.TRANSFER.getCode().equals(dto.getLogisticType())) {
+            deliverType = LogisticsAddressTypeEnum.TRANSFER;
         }
+        //收货人地址信息
+        List<LogisticsAddressEntity> addressList = logisticsAddressService.listByChannelIdAndShopId(channelId, dto.getShopId());
+        LogisticsAddressTypeEnum finalDeliverType = deliverType;
+        List<LogisticsAddressEntity> deliverList = addressList.stream().filter(a -> finalDeliverType.equals(a.getType())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(deliverList)) {
+            throw new ServiceException(ApiError.ERROR_CHANNEL_ADDRESS_NOT_EXIST, logisticsChannel.getName(), deliverType.getName());
+        }
+
+
         //发货人信息
         SenderInfo senderInfo = new SenderInfo();
         LogisticsAddressEntity logisticsAddress = deliverList.get(0);
@@ -409,7 +428,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             returnInfo = senderInfo;
         }
 
-
         //平台
         String logisticsPlatform = auth.getLogisticsPlatform();
         LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
@@ -421,6 +439,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //转化成收货人
         ReceiverInfoVO receiverInfo = LogisticsBillConverter.INSTANCE.convertReceiver(receiverDTO);
         //申报信息-sku拆分
+
+        //中转地址
+        LogisticsAddressEntity logisticsAddressEntity = addressList.stream().filter(a -> LogisticsAddressTypeEnum.TRANSFER.equals(a.getType())).findFirst().orElse(null);
+        if (Objects.nonNull(logisticsAddressEntity)) {
+            receiverInfo = LogisticsBillConverter.INSTANCE.LogisticsAddressEntityToReceiverInfoVO(logisticsAddressEntity);
+        }
+
         List<LogisticsBillDTO.SkuDTO> skuList = dto.getSkuList();
         List<String> skuIdList = skuList.stream().map(LogisticsBillDTO.SkuDTO::getSkuId).collect(Collectors.toList());
         List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listBySkuIdList(skuIdList);
@@ -902,6 +927,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
 
         for (LogisticsBillDTO.PrintLogisticsWaybillDTO dto : list) {
+            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(dto.getB2cSoId())).findFirst().orElse(null);
             String channelId = dto.getChannelId();
             LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
             if (Objects.isNull(auth)) {
@@ -919,14 +945,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
             if (logisticsPlatform.equals(LogisticsPlatformEnum.ALI_EXPRESS.getCode())) {
                 authMap = service.getLogisticsAuthConfig(dto.getShopId());
-                SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(dto.getB2cSoId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                     getLabelVO.setDeliveryNo(soB2cEntity.getPlatformCode());
                 }
             }
             //如果是保宏
             if (logisticsPlatform.equals(LogisticsPlatformEnum.BAO_HONG.getCode())) {
-                SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(dto.getB2cSoId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                     getLabelVO.setDeliveryNo(soB2cEntity.getShippingOrderNo());
                 }
@@ -966,25 +990,44 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             getLabelVO.setLogisticsSaleChannelEntity(entity);
             labelVOArrayList.add(getLabelVO);
 
+            //发起请求第三方接口获取标签信息
             ApiResult<List<LogisticsPrintLabelResponse>> labelList = null;
             try {
                 labelList = service.getLabelList(labelVOArrayList);
-
             } catch (IOException e) {
                 log.info("入参：{} 获取平台物流标签失败：" + e.getMessage(), labelVOArrayList.toArray());
                 return Collections.emptyList();
             }
-            SoB2cDTO.WaybillDTO waybillDTO = new SoB2cDTO.WaybillDTO();
+
+            //校验是否请求成功
             for (LogisticsPrintLabelResponse datum : labelList.getData()) {
                 if ("500".equals(datum.getCode())) {
                     log.info("入参：{} 获取平台物流标签失败", labelVOArrayList.toArray());
                     throw new ServiceException(ApiError.PRINT_WAYBILL_ERROR, datum.getMessage());
                 }
             }
+
             //获取标签信息
             List<String> logisticsBase64 = labelList.getData().stream().map(req -> req.getBase64()).distinct().collect(Collectors.toList());
 
+            //如果是美客户多且是中转发货需要调美客多接口再打一张平台标签
+            String labelUrl = "";
+            if (logisticsPlatform.equals(LogisticsPlatformEnum.MERCADOLIBRE.getCode()) && B2cDeliveryLogisticTypeEnum.TRANSIT_SHIPMENT.getCode().equals(dto.getLogisticType())) {
+                try {
+                    JSONObject jsonObject = JSONObject.parseObject(soB2cEntity.getExtendData());
+                    String shipmentId = String.valueOf(jsonObject.get("shipmentId"));
+                    labelUrl = mercadoSdkClientService.printShippingLabel(authMap, Long.valueOf(shipmentId));
 
+                    String base64 = FileUtil.convertPdfUrlToBase64(labelUrl);
+                    logisticsBase64.add(base64);
+                } catch (IOException e) {
+                    log.error("token信息={},入参params={}, 美客多标签打印失败，返回值 responseMap={}", authMap , JSONObject.parseObject(soB2cEntity.getExtendData()), JSONUtil.toJsonStr(labelUrl));
+                    throw new ServiceException(ApiError.PRINT_WAYBILL_ERROR, e.getMessage());
+                }
+            }
+
+            //返回值
+            SoB2cDTO.WaybillDTO waybillDTO = new SoB2cDTO.WaybillDTO();
             waybillDTO.setLogisticsBase64(logisticsBase64);
             waybillDTO.setDistributeBase64(logisticsBase64);
             waybillDTO.setSoB2cId(dto.getB2cSoId());

@@ -132,6 +132,11 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     */
     @TableField("remark")
     private String remark;
+    /**
+    * 物流类型 oms的dict_basic表type=orderLogisticType
+    */
+    @TableField("logistic_type")
+    private String logisticType;
 
     public static final String CODE = "code";
 

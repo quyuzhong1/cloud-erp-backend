@@ -11,16 +11,16 @@ public interface ShopeeConstants {
      String host = "https://openplatform.shopee.cn";
      long partner_id = 2006582;
     //     long shop_id = 497438607;
-     long shop_id = 497435491;
+     long shop_id = 954283475;
 //     long shop_id = 954283475;
      long main_account_id = 863141;
      long merchant_id = 1315427;
      String code = "596d704f61436b46785a4c494b686363";
      String tmp_partner_key = "436568524178574244445975595377664f574e6b536d786b7256744158715974";
-     String access_token = "757a4644475556494d4d6c706870594a";
+     String access_token = "5a686b47746a56527949796f6f745869";
      String refresh_token = "4e776c4e494949424e464d664379436c";
      String shop_refresh_token = "58666c4b58496358486265526e6f434a";
-     String shop_access_token = "584c664679666f43766451797769526d";
+     String shop_access_token = "5a686b47746a56527949796f6f745869";
      String merchant_access_token = "6b6c50425770684a56474c6257697963";
      String merchant_refresh_token = "58424b515850524b7562476965644f44";
 

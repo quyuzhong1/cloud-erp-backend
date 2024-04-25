@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.product.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -14,8 +14,8 @@ import java.io.Serializable;
  */
 @Data
 public class SellerStock implements Serializable {
-    @JSONField(name = "location_id")
+    @Alias( "location_id")
     private String locationId;
-    @JSONField(name = "stock")
+    @Alias( "stock")
     private Integer stock;
 }

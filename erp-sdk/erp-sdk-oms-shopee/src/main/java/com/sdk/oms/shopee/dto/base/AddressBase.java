@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.base;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -43,6 +43,6 @@ public class AddressBase implements Serializable {
     /**
      * Zip Code
      */
-    @JSONField(name = "zipcode")
+    @Alias("zipcode")
     protected String zipCode;
 }

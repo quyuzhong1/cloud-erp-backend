@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.order.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -14,18 +14,18 @@ import java.io.Serializable;
  */
 @Data
 public class Invoice implements Serializable {
-    @JSONField(name = "number")
+    @Alias( "number")
     private String number;
-    @JSONField(name = "series_number")
+    @Alias( "series_number")
     private String seriesNumber;
-    @JSONField(name = "access_key")
+    @Alias( "access_key")
     private String accessKey;
-    @JSONField(name = "issue_date")
+    @Alias( "issue_date")
     private Long issueDate;
-    @JSONField(name = "total_value")
+    @Alias( "total_value")
     private float totalValue;
-    @JSONField(name = "products_total_value")
+    @Alias( "products_total_value")
     private float productsTotalValue;
-    @JSONField(name = "tax_code")
+    @Alias( "tax_code")
     private String taxCode;
 }

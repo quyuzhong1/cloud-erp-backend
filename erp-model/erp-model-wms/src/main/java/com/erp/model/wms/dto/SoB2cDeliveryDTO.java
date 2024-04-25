@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,10 +17,13 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Map;
 
 /**
  * <p>
@@ -144,6 +148,11 @@ public class SoB2cDeliveryDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
+        /**
+         * 物流类型
+         */
+        @StateEnumValue(clazz = B2cDeliveryLogisticTypeEnum.class, message = "物流类型有误")
+        private String logisticType;
 
         /**
          * 详情
@@ -256,6 +265,7 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 运输单号
          */
         private String  transportNo;
+
     }
 
     /**
@@ -599,6 +609,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 店铺id
          */
         private String shopId;
+        /**
+         * 物流类型
+         */
+        private String logisticType;
     }
 
     /**
