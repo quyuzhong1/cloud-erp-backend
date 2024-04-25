@@ -1238,15 +1238,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String skuStr = notRegistrationSkuNoList.stream().collect(Collectors.joining(","));
             throw new ServiceException(ApiError.NOT_UPDATE_CHANNEL_BY_NOT_REGISTRATION, skuStr, resultDTO.getDeclarePlatformName(), resultDTO.getLogisticsChannelName());
         }
-        updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration);
+
+        if (StrUtil.isNotBlank(logisticsChannelId) && Boolean.TRUE.equals(isCover)) {
+            //预报成功不支持配货
+            if (TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())) {
+                throw new ServiceException(StrUtil.format("B2C销售订单【{}】已预报成功不可更换渠道", entity.getCode()));
+            }
+        }
+        boolean isUpdateTransferStatus = !TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus());
+        updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration,isUpdateTransferStatus);
 
         //选择了渠道则更新
         if (StrUtil.isNotBlank(logisticsChannelId)) {
             if (Boolean.TRUE.equals(isCover)) {
-                //预报成功不支持配货
-                if (TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())) {
-                    throw new ServiceException(StrUtil.format("B2C销售订单【{}】已预报成功不可更换渠道", entity.getCode()));
-                }
 
                 //如果有物流单号 就要去取消
                 if (StringUtils.isNotBlank(code)) {
@@ -2009,6 +2013,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(logisticsEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
+
+        //预报成功不支持发起拦截
+        if (TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),StrUtil.format("B2C销售订单【{}】已预报成功不支持拦截", entity.getCode()));
+        }
+
 
         //修改拦截打标识、冻结状态
         SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
@@ -6168,7 +6178,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //未备案的sku
         List<String> notRegistrationSkuNoList = resultDTO.getNotRegistrationSkuNoList();
         Boolean isRegistration = CollectionUtils.isEmpty(notRegistrationSkuNoList);
-        updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration);
+        updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration,true);
         //表示未备案
         if (!isRegistration) {
             String skuStr = notRegistrationSkuNoList.stream().collect(Collectors.joining(","));
@@ -6184,9 +6194,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param transferStatus
      */
     @Transactional(rollbackFor = Exception.class)
-    public void updatePackageAndTransferStatus(String soId, String packageStatus, String transferStatus, Boolean isRegistration) {
+    public void updatePackageAndTransferStatus(String soId, String packageStatus, String transferStatus, Boolean isRegistration,Boolean isUpdateTransferStatus) {
         if (isRegistration) {
             this.lambdaUpdate().set(SoB2cEntity::getPackageStatus, packageStatus).
+                    set(isUpdateTransferStatus,SoB2cEntity::getTransferStatus, transferStatus).
                     set(SoB2cEntity::getAbnormalType, "").
                     set(SoB2cEntity::getIsMatchLogisticsRule, Boolean.TRUE).
                     eq(SoB2cEntity::getId, soId).update(new SoB2cEntity());
