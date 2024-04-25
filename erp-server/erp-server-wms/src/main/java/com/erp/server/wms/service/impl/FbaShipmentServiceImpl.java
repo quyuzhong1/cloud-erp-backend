@@ -25,6 +25,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
@@ -80,7 +81,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, FbaShipmentEntity> implements FbaShipmentService {
+public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, FbaShipmentEntity> implements FbaShipmentService,WmsDataCompareDbService<com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO> {
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
@@ -649,9 +650,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             List<FbaShipmentDTO.GenerateDeliverView> shipmentList = entry.getValue();
             //映射字段
             FirstMileDeliveryDTO.AddDTO addDTO = FbaShipmentConverter.INSTANCE.fbaGenerateDeliverViewToDeliveryAdd(shipmentList.get(0));
-            FirstMileDeliveryLogisticsDTO.AddDTO logisticsAddDTO = new FirstMileDeliveryLogisticsDTO.AddDTO();
-            logisticsAddDTO.setLogisticsRemark("");
-            logisticsAddDTO.setTrackingNoList(new ArrayList<>());
+
             addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
             addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
             //设置仓库名称
@@ -691,7 +690,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 detailAddList.add(detailAdd);
             }
             addDTO.setDetailList(detailAddList);
-            addDTO.setLogisticsView(logisticsAddDTO);
             if (isSubmit) {
                 firstMileDeliveryService.addAndSubmit(addDTO);
             } else {
@@ -1815,4 +1813,32 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         return null;
     }
+
+	@Override
+	public List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO> getDataCompareByCondition(
+			com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO params , Integer pageSize) {
+		if("0".equals(params.getId())) {
+			this.getParams(params);
+		}
+		return baseMapper.getDataCompareByCondition(params , pageSize);
+	}
+
+	@Override
+	public Integer getDataCompareByConditionCount(com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO params) {
+		this.getParams(params);
+		return baseMapper.getDataCompareByConditionCount(params);
+	}
+	
+	private void getParams(com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO params) {
+		if(CollUtil.isEmpty(params.getReceiveDateList())) {
+			throw new ServiceException("FBA货件签收的系统数据范围【签收日期】不能为空");
+		}
+		String shopId = params.getShopId();
+		if(StringUtils.isNotBlank(shopId)) {
+			ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
+			if(shopInfo != null) {
+				params.setShopName(shopInfo.getName());
+			}
+		}
+	}
 }

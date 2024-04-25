@@ -529,6 +529,8 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         Integer receiveQty;
         //已送货数量
         Integer deliveryQty = MathUtil.ZERO;
+        //有送货单的收货数量
+        Integer hasDeliveryReceiveQty = MathUtil.ZERO;
         //无送货单收货数量
         Integer unDeliveryReceiveQty = MathUtil.ZERO;
         //无收货单的入库数量
@@ -543,7 +545,13 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         if (CollectionUtils.isNotEmpty(receiveList)) {
             receiveQty = receiveList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(addDeliveryDTO.getPurchaseDetailId()) )
                     .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-            unDeliveryReceiveQty = receiveList.stream().filter(e -> StringUtils.isEmpty(e.getSourceId()) && e.getPurchaseOrderDetailId().equals(addDeliveryDTO.getPurchaseDetailId()))
+            hasDeliveryReceiveQty = receiveList.stream().filter(e ->
+                            org.apache.commons.lang3.StringUtils.isNotEmpty(e.getSourceType())
+                                    && e.getSourceType().equalsIgnoreCase(SourceTypeEnum.DELIVERY_ORDER.getCode())
+                                    && e.getPurchaseOrderDetailId().equals(addDeliveryDTO.getPurchaseDetailId()))
+                    .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            unDeliveryReceiveQty = receiveList.stream().filter(e -> StringUtils.isEmpty(e.getSourceId())
+                            && e.getPurchaseOrderDetailId().equals(addDeliveryDTO.getPurchaseDetailId()))
                     .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
         } else {
             receiveQty = MathUtil.ZERO;
@@ -579,7 +587,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                             && com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(e.getReceiptStatus()) && e.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode()) )
                     .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty)
                     .reduce(MathUtil.ZERO, Integer::sum);
-            diffSendAndReceive = srmDeliveryQty - receiveQty;
+            diffSendAndReceive = srmDeliveryQty - hasDeliveryReceiveQty;
         }
         //剩余送货量/可下推量=采购订单-送货单数量-无送货单收货数量-无收货单的入库数量+[收发差异]+退货补货数量[库存退货/质检退货]
         int waitDeliveryQty = orderQty - deliveryQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty;

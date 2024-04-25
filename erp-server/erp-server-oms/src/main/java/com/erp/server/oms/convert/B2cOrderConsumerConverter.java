@@ -44,14 +44,15 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "skuId", source = "skuId"),
             @Mapping(target = "skuNo", source = "skuNo"),
             @Mapping(target = "imageUrl", source = "imageUrl"),
+            @Mapping(target = "platformSpuNo", source = "platformSpuNo"),
     })
-    SoB2cDetailEntity convertNewDetail(PlatformOrderDetailDTO detailDTO, String mainId, String skuId, String skuNo,String imageUrl);
+    SoB2cDetailEntity convertNewDetail(PlatformOrderDetailDTO detailDTO, String mainId, String skuId, String skuNo, String imageUrl, String platformSpuNo);
 
 
     @Mappings({
             // 更新的内容
             @Mapping(target = "platformSkuNo", source = "detailDTO.platformSkuNo"),
-            @Mapping(target = "platformSpuNo", source = "detailDTO.platformSpuNo"),
+//            @Mapping(target = "platformSpuNo", source = "detailDTO.platformSpuNo"),
             @Mapping(target = "warehouseSkuNo", source = "detailDTO.warehouseSkuNo"),
             @Mapping(target = "qty", source = "detailDTO.qty"),
             @Mapping(target = "price", source = "detailDTO.price"),
@@ -59,6 +60,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "currency", source = "detailDTO.currency"),
             @Mapping(target = "exchangeRate", source = "detailDTO.exchangeRate"),
             @Mapping(target = "advicePrice", source = "detailDTO.advicePrice"),
+            @Mapping(target = "sourcePlatform", source = "detailDTO.sourcePlatform"),
             // 历史实体
             @Mapping(target = "mainId", source = "oldEntity.mainId"),
             @Mapping(target = "warehouseId", source = "oldEntity.warehouseId"),
@@ -75,8 +77,10 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "skuId", source = "skuId"),
             @Mapping(target = "skuNo", source = "skuNo"),
             @Mapping(target = "imageUrl", source = "imageUrl"),
+            @Mapping(target = "platformSpuNo", source = "platformSpuNo"),
+
     })
-    SoB2cDetailEntity convertUpdateDetail(SoB2cDetailEntity oldEntity, PlatformOrderDetailDTO detailDTO, String skuId, String skuNo,String imageUrl);
+    SoB2cDetailEntity convertUpdateDetail(SoB2cDetailEntity oldEntity, PlatformOrderDetailDTO detailDTO, String skuId, String skuNo, String imageUrl, String platformSpuNo);
 
 
     @Mappings({
@@ -97,6 +101,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "extendData", source = "dto.extendData"),
             @Mapping(target = "shopId",source = "dto.shopId"),
             @Mapping(target = "platformOrderCreateTime",source = "dto.platformOrderCreateTime"),
+            @Mapping(target = "remark", expression = "java(org.apache.commons.lang3.StringUtils.isBlank(oldEntity.getRemark()) ? dto.getRemark() : oldEntity.getRemark())"),
             // 历史实体
             @Mapping(target = "exchangeRate", source = "oldEntity.exchangeRate"),
             @Mapping(target = "code", source = "oldEntity.code"),
@@ -104,7 +109,6 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "platformCode", source = "oldEntity.platformCode"),
             @Mapping(target = "dictPlatform", source = "oldEntity.dictPlatform"),
             //@Mapping(target = "shopId", source = "oldEntity.shopId"),
-            @Mapping(target = "remark", source = "dto.remark"),
             @Mapping(target = "orgId", source = "oldEntity.orgId"),
             @Mapping(target = "orgName", source = "oldEntity.orgName"),
             @Mapping(target = "isIntercept", source = "oldEntity.isIntercept"),

@@ -1001,4 +1001,9 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         }
     }
 
+    @Override
+    public List<ShippingTemplateEntity> getByChannelIds(List<String> channelIds) {
+        return baseMapper.getByChannelIds(channelIds);
+    }
+
 }

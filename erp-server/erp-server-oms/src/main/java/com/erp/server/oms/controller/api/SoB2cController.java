@@ -1,6 +1,5 @@
 package com.erp.server.oms.controller.api;
 
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.Idempotent;
@@ -16,11 +15,8 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
-import com.erp.model.tms.entity.TransferDeclareEntity;
-import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
@@ -32,6 +28,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 
 /**
@@ -991,6 +988,23 @@ public class SoB2cController extends BaseController {
             resultDTOS.add(deleteResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 导出B2C销售订单信息
+     * @author Will
+     * @date: 2024/4/16 15:06
+     * @param dto
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2C销售订单信息")
+    @PostMapping(value = "/exportExcel")
+    @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
+    public ApiResult exportExcel(@RequestBody SoB2cDTO.PagingParamDTO dto, HttpServletResponse response) {
+        Boolean flag = soB2cService.exportExcel(dto, response);
+        return flag == true ? success() : failure();
     }
 
 }

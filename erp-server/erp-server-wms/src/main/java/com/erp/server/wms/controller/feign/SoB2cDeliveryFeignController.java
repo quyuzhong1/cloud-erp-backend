@@ -38,7 +38,12 @@ public class SoB2cDeliveryFeignController extends BaseController {
         List<SoB2cDeliveryDetailEntity> list = soB2cDeliveryDetailService.listBySoDetailIds(soDetailIdList);
         return list;
     }
- 
+
+    @PostMapping("/updateB2cDeliveryWeightBySoId")
+    public Boolean updateB2cDeliveryWeightBySoId(@RequestBody SoB2cDeliveryDTO.UpdateWeightDTO dto) {
+        return soB2cDeliveryService.updateB2cDeliveryWeightBySoId(dto);
+    }
+
      /** 
       * @description 添加B2C发货单
       * @param dto
@@ -89,6 +94,19 @@ public class SoB2cDeliveryFeignController extends BaseController {
     @PostMapping("/updateStatus")
     public Boolean updateStatus(@RequestParam("ids") List<String> ids, @RequestParam("status") String status) {
         Boolean flag = soB2cDeliveryService.updateStatus(ids, status);
+        return flag;
+    }
+
+    /**
+     * 虚假发货
+     * @Author Luo_WG
+     * @Date 2023/12/27 16:00
+     * @param ids 发货单id
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/falseDeliveryBatch")
+    public Boolean falseDeliveryBatch(@RequestBody List<String> ids) {
+        Boolean flag = soB2cDeliveryService.falseDeliveryBatch(ids);
         return flag;
     }
 }

@@ -6,6 +6,7 @@ import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -17,9 +18,11 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Map;
 
 /**
@@ -121,6 +124,22 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 详情
          */
         private List<SoB2cDeliveryDetailDTO.ViewDTO> detailList;
+    }
+
+    /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class UpdateWeightDTO {
+
+        private String soId;
+
+        private BigDecimal weight;
+
+        private String weightUnit;
     }
 
     /**
@@ -361,13 +380,37 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private Boolean isPrintPicking;
         /**
+         * 拣货单状态 中文
+         */
+        private String printPickingName;
+        /**
          * 是否验货【可排序】
          */
         private Boolean isInspection;
         /**
+         * 验货状态 中文
+         */
+        private String inspectionName;
+        /**
          * 是否称重【可排序】
          */
         private Boolean isWeigh;
+        /**
+         * 称重状态 中文
+         */
+        private String weighName;
+        /**
+         * 称重重量
+         */
+        private BigDecimal weight;
+        /**
+         * 重量+单位
+         */
+        private String weightName;
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
         /**
          * skuId
          */
@@ -404,6 +447,12 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 发货时间【可排序】
          */
         private LocalDateTime deliveryTime;
+
+        /**
+         * 完成打印时间【可排序】
+         */
+        private LocalDateTime finishPrintTime;
+
 
         /**
          * 组包状态  not 不需要  wait 待组包   already 已经组包
@@ -456,6 +505,19 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            PrintPickingViewDTO that = (PrintPickingViewDTO) o;
+            return Objects.equals(skuId, that.skuId) && Objects.equals(skuNo, that.skuNo) && Objects.equals(productName, that.productName) && Objects.equals(warehouseId, that.warehouseId) && Objects.equals(warehouseName, that.warehouseName) && Objects.equals(warehouseLocation, that.warehouseLocation) && Objects.equals(remark, that.remark);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(skuId, skuNo, productName, warehouseId, warehouseName, warehouseLocation, remark);
+        }
     }
 
     /**

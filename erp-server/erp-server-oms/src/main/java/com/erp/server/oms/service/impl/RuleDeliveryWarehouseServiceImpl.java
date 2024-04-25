@@ -253,6 +253,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
                 RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = new RuleDeliveryWarehouseDTO.RuleMatchResultDTO();
                 ruleMatchResult.setWarehouseId(warehouseId);
                 ruleMatchResult.setMap(map);
+                ruleMatchResult.setName(item.getName());
                 return ruleMatchResult;
             }
         }

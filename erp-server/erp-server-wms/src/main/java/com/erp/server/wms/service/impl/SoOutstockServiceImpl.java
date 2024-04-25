@@ -1,10 +1,16 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.enums.CellExtraTypeEnum;
+import com.alibaba.excel.exception.ExcelAnalysisException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -28,8 +34,10 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
@@ -37,6 +45,8 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -46,18 +56,23 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.*;
+import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
-import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.SoOutstockDetailDTO;
+import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.excel.SoOutstockPackingExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.PackingStatusEnum;
+import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -65,10 +80,13 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.wms.convert.FirstMileDeliveryConverter;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
+import com.erp.server.wms.listener.SoOutstockPackingExcelListener;
 import com.erp.server.wms.mapper.SoOutstockMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -77,20 +95,28 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.BeanUtils;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -103,7 +129,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, SoOutstockEntity> implements SoOutstockService {
+public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, SoOutstockEntity> implements SoOutstockService , WmsDataCompareDbService<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> {
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -167,6 +193,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private SoB2cFeign soB2cFeign;
 
     @Resource
+    private ShopInfoFeign shopInfoFeign;
+
+    @Resource
     private TransferDeclareFeign transferDeclareFeign;
 
     @Resource
@@ -177,6 +206,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private StocktakingProfitLossService stocktakingProfitLossService;
+
+    @Resource
+    private WmsCartonService wmsCartonService;
+
+    @Resource
+    private TmsDeclareBillFeign tmsDeclareBillFeign;
+
+    @Resource
+    private OmsListingInfoFeign omsListingInfoFeign;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -317,6 +355,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setSalesOrgName(soCustomer.getSalesOrgName());
         soOutstock.setSellerId(soCustomer.getSellerId());
         soOutstock.setCountry(soCustomer.getCountryId());
+        if(OrderTypeEnum.B2B.getCode().equals(soOutstock.getOrderType())){
+            soOutstock.setDeclareStatus(WmsDeclareStatusEnum.WAIT.getCode());
+        }
         //仓库id
         String warehouseId = soCustomer.getWarehouseId();
         String warehouseKeeperId = soOutstock.getWarehouseKeeperId();
@@ -538,6 +579,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.ERROR_98006);
         }
 
+
+        //已装箱才能审核(B2B订单)
+        if (PackingStatusEnum.NOT_PACKING.getCode().equals(entity.getPackingStatus())
+                && OrderTypeEnum.B2B.getCode().equalsIgnoreCase(entity.getOrderType())
+                && !"CN".equalsIgnoreCase(entity.getCountry())
+        ) {
+            throw new ServiceException(ApiError.NOT_PACKAGE_NO_APPROVE, entity.getCode());
+        }
 
         // 调用流程审核
         approveProcess(entity, dto);
@@ -912,6 +961,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 //            throw new ServiceException(ApiError.B2C_SO_OUTSTOCK_NOT_DIS_APPROVE, code);
 //        }
 
+        //下游单据【报关单】生成后不可操作反审核：报关单[单号]已生成不可操作反审核
+        List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(ids);
+        if (CollectionUtil.isNotEmpty(tmsDeclareBillEntities)) {
+            throw new ServiceException(ApiError.TMS_DECLARE_BILL_EXISTS, tmsDeclareBillEntities.get(0).getCode());
+        }
+
         //审核通过
         // 增加 出库单关联的自发货费用单据已确认状态下，不允许出库单反审核
         List<LogisticsBillCostDTO.OutStockDTO> outStockDTOS = logisticsBillFeign.listBillCostByOutstockIds(ids);
@@ -1267,6 +1322,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setCurrencySymbol(item.getCurrencySymbol());
             item.setAllAmountLocalCurrency(item.getAllAmountLocalCurrency());
 
+            //装箱状态
+            item.setPackingStatusName(PackingStatusEnum.getName(item.getPackingStatus()));
 
         }
     }
@@ -2482,4 +2539,431 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional
+    public String packingSave(WmsCartonDTO.WmsCartonAdd dto) {
+        //待审核的数据可以上传装箱数据
+        SoOutstockEntity entity = this.getById(dto.getId());
+        if (!ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.APPROVE_ING_IS_PACKING);
+        }
+        //已装箱状态不允许再次修改装箱数据
+        if (PackingStatusEnum.PACKING.getCode().equals(entity.getPackingStatus())) {
+            throw new ServiceException(ApiError.SO_OUTSTOCK_NOT_PACKING);
+        }
+
+        //只允许B2B订单装箱
+        if (!OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
+            throw new ServiceException(ApiError.B2B_ORDER_IS_PACK);
+        }
+
+        //删除原装箱信息
+        wmsCartonService.deleteCarton(dto.getId());
+        if (CollectionUtils.isNotEmpty(dto.getWmsCartonList())) {
+            //新增装箱信息
+            for (WmsCartonDTO.AddDTO addDTO : dto.getWmsCartonList()) {
+                //新增装箱信息
+                wmsCartonService.add(addDTO, dto.getId(), SourceTypeEnum.SO_OUTSTOCK.getCode());
+
+                //根据主表id分组sku查询发货及待装箱数
+                List<WmsCartonDTO.PackDateDTO> packDateDTOS = wmsCartonService.listPackDateBySourceId(dto.getId());
+                List<String> ids = packDateDTOS.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+                List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listByMainIds(ids);
+
+                //校验打包数量
+                checkDeliveryQty(packDateDTOS, soOutstockDetailEntities);
+            }
+        }
+
+        //根据主表id分组sku查询发货及待装箱数
+        List<SoOutstockDTO.GroupSkuDTO> groupSkuList = soOutstockDetailService.listGroupSkuByMainId(dto.getId());
+
+        //当所有产品待装箱数量为0时，状态自动变更为已装箱
+        List<SoOutstockDTO.GroupSkuDTO> groupSkuDTOList = groupSkuList.stream().filter(req -> req.getWaitPackQty() > 0).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(groupSkuDTOList)) {
+            updatePackingStatus(dto.getId(), PackingStatusEnum.PACKING.getCode());
+            return PackingStatusEnum.PACKING.getCode();
+        } else {
+            updatePackingStatus(dto.getId(), PackingStatusEnum.NOT_PACKING.getCode());
+            return PackingStatusEnum.NOT_PACKING.getCode();
+        }
+    }
+
+    /**
+     * 校验打包数量
+     * @param packDateDTOS
+     * @param soOutstockDetailEntities
+     */
+    private void checkDeliveryQty(List<WmsCartonDTO.PackDateDTO> packDateDTOS, List<SoOutstockDetailEntity> soOutstockDetailEntities) {
+        for (WmsCartonDTO.PackDateDTO packDateDTO : packDateDTOS) {
+            //发货数量
+            int deliveryQty = soOutstockDetailEntities.stream().filter(req -> req.getMainId().equals(packDateDTO.getId()) && req.getSkuId().equals(packDateDTO.getSkuId())).mapToInt(req -> req.getActualQty()).sum();
+            //待装箱数量=发货数量-所有已装箱数量
+            int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(packDateDTO.getSkuId())).mapToInt(req -> req.getBoxQty() * req.getPackQty()).sum();
+            if (deliveryQty < packQtySum) {
+                throw new ServiceException(ApiError.PACKING_QTY_NOT_GT_WAIT_PACKING_QTY, packDateDTO.getBoxSpecNo(), packDateDTO.getSkuNo());
+            }
+        }
+    }
+
+    @Override
+    public WmsCartonDTO.WmsCartonView packingView(String id) {
+        SoOutstockEntity entity = this.getById(id);
+        //只允许B2B订单装箱
+        if (!OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
+            throw new ServiceException(ApiError.B2B_ORDER_IS_PACK);
+        }
+        //查询装箱详情
+        WmsCartonDTO.WmsCartonView cartonView = wmsCartonService.getCartonViewBySourceId(id);
+
+        cartonView.setId(entity.getId());
+        cartonView.setCode(entity.getCode());
+        return cartonView;
+    }
+
+    @Override
+    public WmsCartonDTO.ListPackingDTO listPacking(String id) {
+        SoOutstockEntity entity = this.getById(id);
+        //只允许B2B订单装箱
+        if (!OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
+            throw new ServiceException(ApiError.B2B_ORDER_IS_PACK);
+        }
+
+        WmsCartonDTO.ListPackingDTO listPackingDTO = new WmsCartonDTO.ListPackingDTO();
+        listPackingDTO.setId(entity.getId());
+        listPackingDTO.setCode(entity.getCode());
+
+        //获取总箱数
+        List<WmsCartonEntity> firstMileCartonEntities = wmsCartonService.listBySourceIds(Arrays.asList(id));
+        int boxQty = firstMileCartonEntities.stream().mapToInt(WmsCartonEntity::getBoxQty).sum();
+        listPackingDTO.setBoxQty(boxQty);
+
+        //箱子明细信息
+        List<WmsCartonDetailDTO.ListPackingDetailDTO> detailList = baseMapper.listPackingDetail(Arrays.asList(id));
+        listPackingDTO.setDetailList(detailList);
+        return listPackingDTO;
+    }
+
+    @Override
+    public void exportPacking(SoOutstockDTO.ExportDTO dto, HttpServletResponse response) {
+        List<WmsCartonDTO.ExportPackingDTO> list = baseMapper.exportPacking(dto);
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+
+        //只有已装箱的发货单可以查看/导出装箱数据
+        long count = list.stream().filter(req -> PackingStatusEnum.NOT_PACKING.getCode().equals(req.getPackingStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
+        }
+
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/soOutstockPackingExport.xlsx";
+        String name = "装箱清单导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+    }
+
+    @Override
+    public void downloadPackingTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/soOutstockPacking.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("packing downloadTemplate  出错了 e==", e);
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+    }
+
+    @Override
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+// 读取 Excel 文件
+        SoOutstockPackingExcelListener listener = new SoOutstockPackingExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), SoOutstockPackingExcelDTO.class, listener).extraRead(CellExtraTypeEnum.MERGE).sheet(0).doRead();
+        }catch (ExcelAnalysisException excelAnalysisException){
+            throw new ServiceException(excelAnalysisException.getMessage());
+        } catch (Exception e) {
+            log.error("excel导入错误", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        }
+        List<SoOutstockPackingExcelDTO> packingExcelDTOList = listener.getPackingExcelDTOList();
+        List<SoOutstockPackingExcelDTO> errorList = listener.getErrorList();
+        //过滤掉错误数据
+        Set<String> errorCodeSet = errorList.stream().map(SoOutstockPackingExcelDTO::getCode).collect(Collectors.toSet());
+        packingExcelDTOList = packingExcelDTOList.stream().filter(v->!errorCodeSet.contains(v.getCode())).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(packingExcelDTOList)){
+            //根据发货单分组
+            Map<String,List<SoOutstockPackingExcelDTO>> map = packingExcelDTOList.stream().collect(Collectors.groupingBy(SoOutstockPackingExcelDTO::getCode));
+            map.forEach((key,value)->{
+                SoOutstockEntity entity = this.listByCodes(Collections.singletonList(key)).get(0);
+                WmsCartonDTO.WmsCartonAdd dto = new WmsCartonDTO.WmsCartonAdd();
+                dto.setId(entity.getId());
+                dto.setCode(key);
+                List<WmsCartonDTO.AddDTO> firstMileCartonList = new ArrayList<>();
+                //根据箱号分组
+                Map<Integer,List<SoOutstockPackingExcelDTO>> boxMap = value.stream().collect(Collectors.groupingBy(SoOutstockPackingExcelDTO::getBoxNo));
+                boxMap.forEach((boxKey,valByBox)->{
+                    WmsCartonDTO.AddDTO addDTO = new WmsCartonDTO.AddDTO();
+                    addDTO.setBoxSpecNo(boxKey);
+                    addDTO.setBoxLength(valByBox.get(0).getSingleBoxLength());
+                    addDTO.setBoxWidth(valByBox.get(0).getSingleBoxWidth());
+                    addDTO.setBoxHeight(valByBox.get(0).getSingleBoxHeight());
+                    addDTO.setPackageWeight(valByBox.get(0).getSingleBoxWeight());
+                    addDTO.setBoxQty(1);
+                    List<WmsCartonDetailDTO.AddDTO> detailList = FirstMileDeliveryConverter.INSTANCE.importToSoOutstockPackingSku(valByBox);
+                    addDTO.setDetailList(detailList);
+                    firstMileCartonList.add(addDTO);
+                });
+                dto.setWmsCartonList(firstMileCartonList);
+                if(StringUtils.isBlank(this.packingSave(dto))){
+                    throw new ServiceException("保存装箱信息失败");
+                }
+            });
+        }
+        if (!errorList.isEmpty()) {
+            String fileName = "装箱错误数据";
+            ExcelUtil.export(fileName, "error", errorList, SoOutstockPackingExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+        return true;
+    }
+
+    @Override
+    public List<WmsCartonDTO.GroupSkuDTO> listGroupSkuById(String id) {
+        List<WmsCartonDTO.GroupSkuDTO> list = baseMapper.listGroupSkuByMainId(id);
+        //查询产品信息
+        List<String> skuIdList = list.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        //查询已装箱数
+        List<WmsCartonDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonService.listPackingQtyByMainId(id, null);
+        for (WmsCartonDTO.GroupSkuDTO groupSkuDTO : list) {
+            //待装箱数量=发货数量-已装箱数量
+            int usePackQty = packingQtyDTOS.stream()
+                    .filter(req -> req.getSkuId().equals(groupSkuDTO.getId())
+                            && req.getSkuId().equals(groupSkuDTO.getSkuId()))
+                    .mapToInt(req -> req.getUsePackQty()).sum();
+            groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - usePackQty);
+            groupSkuDTO.setPackQty(usePackQty);
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(groupSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
+            groupSkuDTO.setProductName(skuVO.getSkuName());
+            groupSkuDTO.setSkuNo(skuVO.getSkuNo());
+        }
+        return list;
+    }
+
+    @Override
+    public List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO) {
+        List<TmsDeclareBillDTO.SoOutDTO> result = baseMapper.getCanGenerateDeclare(querySourceDTO);
+        if(CollectionUtils.isEmpty(result)){
+            return new ArrayList<>();
+        }
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+
+        List<String> ids = result.stream().map(TmsDeclareBillDTO.SoOutDTO::getSourceId).collect(Collectors.toList());
+        List<SoOutstockDetailEntity> allDetailEntityList = soOutstockDetailService.listByMainIds(ids);
+        //查询物流产品信息
+        List<String> skuIds = allDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailDTO.ProductLogisticDTO> allProductLogisticDTOList = plmTaskFeign.listProductLogisticsByIds(skuIds);
+
+        //箱子明细信息
+        List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDetailList = baseMapper.listPackingDetail(ids);
+        Map<String,List<WmsCartonDetailDTO.ListPackingDetailDTO>> packingDetailMap = packingDetailList.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId));
+
+        for (TmsDeclareBillDTO.SoOutDTO deliveryDTO : result) {
+            String countryName = countryList.stream().filter(obj -> obj.getId().equals(deliveryDTO.getCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+            deliveryDTO.setCountryName(countryName);
+
+            List<SoOutstockDetailEntity> detailEntityList = allDetailEntityList.stream().filter(entity -> entity.getMainId().equals(deliveryDTO.getSourceId())).collect(Collectors.toList());
+            //处理产品信息
+            if(CollectionUtils.isNotEmpty(detailEntityList)){
+                //转成MAP，相同sku数量相加
+                Map<String,SoOutstockDetailEntity> detailEntityMap = detailEntityList.stream().collect(Collectors.toMap(SoOutstockDetailEntity::getSkuId,
+                        Function.identity(),(o1, o2)->{
+                            SoOutstockDetailEntity mergeDetail = new SoOutstockDetailEntity();
+                            mergeDetail.setSkuId(o1.getSkuId());
+                            mergeDetail.setPlanQty(o1.getPlanQty()+o2.getPlanQty());
+                            return mergeDetail;
+                        }));
+                List<TmsDeclareBillDTO.ProductDetail> productDetailList = new ArrayList<>();
+                List<ProductDetailDTO.ProductLogisticDTO> productLogisticDTOList = allProductLogisticDTOList.stream().filter(v->detailEntityMap.containsKey(v.getSkuId())).collect(Collectors.toList());
+                for (ProductDetailDTO.ProductLogisticDTO productLogisticDTO : productLogisticDTOList) {
+                    SoOutstockDetailEntity detailEntity = detailEntityMap.get(productLogisticDTO.getSkuId());
+                    if(productLogisticDTO.getCombinationDeclareType().equals(CombinationDeclareTypeEnums.SPLIT.getCode()) && productLogisticDTO.getIsCombination()){
+                        //拆分申报的组合品，拆成子SKU
+                        for (ProductDetailDTO.ProductLogisticDTO logisticDTO : productLogisticDTO.getChildList()) {
+                            TmsDeclareBillDTO.ProductDetail productDetail = BeanUtil.copyProperties(logisticDTO,TmsDeclareBillDTO.ProductDetail.class);
+                            productDetail.setQty(detailEntity.getPlanQty() * logisticDTO.getChildQty());
+                            productDetail.setToCountry(deliveryDTO.getCountry());
+                            productDetail.setToCountryName(deliveryDTO.getCountryName());
+                            productDetailList.add(productDetail);
+                        }
+                    }else{
+                        TmsDeclareBillDTO.ProductDetail productDetail = BeanUtil.copyProperties(productLogisticDTO,TmsDeclareBillDTO.ProductDetail.class);
+                        productDetail.setQty(detailEntity.getPlanQty());
+                        productDetail.setToCountry(deliveryDTO.getCountry());
+                        productDetail.setToCountryName(deliveryDTO.getCountryName());
+                        productDetailList.add(productDetail);
+                    }
+                }
+                deliveryDTO.setNetWeight(productDetailList.stream().filter(v->Objects.nonNull(v.getNetWeight())).map(v->v.getNetWeight().multiply(new BigDecimal(v.getQty())).divide(new BigDecimal(1000),4, RoundingMode.HALF_UP)).reduce(BigDecimal.ZERO, BigDecimal::add));
+                deliveryDTO.setProductDetailList(productDetailList);
+            }
+
+            //设置装箱信息
+            List<WmsCartonDetailDTO.ListPackingDetailDTO> list = packingDetailMap.getOrDefault(deliveryDTO.getSourceId(),new ArrayList<>());
+            if(CollectionUtils.isNotEmpty(list)){
+                List<TmsDeclareBillDTO.PackingDTO> packingDTOList = BeanUtil.copyToList(list,TmsDeclareBillDTO.PackingDTO.class);
+                packingDTOList.forEach(t->t.setCode(deliveryDTO.getSourceCode()));
+                deliveryDTO.setPackingDTOList(packingDTOList);
+            }
+            deliveryDTO.setBoxQty(list.size());
+            deliveryDTO.setGrossWeight(list.stream()
+                    .map(WmsCartonDetailDTO.ListPackingDetailDTO::getPackageWeight)
+                    .map(BigDecimal::new)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add));
+        }
+        //合并相同的sku
+        for (TmsDeclareBillDTO.SoOutDTO deliveryDTO : result) {
+            List<TmsDeclareBillDTO.ProductDetail> productDetails = deliveryDTO.getProductDetailList();
+            // 根据 skuId 进行分组，并对数量进行求和
+            List<TmsDeclareBillDTO.ProductDetail> mergedDetails = new ArrayList<>(productDetails.stream()
+                    .collect(Collectors.toMap(
+                            TmsDeclareBillDTO.ProductDetail::getSkuId,
+                            Function.identity(),
+                            (existing, replacement) -> {
+                                // 合并数量
+                                existing.setQty(existing.getQty() + replacement.getQty());
+                                // 其他字段取第一个出现的值
+                                return existing;
+                            }
+                    ))
+                    .values());
+            mergedDetails.forEach(v->{
+                if(Objects.nonNull(v.getPrice())){
+                    v.setTotalPrice(v.getPrice().multiply(new BigDecimal(v.getQty())));
+                }
+            });
+            deliveryDTO.setProductDetailList(mergedDetails);
+        }
+
+        return result;
+    }
+
+    @Override
+    public List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq) {
+        return baseMapper.logisticStatistics(deliveryStaticsReq);
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean updateStatus(TmsDeclareBillDTO.UpdateStatusDTO dto) {
+        if(StringUtils.isBlank(dto.getDeclareStatus()) && StringUtils.isBlank(dto.getLogisticsStatus())){
+            return false;
+        }
+        return this.lambdaUpdate()
+                .in(SoOutstockEntity :: getId,dto.getIds())
+                .set(StringUtils.isNotBlank(dto.getDeclareStatus()),SoOutstockEntity::getDeclareStatus,dto.getDeclareStatus())
+                .update();
+
+    }
+
+    /**
+     * 根据单号查询出库单
+     * @param codes
+     * @return
+     */
+    @Override
+    public List<SoOutstockEntity> listByCodes(List<String> codes) {
+        if (CollectionUtils.isEmpty(codes)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(SoOutstockEntity::getCode, codes).list();
+    }
+
+
+
+    /**
+     * 修改装箱状态
+     * @Author Luo_WG
+     * @Date 2023/12/4 16:17
+     * @param id 发货单id
+     * @param packingStatus 发货状态
+     * @return void
+     **/
+    private void updatePackingStatus(String id, String packingStatus){
+        lambdaUpdate().set(SoOutstockEntity::getPackingStatus, packingStatus)
+                .eq(SoOutstockEntity::getId, id)
+                .update();
+    }
+
+	@Override
+	public List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> getDataCompareByCondition(
+			com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params , Integer pageSize) {
+		if("0".equals(params.getId())) {
+			this.getParams(params);
+		}
+		return baseMapper.getDataCompareByCondition(params , pageSize);
+	}
+
+	@Override
+	public Integer getDataCompareByConditionCount(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params) {
+		this.getParams(params);
+		return baseMapper.getDataCompareByConditionCount(params);
+	}
+
+	private void getParams(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params) {
+		if(StringUtils.isBlank(params.getDictPlatform())) {
+			throw new ServiceException("销售出库单的系统数据范围【销售平台】不能为空");
+		}
+
+		if(CollUtil.isEmpty(params.getBillDateList())) {
+			throw new ServiceException("销售出库单的系统数据范围【出库日期】不能为空");
+		}
+
+		List<String> customerIdList = new ArrayList<>();
+		String shopId = params.getShopId();
+		if(StringUtils.isNotBlank(shopId)) {
+			ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
+			customerIdList.add(shopInfoEntity.getCustomerId());
+		}else {
+			ApiResult<List<ShopInfoEntity>> list = shopInfoFeign.list();
+			customerIdList = list.getData().stream().filter(s -> s.getCustomerId() != null).map(ShopInfoEntity::getCustomerId).collect(Collectors.toList());
+		}
+
+		List<CustomerInfoEntity> customerInfoEntityList = customerFeign.listCustomerByIds(customerIdList);
+		List<String> customerNameList = customerInfoEntityList.stream().filter(c -> StringUtils.isNotBlank(c.getName())).map(CustomerInfoEntity::getName).collect(Collectors.toList());
+		if(CollUtil.isEmpty(customerNameList)) {
+			throw new ServiceException("选择的店铺未配置客户信息");
+		}
+		params.setCustomerNameList(customerNameList);
+
+		String warehouseId = params.getWarehouseId();
+		if(StringUtils.isNotBlank(warehouseId)) {
+			WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
+			if(warehouseEntity != null) {
+				params.setWarehouseName(warehouseEntity.getName());
+			}
+		}
+	}
 }

@@ -1,16 +1,13 @@
 package com.erp.server.oms.convert;
 
 import com.common.business.dto.WalmartShipDTO;
-import com.common.business.dto.WalmartShipOrderDetailDTO;
-import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Mapper
 @Component
@@ -44,4 +41,91 @@ public interface CustomerInfoConverter {
             @Mapping(target = "approveUserName", ignore = true),
     })
     CustomerB2bSellerChangeEntity toCustomerB2bSellerChangeConvert(CustomerInfoEntity customerInfoEntity, CustomerB2bSellerChangeDTO.AddDTO addDTO);
+
+    /**
+     * 填充客户字段
+     *
+     * @param addDTO
+     * @param id
+     * @return
+     */
+    @Mappings({
+            @Mapping(target = "platformType", source = "addDTO.dictPlatform"),
+            @Mapping(target = "name", source = "addDTO.receiverDTO.customerId"),
+            @Mapping(target = "countryId", source = "addDTO.receiverDTO.country"),
+            @Mapping(target = "currency", source = "addDTO.currency"),
+            @Mapping(target = "remark", source = "addDTO.remark"),
+            @Mapping(target = "conditionDict", constant = "onlineStorePayment"),
+            @Mapping(target = "sourceId", source = "id"),
+            @Mapping(target = "sourceType", constant = "soB2c")
+    })
+    CustomerB2CDTO.AddDTO soB2cAddToCustomerBase(SoB2cDTO.AddDTO addDTO, String id);
+
+    /**
+     * 订单客户信息映射到客户列表
+     * @param receiverDTO
+     * @return
+     */
+    @Mappings({
+            @Mapping(target = "person", source = "receiverName"),
+//            @Mapping(target = "position", constant = ""),
+            @Mapping(target = "telNumber", source = "receiverTelNumber"),
+            @Mapping(target = "email", source = "email"),
+            @Mapping(target = "isDefault", constant = "true"),
+            @Mapping(target = "disabled", constant = "false")
+    })
+    CustomerContactDTO.AddDTO soB2cAddReceiveToContact(SoB2cReceiverDTO.AddDTO receiverDTO);
+    @Mappings({
+//            @Mapping(target = "address", source = "receiverName"),
+            @Mapping(target = "person", source = "receiverName"),
+            @Mapping(target = "type", constant = "receive"),
+            @Mapping(target = "telNumber", source = "receiverTelNumber"),
+            @Mapping(target = "email", source = "email"),
+            @Mapping(target = "zipCode", source = "postCode"),
+            @Mapping(target = "isDefault", constant = "true"),
+            @Mapping(target = "disabled", constant = "false")
+    })
+    CustomerAddressDTO.AddDTO soB2cAddReceiveToAddress(SoB2cReceiverDTO.AddDTO receiverDTO);
+    /**
+     * 填充客户字段
+     *
+     * @param updateDTO
+     * @return
+     */
+    @Mappings({
+            @Mapping(target = "platformType", source = "updateDTO.dictPlatform"),
+            @Mapping(target = "name", source = "updateDTO.receiverDTO.customerId"),
+            @Mapping(target = "countryId", source = "updateDTO.receiverDTO.country"),
+            @Mapping(target = "currency", source = "updateDTO.currency"),
+            @Mapping(target = "remark", source = "updateDTO.remark"),
+            @Mapping(target = "conditionDict", constant = "onlineStorePayment"),
+            @Mapping(target = "sourceId", source = "id"),
+            @Mapping(target = "sourceType", constant = "soB2c")
+    })
+    CustomerB2CDTO.AddDTO soB2cUpdateToCustomerBase(SoB2cDTO.UpdateDTO updateDTO);
+    /**
+     * 订单客户信息映射到客户列表
+     * @param receiverDTO
+     * @return
+     */
+    @Mappings({
+            @Mapping(target = "person", source = "receiverName"),
+//            @Mapping(target = "position", constant = ""),
+            @Mapping(target = "telNumber", source = "receiverTelNumber"),
+            @Mapping(target = "email", source = "email"),
+            @Mapping(target = "isDefault", constant = "true"),
+            @Mapping(target = "disabled", constant = "false")
+    })
+    CustomerContactDTO.AddDTO soB2cUpdateReceiveToContact(SoB2cReceiverDTO.UpdateDTO receiverDTO);
+    @Mappings({
+//            @Mapping(target = "address", source = "receiverName"),
+            @Mapping(target = "person", source = "receiverName"),
+            @Mapping(target = "type", constant = "receive"),
+            @Mapping(target = "telNumber", source = "receiverTelNumber"),
+            @Mapping(target = "email", source = "email"),
+            @Mapping(target = "zipCode", source = "postCode"),
+            @Mapping(target = "isDefault", constant = "true"),
+            @Mapping(target = "disabled", constant = "false")
+    })
+    CustomerAddressDTO.AddDTO soB2cUpdateReceiveToAddress(SoB2cReceiverDTO.UpdateDTO receiverDTO);
 }

@@ -13,10 +13,12 @@
 
 package com.erp.server.dmp.amz;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfiguration;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfigurationOnRequests;
 import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
@@ -26,8 +28,11 @@ import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import com.erp.server.dmp.service.CfgAppClientService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tools.ant.taskdefs.Sleep;
 import org.junit.runner.RunWith;
+import org.springframework.beans.BeanUtils;
 import org.springframework.boot.test.context.SpringBootTest;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import org.springframework.context.annotation.Profile;
@@ -46,6 +51,7 @@ import java.util.stream.Collectors;
 /**
  * API tests for OrdersV0Api
  */
+@Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerDmpApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @TestPropertySource("classpath:bootstrap-dev.yml")
@@ -536,6 +542,42 @@ public class OrdersV0ApiTest {
         // TODO: test validations
     }
 
+    @Test
+    public void confirmList() throws ApiException {
+        String jsonList = "";
+
+        List<ConfirmShipmentManualRequest> list = JSONUtil.toList(jsonList, ConfirmShipmentManualRequest.class);
+        for (ConfirmShipmentManualRequest confirmShipmentManualRequest : list) {
+            log.warn("标记发货请求={}", JSONUtil.toJsonStr(confirmShipmentManualRequest));
+            ConfirmShipmentRequest body = new ConfirmShipmentRequest();
+            BeanUtils.copyProperties(confirmShipmentManualRequest, body);
+            try {
+                String orderId = confirmShipmentManualRequest.getOrderId();
+                String shopId = confirmShipmentManualRequest.getShopId();
+                // 获取店铺授权信息
+                AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+                if (null == shopInfoDTO) {
+                    throw new ServiceException("未找到店铺授权:" + shopId);
+                }
+                AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+                OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
+                log.warn("标记发货请求={}", JSONUtil.toJsonStr(body));
+                ApiResponse<Void> voidApiResponse = api.confirmShipmentWithHttpInfo(body, orderId);
+                log.warn("标记发货响应结果");
+                log.warn(JSONUtil.toJsonStr(voidApiResponse));
+                log.warn("------------------------------------------------------");
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                }
+            } catch (Exception e) {
+                log.error("标记发货请求失败={}", JSONUtil.toJsonStr(body));
+                log.error("标记发货请求失败，error={}", ExceptionUtil.stacktraceToString(e));
+            }
+        }
+
+    }
+
 
     @Test
     public void confirmShipmentTest() throws ApiException {
@@ -552,75 +594,86 @@ public class OrdersV0ApiTest {
         PackageDetail packageDetail = new PackageDetail();
         packageDetail.setPackageReferenceId("1");
 
-        packageDetail.setCarrierCode("BR1 Express");
-        packageDetail.setCarrierName("BR1 Express");
-//        packageDetail.setShippingMethod("FedEx Ground");
-        packageDetail.setTrackingNumber("NC098925025BR");
-        packageDetail.setShipDate("2023-12-27T09:00:00Z");
+        packageDetail.setCarrierCode("360lion");
+        packageDetail.setCarrierName("360Lion");
+        packageDetail.setShippingMethod("360Lion");
+        packageDetail.setTrackingNumber("WSHBR1064112511YQ");
+//        packageDetail.setShipDate("2023-12-27T09:00:00Z");
+        packageDetail.setShipDate("2024-04-16T12:38:06Z");
 
         //巴西邮政小包-带电[巴通]
         //NC098925025BR
 //        packageDetail.setShipDate(OffsetDateTime.parse("2022-02-11T01:00:00.000Z"));
 //        packageDetail.setShipFromSupplySourceId("057d3fcc-b750-419f-bbcd-4d340c60c430");
-        String itemListStr = "[\n" +
-                "        {\n" +
-                "            \"orderItemId\": \"91234697729201\",\n" +
-                "            \"quantityOrdered\": 1,\n" +
-                "            \"isTransparency\": false,\n" +
-                "            \"title\": \"[Somente para iPhone iPad] ULANZI Microfone Lavalier sem fio J12 para iPhone iPad, microfone 2 em 1 Plug-Play com capa de carregamento para telefone, gravação de vídeo, entrevistas\",\n" +
-                "            \"productInfo\": {\n" +
-                "                \"numberOfItems\": 1\n" +
-                "            },\n" +
-                "            \"buyerInfo\": { },\n" +
-                "            \"promotionDiscount\": {\n" +
-                "                \"amount\": \"0.00\",\n" +
-                "                \"currencyCode\": \"BRL\"\n" +
-                "            },\n" +
-                "            \"quantityShipped\":0,\n" +
-                "            \"conditionId\": \"New\",\n" +
-                "            \"conditionSubtypeId\": \"New\",\n" +
-                "            \"isGift\": false,\n" +
-                "            \"aSIN\": \"B09X114FP9\",\n" +
-                "            \"itemPrice\": {\n" +
-                "                \"amount\": \"189.00\",\n" +
-                "                \"currencyCode\": \"BRL\"\n" +
-                "            },\n" +
-                "            \"itemTax\": {\n" +
-                "                \"amount\": \"0.00\",\n" +
-                "                \"currencyCode\": \"BRL\"\n" +
-                "            },\n" +
-                "            \"buyerRequestedCancel\": {\n" +
-                "                \"buyerCancelReason\": \"\",\n" +
-                "                \"isBuyerRequestedCancel\": false\n" +
-                "            },\n" +
-                "            \"sellerSKU\": \"2885\",\n" +
-                "            \"promotionDiscountTax\": {\n" +
-                "                \"amount\": \"0.00\",\n" +
-                "                \"currencyCode\": \"BRL\"\n" +
-                "            }\n" +
-                "        }\n" +
-                "        ]";
-
-        List<OrderItem> list = JSONUtil.toList(itemListStr, OrderItem.class);
+//        String itemListStr = "[\n" +
+//                "        {\n" +
+//                "            \"orderItemId\": \"91234697729201\",\n" +
+//                "            \"quantityOrdered\": 1,\n" +
+//                "            \"isTransparency\": false,\n" +
+//                "            \"title\": \"[Somente para iPhone iPad] ULANZI Microfone Lavalier sem fio J12 para iPhone iPad, microfone 2 em 1 Plug-Play com capa de carregamento para telefone, gravação de vídeo, entrevistas\",\n" +
+//                "            \"productInfo\": {\n" +
+//                "                \"numberOfItems\": 1\n" +
+//                "            },\n" +
+//                "            \"buyerInfo\": { },\n" +
+//                "            \"promotionDiscount\": {\n" +
+//                "                \"amount\": \"0.00\",\n" +
+//                "                \"currencyCode\": \"BRL\"\n" +
+//                "            },\n" +
+//                "            \"quantityShipped\":0,\n" +
+//                "            \"conditionId\": \"New\",\n" +
+//                "            \"conditionSubtypeId\": \"New\",\n" +
+//                "            \"isGift\": false,\n" +
+//                "            \"aSIN\": \"B09X114FP9\",\n" +
+//                "            \"itemPrice\": {\n" +
+//                "                \"amount\": \"189.00\",\n" +
+//                "                \"currencyCode\": \"BRL\"\n" +
+//                "            },\n" +
+//                "            \"itemTax\": {\n" +
+//                "                \"amount\": \"0.00\",\n" +
+//                "                \"currencyCode\": \"BRL\"\n" +
+//                "            },\n" +
+//                "            \"buyerRequestedCancel\": {\n" +
+//                "                \"buyerCancelReason\": \"\",\n" +
+//                "                \"isBuyerRequestedCancel\": false\n" +
+//                "            },\n" +
+//                "            \"sellerSKU\": \"2885\",\n" +
+//                "            \"promotionDiscountTax\": {\n" +
+//                "                \"amount\": \"0.00\",\n" +
+//                "                \"currencyCode\": \"BRL\"\n" +
+//                "            }\n" +
+//                "        }\n" +
+//                "        ]";
+//
+//        List<OrderItem> list = JSONUtil.toList(itemListStr, OrderItem.class);
 
         ConfirmShipmentOrderItemsList orderItemList = new ConfirmShipmentOrderItemsList();
-        for (OrderItem item : list) {
-            ConfirmShipmentOrderItem orderItem = new ConfirmShipmentOrderItem();
-            orderItem.setOrderItemId(item.getOrderItemId());
-            orderItem.setQuantity(item.getQuantityOrdered());
-//            TransparencyCodeList strings = new TransparencyCodeList();
-//            strings.add("09876543211234567890");
-//            orderItem.setTransparencyCodes(strings);
-            orderItemList.add(orderItem);
-        }
+//        for (OrderItem item : list) {
+//            ConfirmShipmentOrderItem orderItem = new ConfirmShipmentOrderItem();
+//            orderItem.setOrderItemId(item.getOrderItemId());
+//            orderItem.setQuantity(item.getQuantityOrdered());
+////            TransparencyCodeList strings = new TransparencyCodeList();
+////            strings.add("09876543211234567890");
+////            orderItem.setTransparencyCodes(strings);
+//            orderItemList.add(orderItem);
+//        }
+        ConfirmShipmentOrderItem orderItem = new ConfirmShipmentOrderItem();
+        orderItem.setOrderItemId("98117332668441");
+        orderItem.setQuantity(1);
+        orderItemList.add(orderItem);
+        ConfirmShipmentOrderItem orderItem2 = new ConfirmShipmentOrderItem();
+        orderItem2.setOrderItemId("98117332668401");
+        orderItem2.setQuantity(1);
+        orderItemList.add(orderItem2);
+
         packageDetail.setOrderItems(orderItemList);
         body.setPackageDetail(packageDetail);
         OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
-        String orderId = "701-3274667-0305064";
-        ApiResponse<Void> voidApiResponse = api.confirmShipmentWithHttpInfo(body, orderId);
+        String orderId = "702-3434489-6918632";
+//        ApiResponse<Void> voidApiResponse = api.confirmShipmentWithHttpInfo(body, orderId);
         System.out.println("标记发货响应结果");
-        System.out.println(JSONUtil.toJsonStr(voidApiResponse));
+//        System.out.println(JSONUtil.toJsonStr(voidApiResponse));
         // {"statusCode":204,"headers":{"connection":["keep-alive"],"content-type":["application/json"],"date":["Wed, 27 Dec 2023 09:16:14 GMT"],"server":["Server"],"strict-transport-security":["max-age=47474747; includeSubDomains; preload"],"vary":["Content-Type,Accept-Encoding,User-Agent"],"x-amz-apigw-id":["OPF462433fc1fae"],"x-amz-rid":["QMA9Z504GHC8P8PPJT5Y"],"x-amzn-ratelimit-limit":["2.0"],"x-amzn-requestid":["462433fc-1fae-4f62-9797-b57badfc7c23"],"x-amzn-trace-id":["Root=1-658beb5e-462433fc1fae4f62"]}}
+        // {"statusCode":204,"headers":{"connection":["keep-alive"],"content-type":["application/json"],"date":["Wed, 17 Apr 2024 07:26:48 GMT"],"server":["Server"],"strict-transport-security":["max-age=47474747; includeSubDomains; preload"],"vary":["Content-Type,Accept-Encoding,User-Agent"],"x-amz-apigw-id":["OPFc791252a2c36"],"x-amz-rid":["QMR5QPCW2WJ3PC5N3XPP"],"x-amzn-ratelimit-limit":["2.0"],"x-amzn-requestid":["c791252a-2c36-42a8-bd40-da67e52255c5"],"x-amzn-trace-id":["Root=1-661f79b8-c791252a2c3642a8"]}}
         // TODO: test validations
     }
 
@@ -629,5 +682,39 @@ public class OrdersV0ApiTest {
         System.out.println(parse);
         LocalDateTime localDateTime = DateUtil.utcSamePlus8(parse);
         System.out.println(localDateTime);
+    }
+
+    @Test
+    public void testConfirm(){
+        ConfirmShipmentRequest body = new ConfirmShipmentRequest();
+//        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        body.setMarketplaceId(AmazonMarketplaceEnum.SA.getMarketplaceId());
+        PackageDetail packageDetail = new PackageDetail();
+        // 包裹参考 ID 支持任何正数值，用于在确认货件后编辑货件。您可以提交任何数值作为 packageReferenceID，
+        // 我们将存储该数据。如果您需要对货件进行编辑，请使用相同的 packageReferenceID 提交另一个 confirmShipment 操作。提交成功后，其他货件详情将被编辑
+        packageDetail.setPackageReferenceId("1");
+        packageDetail.setCarrierCode("carrierCodeValue");
+        packageDetail.setTrackingNumber("trackingNumberValue");
+        // 发货时间
+        String shipDateTime = DateUtil.plus8SameUtcOffset(LocalDateTime.now()).toString();
+        packageDetail.setShipDate(shipDateTime);
+
+        SoB2cDetailEntity detailEntityNew = new SoB2cDetailEntity();
+        detailEntityNew.setSourceDetailId("sourceDetailIdValue");
+        detailEntityNew.setQty(1);
+
+        List<SoB2cDetailEntity> detailEntityList = Arrays.asList(detailEntityNew);
+        // 组合item
+        ConfirmShipmentOrderItemsList orderItemList = new ConfirmShipmentOrderItemsList();
+        for (SoB2cDetailEntity detailEntity : detailEntityList) {
+            ConfirmShipmentOrderItem orderItem = new ConfirmShipmentOrderItem();
+            orderItem.setOrderItemId(detailEntity.getSourceDetailId());
+            orderItem.setQuantity(detailEntity.getQty());
+            orderItemList.add(orderItem);
+        }
+        packageDetail.setOrderItems(orderItemList);
+        body.setPackageDetail(packageDetail);
+        System.out.println("结果");
+        System.out.println(JSONUtil.toJsonStr(body));
     }
 }

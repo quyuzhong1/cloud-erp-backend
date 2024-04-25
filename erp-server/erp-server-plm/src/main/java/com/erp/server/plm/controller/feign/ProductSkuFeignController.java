@@ -51,6 +51,9 @@ public class ProductSkuFeignController {
     @Resource
     private ProductCustomsService productCustomsService;
 
+    @Resource
+    private ProductLogisticsService productLogisticsService;
+
     /**
      * 产品包装信息
      */
@@ -421,6 +424,19 @@ public class ProductSkuFeignController {
         return productInfoService.listProductBySkuIds(skuIds);
     }
 
+
+    /**
+     * @param skuIdList
+     * @return List<ProductDTO>
+     * @description:  根据skuId集合信息查询物流产品信息（组合品根据combinationDeclareType判断是否拆分）
+     * @author Will
+     * @date: 2023/11/16 15:16
+     */
+    @PostMapping("/listProductLogisticsByIds")
+    public List<ProductDetailDTO.ProductLogisticDTO> listProductLogisticsByIds(@RequestBody List<String> skuIdList){
+        return productLogisticsService.listProductLogisticsByIds(skuIdList);
+    }
+
     /**
      * 获取sku定义的目的国申报海关编码
      * @param dto
@@ -437,5 +453,19 @@ public class ProductSkuFeignController {
     @PostMapping("/getSimpleSkuInfoByIds")
     public List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(@RequestBody List<String> skuIds){
         return productDetailService.getSimpleSkuInfoByIds(skuIds);
+    }
+
+    /**
+     * 根据skuid 集合获取到sku基础信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author yl
+     * @date 2023-03-21 12:06
+     */
+    @PostMapping("/getSkuBaseByIds")
+    public List<SkuVO> getSkuBaseByIds(@RequestBody List<String> skuIds) {
+        List<SkuVO> skuList = productDetailService.getSkuBaseByIds(skuIds);
+        return skuList;
     }
 }

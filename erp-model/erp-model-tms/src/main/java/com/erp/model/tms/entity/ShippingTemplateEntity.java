@@ -76,6 +76,11 @@ public class ShippingTemplateEntity extends BaseEntity<ShippingTemplateEntity> {
     */
     @TableField("type")
     private String type;
+    /**
+     * 渠道ID
+     */
+    @TableField(exist = false)
+    private String logisticsChannelId;
 
 
     public static final String NAME = "name";

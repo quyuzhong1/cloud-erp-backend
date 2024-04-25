@@ -2,10 +2,11 @@ package com.erp.model.oms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
 
 /**
  *
@@ -70,6 +71,51 @@ public class SoB2cErrorDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
 
+    }
+
+    /**
+    * 同时新增和删除异常数据
+    */
+    @Data
+    @NoArgsConstructor
+    public static class AddAndDeleteDTO{
+        /**
+         * 新增数据
+         */
+        private List<SoB2cErrorDTO.AddDTO> addDTOList;
+
+        /**
+         * 删除的数据
+         */
+        private List<SoB2cErrorDTO.DeleteDTO> deleteDTOList;
+
+
+        /**
+         * 订单标记报关单信息
+         */
+        private List<ShippingDTO> shippingOrderDTO;
+
+    }
+
+    /**
+     * 第三方中转服务商发货单
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ShippingDTO {
+        /**
+         * 订单id
+         */
+        private String soId;
+
+        /**
+         * 第三方中转服务商的发货单号
+         */
+        private String shippingOrderNo;
+        /**
+         * 异常标识
+         */
+        private String sign;
     }
 
     /**

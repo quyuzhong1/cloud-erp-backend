@@ -160,4 +160,9 @@ public interface ShippingTemplateService extends SuperService<ShippingTemplateEn
      * @return ShippingTemplateEntity
      */
     ShippingTemplateEntity getByChannelId(String channelId);
+
+    /**
+     * 根据渠道ID获取模板
+     */
+    List<ShippingTemplateEntity> getByChannelIds(List<String> channelIds);
 }

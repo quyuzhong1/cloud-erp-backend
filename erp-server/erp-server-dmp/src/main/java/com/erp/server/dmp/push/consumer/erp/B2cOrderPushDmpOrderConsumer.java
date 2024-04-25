@@ -1,6 +1,8 @@
 package com.erp.server.dmp.push.consumer.erp;
 
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
@@ -54,7 +56,7 @@ public class B2cOrderPushDmpOrderConsumer extends AbstractPlatformConsumerHandle
 
     @Override
     public ApiResult<?> handle(Object ext) {
-        SoB2cDTO.ViewDTO viewDTO = JSONUtil.toBean(ext.toString(), SoB2cDTO.ViewDTO.class);
+        SoB2cDTO.ViewDTO viewDTO = JSON.parseObject(ext.toString(), SoB2cDTO.ViewDTO.class);
         this.cleanOrderField(viewDTO);
         return ApiResult.success();
     }
@@ -78,6 +80,7 @@ public class B2cOrderPushDmpOrderConsumer extends AbstractPlatformConsumerHandle
         }
 
         List<DmpOrderItemEntity> itemEntityList = DmpOrderConverter.INSTANCE.soB2cToDmpOrderItem(viewDTO.getDetailList());
+        itemEntityList.forEach(i -> i.setAmountAfter(i.getSellPrice()));
         dmpOrderInfoEntity.setItemList(itemEntityList);
         dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);
     }

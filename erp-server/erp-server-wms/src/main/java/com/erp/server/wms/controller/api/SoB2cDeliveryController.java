@@ -98,6 +98,26 @@ public class SoB2cDeliveryController extends BaseController {
     public ApiResult<PagingVO<SoB2cDeliveryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
         return success(soB2cDeliveryService.paging(dto));
     }
+    /**
+     * 导出excel
+     * @Author zdy
+     * @Date 2024/4/18 16:51
+     * @param dto
+     * @param response
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出b2c发货单")
+    @PostMapping(value = "/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:soB2cDelivery:paging",
+            tableAlias = "sbd"
+    )
+    @WebAdvanceQuery(handler = SoB2cDeliveryQueryHandler.class)
+    public ApiResult exportExcel(@RequestBody @Validated SoB2cDeliveryDTO.PagingParamDTO dto, HttpServletResponse response) {
+        Boolean flag = soB2cDeliveryService.exportExcel(dto, response);
+        return flag == true ? success() : failure();
+    }
 
 
     /**
@@ -260,7 +280,6 @@ public class SoB2cDeliveryController extends BaseController {
     public ApiResult<List<SoB2cDeliveryDTO.PrintPickingViewDTO>> printPickingView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(soB2cDeliveryService.printPickingView(dto.getIds()));
     }
-
     /**
      * 打印拣货单
      *
@@ -285,8 +304,24 @@ public class SoB2cDeliveryController extends BaseController {
      **/
     @PostMapping("/printPickingCancel")
     public ApiResult printPickingCancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soB2cDeliveryService.printPickingCancel(dto.getIds());
-        return flag ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = soB2cDeliveryService.printPickingCancel(id);
+            }catch (Exception e){
+                log.error("取消打印拣货单 取消打印失败",e);
+                SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "发货单不存在, 取消打印拣货单失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -315,5 +350,35 @@ public class SoB2cDeliveryController extends BaseController {
     public void printLogisticsBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
         soB2cDeliveryService.printLogisticsBillConfirm(dto, response);
 
+    }
+
+    /**
+     * 完成打印
+     * @author Will
+     * @date: 2024/4/17 10:44
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/finishPrint")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "完成打印")
+    public ApiResult<List<BatchResultDTO>> finishPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = soB2cDeliveryService.finishPrint(id);
+            }catch (Exception e){
+                log.error("委外发料单 提交审核失败",e);
+                SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "发货单不存在, 完成打印失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

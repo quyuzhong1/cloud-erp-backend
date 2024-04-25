@@ -34,4 +34,6 @@ public class LogisticsTrackVO implements Serializable {
     private String createTimeEnd;
     private String cursor;
     private Integer queryPageSize;
+
+
 }

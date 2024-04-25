@@ -391,6 +391,14 @@ public class ShopInfoController extends BaseController {
         return success(bean);
     }
 
-
+    /**
+     * 根据平台获取店铺
+     * @param dictPlatform
+     * @return
+     */
+    @GetMapping("/getShopifyByPlatform")
+    public ApiResult<List<ShopInfoEntity>> getShopifyByPlatform(@RequestParam(value = "dictPlatform") String dictPlatform) {
+        return success(shopInfoService.lambdaQuery().eq(ShopInfoEntity::getDictPlatform, dictPlatform).list());
+    }
 
 }

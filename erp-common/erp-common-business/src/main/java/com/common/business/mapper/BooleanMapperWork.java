@@ -9,6 +9,13 @@ import org.mapstruct.Named;
 @Named("BooleanMapperWork")
 public class BooleanMapperWork {
 
+    @Named("strToBooleanByNum")
+    public Boolean strToBooleanByNum(String bool) {
+        return null == bool ?
+                null : "1".equals(bool);
+
+    }
+
     @Named("strToBooleanByYN")
     public Boolean toBooleanByYN(String bool) {
         return null == bool ?

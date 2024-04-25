@@ -97,6 +97,8 @@ public enum SourceTypeEnum {
     PROJECT_TASK("projectTask", "任务列表","project_task"),
     PRODUCT_CHANGE("productChange", "变更管理","product_change"),
     BASIC_CATEGORY("basicCategory", "产品分类","basic_category"),
+    PRODUCT_LOGISTICS("ProductLogistics", "物流产品","product_logistics"),
+
 
     //SYS
     SYS_DEPARTMENT("sysDepartment", "部门","sys_department"),
@@ -107,6 +109,17 @@ public enum SourceTypeEnum {
     GLOBAL_AREA("globalArea", "区域","dict_global_area"),
     COUNTRY("country", "国家","dict_country"),
     PROVINCE_CITY("provinceCity", "省市","dict_city"),
+
+    //TMS
+    TMS_B2C_DECLARE_RECONCILIATION("tmsB2cDeclareReconciliation", "B2c报关对账单","tms_b2c_declare_reconciliation"),
+    TRANSFER_DECLARE("transferDeclare", "中转报关","transfer_declare"),
+    DICT_BASIC("dictBasic", "字典","dict_basic"),
+    TMS_CFG_COST("tmsCfgCost", "费用管理配置","tms_cfg_cost"),
+    LOGISTICS_BILL_COST("logisticsBillCost", "自发货物流费用","logistics_bill_cost"),
+    FIRST_MILE_LOGISTICS_BILL_COST("firstMileLogisticsBillCost", "头程物流费用","logistics_bill_cost"),
+    LOGISTICS_BILL("logisticsBill", "物流单","logistics_bill"),
+    TMS_FIRST_MILE_RECONCILIATION("tmsFirstMileReconciliation", "头程对账单","tms_first_mile_reconciliation"),
+
 
     //Mabang
     MABANG_FBA_DELIVERY("MB_FBA_DELIVERY", "马帮FBA发货单",""),
@@ -141,10 +154,13 @@ public enum SourceTypeEnum {
 
     TRANSFER_LOGISTICS_GET_SHIPPING("transferLogisticsGetShipping", "物流报关商获取物流产品数据","dmp_pull_task"),
     TRANSFER_LOGISTICS_CREATE_ORDER("transferLogisticsCreateOrder", "物流报关商创建订单","dmp_push_task"),
+    TRANSFER_LOGISTICS_CREATE_PRODUCT("transferLogisticsCreateProduct", "物流报关商备案产品","dmp_push_task"),
     TRANSFER_LOGISTICS_GET_ORDER_BY_CODE("transferLogisticsGetOrderByCode", "物流报关商获取单个订单","dmp_pull_task"),
     TRANSFER_LOGISTICS_GET_ALL_PRODUCT_INFO("transferLogisticsGetAllProductInfo", "物流报关商获取备案产品","dmp_pull_task"),
     TRANSFER_LOGISTICS_CREATE_INBOUND("transferLogisticsCreateInbound", "物流报关商创建入库单","dmp_push_task"),
     TRANSFER_LOGISTICS_PRINT_LABEL("transferLogisticsPrintLabel", "物流报关商打印标签","dmp_pull_task"),
+    FM_DECLARE_BILL("fmDeclareBill", "头程报关单","tms_declare_bill"),
+    B2B_DECLARE_BILL("b2bDeclareBill", "B2B报关单","tms_declare_bill"),
 
 
     // 亚马逊相关

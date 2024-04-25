@@ -67,7 +67,7 @@ public class PrintWayBillPdfDTO {
     /**
      * 平台物流面单base64
      */
-    private String logisticsLabelBase64;
+    private List<String> logisticsLabelBase64List;
     /**
      * 明细信息
      */

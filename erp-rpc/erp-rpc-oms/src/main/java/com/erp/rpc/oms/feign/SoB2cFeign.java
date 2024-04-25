@@ -4,15 +4,13 @@ import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.UpdateStateDTO;
-import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
-import com.erp.model.oms.dto.SoB2cLogisticsDTO;
-import com.erp.model.oms.dto.TransferDeclareProductDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
-import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +28,14 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/listSoB2cLogisticsByMainIdList")
     List<SoB2cLogisticsEntity> listSoB2cLogisticsByMainIdList(@RequestBody List<String> mainIdList);
+
+    /**
+     * 根据跟踪单号查询订单物流信息
+     * @param trackNo
+     * @return
+     */
+    @PostMapping("/feign/soB2c/getSoB2cLogisticsByTrackNo")
+    SoB2cLogisticsEntity getSoB2cLogisticsByTrackNo(@RequestBody String trackNo);
 
     /**
      * 根据订单id 获取到运费估算的参数值
@@ -57,6 +63,14 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/listByIds")
     List<SoB2cEntity> listByIds(@RequestBody List<String> soIds);
+
+    /**
+     * 根据主表id查询B2C订单主表信息
+     *
+     * @return
+     */
+    @PostMapping("/feign/soB2c/listWithIsIntercept")
+    List<SoB2cEntity> listWithIsIntercept();
 
     /**
      * 根据主表id查询B2C订单主表信息
@@ -375,7 +389,7 @@ public interface SoB2cFeign {
 
     /**
      * 修改订单的第三方物流单号
-     * @Author Luo_WG
+     * @Author zdy
      * @Date 2024/1/29 17:04
      * @param shippingOrderDTO
      * @return java.lang.Boolean
@@ -434,7 +448,37 @@ public interface SoB2cFeign {
 
     @PostMapping("/feign/soB2cError/deleteAll")
     void checkAndDeleteAllError(@RequestBody SoB2cErrorDTO.DeleteDetailDTO deleteDTO);
+    
+    /**
+     * 修改速卖通订单仓库
+     * @Author Luo_WG
+     * @Date 2024/2/1 10:44
+     * @param soId
+     * @return void
+     **/
+    @PostMapping("/feign/soB2c/getDataCompareByCondition")
+    List<WmsDataCompareTaskDTO.SoB2cDTO> getDataCompareByCondition(@RequestBody WmsDataCompareTaskDTO.SoOutstockDTO soOutstockDTO);
 
-    @PostMapping("/feign/soB2c/updateLogisticsLabelBase64ById")
-    Boolean updateLogisticsLabelBase64ById(@RequestBody List<LogisticsBillDTO.SoB2cLabelDTO> soB2cLabelDTOList);
+    @PostMapping("/feign/soB2cLabel/saveSoB2cLabel")
+    Boolean saveSoB2cLabel(@RequestBody List<SoB2cLabelDTO.UpdateDTO> dtoList);
+
+    /**
+     * 清除订单物流信息的发货信息
+     * @Author Luo_WG
+     * @Date 2024/4/18 16:23
+     * @param soIdList
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/soB2c/clearB2cLogisticsCode")
+    Boolean clearB2cLogisticsCode(@RequestBody List<String> soIdList);
+
+    /**
+     * 清除新增订单异常
+     * @Author Luo_WG
+     * @Date 2024/4/19 10:12
+     * @param addAndDeleteDTO
+     * @return void
+     **/
+    @PostMapping("/feign/soB2cError/deleteAndAddErrorBatch")
+    void deleteAndAddErrorBatch(@RequestBody SoB2cErrorDTO.AddAndDeleteDTO addAndDeleteDTO);
 }

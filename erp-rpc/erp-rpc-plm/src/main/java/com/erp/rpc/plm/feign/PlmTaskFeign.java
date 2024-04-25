@@ -54,6 +54,9 @@ public interface PlmTaskFeign {
     @PostMapping("feign/product/getSkuByParam")
     ProductDetailDTO getSkuByParam(@RequestBody Map<String, String> params);
 
+    @GetMapping("feign/dict/listDictByType")
+    List<BasicDictEntity> listDictByType(@RequestParam("type") String type);
+
     /**
      * 根据spu的参数查询spu，参数：id、spuNo
      */
@@ -483,6 +486,18 @@ public interface PlmTaskFeign {
     @PostMapping("/feign/bom/listAllLevelSku")
     BomSkuPageDTO.ListAllSkuDTO listAllLevelSku(@RequestBody BomSkuPageDTO.AllSkuParamDTO params);
 
+
+    /**
+     * @description: 根据skuId集合信息查询物流产品信息（组合品根据combinationDeclareType判断是否拆分）
+     * @author Will
+     * @date: 2023/11/16 15:14
+     * @param skuIdList
+     * @return List<ProductDTO>
+     */
+    @PostMapping("feign/product/listProductLogisticsByIds")
+    List<ProductDetailDTO.ProductLogisticDTO> listProductLogisticsByIds(@RequestBody List<String> skuIdList);
+
+
     /**
      * @description: 根据skuId查询海关编码
      * @author zdy
@@ -498,4 +513,15 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/getSimpleSkuInfoByIds")
     List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(@RequestBody List<String> skuIds);
+
+    /**
+     * 根据skuid 集合获取到sku基础信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author yl
+     * @date 2023-03-21 12:06
+     */
+    @PostMapping("feign/product/getSkuBaseByIds")
+    List<SkuVO> getSkuBaseByIds(@RequestBody List<String> skuIds);
 }
