@@ -19,7 +19,6 @@ import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.*;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
-import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
@@ -7155,6 +7154,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             .length( Objects.nonNull(bomChildrenSkuDTO.getLength()) ? bomChildrenSkuDTO.getLength() : BigDecimal.ZERO)
                             .width( Objects.nonNull(bomChildrenSkuDTO.getWidth()) ? bomChildrenSkuDTO.getWidth() : BigDecimal.ZERO)
                             .height( Objects.nonNull(bomChildrenSkuDTO.getHeight()) ? bomChildrenSkuDTO.getHeight() : BigDecimal.ZERO)
+                            .grossWeight( Objects.nonNull(bomChildrenSkuDTO.getGrossWeight()) ? bomChildrenSkuDTO.getGrossWeight() : BigDecimal.ZERO)
                             .build());
                 });
             }else {
@@ -7165,6 +7165,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 } else {
                     skuVO = BomChildrenSkuDTO.builder()
                             .skuId(simpleSkuVO.getSkuId())
+                            .grossWeight(simpleSkuVO.getGrossWeight())
                             .productSize(simpleSkuVO.getProductSize())
                             .build();
                     this.buildProductSize(skuVO);
@@ -7173,6 +7174,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? skuVO.getLength() : BigDecimal.ZERO)
                             .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? skuVO.getWidth() : BigDecimal.ZERO)
                             .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? skuVO.getHeight() : BigDecimal.ZERO)
+                            .grossWeight( Objects.nonNull(skuVO.getGrossWeight()) ? skuVO.getGrossWeight() : BigDecimal.ZERO)
                             .build());
                 }
 

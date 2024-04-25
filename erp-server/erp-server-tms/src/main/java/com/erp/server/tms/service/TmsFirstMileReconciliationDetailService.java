@@ -155,4 +155,6 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
 
 
     String getCurrencyById(String mainId);
+
+    List<TmsFirstMileReconciliationDetailEntity> listByMainIdsBySort(List<String> mainIds);
 }

@@ -90,7 +90,7 @@ public class LogisticsProductExcelDTO {
 
     @ColumnWidth(30)
     @ExcelProperty(value = "组合品申报", index = 12)
-    @FieldValid(fieldName = "组合品申报",isNotBlank = true)
+    @FieldValid(fieldName = "组合品申报")
     private String combinationDeclareType;
 
 

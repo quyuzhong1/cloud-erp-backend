@@ -114,11 +114,6 @@ public class TmsCfgCostController extends BaseController {
      * @return ApiResult<ViewDTO>
      */
     @GetMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:tmsCfgCost:view",
-            serviceClass = TmsCfgCostService.class,
-            keyIdName = "id")
     @LogViewService
     public ApiResult<TmsCfgCostDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(tmsCfgCostService.view(id));
