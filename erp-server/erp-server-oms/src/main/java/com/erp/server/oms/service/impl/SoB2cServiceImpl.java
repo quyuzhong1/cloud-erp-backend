@@ -6568,8 +6568,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
             return new PagingVO(new Page<>());
         }
-        PagingVO<SoB2cAbnormalDTO.ListDTO> list =  baseMapper.abnormalPaging(query, pagingParamDTO.getParams(), shopAuthResultDTO);
-        return list;
+        IPage<SoB2cAbnormalDTO.ListDTO> list =  baseMapper.abnormalPaging(query, pagingParamDTO.getParams(), shopAuthResultDTO);
+        handleAbnormalList(list.getRecords());
+        return new PagingVO(list);
     }
 
     @Override
@@ -6593,7 +6594,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
         //数据赋值处理
-        handleAbnormalExport(records);
+        handleAbnormalList(records);
         String name = "B2C销售订单";
         StringBuffer sb = new StringBuffer();
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
@@ -6609,8 +6610,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return Boolean.TRUE;
     }
 
-    private void handleAbnormalExport(List<SoB2cAbnormalDTO.ListDTO> records) {
-
+    /**
+     * @description:
+     * @author Will
+     * @date: 2024/4/25 16:10
+     * @param records
+     */
+    private void handleAbnormalList(List<SoB2cAbnormalDTO.ListDTO> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+        for (SoB2cAbnormalDTO.ListDTO listDTO : records) {
+            //审核状态
+            listDTO.setApproveStatusName(ApproveStatusEnum.getName(listDTO.getApproveStatus()));
+            //订单状态
+            listDTO.setBillStatusName(SoB2cBillStatusEnum.getName(listDTO.getBillStatus()));
+            //错误标识名称
+            listDTO.setSignOrderErrorName(SoB2cErrorTypeEnum.getName(listDTO.getSignOrderError()));
+        }
     }
 
     /**

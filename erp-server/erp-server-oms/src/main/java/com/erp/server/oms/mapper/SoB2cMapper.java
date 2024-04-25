@@ -3,7 +3,6 @@ package com.erp.server.oms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.PackageDTO;
 import com.erp.model.oms.dto.ReportDTO;
 import com.erp.model.oms.dto.SoB2cAbnormalDTO;
@@ -166,7 +165,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @param shopAuthResultDTO
      * @return PagingVO<ListDTO>
      */
-    PagingVO<SoB2cAbnormalDTO.ListDTO> abnormalPaging(Page query, @Param("params") SoB2cAbnormalDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
+    IPage<SoB2cAbnormalDTO.ListDTO> abnormalPaging(Page query, @Param("params") SoB2cAbnormalDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
     /**
      * @description: 异常订单导出
      * @author Will

@@ -99,6 +99,11 @@ public class SoB2cAbnormalDTO  implements Serializable {
         private String signOrderErrorName;
 
         /**
+         * 异常信息
+         */
+        private String message;
+
+        /**
          * 物流渠道名称
          */
         private String logisticsChannelName;
@@ -107,6 +112,11 @@ public class SoB2cAbnormalDTO  implements Serializable {
          * 付款时间
          */
         private LocalDateTime payTime;
+
+        /**
+         * 异常生成时间
+         */
+        private LocalDateTime signOrderErrorTime;
     }
 
 }
