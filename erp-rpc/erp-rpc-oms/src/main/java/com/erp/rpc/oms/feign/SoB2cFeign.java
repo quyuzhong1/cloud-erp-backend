@@ -481,4 +481,11 @@ public interface SoB2cFeign {
      **/
     @PostMapping("/feign/soB2cError/deleteAndAddErrorBatch")
     void deleteAndAddErrorBatch(@RequestBody SoB2cErrorDTO.AddAndDeleteDTO addAndDeleteDTO);
+
+
+    /**
+     * 添加销售订单日志
+     */
+    @PostMapping("/feign/soB2c/addModuleOperateLog")
+    Boolean addModuleOperateLog(OperateLogDTO.AddModuleOperateLogDTO operateLogDTO);
 }
