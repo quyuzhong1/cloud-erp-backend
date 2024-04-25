@@ -550,7 +550,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             if (CollUtil.isNotEmpty(saveOrUpdateList)) {
                 this.handleDetailAmountByChange(saveOrUpdateList, soInfoMap, closeSoDetailIdList);
                 List<String> skuIdList = saveOrUpdateList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
-                List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+                List<SkuVO> skuList = plmTaskFeign.listSkuPurchaseByIds(skuIdList);
                 // 供应商id集合
                 List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
                 List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();

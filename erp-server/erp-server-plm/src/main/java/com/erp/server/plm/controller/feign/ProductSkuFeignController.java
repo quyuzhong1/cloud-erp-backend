@@ -471,9 +471,9 @@ public class ProductSkuFeignController {
      * @param skuIds
      * @return
      */
-    @PostMapping("/listSkuInfoByIds")
-    List<SkuVO> listSkuInfoByIds(@RequestBody List<String> skuIds){
-        List<SkuVO> skuList = productDetailService.listSkuInfoByIds(skuIds);
+    @PostMapping("/listSkuAllAttributeByIds")
+    List<SkuVO> listSkuAllAttributeByIds(@RequestBody List<String> skuIds){
+        List<SkuVO> skuList = productDetailService.listSkuAllAttributeByIds(skuIds);
         return skuList;
     }
 

@@ -4197,7 +4197,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public List<SkuVO> listSkuInfoByIds(List<String> skuIds) {
+    public List<SkuVO> listSkuAllAttributeByIds(List<String> skuIds) {
         if (CollectionUtils.isEmpty(skuIds)){
             return Collections.emptyList();
         }

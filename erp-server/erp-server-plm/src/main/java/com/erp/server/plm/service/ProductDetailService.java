@@ -681,7 +681,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @author yl
      * @date 2023-03-21 12:06
      */
-    List<SkuVO> listSkuInfoByIds(List<String> skuIds);
+    List<SkuVO> listSkuAllAttributeByIds(List<String> skuIds);
 
     List<SkuVO> listSkuPackByIds(List<String> skuIds);
 

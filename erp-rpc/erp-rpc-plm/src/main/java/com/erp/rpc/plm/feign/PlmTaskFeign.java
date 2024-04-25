@@ -507,8 +507,8 @@ public interface PlmTaskFeign {
      * @author zdy
      * @date 2024-04-25 12:06
      */
-    @PostMapping("feign/product/listSkuInfoByIds")
-    List<SkuVO> listSkuInfoByIds(@RequestBody List<String> skuIds);
+    @PostMapping("feign/product/listSkuAllAttributeByIds")
+    List<SkuVO> listSkuAllAttributeByIds(@RequestBody List<String> skuIds);
 
     /**
      * 根据skuid 集合获取到sku产品信息（基础信息+产品信息)
