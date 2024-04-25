@@ -59,7 +59,7 @@ public interface TransferLogisticsFeign {
      * @param transferLogisticsSupplierId
      * @return
      */
-    @GetMapping("/getPlatformTransferStatus")
+    @GetMapping("/feign/transferLogistics/getPlatformTransferStatus")
     TransferLogisticsStatusEnum getPlatformTransferStatus(@RequestParam("shippingOrderNo") String shippingOrderNo,
                                                           @RequestParam("transferLogisticsSupplierId") String transferLogisticsSupplierId);
 

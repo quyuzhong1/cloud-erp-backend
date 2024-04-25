@@ -875,4 +875,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     List<BatchResultDTO> autoOrderForecast(List<String> soIdList);
 
     List<BatchResultDTO> cancelOrderForecast(List<String> ids);
+
+    List<BatchResultDTO> retryOrderForecast(BaseIdsDTO.IdsDTO dto);
 }

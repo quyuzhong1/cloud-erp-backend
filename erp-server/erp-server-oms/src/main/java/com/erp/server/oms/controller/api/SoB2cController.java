@@ -2,13 +2,16 @@ package com.erp.server.oms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
@@ -954,6 +957,24 @@ public class SoB2cController extends BaseController {
     @PostMapping("/cancelOrderForecast")
     public ApiResult<List<BatchResultDTO>> cancelOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = soB2cService.cancelOrderForecast(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 重试订单预报
+     * @Author Luo_WG
+     * @Date 2024/1/25 9:54
+     * @param dto  这里的id是 so_id列表
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @LogViewService
+    @PostMapping(value = "/retryOrderForecast")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:transferDeclare:upload",
+            tableAlias = "td"
+    )
+    public ApiResult<List<BatchResultDTO>> retryOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = soB2cService.retryOrderForecast(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 

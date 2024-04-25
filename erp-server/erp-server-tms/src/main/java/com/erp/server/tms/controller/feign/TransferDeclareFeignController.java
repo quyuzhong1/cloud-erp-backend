@@ -82,7 +82,7 @@ public class TransferDeclareFeignController {
      * 成功返回第三方code
      * 失败返回b2c订单code
      */
-    @PostMapping("/feign/transferDeclare/b2cOrderForecast")
+    @PostMapping("/b2cOrderForecast")
     public TransferDeclareDTO.ShippingOrderDTO b2cOrderForecast(@RequestBody @Validated TransferDeclareDTO.B2cOrderForecastDTO b2cOrderForecastDTO) {
         return transferDeclareService.b2cOrderForecast(b2cOrderForecastDTO);
     }
@@ -90,7 +90,7 @@ public class TransferDeclareFeignController {
     /**
      * 通过销售单id查询
      */
-    @PostMapping("/feign/transferDeclare/listBySoCodeList")
+    @PostMapping("/listBySoCodeList")
     public List<TransferDeclareDetailEntity> listBySoCodeList(@RequestBody List<String> soCodeList){
         return transferDeclareDetailService.listBySoCodeList(soCodeList);
     }

@@ -6693,6 +6693,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> deleteErrorIds = new ArrayList<>();
         List<SoB2cErrorEntity> errorList = soB2cErrorService.getByMainIdsAndType(ids, SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
         List<SoB2cErrorEntity> addOrUpdateErrors = new ArrayList<>();
+        List<SoB2cLogisticsEntity> updateLogisticList = new ArrayList<>();
         for (SoB2cEntity soB2cEntity : soB2cEntityList) {
             SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntityList.stream().filter(v->v.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
             if(Objects.isNull(soB2cLogisticsEntity)){
@@ -6717,6 +6718,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"仅可操作中转状态为待中转/预报失败的单据"));
                 continue;
             }
+            soB2cLogisticsEntity.setTransferLogisticsSupplierId(dto.getTransferLogisticsSupplierId());
+            soB2cLogisticsEntity.setTransferLogisticsChannelId(dto.getTransferLogisticsChannelId());
+            updateLogisticList.add(soB2cLogisticsEntity);
 
             ShopInfoEntity shopInfo = shopInfoEntityList.stream().filter(v->v.getId().equals(soB2cEntity.getShopId())).findFirst().orElse(new ShopInfoEntity());
             TransferDeclareDTO.B2cOrderForecastDTO b2cOrderForecastDTO = TransferDeclareDTO.B2cOrderForecastDTO.builder()
@@ -6750,7 +6754,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             updateList.add(soB2cEntity);
         }
         //更新操作同个事务
-        service.updateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors);
+        service.updateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors,updateLogisticList);
         return resultDTOList;
     }
 
@@ -6862,12 +6866,56 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
         //更新操作同个事务
-        service.updateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors);
+        service.updateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors,new ArrayList<>());
+        return resultDTOList;
+    }
+
+    @Override
+    public List<BatchResultDTO> retryOrderForecast(BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        if(CollectionUtils.isEmpty(dto.getIds())){
+            return new ArrayList<>();
+        }
+        List<SoB2cEntity> soB2cEntityList = listByIds(dto.getIds());
+        if(CollectionUtils.isEmpty(soB2cEntityList)){
+            return new ArrayList<>();
+        }
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cLogisticsService.listByMainIds(dto.getIds());
+        //根据物流商分类
+        List<SoB2cDTO.TransferDeclareDTO> transferDeclareDTOList = new ArrayList<>();
+        for (SoB2cEntity soB2cEntity : soB2cEntityList) {
+            SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntityList.stream().filter(v->v.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
+            if(Objects.isNull(soB2cLogisticsEntity)){
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"物流单为空"));
+                continue;
+            }
+            if(StringUtils.isBlank(soB2cLogisticsEntity.getCode()) || StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())){
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"物流运单号或物流渠道为空"));
+                continue;
+            }
+            if(StringUtils.isBlank(soB2cLogisticsEntity.getTransferLogisticsSupplierId()) || StringUtils.isBlank(soB2cLogisticsEntity.getTransferLogisticsChannelId())){
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"中转报关商为空"));
+                continue;
+            }
+            SoB2cDTO.TransferDeclareDTO existDTO = transferDeclareDTOList.stream().filter(v->v.getTransferLogisticsSupplierId().equals(soB2cLogisticsEntity.getTransferLogisticsSupplierId()) && v.getTransferLogisticsChannelId().equals(soB2cLogisticsEntity.getTransferLogisticsChannelId())).findFirst().orElse(null);
+            if(Objects.isNull(existDTO)){
+                existDTO = new SoB2cDTO.TransferDeclareDTO();
+                List<String> ids = new ArrayList<>();
+                ids.add(soB2cEntity.getId());
+                existDTO.setIds(ids);
+                existDTO.setTransferLogisticsSupplierId(soB2cLogisticsEntity.getTransferLogisticsSupplierId());
+                existDTO.setTransferLogisticsChannelId(soB2cLogisticsEntity.getTransferLogisticsChannelId());
+                transferDeclareDTOList.add(existDTO);
+            }else{
+                existDTO.getIds().add(soB2cEntity.getId());
+            }
+        }
+        transferDeclareDTOList.forEach(v->resultDTOList.addAll(this.orderForecast(v)));
         return resultDTOList;
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void updateSoAndError(List<SoB2cEntity> updateB2cList ,List<String> deleteErrorIds, List<SoB2cErrorEntity> addOrUpdateErrors){
+    public void updateSoAndError(List<SoB2cEntity> updateB2cList ,List<String> deleteErrorIds, List<SoB2cErrorEntity> addOrUpdateErrors,List<SoB2cLogisticsEntity> updateLogisticList){
         //更新或添加异常记录
         if (CollectionUtils.isNotEmpty(addOrUpdateErrors)){
             soB2cErrorService.saveOrUpdateBatch(addOrUpdateErrors);
@@ -6878,6 +6926,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         if(CollectionUtils.isNotEmpty(updateB2cList)){
             this.updateBatchById(updateB2cList);
+        }
+        if(CollectionUtils.isNotEmpty(updateLogisticList)){
+            soB2cLogisticsService.updateBatchById(updateLogisticList);
         }
     }
 
