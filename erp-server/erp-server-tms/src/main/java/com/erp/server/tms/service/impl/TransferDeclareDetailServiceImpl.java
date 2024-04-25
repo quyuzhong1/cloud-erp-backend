@@ -239,6 +239,14 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
             logisticsChannelEntities = logisticsChannelService.listByIds(logisticsChannelIds);
         }
 
+        //校验是否存在订单
+        List<String> soCodeIds = list.stream().map(req -> req.getSoCode()).distinct().collect(Collectors.toList());
+        List<TransferDeclareDetailEntity> detailEntityList = this.listBySoCodeList(soCodeIds);
+        if (CollectionUtils.isNotEmpty(detailEntityList)) {
+            throw new ServiceException(ApiError.TRANSFER_DECLARE_SO_EXISTS, detailEntityList.get(0).getSoCode());
+        }
+
+
         List<String> soIds = list.stream().map(req -> req.getSoId()).collect(Collectors.toList());
         List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listBySoIds(soIds);
 
