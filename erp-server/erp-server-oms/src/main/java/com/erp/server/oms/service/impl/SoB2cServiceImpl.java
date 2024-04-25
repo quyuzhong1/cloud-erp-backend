@@ -5910,13 +5910,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //查询对应的中转服务商
             TransferLogisticsSupplierEntity supplierEntity = transferLogisticsSupplierEntities.stream().filter(req -> item.getTransferLogisticsSupplierId().equals(req.getId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(supplierEntity)) {
-                scanResult.setTransferLogisticsSupplierName(supplierEntity.getSupplierName());
+                item.setTransferLogisticsSupplierName(supplierEntity.getSupplierName());
             }
 
             //查询中转服务商对应的渠道
             TransferLogisticsChannelEntity transferLogisticsChannelEntity = logisticsChannelEntityList.stream().filter(req -> item.getTransferLogisticsChannelId().equals(req.getId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(transferLogisticsChannelEntity)) {
-                scanResult.setTransferLogisticsChannelName(transferLogisticsChannelEntity.getName());
+                item.setTransferLogisticsChannelName(transferLogisticsChannelEntity.getName());
             }
         }
 
