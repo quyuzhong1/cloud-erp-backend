@@ -241,6 +241,9 @@ public class WmsDataCompareUtils {
 				Integer relativeRowIndex) {
 			Workbook workbook = sheet.getWorkbook();
 			int rowIndex = cell.getRowIndex();
+			if(rowIndex > 2000) {
+				return;
+			}
 			int columnIndex = cell.getColumnIndex();
 			String key = rowIndex + "-" + columnIndex;
 			

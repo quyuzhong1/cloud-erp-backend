@@ -59,7 +59,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
     private DmpTaskFeign dmpTaskFeign;
     @Resource
     private LogisticsOperateService logisticsOperateService;
-
+    private final static String HAS_BEEN_IMPORTED = "The order number has been imported";
     /**
      * 轨迹查询
      *
@@ -206,9 +206,15 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                 List<Rejected> rejected = data.getRejected();
                 if (CollectionUtils.isNotEmpty(rejected)) {
                     rejected.forEach(rejected1 -> {
-                        registerResponseVOS.add(RegisterResponseVO.builder().trackNo(rejected1.getTrackNo()).trackStatus(false)
-                                .code(rejected1.getError().getCode())
-                                .msg(rejected1.getError().getMsg()).build());
+                        if (Objects.nonNull(rejected1.getError()) && StringUtils.isNotEmpty(rejected1.getError().getMsg())
+                        && rejected1.getError().getMsg().equals(HAS_BEEN_IMPORTED)){
+                            //已导入的运单号，返回成功
+                            registerResponseVOS.add(RegisterResponseVO.builder().trackNo(rejected1.getTrackNo()).trackStatus(true).build());
+                        }else {
+                            registerResponseVOS.add(RegisterResponseVO.builder().trackNo(rejected1.getTrackNo()).trackStatus(false)
+                                    .code(rejected1.getError().getCode())
+                                    .msg(rejected1.getError().getMsg()).build());
+                        }
                     });
                 }
                 logisticsOperateService.pushOperateLog(authMap.get("id"),
@@ -256,9 +262,15 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                 List<Rejected> rejected = data.getRejected();
                 if (CollectionUtils.isNotEmpty(rejected)) {
                     rejected.forEach(rejected1 -> {
-                        registerResponseVOS.add(RegisterResponseVO.builder().trackNo(rejected1.getTrackNo()).trackStatus(false)
-                                .code(rejected1.getError().getCode())
-                                .msg(rejected1.getError().getMsg()).build());
+                        if (Objects.nonNull(rejected1.getError()) && StringUtils.isNotEmpty(rejected1.getError().getMsg())
+                                && rejected1.getError().getMsg().equals(HAS_BEEN_IMPORTED)){
+                            //已导入的运单号，返回成功
+                            registerResponseVOS.add(RegisterResponseVO.builder().trackNo(rejected1.getTrackNo()).trackStatus(true).build());
+                        }else {
+                            registerResponseVOS.add(RegisterResponseVO.builder().trackNo(rejected1.getTrackNo()).trackStatus(false)
+                                    .code(rejected1.getError().getCode())
+                                    .msg(rejected1.getError().getMsg()).build());
+                        }
                     });
                 }
                 logisticsOperateService.pushOperateLog(authMap.get("id"),

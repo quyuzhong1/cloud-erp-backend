@@ -513,8 +513,9 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = true)
     @NoArgsConstructor
-    public static class ExportDTO {
+    public static class ExportDTO extends PagingParamDTO{
 
         /**
          * 对账单ids

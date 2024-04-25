@@ -821,7 +821,12 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     }
                 }
                 String combinationDeclareTypeStr = item.getCombinationDeclareType();
-                String combinationDeclareType = CombinationDeclareTypeEnums.getCode(combinationDeclareTypeStr);
+                String combinationDeclareType = "";
+                if (StringUtils.isEmpty(combinationDeclareTypeStr)){
+                    combinationDeclareType = CombinationDeclareTypeEnums.SPLIT.getCode();
+                }else {
+                    combinationDeclareType = CombinationDeclareTypeEnums.getCode(combinationDeclareTypeStr);
+                }
                 logistics.setCombinationDeclareType(combinationDeclareType);
                 if (StringUtils.isBlank(combinationDeclareType)) {
                     errorMsgList.add("组合品申报不存在");

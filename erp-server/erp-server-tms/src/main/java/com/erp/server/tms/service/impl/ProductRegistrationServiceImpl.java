@@ -454,7 +454,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                 continue;
             }
             if((Objects.nonNull(existEntity) && (StringUtils.isBlank(existEntity.getProductName()) ||StringUtils.isBlank(existEntity.getDeclareElement())))
-             || (Objects.isNull(existEntity))){
+             || (Objects.isNull(existEntity)) || !judgeEquals(entity,productDTO)){
                 //因为保宏拉取批量接口没有返中文名称和申报要素，通过请求单个的接口获取对应信息
                 ApiResult<ProductRegistrationEntity> queryResult = transferLogisticsService.getProductBySku(entity.getSkuNo(),transferLogisticsAuthEntity.getId());
                 if(queryResult.isSuccess()){

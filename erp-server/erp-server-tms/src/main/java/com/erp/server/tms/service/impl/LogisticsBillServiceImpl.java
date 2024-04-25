@@ -599,7 +599,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         ProductCustomsEntity customs = null;
         if (StringUtils.isNotEmpty(country)){
             customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
-                    && StringUtils.isNotEmpty(country) && e.getCountry().equals(country)).findFirst().orElse(null);
+                    && StringUtils.isNotEmpty(country) && e.getCountry().contains(country)).findFirst().orElse(null);
 
         }
         //存在默认值时，先取默认值
