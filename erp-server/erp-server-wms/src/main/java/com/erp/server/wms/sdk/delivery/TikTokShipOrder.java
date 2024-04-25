@@ -88,4 +88,14 @@ public class TikTokShipOrder implements IPlatformService {
         }
 
     }
+
+    @Override
+    public String getOrderDeliveryMarkType(String platform, String logisticsChannelId) {
+        return null;
+    }
+
+    @Override
+    public void deliveryIntercept(String soB2cId, Boolean isCancel) {
+
+    }
 }
