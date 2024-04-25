@@ -247,28 +247,41 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         }
         if (listApiResult.isSuccess()) {
             List<RegisterResponseVO> data = listApiResult.getData();
-            if (CollectionUtils.isNotEmpty(data)) {
-                Map<String, LogisticsTrackDTO.UpdateTrackDTO> collect = records.stream().collect(Collectors.toMap(LogisticsTrackDTO.UpdateTrackDTO::getTrackNo, Function.identity()));
-                data.forEach(registerResponseVO -> {
-                    BatchResultDTO dto = new BatchResultDTO();
-                    LogisticsTrackDTO.UpdateTrackDTO updateTrackDTO = collect.get(registerResponseVO.getTrackNo());
-                    LogisticsBillDetailEntity logisticsBillDetailEntity = logisticsBillDetailService.getById(updateTrackDTO.getId());
-                    if (registerResponseVO.getTrackStatus()) {
-                        logisticsBillDetailEntity.setRegisterStatus(1);
-                        logisticsBillDetailEntity.setPlatformOrderNo(registerResponseVO.getOrderNo());
-                        dto.setSuccess(true);
-                    } else {
-                        dto.setSuccess(false);
-                        logisticsBillDetailEntity.setRegisterStatus(-1);
-                        logisticsBillDetailEntity.setRegisterResult(registerResponseVO.getMsg());
-                    }
-                    dto.setId(updateTrackDTO.getId());
-                    dto.setCode(updateTrackDTO.getTrackNo());
-                    dto.setMsg(registerResponseVO.getMsg());
-                    resultDTOS.add(dto);
-                    logisticsBillDetailEntity.setUpdateTime(LocalDateTime.now());
-                    logisticsBillDetailService.updateById(logisticsBillDetailEntity);
-                });
+            if (CollectionUtils.isEmpty(data)) {
+                return resultDTOS;
+            }
+            List<LogisticsBillDetailEntity> updateList = new ArrayList<>();
+            Map<String, List<LogisticsTrackDTO.UpdateTrackDTO>> collect = records.stream().filter(e -> StringUtils.isNotEmpty(e.getTrackNo())).collect(Collectors.groupingBy(LogisticsTrackDTO.UpdateTrackDTO::getTrackNo));
+            List<String> detailIds = records.stream().map(LogisticsTrackDTO.UpdateTrackDTO::getId).distinct().collect(Collectors.toList());
+            List<LogisticsBillDetailEntity> detailList = logisticsBillDetailService.listByIds(detailIds);
+            data.forEach(registerResponseVO -> {
+                List<LogisticsTrackDTO.UpdateTrackDTO> updateTrackDTOList = collect.get(registerResponseVO.getTrackNo());
+                if (CollectionUtils.isNotEmpty(updateTrackDTOList)){
+                    updateTrackDTOList.forEach(updateTrackDTO -> {
+                        BatchResultDTO dto = new BatchResultDTO();
+                        LogisticsBillDetailEntity logisticsBillDetailEntity = detailList.stream().filter(e -> e.getId().equals(updateTrackDTO.getId())).findFirst().orElse(null);
+                        if (Objects.nonNull(logisticsBillDetailEntity)){
+                            if (registerResponseVO.getTrackStatus()) {
+                                logisticsBillDetailEntity.setRegisterStatus(1);
+                                logisticsBillDetailEntity.setPlatformOrderNo(registerResponseVO.getOrderNo());
+                                dto.setSuccess(true);
+                            } else {
+                                dto.setSuccess(false);
+                                logisticsBillDetailEntity.setRegisterStatus(-1);
+                                logisticsBillDetailEntity.setRegisterResult(registerResponseVO.getMsg());
+                            }
+                            dto.setId(updateTrackDTO.getId());
+                            dto.setCode(updateTrackDTO.getTrackNo());
+                            dto.setMsg(registerResponseVO.getMsg());
+                            resultDTOS.add(dto);
+                            logisticsBillDetailEntity.setUpdateTime(LocalDateTime.now());
+                            updateList.add(logisticsBillDetailEntity);
+                        }
+                    });
+                }
+            });
+            if (CollectionUtils.isNotEmpty(updateList)){
+                logisticsBillDetailService.updateBatchById(updateList);
             }
         } else {
             records.forEach(logisticsBillDetailEntity -> {
