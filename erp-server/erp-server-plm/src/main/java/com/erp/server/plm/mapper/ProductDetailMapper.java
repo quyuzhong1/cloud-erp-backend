@@ -267,6 +267,14 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @date 2023-03-21 12:06
      */
     List<SkuVO> listSkuProductByIds(@Param("skuIds") List<String> skuIds);
+
+    List<SkuVO> listSkuPackByIds(@Param("skuIds")List<String> skuIds);
+
+    List<SkuVO> listSkuSaleByIds(@Param("skuIds")List<String> skuIds);
+
+    List<SkuVO> listSkuLogisticsByIds(@Param("skuIds")List<String> skuIds);
+
+    List<SkuVO> listSkuCategoryByIds(@Param("skuIds")List<String> skuIds);
 }
 
 

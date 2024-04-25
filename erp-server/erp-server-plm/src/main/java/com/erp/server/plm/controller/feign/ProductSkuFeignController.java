@@ -439,7 +439,7 @@ public class ProductSkuFeignController {
         return productDetailService.getSimpleSkuInfoByIds(skuIds);
     }
     /**
-     * 根据skuid 集合获取到sku基础信息 + 采购信息（产品采购信息+产品采购含税单价）
+     * 根据skuid 集合获取到sku采购信息（基础信息+产品采购信息+产品采购含税单价）
      *
      * @param skuIds
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
@@ -453,11 +453,11 @@ public class ProductSkuFeignController {
     }
 
     /**
-     * 根据skuid 集合获取到sku产品信息
+     * 根据skuid 集合获取到sku产品信息（基础信息+产品信息）
      *
      * @param skuIds
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
-     * @author yl
+     * @author zdy
      * @date 2023-03-21 12:06
      */
     @PostMapping("/listSkuProductByIds")
@@ -466,9 +466,68 @@ public class ProductSkuFeignController {
         return skuList;
     }
 
-    @PostMapping("feign/product/listSkuInfoByIds")
+    /**
+     * 缓存sku信息接口（基础信息+产品信息+包装信息+销售信息+物流信息+采购信息+成本信息+产品分类）
+     * @param skuIds
+     * @return
+     */
+    @PostMapping("/listSkuInfoByIds")
     List<SkuVO> listSkuInfoByIds(@RequestBody List<String> skuIds){
         List<SkuVO> skuList = productDetailService.listSkuInfoByIds(skuIds);
+        return skuList;
+    }
+
+    /**
+     * 根据skuid 集合获取到sku包装信息 （基础信息+产品信息+包装信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    @PostMapping("/listSkuPackByIds")
+    public List<SkuVO> listSkuPackByIds(@RequestBody List<String> skuIds){
+        List<SkuVO> skuList = productDetailService.listSkuPackByIds(skuIds);
+        return skuList;
+    }
+    /**
+     * 根据skuid 集合获取到sku销售信息 （基础信息+产品信息+销售信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    @PostMapping("/listSkuSaleByIds")
+    public List<SkuVO> listSkuSaleByIds(@RequestBody List<String> skuIds){
+        List<SkuVO> skuList = productDetailService.listSkuSaleByIds(skuIds);
+        return skuList;
+    }
+    /**
+     * 根据skuid 集合获取到sku物流信息 （基础信息+产品信息+物流信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    @PostMapping("/listSkuLogisticsByIds")
+    public List<SkuVO> listSkuLogisticsByIds(@RequestBody List<String> skuIds){
+        List<SkuVO> skuList = productDetailService.listSkuLogisticsByIds(skuIds);
+        return skuList;
+    }
+
+    /**
+     * 根据skuid 集合获取到sku分类信息（基础信息+产品信息+分类信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    @PostMapping("/listSkuCategoryByIds")
+    public List<SkuVO> listSkuCategoryByIds(@RequestBody List<String> skuIds){
+        List<SkuVO> skuList = productDetailService.listSkuCategoryByIds(skuIds);
         return skuList;
     }
 }

@@ -2729,35 +2729,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         List<SkuVO> skuList = baseMapper.getSkuInfoBySkuIds(skuIds);
         if (CollUtil.isNotEmpty(skuList)) {
-            List<ProductPackEntity> productPackList = productPackService.findBySkuIds(skuIds);
-            Map<String, List<ProductPackEntity>> productPackMap = Maps.newHashMap();
-            if (CollUtil.isNotEmpty(productPackList)) {
-                productPackMap = productPackList.stream().collect(Collectors.groupingBy(ProductPackEntity::getSkuId));
-            }
             //供应商信息
             List<String> supplierIdList = skuList.stream().map(SkuVO::getSupplierId).collect(Collectors.toList());
             List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
-            //产品分类
-            List<String> categoryIdList = skuList.stream().map(SkuVO::getCategoryId).distinct().collect(Collectors.toList());
-            List<BasicCategoryEntity> basicCategoryList = basicCategoryService.listByIds(categoryIdList);
-
             for (SkuVO skuVO : skuList) {
-                if (productPackMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productPackMap.get(skuVO.getSkuId()))) {
-                    ProductPackEntity packEntity = productPackMap.get(skuVO.getSkuId()).get(0);
-                    skuVO.setUnitQty(Objects.nonNull(packEntity.getBoxQty()) ? packEntity.getBoxQty().intValue() : null);
-                    skuVO.setGrossWeight(packEntity.getGrossWeight());
-                    skuVO.setProductSize(packEntity.getProductSize());
-                    skuVO.setNetWeight(packEntity.getNetWeight());
-                }
                 PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(skuVO.getSupplierId()) && req.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
                     //含税价
                     skuVO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
                 }
-
-                //产品分类
-                String categoryName = basicCategoryList.stream().filter(obj -> obj.getId().equals(skuVO.getCategoryId())).map(BasicCategoryEntity::getName).findFirst().orElse("");
-                skuVO.setCategoryName(categoryName);
             }
         }
         return skuList;
@@ -4242,5 +4222,41 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             skuVOS.addAll(skuInfos);
         }
         return skuVOS;
+    }
+
+    @Override
+    public List<SkuVO> listSkuPackByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuPackByIds(skuIds);
+        return skuList;
+    }
+
+    @Override
+    public List<SkuVO> listSkuSaleByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuSaleByIds(skuIds);
+        return skuList;
+    }
+
+    @Override
+    public List<SkuVO> listSkuLogisticsByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuLogisticsByIds(skuIds);
+        return skuList;
+    }
+
+    @Override
+    public List<SkuVO> listSkuCategoryByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuCategoryByIds(skuIds);
+        return skuList;
     }
 }
