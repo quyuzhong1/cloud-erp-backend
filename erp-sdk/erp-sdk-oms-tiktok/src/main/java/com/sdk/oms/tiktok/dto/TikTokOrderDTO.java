@@ -29,19 +29,19 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 public class TikTokOrderDTO extends CleanBaseDTO {
 
-    private OrderViewDTO orderViewDTO;
+    private OrdersBean orderViewDTO;
 
     private String shopId;
 
     /**
      * 初始化
      */
-    public TikTokOrderDTO(OrderViewDTO orderViewDTO, JobTaskDTO dto, String shopId) {
+    public TikTokOrderDTO(OrdersBean orderViewDTO, JobTaskDTO dto, String shopId) {
         this.orderViewDTO = orderViewDTO;
         this.shopId = shopId;
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.MERCADOLIBRE.getCode());
-        this.setUniqueId(combineUnique(orderViewDTO.getData().getOrders().get(0).getFid(), this.shopId));
+        this.setUniqueId(combineUnique(orderViewDTO.getFid(), this.shopId));
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
     }
@@ -62,8 +62,7 @@ public class TikTokOrderDTO extends CleanBaseDTO {
      * 根据PlatformMercadoListingDTO 转换 DTO
      */
     private static PlatformOrderDTO initPlatformProductDTO(TikTokOrderDTO dto) {
-        OrderViewDTO orderViewDTO = dto.getOrderViewDTO();
-        OrdersBean ordersBean = orderViewDTO.getData().getOrders().get(0);
+        OrdersBean ordersBean = dto.getOrderViewDTO();
 
         //设置对应关系
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();

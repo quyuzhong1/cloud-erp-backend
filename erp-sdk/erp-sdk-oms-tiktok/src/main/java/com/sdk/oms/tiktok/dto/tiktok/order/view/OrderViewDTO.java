@@ -18,7 +18,7 @@ public class OrderViewDTO {
     @JsonProperty("code")
     private int code;
     @JsonProperty("data")
-    private DataBean data;
+    private OrderDetailView data;
     @JsonProperty("message")
     private String message;
     @JsonProperty("request_id")
