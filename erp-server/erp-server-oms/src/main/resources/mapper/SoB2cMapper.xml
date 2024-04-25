@@ -635,7 +635,9 @@
             sbl.weight AS weight,
             sbr.receiver_name AS receiverName,
             sbr.country_name AS countryName,
-            sbr.country AS country
+            sbr.country AS country,
+            sbl.transfer_logistics_supplier_id,
+            sbl.transfer_logistics_channel_id
         FROM so_b2c sb
         LEFT JOIN so_b2c_logistics sbl
         ON sb.id = sbl.main_id AND sbl.is_deleted = FALSE

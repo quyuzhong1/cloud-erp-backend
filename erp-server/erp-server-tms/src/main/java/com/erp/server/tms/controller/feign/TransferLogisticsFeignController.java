@@ -59,6 +59,16 @@ public class TransferLogisticsFeignController {
     }
 
     /**
+     * 根据id查询中转服务商
+     * @param supplierIds
+     * @return
+     */
+    @PostMapping("/listLogisticsSupplierByIds")
+    public List<TransferLogisticsSupplierEntity> listLogisticsSupplierByIds(@RequestBody List<String> supplierIds) {
+        return transferLogisticsSupplierService.listByIds(supplierIds);
+    }
+
+    /**
      * 根据主标id查询渠道信息
      * @param supplierIdList
      * @return

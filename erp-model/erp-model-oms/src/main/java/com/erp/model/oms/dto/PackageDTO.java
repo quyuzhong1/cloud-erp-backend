@@ -277,6 +277,26 @@ public class PackageDTO implements Serializable {
          * 国家名
          */
         private String countryName;
+
+        /**
+         * 中转物流商Id
+         */
+        private String transferLogisticsSupplierId;
+
+        /**
+         * 中转物流商中文名
+         */
+        private String transferLogisticsSupplierName;
+
+        /**
+         * 中转商渠道id
+         */
+        private String transferLogisticsChannelId;
+
+        /**
+         * 中转商渠道名
+         */
+        private String transferLogisticsChannelName;
     }
 
 
