@@ -145,7 +145,7 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
      * @param id
      * @return java.util.List<BatchResultDTO>
      **/
-    List<BatchResultDTO> orderForecast(String id);
+    List<BatchResultDTO> orderForecast(BaseDTO.QtyDTO qtyDTO);
 
     /**
      * 入库预报
