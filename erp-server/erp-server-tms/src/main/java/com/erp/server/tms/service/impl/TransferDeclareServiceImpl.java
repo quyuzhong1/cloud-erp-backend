@@ -538,6 +538,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             if (Objects.nonNull(soB2cEntity) && StringUtils.isNotEmpty(soB2cEntity.getShippingOrderNo())){
                 TransferLogisticsCreateInboundReq.ReceiveItem receiveItem = TransferLogisticsCreateInboundReq.ReceiveItem.builder()
                         .orderCode(soB2cEntity.getShippingOrderNo())
+                        .packNum(transferDeclareEntity.getCode())
                         .grossWeight(transferDeclareDetailEntity.getPackageWeight())
                         .build();
                 receiveItemList.add(receiveItem);
