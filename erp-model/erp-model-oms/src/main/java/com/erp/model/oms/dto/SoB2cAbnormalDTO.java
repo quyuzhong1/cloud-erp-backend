@@ -43,6 +43,11 @@ public class SoB2cAbnormalDTO  implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListDTO {
+
+        /**
+         * 销售订单主键id
+         */
+        private String id;
         /**
          * 销售单号【可排序】
          */
