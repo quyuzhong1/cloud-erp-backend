@@ -33,7 +33,6 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
@@ -902,7 +901,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             List<TransferLogisticsCreateOrderReq.ProductDetail> productDetails = TransferDeclareConverter.INSTANCE.transferDeclareProductConvert(transferDeclareProductDTOList);
             //组装SDK需要的下报关单单信息
             TransferLogisticsCreateOrderReq orderReq = TransferLogisticsCreateOrderReq.builder()
-                    .trackingNumber(soB2cLogisticsEntity.getTrackNo())
+                    .trackingNumber(soB2cLogisticsEntity.getCode())
                     .country(soB2cReceiverEntity.getCountry())
                     .shippingCode(transferLogisticsChannelEntity.getCode())
                     .name(soB2cReceiverEntity.getReceiverName())
