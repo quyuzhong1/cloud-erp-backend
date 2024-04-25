@@ -1,5 +1,6 @@
 package com.sdk.oms.tiktok.service;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
@@ -34,6 +35,7 @@ import com.sdk.oms.tiktok.dto.tiktok.listing.view.ListingViewDTO;
 import com.sdk.oms.tiktok.dto.tiktok.listing.view.SkusBean;
 import com.sdk.oms.tiktok.dto.tiktok.order.OrderDTO;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.OrderViewDTO;
+import com.sdk.oms.tiktok.dto.tiktok.order.view.OrdersBean;
 import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderOther;
 import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderOtherParam;
 import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderUS;
@@ -450,9 +452,9 @@ public class TikTokSdkClientService {
      * @param shopInfoDTO
      * @return
      */
-    public List<OrderViewDTO> sendTikTokGetOrder(TikTokShopInfoDTO shopInfoDTO, JobTaskDTO task) {
+    public List<OrdersBean> sendTikTokGetOrder(TikTokShopInfoDTO shopInfoDTO, JobTaskDTO task) {
 
-        List<OrderViewDTO> resultsBeanList = new ArrayList<>();
+        List<OrdersBean> resultsBeanList = new ArrayList<>();
 
         //每次最多获取200条
         Integer pageSize = 100;
@@ -534,7 +536,7 @@ public class TikTokSdkClientService {
             List<String> orderIds = orderDTO.getData().getOrders().stream().map(req -> req.getFid()).distinct().collect(Collectors.toList());
 
             //根据订单id查询订单详情信息
-            List<OrderViewDTO> orderViewDTOS = this.listOrderView(orderIds, shopInfoDTO);
+            List<OrdersBean> orderViewDTOS = this.listOrderView(orderIds, shopInfoDTO);
             resultsBeanList.addAll(orderViewDTOS);
 
             if (StringUtil.isBlank(orderDTO.getData().getNextPageToken())) {
@@ -554,7 +556,7 @@ public class TikTokSdkClientService {
      * @param shopInfoDTO
      * @return
      */
-    private List<OrderViewDTO> listOrderView(List<String> orderIds, TikTokShopInfoDTO shopInfoDTO) {
+    private List<OrdersBean> listOrderView(List<String> orderIds, TikTokShopInfoDTO shopInfoDTO) {
         List<List<String>> partition = Lists.partition(orderIds, 50);
         //平台接口地址
         String url = TikTokConstant.URL;
@@ -565,7 +567,7 @@ public class TikTokSdkClientService {
         //服务密钥
         String secret = shopInfoDTO.getClientSecret();
 
-        List<OrderViewDTO> resultsBeanList = new ArrayList<>();
+        List<OrdersBean> resultsBeanList = new ArrayList<>();
 
         for (List<String> list : partition) {
 
@@ -600,7 +602,7 @@ public class TikTokSdkClientService {
             }
 
             //解析数据
-/*            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = new ObjectMapper();
             OrderViewDTO orderViewDTO = null;
             try {
                 orderViewDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), OrderViewDTO.class);
@@ -611,10 +613,10 @@ public class TikTokSdkClientService {
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok订单详情数据解析失败，返回值 responseMap={}",
                         url+path, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
-            if(CollectionUtil.isEmpty(orderViewDTO)){
+            if(CollectionUtil.isEmpty(orderViewDTO.getData().getOrders())){
                 break;
             }
-            resultsBeanList.addAll(dataList);*/
+            resultsBeanList.addAll(orderViewDTO.getData().getOrders());
 
         }
         return resultsBeanList;

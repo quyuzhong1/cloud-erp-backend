@@ -16,6 +16,7 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.sdk.oms.tiktok.dto.TikTokOrderDTO;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.OrderViewDTO;
+import com.sdk.oms.tiktok.dto.tiktok.order.view.OrdersBean;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -50,7 +51,7 @@ public class TikTokOrderHandler extends AbstractOrderHandler<TikTokOrderDTO, Pla
         }
 
         //发送请求
-        List<OrderViewDTO> orders = tikTokSdkClientService.sendTikTokGetOrder(shopInfoDTO, task);
+        List<OrdersBean> orders = tikTokSdkClientService.sendTikTokGetOrder(shopInfoDTO, task);
 
         // 返回下载源数据
         return orders.stream()
@@ -61,7 +62,7 @@ public class TikTokOrderHandler extends AbstractOrderHandler<TikTokOrderDTO, Pla
     @Override
     public List<PlatformOrderDTO> convert(List<TikTokOrderDTO> sourceDataList) {
         // 包含数据过滤数据 数据转换 数据合并拆分等操作
-        return sourceDataList.stream().filter(req -> !"UNPAID".equals(req.getOrderViewDTO().getData().getOrders().get(0).getStatus()))
+        return sourceDataList.stream().filter(req -> !"UNPAID".equals(req.getOrderViewDTO().getStatus()))
                 // 组装
                 .map(TikTokOrderDTO::convertDTO).collect(Collectors.toList());
     }

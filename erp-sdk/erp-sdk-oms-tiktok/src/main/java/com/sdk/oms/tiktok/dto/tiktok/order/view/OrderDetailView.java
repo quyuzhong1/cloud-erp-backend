@@ -8,7 +8,7 @@ import java.util.List;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DataBean {
+public class OrderDetailView {
     @JsonProperty("orders")
     private List<OrdersBean> orders;
 }

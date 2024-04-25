@@ -9,11 +9,13 @@ import com.common.business.enums.PlatformDictEnum;
 import com.sdk.oms.tiktok.dto.tiktok.listing.view.DataBean;
 import jodd.util.StringUtil;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 @Data
+@NoArgsConstructor
 public class TikTokListingDTO extends CleanBaseDTO {
     private DataBean dataBean;
 
