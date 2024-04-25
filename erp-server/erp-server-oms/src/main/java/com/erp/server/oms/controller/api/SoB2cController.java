@@ -968,11 +968,6 @@ public class SoB2cController extends BaseController {
      **/
     @LogViewService
     @PostMapping(value = "/retryOrderForecast")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:transferDeclare:upload",
-            tableAlias = "td"
-    )
     public ApiResult<List<BatchResultDTO>> retryOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = soB2cService.retryOrderForecast(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
