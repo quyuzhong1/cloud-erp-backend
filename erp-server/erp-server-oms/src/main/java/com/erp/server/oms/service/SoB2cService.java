@@ -872,4 +872,21 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     List<BatchResultDTO> cancelOrderForecast(List<String> ids);
 
     List<BatchResultDTO> retryOrderForecast(BaseIdsDTO.IdsDTO dto);
+    /**
+     * @description: 异常订单分页查询
+     * @author Will
+     * @date: 2024/4/22 17:53
+     * @param pagingParamDTO
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<SoB2cAbnormalDTO.ListDTO> abnormalPaging(PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> pagingParamDTO);
+    /**
+     * @description: 异常订单导出
+     * @author Will
+     * @date: 2024/4/22 19:54
+     * @param dto
+     * @param response
+     * @return Boolean
+     */
+    Boolean abnormalExportExcel(SoB2cAbnormalDTO.PagingParamDTO dto, HttpServletResponse response);
 }
