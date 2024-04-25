@@ -36,8 +36,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RedisKeyConstant;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.*;
@@ -4780,52 +4778,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //产品包装信息
             ProductPackDTO productPackDTO = new ProductPackDTO();
             BeanMapper.copy(dto, productPackDTO);
-            String productSize = "";
-            String boxSize = "";
-            String productSizeLength = dto.getProductSizeLength();
-            String productSizeWide = dto.getProductSizeWide();
-            String productSizeHigh = dto.getProductSizeHigh();
-            String boxSizeLength = dto.getBoxSizeLength();
-            String boxSizeWide = dto.getBoxSizeWide();
-            String boxSizeHigh = dto.getBoxSizeHigh();
-            /**
-             * 产品尺寸(长)
-             */
-            if (StringUtils.isNotBlank(productSizeLength)) {
-                productSize = productSizeLength;
-            }
-            /**
-             * 产品尺寸(宽)
-             */
-            if (StringUtils.isNotBlank(productSizeWide)) {
-                productSize = productSize.concat("X").concat(productSizeWide);
-            }
-            /**
-             * 产品尺寸(高)
-             */
-            if (StringUtils.isNotBlank(productSizeHigh)) {
-                productSize = productSize.concat("X").concat(productSizeHigh);
-            }
-            productPackDTO.setProductSize(productSize);
-            /**
-             * 箱规(长)
-             */
-            if (StringUtils.isNotBlank(boxSizeLength)) {
-                boxSize = boxSizeLength;
-            }
-            /**
-             * 箱规(宽)
-             */
-            if (StringUtils.isNotBlank(boxSizeWide)) {
-                boxSize = boxSize.concat("X").concat(boxSizeWide);
-            }
-            /**
-             * 箱规(高)
-             */
-            if (StringUtils.isNotBlank(boxSizeHigh)) {
-                boxSize = boxSize.concat("X").concat(boxSizeHigh);
-            }
-            productPackDTO.setBoxSize(boxSize);
+            productPackDTO.setProductLength(LengthConverterUtil.cmToMm(new BigDecimal(dto.getProductLength())));
+            productPackDTO.setProductWidth(LengthConverterUtil.cmToMm(new BigDecimal(dto.getProductWidth())));
+            productPackDTO.setProductHeight(LengthConverterUtil.cmToMm(new BigDecimal(dto.getProductHeight())));
+            productPackDTO.setBoxLength(LengthConverterUtil.cmToMm(new BigDecimal(dto.getBoxLength())));
+            productPackDTO.setBoxWidth(LengthConverterUtil.cmToMm(new BigDecimal(dto.getBoxWidth())));
+            productPackDTO.setBoxHeight(LengthConverterUtil.cmToMm(new BigDecimal(dto.getBoxHeight())));
             /**
              * 毛重
              */
