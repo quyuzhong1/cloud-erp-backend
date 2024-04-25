@@ -60,9 +60,9 @@ public class PackageForecastController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/tabList")
+    @PostMapping("/tabList")
     public ApiResult<List<PackageForecastDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-        List<PackageForecastDTO.TabListDTO> tabList = packageForecastService.tabList();
+        List<PackageForecastDTO.TabListDTO> tabList = packageForecastService.tabList(dto);
         return success(tabList);
     }
 

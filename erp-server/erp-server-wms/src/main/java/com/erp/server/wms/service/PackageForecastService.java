@@ -4,6 +4,7 @@ import cn.hutool.core.date.DateTime;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.PackageForecastDTO;
@@ -46,7 +47,7 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
      * @param
      * @return
      */
-    List<PackageForecastDTO.TabListDTO> tabList();
+    List<PackageForecastDTO.TabListDTO> tabList(PermissionsDTO dto);
 
     /**
      * 分页
