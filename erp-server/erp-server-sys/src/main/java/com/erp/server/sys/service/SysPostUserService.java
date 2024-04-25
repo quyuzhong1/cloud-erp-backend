@@ -30,4 +30,6 @@ public interface SysPostUserService  extends IService<SysPostUserEntity> {
      * @return java.util.List<com.erp.model.sys.entity.SysPostUserEntity>
      **/
     List<SysPostUserEntity> getByUserId(String userId);
+
+    List<SysPostUserEntity> getUserIdByPostIds(List<String> ids);
 }

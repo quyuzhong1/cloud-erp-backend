@@ -1,16 +1,22 @@
 package com.erp.server.wms.controller.feign;
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.enums.DataAttributeEnum;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.server.wms.service.SoOutstockDetailService;
 import com.erp.server.wms.service.SoOutstockService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -86,6 +92,14 @@ public class SoOutstockFeignController {
     }
 
 
+    @PostMapping("/listByIds")
+    List<SoOutstockEntity> listByIds(@RequestBody List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
+            return new ArrayList<>();
+        }
+        return soOutstockService.listByIds(ids);
+    }
+
     /**
      * 根据销售订单详情ids 获取对应的出库详情
      *
@@ -139,6 +153,38 @@ public class SoOutstockFeignController {
         return soOutstockService.generateB2cSoOutstock(generateB2cDTO);
     }
 
+    /**
+     * 查询封装报关信息
+     * @return
+     */
+    @PostMapping("/getCanGenerateDeclare")
+    List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(@RequestBody TmsDeclareBillDTO.QuerySourceDTO querySourceDTO) {
+        return soOutstockService.getCanGenerateDeclare(querySourceDTO);
+    }
+
+    /**
+     * 统计状态
+     * @return
+     */
+    @PostMapping("/logisticStatistics")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:so:outstock:paging",
+            tableAlias = "so"
+    )
+    List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(@RequestBody FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq) {
+        return soOutstockService.logisticStatistics(deliveryStaticsReq);
+    }
+
+
+    /**
+     * 更新状态
+     * @return
+     */
+    @PostMapping("/updateStatus")
+    Boolean updateStatus(@RequestBody TmsDeclareBillDTO.UpdateStatusDTO dto) {
+        return soOutstockService.updateStatus(dto);
+    }
 }
 
 

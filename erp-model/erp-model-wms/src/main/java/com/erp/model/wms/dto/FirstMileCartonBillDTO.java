@@ -2,11 +2,10 @@ package com.erp.model.wms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -95,11 +94,11 @@ public class FirstMileCartonBillDTO implements Serializable {
         private String cartonId;
 
         /**
-         * 发货单id
+         * 来源id
          */
-        @NotBlank(message = "mainId不能为空")
-        @Size(max = 19,message = "mainId最大长度不能超过19位")
-        private String mainId;
+        @NotBlank(message = "sourceId不能为空")
+        @Size(max = 19,message = "sourceId最大长度不能超过19位")
+        private String sourceId;
 
         /**
         * 箱号

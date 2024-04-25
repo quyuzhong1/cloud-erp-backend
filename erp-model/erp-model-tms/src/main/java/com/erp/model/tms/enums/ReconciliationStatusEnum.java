@@ -14,9 +14,12 @@ import org.apache.commons.lang3.StringUtils;
 public enum ReconciliationStatusEnum implements EnumMessage {
 
 
+    TO_BE_GENERATED("toBeGenerated","待生成"),
     TO_BE_CONFIRM("toBeConfirm","待确认"),
     CONFIRMED("confirmed","已确认"),
-    INVALID("invalid","已作废")
+    RECONCILED("Reconciled","已对账"),
+    INVALID("invalid","已作废"),
+    DIFF_CONFIRM("diffConfirm", "差异确认"),
     ;
 
     /**

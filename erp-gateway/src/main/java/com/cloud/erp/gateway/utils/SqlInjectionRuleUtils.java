@@ -6,7 +6,6 @@ import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
-import org.thymeleaf.util.MapUtils;
 
 import java.util.List;
 import java.util.Map;

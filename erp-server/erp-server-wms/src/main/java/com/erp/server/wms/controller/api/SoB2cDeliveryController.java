@@ -106,7 +106,7 @@ public class SoB2cDeliveryController extends BaseController {
      * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出中转报关单")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出b2c发货单")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",

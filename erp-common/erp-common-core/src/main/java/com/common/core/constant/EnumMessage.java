@@ -30,4 +30,14 @@ public interface EnumMessage {
         }
         return null;
     }
+
+    // 默认方法，通过name获取枚举实例
+    static <T extends Enum<T> & EnumMessage> T getByName(Class<T> enumType, Object name) {
+        for (T enumValue : enumType.getEnumConstants()) {
+            if (enumValue.getName().equals(name)) {
+                return enumValue;
+            }
+        }
+        return null;
+    }
 }

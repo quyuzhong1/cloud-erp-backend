@@ -27,6 +27,18 @@ public class WarehouseFeignController {
     }
 
     /**
+     * 根据名称集合查询
+     * @author Will
+     * @date: 2024/3/21 17:35
+     * @param warehouseNameList
+     * @return List<UpdateDTO>
+     */
+    @PostMapping("/listWarehouseByNameList")
+    public List<WarehouseDTO.UpdateDTO> listWarehouseByNameList(@RequestBody List<String> warehouseNameList) {
+        return warehouseService.listWarehouseByNameList(warehouseNameList);
+    }
+
+    /**
      * 查询所有审核通过并启用的仓库
      * @author Will
      * @date: 2023/3/21 14:26

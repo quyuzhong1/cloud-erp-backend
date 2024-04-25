@@ -137,7 +137,6 @@
 			T LEFT JOIN fba_shipment_detail G ON T.ID = G.main_id 
 			left join fba_shipment_receive h on g.id = h.detail_id 
 		<include refid="FbaDataCompareByCondition"/>
-		 order by h.id limit #{pageSize}
     </select>
     
     <select id="getDataCompareByConditionCount" resultType="java.lang.Integer">

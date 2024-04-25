@@ -1,5 +1,6 @@
 package com.erp.server.sys.controller.feign;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.BaseController;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
@@ -8,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -68,4 +70,12 @@ public class AccountingCompanyFeignController extends BaseController {
 
     }
 
+    @PostMapping("/listCompanyById")
+    public List<SysAccountingCompanyEntity> listCompanyById(@RequestBody List<String> ids) {
+        if (CollectionUtil.isEmpty(ids)) {
+            return new ArrayList<>();
+        } else {
+            return sysAccountingCompanyService.listByIds(ids);
+        }
+    }
 }

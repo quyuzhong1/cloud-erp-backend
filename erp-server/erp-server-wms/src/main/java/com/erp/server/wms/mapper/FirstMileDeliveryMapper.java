@@ -1,7 +1,9 @@
 package com.erp.server.wms.mapper;
-import com.erp.model.wms.dto.FirstMileCartonDTO;
-import com.erp.model.wms.dto.FirstMileCartonDetailDTO;
+import com.common.business.dto.AdvanceQueryContainer;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.WmsCartonDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -77,10 +79,9 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
      * 根据发货单id查询装箱清单
      * @Author Luo_WG
      * @Date 2023/11/28 17:15
-     * @param id
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDetailDTO.ListPackingDetailDTO>
      **/
-    List<FirstMileCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("id") String id);
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("ids") List<String> ids);
 
     /**
      * 导出装箱清单Excel
@@ -89,6 +90,14 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
      * @param params
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ExportPackingDTO>
      **/
-    List<FirstMileCartonDTO.ExportPackingDTO> exportPacking(@Param("params") FirstMileDeliveryDTO.ExportDTO params);
+    List<WmsCartonDTO.ExportPackingDTO> exportPacking(@Param("params") FirstMileDeliveryDTO.ExportDTO params);
+
+    List<FirstMileDeliveryDTO.GenerateLogisticDTO> getGenerateLogisticDTO(@Param("params") FirstMileDeliveryDTO.GenerateLogisticReqDTO dto);
+
+    List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(FirstMileDeliveryDTO.StatisticsReq dto);
+
+    List<FirstMileDeliveryEntity> advanceQuery(@Param("params") AdvanceQueryContainer advanceQueryContainer);
+
+    List<TmsDeclareBillDTO.DeliveryDTO> getGenerateDeclare(@Param("params") TmsDeclareBillDTO.QuerySourceDTO dto);
 
 }

@@ -45,4 +45,9 @@ public class LogisticsBillDetailQueryDTO implements Serializable {
      * 店铺id
      */
     private String shopId;
+
+    /**
+     * 物流运输类型（LogisticsTransportTypeEnum）
+     */
+    private String transportType;
 }

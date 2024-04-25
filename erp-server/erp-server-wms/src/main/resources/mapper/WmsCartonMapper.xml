@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.FirstMileCartonMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.WmsCartonEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="source_id" property="sourceId" />
+       <result column="box_spec_no" property="boxSpecNo" />
+       <result column="package_weight" property="packageWeight" />
+       <result column="box_length" property="boxLength" />
+       <result column="box_width" property="boxWidth" />
+       <result column="box_height" property="boxHeight" />
+       <result column="box_qty" property="boxQty" />
+    </resultMap>
+
+    <!--查询已装箱数量-->
+    <select id="listPackingQtyByMainId" resultType="com.erp.model.wms.dto.WmsCartonDTO$PackingQtyDTO">
+        SELECT
+            fmc.source_id,
+            fmcd.carton_id,
+            SUM(fmc.box_qty) AS boxQty,
+            fmcd.sku_id,
+            fmcd.sku_no,
+            SUM(fmcd.pack_qty) AS packQty,
+            SUM(fmc.box_qty) * SUM(fmcd.pack_qty) AS usePackQty
+        FROM wms_carton fmc
+        INNER JOIN wms_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
+        WHERE fmc.is_deleted = FALSE
+        <if test="sourceId != null and sourceId != ''">
+            AND fmc.source_id = #{sourceId}
+        </if>
+        <if test="boxSpecNo != null and boxSpecNo != ''">
+            AND fmc.box_spec_no = #{boxSpecNo}
+        </if>
+        GROUP BY fmc.source_id,
+        fmcd.carton_id,
+        fmcd.sku_id,
+        fmcd.sku_no
+    </select>
+
+    <!--根据来源Id查询包装信息-->
+    <select id="listPackDateBySourceId" resultType="com.erp.model.wms.dto.WmsCartonDTO$PackDateDTO">
+        SELECT
+        fmcd.source_id AS id,
+        fmcd.carton_id,
+        fmcd.sku_id,
+        fmcd.sku_no,
+        SUM(fmcd.pack_qty) AS packQty,
+        SUM(fmc.box_qty) AS boxQty,
+        fmc.box_spec_no,
+        fmc.source_type
+        FROM wms_carton fmc
+        INNER JOIN wms_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
+        WHERE fmc.is_deleted = FALSE
+        <if test="sourceId != null and sourceId != ''">
+            AND fmcd.source_id = #{sourceId}
+        </if>
+        GROUP BY fmcd.source_id,
+        fmcd.carton_id,
+        fmcd.sku_id,
+        fmcd.sku_no,
+        fmc.box_spec_no,
+        fmc.source_type
+    </select>
+</mapper>

@@ -222,55 +222,67 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             entity = listByMainId.get(0);//跨店铺拆单需要修改这里
         }
 //            SoB2cLogisticsEntity entity = map.get(platformOrderLogisticsDTO.getCode());
-        if (Objects.isNull(entity)) {
-            entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(platformOrderLogisticsDTO, mainEntity.getId(), allNetWeight, maxLength, maxWidth, totalHeight);
-            entity.setMainId(mainEntity.getId());
-            handleLogisticsData(entity);
-            if (isShopee && StringUtils.isNotEmpty(entity.getLogisticsChannelName())) {
-                //虾皮存在渠道名称不存在渠道id 特殊处理
-                List<LogisticsChannelEntity> channelByNames = logisticsFeign.getChannelByName(entity.getLogisticsChannelName());
-                if (CollectionUtils.isNotEmpty(channelByNames)) {
-                    entity.setLogisticsChannelId(channelByNames.get(0).getId());
+            if (Objects.isNull(entity)) {
+                entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(platformOrderLogisticsDTO, mainEntity.getId(), allNetWeight,maxLength,maxWidth,totalHeight);
+                entity.setMainId(mainEntity.getId());
+                handleLogisticsData(entity);
+                if (isShopee && StringUtils.isNotEmpty(entity.getLogisticsChannelName())){
+                    //虾皮存在渠道名称不存在渠道id 特殊处理
+                    List<LogisticsChannelEntity> channelByNames = logisticsFeign.getChannelByName(entity.getLogisticsChannelName());
+                    if (CollectionUtils.isNotEmpty(channelByNames)){
+                        entity.setLogisticsChannelId(channelByNames.get(0).getId());
+                    }
+                }
+                if (!this.save(entity)) {
+                    throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
+                }
+                if (isShopee) {
+                    addDTOList.add(buildLogisticsBill(entity, mainEntity));
+                }
+            } else {
+                SoB2cLogisticsEntity entity2 = new SoB2cLogisticsEntity();
+                BeanMapperUtils.copy(platformOrderLogisticsDTO, entity2);
+                if (isShopee && StringUtils.isNotEmpty(entity2.getLogisticsChannelName())){
+                    //虾皮存在渠道名称不存在渠道id 特殊处理
+                    List<LogisticsChannelEntity> channelByNames = logisticsFeign.getChannelByName(entity2.getLogisticsChannelName());
+                    if (CollectionUtils.isNotEmpty(channelByNames)){
+                        entity2.setLogisticsChannelId(channelByNames.get(0).getId());
+                    }
+                }
+                // 保留历史
+//                if (null != entity.getWeight() && entity.getWeight().compareTo(BigDecimal.ZERO) > 0){
+//                    allNetWeight = entity.getWeight();
+//                }
+//                if (null != entity.getLength() && entity.getLength().compareTo(BigDecimal.ZERO) > 0){
+//                    maxLength = entity.getLength();
+//                }
+//                if (null != entity.getWidth() && entity.getWidth().compareTo(BigDecimal.ZERO) > 0){
+//                    maxWidth = entity.getWidth();
+//                }
+//                if (null != entity.getHeight() && entity.getHeight().compareTo(BigDecimal.ZERO) > 0){
+//                    totalHeight  = entity.getHeight();
+//                }
+                //如果美客多平台订单不是平台仓发货，不更新物流单号
+                if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+                    if (!mainEntity.hasPlatformWarehouseOrder()) {
+                        entity.setCode(oldEntity.getCode());
+                    }
+                }
+
+                entity2.setWeight(allNetWeight);
+                entity2.setLength(maxLength);
+                entity2.setWidth(maxWidth);
+                entity2.setHeight(totalHeight);
+                entity2.setId(entity.getId());
+
+                if (!this.updateById(entity2)) {
+                    throw new ServiceException("[SoB2cLogisticsEntity] 更新失败");
+                }
+                entity = entity2;
+                if (isShopee) {
+                    addDTOList.add(buildLogisticsBill(entity, mainEntity));
                 }
             }
-
-            if (!this.save(entity)) {
-                throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
-            }
-            if (isShopee) {
-                addDTOList.add(buildLogisticsBill(entity, mainEntity));
-            }
-        } else {
-            SoB2cLogisticsEntity entity2 = new SoB2cLogisticsEntity();
-            BeanMapperUtils.copy(platformOrderLogisticsDTO, entity2);
-            if (isShopee && StringUtils.isNotEmpty(entity2.getLogisticsChannelName())) {
-                //虾皮存在渠道名称不存在渠道id 特殊处理
-                List<LogisticsChannelEntity> channelByNames = logisticsFeign.getChannelByName(entity2.getLogisticsChannelName());
-                if (CollectionUtils.isNotEmpty(channelByNames)) {
-                    entity2.setLogisticsChannelId(channelByNames.get(0).getId());
-                }
-            }
-            entity2.setWeight(allNetWeight);
-            entity2.setLength(maxLength);
-            entity2.setWidth(maxWidth);
-            entity2.setHeight(totalHeight);
-            entity2.setId(entity.getId());
-
-            //如果美客多平台订单不是平台仓发货，不更新物流单号
-            if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
-                if (!mainEntity.hasPlatformWarehouseOrder()) {
-                    entity.setCode(oldEntity.getCode());
-                }
-            }
-
-            if (!this.updateById(entity2)) {
-                throw new ServiceException("[SoB2cLogisticsEntity] 更新失败");
-            }
-            entity = entity2;
-            if (isShopee) {
-                addDTOList.add(buildLogisticsBill(entity, mainEntity));
-            }
-        }
         //虾皮物流订单新增 TMS物流单号记录
         if (isShopee) {
             try {

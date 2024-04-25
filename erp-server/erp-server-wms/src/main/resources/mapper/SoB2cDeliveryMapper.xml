@@ -18,6 +18,7 @@
         sbd.is_inspection AS isInspection,
         sbd.is_weigh AS isWeigh,
         sbd.weight AS weight,
+        sbd.weight_unit AS weightUnit,
         sbdd.sku_id,
         sbdd.sku_no AS skuNo,
         sbdd.delivery_qty AS deliveryQty,

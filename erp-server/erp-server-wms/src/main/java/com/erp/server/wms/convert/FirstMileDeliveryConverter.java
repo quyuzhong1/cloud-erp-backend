@@ -3,17 +3,15 @@ package com.erp.server.wms.convert;
 
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.PackingExcelDTO;
+import com.erp.model.wms.dto.excel.SoOutstockPackingExcelDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import com.erp.model.wms.entity.FirstMileDeliveryLogisticsEntity;
-import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
@@ -29,9 +27,8 @@ public interface FirstMileDeliveryConverter {
             @Mapping(target = "sourceCode", source = "entity.code"),
             @Mapping(target = "toWarehouseId", source = "entity.destWarehouseId"),
             @Mapping(target = "toWarehouseName", source = "entity.destWarehouseName"),
-            @Mapping(target = "logisticsMethod", source = "logisticsEntity.logisticsMethod"),
     })
-    OverseasWarehouseInboundDTO.ViewDTO fmdToOverseasWarehouseInboundView(FirstMileDeliveryEntity entity, FirstMileDeliveryLogisticsEntity logisticsEntity);
+    OverseasWarehouseInboundDTO.ViewDTO fmdToOverseasWarehouseInboundView(FirstMileDeliveryEntity entity);
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
@@ -49,6 +46,15 @@ public interface FirstMileDeliveryConverter {
             @Mapping(target = "skuNo", source = "sku"),
             @Mapping(target = "packQty", source = "singleBoxQuantity"),
     })
-    FirstMileCartonDetailDTO.AddDTO importToPackingSku(PackingExcelDTO data);
-    List<FirstMileCartonDetailDTO.AddDTO> importToPackingSku(List<PackingExcelDTO> data);
+    WmsCartonDetailDTO.AddDTO importToPackingSku(PackingExcelDTO data);
+    List<WmsCartonDetailDTO.AddDTO> importToPackingSku(List<PackingExcelDTO> data);
+
+
+    @Mappings({
+            @Mapping(target = "skuId", source = "skuId"),
+            @Mapping(target = "skuNo", source = "sku"),
+            @Mapping(target = "packQty", source = "singleBoxQuantity"),
+    })
+    WmsCartonDetailDTO.AddDTO importToSoOutstockPackingSku(SoOutstockPackingExcelDTO data);
+    List<WmsCartonDetailDTO.AddDTO> importToSoOutstockPackingSku(List<SoOutstockPackingExcelDTO> data);
 }

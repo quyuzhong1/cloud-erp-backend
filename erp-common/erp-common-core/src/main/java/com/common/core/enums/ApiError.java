@@ -966,7 +966,6 @@ public enum ApiError implements Serializable {
     ERROR_TRANSFER_DECLARE_DETAIL_NOT_EXIST(92136,"入库预报订单明细不能为空"),
     ERROR_UPLOAD_SUCCES_CAN_ORDER_FORCAST(92137,"仅支持订单预报为【待上传/上传失败】，可操作【订单预报】"),
     THIRD_WAREHOUSE_NAME_EXIST(92132,"平台【{}】第三方仓【{}】不能重复绑定多个仓库"),
-
     ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED(92133,"已有盘盈盘亏单【{}】不允许操作【{}】之前单据"),
 
     ERROR_SO_OUTSTOCK_BILL_COST_NOT_DIS_APPROVE(92138,"销售出库单【{}】 自发货费用单据已确认状态下,不允许反审核"),
@@ -984,6 +983,14 @@ public enum ApiError implements Serializable {
     B2C_SO_DELIVERY_FINISH_PRINT(92131,"发货单【{}】非待处理不支持完成打印"),
     B2C_SO_DELIVERY_NOT_FINISH_PRINT(92132,"发货单【{}】非拣货中不支持取消完成拣货"),
     PLEASE_KEEP_LEAST_ONE_DATA(92133,"请至少保留一条明细，或者整单删除！"),
+
+    NOT_PACKAGE_NO_APPROVE(92133,"单号{}尚未完成装箱信息，请完成后审核"),
+    TMS_FIRST_MILE_LOGISTIC_EXISTS(92134,"物流单【{}】已生成，不可反审核"),
+    B2B_ORDER_IS_PACK(92135,"只允许B2B订单装箱"),
+    TMS_DECLARE_BILL_EXISTS(92136,"报关单【{}】已生成，不可反审核"),
+    BILL_IS_GENERATE_DECLARE(92137,"单据【{}】报关状态已生成，不可修改为无需生成"),
+    BILL_IS_GENERATE_LOGISTICS(92137,"单据【{}】物流状态已生成，不可修改为无需生成"),
+    SO_OUTSTOCK_NOT_PACKING(92137,"出库单已装箱，无法更改装箱信息"),
 
 
 
@@ -1214,6 +1221,13 @@ public enum ApiError implements Serializable {
     ERROR_CHANNEL_QUOTE(94029,"该渠道已被引用,无法删除"),
     ERROR_LOGISTICS_BILL_COST_RECONCILIATION_STATUS(94030,"已确认和已作废不支持自发货费用单状态变更"),
     ERROR_LOGISTICS_CHANNEL_EXIST(94031,"渠道【{}】已被使用，不支持重复选择"),
+
+    ERROR_CFG_SAILING_EXIST(94031,"已存在渠道【{}】的截单开船数据"),
+    ERROR_CFG_COST_EXIST(94032,"费用名称【{}】已存在"),
+    ERROR_WAREHOUSE_MAPPING_EXIST(94033,"仓库代码（物流商）【{}】已存在"),
+    ERROR_DECLARE_RECONCILIATION_NOT_EXIST(94034,"报关对账单不存在"),
+    ERROR_DECLARE_RECONCILIATION_DETAIL_NOT_EXIST(94035,"报关对账单明细不存在"),
+    ERROR_DECLARE_RECONCILIATION_ADD_DETAIL(94036,"报关对账单【{}】添加对账明细数据的供应商【{}】必须一致"),
 
 
     /**
