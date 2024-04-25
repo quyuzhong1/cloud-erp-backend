@@ -53,6 +53,7 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
@@ -4309,12 +4310,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (StringUtils.isNotBlank(dto.getSaleCountry())) {
                 String[] saleCountryList = dto.getSaleCountry().split(",");
                 for (String saleCountry : saleCountryList) {
-                    BasicDictEntity productCountry = basicDictService.checkBasicDict(BasicDictTypeEnum.COUNTRY.getCode(), saleCountry);
-                    if (ObjectUtils.isEmpty(productCountry)) {
+                    DictCountryEntity countryEntity = sysUserFeign.getCountryById(saleCountry);
+                    if (ObjectUtils.isEmpty(countryEntity)) {
                         errorMsgList.add("销售国家在系统中未找到");
                         break;
                     }
-                    saleCountryStr = saleCountryStr + productCountry.getId() + ",";
+                    saleCountryStr = saleCountryStr + countryEntity.getId() + ",";
                 }
             }
 
@@ -4434,7 +4435,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
                 //二级品类
                 String secondaryCategory = dto.getSecondaryCategory();
-                BasicCategoryEntity secondaryCategoryEntity = categoryEntityList.stream().filter(req -> req.getName().equals(category) && !req.getPid().equals("0")).findFirst().orElse(null);
+                BasicCategoryEntity secondaryCategoryEntity = categoryEntityList.stream().filter(req -> req.getName().equals(secondaryCategory) && !req.getPid().equals("0")).findFirst().orElse(null);
 
                 if (ObjectUtils.isEmpty(secondaryCategoryEntity)) {
                     errorMsgList.add("二级类目不存在");
