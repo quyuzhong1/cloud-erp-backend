@@ -46,6 +46,14 @@ public interface TransferLogisticsFeign {
     TransferLogisticsSupplierEntity getLogisticsSupplierById(@RequestBody String supplierId);
 
     /**
+     * 根据id查询中转服务商
+     * @param supplierIds
+     * @return
+     */
+    @PostMapping("/feign/transferLogistics/listLogisticsSupplierByIds")
+    List<TransferLogisticsSupplierEntity> listLogisticsSupplierByIds(@RequestBody List<String> supplierIds);
+
+    /**
      * 根据主标id查询渠道信息
      * @param supplierIdList
      * @return
