@@ -183,10 +183,6 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         //删除明细
         lambdaUpdate().in(TransferDeclareDetailEntity::getMainId, mainIds).remove();
 
-        //修改订单中转状态为待中转
-        List<String> soIds = detailEntities.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-        soB2cFeign.updateTransferStatusBatch(soIds, TransferStatusEnum.WAIT.getCode());
-
         //删除明细对应的sku拆分记录
         List<String> ids = detailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
         transferDeclareProductService.removeByDeclareDetailIds(ids);
