@@ -43,18 +43,23 @@ public class SoB2cAbnormalDTO  implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListDTO {
+
         /**
-         * 销售单号
+         * 销售订单主键id
+         */
+        private String id;
+        /**
+         * 销售单号【可排序】
          */
         private String code;
 
         /**
-         * 销售平台
+         * 销售平台【可排序】
          */
         private String dictPlatform;
 
         /**
-         * 审核状态
+         * 审核状态【可排序】
          */
         private String approveStatus;
 
@@ -64,7 +69,7 @@ public class SoB2cAbnormalDTO  implements Serializable {
         private String approveStatusName;
 
         /**
-         * 单据状态
+         * 单据状态【可排序】
          */
         private String billStatus;
 
@@ -74,22 +79,22 @@ public class SoB2cAbnormalDTO  implements Serializable {
         private String billStatusName;
 
         /**
-         * 平台sku编号
+         * 平台sku编号【可排序】
          */
         private String platformSkuNo;
 
         /**
-         * 平台 产品id
+         * 平台 产品id【可排序】
          */
         private String platformSpuNo;
 
         /**
-         * 系统SKU
+         * 系统SKU【可排序】
          */
         private String skuNo;
 
         /**
-         * 订单异常标示
+         * 订单异常标示【可排序】
          */
         private String signOrderError;
 
@@ -99,22 +104,22 @@ public class SoB2cAbnormalDTO  implements Serializable {
         private String signOrderErrorName;
 
         /**
-         * 异常信息
+         * 异常信息【可排序】
          */
         private String message;
 
         /**
-         * 物流渠道名称
+         * 物流渠道名称【可排序】
          */
         private String logisticsChannelName;
 
         /**
-         * 付款时间
+         * 付款时间【可排序】
          */
         private LocalDateTime payTime;
 
         /**
-         * 异常生成时间
+         * 异常生成时间【可排序】
          */
         private LocalDateTime signOrderErrorTime;
     }
