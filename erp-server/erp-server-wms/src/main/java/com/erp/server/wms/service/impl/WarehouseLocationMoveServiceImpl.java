@@ -765,12 +765,6 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                     detailViewDTO.setRealQty(inventoryQtyDTO.getRealQty());
                 });
             });
-//            if (StringUtils.isBlank(detailViewDTO.getOutWarehouseLocation())){
-//                detailViewDTO.setOutWarehouseLocation("空仓位");
-//            }
-//            if (StringUtils.isBlank(detailViewDTO.getInWarehouseLocation())){
-//                detailViewDTO.setInWarehouseLocation("空仓位");
-//            }
         });
         pcViewDTO.setDetailList(detailViewDTOs);
         return pcViewDTO;

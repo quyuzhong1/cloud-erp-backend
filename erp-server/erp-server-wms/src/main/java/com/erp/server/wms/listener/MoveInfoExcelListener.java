@@ -17,6 +17,7 @@ import com.erp.model.wms.dto.excel.MoveInfoExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.*;
+import jnr.ffi.Struct;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -99,10 +100,11 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
                 ProductDetailDTO productDetailDTO = plmTaskFeign.getSkuByParam(skuParams);
                 if (ObjectUtils.isEmpty(productDetailDTO)) {
                     errorMsgList.add("系统中不存在此sku编号");
+                }else {
+                    pcViewDTO.setSkuId(productDetailDTO.getId());
+                    pcViewDTO.setSkuNo(productDetailDTO.getSkuNo());
+                    pcViewDTO.setProductName(productDetailDTO.getName());
                 }
-                pcViewDTO.setSkuId(productDetailDTO.getId());
-                pcViewDTO.setSkuNo(productDetailDTO.getSkuNo());
-                pcViewDTO.setProductName(productDetailDTO.getName());
             }
         }
 
@@ -123,6 +125,14 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
             errorMsgList.add("当前仓库没有仓位");
         }
         Map<String, List<WarehouseLocationDTO.LocationListDTO>> locationMap = warehouseLocationList.stream().collect(Collectors.groupingBy(WarehouseLocationDTO.LocationListDTO::getName));
+        //设置空仓位
+        if (StringUtils.isEmpty(moveInfoExcelDTO.getOutWarehouseLocationName())) {
+            moveInfoExcelDTO.setOutWarehouseLocationName("空仓位");
+        }
+        if (StringUtils.isEmpty(moveInfoExcelDTO.getInWarehouseLocationName())) {
+            moveInfoExcelDTO.setInWarehouseLocationName("空仓位");
+        }
+
         if (Objects.isNull(locationMap.get(moveInfoExcelDTO.getOutWarehouseLocationName()))) {
             errorMsgList.add("取货仓位不存在");
         }
