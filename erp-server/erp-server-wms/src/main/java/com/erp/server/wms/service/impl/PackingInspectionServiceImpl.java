@@ -4,9 +4,12 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
+import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.handler.PlatformSaveHandler;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -19,6 +22,7 @@ import com.erp.model.wms.dto.PackingInspectionDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.PackingInspectionOperationEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
@@ -32,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -148,6 +153,12 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             if(Objects.nonNull(skuInfo) && Objects.nonNull(eanInfo) && !skuInfo.getSkuId().equals(eanInfo.getSkuId())){
                 throw new ServiceException("有超过一个sku编号或ean码匹配，请确认");
             }
+            if(Objects.isNull(dto.getScanQty())){
+                throw new ServiceException("扫描数量不能为空");
+            }
+            if(dto.getScanQty() <= 0){
+                throw new ServiceException("扫描数量必须大于0");
+            }
             //修改对应SKU扫描数量
             Iterator<PackingInspectionDTO.ViewDTO.ScanSkuInfo> it = waitScanList.iterator();
             List<PackingInspectionDTO.ViewDTO.ScanSkuInfo> scannedList = viewDTO.getScannedSkuList();
@@ -166,7 +177,10 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                     }else{
                         scanned.setScannedQty(scanSkuInfo.getSaleQty() - scanSkuInfo.getWaitScanQty());
                     }
-                    scanSkuInfo.setWaitScanQty(scanSkuInfo.getWaitScanQty()-1);
+                    if(dto.getScanQty() > scanSkuInfo.getWaitScanQty()){
+                        throw new ServiceException("扫描数量大于待扫描数量");
+                    }
+                    scanSkuInfo.setWaitScanQty(scanSkuInfo.getWaitScanQty()-dto.getScanQty());
                     scanSkuInfo.setScannedQty(scanSkuInfo.getSaleQty() - scanSkuInfo.getWaitScanQty());
                     //如果已扫描数等于销售数，放到已扫描队列
                     if(scanSkuInfo.getScannedQty().equals(scanSkuInfo.getSaleQty())){
@@ -216,14 +230,43 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                     StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
                 return viewDTO;
             }
+
+            //调用第三方平台SDK发货
+            try {
+                if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+                    //调用第三方平台SDK发货
+                    PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+                    platformShipOrderDTO.setSoB2cId(entity.getSourceId());
+                    platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+                }
+            } catch (Exception e) {
+                log.error("销售单【{}】 标记发货失败 >>>错误信息{}", e.getMessage());
+                throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
+            }
+
+            //获取一个当前时间当作发货时间
+            LocalDateTime deliveryTime = LocalDateTime.now();
+
             //将发货状态更新为已发货
-            entity.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            entity.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getCode());
+            entity.setDeliveryTime(deliveryTime);
             if (!soB2cDeliveryService.updateById(entity)) {
                 throw new ServiceException("发货单更新失败");
             }
-            soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()),SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+
+            //修改订单状态待发货
+            SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
+            updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
+            updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            updateDeliveryTimeDTO.setDeliveryTime(LocalDateTime.now());
+            soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
+
             //出库
             soB2cDeliveryService.generateB2cSoOutstock(entity);
+
+            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", commonService.getUserInfo().getUserName(), "包装验货", entity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
         }
         return viewDTO;
     }

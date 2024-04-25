@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -25,7 +26,7 @@ public interface PackageForecastFeign {
      * @return
      */
     @PostMapping("feign/packageForecast/add")
-    Boolean add(@RequestBody List<PackageForecastDTO.AddDTO> addList);
+    List<BatchResultDTO> add(@RequestBody List<PackageForecastDTO.AddDTO> addList);
 
     /**
      * @description: 根据销售订单id集合查询

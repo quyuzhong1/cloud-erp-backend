@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum SoB2cSourcePlatformEnum {
 
     ENUM_SELF_ADD("selfAdd",  "ERP新增"),
+    ENUM_THIRD_PLATFORM("thirdPlatform",  "第三方平台新增"),
     ;
     /**
      * 类型

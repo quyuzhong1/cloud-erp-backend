@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.CfgReconciliationFieldMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.CfgReconciliationFieldEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="reconciliation_type" property="reconciliationType" />
+       <result column="third_name" property="thirdName" />
+       <result column="third_code" property="thirdCode" />
+       <result column="third_field_name" property="thirdFieldName" />
+       <result column="status" property="status" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        reconciliation_type, third_name, third_code, third_field_name, erp_field_name, erp_field, status, remark
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.tms.dto.CfgReconciliationFieldDTO$PagingVO">
+        SELECT
+            crf.id,
+            crf.create_user_id,
+            crf.create_user_name,
+            crf.create_time,
+            crf.update_user_id,
+            crf.update_user_name,
+            crf.update_time,
+            crf.version,
+            crf.is_deleted,
+            crf.reconciliation_type,
+            crf.third_name,
+            crf.third_code,
+            crf.third_field_name,
+            crf.source_type,
+            crf.source_id,
+            crf.status,
+            crf.remark
+        FROM cfg_reconciliation_field as crf
+        WHERE
+        ${params.sqlMap.default}
+        and crf.is_deleted = FALSE
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        crf.create_time DESC
+    </select>
+
+    <select id="listExportExcel" resultType="com.erp.model.tms.dto.excel.CfgReconciliationFieldExportDTO">
+        SELECT
+            crf.id,
+            crf.create_user_id,
+            crf.create_user_name,
+            crf.create_time,
+            crf.update_user_id,
+            crf.update_user_name,
+            crf.update_time,
+            crf.version,
+            crf.is_deleted,
+            crf.reconciliation_type,
+            crf.third_name,
+            crf.third_code,
+            crf.third_field_name,
+            crf.source_type,
+            crf.source_id,
+            crf.status,
+            crf.remark
+        FROM cfg_reconciliation_field as crf
+        WHERE
+        ${params.sqlMap.default}
+        and crf.is_deleted = FALSE
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        crf.create_time DESC
+    </select>
+</mapper>

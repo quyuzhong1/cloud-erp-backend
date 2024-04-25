@@ -1,11 +1,9 @@
 package com.common.business.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -62,6 +60,14 @@ public class PrintWayBillPdfDTO {
      * 商品数量
      */
     private Integer qtySum;
+    /**
+     * 物流渠道id
+     */
+    private String logisticsChannelId;
+    /**
+     * 平台物流面单base64
+     */
+    private List<String> logisticsLabelBase64List;
     /**
      * 明细信息
      */

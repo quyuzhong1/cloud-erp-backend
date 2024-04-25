@@ -132,4 +132,6 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      * @return {@link LogisticsSupplierDTO.ViewDTO}
      */
     LogisticsSupplierDTO.ViewDTO detail(String id);
+
+    List<LogisticsSupplierEntity> listByName(List<String> supplierNameList);
 }

@@ -2,6 +2,7 @@ package com.erp.model.tms.dto;
 
 import com.common.business.enums.UnitEnum;
 import com.common.core.enums.CurrencyEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -25,6 +26,34 @@ import java.util.List;
 public class LogisticsChannelDTO implements Serializable {
 
 
+    /**
+     * 渠道计费信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsShippingDTO {
+
+        /**
+         * 渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 计费方式
+         */
+        private String billingMethod;
+
+        /**
+         * 计费方式名称
+         */
+        private String billingMethodName;
+
+        /**
+         * 预计时效
+         */
+        private String estimatedTime;
+
+    }
     /**
      * 基础信息
      */
@@ -194,6 +223,7 @@ public class LogisticsChannelDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class SignShipDTO{
 
         private String channelId;
@@ -636,12 +666,22 @@ public class LogisticsChannelDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class IdsDTO {
+    @AllArgsConstructor
+    public static class ParamDTO {
 
         /**
          * 物流商ids
          */
         private List<String> ids;
+
+        /**
+         * 渠道名称
+         */
+        private String name;
+
+        public ParamDTO(List<String> ids) {
+            this.ids = ids;
+        }
     }
 
     @Data

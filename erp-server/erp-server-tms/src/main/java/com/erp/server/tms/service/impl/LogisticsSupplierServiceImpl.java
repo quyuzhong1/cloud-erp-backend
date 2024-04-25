@@ -24,9 +24,7 @@ import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.DictBasicEnum;
-import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
-import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
+import com.erp.model.tms.enums.*;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsFbaOverseasFeign;
@@ -435,6 +433,14 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     @Override
     public LogisticsSupplierDTO.ViewDTO detail(String id) {
         return baseMapper.detail(id);
+    }
+
+    @Override
+    public List<LogisticsSupplierEntity> listByName(List<String> supplierNameList) {
+        if(CollectionUtils.isEmpty(supplierNameList)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(LogisticsSupplierEntity::getSupplierName, supplierNameList).list();
     }
 
 

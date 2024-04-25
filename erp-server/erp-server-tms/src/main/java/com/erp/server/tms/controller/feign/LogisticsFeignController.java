@@ -68,7 +68,7 @@ public class LogisticsFeignController {
      **/
     @PostMapping("/listLogisticsChannel")
     public List<LogisticsChannelDTO.ListSelectDTO> listLogisticsChannel(@RequestBody List<String> logisticsSupplierIds) {
-        return logisticsChannelService.listLogisticsChannel(logisticsSupplierIds);
+        return logisticsChannelService.listLogisticsChannel(new LogisticsChannelDTO.ParamDTO(logisticsSupplierIds));
     }
 
     /**
@@ -142,5 +142,12 @@ public class LogisticsFeignController {
     @GetMapping("/getLogisticsAddressById")
     public LogisticsAddressEntity getLogisticsAddressById(@RequestParam("id") String id) {
         return logisticsAddressService.getById(id);
+    }
+
+    @GetMapping("/getScaleChannelByChannelById")
+    private LogisticsChannelDTO.SignShipDTO getScaleChannelByChannelById(@RequestParam("logisticsChannelId") String logisticsChannelId,
+                                                                         @RequestParam("dictPlatform") String dictPlatform
+    ) {
+        return logisticsChannelService.getScaleChannelByChannelById(logisticsChannelId, dictPlatform);
     }
 }

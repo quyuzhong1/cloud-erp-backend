@@ -12,6 +12,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -95,6 +96,14 @@ public class SysPostUserServiceImpl extends ServiceImpl<SysPostUserMapper, SysPo
             return Collections.EMPTY_LIST;
         }
         return lambdaQuery().in(SysPostUserEntity::getPostId,postIdList).list();
+    }
+
+    @Override
+    public List<SysPostUserEntity> getUserIdByPostIds(List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
+            return new ArrayList<>();
+        }
+        return lambdaQuery().in(SysPostUserEntity::getPostId, ids).list();
     }
 
     public void removePostUser(String postId, Set<String> userIds) {

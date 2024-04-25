@@ -50,6 +50,12 @@
             </foreach>
         </if>
     </update>
+    <delete id="deleteByIds">
+        delete from dmp_push_task where id in
+        <foreach collection="ids" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
 
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.dmp.dto.DmpPushTaskDTO$ListDTO">
@@ -75,7 +81,7 @@
         <if test="params.sourcePlatformName != null and params.sourcePlatformName != '' ">
             and source_platform_name = #{params.sourcePlatformName}
         </if>
-        <if test="params.statusList != null and params.statusList != '' ">
+        <if test="params.statusList != null and params.statusList.size > 0">
             and status in
             <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
                 #{item}

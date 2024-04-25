@@ -172,4 +172,9 @@ public interface RedisCacheConstants {
      */
     String CFG_TIMEZONE = "cfg_timezone";
 
+    /**
+     * 物流报关单合同号
+     */
+    String TMS_DECLARE_CODE = "tms_declare_code:{}_{}";
+
 }

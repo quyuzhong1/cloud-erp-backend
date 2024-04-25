@@ -38,6 +38,7 @@
            pp.product_length as length,
            pp.product_width as width,
            pp.product_height as height,
+           pp.gross_weight as grossWeight,
            pd.name as skuName,
            pd.unit_name as unitName
         from product_bom_info pbi

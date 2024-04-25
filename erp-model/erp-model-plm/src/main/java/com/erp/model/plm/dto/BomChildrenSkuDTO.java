@@ -91,6 +91,10 @@ public class BomChildrenSkuDTO  implements Serializable {
      */
     private BigDecimal height;
     /**
+     * 毛重
+     */
+    private BigDecimal grossWeight;
+    /**
      * sku名称
      */
     private String skuName;

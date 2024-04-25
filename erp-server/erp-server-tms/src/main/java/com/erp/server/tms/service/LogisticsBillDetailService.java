@@ -30,7 +30,7 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @author lambda
      * @date: 2023-11-09
      */
-    Boolean add(LogisticsBillEntity billEntity, List<LogisticsBillDetailDTO.AddDTO> list );
+    Boolean add(LogisticsBillEntity billEntity, List<LogisticsBillDetailDTO.AddDTO> list ,boolean isGenerateCost);
 
     /**
      * 修改
@@ -60,7 +60,7 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @Author Luo_WG
      * @Date 2023/11/9 19:52
      **/
-    Boolean removeByMainIds(List<String> mainIds);
+    Boolean removeByMainIds(List<String> mainIds,boolean isDeleteCost);
 
     /**
      * 更改状态

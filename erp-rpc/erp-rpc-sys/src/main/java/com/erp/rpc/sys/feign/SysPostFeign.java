@@ -54,4 +54,11 @@ public interface SysPostFeign {
      */
     @GetMapping("/feign/post/listPostUserByPostIdList")
     List<SysPostUserEntity> listPostUserByPostIdList(@RequestParam("postIdList") List<String> postIdList);
+
+
+    /**
+     * 通过岗位id查询岗位下全部人员
+     **/
+    @PostMapping("/feign/post/getUserIdByPostIds")
+    List<SysPostUserEntity> getUserIdByPostIds(@RequestBody List<String> ids);
 }

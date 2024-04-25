@@ -122,4 +122,11 @@ public interface TransactionFlowMapper extends BaseMapper<TransactionFlowEntity>
      * @return List<ListDailyInventoryDTO>
      */
     List<InventoryReportDTO.ListDailyInventoryDTO> listDailyInventory(@Param("params") InventoryReportDTO.DailyInventoryParamDTO params);
+    
+    /**
+     * 只查询库存数量
+     * @param params
+     * @return
+     */
+    List<InventoryReportDTO.ListDailyInventoryDTO> listDailyInventoryQty(@Param("params") InventoryReportDTO.DailyInventoryParamDTO params);
 }

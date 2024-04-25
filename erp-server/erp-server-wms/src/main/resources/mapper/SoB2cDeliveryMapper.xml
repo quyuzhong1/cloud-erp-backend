@@ -1,19 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.SoB2cDeliveryMapper">
-
-    <!--获取状态统计-->
-    <select id="tabList" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$TabListDTO">
-        SELECT
-        sbd.status AS tabFlag,
-        count(*) AS count
-        FROM so_b2c_delivery sbd
-        WHERE is_deleted=FALSE
-        GROUP BY sbd.status
-    </select>
-
-    <!--分页查询-->
-    <select id="paging" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$ListDTO">
+    <sql id="pageSql">
         SELECT
         sbd.id,
         sbd.code,
@@ -29,6 +17,8 @@
         sbd.is_print_picking AS isPrintPicking,
         sbd.is_inspection AS isInspection,
         sbd.is_weigh AS isWeigh,
+        sbd.weight AS weight,
+        sbd.weight_unit AS weightUnit,
         sbdd.sku_id,
         sbdd.sku_no AS skuNo,
         sbdd.delivery_qty AS deliveryQty,
@@ -36,93 +26,13 @@
         sbdd.warehouse_name AS warehouseName,
         sbdd.warehouse_location AS warehouseLocation,
         sbd.create_time AS createTime,
-        sbd.delivery_time AS deliveryTime
+        sbd.delivery_time AS deliveryTime,
+        sbd.finish_print_time as finishPrintTime
         FROM so_b2c_delivery sbd
         LEFT JOIN so_b2c_delivery_detail sbdd ON sbd.id = sbdd.main_id AND sbd.is_deleted = FALSE
-        WHERE sbdd.is_deleted = FALSE
-        <!--tab状态-->
-        <if test="params.tabFlag != null and params.tabFlag != ''">
-            AND sbd.status = #{params.tabFlag}
-        </if>
-        <!--单号-->
-        <if test="params.code !=null and params.code!=''">
-            AND sbd.code ILIKE concat('%',#{params.code}::text,'%')
-        </if>
-        <!--平台-->
-        <if test="params.dictPlatformList!=null and params.dictPlatformList.size>0 ">
-            AND sbd.dict_platform IN
-            <foreach collection="params.dictPlatformList" item="dictPlatform" open="(" separator="," close=")">
-                #{dictPlatform}
-            </foreach>
-        </if>
-        <!--店铺-->
-        <if test="params.shopIdList!=null and params.shopIdList.size>0 ">
-            AND sbd.shop_id IN
-            <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
-                #{shopId}
-            </foreach>
-        </if>
-        <!--销售单号-->
-        <if test="params.soCode != null and params.soCode != ''">
-            AND sbd.so_code ILIKE concat('%',#{params.soCode}::text,'%')
-        </if>
-        <!--状态-->
-        <if test="params.statusList != null and params.statusList.size > 0">
-            and sbd.status in
-            <foreach collection="params.statusList" item="status" open="(" separator="," close=")">
-                #{status}
-            </foreach>
-        </if>
-        <!--拣货类型-->
-        <if test="params.pickingTypeList != null and params.pickingTypeList.size > 0">
-            and sbd.picking_type in
-            <foreach collection="params.pickingTypeList" item="pickingType" open="(" separator="," close=")">
-                #{pickingType}
-            </foreach>
-        </if>
-        <!--物流渠道-->
-        <if test="params.logisticsChannelIdList != null and params.logisticsChannelIdList.size > 0">
-            and sbd.logistics_channel_id in
-            <foreach collection="params.logisticsChannelIdList" item="logisticsChannelId" open="(" separator="," close=")">
-                #{logisticsChannelId}
-            </foreach>
-        </if>
-        <!--货件是否打印-->
-        <if test="params.isPrintPicking != null">
-            AND sbd.is_print_picking = #{params.isPrintPicking}
-        </if>
-        <!--是否验货-->
-        <if test="params.isInspection != null">
-            AND sbd.is_inspection = #{params.isInspection}
-        </if>
-        <!--是否称重-->
-        <if test="params.isWeigh != null">
-            AND sbd.is_weigh = #{params.isWeigh}
-        </if>
-        <!--sku编号-->
-        <if test="params.skuNoList != null and params.skuNoList.size > 0">
-            AND sbdd.sku_no in
-            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
-                #{skuNo}
-            </foreach>
-        </if>
-        <!--发货仓库id-->
-        <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
-            AND sbdd.warehouse_id in
-            <foreach collection="params.warehouseIdList" item="warehouseId" open="(" separator="," close=")">
-                #{warehouseId}
-            </foreach>
-        </if>
-        <!--创建时间-->
-        <if test="params.createTimeList != null and params.createTimeList.size > 0">
-            AND sbd.create_time &gt;= #{params.createTimeList[0]}
-            AND sbd.create_time &lt; (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' )
-        </if>
-        <!--创建时间-->
-        <if test="params.deliveryTimeList != null and params.deliveryTimeList.size > 0">
-            AND sbd.delivery_time &gt;= #{params.deliveryTimeList[0]}
-            AND sbd.delivery_time &lt; (#{params.deliveryTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' )
-        </if>
+        WHERE ${params.sqlMap.default}
+        AND sbdd.is_deleted = FALSE
+
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -135,5 +45,29 @@
             </foreach>
         </if>
         sbd.create_time desc
+    </sql>
+    <!--获取状态统计-->
+    <select id="tabList" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$TabListDTO">
+        SELECT
+        sbd.status AS tabFlag,
+        count(*) AS count
+        FROM so_b2c_delivery sbd
+        WHERE
+        is_deleted=FALSE
+
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY sbd.status
+    </select>
+
+    <!--分页查询-->
+    <select id="paging" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$ListDTO">
+        <include refid="pageSql"/>
+    </select>
+    <!--列表查询-->
+    <select id="list" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$ListDTO">
+        <include refid="pageSql"/>
     </select>
 </mapper>

@@ -49,6 +49,11 @@ public class PackingInspectionDTO implements Serializable {
         private String businessCode;
 
         /**
+         * 扫描数量
+         */
+        private Integer scanQty;
+
+        /**
          * sku编号
          */
         private String skuNo;

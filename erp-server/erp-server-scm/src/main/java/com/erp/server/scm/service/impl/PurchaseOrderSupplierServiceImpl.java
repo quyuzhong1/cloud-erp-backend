@@ -57,7 +57,7 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
         List<PurchaseOrderSupplierEntity> list = lambdaQuery().in(PurchaseOrderSupplierEntity::getPurchaseOrderId, purchaseOrderIds).list();
         list.forEach(req -> req.setIsDeleted(Boolean.TRUE));
         //同步到WMS
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_SUPPLIER_TAG.getName(), list, IdUtil.simpleUUID());
+//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_SUPPLIER_TAG.getName(), list, IdUtil.simpleUUID());
         lambdaUpdate().in(PurchaseOrderSupplierEntity::getPurchaseOrderId, purchaseOrderIds).remove();
     }
 
@@ -82,7 +82,7 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
         doOpHandleDataId(dto.getSupplierId(), entity);
         this.save(entity);
         //同步到WMS
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_SUPPLIER_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_SUPPLIER_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
     }
 
     @Override
@@ -104,7 +104,7 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
         moduleOperateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.PURCHASE_ORDER.getCode(), purchaseOrderId, "", "");
         this.saveOrUpdate(entity);
         //同步到WMS
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_SUPPLIER_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_SUPPLIER_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
     }
 
 

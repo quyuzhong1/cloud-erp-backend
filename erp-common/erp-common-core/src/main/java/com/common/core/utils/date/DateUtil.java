@@ -5,10 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.time.format.DateTimeParseException;
@@ -486,6 +483,16 @@ public class DateUtil {
     }
 
     /**
+     * 获取当前年月日
+     */
+    public static String currentYMD() {
+        // 获取当前日期
+        LocalDate currentDate = LocalDate.now();
+        // 格式化当前日期为字符串，格式为"yyyyMMdd"
+
+        return currentDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+    }
+    /**
      * 获取某年的全部日子
      * @param year
      * @return
@@ -515,5 +522,33 @@ public class DateUtil {
 
     public static String nowExcelFileFormat(){
         return DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+    }
+
+    public static LocalDateTime getStartOfMonth(int monthsToAdd) {
+        LocalDateTime startOfMonth;
+
+        if (monthsToAdd == 0) {
+            startOfMonth = YearMonth.now().atDay(1).atStartOfDay();
+        } else if (monthsToAdd < 0) {
+            startOfMonth = YearMonth.now().minusMonths(Math.abs(monthsToAdd)).atDay(1).atStartOfDay();
+        } else {
+            startOfMonth = YearMonth.now().plusMonths(monthsToAdd).atDay(1).atStartOfDay();
+        }
+
+        return startOfMonth;
+    }
+
+    public static LocalDateTime getEndOfMonth(int monthsToAdd) {
+        LocalDateTime endOfMonth;
+
+        if (monthsToAdd == 0) {
+            endOfMonth = YearMonth.now().atEndOfMonth().atTime(23, 59, 59);
+        } else if (monthsToAdd < 0) {
+            endOfMonth = YearMonth.now().minusMonths(Math.abs(monthsToAdd)).atEndOfMonth().atTime(23, 59, 59);
+        } else {
+            endOfMonth = YearMonth.now().plusMonths(monthsToAdd).atEndOfMonth().atTime(23, 59, 59);
+        }
+
+        return endOfMonth;
     }
 }

@@ -100,6 +100,10 @@ public class PlatformOrderDetailDTO {
      * 平台明细行号
      */
     private String platformLineNumber;
+    /**
+     *来源平台
+     */
+    private String sourcePlatform = "thirdPlatform";
 
 
 }

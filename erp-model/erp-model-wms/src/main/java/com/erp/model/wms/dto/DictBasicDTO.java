@@ -66,10 +66,13 @@ public class DictBasicDTO implements Serializable {
         private String code;
 
         private String name;
+        
+        private Boolean status;
 
         public DropDownDTO(DictBasicEntity entity) {
             this.code = entity.getValue();
             this.name = entity.getName();
+            this.status = entity.getStatus();
         }
     }
 }

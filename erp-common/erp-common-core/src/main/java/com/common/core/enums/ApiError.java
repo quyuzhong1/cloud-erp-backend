@@ -939,14 +939,14 @@ public enum ApiError implements Serializable {
     ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),
     DELIVERY_NOT_COMBINATION_NOT_MACHINE(92116,"组合SKU不包含销售套装BOM，无需下推加工单"),
     IS_DELIVERY_NOT_UPDATE_MAPPING(92116,"已下推发货单，不允许修改发货信息"),
-    PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，更新平台订单发货状态失败！"),
+    PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，更新平台订单发货状态失败！,错误信息【{}】"),
     NOT_ADD_SO_B2C_DELIVERY(92117,"订单【{}】已生成过发货单，不可以重复新增！"),
     ORDER_IS_INTERCEPT_NOT_UPDATE(92118,"订单【{}】已发起拦截已被冻结，禁止变更状态"),
     SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态虚假发货，已发货，取消发货的数据不允许操作虚假发货"),
     APPROVE_IS_FALSE_DELIVERY(92120,"只有审核通过且配货中的订单允许虚假发货"),
     LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交虚假发货"),
-    STATUS_NOT_PRINT_PICKING(92122,"单据【{}】取消发货单状态，不允许再打印拣货单"),
-    STATUS_NOT_PRINT_LABEL(92123,"单据【{}】已发货和取消发货单状态，不允许再打印标签"),
+    STATUS_NOT_PRINT_PICKING(92122,"单据【{}】已发货和取消发货单状态，不允许再打印拣货单"),
+    STATUS_NOT_PRINT_LABEL(92123,"单据【{}】取消发货单状态，不允许再打印标签"),
     TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单【{}】反审删除失败，无法撤销"),
     TRANSFER_INFO_CANCEL_PROCESS_ERROR(92123,"关联的直接调拨单【{}】撤销删除失败，无法撤销"),
     JOINT_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单反审删除失败，多个联合处理的要货单，无法撤销"),
@@ -967,7 +967,6 @@ public enum ApiError implements Serializable {
     ERROR_TRANSFER_DECLARE_DETAIL_NOT_EXIST(92136,"入库预报订单明细不能为空"),
     ERROR_UPLOAD_SUCCES_CAN_ORDER_FORCAST(92137,"仅支持订单预报为【待上传/上传失败】，可操作【订单预报】"),
     THIRD_WAREHOUSE_NAME_EXIST(92132,"平台【{}】第三方仓【{}】不能重复绑定多个仓库"),
-
     ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED(92133,"已有盘盈盘亏单【{}】不允许操作【{}】之前单据"),
 
     ERROR_SO_OUTSTOCK_BILL_COST_NOT_DIS_APPROVE(92138,"销售出库单【{}】 自发货费用单据已确认状态下,不允许反审核"),
@@ -982,8 +981,17 @@ public enum ApiError implements Serializable {
     PO_RETURN_NOT_EXISTS(92129,"未找到采购退货单"),
     CFG_SETTING_NOT_EXISTS(92129,"退货配置不存在，请先配置异常处理人"),
     RECEIVE_SHOULD_GENERATE_BY_DELIVERY(92130,"【{}】已开启系统收货协同，请从送货单下推收货单"),
+    B2C_SO_DELIVERY_FINISH_PRINT(92131,"发货单【{}】非待处理不支持完成打印"),
+    B2C_SO_DELIVERY_NOT_FINISH_PRINT(92132,"发货单【{}】非拣货中不支持取消完成拣货"),
+    PLEASE_KEEP_LEAST_ONE_DATA(92133,"请至少保留一条明细，或者整单删除！"),
 
-
+    NOT_PACKAGE_NO_APPROVE(92133,"单号{}尚未完成装箱信息，请完成后审核"),
+    TMS_FIRST_MILE_LOGISTIC_EXISTS(92134,"物流单【{}】已生成，不可反审核"),
+    B2B_ORDER_IS_PACK(92135,"只允许B2B订单装箱"),
+    TMS_DECLARE_BILL_EXISTS(92136,"报关单【{}】已生成，不可反审核"),
+    BILL_IS_GENERATE_DECLARE(92137,"单据【{}】报关状态已生成，不可修改为无需生成"),
+    BILL_IS_GENERATE_LOGISTICS(92137,"单据【{}】物流状态已生成，不可修改为无需生成"),
+    SO_OUTSTOCK_NOT_PACKING(92137,"出库单已装箱，无法更改装箱信息"),
 
 
 
@@ -1209,6 +1217,13 @@ public enum ApiError implements Serializable {
     ERROR_LOGISTICS_BILL_COST_RECONCILIATION_STATUS(94030,"已确认和已作废不支持自发货费用单状态变更"),
     ERROR_LOGISTICS_CHANNEL_EXIST(94031,"渠道【{}】已被使用，不支持重复选择"),
 
+    ERROR_CFG_SAILING_EXIST(94031,"已存在渠道【{}】的截单开船数据"),
+    ERROR_CFG_COST_EXIST(94032,"费用名称【{}】已存在"),
+    ERROR_WAREHOUSE_MAPPING_EXIST(94033,"仓库代码（物流商）【{}】已存在"),
+    ERROR_DECLARE_RECONCILIATION_NOT_EXIST(94034,"报关对账单不存在"),
+    ERROR_DECLARE_RECONCILIATION_DETAIL_NOT_EXIST(94035,"报关对账单明细不存在"),
+    ERROR_DECLARE_RECONCILIATION_ADD_DETAIL(94036,"报关对账单【{}】添加对账明细数据的供应商【{}】必须一致"),
+
 
     /**
      * SRM 错误
@@ -1244,8 +1259,8 @@ public enum ApiError implements Serializable {
     GENERATE_TIME_GT_DEADLINE_TIME(94034,"生成时间不可晚于截单时间"),
     ERROR_NOT_UPDATE_TRACK_STATUS(94035,"该运输状态为系统更新不可修改"),
     EXIST_TRANSFER_LOGISTICS_SUPPLIER_NOT_DELETE(94036,"被其他单据引用的中转物流商不允许删除"),
-    NOT_PRODUCT_REGISTRATION(94037," 【{}】 未在【{}】平台备案，请联系财务备案"),
-    NOT_UPDATE_CHANNEL_BY_NOT_REGISTRATION(94038," 【{}】 未在【{}】平台备案无法更换渠道【{}】，请联系财务备案"),
+    NOT_PRODUCT_REGISTRATION(94037," 【{}】 未在【{}】平台备案，请联系关务/物流"),
+    NOT_UPDATE_CHANNEL_BY_NOT_REGISTRATION(94038," 【{}】 未在【{}】平台备案无法更换渠道【{}】，请联系关务/物流"),
     ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_TRANSFER_LOGISTICS_CHANNEL_DISABLED_EXIST(94039,"存在未停用的中转物流渠道,无法停用该物流商"),
     ORDER_UPLOAD_SUCCESS_NOT_DELETE(94040,"订单【{}】上传成功不能删除"),

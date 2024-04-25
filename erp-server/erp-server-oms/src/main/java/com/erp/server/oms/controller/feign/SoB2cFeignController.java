@@ -14,6 +14,7 @@ import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -120,7 +121,16 @@ public class SoB2cFeignController extends BaseController {
         List<SoB2cEntity> list = soB2cService.listByIds(soIds);
         return list;
     }
-
+    /**
+     * 查询已拦截的订单
+     *
+     * @return
+     */
+    @PostMapping("/listWithIsIntercept")
+    public List<SoB2cEntity> listWithIsIntercept() {
+        List<SoB2cEntity> list = soB2cService.listWithIsIntercept();
+        return list;
+    }
     /**
      * 根据主表id查询B2C订单主表信息
      *
@@ -572,5 +582,22 @@ public class SoB2cFeignController extends BaseController {
     @PostMapping("/checkAndFillBySoOutStock")
     public Boolean checkAndFillBySoOutStock(@RequestBody PlatformSoOutStockDTO dto){
         return soB2cService.checkAndFillBySoOutStock(dto);
+    }
+        
+    @PostMapping("/getDataCompareByCondition")
+    public List<WmsDataCompareTaskDTO.SoB2cDTO> getDataCompareByCondition(@RequestBody WmsDataCompareTaskDTO.SoOutstockDTO soOutstockDTO) {
+        return soB2cService.getDataCompareByCondition(soOutstockDTO);
+    }
+
+    /**
+     * 清除订单物流信息的发货信息
+     * @Author Luo_WG
+     * @Date 2024/4/18 16:23
+     * @param soIdList
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/clearB2cLogisticsCode")
+    public Boolean clearB2cLogisticsCode(@RequestBody List<String> soIdList) {
+        return soB2cLogisticsService.clearB2cLogisticsCode(soIdList);
     }
 }

@@ -3,11 +3,13 @@ package com.erp.model.plm.entity;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * @Description 产品物流信息表
@@ -216,6 +218,43 @@ public class ProductLogisticsEntity extends BaseEntity implements Serializable {
      */
     @TableField(value = "battery_capacity_unit")
     private String batteryCapacityUnit;
+
+    /**
+     * 审核时间
+     */
+    @TableField("approve_time")
+    private LocalDateTime approveTime;
+    /**
+     * 审核人名称
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
+    /**
+     * 审核人id
+     */
+    @TableField("approve_user_id")
+    private String approveUserId;
+
+    /**
+     * 单据审核状态
+     */
+    @TableField("approve_status")
+    private ApproveStatusEnum approveStatus;
+
+    /**
+     * 第一数量
+     */
+    @TableField("first_qty")
+    private BigDecimal firstQty;
+
+    /**
+     * 第二数量
+     */
+    @TableField("second_qty")
+    private BigDecimal secondQty;
+
+    @TableField(exist = false)
+    private String skuNo;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

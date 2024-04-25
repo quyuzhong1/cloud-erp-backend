@@ -1,16 +1,28 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
-import com.common.business.enums.*;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.OrderTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.enums.*;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.SoB2cAbnormalTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -21,6 +33,12 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
+import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
+import com.erp.model.wms.dto.SoB2cDeliveryInterceptDetailDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryInterceptDetailEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
@@ -32,19 +50,15 @@ import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.rpc.wms.feign.ThirdWarehouseFeign;
 import com.erp.server.wms.mapper.SoB2cDeliveryInterceptMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -245,13 +259,17 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         if(cancelResult.isSuccess()){
             entity.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
             entity.setInterceptStatus("");
+
+            //取消成功，清空订单运单号，删除物流单
+            soB2cFeign.clearB2cLogisticsCode(Arrays.asList(entity.getSourceId()));
         }else{
             entity.setCancelStatus(CancelStatusEnum.FAILURE.getCode());
 
             ApiResult<InterceptResponseVO> interceptResult = logisticsBillFeign.interceptBill(dto);
             if(interceptResult.isSuccess()){
                 entity.setInterceptStatus(InterceptStatusEnum.SUCCESS.getCode());
-                
+                //取消成功，清空订单运单号，删除物流单
+                soB2cFeign.clearB2cLogisticsCode(Arrays.asList(entity.getSourceId()));
 //                entity.setHandleResult(HandleResultEnum.SUCCESS.getCode());
             }else{
                 String logisticsPlatform = auth.getLogisticsPlatform();
@@ -364,17 +382,14 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 soB2cDeliveryService.rollbackInventory(ids);
                 soB2cDeliveryService.updateStatus(ids, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
             }
-
-        } else {
-            //修改拦截状态，冻结状态
-            SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
-            interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
-            interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
-            interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
-            interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
-            soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
-
         }
+        //修改拦截状态，冻结状态
+        SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
+        interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
+        interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
+        interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
+        interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
+        soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
 
         // 操作日志
         String logMsg = StrUtil.format("用户【{}】物流拦截结果确认【{}】", commonService.getUserInfo().getUserName(), "发货拦截单", entity.getCode());

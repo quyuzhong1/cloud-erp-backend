@@ -10,12 +10,6 @@ import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-
 
 /**
  * <p>
@@ -59,6 +53,8 @@ public interface DmpPushTaskMapper extends BaseMapper<DmpPushTaskEntity> {
      * @return
      */
     DmpPushTaskEntity getEntityByCondition(@Param("params") DmpPushTaskEntity params);
+
+    void deleteByIds(List<String> ids);
 
     void updateStatus(@Param("noNeedSyncIds")List<String> noNeedSyncIds);
 }

@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.UnitEnum;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.PackageDTO;
@@ -52,10 +53,9 @@ public class PackageServiceImpl implements PackageService {
      * @return
      */
     @Override
-    public Boolean mergePackage(List<String> ids) {
+    public List<BatchResultDTO> mergePackage(List<String> ids) {
         List<PackageForecastDTO.AddDTO> addList = assembleDbBySoIds(ids);
-        packageForecastFeign.add(addList);
-        return Boolean.TRUE;
+        return packageForecastFeign.add(addList);
     }
 
     /**

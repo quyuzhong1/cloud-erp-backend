@@ -21,7 +21,7 @@ public interface TransferDeclareConverter {
             @Mapping(target = "skuNo", source = "skuNo"),
             @Mapping(target = "qty", source = "qty"),
             @Mapping(target = "productTitleEn", source = "declareEnglishName"),
-            @Mapping(target = "purposeDeclaredValue", source = "declarePrice"),
+            @Mapping(target = "purposeDeclaredValue", source = "toDeclarePrice"),
     })
     TransferLogisticsCreateOrderReq.ProductDetail declareProductEntityToCreateOrderReq(TransferDeclareProductEntity declareProductEntity);
     List<TransferLogisticsCreateOrderReq.ProductDetail> declareProductEntityToCreateOrderReq(List<TransferDeclareProductEntity> declareProductEntity);
@@ -30,6 +30,8 @@ public interface TransferDeclareConverter {
             @Mapping(target = "price", source = "destDeclarePrice"),
             @Mapping(target = "declarePrice", source = "declarePrice"),
             @Mapping(target = "quantity", source = "qty"),
+            @Mapping(target = "grossWeight", source = "grossWeight"),
+            @Mapping(target = "weight", source = "weight"),
             @Mapping(target = "declareCurrency", source = "currency"),
             @Mapping(target = "amount", ignore = true),
             @Mapping(target = "childOrderId", ignore = true),

@@ -44,7 +44,7 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      * @date: 2023/11/10 10:06
      * @return List<ListSelectDTO>
      */
-    List<LogisticsChannelDTO.ListSelectDTO> listLogisticsChannel(List<String> logisticsSupplierIds);
+    List<LogisticsChannelDTO.ListSelectDTO> listLogisticsChannel(LogisticsChannelDTO.ParamDTO dto);
 
     /**
      * 物流商id 获取渠道列表
@@ -208,5 +208,9 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
 
     LogisticsChannelDTO.LogisticsChannelConstraintDTO getLogisticsChannelConstraint(String channelId, String country);
 
+    List<LogisticsChannelEntity> listByName(List<String> channelNameList);
+
     List<BaseDropDownDTO.Tree> tree();
+
+    LogisticsChannelDTO.SignShipDTO getScaleChannelByChannelById(String logisticsChannelId, String dictPlatform);
 }

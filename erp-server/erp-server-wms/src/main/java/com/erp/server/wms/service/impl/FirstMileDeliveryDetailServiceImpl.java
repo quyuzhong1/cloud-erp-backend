@@ -3,37 +3,35 @@ package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.FirstMileCartonDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDetailDTO;
-import com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO;
+import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.FirstMileDeliveryDetailMapper;
-import com.erp.server.wms.service.FirstMileCartonDetailService;
-import com.erp.server.wms.service.FirstMileCartonService;
 import com.erp.server.wms.service.FirstMileDeliveryDetailService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.math3.util.Pair;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.erp.server.wms.service.WmsCartonDetailService;
+import com.erp.server.wms.service.WmsCartonService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 /**
  * <p>
  * 头程发货单明细表 服务实现类
@@ -52,9 +50,9 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
     @Autowired
     private OmsListingInfoFeign omsListingInfoFeign;
     @Autowired
-    private FirstMileCartonService firstMileCartonService;
+    private WmsCartonService wmsCartonService;
     @Autowired
-    private FirstMileCartonDetailService firstMileCartonDetailService;
+    private WmsCartonDetailService wmsCartonDetailService;
     @Autowired
     private SkuMappingFeign skuMappingFeign;
 
@@ -131,11 +129,11 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         //查询已装箱数
-        List<FirstMileCartonDTO.PackingQtyDTO> packingQtyDTOS = firstMileCartonService.listPackingQtyByMainId(mainId, null);
+        List<WmsCartonDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonService.listPackingQtyByMainId(mainId, null);
         for (FirstMileDeliveryDTO.GroupSkuDTO groupSkuDTO : list) {
             //待装箱数量=发货数量-已装箱数量
             int usePackQty = packingQtyDTOS.stream()
-                    .filter(req -> req.getMainId().equals(groupSkuDTO.getId())
+                    .filter(req -> req.getSourceId().equals(groupSkuDTO.getId())
                             && req.getSkuId().equals(groupSkuDTO.getSkuId()))
                     .mapToInt(req -> req.getUsePackQty()).sum();
             groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - usePackQty);
@@ -148,20 +146,20 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
 
     @Override
     public List<FirstMileDeliveryDTO.GroupSkuDTO> listCartonGroupSkuByMainId(String mainId , Integer boxSpecNo) {
-        List<FirstMileDeliveryDTO.GroupSkuDTO> list = baseMapper.listCartonGroupSkuByMainId(mainId, boxSpecNo);
+        List<FirstMileDeliveryDTO.GroupSkuDTO> list = baseMapper.listCartonGroupSkuBySourceId(mainId, boxSpecNo);
 
         //查询产品信息
         List<String> skuIdList = list.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         //查询已装箱数
-        List<FirstMileCartonDTO.PackingQtyDTO> packingQtyDTOS = firstMileCartonService.listPackingQtyByMainId(mainId, boxSpecNo);
+        List<WmsCartonDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonService.listPackingQtyByMainId(mainId, boxSpecNo);
         for (FirstMileDeliveryDTO.GroupSkuDTO groupSkuDTO : list) {
             //待装箱数量=发货数量-已装箱数量
-            FirstMileCartonDTO.PackingQtyDTO packingQtyDTO = packingQtyDTOS.stream()
-                    .filter(req -> req.getMainId().equals(groupSkuDTO.getId())
+            WmsCartonDTO.PackingQtyDTO packingQtyDTO = packingQtyDTOS.stream()
+                    .filter(req -> req.getSourceId().equals(groupSkuDTO.getId())
                             && req.getSkuId().equals(groupSkuDTO.getSkuId()))
-                    .findFirst().orElse(new FirstMileCartonDTO.PackingQtyDTO());
+                    .findFirst().orElse(new WmsCartonDTO.PackingQtyDTO());
             groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - packingQtyDTO.getUsePackQty());
             groupSkuDTO.setPackQty(packingQtyDTO.getPackQty());
             groupSkuDTO.setCartonId(packingQtyDTO.getCartonId());
@@ -169,12 +167,6 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(groupSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
             groupSkuDTO.setProductName(skuVO.getSkuName());
         }
-        return list;
-    }
-
-    @Override
-    public List<FirstMileDeliveryDTO.PackDateDTO> listPackDate(String mainId) {
-        List<FirstMileDeliveryDTO.PackDateDTO> list = baseMapper.listPackDate(mainId);
         return list;
     }
 

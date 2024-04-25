@@ -67,4 +67,12 @@ public class SysPostFeignContriller extends BaseController {
         return sysPostUserService.listPostUserByPostIdList(postIdList);
     }
 
+
+    /**
+     * 通过岗位id查询岗位下全部人员
+     **/
+    @PostMapping("/getUserIdByPostIds")
+    public List<SysPostUserEntity> getUserIdByPostIds(@RequestBody List<String> ids) {
+        return sysPostUserService.getUserIdByPostIds(ids);
+    }
 }

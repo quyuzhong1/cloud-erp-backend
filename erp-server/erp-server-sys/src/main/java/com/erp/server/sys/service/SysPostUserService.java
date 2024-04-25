@@ -38,4 +38,6 @@ public interface SysPostUserService  extends IService<SysPostUserEntity> {
      * @return List<SysPostUserEntity>
      */
     List<SysPostUserEntity> listPostUserByPostIdList(List<String> postIdList);
+
+    List<SysPostUserEntity> getUserIdByPostIds(List<String> ids);
 }

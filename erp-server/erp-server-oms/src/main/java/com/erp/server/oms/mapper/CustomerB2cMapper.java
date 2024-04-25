@@ -43,4 +43,12 @@ public interface CustomerB2cMapper extends BaseMapper<CustomerB2cEntity> {
     List<CustomerB2CDTO.PagingViewDTO> listExport(@Param("params") CustomerB2CDTO.ExportDTO dto,@Param("approveList") List<String> approveList);
 
     List<CustomerB2CDTO.ApproveCountDTO> listApproveCount(@Param("permissionSql") String permissionSql);
+
+    /**
+     * 根据名称模糊搜索
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<CustomerB2CDTO.DropListDTO> customerDropDown(Page<CustomerB2CDTO.DropListDTO> query, @Param("params") CustomerB2CDTO.DropSearchDTO params);
 }

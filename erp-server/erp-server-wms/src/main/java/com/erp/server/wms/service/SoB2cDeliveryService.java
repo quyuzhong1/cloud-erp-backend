@@ -1,9 +1,12 @@
 package com.erp.server.wms.service;
-import com.common.business.vo.PagingVO;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -94,10 +97,10 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * 取消打印拣货单
      * @Author Luo_WG
      * @Date 2023/12/19 16:20
-     * @param ids
+     * @param id
      * @return java.lang.Boolean
      **/
-    Boolean printPickingCancel(List<String> ids);
+    BatchResultDTO  printPickingCancel(String id);
 
     /**
      * 打印物流面单
@@ -174,4 +177,31 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @create 2024-01-26 10:17
      */
     void generateB2cSoOutstock(SoB2cDeliveryEntity entity);
+
+    Boolean updateB2cDeliveryWeightBySoId(SoB2cDeliveryDTO.UpdateWeightDTO dto);
+    /**
+     * @description: 完成打印
+     * @author Will
+     * @date: 2024/4/17 10:48
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO finishPrint(String id);
+
+    /**
+     * 导出列表
+     * @param dto
+     * @param response
+     * @return
+     */
+    Boolean exportExcel(SoB2cDeliveryDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    /**
+     * 虚假发货(批量)
+     * @Author Luo_WG
+     * @Date 2024/4/22 18:06
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean falseDeliveryBatch(List<String> ids);
 }

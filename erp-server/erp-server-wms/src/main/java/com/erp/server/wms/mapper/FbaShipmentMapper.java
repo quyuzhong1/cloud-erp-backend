@@ -3,6 +3,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -58,4 +59,13 @@ public interface FbaShipmentMapper extends BaseMapper<FbaShipmentEntity> {
     List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(@Param("ids") List<String> ids);
 
     List<FbaShipmentDTO.ListDTO> export(@Param("params") FbaShipmentDTO.PagingParamDTO dto);
+    
+    /**
+     * 根据条件获取数据对比系统数据
+     * @param params
+     * @return
+     */
+    List<WmsDataCompareTaskDTO.FbaShipmentDTO> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.FbaShipmentDTO params , @Param("pageSize") Integer pageSize);
+    
+    Integer getDataCompareByConditionCount(@Param("params") WmsDataCompareTaskDTO.FbaShipmentDTO params);
 }

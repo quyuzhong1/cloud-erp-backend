@@ -61,15 +61,25 @@ public class TransferDeclareProductEntity extends BaseEntity<TransferDeclareProd
     @TableField("declare_english_name")
     private String declareEnglishName;
     /**
-    * 申报价
+    * 出口报关申报价
     */
-    @TableField("declare_price")
-    private BigDecimal declarePrice;
+    @TableField("from_declare_price")
+    private BigDecimal fromDeclarePrice;
     /**
-    * 申报币种
+    * 出口报关申报币种
     */
-    @TableField("currency")
-    private String currency;
+    @TableField("from_currency")
+    private String fromCurrency;
+    /**
+     * 目的国申报价
+     */
+    @TableField("to_declare_price")
+    private BigDecimal toDeclarePrice;
+    /**
+     * 目的国申报币种
+     */
+    @TableField("to_currency")
+    private String toCurrency;
 
 
     public static final String SO_DETAIL_ID = "so_detail_id";

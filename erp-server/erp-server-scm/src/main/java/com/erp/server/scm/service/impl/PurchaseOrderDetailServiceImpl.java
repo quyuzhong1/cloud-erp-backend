@@ -132,7 +132,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             List<String> skuIds = list.stream().map(PurchaseOrderDetailEntity::getSkuId).distinct().collect(Collectors.toList());
             plmTaskFeign.updateOccupyStatus(skuIds);
             //同步到WMS
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), list, IdUtil.simpleUUID());
+//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), list, IdUtil.simpleUUID());
             //新增关联关系
             List<PurchaseApplicationRefPoEntity> refList = new ArrayList<>();
 
@@ -192,7 +192,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             List<PurchaseOrderDetailEntity> list = lambdaQuery().in(PurchaseOrderDetailEntity::getPurchaseOrderId, deleteIds).list();
             list.forEach(req -> req.setIsDeleted(Boolean.TRUE));
             //同步到WMS
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), list, IdUtil.simpleUUID());
+//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), list, IdUtil.simpleUUID());
             this.removeByIds(deleteIds);
         }
         List<PurchaseOrderDetailEntity> newList = BeanMapperUtils.copyList(PurchaseOrderDetailEntity.class, details);
@@ -233,7 +233,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         List<PurchaseOrderDetailEntity> list = lambdaQuery().in(PurchaseOrderDetailEntity::getPurchaseOrderId, purchaseOrderIds).list();
         list.forEach(req -> req.setIsDeleted(Boolean.TRUE));
         //同步到WMS
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), list, IdUtil.simpleUUID());
+//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), list, IdUtil.simpleUUID());
 
         lambdaUpdate().in(PurchaseOrderDetailEntity::getPurchaseOrderId,purchaseOrderIds).remove();
     }
@@ -545,7 +545,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         });
         list.forEach(req -> req.setIsDeleted(Boolean.TRUE));
         //同步到WMS
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), list, IdUtil.simpleUUID());
+//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), list, IdUtil.simpleUUID());
     }
 
     @Override

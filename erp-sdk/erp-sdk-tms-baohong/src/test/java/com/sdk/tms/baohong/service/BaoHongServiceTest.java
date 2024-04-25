@@ -12,6 +12,8 @@ import com.sdk.tms.baohong.api.order.ProductDeatil;
 import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.api.product.DataRow;
 import com.sdk.tms.baohong.api.product.ProductRow;
+import com.sdk.tms.baohong.api.product.RecordItemRequest;
+import com.sdk.tms.baohong.api.product.RecordItemResponse;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,7 +62,38 @@ public class BaoHongServiceTest {
 
     @Test
     public void getProductInfo(){
-        BaoHongResponse<ProductRow> response = baoHongService.getProductInfo("20221121013-1");
+        BaoHongResponse<ProductRow> response = baoHongService.getProductInfo("2460");
+        System.out.println(response);
+        System.out.println(response.getData());
+        long now = System.currentTimeMillis();
+        for(int i = 0;i<=800;i++){
+            BaoHongResponse<ProductRow> response2 = baoHongService.getProductInfo("2460");
+            System.out.println(response2);
+        }
+        long end = System.currentTimeMillis();
+        System.out.println(end - now);
+    }
+
+    @Test
+    public void filingProduct(){
+        RecordItemRequest recordItemRequest = RecordItemRequest.builder()
+                .sku("2461")
+                .name("三脚架")
+                .englishName("Tripod")
+                .unit("007")
+                .currencyCode("RMB")
+                .declaredValue(14.4400f)
+                .weight(342)
+                .length(9.5f)
+                .width(5.5f)
+                .height(18f)
+                .hasBattery(0)
+                .hsName("三脚架")
+                .hsCode("9620009000")
+                .hsElement("1|0|品牌:Ulanzi|相机拍摄用|型号:MT-40|cas|w")
+                .firstQauntity(342)
+                .build();
+        BaoHongResponse<RecordItemResponse> response = baoHongService.filingProduct(recordItemRequest);
         System.out.println(response);
         System.out.println(response.getData());
     }

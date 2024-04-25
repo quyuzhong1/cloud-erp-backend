@@ -8,15 +8,20 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
@@ -699,7 +704,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @author Lambda
      * @create 2024-01-26 15:26
      */
-    PackageDTO.ScanResultDTO packageScan(String code);
+    PackageDTO.ScanResultDTO packageScan(PackageDTO.ScanDTO code);
     /**
      * 组包分页
      * @description
@@ -829,4 +834,28 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @author Jim
      */
     BatchResultDTO skuMappingBatch(String soId);
+
+
+    /**
+     * 计算明细重量
+     */
+    List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> detailList, List<SkuInfoSimpleVO> skuList);
+
+    /**
+     * 根据条件获取数据对比系统数据
+     * @param params
+     * @return
+     */
+    List<WmsDataCompareTaskDTO.SoB2cDTO> getDataCompareByCondition(WmsDataCompareTaskDTO.SoOutstockDTO params);
+
+    List<SoB2cEntity> listWithIsIntercept();
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2024/4/16 15:07
+     * @param dto
+     * @param response
+     * @return Boolean
+     */
+    Boolean exportExcel(SoB2cDTO.PagingParamDTO dto, HttpServletResponse response);
 }
