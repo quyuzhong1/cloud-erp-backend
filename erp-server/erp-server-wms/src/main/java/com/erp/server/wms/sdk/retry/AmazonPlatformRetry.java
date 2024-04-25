@@ -58,7 +58,7 @@ public class AmazonPlatformRetry implements IPlatformRetryService {
     @Override
     public Boolean retrySoOutStock(SoB2cEntity currentEntity, List list) {
         if(!currentEntity.hasPlatformWarehouseOrder()){
-            return soOutstockService.defaultHandleRetry(currentEntity.getId(), list);
+            return soOutstockService.defaultHandleRetry(currentEntity, list);
         }else{
             return dmpMongoDbFeign.checkAndSendSoOutStock(new DmpPullSoOutStockDTO(currentEntity.getShopId(), currentEntity.getPlatformCode()));
         }
