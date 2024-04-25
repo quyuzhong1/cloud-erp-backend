@@ -509,6 +509,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 .filter(req -> TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(req.getOrderUploadStatus()))
                 .collect(Collectors.toList());
 
+        //新增校验推送订单是否全部出库，未成功提示：{销售订单号}未完成出库无法执行入库预报
+
         List<TransferLogisticsCreateInboundReq.ReceiveItem> receiveItemList = new ArrayList<>(transferDeclareDetailList.size());
         //查询报关单包含的订单信息
         List<String> soIdList = transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).distinct().collect(Collectors.toList());
