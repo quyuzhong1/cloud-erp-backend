@@ -99,11 +99,6 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         }
 
         if (CollectionUtils.isNotEmpty(deleteIds)) {
-            List<TransferDeclareDetailEntity> detailEntities = this.listByIds(deleteIds);
-            long count = detailEntities.stream().filter(req -> TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(req.getOrderUploadStatus())).count();
-            if (count > 0) {
-                throw new ServiceException(ApiError.UPLOAD_SUCCESS_NOT_DELETE);
-            }
 
             List<TransferDeclareDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
@@ -113,14 +108,12 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
             //删除明细对应的sku拆分记录
             transferDeclareProductService.removeByDeclareDetailIds(deleteIds);
 
-            //修改订单中转状态为待中转
-            List<String> soIds = detailEntities.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-            soB2cFeign.updateTransferStatusBatch(soIds, TransferStatusEnum.WAIT.getCode());
-
             //处理订单异常信息
+            List<TransferDeclareDetailEntity> detailEntities = this.listByIds(deleteIds);
+            List<String> soIds = detailEntities.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
             SoB2cErrorDTO.BatchDeleteDTO deleteDTO = new SoB2cErrorDTO.BatchDeleteDTO();
             deleteDTO.setMainIds(soIds);
-            deleteDTO.setType(SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
+            deleteDTO.setType(SoB2cErrorTypeEnum.INSTOCK_FORECAST.getCode());
             soB2cFeign.deleteErrorByMainIds(deleteDTO);
         }
 

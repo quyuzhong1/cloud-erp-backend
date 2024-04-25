@@ -1,10 +1,13 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.PackageForecastEntity;
+import com.erp.server.wms.query.PackageForecastQueryHandler;
+import com.erp.server.wms.query.SoOutstockQueryHandler;
 import com.erp.server.wms.service.PackageForecastDetailService;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +61,7 @@ public class PackageForecastController extends BaseController {
      * @return
      */
     @GetMapping("/tabList")
-    public ApiResult<List<PackageForecastDTO.TabListDTO>> tabList() {
+    public ApiResult<List<PackageForecastDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<PackageForecastDTO.TabListDTO> tabList = packageForecastService.tabList();
         return success(tabList);
     }
@@ -75,6 +78,7 @@ public class PackageForecastController extends BaseController {
             menuCode = "wms:packageForecast:paging",
             tableAlias = "pf"
     )
+    @WebAdvanceQuery(handler = PackageForecastQueryHandler.class)
     public ApiResult<PagingVO<PackageForecastDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PackageForecastDTO.PagingParamDTO> dto) {
         PagingVO<PackageForecastDTO.PagingViewDTO> pagingVO = packageForecastService.paging(dto);
         return success(pagingVO);
