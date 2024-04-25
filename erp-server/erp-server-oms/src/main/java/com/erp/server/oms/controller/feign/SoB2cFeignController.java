@@ -4,6 +4,7 @@ package com.erp.server.oms.controller.feign;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.core.controller.BaseController;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -600,5 +601,17 @@ public class SoB2cFeignController extends BaseController {
     @PostMapping("/clearB2cLogisticsCode")
     public Boolean clearB2cLogisticsCode(@RequestBody List<String> soIdList) {
         return soB2cLogisticsService.clearB2cLogisticsCode(soIdList);
+    }
+
+    /**
+     * 订单拦截
+     * @author Will
+     * @date: 2024/4/24 19:05
+     * @param dto
+     * @return BatchResultDTO
+     */
+    @PostMapping("/deliveryIntercept")
+    public BatchResultDTO deliveryIntercept(@RequestBody @Validated SoB2cDTO.RemarkDTO dto) {
+        return soB2cService.deliveryIntercept(dto.getId(),dto.getRemark());
     }
 }

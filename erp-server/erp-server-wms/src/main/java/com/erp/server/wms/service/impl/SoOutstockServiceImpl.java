@@ -58,6 +58,7 @@ import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
+import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SoOutstockPackingExcelDTO;
@@ -666,6 +667,18 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             statusDTO.setStatus(TransferOutstockStatusEnum.OUTSTOCK.getCode());
             //修改中转报关单订单出库状态
             transferDeclareFeign.updateOutstockStatus(statusDTO);
+
+            //走TMS自动生成报关单逻辑
+            if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode())) {
+                //走TMS自动生成逻辑
+                AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+                        .id(entity.getId())
+                        .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
+                        .sourceTypeEnum(SourceTypeEnum.SO_OUTSTOCK)
+                        .soOutstockEntity(entity)
+                        .build();
+                tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
+            }
         }
         return Boolean.TRUE;
     }

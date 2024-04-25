@@ -705,14 +705,6 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         List<TransferDeclareDetailDTO.AddDTO> addDetailList = PackageForecastConverter.INSTANCE.convertDeclareDetail(detailList);
         addDTO.setDetailList(addDetailList);
         BaseResultDTO.AddDTO result = transferDeclareFeign.add(addDTO);
-        String transferStatus = TransferStatusEnum.ALREADY.getCode();
-        if (StringUtils.isNotBlank(result.getId())) {
-            UpdateStateDTO.UpdateByStrStatusDTO dto = new UpdateStateDTO.UpdateByStrStatusDTO();
-            dto.setStatus(transferStatus);
-            dto.setIds(soIdList);
-            soB2cFeign.updateTransferStatus(dto);
-        }
-        entity.setTransferStatus(transferStatus);
         this.updateById(entity);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "中转报关");
 

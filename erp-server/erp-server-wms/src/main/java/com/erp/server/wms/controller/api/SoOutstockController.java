@@ -8,6 +8,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -21,6 +22,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
@@ -30,6 +32,7 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.PackingStatusEnum;
+import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
@@ -496,24 +499,16 @@ public class SoOutstockController extends BaseController {
 
         if (PackingStatusEnum.PACKING.getCode().equals(packingStatus)) {
             SoOutstockEntity entity = soOutstockService.getById(dto.getId());
-            CfgSettingEntity cfgSetting = cfgSettingFeign.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
-            if (ObjectUtil.isEmpty(cfgSetting)) {
-                return StringUtils.isNotBlank(packingStatus) ? success() : failure();
-            }
-            CfgSettingValueDTO.BillAutoAddDTO billAutoAddDTO = JSONUtil.toBean(cfgSetting.getDataJson(),CfgSettingValueDTO.BillAutoAddDTO.class);
-            if (!"CN".equalsIgnoreCase(entity.getCountry()) && billAutoAddDTO.getIsAutoB2BDeclare()) {
-                //如果装箱完成自动生成报关单
-                TmsDeclareBillDTO.AddDTO addDTO = new TmsDeclareBillDTO.AddDTO();
-                addDTO.setSourceId(entity.getId());
-                addDTO.setDeclareType(DeclareDeclareTypeEnum.INDEPENDENT.getCode());
-                addDTO.setReceiverName("香港唯迹");
-                addDTO.setDictSupervisionMethod(DeclareSupervisionMethodEnum.COMMONLY.getCode());
-                addDTO.setDictNatureLevy(DeclareNatureLevyEnum.COMMONLY.getCode());
-                addDTO.setToArea(entity.getCountry());
-                addDTO.setToPort(entity.getCountry());
-                addDTO.setDictPackType(DeclarePackTypeEnum.CARTON.getCode());
-                addDTO.setDictTransactionMethod(DeclareTransactionMethodEnum.EXW.getCode());
-                tmsDeclareBillFeign.addB2BDeclare(addDTO);
+
+            if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode())) {
+                //走TMS自动生成逻辑
+                AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+                        .id(entity.getId())
+                        .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
+                        .sourceTypeEnum(SourceTypeEnum.SO_OUTSTOCK)
+                        .soOutstockEntity(entity)
+                        .build();
+                tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
             }
         } else {
             List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Arrays.asList(dto.getId()));

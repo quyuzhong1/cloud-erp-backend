@@ -204,4 +204,6 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
      * @return
      */
     List<BatchResultDTO> retryOrderForecast(String id);
+
+    TransferDeclareDTO.ShippingOrderDTO b2cOrderForecast(TransferDeclareDTO.B2cOrderForecastDTO b2cOrderForecastDTO);
 }

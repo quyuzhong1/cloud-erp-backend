@@ -950,7 +950,7 @@ public enum ApiError implements Serializable {
     TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单【{}】反审删除失败，无法撤销"),
     TRANSFER_INFO_CANCEL_PROCESS_ERROR(92123,"关联的直接调拨单【{}】撤销删除失败，无法撤销"),
     JOINT_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单反审删除失败，多个联合处理的要货单，无法撤销"),
-    ALREADY_PACKAGE_TRANSFER_NOT_INTERCEPT(92124,"拦截单号【{}】已组包/中转，请取消组包/中转后操作"),
+    ALREADY_PACKAGE_TRANSFER_NOT_INTERCEPT(92124,"拦截单号【{}】已组包/已预报成功，请取消组包/预报后操作"),
     STATUS_IS_HANDLE_NOT_OPERATE(92124,"已处理不可重复操作"),
     HANDLE_STATUS_IS_HANDLE_OR_CANCEL_NOT(92124,"【处理状态】已处理、已取消的单据，不支持再次发起物流拦截"),
     B2C_SO_OUTSTOCK_NOT_DIS_APPROVE(92125,"销售出库单【{}】 订单类型为B2C 无法反审核"),
@@ -1168,7 +1168,7 @@ public enum ApiError implements Serializable {
     B2C_APPROVE_DELIVERY(92125,"只有审核通过才能提交发货"),
     STATUS_END_NOT_INTERCEPT(92126,"订单拦截正在处理或已处理完成，无法取消拦截"),
     ERROR_WAIT_SHIPPED_TRANSFER(92125,"销售单【{}】 不属于待发货的订单 不能进行中转报关"),
-    ERROR_WAIT_TRANSFER(92126,"销售单【{}】 不属于待中转的订单,不能进行中转报关"),
+    ERROR_WAIT_TRANSFER(92126,"销售单【{}】 不属于预报成功的订单,不能进行入库预报"),
     ALREADY_PACKAGE_NOT_CAN_TRANSFER(92127,"尚未完成组包，请操作组包后中转报关"),
     ERROR_SO_B2C_LOGISTICS_COMPARE_LENGTH(92128,"产品尺寸为{}，超出渠道配置尺寸{}"),
     ERROR_LOGISTICS_ID_NOT_EXIST(92129,"物流单的渠道不能为空"),
@@ -1185,6 +1185,8 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_TIKTOK_NOT_SPLIT(92119,"B2C销售订单【{}】在TikTok平台不允许拆分，平台提示【{}】"),
     ERROR_SO_B2C_TIKTOK_SPLIT_SKU(92080,"订单【{}】SKU【{}】在TikTok平台中不允许把一个sku拆分成多个单据分开发货"),
     ERROR_TIKTOK_SPLIT(92081,"订单【{}】TikTok拆分订单失败"),
+    SO_B2C_IS_MATCH_WAREHOUSE_RULE(92136,"仓库匹配规则更新失败"),
+
 
     /**
      * TMS 错误

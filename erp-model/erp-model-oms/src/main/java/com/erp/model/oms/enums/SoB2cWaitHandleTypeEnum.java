@@ -5,21 +5,20 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * @author Lambda
+ * b2c销售订单待处理类型枚举
+ * @author Will
  * @version 1.0
- * @description: B2C销售订单作废类型枚举
- * @date 2023/12/20 10:27
+ * @date 2024/4/23 19:00
  */
-public enum SoB2cErrorTypeEnum {
+public enum SoB2cWaitHandleTypeEnum {
 
-    SUBMIT_DELIVERY("submitDelivery",  "提交发货异常"),
-    SIGN_DELIVERY("signDelivery",  "标记发货异常"),
-    GET_LOGISTICS_CODE("getLogisticsCode",  "获取物流单异常"),
-    GENERATE_OUTSTOCK("generateOutstock",  "生成销售出库单"),
-    INTERCEPT_SUCCESS("interceptSuccess",  "物流拦截成功"),
-    ORDER_FORECAST("orderForecast",  "订单预报失败"),
-    INSTOCK_FORECAST("instockForecast",  "入库预报失败"),
-    CANCEL_ORDER_FORECAST("cancelOrderForecast",  "取消订单预报失败"),
+
+    APPROVE_REJECT("approveReject",  "审核不通过（自动）"),
+    MANUAL_REJECT("manualReject",  "审核不通过（手动）"),
+    WAIT_SUBMIT("waitSubmit",  "订单反审核"),
+    WAREHOUSE_RULE_REJECT("warehouseRuleReject",  "仓库规则不通过"),
+    LOGISTICS_RULE_REJECT("logisticsRuleReject",  "物流规则不通过"),
+
     ;
     /**
      * 类型
@@ -33,7 +32,7 @@ public enum SoB2cErrorTypeEnum {
     private String name;
 
 
-    SoB2cErrorTypeEnum(String code, String name) {
+    SoB2cWaitHandleTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -50,7 +49,7 @@ public enum SoB2cErrorTypeEnum {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (SoB2cErrorTypeEnum typeEnum : SoB2cErrorTypeEnum.values()) {
+        for (SoB2cWaitHandleTypeEnum typeEnum : SoB2cWaitHandleTypeEnum.values()) {
             if (code.equals(typeEnum.getCode())) {
                 return typeEnum.getName();
             }

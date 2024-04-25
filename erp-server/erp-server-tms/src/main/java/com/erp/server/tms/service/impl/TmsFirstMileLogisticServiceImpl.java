@@ -234,7 +234,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(CollectionUtils.isNotEmpty(tmsCfgCostList)){
             defaultCost = tmsCfgCostList.get(0);
         }
-        List<TmsFirstMileLogisticDTO.LogisticFee> logisticFeeList = addDTO.getLogisticFeeList();
+        List<TmsFirstMileLogisticDTO.LogisticFee> logisticFeeList = addDTO.getLogisticFeeList() == null?new ArrayList<>():addDTO.getLogisticFeeList();
         List<TmsCostDetailDTO.AddDTO> costDetailList = new ArrayList<>();
         for (TmsFirstMileLogisticDTO.LogisticFee logisticFee : logisticFeeList) {
             if(StringUtils.isBlank(logisticFee.getCfgCostId())){
@@ -1640,5 +1640,28 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 endDate
 
         );
+    }
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean autoGenerateFirstMileLogistic(AutoGenerateBillDTO autoGenerateBillDTO) {
+        if(StringUtils.isBlank(autoGenerateBillDTO.getId()) || Objects.isNull(autoGenerateBillDTO.getSourceTypeEnum()) || Objects.isNull(autoGenerateBillDTO.getBillGenerateTimingEnum())){
+            return true;
+        }
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
+        if(cfgSettingEntity.getDisabled()){
+            return true;
+        }
+        CfgSettingValueDTO.BillAutoAddDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.BillAutoAddDTO.class);
+        if(Objects.isNull(dto) || Objects.isNull(dto.getIsAutoLogistics()) || !dto.getIsAutoLogistics() ||
+                StringUtils.isBlank(dto.getLogisticsGenerateTiming()) || !dto.getLogisticsGenerateTiming().equals(autoGenerateBillDTO.getBillGenerateTimingEnum().getCode())){
+            return true;
+        }
+        //生成物流单
+        TmsFirstMileLogisticDTO.AddDTO addDTO = new TmsFirstMileLogisticDTO.AddDTO();
+        addDTO.setOutstockId(autoGenerateBillDTO.getId());
+        this.add(addDTO);
+        return true;
     }
 }

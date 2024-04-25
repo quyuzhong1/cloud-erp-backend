@@ -204,4 +204,22 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return java.lang.Boolean
      **/
     Boolean falseDeliveryBatch(List<String> ids);
+
+    /**
+     * 添加发货单日志
+     * @Author Luo_WG
+     * @Date 2023/12/27 16:00
+     * @param deliveryEntities
+     * @return java.lang.Boolean
+     **/
+    Boolean addDeliveryLog(List<SoB2cDeliveryEntity> deliveryEntities);
+
+    /**
+     * 合并组包发货
+     * @Author Luo_WG
+     * @Date 2024/4/24 19:29
+     * @param soIdList
+     * @return java.lang.Boolean
+     **/
+    Boolean mergePackageDelivery(List<String> soIdList);
 }

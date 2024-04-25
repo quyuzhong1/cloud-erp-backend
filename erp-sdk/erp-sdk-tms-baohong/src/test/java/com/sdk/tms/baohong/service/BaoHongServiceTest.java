@@ -110,9 +110,10 @@ public class BaoHongServiceTest {
                                 .opQuantity(1)
                                 .build()
                 ))
-                .trackingNumber("1234567811011")
+                .orderStatus("2")
+                .trackingNumber("314r13212")
                 .oabName("wj")
-                .referenceNo("wj2024012311")
+                .referenceNo("wj20224012123121")
                 .deliveryAddress("深圳龙岗坂田")
                 .oabStreetAddress1("深圳龙岗坂田")
                 .build();
@@ -121,10 +122,15 @@ public class BaoHongServiceTest {
         System.out.println(response.getData());
     }
 
+    @Test
+    public void cancelOrder(){
+        BaoHongResponse<String> response = baoHongService.cancelOrder("SOE02070223440","平台发货异常");
+        System.out.println(response);
+    }
 
     @Test
     public void getOrderByCodeTest(){
-        BaoHongResponse<OrderDataArr> response = baoHongService.getOrderByCode("SOE02070222879");
+        BaoHongResponse<OrderDataArr> response = baoHongService.getOrderByCode("SOE02070223440");
         System.out.println(response);
         System.out.println(response.getData());
     }

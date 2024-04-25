@@ -16,4 +16,19 @@ public interface IPlatformService {
      */
     void shipOrder(PlatformShipOrderDTO dto);
 
+    /**
+     * 订单发货获取标发单号类型
+     * @param platform
+     * @param logisticsChannelId
+     * @return
+     */
+    String getOrderDeliveryMarkType(String platform, String logisticsChannelId);
+
+
+    /**
+     * 订单取消后发货单拦截
+     * @param soB2cId
+     * @return
+     */
+    void deliveryIntercept(String soB2cId,Boolean isCancel);
 }

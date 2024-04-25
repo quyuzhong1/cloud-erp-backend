@@ -207,6 +207,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             List<SoB2cDeliveryDetailEntity> detailEntityList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
             detailEntityList.forEach(v-> v.setWaitScanQty(0));
             entity.setIsInspection(true);
+            entity.setInspectionTime(LocalDateTime.now());
             viewDTO.setStatus(true);
             if(!soB2cDeliveryService.updateById(entity)){
                 throw new ServiceException("发货单更新失败");
@@ -280,6 +281,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         List<SoB2cDeliveryDetailEntity> detailEntityList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         detailEntityList.forEach(v-> v.setWaitScanQty(v.getDeliveryQty()));
         entity.setIsInspection(false);
+        entity.setInspectionTime(null);
         if(!soB2cDeliveryService.updateById(entity)){
             throw new ServiceException("发货单更新失败");
         }

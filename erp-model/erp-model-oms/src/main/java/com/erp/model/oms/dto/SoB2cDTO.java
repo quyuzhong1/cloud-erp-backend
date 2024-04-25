@@ -2332,4 +2332,21 @@ public class SoB2cDTO implements Serializable {
         private SoB2cEntity oldEntity;
 
     }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RemarkDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 }

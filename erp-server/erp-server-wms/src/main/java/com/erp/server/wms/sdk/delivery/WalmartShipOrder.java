@@ -1,31 +1,24 @@
 package com.erp.server.wms.sdk.delivery;
 
 import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.PlatformAnnotate;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.WalmartShipDTO;
-import com.common.business.dto.WalmartShipOrderDetailDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.IPlatformService;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.MathUtil;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.tms.dto.LogisticsMappingDTO;
+import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.server.wms.convert.WalmartShipOrderConverter;
+import com.erp.rpc.tms.feign.LogisticsMappingFeign;
 import com.sdk.oms.walmart.service.WalmartSdkClientService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.poi.ss.formula.functions.T;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -35,6 +28,9 @@ public class WalmartShipOrder implements IPlatformService {
 
     @Resource
     private SoB2cFeign soB2cFeign;
+
+    @Resource
+    private LogisticsMappingFeign logisticsMappingFeign;
 
     @Override
     public void shipOrder(PlatformShipOrderDTO dto) {
@@ -50,9 +46,28 @@ public class WalmartShipOrder implements IPlatformService {
             } else if (LogisticsPlatformEnum.SF_EXPRESS.getCode().equals(walmartShipDTO.getLogisticsPlatformCode())) {
                 walmartShipDTO.setLogisticsPlatformCode("SF Express");
             }
+            //标发订单类型
+            String standardOrderType = getOrderDeliveryMarkType(PlatformDictEnum.WALMART.getCode(), walmartShipDTO.getLogisticsChannelId());
+            walmartShipDTO.setOrderDeliveryMarkType(standardOrderType);
+
             walmartSdkClientService.shipOrder(walmartShipDTO);
         }
     }
 
+    @Override
+    public String getOrderDeliveryMarkType(String platform, String logisticsChannelId) {
+        LogisticsMappingEntity logisticsMappingEntity = logisticsMappingFeign.getByLogisticsMappingParam(new LogisticsMappingDTO.SearchParamDTO(platform, logisticsChannelId));
+        if (ObjectUtil.isEmpty(logisticsMappingEntity) || StrUtil.isBlank(logisticsMappingEntity.getOrderDeliveryMarkType())) {
+            throw new ServiceException("操作失败，渠道标发单号为空");
+        }
+        return logisticsMappingEntity.getOrderDeliveryMarkType();
+    }
 
+    @Override
+    public void deliveryIntercept(String soB2cId,Boolean isCancel) {
+        if (isCancel) {
+            //订单拦截
+            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cId, "平台取消"));
+        }
+    }
 }
