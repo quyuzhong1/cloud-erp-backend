@@ -4447,6 +4447,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                         errorMsgList.add("产品分类一级类目和二级类目的关系不匹配");
                     }
                 }
+                //存在错误信息则返回
+                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                    dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    errorList.add(dto);
+                    continue;
+                }
                 productInfoDTO.setCategory(secondaryCategory);
                 productInfoDTO.setCategoryId(secondaryCategoryEntity.getId());
             }
