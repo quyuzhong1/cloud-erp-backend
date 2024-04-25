@@ -890,17 +890,10 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         List<InventoryDTO.InventoryViewQtyDTO> list = new ArrayList<>();
         dtos.forEach(dto -> {
             InventoryDTO.InventoryViewQtyDTO inventoryQtyDTO = new InventoryDTO.InventoryViewQtyDTO();
-            //根据仓位id获取仓位
-            WarehouseLocationEntity warehouseLocation = warehouseLocationService.findLocationById(dto.getWarehouseLocation());
-            if (Objects.isNull(warehouseLocation)) {
-                inventoryQtyDTO = new InventoryDTO.InventoryViewQtyDTO();
-            } else {
-                if (StringUtils.isNotBlank(dto.getWarehouseId()) && StringUtils.isNotBlank(dto.getSkuId())) {
-                    dto.setWarehouseLocation(warehouseLocation.getCode());
-                    inventoryQtyDTO = baseMapper.getInventoryInfoByParam(dto);
-                    if (Objects.isNull(inventoryQtyDTO)) {
-                        inventoryQtyDTO = new InventoryDTO.InventoryViewQtyDTO();
-                    }
+            if (StringUtils.isNotBlank(dto.getWarehouseId()) && StringUtils.isNotBlank(dto.getSkuId())) {
+                inventoryQtyDTO = baseMapper.getInventoryInfoByParam(dto);
+                if (Objects.isNull(inventoryQtyDTO)) {
+                    inventoryQtyDTO = new InventoryDTO.InventoryViewQtyDTO();
                 }
             }
             setExtData(dto, inventoryQtyDTO);
