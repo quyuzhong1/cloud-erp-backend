@@ -6,6 +6,7 @@ import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.core.controller.BaseController;
+import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
@@ -51,6 +52,9 @@ public class SoB2cFeignController extends BaseController {
 
     @Resource
     private SoB2cRefService soB2cRefService;
+
+    @Resource
+    private OperateLogService operateLogService;
 
 
     /**
@@ -599,5 +603,17 @@ public class SoB2cFeignController extends BaseController {
     @PostMapping("/clearB2cLogisticsCode")
     public Boolean clearB2cLogisticsCode(@RequestBody List<String> soIdList) {
         return soB2cLogisticsService.clearB2cLogisticsCode(soIdList);
+    }
+
+
+    /**
+     * 添加操作日志
+     */
+    @PostMapping("/addModuleOperateLog")
+    public Boolean addModuleOperateLog(OperateLogDTO.AddModuleOperateLogDTO operateLogDTO){
+        return operateLogService.addModuleOperateLog(operateLogDTO.getContent(),
+                operateLogDTO.getModuleType(),
+                operateLogDTO.getBusinessId(),
+                operateLogDTO.getOperation());
     }
 }
