@@ -719,10 +719,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		if(WmsDataCompareTaskSubStatusEnum.WAIT_UPLOAD.getCode().equals(wmsDataCompareTaskEntity.getSubStatus())) {
 			String resultReportUrl = wmsDataCompareTaskEntity.getResultReportUrl();
 			if(StringUtils.isBlank(resultReportUrl)) {
-				List<WmsDataCompareTempEntity> wmsDataCompareTempEntityList = wmsDataCompareTempService.lambdaQuery().eq(WmsDataCompareTempEntity::getTaskId, id)
-						   .in(WmsDataCompareTempEntity::getCompareResult, Arrays.asList(WmsDataCompareTempCompareResultEnum.EXCEED.getCode() 
-								   , WmsDataCompareTempCompareResultEnum.MISS.getCode() , WmsDataCompareTempCompareResultEnum.DIFF.getCode()))
-						   .list();
+				List<WmsDataCompareTempEntity> wmsDataCompareTempEntityList = wmsDataCompareTempService.lambdaQuery().eq(WmsDataCompareTempEntity::getTaskId, id).list();
 				if(CollUtil.isNotEmpty(wmsDataCompareTempEntityList)) {
 					Map<String, List<WmsDataCompareTempEntity>> pkTempMaps = wmsDataCompareTempEntityList.stream().collect(Collectors.groupingBy(WmsDataCompareTempEntity::getPkFieldValue));
 					wmsDataCompareTempEntityList = new ArrayList<>();
