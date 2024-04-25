@@ -1232,15 +1232,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String skuStr = notRegistrationSkuNoList.stream().collect(Collectors.joining(","));
             throw new ServiceException(ApiError.NOT_UPDATE_CHANNEL_BY_NOT_REGISTRATION, skuStr, resultDTO.getDeclarePlatformName(), resultDTO.getLogisticsChannelName());
         }
+
+        if (StrUtil.isNotBlank(logisticsChannelId) && Boolean.TRUE.equals(isCover)) {
+            //预报成功不支持配货
+            if (TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())) {
+                throw new ServiceException(StrUtil.format("B2C销售订单【{}】已预报成功不可更换渠道", entity.getCode()));
+            }
+        }
+
         updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration);
 
         //选择了渠道则更新
         if (StrUtil.isNotBlank(logisticsChannelId)) {
             if (Boolean.TRUE.equals(isCover)) {
-                //预报成功不支持配货
-                if (TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())) {
-                    throw new ServiceException(StrUtil.format("B2C销售订单【{}】已预报成功不可更换渠道", entity.getCode()));
-                }
 
                 //如果有物流单号 就要去取消
                 if (StringUtils.isNotBlank(code)) {
