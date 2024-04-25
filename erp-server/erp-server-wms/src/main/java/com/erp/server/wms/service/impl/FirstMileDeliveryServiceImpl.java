@@ -42,10 +42,12 @@ import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
+import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.entity.*;
@@ -768,6 +770,20 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             } else {
                 throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
             }
+
+            //走TMS自动生成物流单逻辑
+            AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+                    .id(entity.getId())
+                    .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_APPROVE)
+                    .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
+                    .firstMileDeliveryEntity(entity)
+                    .build();
+            if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
+                tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
+            }
+            if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
+                tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+            }
         }
         return Boolean.TRUE;
     }
@@ -1489,6 +1505,19 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuDTOList = groupSkuList.stream().filter(req -> req.getWaitPackQty() > 0).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(groupSkuDTOList)) {
             updatePackingStatus(dto.getId(), PackingStatusEnum.PACKING.getCode());
+            //走TMS自动生成物流单逻辑
+            AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+                    .id(dto.getId())
+                    .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
+                    .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
+                    .firstMileDeliveryEntity(entity)
+                    .build();
+            if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
+                tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
+            }
+            if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
+                tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+            }
         } else {
             updatePackingStatus(dto.getId(), PackingStatusEnum.NOT_PACKING.getCode());
         }

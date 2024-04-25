@@ -1,6 +1,7 @@
 package com.erp.rpc.tms.feign;
 
 import com.common.business.dto.base.BatchResultDTO;
+import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -40,4 +41,16 @@ public interface TmsDeclareBillFeign {
      **/
     @PostMapping("/feign/tmsDeclareBill/delete")
     List<BatchResultDTO> delete(@RequestBody TmsDeclareBillDTO.DeleteDTO dto);
+
+    /**
+     * 自动生成头程报关单
+     **/
+    @PostMapping("/feign/tmsDeclareBill/autoGenerateFirstMileDeclare")
+    Boolean autoGenerateFirstMileDeclare(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO);
+
+    /**
+     * 自动生成B2B报关单
+     **/
+    @PostMapping("/feign/tmsDeclareBill/autoGenerateB2bDeclare")
+    Boolean autoGenerateB2bDeclare(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO);
 }
