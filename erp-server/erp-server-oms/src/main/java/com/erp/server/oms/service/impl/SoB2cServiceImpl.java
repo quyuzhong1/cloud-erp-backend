@@ -5934,7 +5934,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException("中转报关订单待中转/上传失败不可操作组包发货");
         }
 
-        TransferLogisticsStatusEnum platformTransferStatus = transferLogisticsFeign.getPlatformTransferStatus(scanResult.getTransferLogisticsSupplierId(), entity.getShippingOrderNo());
+        TransferLogisticsStatusEnum platformTransferStatus = transferLogisticsFeign.getPlatformTransferStatus(entity.getShippingOrderNo(), scanResult.getTransferLogisticsSupplierId());
         if (ObjectUtil.isEmpty(platformTransferStatus)
                 || TransferLogisticsStatusEnum.DELETED.getCode().equals(platformTransferStatus.getCode())
                 || TransferLogisticsStatusEnum.UNUSUAL.getCode().equals(platformTransferStatus.getCode())
@@ -6002,7 +6002,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
 
             //查询中转服务商对应的渠道
-            List<TransferLogisticsChannelEntity> logisticsChannelEntityList = transferLogisticsFeign.listLogisticsChannelByMainId(Arrays.asList(scanResult.getTransferLogisticsChannelId()));
+            List<TransferLogisticsChannelEntity> logisticsChannelEntityList = transferLogisticsFeign.listLogisticsChannelByMainId(Arrays.asList(scanResult.getTransferLogisticsSupplierId()));
             if (CollectionUtils.isNotEmpty(logisticsChannelEntityList)) {
                 TransferLogisticsChannelEntity transferLogisticsChannelEntity = logisticsChannelEntityList.stream().filter(req -> scanResult.getTransferLogisticsChannelId().equals(req.getId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(transferLogisticsChannelEntity)) {
