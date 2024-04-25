@@ -279,7 +279,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
      * 平台订单状态
      */
     @TableField("platform_order_status")
-    private Boolean platformOrderStatus;
+    private String platformOrderStatus;
 
     /**
      * 平台是否取消
