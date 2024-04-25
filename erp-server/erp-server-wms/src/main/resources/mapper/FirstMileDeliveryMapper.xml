@@ -160,7 +160,7 @@
         fdd.warehouse_location,
         fdd.delivery_qty AS assembleQty
         FROM  first_mile_delivery fd
-        INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
+
         WHERE fd.is_deleted = FALSE
         AND fdd.is_combination = TRUE
         <if test="ids != null and ids.size > 0">
@@ -200,24 +200,26 @@
     <!--导出装箱清单Excel-->
     <select id="exportPacking" resultType="com.erp.model.wms.dto.WmsCartonDTO$ExportPackingDTO">
         SELECT
-        fmd.id,
-        fmd.packing_status,
-        fmd.code,
-        fmcb.box_no,
+        DISTINCT
+        fd.id,
+        fd.packing_status,
+        fd.code,
+        CAST(fmcb.box_no AS INTEGER) AS box_no,
         concat(box_length, '*', fmc.box_width, '*', fmc.box_height) AS boxSize,
         fmc.package_weight,
         fmcb.box_desc
-        FROM first_mile_delivery fmd
-        LEFT JOIN wms_carton fmc ON fmc.source_id = fmd.id AND fmc.is_deleted = FALSE
+        FROM first_mile_delivery fd
+        LEFT JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id
+        LEFT JOIN wms_carton fmc ON fmc.source_id = fd.id AND fmc.is_deleted = FALSE
         LEFT JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
-        and fmd.is_deleted = FALSE
+        and fd.is_deleted = FALSE
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        ORDER BY fmd.code,
+        ORDER BY fd.code,
         CAST(fmcb.box_no AS INTEGER)
     </select>
     <select id="getGenerateLogisticDTO"
