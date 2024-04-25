@@ -3835,12 +3835,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("packageWidth", logisticsEntity.getWidth());
             detailMap.put("buyLogisticsChannelId", logisticsEntity.getName());
             detailMap.put("postCode", receiverEntity.getPostCode());
-            detailMap.put("deliveryWarehouseQty", warehouseCount);
-            detailMap.put("destCountry", receiverEntity.getCountry());
-            detailMap.put("destCity", receiverEntity.getCityName());
-            detailMap.put("orderTaxCost", totalTaxCost);
-            detailMap.put("amount", MathUtil.multiply(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
-            detailMap.put("orderProfitRate", financialInfo.getProfitRateFlag());
 
             //如果是美客多，取订单标签里面的发货类型标识匹配订单规则
             if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(soB2cEntity.getDictPlatform())) {
@@ -5131,8 +5125,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
             }
 
-            // 自发货订单状态不更新(由ERP系统决定)
-            if (!oldEntity.hasPlatformWarehouseOrder()){
+            // 自发货订单如果来源状态是带配货不更新状态, 审核状态也不更新
+            if (!oldEntity.hasPlatformWarehouseOrder() && SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(dto.getBillStatus())){
                 dto.setBillStatus(oldEntity.getBillStatus());
             }
             // 自发货订单的平台状态作废：如果订单状态是(待发货/已发货/部分发货)=已有发货单不作废，只添加平台作废记录

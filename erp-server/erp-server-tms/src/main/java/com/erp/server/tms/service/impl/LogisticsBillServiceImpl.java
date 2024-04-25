@@ -126,18 +126,18 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Autowired
     private LogisticsPrintTypeService logisticsPrintTypeService;
 
-    @Resource
-    private MercadoSdkClientService mercadoSdkClientService;
-
-    @Resource
-    private LogisticsOperateService logisticsOperateService;
-
     @Autowired
     private TmsCfgCostService tmsCfgCostService;
 
     @Autowired
     private LogisticsBillService logisticsBillService;
 
+
+    @Resource
+    private MercadoSdkClientService mercadoSdkClientService;
+
+    @Resource
+    private LogisticsOperateService logisticsOperateService;
 
     @Autowired
     private PlmTaskFeign plmTaskFeign;
