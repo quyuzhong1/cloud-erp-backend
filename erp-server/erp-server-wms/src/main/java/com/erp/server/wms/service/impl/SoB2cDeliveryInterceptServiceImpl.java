@@ -307,8 +307,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto, String id) {
         SoB2cDeliveryInterceptEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -369,7 +367,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 BaseIdsDTO.IdsDTO approveIdDto = new BaseIdsDTO.IdsDTO();
                 approveIdDto.setIds(approveIds);
                 if (CollectionUtils.isNotEmpty(approveIds)) {
-                    soOutstockService.disApprove(approveIdDto, Boolean.FALSE);
+                    soOutstockService.disApprove(approveIdDto, Boolean.TRUE);
                 }
 
                 //查询已提交的出库单，进行撤销
