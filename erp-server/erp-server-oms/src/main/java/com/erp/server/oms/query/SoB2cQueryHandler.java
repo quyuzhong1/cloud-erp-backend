@@ -154,6 +154,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
          * 物流规则不通过：订单状态是待配货，待配货原因是物流规则不通过
          */
         if ("waitHandle".equals(field))  {
+
             //审核不通过（自动）
             if (SoB2cWaitHandleTypeEnum.APPROVE_REJECT.getCode().equals(value)) {
                 super.buildDefaultDTO("sb2c.approve_status", Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
