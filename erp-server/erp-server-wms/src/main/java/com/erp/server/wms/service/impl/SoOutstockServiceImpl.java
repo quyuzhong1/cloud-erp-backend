@@ -1001,15 +1001,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
 
-        //查询是否冻结
-        List<String> soIds = list.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
-        for (SoB2cEntity soB2cEntity : soB2cEntities) {
-            if (soB2cEntity.getIsFrozen()) {
-                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
-            }
-        }
-
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> ApproveStatusEnum.APPROVE.equals(s.getApproveStatus())).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.WAIT_SUBMIT, "", null);
@@ -1085,15 +1076,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         long invalidCount = list.stream().filter(s -> s.getInvalidStatus()).count();
         if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
-        }
-
-        //查询是否冻结
-        List<String> soIds = list.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
-        for (SoB2cEntity soB2cEntity : soB2cEntities) {
-            if (soB2cEntity.getIsFrozen()) {
-                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
-            }
         }
 
         Boolean result = this.removeByIds(ids);
