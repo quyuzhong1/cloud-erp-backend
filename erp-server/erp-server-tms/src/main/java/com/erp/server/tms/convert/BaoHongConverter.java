@@ -10,7 +10,6 @@ import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
-import com.erp.tms.aliexpress.model.order.request.Address;
 import com.sdk.tms.baohong.api.asn.ReceivingInfo;
 import com.sdk.tms.baohong.api.asn.ReceivingItemsType;
 import com.sdk.tms.baohong.api.order.CreateOrderInfo;
@@ -135,6 +134,7 @@ public interface BaoHongConverter {
 
     @Mappings({
             @Mapping(target = "orderCode", source = "orderCode"),
+            @Mapping(target = "packNum", source = "packNum"),
             @Mapping(target = "groossWeight", source = "grossWeight",qualifiedByName = "bigDecimalToStr"),
     })
     ReceivingItemsType  createReceiveOrderConvert(TransferLogisticsCreateInboundReq.ReceiveItem item);
