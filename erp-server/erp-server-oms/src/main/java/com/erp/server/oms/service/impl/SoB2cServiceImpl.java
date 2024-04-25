@@ -19,7 +19,6 @@ import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.*;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
-import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
@@ -892,11 +891,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
         interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getId()));
         this.updateIntercept(interceptUpdateOrderDTO);
+
         //取消异常原因
         String abnormalType = entity.getAbnormalType();
-        String  approveReject= SoB2cAbnormalTypeEnum.ENUM_APPROVE_REJECT.getCode();
-        String  manualReject= SoB2cAbnormalTypeEnum.ENUM_MANUAL_REJECT.getCode();
-        if (approveReject.equals(abnormalType) || manualReject.equals(abnormalType)) {
+        String approveReject = SoB2cAbnormalTypeEnum.ENUM_APPROVE_REJECT.getCode();
+        String manualReject = SoB2cAbnormalTypeEnum.ENUM_MANUAL_REJECT.getCode();
+        String interceptSuccessReject = SoB2cAbnormalTypeEnum.INTERCEPT_SUCCESS_REJECT.getCode();
+        if (approveReject.equals(abnormalType) || manualReject.equals(abnormalType) || interceptSuccessReject.equals(interceptSuccessReject)) {
             this.updateAbnormalType(entity.getId(), "");
         }
         // 记录操作日志
@@ -1299,8 +1300,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         //操作日志
-        String msg = "B2C销售订单配货,物流方式【{}】,仓库【{}】";
-        operateLogService.addModuleOperateLog(StrUtil.format(msg, soB2cLogisticsEntity.getName(), updateDTO.getName()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "手动配货");
+        String msg = "B2C销售订单配货,物流渠道【{}】,仓库【{}】";
+        operateLogService.addModuleOperateLog(StrUtil.format(msg, StrUtil.isBlank(soB2cLogisticsEntity.getLogisticsChannelName()) ? "" : soB2cLogisticsEntity.getLogisticsChannelName(), StrUtil.isBlank(updateDTO.getName()) ? "" : updateDTO.getName()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "手动配货");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动配货");
     }
 
@@ -3075,7 +3076,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                                     && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
                             .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
                             .orElse(MathUtil.ZERO);
-                    detailDTO.setUseableQty(useableQty);
                     //冻结库存
                     freezeQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
                                     && obj.getWarehouseId().equals(detailDTO.getWarehouseId())
@@ -3083,8 +3083,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                                     && InventoryStatusEnum.FROZEN.getCode().equals(obj.getInventoryStatus()))
                             .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
                             .orElse(MathUtil.ZERO);
-                    detailDTO.setFreezeQty(freezeQty);
                 }
+                detailDTO.setUseableQty(useableQty);
+                detailDTO.setFreezeQty(freezeQty);
                 //存在仓库则需要判断是否缺货
                 if (StrUtil.isNotBlank(detailDTO.getWarehouseId())) {
                     //缺货订单
@@ -3915,11 +3916,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         try {
             if (this.checkPlatformShipOrder(id)) {
                 //调用第三方平台SDK发货
-                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-                platformShipOrderDTO.setSoB2cId(id);
-                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-                paramJson = JSONObject.toJSONString(platformShipOrderDTO);
-                PlatformSaveHandler.shipOrder(platformShipOrderDTO);
                 List<String> ids = deliveryEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
                 soB2cDeliveryFeign.falseDeliveryBatch(ids);
             }
@@ -3992,6 +3988,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cDetailService.updateIsMatchWarehouseRule(detailIdList);
             return Boolean.FALSE;
         }
+        if(StringUtils.isNotBlank(ruleMatchResult.getName())){
+            String msg = StrUtil.format("自动匹配仓库规则成功，规则名称：{}", ruleMatchResult.getName());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), id, "配货操作");
+        }
         //更新明细仓库信息
         String warehouseId = ruleMatchResult.getWarehouseId();
         //返回了仓库则更新仓库为空的数据
@@ -4054,6 +4054,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         soB2cLogisticsService.updateById(b2cLogistics);
                     }
                 }
+            }
+            if(StringUtils.isNotBlank(matchResult.getName())){
+                String msg = StrUtil.format("自动匹配物流规则成功，规则名称：{}", matchResult.getName());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), id, "配货操作");
             }
             //状态更新为配货中
             updateBillStatusAndMatchLogistics(id, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION,Boolean.TRUE);
@@ -5612,6 +5616,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cDetailService.updateIsMatchWarehouseRule(detailIdList);
         } else {
             isRuleMatch = Boolean.TRUE;
+            if(StringUtils.isNotBlank(ruleMatchResult.getName())){
+                String msg = StrUtil.format("自动匹配仓库规则成功，规则名称：{}", ruleMatchResult.getName());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), id, "配货操作");
+            }
             //更新明细仓库信息
             String warehouseId = ruleMatchResult.getWarehouseId();
             //返回了仓库则更新仓库为空的数据
@@ -6800,6 +6808,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             .length( Objects.nonNull(bomChildrenSkuDTO.getLength()) ? bomChildrenSkuDTO.getLength() : BigDecimal.ZERO)
                             .width( Objects.nonNull(bomChildrenSkuDTO.getWidth()) ? bomChildrenSkuDTO.getWidth() : BigDecimal.ZERO)
                             .height( Objects.nonNull(bomChildrenSkuDTO.getHeight()) ? bomChildrenSkuDTO.getHeight() : BigDecimal.ZERO)
+                            .grossWeight( Objects.nonNull(bomChildrenSkuDTO.getGrossWeight()) ? bomChildrenSkuDTO.getGrossWeight() : BigDecimal.ZERO)
                             .build());
                 });
             }else {
@@ -6810,6 +6819,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 } else {
                     skuVO = BomChildrenSkuDTO.builder()
                             .skuId(simpleSkuVO.getSkuId())
+                            .grossWeight(simpleSkuVO.getGrossWeight())
                             .productSize(simpleSkuVO.getProductSize())
                             .build();
                     this.buildProductSize(skuVO);
@@ -6818,6 +6828,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? skuVO.getLength() : BigDecimal.ZERO)
                             .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? skuVO.getWidth() : BigDecimal.ZERO)
                             .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? skuVO.getHeight() : BigDecimal.ZERO)
+                            .grossWeight( Objects.nonNull(skuVO.getGrossWeight()) ? skuVO.getGrossWeight() : BigDecimal.ZERO)
                             .build());
                 }
 

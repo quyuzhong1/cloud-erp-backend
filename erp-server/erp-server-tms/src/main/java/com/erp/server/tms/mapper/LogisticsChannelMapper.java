@@ -1,9 +1,9 @@
 package com.erp.server.tms.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -26,7 +26,7 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
      * @date: 2023/11/10 10:08
      * @return List<ListSelectDTO>
      */
-    List<LogisticsChannelDTO.ListSelectDTO> listLogisticsChannel(@Param("logisticsSupplierIds") List<String> logisticsSupplierIds);
+    List<LogisticsChannelDTO.ListSelectDTO> listLogisticsChannel(@Param("params") LogisticsChannelDTO.ParamDTO params);
 
     /**
      * 根据供应商id获取到 对应渠道下 启用禁用的列表

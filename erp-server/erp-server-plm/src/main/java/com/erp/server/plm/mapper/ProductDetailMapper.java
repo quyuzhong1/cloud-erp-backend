@@ -219,7 +219,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      *@author yl
      *@date 2023-11-27
      */
-    List<LogisticsProductDTO.ProductDTO> listLogisticsProduct(@Param("skuIdList") List<String> skuIdList);
+    List<LogisticsProductDTO.ProductDTO> listLogisticsProduct(@Param("skuIdList") List<String> skuIdList,@Param("skuNoList") List<String> skuNoList);
 
     /**
      * 搜索SKU只带组合信息
@@ -249,6 +249,14 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return List<SkuVO>
      */
     List<SkuVO> accessoriesSku(@Param("searchKeyword") String searchKeyword,@Param("state") Integer state);
+    /**
+     * @description: tab
+     * @author Will
+     * @date: 2024/3/18 19:26
+     * @param searchParamDTO
+     * @return Integer
+     */
+    Integer listCount(@Param("params") LogisticsProductDTO.PagingParamDTO searchParamDTO);
 }
 
 

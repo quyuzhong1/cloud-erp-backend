@@ -14,6 +14,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -31,10 +32,7 @@ import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.TransferDeclareDTO;
-import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
-import com.erp.model.tms.dto.TransferDeclareDetailDTO;
-import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
@@ -112,6 +110,10 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     private TransferDeclareProductService transferDeclareProductService;
     @Autowired
     private SoOutstockFeign soOutstockFeign;
+
+    @Autowired
+    private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
+
 
     @Override
     public PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> pagingParamDTO) {
@@ -553,6 +555,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 //拿到第三方订单号，用于给订单赋值第三方平台发货单号
                 transferDeclareEntity.setInstockForecastStatus(InstockForecastStatusEnum.UPLOAD_SUCCESS.getCode());
                 transferDeclareEntity.setInstockForecastRemark("");
+                transferDeclareEntity.setInstockForecastDate(LocalDate.now());
                 //上传成功
                 baseMapper.updateById(transferDeclareEntity);
                 //删除订单异常记录
@@ -560,6 +563,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 deleteDTO.setMainIds(transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).distinct().collect(Collectors.toList()));
                 deleteDTO.setType(SoB2cErrorTypeEnum.INSTOCK_FORECAST.getCode());
                 soB2cFeign.deleteErrorByMainIds(deleteDTO);
+
+                //入库预报成功添加报关对账明细
+                addDeclareReconciliation(transferDeclareDetailEntities);
 
                 resultDTOList.add(BatchResultDTO.success(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), "入库预报成功"));
             } else {
@@ -600,6 +606,29 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
 
         return resultDTOList;
+    }
+
+    /**
+     * @description: 新增报关对账明细数据
+     * @author Will
+     * @date: 2024/3/26 17:19
+     * @param transferDeclareDetailList
+     */
+    private void addDeclareReconciliation (List<TransferDeclareDetailEntity> transferDeclareDetailList) {
+        if (CollectionUtil.isEmpty(transferDeclareDetailList)) {
+            return;
+        }
+        List<TmsB2cDeclareReconciliationDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+        for (TransferDeclareDetailEntity transferDeclareDetailEntity : transferDeclareDetailList) {
+            TmsB2cDeclareReconciliationDetailDTO.AddDTO addDTO = new TmsB2cDeclareReconciliationDetailDTO.AddDTO();
+            addDTO.setSourceDetailId(transferDeclareDetailEntity.getId());
+            addDTO.setSourceType(SourceTypeEnum.TRANSFER_DECLARE.getCode());
+            addDetailList.add(addDTO);
+        }
+        if (CollectionUtil.isEmpty(addDetailList)) {
+            return;
+        }
+        tmsB2cDeclareReconciliationDetailService.add(addDetailList);
     }
 
     private String getReferenceCode() {
@@ -817,7 +846,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                     .filter(e -> !e.getSoId().equals(soB2cEntity.getId()) && !TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(e.getOrderUploadStatus()))
                     .collect(Collectors.toList());
             if (CollectionUtils.isEmpty(collect)) {
-                this.updateUploadStatus(id, TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+                this.updateUploadStatus(transferDeclareEntity.getId(), TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode());
             }
         }
         return resultDTOList;

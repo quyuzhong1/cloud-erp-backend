@@ -17,21 +17,74 @@
        <result column="declare_platform" property="declarePlatform" />
        <result column="remark" property="remark" />
        <result column="status" property="status" />
+       <result column="product_name" property="productName" />
+       <result column="product_name_en" property="productNameEn" />
+       <result column="declare_unit" property="declareUnit" />
+       <result column="good_id" property="goodId" />
+       <result column="spu" property="spu" />
+       <result column="currency" property="currency" />
+       <result column="declare_price" property="declarePrice" />
+       <result column="gross_weight" property="grossWeight" />
+       <result column="length" property="length" />
+       <result column="width" property="width" />
+       <result column="height" property="height" />
+       <result column="is_battery" property="isBattery" />
+       <result column="battery_type" property="batteryType" />
+       <result column="declare_name_cn" property="declareNameCn" />
+       <result column="customs_code" property="customsCode" />
+       <result column="first_number" property="firstNumber" />
+       <result column="second_number" property="secondNumber" />
+       <result column="declare_element" property="declareElement" />
+       <result column="supplier_code" property="supplierCode" />
+       <result column="barcode_type" property="barcodeType" />
+       <result column="custom_barcode" property="customBarcode" />
+       <result column="is_invoice" property="isInvoice" />
+       <result column="is_parts" property="isParts" />
+       <result column="battery_note" property="batteryNote" />
+       <result column="url" property="url" />
+        <result column="push_info" property="pushInfo" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler" />
     </resultMap>
 
-    <!-- 通用查询结果列 -->
-    <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        sku_id, sku_no, declare_platform, remark, status
-    </sql>
+    <select id="tabList" resultType="com.erp.model.tms.dto.ProductRegistrationDTO$TabListDTO">
+        SELECT tabFlag, tabFlagName, sum(num) as count
+        FROM (SELECT case when status = 'registered' then 'registered' else 'notRegister' end as tabFlag,
+                     case when status = 'registered' then '已备案' else '未备案' end          as tabFlagName,
+                     count(1)                                                                 as num
+              FROM "product_registration" where is_deleted = false
+              group by status) a
+        GROUP BY tabFlag, tabFlagName
+    </select>
 
+    <select id="paging" resultType="com.erp.model.tms.dto.ProductRegistrationDTO$PagingVO">
+        select pr.id,
+            pr.sku_id as skuId,
+            pr.sku_no as skuNo,
+            pr.declare_model as spu,
+            pr.declare_platform as declarePlatform,
+            pr.status,
+            pr.declare_name_cn as declareCnName,
+            pr.declare_price as declare_price,
+            pr.declare_currency_symbol as declareCurrencySymbol,
+            pr.customs_code as customsCode,
+            pr.declare_element as declareElement,
+            pr.latest_time as  latestTime,
+            pr.declare_supplier_name as declareSupplierName,
+            pr.failure_reason as failureReason
+        from product_registration pr
+        where
+            ${params.sqlMap.default}
+          and  pr.is_deleted=false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pr.latest_time DESC ,pr.create_time desc,pr.sku_no
+    </select>
 
 </mapper>

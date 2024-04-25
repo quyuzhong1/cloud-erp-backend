@@ -1,8 +1,9 @@
 package com.erp.server.tms.service;
-import com.erp.model.tms.entity.CfgSettingEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.CfgSettingDTO;
+import com.erp.model.tms.entity.CfgSettingEntity;
 
 /**
  * <p>

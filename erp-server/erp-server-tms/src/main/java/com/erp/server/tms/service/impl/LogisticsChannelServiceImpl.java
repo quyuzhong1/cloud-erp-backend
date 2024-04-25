@@ -30,12 +30,12 @@ import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import cn.hutool.core.util.ObjectUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -153,8 +153,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public List<LogisticsChannelDTO.ListSelectDTO> listLogisticsChannel(List<String> logisticsSupplierIds) {
-        return baseMapper.listLogisticsChannel(logisticsSupplierIds);
+    public List<LogisticsChannelDTO.ListSelectDTO> listLogisticsChannel(LogisticsChannelDTO.ParamDTO dto) {
+        return baseMapper.listLogisticsChannel(dto);
     }
 
     @Override
@@ -353,6 +353,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public List<BaseDropDownDTO.DisabledDTO> listAll() {
         List<LogisticsChannelEntity> list = this.lambdaQuery().orderByAsc(LogisticsChannelEntity::getDisabled).list();
         List<BaseDropDownDTO.DisabledDTO> resultList = LogisticsChannelConverter.INSTANCE.convertByChannelDown(list);
+        Collections.sort(resultList, Comparator.comparing(BaseDropDownDTO.DisabledDTO::getDisabled));
+
         return resultList;
     }
 
@@ -517,6 +519,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             tree.setChildTreeList(childList);
         }
         return result;
+    }
+
+    @Override
+    public List<LogisticsChannelEntity> listByName(List<String> channelNameList) {
+        if(CollectionUtils.isEmpty(channelNameList)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(LogisticsChannelEntity::getName, channelNameList).list();
     }
 
     @Override

@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum OrderTypeEnum implements EnumMessage {
     B2B("B2B", "B2B订单"),
     B2C("B2C", "B2C订单"),
+    FIRST_MILE("firstMile", "头程物流单"),
     ;
 
     private String code;

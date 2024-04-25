@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.TmsWarehouseMappingMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.TmsWarehouseMappingEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="logistics_warehouse_code" property="logisticsWarehouseCode" />
+       <result column="erp_warehouse_id" property="erpWarehouseId" />
+       <result column="erp_warehouse_name" property="erpWarehouseName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id as createUserId,
+        create_user_name as createUserName,
+        create_time as createTime,
+        update_user_id as updateUserId,
+        update_user_name as updateUserName,
+        update_time as updateTime,
+        version,
+        is_deleted as isDeleted,
+        logistics_warehouse_code as logisticsWarehouseCode,
+        erp_warehouse_id as erpWarehouseId,
+        erp_warehouse_name as erpWarehouseName
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.tms.dto.TmsWarehouseMappingDTO$ListDTO">
+        select
+              <include refid="Base_Column_List" />
+        from tms_warehouse_mapping twm
+        <where>
+            ${params.sqlMap.default}
+            and twm.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            twm.id desc
+        </where>
+    </select>
+
+    <!-- 导出查询 -->
+    <select id="listExportExcel" resultType="com.erp.model.tms.dto.TmsWarehouseMappingDTO$ListDTO">
+        select
+        <include refid="Base_Column_List" />
+        from tms_warehouse_mapping twm
+        <where>
+            ${params.sqlMap.default}
+            and twm.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            twm.id desc
+        </where>
+    </select>
+
+
+</mapper>

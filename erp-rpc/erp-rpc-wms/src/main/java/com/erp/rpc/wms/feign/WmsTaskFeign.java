@@ -34,6 +34,12 @@ public interface WmsTaskFeign {
     List<WarehouseDTO.UpdateDTO> listWarehouseByIds(@RequestBody List<String> warehouseIds);
 
     /**
+     * 根据仓库名称查询
+     */
+    @PostMapping("feign/warehouse/listWarehouseByNameList")
+    List<WarehouseDTO.UpdateDTO> listWarehouseByNameList(@RequestBody List<String> warehouseNameList);
+
+    /**
      * 查询所有审核通过并启用的仓库
      */
     @GetMapping("feign/warehouse/listApproveWarehouse")

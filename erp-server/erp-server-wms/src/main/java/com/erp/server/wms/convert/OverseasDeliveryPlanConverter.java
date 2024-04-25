@@ -40,7 +40,8 @@ public interface OverseasDeliveryPlanConverter {
 
     @Mappings({
             @Mapping(target = "destWarehouseId", source = "toWarehouseId"),
-            @Mapping(target = "destWarehouseName", source = "toWarehouseName")
+            @Mapping(target = "destWarehouseName", source = "toWarehouseName"),
+            @Mapping(target = "countryId", source = "country")
     })
     FirstMileDeliveryDTO.AddDTO generateDeliverFDD(OverseasDeliveryPlanDTO.GenerateDeliverViewDTO dto);
 

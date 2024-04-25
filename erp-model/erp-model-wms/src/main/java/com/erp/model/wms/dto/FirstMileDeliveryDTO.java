@@ -1,25 +1,21 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import java.util.List;
-
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import org.springframework.validation.annotation.Validated;
 
-import java.io.Serializable;
-import java.util.Map;
-import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -33,6 +29,69 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class FirstMileDeliveryDTO implements Serializable {
 
+    /**
+     * 统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class StatisticsReq {
+
+        private LocalDateTime beginDate;
+
+        private LocalDateTime endDate;
+
+        private String status;
+
+        private String orderType;
+
+        private String permissionSql;
+    }
+
+    /**
+     * 统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LogisticStatisticsDTO {
+
+        /**
+         * 年份
+         */
+        private Integer year;
+
+        /**
+         * 月份
+         */
+        private Integer month;
+
+        /**
+         * 数量
+         */
+        private Integer count = 0;
+    }
+
+
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateStatusDTO {
+        @NotNull(message = "ids不能为空")
+        private List<String> ids;
+        /**
+         * 物流单状态
+         */
+        private String logisticsStatus;
+
+        /**
+         * 报关单状态
+         */
+        private String declareStatus;
+    }
 
      /**
      * 状态统计
@@ -72,87 +131,6 @@ public class FirstMileDeliveryDTO implements Serializable {
           * sqlMap 默认key default
           */
          private Map<String, String> sqlMap;
-
-         /**
-         * tab：/wms/common/enumDropDown?type=ApproveStatusEnum
-         * 描述：waitSubmit:待提交, approveIng:审核中, reject:审核不通过, approve:已审核
-         */
-         private String  tabFlag;
-         /**
-         * 审核时间
-         */
-         private List<LocalDate> approveTimeList;
-         /**
-         * 单据编号
-         */
-         private String code;
-         /**
-         * sku编号
-         */
-         private List<String> skuNoList;
-         /**
-         * 来源单号
-         */
-         private String sourceCode;
-         /**
-          * 备货类型:/wms/common/enumDropDown?type=FbaDemandType
-          * 描述：demandPlatformWarehouse:备货平台仓  demandOverseasWarehouse:备货海外仓
-          */
-         private List<String> demandTypeList;
-         /**
-         * 店铺id
-         */
-         private List<String> shopIdList;
-         /**
-         * 国家二字码
-         */
-         private List<String> countryIdList;
-         /**
-         * 发货仓id
-         */
-         private List<String> deliveryWarehouseIdList;
-         /**
-         * 目的仓id
-         */
-         private List<String> destWarehouseIdList;
-         /**
-         * 审核状态
-         */
-         private List<String> approveStatusList;
-         /**
-         * 物流方式
-         */
-         private List<String> logisticsMethodList;
-         /**
-         * 是否组合品
-         */
-         private Boolean isCombination;
-         /**
-         * 平台sku
-         */
-         private String platformSpuNo;
-         /**
-         * fnSku
-         */
-         private String fnSku;
-         /**
-         * 卖家sku
-         */
-         private String platformSkuNo;
-         /**
-         * 创建时间
-         */
-         private List<LocalDate> createTimeList;
-         /**
-          * 装箱状态：/wms/common/enumDropDown?type=PackingStatus
-          * notPacking：未装箱
-          * packing：已装箱
-          */
-         private String packingStatus;
-         /**
-          * 是否下推入库单
-          */
-         private Boolean isGenerateOverseasInbound;
      }
 
     /**
@@ -173,6 +151,22 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 编号
          */
         private String code;
+        /**
+         * 物流单状态编码
+         */
+        private String logisticsStatus;
+        /**
+         * 物流单状态中文
+         */
+        private String logisticsStatusName;
+        /**
+         * 报关单状态编码
+         */
+        private String declareStatus;
+        /**
+         * 报关单状态中文
+         */
+        private String declareStatusName;
 
         /**
          * 服务商编码
@@ -363,6 +357,7 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 审核时间
          */
         private LocalDateTime approveTime;
+
     }
 
     /**
@@ -539,7 +534,7 @@ public class FirstMileDeliveryDTO implements Serializable {
         /**
          * 物流信息
          */
-        private FirstMileDeliveryLogisticsDTO.ViewDTO logisticsView;
+        private FirstMileDeliveryDTO.ViewLogisticDTO logisticsView;
 
         /**
          * 产品信息
@@ -563,11 +558,6 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 附件url集合
          */
         private List<String> attachUrlList;
-
-        /**
-         * 物流信息
-         */
-        private FirstMileDeliveryLogisticsDTO.AddDTO logisticsView;
 
         /**
          * 产品信息
@@ -598,11 +588,6 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 附件url集合
          */
         private List<String> attachUrlList;
-
-        /**
-         * 物流信息
-         */
-        private FirstMileDeliveryLogisticsDTO.UpdateDTO logisticsView;
 
         /**
          * 产品信息
@@ -897,51 +882,6 @@ public class FirstMileDeliveryDTO implements Serializable {
     }
 
     /**
-     * 装箱
-     */
-    @Data
-    @NoArgsConstructor
-    public static class FirstMileCartonAdd {
-        /**
-         * 发货单id
-         */
-        private String id;
-
-        /**
-         * 发货单号
-         */
-        private String code;
-
-        /**
-         * 装箱信息
-         */
-        @Valid
-        private List<FirstMileCartonDTO.AddDTO> firstMileCartonList;
-    }
-
-    /**
-     * 装箱详情
-     */
-    @Data
-    @NoArgsConstructor
-    public static class FirstMileCartonView {
-        /**
-         * 发货单id
-         */
-        private String id;
-
-        /**
-         * 发货单号
-         */
-        private String code;
-
-        /**
-         * 装箱信息
-         */
-        private List<FirstMileCartonDTO.ViewDTO> firstMileCartonList;
-    }
-
-    /**
      * 分组汇总sku
      */
     @Data
@@ -986,61 +926,212 @@ public class FirstMileDeliveryDTO implements Serializable {
         private Integer packQty;
     }
 
-
     /**
-     * 装箱信息
+     * 生成状态修改入参
      */
     @Data
     @NoArgsConstructor
-    public static class PackDateDTO {
+    public static class GenerateStatusUpdateDTO {
+        /**
+         * 单据id
+         */
+        private List<String> ids;
+        /**
+         * 单据类型
+         * 接口：/wms/dict/list?key=fmDeliveryBillType
+         */
+        private List<String> billTypes;
+    }
+
+    /**
+     * 生成物流单传的DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateLogisticReqDTO {
+
+        /**
+         * 装箱状态
+         */
+        private String packingStatus;
+
+        /**
+         * 物流单状态
+         */
+        private String logisticsStatus;
+
+        /**
+         * 发货单ids
+         */
+        private List<String> ids;
+    }
+    /**
+     * 生成物流单传的DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateLogisticDTO {
+
+        /**
+         * 来源id（海外仓，FBA）
+         */
+        private String sourceId;
+
+        /**
+         * 来源编号（海外仓，FBA）
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型（海外仓，FBA）
+         */
+        private String sourceType;
+
         /**
          * 发货单id
          */
-        private String id;
-        /**
-         * 箱子id
-         */
-        private String cartonId;
-        /**
-         * 产品id
-         */
-        private String skuId;
+        private String outstockId;
 
         /**
-         * 产品编号
+         * 发货单单号
          */
-        private String skuNo;
+        private String outstockCode;
 
         /**
-         * 产品产品名称
+         * 店铺Id
          */
-        private String productName;
+        private String shopId;
 
         /**
-         * 发货数量
+         * 店铺名称
          */
-        private Integer deliveryQty;
+        private String shopName;
 
         /**
-         * 待装箱数量
+         * 店铺负责人
          */
-        private Integer waitPackQty;
+        private String chargeId;
 
         /**
-         * 装箱数量
+         * 审核时间
          */
-        private Integer packQty;
+        private LocalDateTime approveTime;
 
         /**
-         * 箱规编号
+         * 发货仓库名称
          */
-        private Integer boxSpecNo;
+        private String fromWarehouseName;
 
         /**
-         * 箱数
+         * 发货国家
          */
-        private Integer boxQty;
+        private String fromCountryName;
+
+        /**
+         * 发货详细地址
+         */
+        private String fromAddress;
+
+        /**
+         * 目的仓库名称
+         */
+        private String toWarehouseName;
+
+        /**
+         * 目的国家
+         */
+        private String toCountry;
+
+        /**
+         * 目的国家
+         */
+        private String toCountryName;
+
+        /**
+         * 目的详细地址
+         */
+        private String toAddress;
+
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 装箱信息
+         */
+        private List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDTOList;
     }
 
+    /**
+     * 物流详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewLogisticDTO {
 
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 主表id
+         */
+        private String mainId;
+
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+
+        /**
+         * 物流方式:/wms/common/enumDropDown?type=LogisticsMethod
+         * 描述：airfreight:空运, express:快递, oceanFreightBulk:海运散装
+         * , oceanFreightFCL:海运整箱, railwayTransportationBulk:铁运散装
+         * , railwayTransportationFCL:铁运整箱
+         */
+        private String logisticsMethod;
+
+        /**
+         * 物流方式名称
+         */
+        private String logisticsMethodName;
+
+        /**
+         * 物流渠道
+         */
+        private String logisticsChannel;
+
+        /**
+         * 物流渠道名称
+         */
+        private String logisticsChannelName;
+
+        /**
+         * 发货时间
+         */
+        private LocalDateTime deliveryTime;
+
+        /**
+         * 备注
+         */
+        private String logisticsRemark;
+
+        /**
+         * 物流运单号
+         */
+        private List<String> trackingNoList;
+
+        /**
+         * 发货地址
+         */
+        private String deliveryFromAddress;
+
+        /**
+         * 收货地址
+         */
+        private String receiveToAddress;
+    }
 }
