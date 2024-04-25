@@ -217,7 +217,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
         //查询授权信息
         TransferLogisticsAuthEntity authEntity = transferLogisticsAuthService.getByMainId("", transferLogisticsSupplierId);
         if (ObjectUtil.isEmpty(authEntity)) {
-            new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
+            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
         }
 
         TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());

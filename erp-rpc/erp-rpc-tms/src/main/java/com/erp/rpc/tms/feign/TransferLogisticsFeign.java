@@ -42,7 +42,7 @@ public interface TransferLogisticsFeign {
      * @param supplierId
      * @return
      */
-    @GetMapping("/feign/transferLogistics/getLogisticsSupplierById")
+    @PostMapping("/feign/transferLogistics/getLogisticsSupplierById")
     TransferLogisticsSupplierEntity getLogisticsSupplierById(@RequestBody String supplierId);
 
     /**

@@ -53,7 +53,7 @@ public class TransferLogisticsFeignController {
      * @param supplierId
      * @return
      */
-    @GetMapping("/getLogisticsSupplierById")
+    @PostMapping("/getLogisticsSupplierById")
     public TransferLogisticsSupplierEntity getLogisticsSupplierById(@RequestBody String supplierId) {
         return transferLogisticsSupplierService.getById(supplierId);
     }
