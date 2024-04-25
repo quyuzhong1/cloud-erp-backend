@@ -214,11 +214,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         PackageForecastDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         String uploadStatus = "";
-        if (!"all".equals(params.getTabFlag())) {
-            uploadStatus = params.getTabFlag();
-        }
+
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params, uploadStatus);
+        IPage pageData = baseMapper.paging(query, params);
         List<PackageForecastDTO.PagingViewDTO> list = pageData.getRecords();
         //处理分页数据
         fillPaging(list);
@@ -710,10 +708,8 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     @Override
     public Boolean exportExcel(PackageForecastDTO.ExportDTO dto, HttpServletResponse response) {
         String uploadStatus = "";
-        if (!"all".equals(dto.getTabFlag())) {
-            uploadStatus = dto.getTabFlag();
-        }
-        List<PackageForecastDTO.PagingViewDTO> list = baseMapper.listExcel(dto, uploadStatus);
+
+        List<PackageForecastDTO.PagingViewDTO> list = baseMapper.listExcel(dto);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
