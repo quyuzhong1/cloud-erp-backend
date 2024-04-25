@@ -3076,7 +3076,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                                     && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
                             .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
                             .orElse(MathUtil.ZERO);
-                    detailDTO.setUseableQty(useableQty);
                     //冻结库存
                     freezeQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
                                     && obj.getWarehouseId().equals(detailDTO.getWarehouseId())
@@ -3084,8 +3083,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                                     && InventoryStatusEnum.FROZEN.getCode().equals(obj.getInventoryStatus()))
                             .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
                             .orElse(MathUtil.ZERO);
-                    detailDTO.setFreezeQty(freezeQty);
                 }
+                detailDTO.setUseableQty(useableQty);
+                detailDTO.setFreezeQty(freezeQty);
                 //存在仓库则需要判断是否缺货
                 if (StrUtil.isNotBlank(detailDTO.getWarehouseId())) {
                     //缺货订单
