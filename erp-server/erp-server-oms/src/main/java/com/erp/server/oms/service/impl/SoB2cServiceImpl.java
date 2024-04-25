@@ -5201,6 +5201,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
+        //待配货和配货中订单允许配货
+        if (!SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(entity.getBillStatus())
+                && !SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_DISTRIBUTION, entity.getCode());
+        }
+        //只有已审核数据支持配货
+        if (!ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_APPROVE_NOT_DISTRIBUTION, entity.getCode());
+        }
         //物流信息
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
         if (ObjectUtils.isEmpty(soB2cLogisticsEntity)) {
