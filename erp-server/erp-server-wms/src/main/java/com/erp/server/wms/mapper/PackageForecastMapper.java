@@ -35,7 +35,7 @@ public interface PackageForecastMapper extends BaseMapper<PackageForecastEntity>
      * @param params
      * @return
      */
-    IPage<PackageForecastDTO.PagingViewDTO> paging(Page query, @Param("params") PackageForecastDTO.PagingParamDTO params,@Param("uploadStatus") String uploadStatus);
+    IPage<PackageForecastDTO.PagingViewDTO> paging(Page query, @Param("params") PackageForecastDTO.PagingParamDTO params);
 
     /**
      * 导出

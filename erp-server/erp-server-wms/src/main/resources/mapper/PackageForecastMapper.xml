@@ -86,64 +86,10 @@
          FROM package_forecast pf
          INNER JOIN  package_forecast_detail pfd
          ON pf.id = pfd.main_id AND pfd.is_deleted = FALSE
-         WHERE pf.is_deleted = FALSE
-         <!--tab flag-->
-         <if test="uploadStatus!=null and uploadStatus!=''">
-            and pf.upload_status = #{uploadStatus}
-         </if>
-         <!--tab 组包单号-->
-         <if test="params.code!=null and params.code!=''">
-             and pf.code ILIKE concat('%',#{params.code}::text,'%')
-         </if>
-        <!--物流商-->
-        <if test="params.logisticsSupplierIdList!=null and params.logisticsSupplierIdList.size>0">
-            and pf.logistics_supplier_id IN
-            <foreach collection="params.logisticsSupplierIdList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <!-- 大包运单号-->
-        <if test="params.transportNo!=null and params.transportNo!=''">
-            and pf.transport_no ILIKE concat('%',#{params.transportNo}::text,'%')
-        </if>
-        <!-- 交接单号/组包号-->
-        <if test="params.platformNo!=null and params.platformNo!=''">
-            and (pf.handover_no ILIKE concat('%',#{params.platformNo}::text,'%')
-                OR pf.platform_package_no ILIKE concat('%',#{params.platformNo}::text,'%'))
-        </if>
-        <!--大包交接状态-->
-        <if test="params.handoverStatusList!=null and params.handoverStatusList.size>0">
-            and pf.handover_status IN
-            <foreach collection="params.handoverStatusList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <!--小包交接状态-->
-        <if test="params.minHandoverStatusList!=null and params.minHandoverStatusList.size>0">
-            and pfd.handover_status IN
-            <foreach collection="params.minHandoverStatusList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <!--上传状态-->
-        <if test="params.uploadStatusList!=null and params.uploadStatusList.size>0">
-            and pf.upload_status IN
-            <foreach collection="params.uploadStatusList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <!--创建人id-->
-        <if test="params.createUserIdList!=null and params.createUserIdList.size>0">
-            and pf.create_user_id IN
-            <foreach collection="params.createUserIdList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <!--创建时间 -->
-        <if test="params.createTimeList !=null and params.createTimeList.size>0">
-            AND pf.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > pf.create_time
-        </if>
+         WHERE ${params.sqlMap.default}
+
+        and pf.is_deleted = FALSE
+
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
