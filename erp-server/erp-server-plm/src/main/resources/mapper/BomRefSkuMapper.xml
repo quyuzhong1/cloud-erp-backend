@@ -158,14 +158,16 @@
     <!-- 根据子级SKU查询未作废BOM -->
     <select id="listAllBomByChildSkuIdList" resultType="com.erp.model.plm.dto.BomDTO$BomSku">
         select
-            pbs.parent_sku_id ,
-            pbs.parent_sku_no ,
+            DISTINCT
+            pbsl.parent_sku_id ,
+            pbsl.parent_sku_no ,
             pbi.serial_number,
-            pbs.sku_id as skuId,
-            pbs.sku_no as skuNo,
-            pbs.quantity as qty
+            pbsl.sku_id as skuId,
+            pbsl.sku_no as skuNo,
+            pbsl.quantity as qty
         from product_bom_info pbi
         inner join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
+        inner join product_bom_sku pbsl on pbs.bom_id = pbsl.bom_id and pbsl.is_deleted = false
         <where>
             pbi.is_deleted = false and pbi.state != 6
             and pbs.sku_id in
