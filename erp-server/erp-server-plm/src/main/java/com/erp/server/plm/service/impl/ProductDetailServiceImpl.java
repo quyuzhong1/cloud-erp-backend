@@ -2140,9 +2140,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //获取人民币汇率下含税成本
             BigDecimal actualTaxCostUsd = MathUtil.multiply(actualTaxCost, exchangeRate);
             //统一换算成美元汇率
-            if (Objects.isNull(skuCostDTO.getCostDate())) {
-                return;
-            }
             BigDecimal usdRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
             if (Objects.isNull(usdRate)) {
                 return;
