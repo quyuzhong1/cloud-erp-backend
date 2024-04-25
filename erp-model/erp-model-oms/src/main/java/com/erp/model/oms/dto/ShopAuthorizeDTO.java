@@ -110,8 +110,14 @@ public class ShopAuthorizeDTO implements Serializable {
         }
 
         // 美客多
-        if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code) && StrUtil.startWith(this.code, "TG")){
+        if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code) && StrUtil.startWith(this.state, PlatformDictEnum.MERCADOLIBRE.getCode())){
             this.setPlatformCode(PlatformDictEnum.MERCADOLIBRE.getCode());
+            return this;
+        }
+
+        // TikTok
+        if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code) && StrUtil.startWith(this.state, PlatformDictEnum.TIK_TOK.getCode())){
+            this.setPlatformCode(PlatformDictEnum.TIK_TOK.getCode());
             return this;
         }
 
@@ -138,6 +144,8 @@ public class ShopAuthorizeDTO implements Serializable {
             this.setPlatformCode(PlatformDictEnum.WALMART.getCode());
             return this;
         }
+
+
 
         throw new ServiceException("参数无法识别到对应平台");
     }

@@ -93,6 +93,12 @@ import com.erp.server.oms.convert.WalmartShipOrderConverter;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
+import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
+import com.sdk.oms.tiktok.dto.tiktok.split.PackagesBean;
+import com.sdk.oms.tiktok.dto.tiktok.split.PlatformSplitViewDTO;
+import com.sdk.oms.tiktok.dto.tiktok.split.SplitAttributesBean;
+import com.sdk.oms.tiktok.dto.tiktok.split.SplitAttributesDTO;
+import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -265,6 +271,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private MQProducerService mqProducerService;
+
+    @Resource
+    private TikTokSdkClientService tikTokSdkClientService;
 
     @Resource
     private SoB2cLabelService soB2cLabelService;
@@ -2408,8 +2417,37 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
     @Override
+    public SoB2cDTO.SplitSaveResultDTO splitSave(SoB2cDTO.SplitSaveDTO dto) {
+        //订单拆分字段处理
+        SoB2cDTO.SplitSaveResultDTO resultDTO = splitSaveHandle(dto);
+
+        //如果是TikTok平台拆分订单，需要同步到平台
+        if (PlatformDictEnum.TIK_TOK.getCode().equals(resultDTO.getOldEntity().getDictPlatform())) {
+            tikTokSplit(resultDTO);
+        }
+        return resultDTO;
+    }
+
     @Transactional(rollbackFor = Exception.class)
-    public List<String> splitSave(SoB2cDTO.SplitSaveDTO dto) {
+    public void tikTokSplit(SoB2cDTO.SplitSaveResultDTO resultDTO) {
+        OrderSplitPramDTO tikTokPramDTO = resultDTO.getTikTokPramDTO();
+        PlatformSplitViewDTO platformSplitViewDTO = tikTokSdkClientService.sendTikTokOrdersSplit(resultDTO.getOldEntity().getShopId(), resultDTO.getOldEntity().getDictPlatform(), tikTokPramDTO);
+        if (0 != platformSplitViewDTO.getCode()) {
+            throw new ServiceException(ApiError.ERROR_TIKTOK_SPLIT, resultDTO.getOldEntity().getCode());
+        }
+        List<PackagesBean> packages = platformSplitViewDTO.getData().getPackages();
+        for (SplittableGroupsBean splittableGroup : tikTokPramDTO.getSplittableGroups()) {
+            PackagesBean packagesBean = packages.stream().filter(req -> req.getSplittableGroupId().equals(splittableGroup.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(packagesBean)) {
+                continue;
+            }
+            //回写平台包裹号
+            soB2cDetailService.updatePlatformPackageIdByMainId(packagesBean.getId(), packagesBean.getSplittableGroupId());
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public SoB2cDTO.SplitSaveResultDTO splitSaveHandle(SoB2cDTO.SplitSaveDTO dto) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(entity)) {
@@ -2473,7 +2511,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //分组包装重量
         BigDecimal groupWeight = BigDecimal.ZERO;
 
+        // 使用 Set 存储 platformSkuNo 值
+        Set<String> platformSkuNoSet = new HashSet<>();
+
+        //拆分同步tiktok入参
+        OrderSplitPramDTO tikTokPramDTO = new OrderSplitPramDTO();
+        List<SplittableGroupsBean> splittableGroups = new ArrayList<>();
+
         for (int i = 0; i < splitList.size(); i++) {
+            SplittableGroupsBean groupsBean = new SplittableGroupsBean();
+
             SoB2cDTO.GroupSplitSaveDTO groupSplitSaveDTO = splitList.get(i);
             //新建拆分后数据
             SoB2cDTO.AddDTO addDTO = new SoB2cDTO.AddDTO();
@@ -2499,6 +2546,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     log.error("订单【{}】SKU【{}】拆分数量【{}】不能大于原数量【{}】", entity.getCode(), detailEntity.getSkuNo(), splitDetailSaveDTO.getQty(), detailEntity.getQty());
                     throw new ServiceException(ApiError.ERROR_SO_B2C_SPLIT_QTY, entity.getCode(), detailEntity.getSkuNo(), splitDetailSaveDTO.getQty(), detailEntity.getQty());
                 }
+
+                if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform())) {
+                    String platformSkuNo = detailEntity.getPlatformSkuNo();
+                    // 如果 platformSkuNo 已经存在于 Set 中，则表示重复
+                    if (!platformSkuNoSet.add(platformSkuNo) && i != 0) {
+                        throw new ServiceException(ApiError.ERROR_SO_B2C_TIKTOK_SPLIT_SKU, entity.getCode(), detailEntity.getSkuNo());
+                    }
+                }
+
                 SoB2cDetailDTO.AddDTO addDetailDTO = new SoB2cDetailDTO.AddDTO();
                 BeanMapperUtils.copy(detailEntity, addDetailDTO);
                 addDetailDTO.setQty(splitDetailSaveDTO.getQty());
@@ -2509,7 +2565,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             }
             addDTO.setDetailList(detailList);
-
             //拆分金额所占比例
             BigDecimal rate = MathUtil.divide(splitTotalAmount, totalAmount);
             BigDecimal amount = MathUtil.multiply(rate, entity.getAmount());
@@ -2549,6 +2604,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String code = StrUtil.format("{}_{}", entity.getCode(), flag);
             SoB2cEntity add = this.add(addDTO, code);
             soIdList.add(add.getId());
+
+            //用于同步到TikTok拆分数据的入参
+            List<String> sourceDetailIds = detailList.stream().map(req -> req.getSourceDetailId()).collect(Collectors.toList());
+            groupsBean.setOrderLineItemIds(sourceDetailIds);
+            groupsBean.setId(add.getId());
+            splittableGroups.add(groupsBean);
             //计算已生成金额
             groupAmount = MathUtil.add(addDTO.getAmount(), groupAmount);
             groupEstimatedShippingCost = MathUtil.add(logisticsAddDTO.getEstimatedShippingCost(), groupEstimatedShippingCost);
@@ -2558,12 +2619,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             groupWeight = MathUtil.add(logisticsAddDTO.getWeight(), groupWeight);
             flag++;
         }
+
         this.invalid(entity.getId(), StrUtil.format("【{}】被拆分作废", entity.getCode()), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
 
         //操作日志
         String msg = "从【{}】拆分出新订单";
         operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "拆分订单");
-        return soIdList;
+        SoB2cDTO.SplitSaveResultDTO splitSaveResultDTO = new SoB2cDTO.SplitSaveResultDTO();
+        splitSaveResultDTO.setSoB2cIds(soIdList);
+        splitSaveResultDTO.setTikTokPramDTO(tikTokPramDTO);
+        splitSaveResultDTO.setOldEntity(entity);
+        return splitSaveResultDTO;
     }
 
     @Override
@@ -3514,7 +3580,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(entity.getDictPlatform())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_MERCADO_NOT_SPLIT, entity.getCode());
         }
-
+        if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform())) {
+            TikTokShopInfoDTO tikTokShopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(entity.getShopId());
+            SplitAttributesDTO splitAttributesDTO = tikTokSdkClientService.sendTikTokSplitAttributes(tikTokShopInfoDTO, entity.getPlatformCode());
+            SplitAttributesBean splitAttributesBean = splitAttributesDTO.getData().getSplitAttributes().stream().filter(req -> entity.getPlatformCode().equals(req.getOrderId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(splitAttributesBean) || !splitAttributesBean.getCanSplit()) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_TIKTOK_NOT_SPLIT, entity.getCode(), ObjectUtil.isNotEmpty(splitAttributesBean) ? splitAttributesBean.getReason() : "");
+            }
+        }
 
         //未付款数据不能操作
         if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) {
@@ -4222,7 +4295,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             authDTO.setLogisticsPlatform(platformEnum.getCode());
 
             //映射详情字段
-            List<SoB2cDetailEntity> detailList = soB2cDetailEntities.stream().filter(req -> soB2cEntity.getId().equals(req.getMainId())).collect(Collectors.toList());
+            List<SoB2cDetailEntity> detailList = soB2cDetailEntities.stream()
+                    .filter(req -> soB2cEntity.getId().equals(req.getMainId())
+                            && StringUtils.isBlank(req.getSourcePlatform())
+                    ).collect(Collectors.toList());
             List<WalmartShipOrderDetailDTO> walmartShipOrderDetailDTOS = WalmartShipOrderConverter.INSTANCE.soB2cDetailEntityToWalmartShipOrderDetail(detailList);
             walmartShipDTO.setDetailList(walmartShipOrderDetailDTOS);
 
@@ -5028,7 +5104,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //沃尔玛
             if (PlatformDictEnum.WALMART.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
                 if ("Cancelled".equals(platformOrderStatus)
-                        || "Refund".equals(platformOrderStatus)) {
+                        || "Refund".equals(platformOrderStatus)
+                ) {
+                    oldEntity.setApproveStatus(oldApproveStatus);
+                    dto.setPayStatus(oldEntity.getPayStatus());
+                    dto.setBillStatus(oldEntity.getBillStatus());
+                }
+            }
+            //TikTok
+            if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+                if ("AWAITING_COLLECTION".equalsIgnoreCase(platformOrderStatus)
+                        || "PARTIALLY_SHIPPING".equalsIgnoreCase(platformOrderStatus)
+                        || "IN_TRANSIT".equalsIgnoreCase(platformOrderStatus)
+                        || "DELIVERED".equalsIgnoreCase(platformOrderStatus)
+                        || "COMPLETED".equalsIgnoreCase(platformOrderStatus)
+                ) {
                     oldEntity.setApproveStatus(oldApproveStatus);
                     dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(oldEntity.getBillStatus());
@@ -6499,7 +6589,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> platformSkuList = detailList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).collect(Collectors.toList());
         // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
         List<String> platformSpuList = new LinkedList<>();
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(entity.getDictPlatform())){
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(entity.getDictPlatform())
+                || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(entity.getDictPlatform())
+                || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(entity.getDictPlatform())){
             platformSpuList = detailList.stream()
                     .map(SoB2cDetailEntity::getPlatformSpuNo)
                     .distinct()
@@ -6512,7 +6604,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(platformSkuList);
         // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(entity.getDictPlatform())){
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(entity.getDictPlatform())
+                || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(entity.getDictPlatform())
+                || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(entity.getDictPlatform())){
             paramDTO.setPlatformSpuNoList(platformSpuList);
         }
         paramDTO.setMatchResult(true);

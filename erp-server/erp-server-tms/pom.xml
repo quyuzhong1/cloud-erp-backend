@@ -257,6 +257,12 @@
         </dependency>
         <dependency>
             <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-sdk-tms-tiktok</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
             <artifactId>erp-sdk-msg-fs</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>

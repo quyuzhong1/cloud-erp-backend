@@ -156,6 +156,12 @@ public interface RedisCacheConstants {
     String AUTH_MERCADO_STATE = "third-party-auth:mercado_state:{}";
 
     /**
+     * TikTok授权:{id}
+     * 内容店铺ID
+     */
+    String AUTH_TIKTOK_STATE = "third-party-auth:tiktok_state:{}";
+
+    /**
      * 平台token刷新重试次数记录
      * platform-refresh-token:平台名称:店铺ID
      */

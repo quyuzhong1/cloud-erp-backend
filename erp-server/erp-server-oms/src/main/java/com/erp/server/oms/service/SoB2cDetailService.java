@@ -9,8 +9,6 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
-import com.erp.model.plm.vo.SkuSimpleVO;
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
 
 import java.time.LocalDateTime;
@@ -166,4 +164,13 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @since 2023-11-28
      **/
     ListingInfoWithSkuMappingDTO checkAndMappingDTO(List<ListingInfoWithSkuMappingDTO> mappingDTOList, String platformSpuNo, String dictPlatform);
+
+    /**
+     * 根据主表id修改平台包裹号
+     * @param platformPackageId
+     * @param mainId
+     * @return
+     */
+    Boolean updatePlatformPackageIdByMainId(String platformPackageId, String mainId);
+
 }

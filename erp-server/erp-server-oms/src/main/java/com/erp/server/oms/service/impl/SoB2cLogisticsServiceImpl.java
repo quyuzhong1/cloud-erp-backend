@@ -262,17 +262,19 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 //                if (null != entity.getHeight() && entity.getHeight().compareTo(BigDecimal.ZERO) > 0){
 //                    totalHeight  = entity.getHeight();
 //                }
-                entity2.setWeight(allNetWeight);
-                entity2.setLength(maxLength);
-                entity2.setWidth(maxWidth);
-                entity2.setHeight(totalHeight);
-                entity2.setId(entity.getId());
                 //如果美客多平台订单不是平台仓发货，不更新物流单号
                 if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
                     if (!mainEntity.hasPlatformWarehouseOrder()) {
                         entity.setCode(oldEntity.getCode());
                     }
                 }
+
+                entity2.setWeight(allNetWeight);
+                entity2.setLength(maxLength);
+                entity2.setWidth(maxWidth);
+                entity2.setHeight(totalHeight);
+                entity2.setId(entity.getId());
+
                 if (!this.updateById(entity2)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 更新失败");
                 }

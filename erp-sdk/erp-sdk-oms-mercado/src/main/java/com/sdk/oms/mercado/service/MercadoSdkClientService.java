@@ -18,6 +18,7 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -307,7 +308,7 @@ public class MercadoSdkClientService {
     }
 
     /**
-     * 发送请求获取指定店铺的sku信息
+     * 发送请求获取指定店铺的订单信息
      * @param shopInfoDTO
      * @return
      */
@@ -461,6 +462,7 @@ public class MercadoSdkClientService {
             }
         } else {
             ShopAuthEntity shopAuthEntity = shopInfoFeign.getShopAuthByShopId(shopId);
+            ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
             CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
             AppClientEnum appClientEnum = AppClientEnum.MERCADO_ACCESS_TOKEN;
             findDTO.setBusinessType(appClientEnum.getBusinessType());
@@ -474,6 +476,9 @@ public class MercadoSdkClientService {
             result.setBaseUrl(cfgAppClient.getUrl());
             result.setClientId(cfgAppClient.getClientId());
             result.setClientSecret(cfgAppClient.getClientSecret());
+            Map<String, Object> extendData = shopInfoEntity.getExtendData();
+            result.setUserId(Integer.valueOf(extendData.get("userId")+""));
+
             result.setId(shopId);
             if (Objects.nonNull(shopAuthEntity)) {
                 result.setAccessToken(shopAuthEntity.getAccessToken());

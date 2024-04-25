@@ -646,6 +646,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if (null == entity){
             throw new ServiceException("对应销售平台物流渠道信息不存在");
         }
-        return new LogisticsChannelDTO.SignShipDTO(entity.getId(), entity.getCode(), entity.getCnName());
+        return new LogisticsChannelDTO.SignShipDTO(entity.getId(), entity.getCode(), entity.getCnName(), entity.getPlatformChannelId());
     }
 }

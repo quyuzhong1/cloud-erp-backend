@@ -258,7 +258,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param dto
      * @return Boolean
      */
-    List<String> splitSave(SoB2cDTO.SplitSaveDTO dto);
+    SoB2cDTO.SplitSaveResultDTO splitSave(SoB2cDTO.SplitSaveDTO dto);
     /**
      * @description: 取消合并前数据展示
      * @author Will
@@ -845,7 +845,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 计算明细重量
      */
     List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> detailList, List<SkuInfoSimpleVO> skuList);
-    
+
     /**
      * 根据条件获取数据对比系统数据
      * @param params

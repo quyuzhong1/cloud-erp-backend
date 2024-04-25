@@ -1436,6 +1436,10 @@ public class SoB2cDTO implements Serializable {
          */
         private String id;
         /**
+         * 平台产品sku
+         */
+        private String platformSkuNo;
+        /**
          * 图片Url
          */
         private String imageUrl;
@@ -2306,5 +2310,26 @@ public class SoB2cDTO implements Serializable {
         private String getHeightStr () {
             return this.height.stripTrailingZeros().toPlainString();
         }
+    }
+
+    /**
+     * 拆单保存结果返回
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SplitSaveResultDTO {
+        /**
+         * id
+         */
+        private List<String> soB2cIds;
+        /**
+         * TikTok拆单入参
+         */
+        private OrderSplitPramDTO tikTokPramDTO;
+        /**
+         * 原始订单信息
+         */
+        private SoB2cEntity oldEntity;
+
     }
 }

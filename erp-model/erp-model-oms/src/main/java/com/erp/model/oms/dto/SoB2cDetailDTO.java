@@ -248,7 +248,12 @@ public class SoB2cDetailDTO implements Serializable {
         */
         private BigDecimal exchangeRate;
 
-    }
+        /**
+        * 来源详情id
+        */
+        private String sourceDetailId;
+
+ }
 
     /**
     * 新增

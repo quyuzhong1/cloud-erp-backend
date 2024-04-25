@@ -18,8 +18,10 @@ import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.server.oms.query.SoB2cQueryHandler;
+import com.erp.server.oms.service.SoB2cDetailService;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
+import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -46,6 +48,10 @@ public class SoB2cController extends BaseController {
     private SoB2cService soB2cService;
     @Resource
     private SoB2cErrorService soB2cErrorService;
+    @Resource
+    private TikTokSdkClientService tikTokSdkClientService;
+    @Resource
+    private SoB2cDetailService soB2cDetailSerice;
 
 
     /**
@@ -800,9 +806,9 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/splitSave")
     public ApiResult<List<BatchResultDTO>> splitSave(@RequestBody @Validated SoB2cDTO.SplitSaveDTO dto) {
-        List<String> soIdList = soB2cService.splitSave(dto);
-        if (CollectionUtils.isNotEmpty(soIdList)) {
-            for (String soId : soIdList) {
+        SoB2cDTO.SplitSaveResultDTO resultDTO = soB2cService.splitSave(dto);
+        if (ObjectUtil.isNotEmpty(resultDTO)) {
+            for (String soId : resultDTO.getSoB2cIds()) {
                 try {
                     soB2cService.checkProductRegistrationAndUpdate(soId, "");
                 } catch (Exception e) {
