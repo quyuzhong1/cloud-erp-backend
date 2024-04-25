@@ -4259,4 +4259,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<SkuVO> skuList = baseMapper.listSkuCategoryByIds(skuIds);
         return skuList;
     }
+
+    @Override
+    public List<SkuVO> listSkuPurchaseByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuPurchaseByIds(skuIds);
+        return skuList;
+    }
 }

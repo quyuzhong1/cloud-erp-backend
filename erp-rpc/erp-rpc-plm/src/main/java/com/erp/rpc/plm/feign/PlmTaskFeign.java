@@ -500,7 +500,7 @@ public interface PlmTaskFeign {
     List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(@RequestBody List<String> skuIds);
 
     /**
-     * 根据skuid 集合获取到sku信息
+     * 根据skuid 集合获取到sku信息 （走redis缓存审核sku时刷新缓存）
      *
      * @param skuIds
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
@@ -572,4 +572,14 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/listSkuCategoryByIds")
     List<SkuVO> listSkuCategoryByIds(@RequestBody List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku分类信息（基础信息+产品信息+采购信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2024-04-25 12:06
+     */
+    @PostMapping("feign/product/listSkuPurchaseByIds")
+    List<SkuVO> listSkuPurchaseByIds(@RequestBody List<String> skuIds);
 }

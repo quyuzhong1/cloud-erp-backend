@@ -275,6 +275,8 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
     List<SkuVO> listSkuLogisticsByIds(@Param("skuIds")List<String> skuIds);
 
     List<SkuVO> listSkuCategoryByIds(@Param("skuIds")List<String> skuIds);
+
+    List<SkuVO> listSkuPurchaseByIds(@Param("skuIds")List<String> skuIds);
 }
 
 

@@ -690,4 +690,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     List<SkuVO> listSkuLogisticsByIds(List<String> skuIds);
 
     List<SkuVO> listSkuCategoryByIds(List<String> skuIds);
+
+    List<SkuVO> listSkuPurchaseByIds(List<String> skuIds);
 }

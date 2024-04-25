@@ -1852,4 +1852,35 @@
             </foreach>
         </if>
     </select>
+    <select id="listSkuPurchaseByIds" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pd.version,
+        pd.id AS skuId,
+        pd.product_id AS productId,
+        pd.sku_no,
+        pd.images_url AS skuImagesUrl,
+        pd.name AS skuName,
+        pd.variant_property as variantProperty,
+        pd.unit_name,
+        pd.status,
+        pd.warehouse_location as warehouseLocation,
+        pi.id AS productId,
+        pi.spu_no as spuNo,
+        pi.name AS spuName,
+        pi.category_id as categoryId,
+        pp.ean,
+        pp.moq,
+        pp.main_supplier as supplierId
+        FROM  product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
+        WHERE
+        pd.is_deleted = FALSE
+        <if test="skuIds != null and skuIds.size>0">
+            AND pd.id IN
+            <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+    </select>
 </mapper>
