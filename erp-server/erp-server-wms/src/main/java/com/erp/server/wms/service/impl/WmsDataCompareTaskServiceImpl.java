@@ -6,9 +6,11 @@ import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -440,6 +442,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 			errorCount = errorCount + 1;
 			update(Wrappers.<WmsDataCompareTaskEntity>lambdaUpdate().set(WmsDataCompareTaskEntity::getErrorCount, errorCount)
 					.set(WmsDataCompareTaskEntity::getErrorMessage, ExceptionUtil.stacktraceToString(e, 2000))
+					.set(WmsDataCompareTaskEntity::getUpdateTime, LocalDateTime.now())
 					.set(errorCount == 3 , WmsDataCompareTaskEntity::getStatus, WmsDataCompareTaskStatusEnum.ERROR.getCode())
 					.eq(WmsDataCompareTaskEntity::getId, id));
 			if(errorCount >= 3) {
@@ -551,6 +554,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					.eq(WmsDataCompareImportEntity::getTaskId, id)
 					.eq(WmsDataCompareImportEntity::getParseStatus, WmsDataCompareImportParseStatusEnum.WAIT.getCode())) == 0) {
 				update(Wrappers.<WmsDataCompareTaskEntity>lambdaUpdate().set(WmsDataCompareTaskEntity::getSubStatus, WmsDataCompareTaskSubStatusEnum.WAIT_COMPARE)
+						.set(WmsDataCompareTaskEntity::getUpdateTime, LocalDateTime.now())
 						.eq(WmsDataCompareTaskEntity::getId, id).eq(WmsDataCompareTaskEntity::getSubStatus, WmsDataCompareTaskSubStatusEnum.WAIT_PARSE));
 			}
 		}
@@ -652,6 +656,9 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 						if(CollUtil.isNotEmpty(importDataList)) {
 							insertWmsDataCompareTempEntity.setImportDataJson(JSON.toJSONString(importDataList.get(0)));
 						}
+						if(compareResult == WmsDataCompareTempCompareResultEnum.DIFF) {
+							insertWmsDataCompareTempEntity.setDiffFields(JSON.toJSONString(Collections.singleton(pkImportDataMappingDTO)));
+						}
 						insertWmsDataCompareTempEntity.setSystemDataJson(JSON.toJSONString(systemData));
 						insertWmsDataCompareTempEntity.setSystemDataId(((DataCompareDTO)systemData).getId());
 						insertOrUpdateTempEntity.add(insertWmsDataCompareTempEntity);
@@ -683,6 +690,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 													.set(WmsDataCompareTaskEntity::getResultExceedCount, resultExceedCount)
 													.set(WmsDataCompareTaskEntity::getResultMissCount, resultMissCount)
 													.set(WmsDataCompareTaskEntity::getResultDiffCount, resultDiffCount)
+													.set(WmsDataCompareTaskEntity::getUpdateTime, LocalDateTime.now())
 													.update();
 		}
 	}
@@ -773,14 +781,8 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				    int i = headList.size();
 				    for(WmsDataCompareTempEntity wmsDataCompareTempEntity : wmsDataCompareTempEntityList) {
 				    	String compareResult = wmsDataCompareTempEntity.getCompareResult();
-				    	String systemDataJson = "";
-				    	if(WmsDataCompareTempCompareResultEnum.EXCEED.getCode().equals(compareResult) || WmsDataCompareTempCompareResultEnum.DIFF.getCode().equals(compareResult) ) {
-				    		systemDataJson = wmsDataCompareTempEntity.getSystemDataJson();
-				    	}
-				    	String importDataJson = "";
-				    	if(WmsDataCompareTempCompareResultEnum.MISS.getCode().equals(compareResult) || WmsDataCompareTempCompareResultEnum.DIFF.getCode().equals(compareResult) ) {
-				    		importDataJson = wmsDataCompareTempEntity.getImportDataJson();
-				    	}
+				    	String systemDataJson = wmsDataCompareTempEntity.getSystemDataJson();
+				    	String importDataJson = wmsDataCompareTempEntity.getImportDataJson();
 				    	if(WmsDataCompareTempCompareResultEnum.DIFF.getCode().equals(compareResult)) {
 				    		String diffFields = wmsDataCompareTempEntity.getDiffFields();
 				    		if(StringUtils.isNotBlank(diffFields)) {
@@ -827,6 +829,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		.set(WmsDataCompareTaskEntity::getSubStatus, WmsDataCompareTaskSubStatusEnum.FINISH.getCode())
 		.set(WmsDataCompareTaskEntity::getStatus, WmsDataCompareTaskStatusEnum.FINISH.getCode())
 		.set(WmsDataCompareTaskEntity::getResultReportUrl, resultReportUrl)
+		.set(WmsDataCompareTaskEntity::getUpdateTime, LocalDateTime.now())
 		.update();
 		wmsDataCompareTempService.deleteData(id);
 	}
