@@ -369,7 +369,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 BaseIdsDTO.IdsDTO approveIdDto = new BaseIdsDTO.IdsDTO();
                 approveIdDto.setIds(approveIds);
                 if (CollectionUtils.isNotEmpty(approveIds)) {
-                    soOutstockService.disApprove(approveIdDto, Boolean.TRUE);
+                    soOutstockService.disApprove(approveIdDto, Boolean.FALSE);
                 }
 
                 //查询已提交的出库单，进行撤销
