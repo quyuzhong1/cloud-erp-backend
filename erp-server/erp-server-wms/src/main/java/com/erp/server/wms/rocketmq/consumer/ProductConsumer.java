@@ -29,37 +29,37 @@ public class ProductConsumer {
     @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;
 
-    @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC,
-            selectorExpression = "sync_wms_purchase_order_tag",
-            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-wms_purchase_order_consumer")
-    public class ConsumerWmsPurchaseOrder implements RocketMQListener<List<PurchaseOrderEntity>> {
-        @Override
-        public void onMessage(List<PurchaseOrderEntity> ext) {
-            purchaseOrderService.saveOrUpdatePurchaseOrder(ext);
-        }
-    }
-
-    @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC,
-            selectorExpression = "sync_wms_purchase_order_detail_tag",
-            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-wms_purchase_order_detail_consumer")
-    public class ConsumerWmsPurchaseDetail implements RocketMQListener<List<PurchaseOrderDetailEntity>> {
-        @Override
-        public void onMessage(List<PurchaseOrderDetailEntity> ext) {
-            purchaseOrderDetailService.saveOrUpdatePurchaseOrderDetail(ext);
-        }
-    }
-
-    @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC,
-            selectorExpression = "sync_wms_purchase_order_supplier_tag",
-            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-wms_purchase_order_supplier_consumer")
-    public class ConsumerWmsPurchaseOrderSupplier implements RocketMQListener<List<PurchaseOrderSupplierEntity>> {
-        @Override
-        public void onMessage(List<PurchaseOrderSupplierEntity> ext) {
-            purchaseOrderSupplierService.saveOrUpdatePurchaseOrderSupplier(ext);
-        }
-    }
+//    @Service
+//    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC,
+//            selectorExpression = "sync_wms_purchase_order_tag",
+//            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-wms_purchase_order_consumer")
+//    public class ConsumerWmsPurchaseOrder implements RocketMQListener<List<PurchaseOrderEntity>> {
+//        @Override
+//        public void onMessage(List<PurchaseOrderEntity> ext) {
+//            purchaseOrderService.saveOrUpdatePurchaseOrder(ext);
+//        }
+//    }
+//
+//    @Service
+//    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC,
+//            selectorExpression = "sync_wms_purchase_order_detail_tag",
+//            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-wms_purchase_order_detail_consumer")
+//    public class ConsumerWmsPurchaseDetail implements RocketMQListener<List<PurchaseOrderDetailEntity>> {
+//        @Override
+//        public void onMessage(List<PurchaseOrderDetailEntity> ext) {
+//            purchaseOrderDetailService.saveOrUpdatePurchaseOrderDetail(ext);
+//        }
+//    }
+//
+//    @Service
+//    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC,
+//            selectorExpression = "sync_wms_purchase_order_supplier_tag",
+//            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-wms_purchase_order_supplier_consumer")
+//    public class ConsumerWmsPurchaseOrderSupplier implements RocketMQListener<List<PurchaseOrderSupplierEntity>> {
+//        @Override
+//        public void onMessage(List<PurchaseOrderSupplierEntity> ext) {
+//            purchaseOrderSupplierService.saveOrUpdatePurchaseOrderSupplier(ext);
+//        }
+//    }
 }
 
