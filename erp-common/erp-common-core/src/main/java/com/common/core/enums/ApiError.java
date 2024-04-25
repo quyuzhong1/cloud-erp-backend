@@ -992,6 +992,7 @@ public enum ApiError implements Serializable {
     BILL_IS_GENERATE_DECLARE(92137,"单据【{}】报关状态已生成，不可修改为无需生成"),
     BILL_IS_GENERATE_LOGISTICS(92137,"单据【{}】物流状态已生成，不可修改为无需生成"),
     SO_OUTSTOCK_NOT_PACKING(92137,"出库单已装箱，无法更改装箱信息"),
+    TRANSFER_DECLARE_SO_EXISTS(92138,"订单【{}】已存在入库预报单，请不要重复新增"),
 
 
 
