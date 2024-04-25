@@ -128,13 +128,6 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
                         || detailEntity.getInWarehouseLocation().equals(detailEntity.getOutWarehouseLocation())) {
                     throw new ServiceException(ApiError.ERROR_CANNOT_SAME_POSITION);
                 }
-                //获取仓位
-                WarehouseLocationEntity outWarehouseLocation = warehouseLocationService.getByIdOpt(detailEntity.getOutWarehouseLocation())
-                        .orElseThrow(() -> new ServiceException(ApiError.ERROR_OUT_WAREHOUSELOCATION_NOT_FOUND));
-                WarehouseLocationEntity inWarehouseLocation = warehouseLocationService.getByIdOpt(detailEntity.getInWarehouseLocation())
-                        .orElseThrow(() -> new ServiceException(ApiError.ERROR_IN_WAREHOUSELOCATION_NOT_FOUND));
-                detailEntity.setOutWarehouseLocation(outWarehouseLocation.getCode());
-                detailEntity.setInWarehouseLocation(inWarehouseLocation.getCode());
             }
             paramDTO.setWarehouseLocations(Arrays.asList(detailEntity.getOutWarehouseLocation()));
             List<InventoryDTO.PdaInventoryDTO> inventoryByParams = inventoryService.getInventoryByParam(paramDTO);
