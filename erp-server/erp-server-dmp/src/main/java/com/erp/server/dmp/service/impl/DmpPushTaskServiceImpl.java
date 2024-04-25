@@ -42,6 +42,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.server.dmp.mapper.DmpPushTaskHistoryMapper;
 import com.erp.server.dmp.mapper.DmpPushTaskMapper;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
@@ -89,6 +90,8 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
 
     @Resource
     private RedisUtil redisUtil;
+    @Resource
+    private DmpPushTaskHistoryMapper dmpPushTaskHistoryMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -100,7 +103,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         Boolean isSend = isSendParentBillTask(entity);
         String entityId = saveOrUpdateDmpSyncTask(entity);
         //判断是否存在上级单据，并且推送成功
-        if (!isSend) {
+        if (Boolean.FALSE.equals(isSend)) {
             return;
         }
         // 发送MQ消息
@@ -128,15 +131,14 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
 
     @Override
     public List<DmpPushTaskEntity> listNeedPushTask() {
-        List<DmpPushTaskEntity> list = lambdaQuery()
+        return lambdaQuery()
                 .in(DmpPushTaskEntity::getStatus, Arrays.asList(SyncStatusEnum.TO_BE_SYNC.getCode(), SyncStatusEnum.FAILED_SYNC.getCode()))
                 .list();
-        return list;
     }
 
     @Override
     public DmpPushTaskEntity getByParam(DmpSyncTaskDTO.OneDTO oneDTO) {
-        DmpPushTaskEntity found = lambdaQuery()
+        return lambdaQuery()
                 .eq(DmpPushTaskEntity::getSourceId, oneDTO.getSourceId())
                 .eq(StringUtils.isNotBlank(oneDTO.getSourceType()),DmpPushTaskEntity::getSourceType, oneDTO.getSourceType())
                 .eq(DmpPushTaskEntity::getSourcePlatformName, oneDTO.getSourcePlatformName())
@@ -145,12 +147,11 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 .eq(StringUtils.isNotBlank(oneDTO.getMqTag()),DmpPushTaskEntity::getMqTag, oneDTO.getMqTag())
                 .last("LIMIT 1")
                 .one();
-        return found;
     }
 
     @Override
     public List<DmpPushTaskEntity> listByParam(DmpSyncTaskDTO.ListDTO listDTO) {
-        List<DmpPushTaskEntity> list = lambdaQuery()
+        return lambdaQuery()
                 .in(DmpPushTaskEntity::getSourceId, listDTO.getSourceIdList())
                 .eq(StringUtils.isNotBlank(listDTO.getSourceType()), DmpPushTaskEntity::getSourceType, listDTO.getSourceType())
                 .eq(DmpPushTaskEntity::getSourcePlatformName, listDTO.getSourcePlatformName())
@@ -158,7 +159,6 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 .eq(StringUtils.isNotBlank(listDTO.getMqTopic()), DmpPushTaskEntity::getMqTopic, listDTO.getMqTopic())
                 .eq(StringUtils.isNotBlank(listDTO.getMqTag()), DmpPushTaskEntity::getMqTag, listDTO.getMqTag())
                 .list();
-        return list;
     }
 
     @Override
@@ -195,6 +195,9 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         syncIng.setCount(syncIngCount);
         result.add(syncIng);
+        //已归档
+        DmpPushTaskDTO.TabListDTO archived = dmpPushTaskHistoryMapper.getStatusCount(dto.getPermissionSql());
+        result.add(archived);
 
         //无需同步
         DmpPushTaskDTO.TabListDTO noNeedSync = new DmpPushTaskDTO.TabListDTO();
@@ -253,13 +256,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                     updateList.add(dmpPushTaskEntity);
                     continue;
                 }
-                String mqData = dmpPushTaskEntity.getMqData();
-                JSONObject jsonObject = JSONUtil.parseObj(mqData);
-                jsonObject.set("dmpSyncTaskId",dmpPushTaskEntity.getId());
-                SendResult result = mqProducerService.syncClassMsg(dmpPushTaskEntity.getMqTopic(), dmpPushTaskEntity.getMqTag(), JSONUtil.toJsonStr(jsonObject), dmpPushTaskEntity.getSourceId());
-                if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                    throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-                }
+                DmpPushTaskHistoryServiceImpl.sendMq(dmpPushTaskEntity.getMqData(), dmpPushTaskEntity.getId(), mqProducerService, dmpPushTaskEntity.getMqTopic(), dmpPushTaskEntity.getMqTag(), dmpPushTaskEntity.getSourceId());
             }catch (Exception e){
                 String sourceTypeName = SourceTypeEnum.getName(dmpPushTaskEntity.getSourceType());
                 log.error("从{}推送{}到{}发送消息异常", dmpPushTaskEntity.getSourcePlatformName(), sourceTypeName, dmpPushTaskEntity.getTargetPlatformName(), e);
@@ -456,6 +453,14 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         }
         this.saveOrUpdate(entity);
         return entity.getId();
+    }
+
+    @Override
+    public void deleteByIds(List<String> ids) {
+        if (CollectionUtil.isEmpty(ids)) {
+            return;
+        }
+        baseMapper.deleteByIds(ids);
     }
 
 
