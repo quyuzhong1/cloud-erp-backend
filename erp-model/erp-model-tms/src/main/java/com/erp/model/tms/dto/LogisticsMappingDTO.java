@@ -46,7 +46,10 @@ public class LogisticsMappingDTO implements Serializable {
          */
         private String logisticsSaleChannelId;
 
-
+        /**
+         * 标记发货订单类型（transportNo运单号、trackNo跟踪号）
+         */
+        private String orderDeliveryMarkType;
     }
 
     /**
