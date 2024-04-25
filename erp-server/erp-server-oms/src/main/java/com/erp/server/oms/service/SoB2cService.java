@@ -756,11 +756,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      **/
     Boolean updateShippingOrderNo(List<TransferDeclareDTO.ShippingOrderDTO> list);
 
-    /**
-     * 计算产品尺寸
-     * @param bomChildrenSkuDTO
-     */
-    void buildProductSize(BomChildrenSkuDTO bomChildrenSkuDTO);
 
     /**
      * 计算长度

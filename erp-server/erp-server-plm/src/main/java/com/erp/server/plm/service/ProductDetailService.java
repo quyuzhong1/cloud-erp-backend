@@ -661,6 +661,8 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(List<String> skuIds);
 
+    void initProductSizeAndBoxSize();
+
     /**
      * 根据skuId获取sku基础信息
      * @param skuIds

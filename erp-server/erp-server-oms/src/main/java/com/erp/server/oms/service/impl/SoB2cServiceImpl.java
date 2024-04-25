@@ -28,10 +28,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.StrUtils;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
@@ -64,6 +61,12 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.third.ThirdWarehouseCancelOutboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
+import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.*;
@@ -733,21 +736,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         .collect(Collectors.toList());
                 //子sku数量需要乘订单数量
                 childrenSkuDTOS.forEach(bomChildrenSkuDTO -> {
-                    this.buildProductSize(bomChildrenSkuDTO);
                     splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty() * bomChildrenSkuDTO.getQuantity())
                             .skuNo( StrUtil.isNotEmpty(bomChildrenSkuDTO.getSkuNo()) ? bomChildrenSkuDTO.getSkuNo() : "")
-                            .length( Objects.nonNull(bomChildrenSkuDTO.getLength()) ? bomChildrenSkuDTO.getLength() : BigDecimal.ZERO)
-                            .width( Objects.nonNull(bomChildrenSkuDTO.getWidth()) ? bomChildrenSkuDTO.getWidth() : BigDecimal.ZERO)
-                            .height( Objects.nonNull(bomChildrenSkuDTO.getHeight()) ? bomChildrenSkuDTO.getHeight() : BigDecimal.ZERO)
+                            .length( Objects.nonNull(bomChildrenSkuDTO.getLength()) ? LengthConverterUtil.mmToCm(bomChildrenSkuDTO.getLength()) : BigDecimal.ZERO)
+                            .width( Objects.nonNull(bomChildrenSkuDTO.getWidth()) ? LengthConverterUtil.mmToCm(bomChildrenSkuDTO.getWidth()) : BigDecimal.ZERO)
+                            .height( Objects.nonNull(bomChildrenSkuDTO.getHeight()) ? LengthConverterUtil.mmToCm(bomChildrenSkuDTO.getHeight()) : BigDecimal.ZERO)
                             .build());
                 });
             }else {
-                this.buildProductSize(skuVO);
                 splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
                         .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
-                        .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? skuVO.getLength() : BigDecimal.ZERO)
-                        .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? skuVO.getWidth() : BigDecimal.ZERO)
-                        .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? skuVO.getHeight() : BigDecimal.ZERO)
+                        .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? LengthConverterUtil.mmToCm(skuVO.getLength()) : BigDecimal.ZERO)
+                        .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? LengthConverterUtil.mmToCm(skuVO.getWidth()) : BigDecimal.ZERO)
+                        .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? LengthConverterUtil.mmToCm(skuVO.getHeight()) : BigDecimal.ZERO)
                         .build());
             }
         });
@@ -771,7 +772,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         .collect(Collectors.toList());
                 //子sku数量需要乘订单数量
                 childrenSkuDTOS.forEach(bomChildrenSkuDTO -> {
-                    this.buildProductSize(bomChildrenSkuDTO);
                     splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty() * bomChildrenSkuDTO.getQuantity())
                             .skuNo( StrUtil.isNotEmpty(bomChildrenSkuDTO.getSkuNo()) ? bomChildrenSkuDTO.getSkuNo() : "")
                             .length( Objects.nonNull(bomChildrenSkuDTO.getLength()) ? bomChildrenSkuDTO.getLength() : BigDecimal.ZERO)
@@ -780,7 +780,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             .build());
                 });
             }else {
-                this.buildProductSize(skuVO);
                 splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
                         .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
                         .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? skuVO.getLength() : BigDecimal.ZERO)
@@ -1242,7 +1241,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     //取消物流单
                     LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
                             channelId(existChannelId).transportNo(code).
-                            referenceNumber(entity.getId()).build();
+                            referenceNumber(entity.getCode()).build();
                     ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
                     //取消失败
                     if (!cancelResult.isSuccess()) {
@@ -1383,13 +1382,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(soB2cLogisticsEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
-        Boolean isCodeNotNull = StringUtils.isNotBlank(soB2cLogisticsEntity.getCode());
-        if (StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())
-                || isCodeNotNull) {
-            if (isCodeNotNull) {
-                soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
+        //如果有物流单号 就要去取消
+        if (StringUtils.isNotBlank(soB2cLogisticsEntity.getCode())) {
+            //已存在的渠道为空
+            if (StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
+                throw new ServiceException(ApiError.CANCEL_LOGISTICS_ID_NOT_EXIST);
             }
-            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CODE, entity.getCode());
+            //取消物流单
+            LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
+                    channelId(soB2cLogisticsEntity.getLogisticsChannelId()).transportNo(soB2cLogisticsEntity.getCode()).
+                    referenceNumber(entity.getCode()).build();
+            ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
+            //取消失败
+            if (!cancelResult.isSuccess() && !"功能未开放".equals(cancelResult.getMsg())) {
+                soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
+                log.error("{}原因是：{}", ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAIL.msg, cancelResult.getMsg());
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAIL, entity.getCode());
+            }
         }
         try {
             LogisticsBillDTO.GenerateBillDTO generateBillDTO = makeGenerateBillDTO(entity, soB2cLogisticsEntity);
@@ -5497,6 +5506,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
+        //待配货和配货中订单允许配货
+        if (!SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(entity.getBillStatus())
+                && !SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_DISTRIBUTION, entity.getCode());
+        }
+        //只有已审核数据支持配货
+        if (!ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_APPROVE_NOT_DISTRIBUTION, entity.getCode());
+        }
         //物流信息
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
         if (ObjectUtils.isEmpty(soB2cLogisticsEntity)) {
@@ -5504,8 +5522,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //存在的物流渠道
         String existChannelId = soB2cLogisticsEntity.getLogisticsChannelId();
-        //表示不一样 就要改过
-        Boolean isUpdate = !logisticsChannelId.equals(existChannelId);
         //存在的物流单 code
         String code = soB2cLogisticsEntity.getCode();
         LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(logisticsChannelId);
@@ -5516,25 +5532,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //取消物流单
             LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
                     channelId(existChannelId).transportNo(code).
-                    referenceNumber(entity.getId()).build();
+                    referenceNumber(entity.getCode()).build();
             ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
             //取消失败
-            if (!cancelResult.isSuccess()) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAI, code);
+            if (!cancelResult.isSuccess() && !"功能未开放".equals(cancelResult.getMsg())) {
+                soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
+                log.error("{}原因是：{}", ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAIL.msg, cancelResult.getMsg());
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAIL, entity.getCode());
             }
         }
-        if (isUpdate) {
-            soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
-            soB2cLogisticsEntity.setLogisticsChannelName(logisticsChannel.getName());
-            soB2cLogisticsEntity.setCode("");
-            soB2cLogisticsEntity.setTrackNo("");
-            entity.setIsMatchLogisticsRule(Boolean.TRUE);
-            this.updateById(entity);
-            logisticsBillFeign.removeLogisticsBillBySourceId(Arrays.asList(id));
-            //物流信息更新
-            return soB2cLogisticsService.updateById(soB2cLogisticsEntity);
-        }
-        return true;
+        soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
+        soB2cLogisticsEntity.setLogisticsChannelName(logisticsChannel.getName());
+        soB2cLogisticsEntity.setCode("");
+        soB2cLogisticsEntity.setTrackNo("");
+        entity.setIsMatchLogisticsRule(Boolean.TRUE);
+        this.updateById(entity);
+        logisticsBillFeign.removeLogisticsBillBySourceId(Arrays.asList(id));
+        //物流信息更新
+        return soB2cLogisticsService.updateById(soB2cLogisticsEntity);
 
     }
 
@@ -5932,6 +5947,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 scanResult.setLogisticsChannelName(baseDTO.getName());
                 scanResult.setLogisticsSupplierId(baseDTO.getMainId());
                 scanResult.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
+                scanResult.setLogisticsSupplierShortName(baseDTO.getLogisticsSupplierShortName());
             }
         }
         return scanResult;
@@ -5959,6 +5975,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 item.setLogisticsChannelName(base.getName());
                 item.setLogisticsSupplierId(base.getLogisticsSupplierId());
                 item.setLogisticsSupplierName(base.getLogisticsSupplierName());
+                item.setLogisticsSupplierShortName(base.getLogisticsSupplierShortName());
             }
         }
 
@@ -6510,61 +6527,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
     }
 
-    @Override
-    public void buildProductSize(BomChildrenSkuDTO bomChildrenSkuDTO) {
-        if (Objects.isNull(bomChildrenSkuDTO)) {
-            return;
-        }
-        String productSize = bomChildrenSkuDTO.getProductSize();
-        if (org.apache.commons.lang3.StringUtils.isEmpty(productSize)) {
-            bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
-            bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
-            bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
-        } else {
-            String[] xes = productSize.split("X");
-            if (xes.length > 2){
-                if (org.apache.commons.lang3.StringUtils.isNotEmpty(xes[0])){
-                    bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
-                }else {
-                    bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
-                }
-                if (org.apache.commons.lang3.StringUtils.isNotEmpty(xes[1])){
-                    bomChildrenSkuDTO.setWidth(new BigDecimal(xes[1]));
-                }else {
-                    bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
-                }
-                if (org.apache.commons.lang3.StringUtils.isNotEmpty(xes[2])){
-                    bomChildrenSkuDTO.setHeight(new BigDecimal(xes[2]));
-                }else {
-                    bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
-                }
-            }else if (xes.length > 1){
-                if (org.apache.commons.lang3.StringUtils.isNotEmpty(xes[0])){
-                    bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
-                }else {
-                    bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
-                }
-                if (org.apache.commons.lang3.StringUtils.isNotEmpty(xes[1])){
-                    bomChildrenSkuDTO.setWidth(new BigDecimal(xes[1]));
-                }else {
-                    bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
-                }
-                bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
-            }else if (xes.length > 0){
-                if (org.apache.commons.lang3.StringUtils.isNotEmpty(xes[0])){
-                    bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
-                }else {
-                    bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
-                }
-                bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
-                bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
-            }else {
-                bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
-                bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
-                bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
-            }
-        }
-    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

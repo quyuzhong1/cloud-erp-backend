@@ -1,11 +1,9 @@
 package com.erp.model.scm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.core.anno.StateEnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -212,11 +210,6 @@ public class PurchasePriceDTO implements Serializable {
          */
         private String pricingUserId;
 
-
-        /**
-         * 采购组织id
-         */
-        private String purchaseOrgId;
 
         /**
          * 附件地址

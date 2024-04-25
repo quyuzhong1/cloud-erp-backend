@@ -1,8 +1,8 @@
 package com.erp.server.tms.convert;
 
-import com.common.business.dto.base.BaseChildDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.mapper.BooleanMapperWork;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
@@ -214,8 +214,8 @@ public interface LogisticsChannelConverter {
             @Mapping(target = "disabled", source = "disabled"),
 
     })
-    BaseChildDTO.ListChildTreeDTO convertTree(LogisticsChannelEntity entity);
-     List<BaseChildDTO.ListChildTreeDTO> convertTree(List<LogisticsChannelEntity> channelList);
+    LogisticsSupplierDTO.ListChildTreeDTO convertTree(LogisticsChannelEntity entity);
+     List<LogisticsSupplierDTO.ListChildTreeDTO> convertTree(List<LogisticsChannelEntity> channelList);
 
 
     @Mappings({

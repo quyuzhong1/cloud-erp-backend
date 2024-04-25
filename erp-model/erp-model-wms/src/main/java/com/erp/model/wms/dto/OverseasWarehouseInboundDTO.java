@@ -620,6 +620,16 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 地址邮编
          */
         private String zipcode;
+
+        /**
+         * 报关类型
+         */
+        private String declareType;
+
+        /**
+         * 报关类型名称
+         */
+        private String declareTypeName;
     }
 
     /**
@@ -778,6 +788,7 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         /**
          * 物流产品代码
          * /api/wms/overseasWarehouseInbound/transferWareHouseList?code=中转仓代号
+         * 艾姆勒: /api/dict/drop/down?type=imlLogisticProduct
          */
         private String logisticsProductCode;
 
@@ -785,6 +796,11 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 前端不传
          */
         private String logisticsProductName;
+        /**
+         * 报关类型
+         * 艾姆勒: /api/dict/drop/down?type=imlDeclareType
+         */
+        private String declareType;
 
         /**
          * 预计揽收日期
@@ -884,7 +900,6 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         }
 
         private void setBankWithoutCollectAtHome() {
-            this.setLogisticsProductCode("");
             this.setDictProvinceId("");
             this.setDictCityId("");
             this.setDictDistrictId("");

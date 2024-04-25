@@ -4,10 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
+import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.OverseasCustomsTypeNewEnum;
 import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
@@ -24,6 +21,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerWmsApplication.class})
@@ -37,6 +35,14 @@ public class GoodCangHandlerServiceImplTest {
     @PostConstruct
     public void init(){
         thirdWarehouseService = thirdWarehouseRegistry.getHandler(OmsPlatformEnum.OMS_GOOD_CANG.getCode());
+    }
+
+    @Test
+    public void getSkuList() {
+        ThirdWarehouseProductReq productReq = new ThirdWarehouseProductReq();
+        productReq.setSkuNoList(Arrays.asList("YDXN5C-001300UK","YDXN5C-001200UK"));
+        ApiResult<List<ThirdWarehouseSkuResp>> code = thirdWarehouseService.getSkuList(productReq,"1726456935660867586");
+        System.out.println(code);
     }
 
     @Test

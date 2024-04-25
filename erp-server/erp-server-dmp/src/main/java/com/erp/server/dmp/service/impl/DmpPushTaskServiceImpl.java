@@ -195,6 +195,14 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         syncIng.setCount(syncIngCount);
         result.add(syncIng);
+
+        //无需同步
+        DmpPushTaskDTO.TabListDTO noNeedSync = new DmpPushTaskDTO.TabListDTO();
+        noNeedSync.setTabFlag(SyncStatusEnum.NO_NEED_SYNC.getCode());
+        int noNeedSyncCount = countList.stream().filter(a -> a.getTabFlag().equals(noNeedSync.getTabFlag())).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        noNeedSync.setCount(noNeedSyncCount);
+        result.add(noNeedSync);
         return result;
     }
 
@@ -287,6 +295,26 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 log.error("从{}推送{}到{}发送消息异常", PlatformEnum.ERP.getDesc(), sourceTypeName, PlatformEnum.KINGDEE.getDesc(), e);
             }
         }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean batchNoNeedSync(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //获取数据
+        List<DmpPushTaskEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DATA);
+        }
+        //判断数据状态-只有同步失败的才可以变更为无需同步
+        List<String> noNeedSyncIds = list.stream().filter(obj -> SyncStatusEnum.FAILED_SYNC.getCode().equals(obj.getStatus())).map(DmpPushTaskEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(noNeedSyncIds)) {
+            throw new ServiceException(ApiError.ERROR_STATUS_NO_NEED_SYNC);
+        }
+        this.baseMapper.updateStatus(noNeedSyncIds);
         return Boolean.TRUE;
     }
 

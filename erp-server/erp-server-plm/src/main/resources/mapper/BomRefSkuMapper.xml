@@ -35,7 +35,9 @@
            pbs.sku_id as skuId,
            pbs.sku_no as skuNo,
            pbs.quantity as quantity,
-           pp.product_size as productSize,
+           pp.product_length as length,
+           pp.product_width as width,
+           pp.product_height as height,
            pp.gross_weight as grossWeight,
            pd.name as skuName,
            pd.unit_name as unitName
@@ -62,7 +64,9 @@
         pbs.sku_id as skuId,
         pbs.sku_no as skuNo,
         pbs.quantity as quantity,
-        pp.product_size,
+        pp.product_length as productLength,
+        pp.product_width as productWidth,
+        pp.product_height as productHeight,
         pd.name as skuName,
         pd.unit_name as unitName
         from product_bom_info pbi
@@ -125,6 +129,7 @@
         </where>
     </select>
 
+    <!-- 根据父级SKU查询未作废BOM -->
     <select id="listAllBomByParentSkuNos" resultType="com.erp.model.plm.entity.BomInfoEntity">
         select
         DISTINCT
@@ -150,6 +155,26 @@
         </where>
     </select>
 
+    <!-- 根据子级SKU查询未作废BOM -->
+    <select id="listAllBomByChildSkuIdList" resultType="com.erp.model.plm.dto.BomDTO$BomSku">
+        select
+            pbs.parent_sku_id ,
+            pbs.parent_sku_no ,
+            pbi.serial_number,
+            pbs.sku_id as skuId,
+            pbs.sku_no as skuNo,
+            pbs.quantity as qty
+        from product_bom_info pbi
+        inner join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
+        <where>
+            pbi.is_deleted = false and pbi.state != 6
+            and pbs.sku_id in
+            <foreach collection="childSkuIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+
 
     <select id="listBomBySkuIds" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
         select
@@ -160,7 +185,9 @@
         pbs.sku_id as skuId,
         pbs.sku_no as skuNo,
         pbs.quantity as quantity,
-        pp.product_size as productSize,
+        pp.product_length as productLength,
+        pp.product_width as productWidth,
+        pp.product_height as productHeight,
         pd.name as skuName,
         pd.unit_name as unitName
         from product_bom_info pbi

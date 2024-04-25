@@ -98,7 +98,7 @@ public class SoOutstockController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:paging",
             tableAlias = "so"
     )
@@ -118,7 +118,7 @@ public class SoOutstockController extends BaseController {
      */
     @PostMapping("/getTotalByQuery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:paging",
             tableAlias = "so"
     )
@@ -127,6 +127,7 @@ public class SoOutstockController extends BaseController {
         SoOutstockDTO.PagingTotalDTO pagingTotalDTO = soOutstockService.getTotalByQuery(dto);
         return success(pagingTotalDTO);
     }
+
 
     /**
      * 创建
@@ -150,7 +151,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交销售出库单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:submit",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids"
@@ -183,7 +184,7 @@ public class SoOutstockController extends BaseController {
     @LogViewService
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:view",
             serviceClass = SoOutstockService.class,
             keyIdName = "id"
@@ -202,7 +203,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改销售出库单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:update",
             serviceClass = SoOutstockService.class,
             keyIdName = "id"
@@ -221,7 +222,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交销售出库单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:update",
             serviceClass = SoOutstockService.class,
             keyIdName = "id"
@@ -242,7 +243,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "销售出库单列表修改:运输单号={trackNo},ids={idList}")
     @PostMapping("/pagingUpdate")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:update",
             serviceClass = SoOutstockService.class,
             keyIdName = "id"
@@ -261,7 +262,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核销售出库单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:approve",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids"
@@ -337,7 +338,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核销售出库单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:disApprove",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids"
@@ -357,7 +358,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销销售出库单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:cancelProcess",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids")
@@ -375,7 +376,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除销售出库单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:delete",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids")
@@ -395,7 +396,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.INVALID, desc = "作废销售出库单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:invalid",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids")
@@ -411,7 +412,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售出库单")
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:paging",
             serviceClass = SoOutstockService.class,
             keyIdName = "so"

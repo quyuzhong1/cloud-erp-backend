@@ -1,4 +1,4 @@
-package com.erp.model.wms.dto.third.request;
+package com.erp.model.wms.dto.third;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -87,6 +87,11 @@ public class ThirdWarehouseCreateInboundReq {
      * {@link com.erp.model.wms.enums.OverseasCustomsTypeNewEnum}
      */
     private String customsType;
+
+    /**
+     * 报关类型
+     */
+    private String declareType;
 
     /**
      * 交货方式

@@ -11,7 +11,7 @@
         from
         qc_info qb
         <where>
-            qb.is_deleted = false and qb.qc_date is not null
+            qb.is_deleted = false and qb.qc_date is not null and qb.qc_status != 'cancel'
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
@@ -34,7 +34,7 @@
             count (0) as count
         from qc_info qb
         <where>
-            qb.is_deleted = false and qb.qc_date is not null
+            qb.is_deleted = false and qb.qc_date is not null and qb.qc_status != 'cancel'
             <if test="beginDate != null and endDate != null">
                 and qb.qc_date >= #{beginDate} and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
             </if>
@@ -61,7 +61,7 @@
         from qc_info qb
         left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
-            qb.is_deleted = false and qb.qc_date is not null
+            qb.is_deleted = false and qb.qc_date is not null and qb.qc_status != 'cancel'
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
@@ -91,7 +91,7 @@
         inner join qc_product qp on qb.id = qp.main_id and qp.is_deleted = false
         left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
-            qb.is_deleted = false and qb.qc_date is not null
+            qb.is_deleted = false and qb.qc_date is not null and qb.qc_status != 'cancel'
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
@@ -107,7 +107,7 @@
                     and wr.approve_time::timestamp + '1 day' >= qb.qc_finish_time::timestamp
                 </if>
                 <if test="params.isTimeOut == true">
-                    and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status = 'waitQc'))
+                    and qb.qc_status != 'exemption'  and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status = 'waitQc'))
                 </if>
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
@@ -132,7 +132,7 @@
         from qc_info qb
         left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
-            qb.is_deleted = false and qb.qc_date is not null
+            qb.is_deleted = false and qb.qc_date is not null and qb.qc_status != 'cancel'
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
@@ -166,7 +166,7 @@
         inner join qc_product qp on qb.id = qp.main_id and qp.is_deleted = false
         left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
-            qb.is_deleted = false and qb.qc_date is not null
+            qb.is_deleted = false and qb.qc_date is not null and qb.qc_status != 'cancel'
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
@@ -663,6 +663,31 @@
         <foreach collection="purchaseDetailIds" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
+    </select>
+
+    <!--统计未质检数量 -->
+    <select id="countTotalNotQc" resultType="java.lang.Integer">
+        select
+            count(0)
+        from qc_info  qb
+        inner join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
+        <where>
+            qb.is_deleted = false and qb.qc_date is not null
+            <if test="params.qcStatusList !=null and params.qcStatusList.size>0">
+                AND qb.qc_status IN
+                <foreach collection="params.qcStatusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.isTimeOut != null">
+                <if test="params.isTimeOut == false">
+                    and wr.approve_time::timestamp + '1 day' >= qb.qc_finish_time::timestamp
+                </if>
+                <if test="params.isTimeOut == true">
+                    and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status = 'waitQc'))
+                </if>
+            </if>
+        </where>
     </select>
 
 </mapper>

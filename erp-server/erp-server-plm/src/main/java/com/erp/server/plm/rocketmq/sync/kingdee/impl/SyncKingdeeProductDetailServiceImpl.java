@@ -9,6 +9,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.LengthConverterUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -189,56 +190,23 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
             resultMap.put("grossWeight", productPackEntity.getGrossWeight());
             //净重
             resultMap.put("netWeight", productPackEntity.getNetWeight());
-            //产品尺寸
-            String productSize = productPackEntity.getProductSize();
-            if (StringUtils.isNotBlank(productSize)) {
-                List<String> productSizeList = Arrays.stream(productSize.split("X")).collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(productSizeList)) {
-                    if (productSizeList.size() == 1) {
-                        //产品尺寸-长(cm)
-                        resultMap.put("productSize_length", productSizeList.get(0));
-                    } else if (productSizeList.size() == 2) {
-                        //产品尺寸-长(cm)
-                        resultMap.put("productSize_length", productSizeList.get(0));
-                        //产品尺寸-宽(cm)
-                        resultMap.put("productSize_width", productSizeList.get(1));
-                    } else {
-                        //产品尺寸-长(cm)
-                        resultMap.put("productSize_length", productSizeList.get(0));
-                        //产品尺寸-宽(cm)
-                        resultMap.put("productSize_width", productSizeList.get(1));
-                        //产品尺寸-高(cm)
-                        resultMap.put("productSize_height", productSizeList.get(2));
-                    }
-                }
-            }
+            //产品尺寸-长(cm)
+            resultMap.put("productSize_length", LengthConverterUtil.mmToCm(productPackEntity.getProductLength()));
+            //产品尺寸-宽(cm)
+            resultMap.put("productSize_width", LengthConverterUtil.mmToCm(productPackEntity.getProductWidth()));
+            //产品尺寸-高(cm)
+            resultMap.put("productSize_height", LengthConverterUtil.mmToCm(productPackEntity.getProductHeight()));
             //单箱数量
             resultMap.put("boxQty", productPackEntity.getBoxQty());
             //单箱重量
             resultMap.put("boxWeight", productPackEntity.getBoxWeight());
             //单箱尺寸
-            String boxSize = productPackEntity.getBoxSize();
-            if (StringUtils.isNotBlank(boxSize)) {
-                List<String> boxSizeList = Arrays.stream(boxSize.split("X")).collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(boxSizeList)) {
-                    if (boxSizeList.size() == 1) {
-                        //产品尺寸-长(cm)
-                        resultMap.put("boxSize_length", boxSizeList.get(0));
-                    } else if (boxSizeList.size() == 2) {
-                        //产品尺寸-长(cm)
-                        resultMap.put("boxSize_length", boxSizeList.get(0));
-                        //产品尺寸-宽(cm)
-                        resultMap.put("boxSize_width", boxSizeList.get(1));
-                    } else {
-                        //产品尺寸-长(cm)
-                        resultMap.put("boxSize_length", boxSizeList.get(0));
-                        //产品尺寸-宽(cm)
-                        resultMap.put("boxSize_width", boxSizeList.get(1));
-                        //产品尺寸-高(cm)
-                        resultMap.put("boxSize_height", boxSizeList.get(2));
-                    }
-                }
-            }
+            //产品尺寸-长(cm)
+            resultMap.put("boxSize_length", LengthConverterUtil.mmToCm(productPackEntity.getBoxLength()));
+            //产品尺寸-宽(cm)
+            resultMap.put("boxSize_width", LengthConverterUtil.mmToCm(productPackEntity.getBoxWidth()));
+            //产品尺寸-高(cm)
+            resultMap.put("boxSize_height", LengthConverterUtil.mmToCm(productPackEntity.getBoxHeight()));
         }
         //成本信息
         if (ObjectUtils.isNotEmpty(productCostEntity)) {
