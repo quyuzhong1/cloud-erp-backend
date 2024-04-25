@@ -1993,6 +1993,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
 
+        //预报成功不支持发起拦截
+        if (TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),StrUtil.format("B2C销售订单【{}】已预报成功不支持拦截", entity.getCode()));
+        }
+
+
         //修改拦截打标识、冻结状态
         SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
         interceptUpdateOrderDTO.setIsIntercept(Boolean.TRUE);
