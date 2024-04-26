@@ -928,7 +928,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             return true;
         }
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
-        if(cfgSettingEntity.getDisabled()){
+        if(Objects.isNull(cfgSettingEntity) || cfgSettingEntity.getDisabled()){
             return true;
         }
         CfgSettingValueDTO.BillAutoAddDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.BillAutoAddDTO.class);

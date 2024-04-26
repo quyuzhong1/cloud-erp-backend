@@ -5992,19 +5992,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //校验订单状态中转状态为待中转/上传失败，扫描识别后非成功状态若勾选则取消勾选并禁用，若未勾选则直接禁用
             throw new ServiceException(ApiError.TRANSFER_FAILURE_NOT_PACKAGE);
         }
-        if (StringUtils.isBlank(scanResult.getTransferLogisticsSupplierId())) {
+        if (StringUtils.isBlank(scanResult.getTransferLogisticsSupplierId()) && !TransferStatusEnum.NOT.getCode().equals(entity.getTransferStatus())) {
             throw new ServiceException(ApiError.TRANSFER_LOGISTICS_SUPPLIER_IS_NULL_NOT_PACKAGE);
         }
 
         if (entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.INVALID_NOT_PACKAGE);
         }
-        TransferLogisticsStatusEnum platformTransferStatus = transferLogisticsFeign.getPlatformTransferStatus(entity.getShippingOrderNo(), scanResult.getTransferLogisticsSupplierId());
-        if (ObjectUtil.isEmpty(platformTransferStatus)
-                || TransferLogisticsStatusEnum.DELETED.getCode().equals(platformTransferStatus.getCode())
-                || TransferLogisticsStatusEnum.UNUSUAL.getCode().equals(platformTransferStatus.getCode())
-        ) {
-            throw new ServiceException(ApiError.ORDER_CANCEL_NOT_PACKAGE);
+
+        if (!TransferStatusEnum.NOT.getCode().equals(entity.getTransferStatus())) {
+            TransferLogisticsStatusEnum platformTransferStatus = transferLogisticsFeign.getPlatformTransferStatus(entity.getShippingOrderNo(), scanResult.getTransferLogisticsSupplierId());
+            if (ObjectUtil.isEmpty(platformTransferStatus)
+                    || TransferLogisticsStatusEnum.DELETED.getCode().equals(platformTransferStatus.getCode())
+                    || TransferLogisticsStatusEnum.UNUSUAL.getCode().equals(platformTransferStatus.getCode())
+            ) {
+                throw new ServiceException(ApiError.ORDER_CANCEL_NOT_PACKAGE);
+            }
         }
 
         if (entity.getIsIntercept()) {
@@ -6059,6 +6062,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //物流渠道id
         String logisticsChannelId = scanResult.getLogisticsChannelId();
         if (StringUtils.isNotBlank(logisticsChannelId)) {
+            LogisticsChannelDTO.BaseDTO baseDTO = logisticsFeign.getChannelInfoById(logisticsChannelId);
+            if (Objects.nonNull(baseDTO)) {
+                scanResult.setLogisticsChannelName(baseDTO.getName());
+                scanResult.setLogisticsSupplierId(baseDTO.getMainId());
+                scanResult.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
+            }
+
+            if (TransferStatusEnum.NOT.getCode().equals(entity.getTransferStatus())) {
+                return scanResult;
+            }
 
             //查询对应的中转服务商
             TransferLogisticsSupplierEntity supplierEntity = transferLogisticsFeign.getLogisticsSupplierById(scanResult.getTransferLogisticsSupplierId());
@@ -6073,14 +6086,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (ObjectUtil.isNotEmpty(transferLogisticsChannelEntity)) {
                     scanResult.setTransferLogisticsChannelName(transferLogisticsChannelEntity.getName());
                 }
-            }
-
-            LogisticsChannelDTO.BaseDTO baseDTO = logisticsFeign.getChannelInfoById(logisticsChannelId);
-            if (Objects.nonNull(baseDTO)) {
-                scanResult.setLogisticsChannelName(baseDTO.getName());
-                scanResult.setLogisticsSupplierId(baseDTO.getMainId());
-                scanResult.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
-                scanResult.setLogisticsSupplierShortName(baseDTO.getLogisticsSupplierShortName());
             }
         }
 
