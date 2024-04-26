@@ -83,18 +83,6 @@ public class PackageForecastDetailEntity extends BaseEntity<PackageForecastDetai
     @TableField("source_code")
     private String sourceCode;
 
-    /**
-     * 中转商渠道id
-     */
-    @TableField("transfer_logistics_channel_id")
-    private String transferLogisticsChannelId;
-
-    /**
-     * 中转商渠道名
-     */
-    @TableField("transfer_logistics_channel_name")
-    private String transferLogisticsChannelName;
-
 
     public static final String MAIN_ID = "main_id";
 
