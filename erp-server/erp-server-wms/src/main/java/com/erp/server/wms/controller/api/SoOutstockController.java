@@ -501,14 +501,14 @@ public class SoOutstockController extends BaseController {
             SoOutstockEntity entity = soOutstockService.getById(dto.getId());
 
             if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode())) {
-                //走TMS自动生成逻辑
-                AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
-                        .id(entity.getId())
-                        .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
-                        .sourceTypeEnum(SourceTypeEnum.SO_OUTSTOCK)
-                        .soOutstockEntity(entity)
-                        .build();
-                tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
+//                //走TMS自动生成逻辑
+//                AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+//                        .id(entity.getId())
+//                        .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
+//                        .sourceTypeEnum(SourceTypeEnum.SO_OUTSTOCK)
+//                        .soOutstockEntity(entity)
+//                        .build();
+//                tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
             }
         } else {
             List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Arrays.asList(dto.getId()));
