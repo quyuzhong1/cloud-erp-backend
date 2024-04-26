@@ -223,6 +223,25 @@ public class SoB2cDTO implements Serializable {
         private String logisticsChannelName;
 
         /**
+         * 中转物流商id
+         */
+        private String transferLogisticsSupplierId;
+
+        /**
+         * 中转物流商名
+         */
+        private String transferLogisticsSupplierName;
+        /**
+         * 中转物流商渠道id
+         */
+        private String transferLogisticsChannelId;
+
+        /**
+         * 中转物流商渠道名
+         */
+        private String transferLogisticsChannelName;
+
+        /**
          * 实际运费(优先实际、没有取预估)
          */
         private BigDecimal shippingCost;
