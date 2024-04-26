@@ -5807,7 +5807,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //校验订单状态中转状态为待中转/上传失败，扫描识别后非成功状态若勾选则取消勾选并禁用，若未勾选则直接禁用
             throw new ServiceException("中转报关订单待中转/上传失败不可操作组包发货");
         }
-
+        if (StringUtils.isBlank(scanResult.getTransferLogisticsSupplierId())) {
+            throw new ServiceException("订单中转物流商不存在，请重新预报后再扫描");
+        }
         TransferLogisticsStatusEnum platformTransferStatus = transferLogisticsFeign.getPlatformTransferStatus(entity.getShippingOrderNo(), scanResult.getTransferLogisticsSupplierId());
         if (ObjectUtil.isEmpty(platformTransferStatus)
                 || TransferLogisticsStatusEnum.DELETED.getCode().equals(platformTransferStatus.getCode())
