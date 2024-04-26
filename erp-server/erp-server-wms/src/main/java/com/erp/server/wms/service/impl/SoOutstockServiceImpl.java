@@ -582,12 +582,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
 
         //已装箱才能审核(B2B订单)
-        if (PackingStatusEnum.NOT_PACKING.getCode().equals(entity.getPackingStatus())
+/*        if (PackingStatusEnum.NOT_PACKING.getCode().equals(entity.getPackingStatus())
                 && OrderTypeEnum.B2B.getCode().equalsIgnoreCase(entity.getOrderType())
                 && !"CN".equalsIgnoreCase(entity.getCountry())
         ) {
             throw new ServiceException(ApiError.NOT_PACKAGE_NO_APPROVE, entity.getCode());
-        }
+        }*/
 
         // 调用流程审核
         approveProcess(entity, dto);
