@@ -865,6 +865,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     public SysUserInfoEntity findByAccount(String account, String userType) {
+        //暂时将pda账号重置为erp pda和erp共用用户体系
+        if (UserTypeEnum.PDA.code.equals(userType)){
+            userType = UserTypeEnum.ERP.code;
+        }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUserInfoEntity::getUserAccount, account)
                 .eq(SysUserInfoEntity::getUserType, userType)
