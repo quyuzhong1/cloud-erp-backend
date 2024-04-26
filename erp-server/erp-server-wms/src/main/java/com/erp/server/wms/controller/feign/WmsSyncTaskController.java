@@ -34,4 +34,15 @@ public class WmsSyncTaskController {
     public void findDataSendSyncTask(@RequestBody @Validated DmpSyncMqDTO.SyncParamDTO syncParamDTO) {
         syncTaskService.findDataSendSyncTask(syncParamDTO);
     }
+
+    /**
+     * 查询数据重新发送
+     * @author Will
+     * @date: 2023/10/19 11:07
+     * @param syncParamDTO
+     */
+    @PostMapping("/findMaBangDataSendSyncTask")
+    public void findMaBangDataSendSyncTask(@RequestBody @Validated DmpSyncMqDTO.SyncParamDTO syncParamDTO) {
+        syncTaskService.findMaBangDataSendSyncTask(syncParamDTO);
+    }
 }

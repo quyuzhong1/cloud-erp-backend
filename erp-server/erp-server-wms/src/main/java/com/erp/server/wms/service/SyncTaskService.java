@@ -9,4 +9,10 @@ public interface SyncTaskService {
      * @return void
      **/
     void findDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+    /**
+     * 查询数据重新发送
+     * @param syncParamDTO
+     * @return void
+     **/
+    void findMaBangDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }

@@ -275,18 +275,32 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_NOT_EXIST_DMP_PUSH_TASK);
         }
-        long count = list.stream().filter(obj -> !PlatformEnum.ERP.getDesc().equals(obj.getSourcePlatformName()) || !PlatformEnum.KINGDEE.getDesc().equals(obj.getTargetPlatformName())).count();
+        long count = list.stream().filter(obj -> !PlatformEnum.ERP.getDesc().equals(obj.getSourcePlatformName())
+                || (!PlatformEnum.KINGDEE.getDesc().equals(obj.getTargetPlatformName())
+                && !PlatformEnum.MABANG.getDesc().equals(obj.getTargetPlatformName()))).count();
         if (count > 0) {
-            throw new ServiceException(new ApiResult(10000,"只允许推送自研ERP>>>>金蝶的数据"));
+            throw new ServiceException(new ApiResult(10000,"只允许推送自研ERP>>>>(金蝶、马帮)的数据"));
         }
-        Map<String, List<DmpPushTaskEntity>> map = list.stream().collect(Collectors.groupingBy(DmpPushTaskEntity::getSourceType));
+        Map<String, List<DmpPushTaskEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getTargetPlatformName().concat(obj.getTargetPlatformName())));
         for (Map.Entry<String, List<DmpPushTaskEntity>> entry : map.entrySet()) {
-            String sourceType = entry.getKey();
             List<DmpPushTaskEntity> value = entry.getValue();
+            //来源类型
+            String sourceType = value.get(0).getSourceType();
+            //目的平台
+            String targetPlatformName = value.get(0).getTargetPlatformName();
+
             List<DmpSyncMqDTO.SyncParamDetailDTO> paramDetailList = value.stream().map(obj -> new DmpSyncMqDTO.SyncParamDetailDTO(obj.getSourceId(), obj.getSyncOperate())).collect(Collectors.toList());
             try {
-                // 发送MQ消息
-                findDataAndSendMq(paramDetailList,sourceType);
+                //金蝶
+                if (PlatformEnum.KINGDEE.getDesc().equals(targetPlatformName)) {
+                    // 发送MQ消息
+                    findKingdeeDataAndSendMq(paramDetailList,sourceType);
+                }
+                //马帮
+                if (PlatformEnum.MABANG.getDesc().equals(targetPlatformName)) {
+                    // 发送MQ消息
+                    findMaBangDataAndSendMq(paramDetailList,sourceType);
+                }
             }catch (Exception e){
                 String sourceTypeName = SourceTypeEnum.getName(sourceType);
                 log.error("从{}推送{}到{}发送消息异常", PlatformEnum.ERP.getDesc(), sourceTypeName, PlatformEnum.KINGDEE.getDesc(), e);
@@ -366,11 +380,11 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
 
 
     /**
-     * @description: 重新查询数据发送MQ
+     * @description: 重新查询数据发送金蝶MQ
      * @author Will
      * @date: 2023/10/30 10:03
      */
-    private void findDataAndSendMq (List<DmpSyncMqDTO.SyncParamDetailDTO> paramDetailList,String sourceType) {
+    private void findKingdeeDataAndSendMq (List<DmpSyncMqDTO.SyncParamDetailDTO> paramDetailList,String sourceType) {
         SourceTypeEnum sourceTypeEnum = SourceTypeEnum.getEnum(sourceType);
         DmpSyncMqDTO.SyncParamDTO syncParamDTO = new DmpSyncMqDTO.SyncParamDTO(paramDetailList,sourceTypeEnum);
         switch (SourceTypeEnum.getEnum(sourceType)) {
@@ -416,6 +430,25 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 return;
         }
     }
+    /**
+     * @description: 重新查询数据发送马帮MQ
+     * @author Will
+     * @date: 2023/10/30 10:03
+     */
+    private void findMaBangDataAndSendMq (List<DmpSyncMqDTO.SyncParamDetailDTO> paramDetailList,String sourceType) {
+        SourceTypeEnum sourceTypeEnum = SourceTypeEnum.getEnum(sourceType);
+        DmpSyncMqDTO.SyncParamDTO syncParamDTO = new DmpSyncMqDTO.SyncParamDTO(paramDetailList,sourceTypeEnum);
+        switch (SourceTypeEnum.getEnum(sourceType)) {
+            case MACHINE_INFO:
+            case TRANSFER_INFO:
+                wmsTaskFeign.findMaBangDataSendSyncTask(syncParamDTO);
+                return;
+            default:
+                return;
+        }
+    }
+
+
 
     /**
      * @description: 列表查询数据格式话
