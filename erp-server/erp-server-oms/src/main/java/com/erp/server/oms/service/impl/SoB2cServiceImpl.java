@@ -4326,93 +4326,104 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean transferDeclare(List<String> ids, String transferLogisticsSupplierId, String transferLogisticsChannelId) {
-
+    public List<BatchResultDTO> transferDeclare(List<String> ids) {
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
         //B2C销售订单主表信息
         List<SoB2cEntity> soB2cList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(soB2cList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-        String waitShipped = SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
-        //没有待发货的
-        String notWaitShippedCode = soB2cList.stream().filter(s -> !waitShipped.equals(s.getBillStatus())).map(SoB2cEntity::getCode).collect(Collectors.joining(","));
-        if (StringUtils.isNotBlank(notWaitShippedCode)) {
-            throw new ServiceException(ApiError.ERROR_WAIT_SHIPPED_TRANSFER, notWaitShippedCode);
-        }
-        String unit = UnitEnum.WeightUnitEnum.G.getCode();
 
-        String alreadyTransfer = TransferStatusEnum.SUCCESS.getCode();
-        String alreadyTransferCode = soB2cList.stream().filter(s -> !alreadyTransfer.equals(s.getTransferStatus())).map(SoB2cEntity::getCode).collect(Collectors.joining(","));
-        if (StringUtils.isNotBlank(alreadyTransferCode)) {
-            throw new ServiceException(ApiError.ERROR_WAIT_TRANSFER, alreadyTransferCode);
-        }
-
-        String notPackage = PackageStatusEnum.NOT.getCode();
-        //需要组包
-        String wantPackageCode = soB2cList.stream().filter(s -> !notPackage.equals(s.getPackageStatus())).map(SoB2cEntity::getCode).collect(Collectors.joining(","));
-        //表示强制组包了 就要去组包预报 去中转了
-        if (StringUtils.isNotBlank(wantPackageCode)) {
-            throw new ServiceException(ApiError.PACKAGE_FORECAST_TRANSFER,wantPackageCode);
-        }
+        //先校验基础字段
         List<SoB2cLogisticsEntity> logisticsList = soB2cLogisticsService.listByMainIds(ids);
-        List<String> channelIds = logisticsList.stream().filter(l -> StringUtils.isNotBlank(l.getLogisticsChannelId())).
-                map(SoB2cLogisticsEntity::getLogisticsChannelId).distinct().collect(Collectors.toList());
-        if(CollectionUtils.isEmpty(channelIds)){
-            return true;
-        }
+        List<String> channelIds = logisticsList.stream().map(SoB2cLogisticsEntity::getLogisticsChannelId).
+                filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<LogisticsChannelDTO.BaseDTO> channelList = logisticsFeign.listChannelInfoById(channelIds);
-        Map<String, List<LogisticsChannelDTO.BaseDTO>> map = channelList.stream().
-                collect(Collectors.groupingBy(LogisticsChannelDTO.BaseDTO::getMainId));
-        LocalTime now=LocalTime.now();
-        //需要中转的数据
-        List<TransferDeclareDTO.AddDTO> transferDeclareList = new ArrayList<>();
+        List<String> notChannelInfoList = soB2cList.stream().filter(v->{
+            SoB2cLogisticsEntity logisticsEntity = logisticsList.stream().filter(t->t.getMainId().equals(v.getId())).findFirst().orElse(new SoB2cLogisticsEntity());
+            LogisticsChannelDTO.BaseDTO channelBase = channelList.stream().filter(t->t.getId().equals(logisticsEntity.getLogisticsChannelId())).findFirst().orElse(new LogisticsChannelDTO.BaseDTO());
+            return StringUtils.isBlank(logisticsEntity.getLogisticsChannelId()) || StringUtils.isBlank(logisticsEntity.getTransferLogisticsChannelId()) ||StringUtils.isBlank(logisticsEntity.getTransferLogisticsSupplierId())||StringUtils.isBlank(channelBase.getMainId());
+        }).map(SoB2cEntity::getCode).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(notChannelInfoList)){
+            throw new ServiceException(StrUtil.format("销售单【{}】没有物流或中转信息",notChannelInfoList));
+        }
+
+        //相同物流商，中转商，中转渠道 合并成一条主记录
+        List<SoB2cDTO.MergeTransferDTO> mergeTransferDTOList = new ArrayList<>();
+        for (SoB2cEntity soB2cEntity : soB2cList) {
+            //上面校验了，这里物流和中转信息不会为空
+            SoB2cLogisticsEntity logisticsEntity = logisticsList.stream().filter(t->t.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(new SoB2cLogisticsEntity());
+            LogisticsChannelDTO.BaseDTO channelBase = channelList.stream().filter(t->t.getId().equals(logisticsEntity.getLogisticsChannelId())).findFirst().orElse(new LogisticsChannelDTO.BaseDTO());
+            SoB2cDTO.MergeTransferDTO mergeTransferDTO = mergeTransferDTOList.stream().filter(v-> v.getLogisticSupplierId().equals(channelBase.getMainId())
+                    && v.getTransferLogisticsSupplierId().equals(logisticsEntity.getTransferLogisticsSupplierId())
+                    && v.getTransferChannelId().equals(logisticsEntity.getTransferLogisticsChannelId())).findFirst().orElse(null);
+            if(Objects.isNull(mergeTransferDTO)){
+                mergeTransferDTO = new SoB2cDTO.MergeTransferDTO();
+                mergeTransferDTO.setTransferChannelId(logisticsEntity.getTransferLogisticsChannelId());
+                mergeTransferDTO.setTransferLogisticsSupplierId(logisticsEntity.getTransferLogisticsSupplierId());
+                mergeTransferDTO.setLogisticSupplierId(channelBase.getMainId());
+                mergeTransferDTO.setLogisticSupplierName(channelBase.getLogisticsSupplierName());
+                List<SoB2cEntity> soB2cEntityList = new ArrayList<>();
+                soB2cEntityList.add(soB2cEntity);
+                mergeTransferDTO.setSoB2cEntityList(soB2cEntityList);
+                mergeTransferDTOList.add(mergeTransferDTO);
+            }else{
+                mergeTransferDTO.getSoB2cEntityList().add(soB2cEntity);
+            }
+        }
+
+        //已中转的订单
         List<String> soCodeList = soB2cList.stream().map(SoB2cEntity::getCode).collect(Collectors.toList());
         List<TransferDeclareDetailEntity> transferDeclareDetailEntityList = transferDeclareFeign.listBySoCodeList(soCodeList);
-        List<String> existCodeList = transferDeclareDetailEntityList.stream().map(v->v.getSoCode()).distinct().collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(existCodeList)) {
-            throw new ServiceException(StrUtil.format("销售单【{}】 已进行入库预报，不能重复预报",existCodeList));
-        }
+        List<String> existCodeList = transferDeclareDetailEntityList.stream().map(TransferDeclareDetailEntity::getSoCode).distinct().collect(Collectors.toList());
 
-        for (Map.Entry<String, List<LogisticsChannelDTO.BaseDTO>> entry : map.entrySet()) {
-            //物流商
-            String logisticsSupplierId = entry.getKey();
-            List<LogisticsChannelDTO.BaseDTO> baseChannelList = entry.getValue();
+        //校验合并后记的记录
+        LocalTime now=LocalTime.now();
+        List<TransferDeclareDTO.AddDTO> transferDeclareList = new ArrayList<>();
+        for (SoB2cDTO.MergeTransferDTO mergeTransferDTO : mergeTransferDTOList) {
+            List<SoB2cEntity> soB2cEntityList = mergeTransferDTO.getSoB2cEntityList();
+            String alreadyTransfer = TransferStatusEnum.SUCCESS.getCode();
+            List<String> alreadyTransferCode = soB2cEntityList.stream().filter(s -> !alreadyTransfer.equals(s.getTransferStatus())).map(SoB2cEntity::getCode).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(alreadyTransferCode)) {
+                resultDTOList.add(BatchResultDTO.fail(mergeTransferDTO.getLogisticSupplierId(),mergeTransferDTO.getLogisticSupplierName(),StrUtil.format("销售单【{}】 不属于预报成功的订单,不能进行入库预报",alreadyTransferCode)));
+                continue;
+            }
+            List<String> alreadyDeclareCode = soB2cEntityList.stream().map(SoB2cEntity::getCode).filter(existCodeList::contains).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(alreadyDeclareCode)) {
+                resultDTOList.add(BatchResultDTO.fail(mergeTransferDTO.getLogisticSupplierId(),mergeTransferDTO.getLogisticSupplierName(),StrUtil.format("销售单【{}】 已进行入库预报，不能重复预报",existCodeList)));
+                continue;
+            }
+            String notPackage = PackageStatusEnum.NOT.getCode();
+            //需要组包
+            List<String> wantPackageCode = soB2cEntityList.stream().filter(s -> !notPackage.equals(s.getPackageStatus())).map(SoB2cEntity::getCode).collect(Collectors.toList());
+            //表示强制组包了 就要去组包预报 去中转了
+            if (CollectionUtils.isNotEmpty(wantPackageCode)) {
+                resultDTOList.add(BatchResultDTO.fail(mergeTransferDTO.getLogisticSupplierId(),mergeTransferDTO.getLogisticSupplierName(),StrUtil.format("销售订单【{}】关联强制组包，请在组包预报页面操作中转报关",existCodeList)));
+                continue;
+            }
+            String unit = UnitEnum.WeightUnitEnum.G.getCode();
             TransferDeclareDTO.AddDTO addDTO = new TransferDeclareDTO.AddDTO();
-            addDTO.setDeliveryLogisticsSupplierId(logisticsSupplierId);
-            addDTO.setTransferLogisticsSupplierId(transferLogisticsSupplierId);
-            addDTO.setTransferChannelId(transferLogisticsChannelId);
+            addDTO.setDeliveryLogisticsSupplierId(mergeTransferDTO.getLogisticSupplierId());
+            addDTO.setTransferLogisticsSupplierId(mergeTransferDTO.getTransferLogisticsSupplierId());
+            addDTO.setTransferChannelId(mergeTransferDTO.getTransferChannelId());
             addDTO.setGenerateTime(now);
-            //这个物流商对应的渠道id
-            List<String> channelIdList = baseChannelList.stream().map(LogisticsChannelDTO.BaseDTO::getId).
-                    distinct().collect(Collectors.toList());
             //添加的详情
-            List<TransferDeclareDetailDTO.AddDTO> addDetailList = new ArrayList<>(channelIdList.size());
-            for (String channelId : channelIdList) {
-                List<SoB2cLogisticsEntity> b2cLogisticsList = logisticsList.stream().filter(l -> l.getLogisticsChannelId().equals(channelId)).collect(Collectors.toList());
-                Map<String, List<SoB2cLogisticsEntity>> b2cLogisticsMap = b2cLogisticsList.stream().
-                        collect(Collectors.groupingBy(SoB2cLogisticsEntity::getMainId));
-                //以销售订单分组
-                for (Map.Entry<String, List<SoB2cLogisticsEntity>> b2cEntry : b2cLogisticsMap.entrySet()) {
-                    String soId = b2cEntry.getKey();
-                    String code = soB2cList.stream().filter(s -> s.getId().equals(soId)).
-                            map(SoB2cEntity::getCode).findFirst().orElse("");
-
-                    List<SoB2cLogisticsEntity> dbB2cLogisticsList = b2cEntry.getValue();
-                    for (SoB2cLogisticsEntity item : dbB2cLogisticsList) {
-                        TransferDeclareDetailDTO.AddDTO detailAddDTO = new TransferDeclareDetailDTO.AddDTO();
-                        detailAddDTO.setSoCode(code);
-                        detailAddDTO.setSoId(soId);
-                        detailAddDTO.setWeightUnit(unit);
-                        detailAddDTO.setLogisticsChannelId(item.getLogisticsChannelId());
-                        detailAddDTO.setPackageWeight(item.getWeight());
-                        detailAddDTO.setTrackNo(item.getCode());
-                        addDetailList.add(detailAddDTO);
-                    }
-                }
+            List<TransferDeclareDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+            for (SoB2cEntity soB2cEntity : soB2cEntityList) {
+                SoB2cLogisticsEntity logisticsEntity = logisticsList.stream().filter(t->t.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(new SoB2cLogisticsEntity());
+                TransferDeclareDetailDTO.AddDTO detailAddDTO = new TransferDeclareDetailDTO.AddDTO();
+                detailAddDTO.setSoCode(soB2cEntity.getCode());
+                detailAddDTO.setSoId(soB2cEntity.getId());
+                detailAddDTO.setWeightUnit(unit);
+                detailAddDTO.setLogisticsChannelId(logisticsEntity.getLogisticsChannelId());
+                detailAddDTO.setPackageWeight(logisticsEntity.getWeight());
+                detailAddDTO.setTrackNo(logisticsEntity.getCode());
+                addDetailList.add(detailAddDTO);
             }
             addDTO.setDetailList(addDetailList);
             transferDeclareList.add(addDTO);
         }
+
         //需要添加中转报关单数据
         for (TransferDeclareDTO.AddDTO item : transferDeclareList) {
             try {
@@ -4424,7 +4435,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
 
-        return true;
+        return resultDTOList;
     }
 
 

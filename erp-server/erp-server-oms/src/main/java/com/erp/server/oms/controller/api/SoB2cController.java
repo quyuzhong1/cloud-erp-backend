@@ -987,10 +987,10 @@ public class SoB2cController extends BaseController {
      * @create 2024-01-20 15:27
      */
     @PostMapping("/transferDeclare")
-    public ApiResult  transferDeclare(@RequestBody SoB2cDTO.TransferDeclareDTO dto) {
+    public ApiResult<List<BatchResultDTO>>  transferDeclare(@RequestBody BaseIdsDTO.IdsDTO dto) {
 
-       Boolean result= soB2cService.transferDeclare(dto.getIds(), dto.getTransferLogisticsSupplierId(), dto.getTransferLogisticsChannelId());
-       return result ? success() : failure();
+        List<BatchResultDTO> resultDTOS= soB2cService.transferDeclare(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
 
     }
 
