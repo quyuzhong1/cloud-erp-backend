@@ -201,7 +201,7 @@ public class PackageForecastController extends BaseController {
      * @param dto
      * @return
      */
-    @PostMapping("/forecast")
+    /*@PostMapping("/forecast")
     public ApiResult<List<BatchResultDTO>> forecast(@RequestBody @Valid PackageForecastDTO.TransferDeclareDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         String transferLogisticsChannelId = dto.getTransferLogisticsChannelId();
@@ -223,7 +223,37 @@ public class PackageForecastController extends BaseController {
             resultDTOS.add(deleteResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }*/
+
+    /**
+     * 入库预报
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/instockForcast")
+    public ApiResult<List<BatchResultDTO>> instockForcast(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = packageForecastService.instockForcast(id);
+            } catch (Exception e) {
+                log.error("组包预报单 入库预报失败===>{}", e.getMessage());
+                PackageForecastEntity entity = packageForecastService.getById(id);
+                if (Objects.isNull(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 入库预报失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+
 
     /**
      * 上传组包预报

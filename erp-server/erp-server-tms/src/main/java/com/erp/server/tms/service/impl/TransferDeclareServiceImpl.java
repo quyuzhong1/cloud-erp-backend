@@ -522,7 +522,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listBySoIds(soIds);
         for (TransferDeclareDetailEntity transferDeclareDetailEntity : detailEntityList) {
             List<SoOutstockEntity> outstockEntities = soOutstockEntities.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getSoId())
-                    && ApproveStatusEnum.APPROVE.getCode().equals(req.getApproveStatus())
+                    && ApproveStatusEnum.APPROVE.getCode().equals(req.getApproveStatus().getStatus())
             ).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(outstockEntities)) {
                 resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), "【"+transferDeclareDetailEntity.getSoCode()+"】未完成出库无法执行入库预报"));

@@ -24,6 +24,7 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -703,6 +704,44 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         this.updateById(entity);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "中转报关");
 
+    }
+
+    @Override
+    public BatchResultDTO instockForcast(String id) {
+        PackageForecastEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+        }
+        List<String> uploadStatusList = new ArrayList<>(2);
+        uploadStatusList.add(PackageUploadStatusEnum.NOT.getCode());
+        uploadStatusList.add(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+        String uploadStatus = entity.getUploadStatus();
+        if (!uploadStatusList.contains(uploadStatus)) {
+            throw new ServiceException("只有无需上传和上传成功的组包 才能入库预报");
+        }
+        List<PackageForecastDetailEntity> detailList = packageForecastDetailService.listDbByMainId(id);
+        List<String> soIdList = detailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
+        //校验订单中转状态 （先去掉校验，因为历史数据问题）
+//        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIdList);
+//        List<String> alreadyTransferList = soB2cEntityList.stream().filter(v->TransferStatusEnum.ALREADY.getCode().equals(v.getTransferStatus())).map(SoB2cEntity::getCode).collect(Collectors.toList());
+//        if(CollectionUtils.isNotEmpty(alreadyTransferList)){
+//            return BatchResultDTO.fail(entity.getId(), entity.getCode(), StrUtil.format("{}已中转不可重复中转",alreadyTransferList));
+//        }
+
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(soIdList);
+        if (CollectionUtils.isEmpty(soB2cLogisticsEntities)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
+        TransferDeclareDTO.AddDTO addDTO = new TransferDeclareDTO.AddDTO();
+        addDTO.setTransferLogisticsSupplierId(soB2cLogisticsEntities.get(0).getTransferLogisticsSupplierId());
+        addDTO.setTransferChannelId(soB2cLogisticsEntities.get(0).getTransferLogisticsChannelId());
+        addDTO.setDeliveryLogisticsSupplierId(entity.getLogisticsSupplierId());
+        addDTO.setGenerateTime(LocalTime.now());
+        List<TransferDeclareDetailDTO.AddDTO> addDetailList = PackageForecastConverter.INSTANCE.convertDeclareDetail(detailList);
+        addDTO.setDetailList(addDetailList);
+        BaseResultDTO.AddDTO result = transferDeclareFeign.add(addDTO);
+        this.updateById(entity);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "入库预报");
     }
 
     @Override
