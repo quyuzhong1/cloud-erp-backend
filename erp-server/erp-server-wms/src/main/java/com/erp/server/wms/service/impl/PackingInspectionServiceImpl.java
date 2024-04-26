@@ -102,7 +102,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             //根据SKU查询BOM判断是否是组合SKU
             List<String> skuIdList = detailEntityList.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
             //查询sku基础信息
-            List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+            List<SkuVO> skuVOList = plmTaskFeign.listSkuPurchaseByIds(skuIdList);
             Map<String,SkuVO> skuVOMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId,Function.identity()));
             PackingInspectionDTO.ViewDTO addViewDTO;
             addViewDTO = PackingInspectConverter.INSTANCE.convertViewDTO(entity,detailEntityList);

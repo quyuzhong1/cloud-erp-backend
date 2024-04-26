@@ -162,7 +162,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         }
         List<PurchasePriceChangeDetailEntity> addList = BeanMapper.copyList(purchasePriceChangeDetailList, PurchasePriceChangeDetailEntity.class);
         List<String> skuIds = addList.stream().map(PurchasePriceChangeDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         for (PurchasePriceChangeDetailEntity item : addList) {
             String skuId = item.getSkuId();
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
@@ -268,7 +268,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         List<PurchasePriceChangeDetailEntity> removeList = dbList.stream().filter(r -> deleteIdList.contains(r.getId())).collect(Collectors.toList());
         this.removeByIds(deleteIdList);
         List<String> skuIds = purchasePriceChangeDetailList.stream().map(PurchasePriceChangeDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         List<PurchasePriceChangeDetailEntity> saveOrUpdateList = new ArrayList<>(purchasePriceChangeDetailList.size());
         LocalDate localDate = LocalDate.now();
         for (PurchasePriceChangeDetailDTO.UpdateDTO item : purchasePriceChangeDetailList) {

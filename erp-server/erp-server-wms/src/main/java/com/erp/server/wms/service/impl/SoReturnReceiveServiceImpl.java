@@ -369,7 +369,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //获取sku的id集合
         List<String> skuIdList = detailEntityList.stream().map(SoReturnReceiveDetailEntity::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
-        List<SkuVO> skuInfoByIds = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIdList);
         //退货单详情
         List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(Arrays.asList(entity.getSourceId()));
         //销售单详情id集合
@@ -515,7 +515,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<String> skuIds = qcList.stream().map(QcInfoDTO.SoReturnReceiveToQcDTO::getSkuId).collect(Collectors.toList());
         //获取到sku 信息
         List<ProductVO.ProductPackVO> skuList = plmTaskFeign.getProductPackBySkuIds(skuIds);
-        List<SkuVO> skuNoList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
         String sourceType = SourceTypeEnum.SO_RETURN_RECEIVE.getCode();
         for (QcInfoDTO.SoReturnReceiveToQcDTO item : qcList) {
             String skuId = item.getSkuId();

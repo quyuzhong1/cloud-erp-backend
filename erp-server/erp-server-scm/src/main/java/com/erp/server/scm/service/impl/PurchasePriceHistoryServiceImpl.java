@@ -46,7 +46,7 @@ public class PurchasePriceHistoryServiceImpl extends SuperServiceImpl<PurchasePr
         List<PurchasePriceDetailDTO.HistoryDTO> resultList = BeanMapper.copyList(list, PurchasePriceDetailDTO.HistoryDTO.class);
         List<String> skuIdList = resultList.stream().map(PurchasePriceDetailDTO.HistoryDTO::getSkuId).collect(Collectors.toList());
         List<String> currencyIdList = resultList.stream().map(PurchasePriceDetailDTO.HistoryDTO::getCurrency).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
         //币种信息
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
         for (PurchasePriceDetailDTO.HistoryDTO item : resultList) {

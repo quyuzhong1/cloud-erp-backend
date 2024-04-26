@@ -319,7 +319,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
         //产品信息
         List<String> skuIds = detailList.stream().map(TransferApplicationDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
 
         //组织
         InventoryDTO.ParamDTO param = new InventoryDTO.ParamDTO();
@@ -778,7 +778,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
         //产品信息
         List<String> skuIds = list.stream().map(TransferApplicationDTO.ViewGenerateMachineInfo::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         //根据sku查询拥有的子sku
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
         String combinationType = BomTypeEnum.COMBINATION.getType();

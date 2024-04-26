@@ -372,7 +372,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         List<String> billIdList = list.stream().map(QcInfoDTO.PagingViewDTO::getId).collect(Collectors.toList());
         List<QcRemarkEntity> billRemarkList = qcRemarkService.getByMainIdList(billIdList);
 
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
         // 退货签收单单号显示
         List<String> soReturnReceiveIds = list.stream().filter(r->Objects.equals(r.getSourceType(), SourceTypeEnum.SO_RETURN_RECEIVE.getCode())).map(QcInfoDTO.PagingViewDTO::getSourceId).distinct().collect(Collectors.toList());
         List<SoReturnReceiveEntity> receiveReturnReceiveList = Lists.newArrayList();
@@ -457,7 +457,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
             List<String> billIdList = viewList.stream().map(QcInfoDTO.PagingViewDTO::getId).collect(Collectors.toList());
             List<QcRemarkEntity> billRemarkList = qcRemarkService.getByMainIdList(billIdList);
-            List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+            List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
             for (QcInfoDTO.PagingViewDTO item : viewList) {
                 QcBillExportExcelDTO excelDTO = new QcBillExportExcelDTO();
                 BeanMapper.copy(item, excelDTO);
@@ -1425,7 +1425,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
         List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = baseMapper.viewGeneratePurchaseReturnOrder(ids);
         List<String> skuIds = list.stream().map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         //采购订单id
         List<String> poIdList = list.stream().map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getPurchaseOrderId).collect(Collectors.toList());
         //采购订单明细id
@@ -2244,7 +2244,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
             List<String> billIdList = dataList.stream().map(QcInfoDTO.DailyListDTO::getId).collect(Collectors.toList());
             List<QcRemarkEntity> billRemarkList = qcRemarkService.getByMainIdList(billIdList);
-            List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+            List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
             List<String> billIds = dataList.stream().map(QcInfoDTO.DailyListDTO::getId).distinct().collect(Collectors.toList());
             List<PurchaseOrderEntity> poList = scmTaskFeign.listPurchaseOrderByIds(billIds);
 

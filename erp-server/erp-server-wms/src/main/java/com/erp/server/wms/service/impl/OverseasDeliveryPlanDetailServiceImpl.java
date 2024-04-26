@@ -134,7 +134,7 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         //查询skuId产品信息
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
 
         //获取库存sku信息
         List<SkuMappingDTO.ListSkuParamDTO> paramDTOS = new ArrayList<>();

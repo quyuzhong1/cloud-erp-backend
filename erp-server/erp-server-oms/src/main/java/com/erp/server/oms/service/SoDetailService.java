@@ -250,13 +250,12 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
 
     /**
      * 计算毛利成本
-     * @param purchasePriceList
      * @param skuList
      * @param saleOrderBillDate
      * @param item
      * @param isBrush
      */
-    void calCost(List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList, List<SkuVO> skuList, LocalDate saleOrderBillDate, SoDetailEntity item, Boolean isBrush);
+    void calCost(List<SkuVO> skuList, LocalDate saleOrderBillDate, SoDetailEntity item, Boolean isBrush);
 
     /**
      * 更新成本毛利信息

@@ -67,13 +67,20 @@ public interface PlmTaskFeign {
     void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params);
 
     /**
-     * 根据skuid集合获取到sku 信息
-     *
+     * 根据skuId集合获取到sku信息,推荐按需使用
+     * listSkuProductByIds  基础信息+产品信息
+     * listSkuCostByIds     基础信息+成本信息
+     * listSkuPackByIds     基础信息+产品信息+包装信息
+     * listSkuSaleByIds     基础信息+产品信息+销售信息
+     * listSkuLogisticsByIds基础信息+产品信息+物流信息
+     * listSkuCategoryByIds 基础信息+产品信息+分类信息
+     * listSkuPurchaseByIds 基础信息+产品信息+采购信息
      * @param skuIds
      * @return
      * @author yl
      * @date 2023-03-21 12:19
      */
+    @Deprecated
     @PostMapping("feign/product/getSkuInfoByIds")
     List<SkuVO> getSkuInfoByIds(@RequestBody List<String> skuIds);
 

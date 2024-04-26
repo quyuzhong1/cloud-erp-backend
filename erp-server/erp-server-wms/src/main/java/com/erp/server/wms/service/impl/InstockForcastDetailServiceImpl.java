@@ -48,7 +48,7 @@ public class InstockForcastDetailServiceImpl extends SuperServiceImpl<InstockFor
          */
         // 获取产品信息
         List<String> skuIdList = details.stream().map(InstockForcastDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         // 需要保存的详情集合
         List<InstockForcastDetailEntity> listDetail = new ArrayList<>();

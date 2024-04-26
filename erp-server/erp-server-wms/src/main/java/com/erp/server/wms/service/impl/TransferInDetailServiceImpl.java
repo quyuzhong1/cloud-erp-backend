@@ -101,7 +101,7 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
         List<TransferInDetailEntity> dbList = this.listDbByMainId(mainId);
         List<TransferInDetailDTO.ViewDTO> list = BeanMapper.copyList(dbList, TransferInDetailDTO.ViewDTO.class);
         List<String> skuIdList = list.stream().map(TransferInDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
         for (TransferInDetailDTO.ViewDTO item : list) {
             String skuId = item.getSkuId();
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
@@ -153,7 +153,7 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
             this.removeByIds(deleteIdList);
         }
         List<String> skuIdList = detailList.stream().map(TransferInDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
         for (TransferInDetailEntity item : saveOrUpdateList) {
             item.setMainId(mainId);
             String skuId = item.getSkuId();

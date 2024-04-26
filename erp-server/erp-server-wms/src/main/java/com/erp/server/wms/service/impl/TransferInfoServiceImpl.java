@@ -353,7 +353,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         viewDTO.setTypeName(TransferTypeEnum.getNameByCode(entity.getType()));
         //产品信息
         List<String> skuIds = detailList.stream().map(TransferInfoDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         //仓库信息
         List<String> inWarehouseIds = detailList.stream().map(TransferInfoDetailEntity::getInWarehouseId).distinct().collect(Collectors.toList());
         List<String> outWarehouseIds = detailList.stream().map(TransferInfoDetailEntity::getOutWarehouseId).distinct().collect(Collectors.toList());

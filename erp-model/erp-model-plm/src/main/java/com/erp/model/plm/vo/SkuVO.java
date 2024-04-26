@@ -1,5 +1,6 @@
 package com.erp.model.plm.vo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -173,9 +174,13 @@ public class SkuVO implements Serializable {
     private BigDecimal targetTaxCost;
 
     /**
-     * 实际含税成本
+     * 实际含税成本(含税)
      */
     private BigDecimal actualTaxCost;
+    /**
+     * 成本价格（不含税）
+     */
+    private BigDecimal notTaxCostPrice;
 
     /**
      * 标准零售价

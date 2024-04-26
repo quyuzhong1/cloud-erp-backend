@@ -693,7 +693,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         }
         //查询skuId产品信息
         List<String> skuIds = detailEntityList.stream().map(OverseasWarehouseInboundDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        Map<String, String> imageUrlMap = plmTaskFeign.getSkuInfoByIds(skuIds)
+        Map<String, String> imageUrlMap = plmTaskFeign.listSkuProductByIds(skuIds)
                 .stream()
                 .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::checkAndGetSkuImagesUrl));
 

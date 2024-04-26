@@ -671,7 +671,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         SoInfoDTO.CustomerDTO soCustomer = soInfoService.getSoCustomer(soId);
         List<SoChangeDTO.SoRefDTO> resultList = baseMapper.listSoRefSoChangeBySoId(soId);
         List<String> skuIdList = resultList.stream().map(SoChangeDTO.SoRefDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
         for (SoChangeDTO.SoRefDTO item : resultList) {
             String skuId = item.getSkuId();
             ApproveStatusEnum approveStatus = item.getApproveStatus();

@@ -176,7 +176,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
                 .distinct()
                 .collect(Collectors.toList());
 
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
         Map<String, SkuVO> skuVOMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
         for (OverseasInventoryDTO.ListDTO data : list) {
             if (StringUtils.isNotBlank(data.getSkuId())){

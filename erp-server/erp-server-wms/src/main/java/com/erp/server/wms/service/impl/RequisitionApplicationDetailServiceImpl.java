@@ -139,7 +139,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
 
         //获取sku信息
         List<String> skuIdList = list.stream().map(RequisitionApplicationDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
         for (RequisitionApplicationDetailEntity requisitionApplicationDetailEntity : list) {
             requisitionApplicationDetailEntity.setMainId(mainId);
 

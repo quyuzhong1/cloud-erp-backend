@@ -127,7 +127,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
                 throw new ServiceException(ApiError.ERROR_98026);
             }
             List<String> skuIdList = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
-            List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+            List<SkuVO> skuList = plmTaskFeign.listSkuPurchaseByIds(skuIdList);
 
             // 关闭SKU重复检查
             // checkAddDetailsRepeatSku(purchaseOrderDetailEntities);
@@ -240,7 +240,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         // checkAddDetailsRepeat(detailList);
 
         List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> detailEntityList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> detailEntityList = plmTaskFeign.listSkuPurchaseByIds(skuIdList);
         List<String> collect = dto.getPurchasePriceDetailList().stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currency = sysUserFeign.listByCurrency(collect);
         for (PurchaseReturnOrderDetailDTO.AddDTO addDTO : detailList) {
@@ -302,7 +302,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
                 throw new ServiceException(ApiError.ERROR_98026);
             }
             List<String> skuIdList = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
-            List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+            List<SkuVO> skuList = plmTaskFeign.listSkuPurchaseByIds(skuIdList);
 
             //遍历需要保存的采购收货单详情信息，并赋值采购单信息
             List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
@@ -409,7 +409,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         //遍历需要保存的采购收货单详情信息，并赋值采购单信息
         List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
         List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> detailEntityList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> detailEntityList = plmTaskFeign.listSkuPurchaseByIds(skuIdList);
         //获取币别符号
         List<String> collect = dto.getPurchasePriceDetailList().stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currency = sysUserFeign.listByCurrency(collect);

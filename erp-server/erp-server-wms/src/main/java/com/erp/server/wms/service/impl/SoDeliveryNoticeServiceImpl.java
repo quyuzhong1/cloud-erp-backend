@@ -1011,7 +1011,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //附件信息
         List<WmsAttachmentDTO.UpdateDTO> attachmentDbList = wmsAttachmentService.getByBusinessIds(detailIds);
         List<String> skuIds = resultList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
-        List<SkuVO> skuInfoByIds = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIds);
         for (SoOutstockDTO.GenerateSoOutstockViewDTO item : resultList) {
             item.setSourceType(soDeliveryNotice);
             String detailId = item.getSourceDetailId();
