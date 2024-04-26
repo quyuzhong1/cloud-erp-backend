@@ -46,13 +46,6 @@ public interface SysPostFeign {
 
 
     /**
-     * 通过岗位id查询岗位下全部人员
-     **/
-    @PostMapping("/feign/post/getUserIdByPostIds")
-    List<SysPostUserEntity> getUserIdByPostIds(@RequestBody List<String> ids);
-
-
-    /**
      * 根据岗位id集合查询岗位用户关联信息
      * @author Will
      * @date: 2024/4/10 16:40
@@ -61,4 +54,11 @@ public interface SysPostFeign {
      */
     @GetMapping("/feign/post/listPostUserByPostIdList")
     List<SysPostUserEntity> listPostUserByPostIdList(@RequestParam("postIdList") List<String> postIdList);
+
+
+    /**
+     * 通过岗位id查询岗位下全部人员
+     **/
+    @PostMapping("/feign/post/getUserIdByPostIds")
+    List<SysPostUserEntity> getUserIdByPostIds(@RequestBody List<String> ids);
 }

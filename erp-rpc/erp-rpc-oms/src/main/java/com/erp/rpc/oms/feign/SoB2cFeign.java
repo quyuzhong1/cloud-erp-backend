@@ -449,6 +449,7 @@ public interface SoB2cFeign {
     @PostMapping("/feign/soB2cError/deleteAll")
     void checkAndDeleteAllError(@RequestBody SoB2cErrorDTO.DeleteDetailDTO deleteDTO);
 
+
     /**
      * 修改速卖通订单仓库
      * @Author Luo_WG

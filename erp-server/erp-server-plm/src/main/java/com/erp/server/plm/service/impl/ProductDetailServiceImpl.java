@@ -36,8 +36,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RedisKeyConstant;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.*;
@@ -4924,5 +4922,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         pack.setBoxWidth(LengthConverterUtil.cmToMm(boxSizeList.stream().skip(1).findFirst().orElse(BigDecimal.ZERO)));
         //箱规-高
         pack.setBoxHeight(LengthConverterUtil.cmToMm(boxSizeList.stream().skip(2).findFirst().orElse(BigDecimal.ZERO)));
+    }
+
+    @Override
+    public List<SkuVO> accessoriesSku(String searchKeyword) {
+        return baseMapper.accessoriesSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
+
+    }
+    /**
+     * 获取已审核sku 未计算目的国申报价数据
+     * @return
+     */
+    @Override
+    public List<ProductDetailEntity> getProductDetailByDestDeclarePrice() {
+        return baseMapper.getProductDetailByDestDeclarePrice();
+    }
+
+    @Override
+    public List<SkuVO> getSkuBaseByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getSkuBaseBySkuIds(skuIds);
     }
 }
