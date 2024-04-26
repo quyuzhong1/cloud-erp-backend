@@ -1015,6 +1015,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         switch (SoB2cDeliveryPrintTypeEnum.getByCode(param.getPrintType())){
             case LOGISTICS_BILL :
                 //打印面单预览
+
                 return null;
             case ALLOCATE_CARGO_BILL :
                 //打印配货单预览
@@ -1023,16 +1024,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 //打印面单/配货单预览
                 return null;
             default:
-
-
-        }
-        if (SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode().equals(param.getPrintType())) {
-            //打印面单预览
-
-        } else if (SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(param.getPrintType())) {
-
-
-        } else {
 
 
         }

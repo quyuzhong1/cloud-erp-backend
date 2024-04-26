@@ -119,7 +119,7 @@ public class PackageServiceImpl implements PackageService {
         }
 
         Map<String, List<PackageDTO.ScanResultDTO>> map = list.stream().filter(s -> StringUtils.isNotBlank(s.getLogisticsSupplierId())).
-                collect(Collectors.groupingBy(req -> req.getLogisticsSupplierId()+"-"+req.getLogisticsChannelId()+"-"+req.getTransferLogisticsSupplierId()));
+                collect(Collectors.groupingBy(req -> req.getLogisticsSupplierId()+"-"+req.getTransferLogisticsChannelId()+"-"+req.getTransferLogisticsSupplierId()));
 
         LocalDate nowDate = LocalDate.now();
         String weightUnit= UnitEnum.WeightUnitEnum.G.getCode();
