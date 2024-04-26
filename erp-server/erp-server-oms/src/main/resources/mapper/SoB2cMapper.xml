@@ -76,7 +76,9 @@
         sb2cr.customer_id as buyerId,
         sb2cr.name as buyerName,
         sb2cr.country_name as countryName,
-        sb2c.create_time as createTime
+        sb2c.create_time as createTime,
+        sb2cl.transfer_logistics_supplier_id as transferLogisticsSupplierId
+        sb2cl.transfer_logistics_channel_id as transferLogisticsChannelId,
     </sql>
 
     <!-- 通用查询结果列 -->
