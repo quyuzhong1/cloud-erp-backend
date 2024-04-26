@@ -28,7 +28,7 @@ public class TikTokListingDTO extends CleanBaseDTO {
         this.dataBean = dataBean;
         this.setIsClean(0);
         this.shopId = dto.getShopId();
-        super.setPlatform(PlatformDictEnum.MERCADOLIBRE.getCode());
+        super.setPlatform(PlatformDictEnum.TIK_TOK.getCode());
         this.setUniqueId(dataBean.getFid());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
