@@ -62,7 +62,7 @@ public class TmsDeclareBillFeignController {
     /**
      * 自动生成头程报关单
      **/
-    @PostMapping("/feign/tmsFirstMileLogistic/autoGenerateFirstMileDeclare")
+    @PostMapping("/feign/tmsDeclareBill/autoGenerateFirstMileDeclare")
     Boolean autoGenerateFirstMileDeclare(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO){
         return tmsDeclareBillService.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
     }
@@ -70,7 +70,7 @@ public class TmsDeclareBillFeignController {
     /**
      * 自动生成B2b报关单
      **/
-    @PostMapping("/feign/tmsFirstMileLogistic/autoGenerateB2bDeclare")
+    @PostMapping("/feign/tmsDeclareBill/autoGenerateB2bDeclare")
     Boolean autoGenerateB2bDeclare(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO){
         return tmsDeclareBillService.autoGenerateB2bDeclare(autoGenerateBillDTO);
     }
