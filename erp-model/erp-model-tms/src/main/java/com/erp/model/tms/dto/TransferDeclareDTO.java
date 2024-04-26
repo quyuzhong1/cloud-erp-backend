@@ -2,6 +2,7 @@ package com.erp.model.tms.dto;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.OperationTypeEnum;
@@ -211,6 +212,11 @@ public class TransferDeclareDTO implements Serializable {
         */
         private LocalDate planTransferDate;
 
+        /**
+         * 上传状态
+         */
+        private String uploadStatus;
+
     }
 
     /**
@@ -295,10 +301,12 @@ public class TransferDeclareDTO implements Serializable {
             this.logisticsChannelIdList = new ArrayList<>();
             this.deliveryLogisticsSupplierIdList = new ArrayList<>();
             this.transferLogisticsSupplierIdList = new ArrayList<>();
+            this.instockForecastStatusList = new ArrayList<>();
             this.uploadStatusList = new ArrayList<>();
             this.outstockStatusList = new ArrayList<>();
             this.transferStatusList = new ArrayList<>();
             this.createUserIdList = new ArrayList<>();
+            this.createTimeList = new ArrayList<>();
             this.createTimeList = new ArrayList<>();
         }
     }

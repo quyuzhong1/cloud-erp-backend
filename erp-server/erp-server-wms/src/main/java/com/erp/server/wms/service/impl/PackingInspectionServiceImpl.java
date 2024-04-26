@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
+import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.handler.PlatformSaveHandler;
 import com.common.core.enums.ApiError;
@@ -93,6 +94,17 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
         if(ObjectUtil.isEmpty(soB2cEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+
+        //验货前判断平台订单是否取消
+        PlatformDeliveryInterceptDTO interceptDTO = PlatformDeliveryInterceptDTO.builder()
+                .soB2cId(soB2cEntity.getId())
+                .dictPlatform(soB2cEntity.getDictPlatform())
+                .oldIsCancel(soB2cEntity.getIsCancel())
+                .build();
+        Boolean isCancel = PlatformSaveHandler.deliveryIntercept(interceptDTO);
+        if (isCancel) {
+           throw new ServiceException(StrUtil.format("销售订单【{}】平台已取消，不支持验货",soB2cEntity.getCode()));
         }
 
         //因为明细只保存父级SKU，所以如果有组合品没办法直接更新明细，将明细sku拆分放到redis，扫描时操作redis的值，在最后全部扫描完成统一更新数据库

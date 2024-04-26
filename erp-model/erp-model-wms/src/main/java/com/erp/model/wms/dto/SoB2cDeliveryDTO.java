@@ -718,6 +718,22 @@ public class SoB2cDeliveryDTO implements Serializable {
         private List<PrintLogisticsWaybillDetailDTO> detailList;
     }
 
+    /**
+     * 打印物流面单确认
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintLogisticsBillConfirmParam {
+        /**
+         * 打印类型 wms/common/enumDropDown?type=SoB2cDeliveryPrintType
+         * logisticsBill: 物流面单，allocateCargoBill：配货单
+         */
+        private String printType;
+
+        private List<String> ids;
+    }
+
 
     /**
      * 打印物流面单

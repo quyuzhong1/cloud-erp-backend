@@ -202,6 +202,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         if(!save) {
             throw new ServiceException("中转报关单保存失败");
         }
+
         //新增明细
         transferDeclareDetailService.add(addDTO, transferDeclareEntity.getId());
 
@@ -980,13 +981,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     private void handleTableParam(TransferDeclareDTO.PagingParamDTO params) {
         List<String> uploadStatusList = params.getUploadStatusList();
         List<String> transferStatusList = params.getTransferStatusList();
+        List<String> instockForecastStatusList = params.getInstockForecastStatusList();
         //待上传
         if (TransferDeclareTabFlagEnum.WAIT_UPLOAD.getCode().equals(params.getTabFlag())) {
-            uploadStatusList.add(TransferDeclareTabFlagEnum.WAIT_UPLOAD.getCode());
+            instockForecastStatusList.add(InstockForecastStatusEnum.WAIT_UPLOAD.getCode());
         }
         //上传失败
         if (TransferDeclareTabFlagEnum.UPLOAD_FAILURE.getCode().equals(params.getTabFlag())) {
-            uploadStatusList.add(TransferDeclareTabFlagEnum.UPLOAD_FAILURE.getCode());
+            instockForecastStatusList.add(InstockForecastStatusEnum.UPLOAD_FAILURE.getCode());
         }
         //物流商未出库
         if (TransferDeclareTabFlagEnum.LOGISTICS_UN_OUTSTOCK.getCode().equals(params.getTabFlag())) {

@@ -53,6 +53,25 @@ public class SoB2cLogisticsDTO implements Serializable {
          * 第三方平台订单包裹号
          */
         private String platformPackageId;
+
+        /**
+         * 中转物流商id
+         */
+        private String transferLogisticsSupplierId;
+
+        /**
+         * 中转物流商名
+         */
+        private String transferLogisticsSupplierName;
+        /**
+         * 中转物流商渠道id
+         */
+        private String transferLogisticsChannelId;
+
+        /**
+         * 中转物流商渠道名
+         */
+        private String transferLogisticsChannelName;
     }
 
     @Data

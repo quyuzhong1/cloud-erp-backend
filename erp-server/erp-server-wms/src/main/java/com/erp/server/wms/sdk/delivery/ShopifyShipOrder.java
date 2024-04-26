@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
+import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -11,7 +12,6 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.IPlatformService;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -219,10 +219,7 @@ public class ShopifyShipOrder implements IPlatformService {
     }
 
     @Override
-    public void deliveryIntercept(String soB2cId,Boolean isCancel) {
-        if (isCancel) {
-            //订单拦截
-            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cId, "平台取消"));
-        }
+    public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
+        return null;
     }
 }
