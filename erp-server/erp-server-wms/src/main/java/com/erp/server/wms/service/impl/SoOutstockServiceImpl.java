@@ -2841,6 +2841,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //合并相同的sku
         for (TmsDeclareBillDTO.SoOutDTO deliveryDTO : result) {
             List<TmsDeclareBillDTO.ProductDetail> productDetails = deliveryDTO.getProductDetailList();
+            if(productDetails == null){
+                productDetails = new ArrayList<>();
+            }
             // 根据 skuId 进行分组，并对数量进行求和
             List<TmsDeclareBillDTO.ProductDetail> mergedDetails = new ArrayList<>(productDetails.stream()
                     .collect(Collectors.toMap(
