@@ -3,6 +3,7 @@ package com.erp.server.wms.sdk.delivery;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.annotation.PlatformShipOrderAnno;
+import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.IPlatformService;
@@ -95,7 +96,7 @@ public class TikTokShipOrder implements IPlatformService {
     }
 
     @Override
-    public void deliveryIntercept(String soB2cId, Boolean isCancel) {
-
+    public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
+        return null;
     }
 }
