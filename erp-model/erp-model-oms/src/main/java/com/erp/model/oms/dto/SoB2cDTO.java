@@ -10,6 +10,7 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -34,6 +35,36 @@ import java.util.Map;
 @NoArgsConstructor
 public class SoB2cDTO implements Serializable {
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class MergeTransferDTO {
+
+        /**
+         * 物流商id
+         */
+        private String logisticSupplierId;
+        /**
+         * 物流商id
+         */
+        private String logisticSupplierName;
+
+        /**
+         * 中转物流商id
+         */
+        private String transferLogisticsSupplierId;
+
+        /**
+         * 中转渠道id
+         */
+        private String transferChannelId;
+
+        /**
+         * 销售订单
+         */
+        private List<SoB2cEntity> soB2cEntityList;
+    }
 
     /**
      * 状态统计

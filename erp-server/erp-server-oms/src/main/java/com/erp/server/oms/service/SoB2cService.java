@@ -664,7 +664,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      * @create 2024-01-20 15:47
      */
-    Boolean transferDeclare(List<String> ids,String transferLogisticsSupplierId,String  transferLogisticsChannelId);
+    List<BatchResultDTO> transferDeclare(List<String> ids);
 
     /**
      * 根据物流商查询待中转的订单
