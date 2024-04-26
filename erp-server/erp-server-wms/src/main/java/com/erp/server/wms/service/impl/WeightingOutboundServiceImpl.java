@@ -79,6 +79,11 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
 
+        //验证订单平台是否取消
+        if (soB2cEntity.getIsCancel()) {
+            throw new ServiceException(StrUtil.format("销售订单【{}】平台已取消，不支持称重",soB2cEntity.getCode()));
+        }
+
         //查询订单物流信息获取跟踪号
         List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
         //设置物流跟踪单号
