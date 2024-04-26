@@ -1036,6 +1036,36 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return true;
     }
 
+    @Override
+    public List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillPreview(SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param) {
+
+        switch (SoB2cDeliveryPrintTypeEnum.getByCode(param.getPrintType())){
+            case LOGISTICS_BILL :
+                //打印面单预览
+                return null;
+            case ALLOCATE_CARGO_BILL :
+                //打印配货单预览
+                return null;
+            case ALL :
+                //打印面单/配货单预览
+                return null;
+            default:
+
+
+        }
+        if (SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode().equals(param.getPrintType())) {
+            //打印面单预览
+
+        } else if (SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(param.getPrintType())) {
+
+
+        } else {
+
+
+        }
+        return null;
+    }
+
     /**
      * @description: 根据id集合更新修改状态
      * @author Will

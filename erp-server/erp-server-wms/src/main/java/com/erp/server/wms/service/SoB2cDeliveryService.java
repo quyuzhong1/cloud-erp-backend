@@ -230,4 +230,11 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * false=有已发货的发货单
      */
     boolean hasNotShippedDeliveryAndLog(SoB2cEntity currentEntity);
+
+    /**
+     * 打印面单预览
+     * @param param
+     * @return
+     */
+    List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillPreview(SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param);
 }
