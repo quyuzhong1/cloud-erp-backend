@@ -4139,16 +4139,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 continue;
             }
             //包装尺寸
-            if (ObjectUtils.isEmpty(productPackEntity.getProductLength()) || ObjectUtils.isEmpty(productPackEntity.getProductWidth()) || ObjectUtils.isEmpty(productPackEntity.getProductHeight())) {
-                errMsg.append(StrUtil.format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append("</br>");
-            }
             if (MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getProductLength()) >= 0  || MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getProductWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getProductHeight()) >= 0) {
                 errMsg.append(StrUtil.format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append("</br>");
             }
             //箱规
-            if (ObjectUtils.isEmpty(productPackEntity.getBoxLength()) || ObjectUtils.isEmpty(productPackEntity.getBoxWidth()) || ObjectUtils.isEmpty(productPackEntity.getBoxHeight())) {
-                errMsg.append(StrUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append("</br>");
-            }
             if (MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getBoxLength()) >= 0 ||MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getBoxWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getBoxHeight()) >= 0) {
                 errMsg.append(StrUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append("</br>");
             }
