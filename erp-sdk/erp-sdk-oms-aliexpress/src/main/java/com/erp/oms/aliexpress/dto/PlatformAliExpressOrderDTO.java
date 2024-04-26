@@ -210,6 +210,9 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         // （soB2cBillStatus字典类型）
         orderDTO.setBillStatus(sourceOrder.convertBillStatus(isAliexpressPlatformWarehouseOrder));
 
+        // 平台订单原始状态
+        orderDTO.setPlatformOrderStatus(sourceOrder.getOrderStatus());
+
         // 审核状态状态
         // （ApproveStatus字典类型）
         orderDTO.setApproveStatusStr(sourceOrder.convertApproveStatus(isAliexpressPlatformWarehouseOrder));

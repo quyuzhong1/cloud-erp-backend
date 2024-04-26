@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.feign;
 
 
+import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
@@ -52,6 +53,9 @@ public class SoB2cFeignController extends BaseController {
 
     @Resource
     private SoB2cRefService soB2cRefService;
+
+    @Resource
+    private SoB2cStatusService b2cStatusService;
 
 
     /**
@@ -612,5 +616,14 @@ public class SoB2cFeignController extends BaseController {
     @PostMapping("/deliveryIntercept")
     public BatchResultDTO deliveryIntercept(@RequestBody @Validated SoB2cDTO.RemarkDTO dto) {
         return soB2cService.deliveryIntercept(dto.getId(),dto.getRemark());
+    }
+
+
+    /**
+     * 更新平台订单取消状态
+     */
+    @PostMapping("/updateCancelAndLog")
+    public Boolean updateCancelAndLog(@RequestBody @Validated PlatformDeliveryInterceptDTO dto){
+        return b2cStatusService.updateCancelAndLog(dto);
     }
 }

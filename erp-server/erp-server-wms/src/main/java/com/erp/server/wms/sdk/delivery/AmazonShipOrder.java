@@ -1,5 +1,6 @@
 package com.erp.server.wms.sdk.delivery;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -32,10 +33,7 @@ import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
-import com.erp.sdk.oms.amz.spapi.model.orders.ConfirmShipmentOrderItem;
-import com.erp.sdk.oms.amz.spapi.model.orders.ConfirmShipmentOrderItemsList;
-import com.erp.sdk.oms.amz.spapi.model.orders.ConfirmShipmentRequest;
-import com.erp.sdk.oms.amz.spapi.model.orders.PackageDetail;
+import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import com.erp.server.wms.service.DictBasicService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -172,12 +170,16 @@ public class AmazonShipOrder implements IPlatformService {
             if (null == shopInfoDTO) {
                 throw new ServiceException("未找到店铺授权:" + mainEntity.getShopId());
             }
+            AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+            OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
 
             //取消则需要自动发起订单拦截
             PlatformDeliveryInterceptDTO interceptDTO = PlatformDeliveryInterceptDTO.builder()
                     .soB2cId(mainEntity.getId())
                     .dictPlatform(mainEntity.getDictPlatform())
                     .oldIsCancel(mainEntity.getIsCancel())
+                    .shopId(mainEntity.getShopId())
+                    .platformCode(mainEntity.getPlatformCode())
                     .build();
             Boolean isCancel = deliveryIntercept(interceptDTO);
             if (isCancel){
@@ -185,7 +187,6 @@ public class AmazonShipOrder implements IPlatformService {
             }
 
             ConfirmShipmentRequest body = new ConfirmShipmentRequest();
-            AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
             body.setMarketplaceId(marketplaceEnum.getMarketplaceId());
             PackageDetail packageDetail = new PackageDetail();
             // 包裹参考 ID 支持任何正数值，用于在确认货件后编辑货件。您可以提交任何数值作为 packageReferenceID，
@@ -220,8 +221,6 @@ public class AmazonShipOrder implements IPlatformService {
             packageDetail.setOrderItems(orderItemList);
             body.setPackageDetail(packageDetail);
 
-            OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
-
             try {
                 ApiResponse<Void> voidApiResponse = api.confirmShipmentWithHttpInfo(body, mainEntity.getPlatformCode());
                 log.warn("标记发货响应结果:{}", JSONUtil.toJsonStr(voidApiResponse));
@@ -248,11 +247,33 @@ public class AmazonShipOrder implements IPlatformService {
 
     @Override
     public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
-        Boolean isCancel = Boolean.FALSE;
+        Boolean isCancel = dto.getOldIsCancel();
+        if (!dto.getOldIsCancel()){
+            // 请求亚马逊接口获取最新状态
+            // 获取店铺授权信息
+            AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(dto.getShopId());
+            if (null == shopInfoDTO) {
+                throw new ServiceException("未找到店铺授权:" + dto.getShopId());
+            }
+            AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+            OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
+            try {
+                GetOrderResponse response = api.getOrder(dto.getPlatformCode());
+                isCancel = response.getPayload().convertCancel();
+            } catch (Exception e) {
+                log.warn("查询亚马逊订单【{}】信息响应结果:, error={}", dto.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
+                throw new ServiceException("查询亚马逊订单最新信息失败:" + e.getMessage());
+            }
+            // 订单取消:分事务标记到订单
+            if (isCancel){
+                dto.setOldIsCancel(isCancel);
+                soB2cFeign.updateCancelAndLog(dto);
+            }
+        }
+
         if (isCancel) {
             //订单拦截
             soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(dto.getSoB2cId(), "平台取消"));
-            isCancel = Boolean.TRUE;
         }
         return isCancel;
     }

@@ -1,14 +1,20 @@
 package com.common.business.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.StateEnumValue;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.checkerframework.common.value.qual.ArrayLen;
 
 import javax.validation.constraints.NotBlank;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PlatformDeliveryInterceptDTO {
 
     /**
@@ -16,6 +22,12 @@ public class PlatformDeliveryInterceptDTO {
      */
     @NotBlank(message = "b2c销售单id不能为空")
     private String soB2cId;
+
+    /**
+     * 平台订单号
+     */
+    @NotBlank(message = "平台订单号不能为空")
+    private String platformCode;
 
     /**
      * 销售平台
