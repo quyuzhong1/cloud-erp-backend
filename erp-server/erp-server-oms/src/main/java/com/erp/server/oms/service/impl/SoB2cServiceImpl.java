@@ -2724,6 +2724,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 logisticsChannelName = channelEntity.getName();
             }
         }
+        String transferLogisticsChannelId =  soB2cLogisticsEntity.getTransferLogisticsChannelId();
+        List<TransferLogisticsChannelDTO.ListSelectDTO> transferInfoList = transferLogisticsFeign.listByTransferChannelIds(Arrays.asList(transferLogisticsChannelId));
+        if(CollectionUtils.isNotEmpty(transferInfoList)){
+            TransferLogisticsChannelDTO.ListSelectDTO transferInfo = transferInfoList.get(0);
+            logisticsDTO.setTransferLogisticsSupplierId(transferInfo.getTransferLogisticsSupplierId());
+            logisticsDTO.setTransferLogisticsSupplierName(transferInfo.getTransferLogisticSupplierName());
+            logisticsDTO.setTransferLogisticsChannelId(transferInfo.getId());
+            logisticsDTO.setTransferLogisticsChannelName(transferInfo.getName());
+        }
         logisticsDTO.setLogisticsChannelName(logisticsChannelName);
         data.setLogisticsDTO(logisticsDTO);
         //买家
@@ -3003,6 +3012,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         listSkuParamList.setList(listParamList);
         List<SkuMappingDTO.ListSkuDTO> skuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
         String bomType = BomTypeEnum.COMBINATION.getType();
+
+        //中转信息
+        List<String> transferLogisticsChannelIdList = list.stream().map(SoB2cDTO.ListDTO::getTransferLogisticsChannelId).distinct().collect(Collectors.toList());
+        List<TransferLogisticsChannelDTO.ListSelectDTO> transferInfoList = transferLogisticsFeign.listByTransferChannelIds(transferLogisticsChannelIdList);
+
         // 属性赋值
         for (SoB2cDTO.ListDTO data : list) {
             //店铺
@@ -3010,6 +3024,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (ObjectUtils.isNotEmpty(shopInfoEntity)) {
                 data.setShopName(shopInfoEntity.getName());
                 data.setCountryName(shopInfoEntity.getCountryName());
+            }
+            //中转信息
+            TransferLogisticsChannelDTO.ListSelectDTO transferInfo = transferInfoList.stream().filter(v->v.getId().equals(data.getTransferLogisticsChannelId())).findFirst().orElse(null);
+            if(Objects.nonNull(transferInfo)){
+                data.setTransferLogisticsSupplierName(transferInfo.getTransferLogisticSupplierName());
+                data.setTransferLogisticsChannelName(transferInfo.getName());
             }
 
             //单据状态
