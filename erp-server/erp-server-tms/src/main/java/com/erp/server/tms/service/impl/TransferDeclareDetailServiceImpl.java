@@ -240,7 +240,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         }
 
         //校验是否存在订单
-        List<String> soCodeIds = list.stream().map(req -> req.getSoCode()).distinct().collect(Collectors.toList());
+        List<String> soCodeIds = list.stream().filter(req -> StringUtils.isBlank(req.getId())).map(req -> req.getSoCode()).distinct().collect(Collectors.toList());
         List<TransferDeclareDetailEntity> detailEntityList = this.listBySoCodeList(soCodeIds);
         if (CollectionUtils.isNotEmpty(detailEntityList)) {
             throw new ServiceException(ApiError.TRANSFER_DECLARE_SO_EXISTS, detailEntityList.get(0).getSoCode());

@@ -318,7 +318,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         //上传成功不能删除
         List<TransferDeclareEntity> transferDeclareEntities = this.listByIds(ids);
         long count = transferDeclareEntities.stream()
-                .filter(req -> InstockForecastStatusEnum.UPLOAD_SUCCESS.getCode().equals(req.getUploadStatus()))
+                .filter(req -> InstockForecastStatusEnum.UPLOAD_SUCCESS.getCode().equals(req.getInstockForecastStatus()))
                 .count();
         if (count > 0) {
             throw new ServiceException(ApiError.UPLOAD_SUCCESS_NOT_DELETE);
