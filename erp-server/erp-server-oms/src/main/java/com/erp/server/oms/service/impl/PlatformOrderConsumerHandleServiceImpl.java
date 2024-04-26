@@ -206,6 +206,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         if (null == shopInfo) {
             throw new ServiceException("未找到订单的店铺" + dto.getShopId());
         }
+
         // 查询国家信息
         List<String> countryIds;
         if (Objects.nonNull(dto.getReceiver())){
@@ -227,7 +228,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
 
         // 主表更新或保存
-        SoB2cDTO.PullOrderResultDTO resultDTO = soB2cService.saveOrUpdateEntity(dto);
+        SoB2cDTO.PullOrderResultDTO resultDTO = soB2cService.saveOrUpdateEntity(dto, shopInfo);
         SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
         resultDTO.setShopWarehouseId(shopInfo.getWarehouseId());
         // 详情更新或保存
