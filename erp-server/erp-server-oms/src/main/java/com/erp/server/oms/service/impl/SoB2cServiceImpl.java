@@ -4364,6 +4364,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         LocalTime now=LocalTime.now();
         //需要中转的数据
         List<TransferDeclareDTO.AddDTO> transferDeclareList = new ArrayList<>();
+        List<String> soCodeList = soB2cList.stream().map(SoB2cEntity::getCode).collect(Collectors.toList());
+        List<TransferDeclareDetailEntity> transferDeclareDetailEntityList = transferDeclareFeign.listBySoCodeList(soCodeList);
+        List<String> existCodeList = transferDeclareDetailEntityList.stream().map(v->v.getSoCode()).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(existCodeList)) {
+            throw new ServiceException(StrUtil.format("销售单【{}】 已进行入库预报，不能重复预报",existCodeList));
+        }
+
         for (Map.Entry<String, List<LogisticsChannelDTO.BaseDTO>> entry : map.entrySet()) {
             //物流商
             String logisticsSupplierId = entry.getKey();
