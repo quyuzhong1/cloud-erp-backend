@@ -4924,25 +4924,4 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         pack.setBoxHeight(LengthConverterUtil.cmToMm(boxSizeList.stream().skip(2).findFirst().orElse(BigDecimal.ZERO)));
     }
 
-    @Override
-    public List<SkuVO> accessoriesSku(String searchKeyword) {
-        return baseMapper.accessoriesSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
-
-    }
-    /**
-     * 获取已审核sku 未计算目的国申报价数据
-     * @return
-     */
-    @Override
-    public List<ProductDetailEntity> getProductDetailByDestDeclarePrice() {
-        return baseMapper.getProductDetailByDestDeclarePrice();
-    }
-
-    @Override
-    public List<SkuVO> getSkuBaseByIds(List<String> skuIds) {
-        if(CollectionUtils.isEmpty(skuIds)){
-            return Collections.emptyList();
-        }
-        return baseMapper.getSkuBaseBySkuIds(skuIds);
-    }
 }
