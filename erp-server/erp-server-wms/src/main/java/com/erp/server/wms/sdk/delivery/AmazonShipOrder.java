@@ -118,20 +118,6 @@ public class AmazonShipOrder implements IPlatformService {
         }
 
         for (SoB2cEntity mainEntity : sourceOrderList) {
-            // 非线上环境需要指定订单ID
-            if (!BusinessCommonConstants.hasProfile("prod")){
-                List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("amazonAllowShipOrderId");
-                if (CollectionUtils.isEmpty(warehouseTypes)){
-                    log.warn("【{}】不存在指定的订单ID配置,不请求亚马逊接口", mainEntity.getPlatformCode());
-                    return;
-                }
-                // 允许通过的ID
-                DictBasicDTO.ListDTO configAllowPlatformOrderDTO = warehouseTypes.stream().filter(e -> mainEntity.getPlatformCode().equalsIgnoreCase(e.getValue())).findFirst().orElse(null);
-                if (null == configAllowPlatformOrderDTO){
-                    log.warn("【{}】不属于配置指定的订单ID,不请求亚马逊接口", mainEntity.getPlatformCode());
-                    return;
-                }
-            }
             //检查销售订单详情是否存在
             List<SoB2cDetailEntity> detailEntityList = soB2cDetailEntityListMap.get(mainEntity.getId());
             if (CollectionUtils.isEmpty(detailEntityList)) {
@@ -184,6 +170,20 @@ public class AmazonShipOrder implements IPlatformService {
             Boolean isCancel = deliveryIntercept(interceptDTO);
             if (isCancel){
                 throw new ServiceException(StrUtil.format("销售订单【{}】平台已取消，不支持发货",mainEntity.getCode()));
+            }
+            // 非线上环境需要指定订单ID
+            if (!BusinessCommonConstants.hasProfile("prod")){
+                List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("amazonAllowShipOrderId");
+                if (CollectionUtils.isEmpty(warehouseTypes)){
+                    log.warn("【{}】不存在指定的订单ID配置,不请求亚马逊接口", mainEntity.getPlatformCode());
+                    return;
+                }
+                // 允许通过的ID
+                DictBasicDTO.ListDTO configAllowPlatformOrderDTO = warehouseTypes.stream().filter(e -> mainEntity.getPlatformCode().equalsIgnoreCase(e.getValue())).findFirst().orElse(null);
+                if (null == configAllowPlatformOrderDTO){
+                    log.warn("【{}】不属于配置指定的订单ID,不请求亚马逊接口", mainEntity.getPlatformCode());
+                    return;
+                }
             }
 
             ConfirmShipmentRequest body = new ConfirmShipmentRequest();
