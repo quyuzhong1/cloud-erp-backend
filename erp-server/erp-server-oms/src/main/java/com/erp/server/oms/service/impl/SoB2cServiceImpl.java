@@ -5836,21 +5836,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (TransferStatusEnum.WAIT.getCode().equals(scanResult.getForcastStatus())
                 || TransferStatusEnum.FAILURE.getCode().equals(scanResult.getForcastStatus())) {
             //校验订单状态中转状态为待中转/上传失败，扫描识别后非成功状态若勾选则取消勾选并禁用，若未勾选则直接禁用
-            throw new ServiceException("中转报关订单待中转/上传失败不可操作组包发货");
+            throw new ServiceException(ApiError.TRANSFER_FAILURE_NOT_PACKAGE);
         }
         if (StringUtils.isBlank(scanResult.getTransferLogisticsSupplierId())) {
-            throw new ServiceException("订单中转物流商不存在，请重新预报后再扫描");
+            throw new ServiceException(ApiError.TRANSFER_LOGISTICS_SUPPLIER_IS_NULL_NOT_PACKAGE);
+        }
+
+        if (entity.getInvalidStatus()) {
+            throw new ServiceException(ApiError.INVALID_NOT_PACKAGE);
         }
         TransferLogisticsStatusEnum platformTransferStatus = transferLogisticsFeign.getPlatformTransferStatus(entity.getShippingOrderNo(), scanResult.getTransferLogisticsSupplierId());
         if (ObjectUtil.isEmpty(platformTransferStatus)
                 || TransferLogisticsStatusEnum.DELETED.getCode().equals(platformTransferStatus.getCode())
                 || TransferLogisticsStatusEnum.UNUSUAL.getCode().equals(platformTransferStatus.getCode())
         ) {
-            throw new ServiceException("单据对应的物流商单号被拦截/取消/异常，不可组包操作");
+            throw new ServiceException(ApiError.ORDER_CANCEL_NOT_PACKAGE);
         }
 
         if (entity.getIsIntercept()) {
-            throw new ServiceException("订单被拦截，不可组包操作");
+            throw new ServiceException(ApiError.LOGISTICS_INTERCEPT_NOT_PACKAGE);
         }
 
         String billStatus = scanResult.getBillStatus();
