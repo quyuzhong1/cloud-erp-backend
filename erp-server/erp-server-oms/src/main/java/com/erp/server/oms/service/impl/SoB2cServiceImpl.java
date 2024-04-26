@@ -4955,10 +4955,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public SoB2cDTO.PullOrderResultDTO saveOrUpdateEntity(PlatformOrderDTO dto) {
+    public SoB2cDTO.PullOrderResultDTO saveOrUpdateEntity(PlatformOrderDTO dto, ShopInfoEntity shopInfo) {
         SoB2cDTO.PullOrderResultDTO resultDTO = new SoB2cDTO.PullOrderResultDTO();
         if (dto.getInvalidStatus()) {
             dto.setRemark("平台作废");
+        }
+        // 平台来源币种为空取默认币种
+        if (StringUtils.isBlank(dto.getCurrency())){
+            dto.setCurrency(shopInfo.getDefaultCurrency());
         }
         log.debug("===== start saveOrUpdateEntity:{}", dto);
         SoB2cEntity oldEntity = null;
