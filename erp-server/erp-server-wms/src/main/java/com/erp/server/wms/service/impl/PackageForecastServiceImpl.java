@@ -689,6 +689,14 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException("只有无需上传和上传成功的组包 才能中转报关");
         }
         List<PackageForecastDetailEntity> detailList = packageForecastDetailService.listDbByMainId(id);
+        List<String> soIdList = detailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
+        //校验订单中转状态 （先去掉校验，因为历史数据问题）
+//        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIdList);
+//        List<String> alreadyTransferList = soB2cEntityList.stream().filter(v->TransferStatusEnum.ALREADY.getCode().equals(v.getTransferStatus())).map(SoB2cEntity::getCode).collect(Collectors.toList());
+//        if(CollectionUtils.isNotEmpty(alreadyTransferList)){
+//            return BatchResultDTO.fail(entity.getId(), entity.getCode(), StrUtil.format("{}已中转不可重复中转",alreadyTransferList));
+//        }
+
         TransferDeclareDTO.AddDTO addDTO = new TransferDeclareDTO.AddDTO();
         addDTO.setTransferLogisticsSupplierId(transferLogisticsSupplierId);
         addDTO.setTransferChannelId(transferLogisticsChannelId);
@@ -699,7 +707,6 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         BaseResultDTO.AddDTO result = transferDeclareFeign.add(addDTO);
         String transferStatus = TransferStatusEnum.ALREADY.getCode();
         if (StringUtils.isNotBlank(result.getId())) {
-            List<String> soIdList = detailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
             UpdateStateDTO.UpdateByStrStatusDTO dto = new UpdateStateDTO.UpdateByStrStatusDTO();
             dto.setStatus(transferStatus);
             dto.setIds(soIdList);

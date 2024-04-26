@@ -12,6 +12,7 @@ public enum CalculateSizeEnum {
     LENGTH("length", "长度"),
     WIDTH("width", "宽度"),
     HEIGHT("height", "高度"),
+    GROSS_WEIGHT("grossWeight", "毛重"),
     ;
     /**
      * 类型

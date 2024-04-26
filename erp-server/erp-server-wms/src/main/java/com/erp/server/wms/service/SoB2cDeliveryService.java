@@ -84,6 +84,14 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      **/
     List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids);
 
+    /**
+     * 打印拣货单
+     * @Author Luo_WG
+     * @Date 2023/12/19 16:12
+     * @param ids
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    Boolean printPicking(List<String> ids);
 
     /**
      * 取消打印拣货单
@@ -169,6 +177,8 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @create 2024-01-26 10:17
      */
     void generateB2cSoOutstock(SoB2cDeliveryEntity entity);
+
+    Boolean updateB2cDeliveryWeightBySoId(SoB2cDeliveryDTO.UpdateWeightDTO dto);
     /**
      * @description: 完成打印
      * @author Will
@@ -185,4 +195,13 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return
      */
     Boolean exportExcel(SoB2cDeliveryDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    /**
+     * 虚假发货(批量)
+     * @Author Luo_WG
+     * @Date 2024/4/22 18:06
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean falseDeliveryBatch(List<String> ids);
 }

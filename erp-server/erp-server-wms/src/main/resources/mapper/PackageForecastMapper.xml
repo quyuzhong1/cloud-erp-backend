@@ -84,7 +84,7 @@
                 pfd.weight_unit AS weightUnit,
                 pfd.handover_status AS minPackageHandoverStatus
          FROM package_forecast pf
-         LEFT JOIN  package_forecast_detail pfd
+         INNER JOIN  package_forecast_detail pfd
          ON pf.id = pfd.main_id AND pfd.is_deleted = FALSE
          WHERE pf.is_deleted = FALSE
          <!--tab flag-->

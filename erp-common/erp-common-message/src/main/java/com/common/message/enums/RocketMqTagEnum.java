@@ -536,6 +536,13 @@ public enum RocketMqTagEnum {
      */
     SYNC_ERP_LOG_TO_SYS_TAG(9004, RocketMqTagEnum.SYS_LOG,"sync_erp_log_to_sys_tag"),
 
+
+    //-----------------------------TMS编码从10001开始------------------------------------------------------------------
+    /**
+     * 异步获取平台打印面单标签
+     */
+    ASYNC_GET_PLATFORM_LABEL_TAG(10001, RocketMqTagEnum.SYNC_TMS,"async_get_platform_label_tag"),
+
     ;
     public static final String SALES_ORDER = "sales";
     public static final String DELIVERY_ORDER = "delivery";
@@ -558,6 +565,8 @@ public enum RocketMqTagEnum {
     public static final String SYNC_SCM = "sync_scm";
 
     public static final String SYNC_OMS = "sync_oms";
+
+    public static final String SYNC_TMS = "sync_tms";
 
     public static final String MSG_WARN = "msg_warn";
 

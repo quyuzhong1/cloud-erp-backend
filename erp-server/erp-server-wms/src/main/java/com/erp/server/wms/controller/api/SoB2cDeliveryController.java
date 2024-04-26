@@ -106,7 +106,7 @@ public class SoB2cDeliveryController extends BaseController {
      * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出中转报关单")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出b2c发货单")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -278,6 +278,19 @@ public class SoB2cDeliveryController extends BaseController {
     )
     public ApiResult<List<SoB2cDeliveryDTO.PrintPickingViewDTO>> printPickingView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(soB2cDeliveryService.printPickingView(dto.getIds()));
+    }
+    /**
+     * 打印拣货单
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/12/19 16:12
+     **/
+    @PostMapping("/printPicking")
+    public ApiResult printPicking(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = soB2cDeliveryService.printPicking(dto.getIds());
+        return flag ? success() : failure();
     }
 
     /**

@@ -23,7 +23,6 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -793,11 +792,6 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
             //来源类型
             addDTO.setSourceType(SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode());
 
-            //物流信息
-            FirstMileDeliveryLogisticsDTO.AddDTO logisticsAddDTO = new FirstMileDeliveryLogisticsDTO.AddDTO();
-            logisticsAddDTO.setLogisticsRemark("");
-            logisticsAddDTO.setTrackingNoList(new ArrayList<>());
-
             //映射详情信息
             List<FirstMileDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             for (OverseasDeliveryPlanDTO.GenerateDeliverViewDTO viewDTO : value) {
@@ -830,7 +824,6 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
                 detailAddList.add(detailAddDto);
             }
             addDTO.setDetailList(detailAddList);
-            addDTO.setLogisticsView(logisticsAddDTO);
 
             BaseResultDTO.AddDTO add = firstMileDeliveryService.add(addDTO);
             if (isSubmit) {

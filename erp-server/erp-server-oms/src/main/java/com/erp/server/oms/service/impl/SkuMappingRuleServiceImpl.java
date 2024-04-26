@@ -350,6 +350,11 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                 for(String ruleRegex : ruleRegexList){
                     handlePlatformSkuNo = skuMappingRuleEnum.getHandleRegexMethod().apply(skuMappingRuleEntity.getRuleType(),ruleRegex,handlePlatformSkuNo);
                     if(skuVOMap.containsKey(handlePlatformSkuNo)){
+                        ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
+                        listingInfoEntity.setId(listingInfoWithSkuMappingDTO.getListingId());
+                        listingInfoEntity.setMatchResult(true);
+                        updateListingList.add(listingInfoEntity);
+
                         SkuVO skuVO = skuVOMap.get(handlePlatformSkuNo);
                         SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
                         skuMappingEntity.setId(listingInfoWithSkuMappingDTO.getTableId());
@@ -357,12 +362,8 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                         skuMappingEntity.setProductSkuId(skuVO.getSkuId());
                         skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
                         skuMappingEntity.setProductName(skuVO.getSkuName());
+                        skuMappingEntity.setListingId(listingInfoEntity.getId());
                         updateSkuMappingList.add(skuMappingEntity);
-
-                        ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
-                        listingInfoEntity.setId(listingInfoWithSkuMappingDTO.getListingId());
-                        listingInfoEntity.setMatchResult(true);
-                        updateListingList.add(listingInfoEntity);
                         break ruleLoop;
                     }
                 }

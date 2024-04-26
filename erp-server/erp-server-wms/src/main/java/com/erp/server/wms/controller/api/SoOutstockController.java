@@ -1,44 +1,54 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.tms.dto.CfgSettingValueDTO;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.entity.CfgSettingEntity;
+import com.erp.model.tms.entity.TmsDeclareBillEntity;
+import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.tms.feign.CfgSettingFeign;
+import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.server.wms.query.SoOutstockQueryHandler;
-import com.erp.server.wms.service.impl.PlatformRetryHandler;
 import com.erp.server.wms.service.SoOutstockService;
+import com.erp.server.wms.service.impl.PlatformRetryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -59,6 +69,13 @@ public class SoOutstockController extends BaseController {
 
     @Resource
     private SoB2cFeign soB2cFeign;
+
+    @Resource
+    private TmsDeclareBillFeign tmsDeclareBillFeign;
+
+
+    @Resource
+    private CfgSettingFeign cfgSettingFeign;
 
 
     /**
@@ -461,5 +478,134 @@ public class SoOutstockController extends BaseController {
 
 
         return success();
+    }
+
+
+    /**
+     * 装箱
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:21
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/packingSave")
+    @LogAction(value = LogActionEnum.INSERT, desc = "头程发货单装箱保存")
+    public ApiResult packingSave(@RequestBody @Validated WmsCartonDTO.WmsCartonAdd dto) {
+        String packingStatus = soOutstockService.packingSave(dto);
+
+        if (PackingStatusEnum.PACKING.getCode().equals(packingStatus)) {
+            SoOutstockEntity entity = soOutstockService.getById(dto.getId());
+            CfgSettingEntity cfgSetting = cfgSettingFeign.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
+            if (ObjectUtil.isEmpty(cfgSetting)) {
+                return StringUtils.isNotBlank(packingStatus) ? success() : failure();
+            }
+            CfgSettingValueDTO.BillAutoAddDTO billAutoAddDTO = JSONUtil.toBean(cfgSetting.getDataJson(),CfgSettingValueDTO.BillAutoAddDTO.class);
+            if (!"CN".equalsIgnoreCase(entity.getCountry()) && billAutoAddDTO.getIsAutoB2BDeclare()) {
+                //如果装箱完成自动生成报关单
+                TmsDeclareBillDTO.AddDTO addDTO = new TmsDeclareBillDTO.AddDTO();
+                addDTO.setSourceId(entity.getId());
+                addDTO.setDeclareType(DeclareDeclareTypeEnum.INDEPENDENT.getCode());
+                addDTO.setReceiverName("香港唯迹");
+                addDTO.setDictSupervisionMethod(DeclareSupervisionMethodEnum.COMMONLY.getCode());
+                addDTO.setDictNatureLevy(DeclareNatureLevyEnum.COMMONLY.getCode());
+                addDTO.setToArea(entity.getCountry());
+                addDTO.setToPort(entity.getCountry());
+                addDTO.setDictPackType(DeclarePackTypeEnum.CARTON.getCode());
+                addDTO.setDictTransactionMethod(DeclareTransactionMethodEnum.EXW.getCode());
+                tmsDeclareBillFeign.addB2BDeclare(addDTO);
+            }
+        } else {
+            List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Arrays.asList(dto.getId()));
+            List<String> ids = tmsDeclareBillEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+            if (CollectionUtil.isNotEmpty(ids)) {
+                TmsDeclareBillDTO.DeleteDTO deleteDTO = new TmsDeclareBillDTO.DeleteDTO();
+                deleteDTO.setIds(ids);
+                tmsDeclareBillFeign.delete(deleteDTO);
+            }
+        }
+        return StringUtils.isNotBlank(packingStatus) ? success() : failure();
+    }
+
+    /**
+     * 装箱详情
+     * @Author Luo_WG
+     * @Date 2023/11/28 17:44
+     * @param id
+     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
+     **/
+    @GetMapping("/packingView")
+    public ApiResult<WmsCartonDTO.WmsCartonView> packingView(@RequestParam("id") String id) {
+        WmsCartonDTO.WmsCartonView wmsCartonView = soOutstockService.packingView(id);
+        return success(wmsCartonView);
+    }
+
+    /**
+     * 装箱清单
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:21
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/listPacking")
+    public ApiResult<WmsCartonDTO.ListPackingDTO> listPacking(@RequestParam("id") String id) {
+        WmsCartonDTO.ListPackingDTO result = soOutstockService.listPacking(id);
+        return success(result);
+    }
+
+    /**
+     * 导出装箱清单Excel
+     * @author Luo_WG
+     * @date 2023-10-30
+     * @param dto
+     * @param response
+     */
+    @PostMapping("/exportPacking")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:fbaDelivery:exportPacking",
+            tableAlias = "fd"
+    )
+    @LogAction(value = LogActionEnum.EXPORT, desc = "销售出库单导出装箱清单Excel")
+    @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
+    public ApiResult exportPacking(@RequestBody @Validated SoOutstockDTO.ExportDTO dto, HttpServletResponse response) {
+        soOutstockService.exportPacking(dto, response);
+        return success();
+    }
+
+    /**
+     * 下载装箱模板
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载装箱模板数据")
+    @GetMapping("/downloadPackingTemplate")
+    public ApiResult downloadPackingTemplate(HttpServletResponse response) {
+        soOutstockService.downloadPackingTemplate(response);
+        return success();
+    }
+
+
+    /**
+     * 导入装箱数据
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入装箱模板数据")
+    @PostMapping("/importPacking")
+    public ApiResult importPacking(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = soOutstockService.importFile(excelFile, response);
+        return result == true ? success() : failure();
+    }
+
+    /**
+     *
+     * 快粘贴查询sku
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:21
+     * @param id 销售出库单Id
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/listGroupSkuById")
+    public ApiResult<List<WmsCartonDTO.GroupSkuDTO>> listGroupSkuById(@RequestParam("id") String id) {
+        List<WmsCartonDTO.GroupSkuDTO> result = soOutstockService.listGroupSkuById(id);
+        return success(result);
     }
 }

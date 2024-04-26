@@ -25,6 +25,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.plm.vo.SkuVO;
@@ -32,6 +33,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.ImlDictCityEntity;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO.OverseasInboundDTO;
 import com.erp.model.wms.dto.excel.ExportOverseasWarehouseInboundExcelDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
@@ -72,7 +74,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<OverseasWarehouseInboundMapper, OverseasWarehouseInboundEntity> implements OverseasWarehouseInboundService {
+public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<OverseasWarehouseInboundMapper, OverseasWarehouseInboundEntity> implements OverseasWarehouseInboundService,WmsDataCompareDbService<OverseasInboundDTO> {
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -108,7 +110,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @Resource
     private DictBasicService dictBasicService;
     @Resource
-    private FirstMileCartonDetailService firstMileCartonDetailService;
+    private WmsCartonDetailService wmsCartonDetailService;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
@@ -240,7 +242,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
      * 构建请求参数
      */
     private ThirdWarehouseCreateInboundReq entityToCreateInboundBill(OverseasWarehouseInboundEntity mainEntity,
-                                                                     List<FirstMileCartonDTO.PackingItemDTO> itemDTOList,
+                                                                     List<WmsCartonDTO.PackingItemDTO> itemDTOList,
                                                                      Map<String, List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView>> currentSkuMap,
                                                                      Map<SettingEnum, String> shipperInfo,
                                                                      String verifyCode,
@@ -265,7 +267,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         // 装箱信息item
         List<ThirdWarehouseCreateInboundReq.Item> itemList = new LinkedList<>();
-        for (FirstMileCartonDTO.PackingItemDTO itemDTO : itemDTOList) {
+        for (WmsCartonDTO.PackingItemDTO itemDTO : itemDTOList) {
             List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> viewList = currentSkuMap.get(itemDTO.getSkuId());
             SkuMappingDTO.ListStockSkuNoByProductSkuIdView view = viewList.stream().findFirst().orElse(null);
             if (null == view) {
@@ -1002,7 +1004,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                                                                      String verityCode
     ) {
         // 查询包装信息
-        List<FirstMileCartonDTO.PackingItemDTO> packingQtyDTOS = firstMileCartonDetailService.boxInfoByMainId(mainEntity.getSourceId());
+        List<WmsCartonDTO.PackingItemDTO> packingQtyDTOS = wmsCartonDetailService.boxInfoBySourceId(mainEntity.getSourceId());
         if (CollectionUtils.isEmpty(packingQtyDTOS)) {
             String format = StrUtil.format("【{}】发货单：未找到包装信息", mainEntity.getSourceCode());
             throw new ServiceException(format);
@@ -1212,5 +1214,32 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             }
         }
     }
+
+    @Override
+	public List<OverseasInboundDTO> getDataCompareByCondition(OverseasInboundDTO params , Integer pageSize) {
+    	if("0".equals(params.getId())) {
+			this.getParams(params);
+		}
+		return baseMapper.getDataCompareByCondition(params , pageSize);
+	}
+
+	@Override
+	public Integer getDataCompareByConditionCount(OverseasInboundDTO params) {
+		this.getParams(params);
+		return baseMapper.getDataCompareByConditionCount(params);
+	}
+	
+	private void getParams(OverseasInboundDTO params) {
+		if(CollUtil.isEmpty(params.getReceiveDateList())) {
+			throw new ServiceException("第三方仓货件签收的系统数据范围【签收日期】不能为空");
+		}
+		String toWarehouseId = params.getToWarehouseId();
+		if(StringUtils.isNotBlank(toWarehouseId)) {
+			WarehouseEntity warehouseEntity = warehouseService.getById(toWarehouseId);
+			if(warehouseEntity != null) {
+				params.setToWarehouseName(warehouseEntity.getName());
+			}
+		}
+	}
 
 }

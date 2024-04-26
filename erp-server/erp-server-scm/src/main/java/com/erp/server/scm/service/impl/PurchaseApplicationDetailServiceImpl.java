@@ -130,7 +130,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
      */
     private void doOpHandleDataId (List<PurchaseApplicationDetailEntity> newList,String purchaseApplicationId,Boolean isAdd) {
         //仓库信息
-        List<String> destWarehouseIdList = newList.stream().map(PurchaseApplicationDetailEntity::getDestWarehouseId).collect(Collectors.toList());
+        List<String> destWarehouseIdList = newList.stream().map(PurchaseApplicationDetailEntity::getDestWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
         if (CollectionUtils.isEmpty(warehouseList)) {
             throw new ServiceException(ApiError.ERROR_99002);
@@ -138,13 +138,13 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
         List<String> orgIds = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).distinct().collect(Collectors.toList());
 
         //采购组织Ids
-        List<String> purchaseOrgIds = newList.stream().map(PurchaseApplicationDetailEntity::getPurchaseOrgId).collect(Collectors.toList());
+        List<String> purchaseOrgIds = newList.stream().map(PurchaseApplicationDetailEntity::getPurchaseOrgId).distinct().collect(Collectors.toList());
         purchaseOrgIds.addAll(orgIds);
         //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(purchaseOrgIds);
 
         //产品信息
-        List<String> skuIds = newList.stream().map(PurchaseApplicationDetailEntity::getSkuId).collect(Collectors.toList());
+        List<String> skuIds = newList.stream().map(PurchaseApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuPurchaseByIds(skuIds);
 
         //添加操作日志

@@ -27,6 +27,9 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.mapper.LogisticsChannelMapper;
 import com.erp.server.tms.service.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
+import cn.hutool.core.util.ObjectUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -150,8 +153,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public List<LogisticsChannelDTO.ListSelectDTO> listLogisticsChannel(List<String> logisticsSupplierIds) {
-        return baseMapper.listLogisticsChannel(logisticsSupplierIds);
+    public List<LogisticsChannelDTO.ListSelectDTO> listLogisticsChannel(LogisticsChannelDTO.ParamDTO dto) {
+        return baseMapper.listLogisticsChannel(dto);
     }
 
     @Override
@@ -350,6 +353,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public List<BaseDropDownDTO.DisabledDTO> listAll() {
         List<LogisticsChannelEntity> list = this.lambdaQuery().orderByAsc(LogisticsChannelEntity::getDisabled).list();
         List<BaseDropDownDTO.DisabledDTO> resultList = LogisticsChannelConverter.INSTANCE.convertByChannelDown(list);
+        Collections.sort(resultList, Comparator.comparing(BaseDropDownDTO.DisabledDTO::getDisabled));
+
         return resultList;
     }
 
@@ -517,6 +522,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
+    public List<LogisticsChannelEntity> listByName(List<String> channelNameList) {
+        if(CollectionUtils.isEmpty(channelNameList)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(LogisticsChannelEntity::getName, channelNameList).list();
+    }
+
+    @Override
     public LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelId(String channelId) {
         LogisticsChannelDTO.SignShipDTO signShipDTO = new LogisticsChannelDTO.SignShipDTO();
         LogisticsChannelEntity channelEntity = this.getById(channelId);
@@ -610,6 +623,29 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             }
         }
 
+    }
 
+    @Override
+    public LogisticsChannelDTO.SignShipDTO getScaleChannelByChannelById(String logisticsChannelId, String dictPlatform) {
+        LogisticsChannelEntity channelEntity = this.getById(logisticsChannelId);
+        if (null == channelEntity){
+            throw new ServiceException(ApiError.NOT_EXIST, "物流渠道");
+        }
+        if (StringUtils.isBlank(dictPlatform)){
+            throw new ServiceException("关联的销售平台不能为空");
+        }
+        List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingService.listByChannelId(logisticsChannelId);
+        if (CollectionUtils.isEmpty(mappingList)){
+            throw new ServiceException("物流渠道关联的销售平台物流渠道为空");
+        }
+        LogisticsMappingDTO.ViewDTO viewDTO = mappingList.stream().filter(e -> e.getSalesPlatform().equalsIgnoreCase(dictPlatform)).findFirst().orElse(null);
+        if (null == viewDTO){
+            throw new ServiceException("物流渠道关联无对应销售平台物流渠道");
+        }
+        LogisticsSaleChannelEntity entity = logisticsSaleChannelService.getById(viewDTO.getLogisticsSaleChannelId());
+        if (null == entity){
+            throw new ServiceException("对应销售平台物流渠道信息不存在");
+        }
+        return new LogisticsChannelDTO.SignShipDTO(entity.getId(), entity.getCode(), entity.getCnName());
     }
 }

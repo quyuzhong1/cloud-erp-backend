@@ -16,6 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
@@ -189,4 +190,14 @@ public class CustomerFeignController {
         return customerInfoService.listDTOByNameList(customerNameList);
     }
 
+    /**
+     * 根据名称获取用户详情
+     *
+     * @param customerName
+     * @return
+     */
+    @PostMapping("/getCustomerByCodeAndName")
+    public List<CustomerInfoEntity> getCustomerByCodeAndName(@RequestParam(value = "code") String code,@RequestParam(value = "name") String name) {
+        return customerInfoService.lambdaQuery().eq(CustomerInfoEntity::getCode, code).eq(CustomerInfoEntity::getName, name).list();
+    }
 }

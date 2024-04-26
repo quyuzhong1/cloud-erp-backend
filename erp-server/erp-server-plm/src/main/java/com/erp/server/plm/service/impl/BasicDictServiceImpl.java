@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -59,6 +60,11 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
         queryWrapper.eq(BasicDictEntity::getType, type);
         queryWrapper.orderByDesc(BasicDictEntity::getOrderIndex);
         return this.list(queryWrapper);
+    }
+
+    @Override
+    public Map<String, String> mapByType(String type) {
+        return  this.list(new LambdaQueryWrapper<BasicDictEntity>().eq(BasicDictEntity::getType, type).orderByDesc(BasicDictEntity::getOrderIndex)).stream().collect(Collectors.toMap(BasicDictEntity::getValue, BasicDictEntity::getName, (v1, v2) -> v1));
     }
 
     @Override

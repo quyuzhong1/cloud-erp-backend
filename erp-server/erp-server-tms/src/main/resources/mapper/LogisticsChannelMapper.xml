@@ -59,11 +59,14 @@
         from logistics_channel lc
         inner join logistics_supplier ls on lc.main_id = ls.id and ls.is_deleted = false
         where lc.is_deleted = false
-        <if test="logisticsSupplierIds != null and logisticsSupplierIds.size > 0">
+        <if test="params.ids != null and params.ids.size > 0">
             and lc.main_id in
-            <foreach collection="logisticsSupplierIds" open="(" close=")" item="item" separator=",">
+            <foreach collection="params.ids" open="(" close=")" item="item" separator=",">
                 #{item}
             </foreach>
+        </if>
+        <if test="params.name != null and params.name != ''">
+            and lc.name ILIKE concat('%',#{params.name}::text,'%')
         </if>
         order by lc.disabled asc,lc.id desc
     </select>

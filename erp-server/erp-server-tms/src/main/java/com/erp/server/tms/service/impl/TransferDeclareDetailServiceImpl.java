@@ -8,6 +8,8 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.TransferDeclareDTO;
@@ -92,6 +94,10 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         //原明细数据
         List<TransferDeclareDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
         List<String> deleteIds = getDeleteIds(updateDTO.getDetailList(), oldList);
+        if (deleteIds.size() >= oldList.size()) {
+            throw new ServiceException(ApiError.PLEASE_KEEP_LEAST_ONE_DATA);
+        }
+
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<TransferDeclareDetailEntity> detailEntities = this.listByIds(deleteIds);
             long count = detailEntities.stream().filter(req -> TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(req.getOrderUploadStatus())).count();
@@ -110,6 +116,12 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
             //修改订单中转状态为待中转
             List<String> soIds = detailEntities.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
             soB2cFeign.updateTransferStatusBatch(soIds, TransferStatusEnum.WAIT.getCode());
+
+            //处理订单异常信息
+            SoB2cErrorDTO.BatchDeleteDTO deleteDTO = new SoB2cErrorDTO.BatchDeleteDTO();
+            deleteDTO.setMainIds(soIds);
+            deleteDTO.setType(SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
+            soB2cFeign.deleteErrorByMainIds(deleteDTO);
         }
 
         // 数据处理
@@ -216,6 +228,14 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
             return Collections.EMPTY_LIST;
         }
         return lambdaQuery().in(TransferDeclareDetailEntity::getLogisticsChannelId,logisticsChannelIdList).list();
+    }
+
+    @Override
+    public List<TransferDeclareDetailEntity> listBySoCodeList(List<String> soCodeList) {
+        if (CollectionUtils.isEmpty(soCodeList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(TransferDeclareDetailEntity::getSoCode,soCodeList).list();
     }
 
     /**

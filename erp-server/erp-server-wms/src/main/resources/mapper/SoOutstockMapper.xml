@@ -57,7 +57,8 @@
         sod.exchange_rate as exchangeRate,
         sod.so_detail_id as soDetailId,
         sod.source_detail_id AS sourceDetailId,
-        sod.warehouse_location AS warehouseLocation
+        sod.warehouse_location AS warehouseLocation,
+        so.packing_status
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod
         ON so.id=sod.main_id AND sod.is_deleted=FALSE
@@ -299,4 +300,159 @@
     <select id="listByAdvanceQuery" resultType="com.erp.model.wms.entity.SoOutstockEntity">
 
     </select>
+
+    <!--根据发货单id查询装箱清单-->
+    <select id="listPackingDetail" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
+        SELECT
+            so.id,
+            fmcb.box_no as boxNo,
+            concat(box_length, '*', fmc.box_width, '*', fmc.box_height) AS boxSize,
+            box_length*box_width*box_height as multiplySize,
+            fmc.package_weight as packageWeight,
+            fmcb.box_desc as boxDesc,
+        (select string_agg(cd.sku_no , ',') from wms_carton_detail cd where cd.is_deleted = false and cd.carton_id = fmc.id) as sku
+        FROM so_outstock so
+        INNER JOIN wms_carton fmc ON fmc.source_id = so.id AND fmc.is_deleted = FALSE
+        INNER JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
+        WHERE so.is_deleted = FALSE
+        AND so.id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        ORDER BY CAST(fmcb.box_no AS INTEGER)
+    </select>
+
+    <!--导出装箱信息-->
+    <select id="exportPacking" resultType="com.erp.model.wms.dto.WmsCartonDTO$ExportPackingDTO">
+        SELECT
+        so.id,
+        so.packing_status,
+        so.code,
+        fmcb.box_no,
+        concat(box_length, '*', fmc.box_width, '*', fmc.box_height) AS boxSize,
+        fmc.package_weight,
+        fmcb.box_desc
+        FROM so_outstock so
+        LEFT JOIN wms_carton fmc ON fmc.source_id = so.id AND fmc.is_deleted = FALSE
+        LEFT JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        AND so.is_deleted = FALSE
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY so.code,
+        CAST(fmcb.box_no AS INTEGER)
+    </select>
+    <!--根据销售出单单ID 查询sku 信息-->
+    <select id="listGroupSkuByMainId" resultType="com.erp.model.wms.dto.WmsCartonDTO$GroupSkuDTO">
+           SELECT
+               so.id,
+               sod.sku_id,
+               sod.sku_no,
+               SUM(sod.actual_qty) AS deliveryQty
+           from  so_outstock_detail sod
+           LEFT JOIN so_outstock so
+           ON so.id = sod.main_id
+           AND so.is_deleted=FALSE
+           WHERE  sod.is_deleted=FALSE  AND
+           sod.main_id = #{mainId}
+           GROUP BY so.id,
+               sod.sku_id,
+               sod.sku_no
+    </select>
+    <select id="getCanGenerateDeclare" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$SoOutDTO">
+        SELECT so.id as sourceId,
+               so.code as sourceCode,
+               so.country,
+               so.order_type as businessType
+            from so_outstock so
+        where so.is_deleted = false
+          and so.country != 'CN'
+        <if test="params.packingStatus != null and params.packingStatus != ''">
+            AND so.packing_status = #{params.packingStatus}
+        </if>
+        <if test="params.declareStatus != null and params.declareStatus != ''">
+            AND so.declare_status = #{params.declareStatus}
+        </if>
+        <if test="params.ids != null and params.ids.size > 0">
+            AND so.id IN
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+    <select id="logisticStatistics"
+            resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$LogisticStatisticsDTO">
+        SELECT  EXTRACT(year FROM approve_time),  EXTRACT(month FROM approve_time) as month,
+        count(1)
+        from so_outstock so
+        where is_deleted = false
+          and so.declare_status != 'none'
+        <if test="orderType != null and orderType != ''">
+            and  order_type = #{orderType}
+        </if>
+        <if test="status != null and status != ''">
+            and  approve_status = #{status}
+        </if>
+        <if test="beginDate != null">
+            and approve_time >= #{beginDate}
+        </if>
+        <if test="endDate != null ">
+            and approve_time <![CDATA[<=]]>  #{endDate}
+        </if>
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        group by EXTRACT(month FROM approve_time), EXTRACT(year FROM approve_time)
+        order by  EXTRACT(year FROM approve_time), EXTRACT(month FROM approve_time)
+    </select>
+
+    <select id="getDataCompareByCondition" resultType="com.erp.model.wms.dto.WmsDataCompareTaskDTO$SoOutstockDTO">
+		        SELECT g.id,g.platform_code so_code,t.customer_name shop_name,
+			T.warehouse_name,
+			G.sku_no,
+			G.actual_qty::VARCHAR actual_qty,
+			TO_CHAR(T.bill_date, 'YYYY-MM-DD') bill_date
+		FROM
+			so_outstock
+			T LEFT JOIN so_outstock_detail G ON T.ID = G.main_id
+		<include refid="SoDataCompareByCondition"/>
+    </select>
+
+    <select id="getDataCompareByConditionCount" resultType="java.lang.Integer">
+		 SELECT count(g.id)
+			FROM
+			so_outstock
+			T LEFT JOIN so_outstock_detail G ON T.ID = G.main_id
+		<include refid="SoDataCompareByCondition"/>
+    </select>
+
+    <sql id="SoDataCompareByCondition">
+   		WHERE
+		T.approve_status = 'approve'
+		AND T.is_deleted = 'f' and G.is_deleted = 'f'
+		<if test="params.id!=null and params.id!=''">
+		and g.id > #{params.id}
+		</if>
+		<if test="params.customerNameList !=null and params.customerNameList.size>0">
+           AND t.customer_name IN
+           <foreach collection="params.customerNameList" item="name" open="(" separator="," close=")">
+               #{name}
+           </foreach>
+       	</if>
+		<if test="params.billDateList !=null and params.billDateList.size>0">
+           AND t.bill_date >= #{params.billDateList[0]} and
+           (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1
+           DAY' ) > t.bill_date
+       	</if>
+       	<if test="params.warehouseName!=null and params.warehouseName!=''">
+           AND t.warehouse_name = #{params.warehouseName}
+       	</if>
+		<if test="params.taskId!=null and params.taskId!=''">
+           and not exists (select id from wms_data_compare_temp where system_data_id = g.id and task_id = #{params.taskId})
+       	</if>
+    </sql>
 </mapper>

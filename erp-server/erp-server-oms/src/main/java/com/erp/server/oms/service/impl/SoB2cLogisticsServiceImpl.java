@@ -248,6 +248,19 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                         entity2.setLogisticsChannelId(channelByNames.get(0).getId());
                     }
                 }
+                // 保留历史
+//                if (null != entity.getWeight() && entity.getWeight().compareTo(BigDecimal.ZERO) > 0){
+//                    allNetWeight = entity.getWeight();
+//                }
+//                if (null != entity.getLength() && entity.getLength().compareTo(BigDecimal.ZERO) > 0){
+//                    maxLength = entity.getLength();
+//                }
+//                if (null != entity.getWidth() && entity.getWidth().compareTo(BigDecimal.ZERO) > 0){
+//                    maxWidth = entity.getWidth();
+//                }
+//                if (null != entity.getHeight() && entity.getHeight().compareTo(BigDecimal.ZERO) > 0){
+//                    totalHeight  = entity.getHeight();
+//                }
                 entity2.setWeight(allNetWeight);
                 entity2.setLength(maxLength);
                 entity2.setWidth(maxWidth);
@@ -323,6 +336,32 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             return null;
         }
         return lambdaQuery().eq(SoB2cLogisticsEntity::getTrackNo, trackNo).last("LIMIT 1").one();
+    }
+
+    @Override
+    public Boolean clearB2cLogisticsCode(List<String> soIdList) {
+        if (CollectionUtils.isEmpty(soIdList)) {
+            return Boolean.FALSE;
+        }
+        //清空物流单号
+        lambdaUpdate()
+                .set(SoB2cLogisticsEntity::getCode, "")
+                .set(SoB2cLogisticsEntity::getTrackNo, "")
+                .in(SoB2cLogisticsEntity::getMainId, soIdList)
+                .update();
+
+        //删除物流单
+        return logisticsBillFeign.removeLogisticsBillBySourceId(soIdList);
+    }
+
+    @Override
+    public Boolean updateWeight(String soId,String id, BigDecimal weightByG) {
+        String msg = StrUtil.format("用户【{}】更新重量为{} ", commonService.getUserInfo().getUserName(),weightByG+"g");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soId, msg);
+        return lambdaUpdate()
+                .set(SoB2cLogisticsEntity::getWeight, weightByG)
+                .eq(SoB2cLogisticsEntity::getId, id)
+                .update();
     }
 
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {

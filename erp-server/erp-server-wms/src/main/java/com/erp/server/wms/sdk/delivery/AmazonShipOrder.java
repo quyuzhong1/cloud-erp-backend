@@ -12,6 +12,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -124,8 +125,16 @@ public class AmazonShipOrder implements IPlatformService {
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
             }
-            if (detailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
-                throw new ServiceException("平台来源详情ID为空");
+            // 来源明细ID为空代表是手工添加的明细忽略
+            detailEntityList =  detailEntityList.stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getSourceDetailId()))
+                    .collect(Collectors.toList());
+//            if (detailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
+//                throw new ServiceException("平台来源详情ID为空");
+//            }
+            if (CollectionUtils.isEmpty(detailEntityList)) {
+                log.warn("订单【{}】所有明细来源ID为空,不请求亚马逊接口", mainEntity.getCode());
+                return;
             }
 
             //检查销售订单物流信息是否存在
@@ -136,9 +145,12 @@ public class AmazonShipOrder implements IPlatformService {
             if (StringUtils.isBlank(logisticsEntity.getLogisticsChannelId())){
                 throw new ServiceException("订单渠道ID为空");
             }
-            //获取渠道信息
-            LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getSignShipInfoByChannelById(logisticsEntity.getLogisticsChannelId());
-            if (null == tmsSignShipDTO){
+            //获取销售渠道信息
+            LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = logisticsFeign.getScaleChannelByChannelById(
+                    logisticsEntity.getLogisticsChannelId(),
+                    PlatformDictEnum.AMAZON.getCode()
+            );
+            if (null == tmsScaleChannelShipDTO){
                 throw new ServiceException("找不到渠道信息");
             }
             // 获取店铺授权信息
@@ -154,8 +166,15 @@ public class AmazonShipOrder implements IPlatformService {
             // 包裹参考 ID 支持任何正数值，用于在确认货件后编辑货件。您可以提交任何数值作为 packageReferenceID，
             // 我们将存储该数据。如果您需要对货件进行编辑，请使用相同的 packageReferenceID 提交另一个 confirmShipment 操作。提交成功后，其他货件详情将被编辑
             packageDetail.setPackageReferenceId("1");
-            packageDetail.setCarrierCode(tmsSignShipDTO.getCode());
-            packageDetail.setTrackingNumber(logisticsEntity.getTrackNo());
+            // 物流渠道代号
+            packageDetail.setCarrierCode(tmsScaleChannelShipDTO.getCode());
+            // 物流渠道名称
+            packageDetail.setCarrierName(tmsScaleChannelShipDTO.getSaleChannelSupplierName());
+            // 物流服务商=物流渠道名称
+            packageDetail.setShippingMethod(tmsScaleChannelShipDTO.getSaleChannelSupplierName());
+            // 物流运单号
+            packageDetail.setTrackingNumber(logisticsEntity.getCode());
+
             // 发货时间
             String shipDateTime = DateUtil.plus8SameUtcOffset(LocalDateTime.now()).toString();
             packageDetail.setShipDate(shipDateTime);
@@ -169,12 +188,18 @@ public class AmazonShipOrder implements IPlatformService {
             }
             packageDetail.setOrderItems(orderItemList);
             body.setPackageDetail(packageDetail);
-            //
+
             OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
 
             try {
                 ApiResponse<Void> voidApiResponse = api.confirmShipmentWithHttpInfo(body, mainEntity.getPlatformCode());
                 log.warn("标记发货响应结果:{}", JSONUtil.toJsonStr(voidApiResponse));
+            } catch (ApiException e){
+                if (e.getMessage().contains("ErrorCode: NonexistentOrderItem Description: Failed to find order item list by order ID:")){
+                    throw new ServiceException("平台取消发货，不允许出库，请处理订单发货拦截后，取消发货");
+                } else {
+                    throw new ServiceException("亚马逊标记发货失败:" + e.getMessage());
+                }
             } catch (Exception e) {
                 throw new ServiceException("亚马逊标记发货失败:" + e.getMessage());
             }

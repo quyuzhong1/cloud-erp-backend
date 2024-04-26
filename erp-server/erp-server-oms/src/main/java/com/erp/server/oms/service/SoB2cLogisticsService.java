@@ -125,4 +125,15 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
     * @return java.util.List<com.erp.model.oms.entity.SoB2cLogisticsEntity>
     **/
    SoB2cLogisticsEntity getSoB2cLogisticsByTrackNo(String trackNo);
+
+   /**
+    * 清除订单物流信息的发货信息
+    * @Author Luo_WG
+    * @Date 2024/4/18 16:26
+    * @param soIdList
+    * @return java.lang.Boolean
+    **/
+   Boolean clearB2cLogisticsCode(List<String> soIdList);
+
+    Boolean updateWeight(String soId,String logisticsId, BigDecimal weightByG);
 }

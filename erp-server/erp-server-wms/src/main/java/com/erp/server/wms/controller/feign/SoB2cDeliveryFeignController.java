@@ -1,29 +1,18 @@
 package com.erp.server.wms.controller.feign;
 
 
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.*;
-import com.common.business.enums.DataAttributeEnum;
-import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogAction;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.server.wms.service.SoB2cDeliveryDetailService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -49,7 +38,12 @@ public class SoB2cDeliveryFeignController extends BaseController {
         List<SoB2cDeliveryDetailEntity> list = soB2cDeliveryDetailService.listBySoDetailIds(soDetailIdList);
         return list;
     }
- 
+
+    @PostMapping("/updateB2cDeliveryWeightBySoId")
+    public Boolean updateB2cDeliveryWeightBySoId(@RequestBody SoB2cDeliveryDTO.UpdateWeightDTO dto) {
+        return soB2cDeliveryService.updateB2cDeliveryWeightBySoId(dto);
+    }
+
      /** 
       * @description 添加B2C发货单
       * @param dto
@@ -100,6 +94,19 @@ public class SoB2cDeliveryFeignController extends BaseController {
     @PostMapping("/updateStatus")
     public Boolean updateStatus(@RequestParam("ids") List<String> ids, @RequestParam("status") String status) {
         Boolean flag = soB2cDeliveryService.updateStatus(ids, status);
+        return flag;
+    }
+
+    /**
+     * 虚假发货
+     * @Author Luo_WG
+     * @Date 2023/12/27 16:00
+     * @param ids 发货单id
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/falseDeliveryBatch")
+    public Boolean falseDeliveryBatch(@RequestBody List<String> ids) {
+        Boolean flag = soB2cDeliveryService.falseDeliveryBatch(ids);
         return flag;
     }
 }

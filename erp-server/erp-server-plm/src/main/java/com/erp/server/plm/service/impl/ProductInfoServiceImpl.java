@@ -294,9 +294,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         entity.setIsFinishedProductDev(1);
         Boolean flag = this.saveOrUpdate(entity);
         //同步到SCM
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
         //同步到WMS
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
 
         /**
          * 表示是新添加的
@@ -412,9 +412,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             this.saveOrUpdateBatch(list);
 
             //同步到SCM
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), list, IdUtil.simpleUUID());
+//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), list, IdUtil.simpleUUID());
             //同步到WMS
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), list, IdUtil.simpleUUID());
+//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), list, IdUtil.simpleUUID());
 
         }
         return Boolean.TRUE;
@@ -441,9 +441,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             }
             entity.setIsDeleted(Boolean.TRUE);
             //同步到SCM
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
             //同步到WMS
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
 
             flag = this.removeById(productId);
             //当保存成功 就要去删除对应的任务了
@@ -1083,9 +1083,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
         ProductInfoEntity infoEntity = this.getById(productId);
         //同步到SCM
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(infoEntity), IdUtil.simpleUUID());
+//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(infoEntity), IdUtil.simpleUUID());
         //同步到WMS
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(infoEntity), IdUtil.simpleUUID());
+//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(infoEntity), IdUtil.simpleUUID());
 
     }
 
@@ -1184,9 +1184,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
         this.saveOrUpdate(productInfoEntity);
         //同步到SCM
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(productInfoEntity), IdUtil.simpleUUID());
+//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(productInfoEntity), IdUtil.simpleUUID());
         //同步到WMS
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(productInfoEntity), IdUtil.simpleUUID());
+//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(productInfoEntity), IdUtil.simpleUUID());
 
         return productInfoEntity.getId();
     }
@@ -1271,9 +1271,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
             Boolean updateFlag = this.updateById(newProduct);
             //同步到SCM
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(newProduct), IdUtil.simpleUUID());
+//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(newProduct), IdUtil.simpleUUID());
             //同步到WMS
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(newProduct), IdUtil.simpleUUID());
+//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(newProduct), IdUtil.simpleUUID());
 
             //当修改成功 且是已立项 就要创建项目了
             if (yesApproval && updateFlag) {
@@ -1711,9 +1711,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
             this.saveOrUpdate(productInfoEntity);
             //同步到SCM
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(productInfoEntity), IdUtil.simpleUUID());
+//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(productInfoEntity), IdUtil.simpleUUID());
             //同步到WMS
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(productInfoEntity), IdUtil.simpleUUID());
+//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(productInfoEntity), IdUtil.simpleUUID());
 
         }
 
@@ -1751,9 +1751,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
         entity.setProgressStatus(dto.getProgressStatus());
         //同步到SCM
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
         //同步到WMS
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
 
         return this.updateById(entity);
     }
@@ -1773,9 +1773,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
         entity.setImageUrl(dto.getImageUrl());
         //同步到SCM
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
         //同步到WMS
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
 
         return this.updateById(entity);
     }
@@ -2122,9 +2122,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
         Boolean result = this.updateBatchById(productInfoList);
         //同步到SCM
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), productInfoList, IdUtil.simpleUUID());
+//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), productInfoList, IdUtil.simpleUUID());
         //同步到WMS
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), productInfoList, IdUtil.simpleUUID());
+//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), productInfoList, IdUtil.simpleUUID());
 
         if (result) {
             //批量添加获取修改产品
