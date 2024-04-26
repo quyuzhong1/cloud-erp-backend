@@ -1,5 +1,6 @@
 package com.common.business.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -228,4 +229,9 @@ public class PlatformOrderDTO extends UniqueDto {
      * 订单创建日期
      */
     private LocalDateTime platformOrderCreateTime;
+
+    /**
+     * 平台是否取消
+     */
+    private Boolean isCancel;
 }

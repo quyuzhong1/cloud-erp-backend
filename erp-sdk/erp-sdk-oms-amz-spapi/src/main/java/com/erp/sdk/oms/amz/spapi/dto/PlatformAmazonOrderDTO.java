@@ -125,10 +125,10 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         // 店铺ID
         orderDTO.setShopId(dto.getShopId());
 
-        // 平台原始状态
+        // 平台订单原始状态
         orderDTO.setPlatformOrderStatus(sourceOrder.getOrderStatus());
-        // 取消状态
-
+        // 平台订单原始取消状态
+        orderDTO.setIsCancel(sourceOrder.convertCancel());
         // 作废状态（false未作废，true已作废）
         orderDTO.setInvalidStatus(sourceOrder.convertCancel());
         // 作废类型（manual手动作废，automatic自动作废）
