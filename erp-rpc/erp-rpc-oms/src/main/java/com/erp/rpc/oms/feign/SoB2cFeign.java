@@ -1,5 +1,6 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
@@ -499,4 +500,11 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/addModuleOperateLog")
     Boolean addModuleOperateLog(OperateLogDTO.AddModuleOperateLogDTO operateLogDTO);
+
+
+    /**
+     * 更新平台订单取消状态
+     */
+    @PostMapping("/feign/soB2c/updateCancelAndLog")
+    Boolean updateCancelAndLog(@RequestBody @Validated PlatformDeliveryInterceptDTO dto);
 }

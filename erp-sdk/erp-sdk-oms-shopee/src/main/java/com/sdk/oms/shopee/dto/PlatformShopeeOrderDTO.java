@@ -141,6 +141,11 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
             orderDTO.setInvalidStatus(false);
         }
 
+        // 平台订单原始状态
+        orderDTO.setPlatformOrderStatus(orderStatus);
+        // 订单状态
+        orderDTO.setIsCancel(orderDTO.getIsCancel());
+
         // 付款状态（待付款、已付款）
         // （soB2cPayStatus字典类型）
         Long paytime = orderDetail.getPayTime();

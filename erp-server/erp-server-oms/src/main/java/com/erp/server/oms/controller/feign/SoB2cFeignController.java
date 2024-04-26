@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.feign;
 
 
+import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
@@ -56,6 +57,9 @@ public class SoB2cFeignController extends BaseController {
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private SoB2cStatusService b2cStatusService;
 
 
     /**
@@ -629,5 +633,14 @@ public class SoB2cFeignController extends BaseController {
                 operateLogDTO.getModuleType(),
                 operateLogDTO.getBusinessId(),
                 operateLogDTO.getOperation());
+    }
+
+
+    /**
+     * 更新平台订单取消状态
+     */
+    @PostMapping("/updateCancelAndLog")
+    public Boolean updateCancelAndLog(@RequestBody @Validated PlatformDeliveryInterceptDTO dto){
+        return b2cStatusService.updateCancelAndLog(dto);
     }
 }
