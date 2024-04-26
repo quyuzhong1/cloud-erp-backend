@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.constant.BusinessCommonConstants;
+import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -172,13 +173,16 @@ public class AmazonShipOrder implements IPlatformService {
                 throw new ServiceException("未找到店铺授权:" + mainEntity.getShopId());
             }
 
-            Boolean isCancel = mainEntity.getIsCancel();
-            if (!isCancel) {
-                //TODO, 检查订单平台订单是否已经取消
-                isCancel = Boolean.TRUE;
-            }
             //取消则需要自动发起订单拦截
-            deliveryIntercept(mainEntity.getId(),isCancel);
+            PlatformDeliveryInterceptDTO interceptDTO = PlatformDeliveryInterceptDTO.builder()
+                    .soB2cId(mainEntity.getId())
+                    .dictPlatform(mainEntity.getDictPlatform())
+                    .oldIsCancel(mainEntity.getIsCancel())
+                    .build();
+            Boolean isCancel = deliveryIntercept(interceptDTO);
+            if (isCancel){
+                throw new ServiceException(StrUtil.format("销售订单【{}】平台已取消，不支持发货",mainEntity.getCode()));
+            }
 
             ConfirmShipmentRequest body = new ConfirmShipmentRequest();
             AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
@@ -243,10 +247,13 @@ public class AmazonShipOrder implements IPlatformService {
     }
 
     @Override
-    public void deliveryIntercept(String soB2cId,Boolean isCancel) {
+    public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
+        Boolean isCancel = Boolean.FALSE;
         if (isCancel) {
             //订单拦截
-            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cId, "平台取消"));
+            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(dto.getSoB2cId(), "平台取消"));
+            isCancel = Boolean.TRUE;
         }
+        return isCancel;
     }
 }
