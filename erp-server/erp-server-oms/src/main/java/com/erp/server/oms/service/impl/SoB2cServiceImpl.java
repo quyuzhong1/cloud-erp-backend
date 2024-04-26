@@ -1223,7 +1223,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String packageStatus = resultDTO.getPackageStatus();
         String transferStatus = resultDTO.getTransferStatus();
         entity.setPackageStatus(packageStatus);
-        entity.setTransferStatus(transferStatus);
         //未备案的sku
         List<String> notRegistrationSkuNoList = resultDTO.getNotRegistrationSkuNoList();
         Boolean isRegistration = CollectionUtils.isEmpty(notRegistrationSkuNoList);
@@ -1238,6 +1237,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())) {
                 throw new ServiceException(StrUtil.format("B2C销售订单【{}】已预报成功不可更换渠道", entity.getCode()));
             }
+        }
+        if(!TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())){
+            entity.setTransferStatus(transferStatus);
         }
         boolean isUpdateTransferStatus = !TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus());
         updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration,isUpdateTransferStatus);
