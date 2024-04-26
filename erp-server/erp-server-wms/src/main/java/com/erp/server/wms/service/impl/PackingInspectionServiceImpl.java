@@ -4,7 +4,6 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
-import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.handler.PlatformSaveHandler;
 import com.common.core.enums.ApiError;
@@ -95,15 +94,8 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         if(ObjectUtil.isEmpty(soB2cEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-
-        //验货前判断平台订单是否取消
-        PlatformDeliveryInterceptDTO interceptDTO = PlatformDeliveryInterceptDTO.builder()
-                .soB2cId(soB2cEntity.getId())
-                .dictPlatform(soB2cEntity.getDictPlatform())
-                .oldIsCancel(soB2cEntity.getIsCancel())
-                .build();
-        Boolean isCancel = PlatformSaveHandler.deliveryIntercept(interceptDTO);
-        if (isCancel) {
+        //验证订单平台是否取消
+        if (soB2cEntity.getIsCancel()) {
            throw new ServiceException(StrUtil.format("销售订单【{}】平台已取消，不支持验货",soB2cEntity.getCode()));
         }
 
