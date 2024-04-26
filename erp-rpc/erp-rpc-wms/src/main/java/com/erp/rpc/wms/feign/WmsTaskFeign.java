@@ -282,6 +282,16 @@ public interface WmsTaskFeign {
     void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 
     /**
+     * wms同步马帮数据
+     * @Author Luo_WG
+     * @Date 2023/10/30 12:22
+     * @param syncParamDTO
+     * @return void
+     **/
+    @PostMapping("/feign/wmsSyncTask/findMaBangDataSendSyncTask")
+    void findMaBangDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+
+    /**
      * FBA发货单审核通过
      * @Author Luo_WG
      * @Date 2023/11/15 18:01
