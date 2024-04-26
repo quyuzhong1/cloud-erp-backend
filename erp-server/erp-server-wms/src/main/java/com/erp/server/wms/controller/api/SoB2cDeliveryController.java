@@ -344,10 +344,10 @@ public class SoB2cDeliveryController extends BaseController {
      * @Date 2024/4/26 11:04
      * @return void
      **/
-/*    @PostMapping("/printLogisticsWaybillPreview")
-    public void printLogisticsWaybillPreview(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param) {
-        soB2cDeliveryService.printAllocateCargoBillConfirm(param);
-    }*/
+    @PostMapping("/printLogisticsWaybillPreview")
+    public ApiResult<List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO>> printLogisticsWaybillPreview(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param) {
+        return success(soB2cDeliveryService.printLogisticsWaybillPreview(param));
+    }
 
 
     /**

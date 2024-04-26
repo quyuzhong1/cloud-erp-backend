@@ -222,4 +222,11 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return java.lang.Boolean
      **/
     Boolean mergePackageDelivery(List<String> soIdList);
+
+    /**
+     * 打印面单预览
+     * @param param
+     * @return
+     */
+    List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillPreview(SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param);
 }
