@@ -245,7 +245,7 @@
                  left join warehouse tw on fmd.dest_warehouse_id = tw.id and tw.is_deleted = false
         where fmd.is_deleted = false
         <if test="params.packingStatus != null and params.packingStatus != ''">
-            AND fmd.packing_status = #{params.packingStatus}
+            AND (fmd.packing_status = #{params.packingStatus} or fmd.approve_status = 'approve')
         </if>
         <if test="params.logisticsStatus != null and params.logisticsStatus != ''">
             AND fmd.logistics_status = #{params.logisticsStatus}
@@ -300,7 +300,7 @@
              first_mile_delivery fmd
         where fmd.is_deleted = false
         <if test="params.packingStatus != null and params.packingStatus != ''">
-            AND fmd.packing_status = #{params.packingStatus}
+            AND (fmd.packing_status = #{params.packingStatus} or fmd.approve_status = 'approve')
         </if>
         <if test="params.declareStatus != null and params.declareStatus != ''">
             AND fmd.declare_status = #{params.declareStatus}
