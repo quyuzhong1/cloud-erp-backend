@@ -2,6 +2,7 @@ package com.erp.model.tms.dto;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.OperationTypeEnum;
@@ -210,6 +211,11 @@ public class TransferDeclareDTO implements Serializable {
         * 预计报关日期
         */
         private LocalDate planTransferDate;
+
+        /**
+         * 上传状态
+         */
+        private String uploadStatus;
 
     }
 
