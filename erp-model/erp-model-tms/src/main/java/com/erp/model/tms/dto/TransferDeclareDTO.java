@@ -301,10 +301,12 @@ public class TransferDeclareDTO implements Serializable {
             this.logisticsChannelIdList = new ArrayList<>();
             this.deliveryLogisticsSupplierIdList = new ArrayList<>();
             this.transferLogisticsSupplierIdList = new ArrayList<>();
+            this.instockForecastStatusList = new ArrayList<>();
             this.uploadStatusList = new ArrayList<>();
             this.outstockStatusList = new ArrayList<>();
             this.transferStatusList = new ArrayList<>();
             this.createUserIdList = new ArrayList<>();
+            this.createTimeList = new ArrayList<>();
             this.createTimeList = new ArrayList<>();
         }
     }

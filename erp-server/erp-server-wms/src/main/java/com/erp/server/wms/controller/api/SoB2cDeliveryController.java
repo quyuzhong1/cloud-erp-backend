@@ -279,6 +279,7 @@ public class SoB2cDeliveryController extends BaseController {
     public ApiResult<List<SoB2cDeliveryDTO.PrintPickingViewDTO>> printPickingView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(soB2cDeliveryService.printPickingView(dto.getIds()));
     }
+
     /**
      * 打印拣货单
      *
@@ -337,7 +338,7 @@ public class SoB2cDeliveryController extends BaseController {
     }
 
     /**
-     * 打印物流面单确认
+     * 打印物流面单确认（预览）
      *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintLogisticsWaybillDTO>>
@@ -348,8 +349,18 @@ public class SoB2cDeliveryController extends BaseController {
     @PostMapping("/printLogisticsBillConfirm")
     public void printLogisticsBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
         soB2cDeliveryService.printLogisticsBillConfirm(dto, response);
-
     }
+/*
+    *//**
+     * 打印配货单确认（预览）
+     * @param dto
+     * @param response
+     *//*
+
+    @PostMapping("/printDistributionConfirm")
+    public void printAllocateCargoBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param) {
+        soB2cDeliveryService.printAllocateCargoBillConfirm(param);
+    }*/
 
     /**
      * 完成打印
