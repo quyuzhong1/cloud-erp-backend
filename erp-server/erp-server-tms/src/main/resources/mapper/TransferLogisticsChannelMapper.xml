@@ -40,7 +40,8 @@
         lc.name,
         lc.disabled,
         ls.id as logisticsSupplierId,
-        ls.supplier_name as supplierName
+        ls.supplier_name as supplierName,
+        ls.supplier_name as transferLogisticSupplierName
         from transfer_logistics_channel lc
         inner join transfer_logistics_supplier ls on lc.main_id = ls.id and ls.is_deleted = false
         where lc.is_deleted = false
