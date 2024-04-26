@@ -670,14 +670,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             //走TMS自动生成报关单逻辑
             if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode())) {
-                //走TMS自动生成逻辑
-                AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
-                        .id(entity.getId())
-                        .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
-                        .sourceTypeEnum(SourceTypeEnum.SO_OUTSTOCK)
-                        .soOutstockEntity(entity)
-                        .build();
-                tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
+//                //走TMS自动生成逻辑
+//                AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+//                        .id(entity.getId())
+//                        .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
+//                        .sourceTypeEnum(SourceTypeEnum.SO_OUTSTOCK)
+//                        .soOutstockEntity(entity)
+//                        .build();
+//                tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
             }
         }
         return Boolean.TRUE;

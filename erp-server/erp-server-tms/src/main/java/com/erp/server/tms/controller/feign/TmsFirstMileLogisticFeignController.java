@@ -40,7 +40,7 @@ public class TmsFirstMileLogisticFeignController {
     /**
      * 自动生成头程物流单
      **/
-    @PostMapping("/feign/tmsFirstMileLogistic/autoGenerateFirstMileLogistic")
+    @PostMapping("/autoGenerateFirstMileLogistic")
     Boolean autoGenerateFirstMileLogistic(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO){
         return tmsFirstMileLogisticService.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
     }
