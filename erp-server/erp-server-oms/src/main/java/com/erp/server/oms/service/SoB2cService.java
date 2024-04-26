@@ -8,6 +8,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
@@ -335,7 +336,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @Author Jim
      * @since 2023-11-10
      **/
-    SoB2cDTO.PullOrderResultDTO saveOrUpdateEntity(PlatformOrderDTO dto);
+    SoB2cDTO.PullOrderResultDTO saveOrUpdateEntity(PlatformOrderDTO dto, ShopInfoEntity shopInfo);
 
     /**
      * 通过哟平台订单ID和类型查询
