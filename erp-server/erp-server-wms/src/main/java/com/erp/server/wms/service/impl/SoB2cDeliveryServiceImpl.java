@@ -1002,7 +1002,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (!this.updateBatchById(deliveryEntities)) {
             throw new ServiceException("发货单更新失败");
         }
+
         for (SoB2cDeliveryEntity deliveryEntity : deliveryEntities) {
+            //出库
+            this.generateB2cSoOutstock(deliveryEntity);
             String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", commonService.getUserInfo().getUserName(), "组包称重", deliveryEntity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), deliveryEntity.getId(), "组包称重");
         }
