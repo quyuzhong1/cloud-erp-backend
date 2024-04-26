@@ -40,7 +40,7 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         this.orderViewDTO = orderViewDTO;
         this.shopId = shopId;
         this.setIsClean(0);
-        this.setPlatform(PlatformDictEnum.MERCADOLIBRE.getCode());
+        this.setPlatform(PlatformDictEnum.TIK_TOK.getCode());
         this.setUniqueId(combineUnique(orderViewDTO.getFid(), this.shopId));
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
