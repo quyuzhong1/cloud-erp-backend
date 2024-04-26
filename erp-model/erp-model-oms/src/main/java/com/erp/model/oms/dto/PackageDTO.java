@@ -118,11 +118,6 @@ public class PackageDTO implements Serializable {
         private Boolean isAutoOut;
 
         /**
-         * 是否禁用自动出库 false 未禁用
-         */
-        private Boolean disabled;
-
-        /**
          * 预报状态
          */
         private String forcastStatus;

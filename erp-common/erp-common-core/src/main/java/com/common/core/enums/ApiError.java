@@ -1233,6 +1233,11 @@ public enum ApiError implements Serializable {
     ERROR_DECLARE_RECONCILIATION_NOT_EXIST(94034,"报关对账单不存在"),
     ERROR_DECLARE_RECONCILIATION_DETAIL_NOT_EXIST(94035,"报关对账单明细不存在"),
     ERROR_DECLARE_RECONCILIATION_ADD_DETAIL(94036,"报关对账单【{}】添加对账明细数据的供应商【{}】必须一致"),
+    TRANSFER_LOGISTICS_SUPPLIER_IS_NULL_NOT_PACKAGE(94037,"订单中转物流商不存在，请重新预报后再扫描"),
+    INVALID_NOT_PACKAGE(94038,"订单已作废，不可组包"),
+    TRANSFER_FAILURE_NOT_PACKAGE(94039,"中转报关订单待中转/上传失败不可操作组包发货"),
+    ORDER_CANCEL_NOT_PACKAGE(94040,"单据对应的物流商单号被拦截/取消/异常，不可组包操作"),
+    LOGISTICS_INTERCEPT_NOT_PACKAGE(94041,"订单被拦截，不可组包操作"),
 
 
     /**
