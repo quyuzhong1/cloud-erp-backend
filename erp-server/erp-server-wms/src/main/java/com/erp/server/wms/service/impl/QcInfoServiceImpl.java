@@ -903,6 +903,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @date 2023-04-20 14:01
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean draft(QcInfoDTO.SaveOrUpdateDTO dto) {
         //质检单
         QcInfoEntity bill = new QcInfoEntity();
@@ -962,6 +963,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @date 2023-04-20 15:29
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean exemption(QcInfoDTO.SaveOrUpdateDTO dto) {
         String id = dto.getId();
         QcInfoEntity bill = this.getById(id);
