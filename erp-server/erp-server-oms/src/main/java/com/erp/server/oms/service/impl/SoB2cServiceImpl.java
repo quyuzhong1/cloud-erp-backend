@@ -62,7 +62,6 @@ import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.wms.dto.*;
@@ -107,11 +106,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -6836,7 +6833,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             updateList.add(soB2cEntity);
         }
         //更新操作同个事务
-        service.updateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors,updateLogisticList);
+        service.orderForecastUpdateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors,updateLogisticList);
         return resultDTOList;
     }
 
@@ -6948,7 +6945,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
         //更新操作同个事务
-        service.updateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors,new ArrayList<>());
+        service.orderForecastUpdateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors,new ArrayList<>());
         return resultDTOList;
     }
 
@@ -6997,7 +6994,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void updateSoAndError(List<SoB2cEntity> updateB2cList ,List<String> deleteErrorIds, List<SoB2cErrorEntity> addOrUpdateErrors,List<SoB2cLogisticsEntity> updateLogisticList){
+    public void orderForecastUpdateSoAndError(List<SoB2cEntity> updateB2cList , List<String> deleteErrorIds, List<SoB2cErrorEntity> addOrUpdateErrors, List<SoB2cLogisticsEntity> updateLogisticList){
         //更新或添加异常记录
         if (CollectionUtils.isNotEmpty(addOrUpdateErrors)){
             soB2cErrorService.saveOrUpdateBatch(addOrUpdateErrors);
@@ -7007,6 +7004,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cErrorService.removeByIds(deleteErrorIds);
         }
         if(CollectionUtils.isNotEmpty(updateB2cList)){
+            updateB2cList.forEach(v->{
+                if(TransferStatusEnum.SUCCESS.getCode().equals(v.getTransferStatus()) && SoB2cErrorTypeEnum.ORDER_FORECAST.getCode().equals(v.getSignOrderError())){
+                    v.setSignOrderError("");
+                }
+            });
             this.updateBatchById(updateB2cList);
         }
         if(CollectionUtils.isNotEmpty(updateLogisticList)){
