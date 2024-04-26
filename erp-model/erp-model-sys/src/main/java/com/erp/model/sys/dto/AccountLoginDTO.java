@@ -22,7 +22,11 @@ public class AccountLoginDTO implements Serializable {
 
     @NotBlank(message = "密码不能为空")
     private String password;
-
+    /**
+     * erp ERP系统传参
+     * srm SRM系统传参
+     * pda PDA系统传参
+     */
     @NotBlank(message = "所属系统不能为空")
     private String userType;
 }
