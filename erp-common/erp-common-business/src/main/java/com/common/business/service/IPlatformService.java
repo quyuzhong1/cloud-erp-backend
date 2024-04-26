@@ -1,5 +1,6 @@
 package com.common.business.service;
 
+import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 
 /**
@@ -27,8 +28,8 @@ public interface IPlatformService {
 
     /**
      * 订单取消后发货单拦截
-     * @param soB2cId
+     * @param dto
      * @return
      */
-    void deliveryIntercept(String soB2cId,Boolean isCancel);
+    Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto);
 }
