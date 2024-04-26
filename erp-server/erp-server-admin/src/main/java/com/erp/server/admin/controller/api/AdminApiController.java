@@ -61,7 +61,7 @@ public class AdminApiController  extends BaseController {
      * 保存或者修改
      */
     @RequestMapping("/saveOrUpdate")
-    public ApiResult save(@RequestBody MenuEntity sysMenu) {
+    public ApiResult save(@RequestBody @Validated MenuEntity sysMenu) {
         boolean resultFlag = menuService.saveOrUpdateMenu(sysMenu);
         return resultFlag == true ? success() : failure();
     }
@@ -77,7 +77,7 @@ public class AdminApiController  extends BaseController {
      * 修改
      */
     @RequestMapping("/update")
-    public ApiResult update(@RequestBody MenuEntity sysMenu) {
+    public ApiResult update(@RequestBody @Validated MenuEntity sysMenu) {
         menuService.updateById(sysMenu);
 
         return success();
