@@ -360,7 +360,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         //已装箱才能审核
-        if (PackingStatusEnum.NOT_PACKING.getCode().equals(entity.getPackingStatus())) {
+        if (PackingStatusEnum.NOT_PACKING.getCode().equals(entity.getPackingStatus())
+            && FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())) {
             throw new ServiceException(ApiError.NOT_PACKAGE_NO_APPROVE, entity.getCode());
         }
 
