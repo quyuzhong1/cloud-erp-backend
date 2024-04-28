@@ -993,6 +993,7 @@ public enum ApiError implements Serializable {
     BILL_IS_GENERATE_LOGISTICS(92137,"单据【{}】物流状态已生成，不可修改为无需生成"),
     SO_OUTSTOCK_NOT_PACKING(92137,"出库单报关单已生成，不支持修改"),
     TRANSFER_DECLARE_SO_EXISTS(92138,"订单【{}】已存在入库预报单，请不要重复新增"),
+    PAPER_SIZE_INCONSISTENT_NOT_PRINT(92139,"纸张大小不一致，不支持批量打印"),
 
 
 
@@ -1241,8 +1242,8 @@ public enum ApiError implements Serializable {
 
 
     LOGISTICS_NOT_PRINT_LOGISTICS_BILL(94042,"物流商【{}】不支持打印物流面单"),
-    LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL(94043,"物流商【{}】不支持打印官方配货单"),
-    LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST(94044,"渠道配置的打印类型设置未找到"),
+    LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL(94043,"物流商【{}】不支持分开单独打印官方配货单"),
+    LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST(94044,"渠道【{}】配置的打印配货单的类型设置未找到"),
     /**
      * SRM 错误
      * 从96000 开始
