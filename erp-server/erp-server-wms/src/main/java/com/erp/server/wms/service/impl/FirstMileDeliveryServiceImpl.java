@@ -794,12 +794,23 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
                     .firstMileDeliveryEntity(entity)
                     .build();
-//            if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
-//                tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
-//            }
-//            if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
-//                tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
-//            }
+            try {
+                if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
+                    tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
+                }
+            }catch (Exception e){
+                log.error("头程发货单{} 审核后自动生成物流单失败>>>>>>{}", entity.getCode(), e.getMessage());
+                throw new ServiceException(StrUtil.format("头程发货单{} 审核后自动生成物流单失败>>>>>>{}", entity.getCode(), e.getMessage()));
+            }
+
+            try {
+                if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
+                    tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+                }
+            }catch (Exception e){
+                log.error("头程发货单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
+                throw new ServiceException(StrUtil.format("头程发货单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
+            }
         }
         return Boolean.TRUE;
     }
@@ -1522,18 +1533,29 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (CollectionUtils.isEmpty(groupSkuDTOList)) {
             updatePackingStatus(dto.getId(), PackingStatusEnum.PACKING.getCode());
             //走TMS自动生成物流单逻辑
-//            AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
-//                    .id(dto.getId())
-//                    .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
-//                    .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
-//                    .firstMileDeliveryEntity(entity)
-//                    .build();
-//            if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
-//                tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
-//            }
-//            if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
-//                tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
-//            }
+            AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+                    .id(dto.getId())
+                    .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
+                    .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
+                    .firstMileDeliveryEntity(entity)
+                    .build();
+            try {
+                if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
+                    tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
+                }
+            }catch (Exception e){
+                log.error("头程发货单{} 装箱后自动生成物流单失败>>>>>>{}", entity.getCode(), e.getMessage());
+                throw new ServiceException(StrUtil.format("头程发货单{} 装箱后自动生成物流单失败>>>>>>{}", entity.getCode(), e.getMessage()));
+            }
+
+            try {
+                if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
+                    tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+                }
+            }catch (Exception e){
+                log.error("头程发货单{} 装箱后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
+                throw new ServiceException(StrUtil.format("头程发货单{} 装箱后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
+            }
         } else {
             updatePackingStatus(dto.getId(), PackingStatusEnum.NOT_PACKING.getCode());
         }
