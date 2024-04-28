@@ -7039,7 +7039,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         if(CollectionUtils.isNotEmpty(updateB2cList)){
             updateB2cList.forEach(v->{
-                if(TransferStatusEnum.SUCCESS.getCode().equals(v.getTransferStatus()) && SoB2cErrorTypeEnum.ORDER_FORECAST.getCode().equals(v.getSignOrderError())){
+                if(TransferStatusEnum.SUCCESS.getCode().equals(v.getTransferStatus())
+                        && (SoB2cErrorTypeEnum.ORDER_FORECAST.getCode().equals(v.getSignOrderError()))||SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode().equals(v.getSignOrderError())){
                     v.setSignOrderError("");
                 }
             });
