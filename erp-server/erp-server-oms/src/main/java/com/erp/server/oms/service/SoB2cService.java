@@ -8,7 +8,6 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
@@ -19,7 +18,6 @@ import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
-import com.erp.model.tms.dto.*;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 
@@ -858,4 +856,21 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return Boolean
      */
     Boolean exportExcel(SoB2cDTO.PagingParamDTO dto, HttpServletResponse response);
+    /**
+     * @description: 异常订单分页查询
+     * @author Will
+     * @date: 2024/4/22 17:53
+     * @param pagingParamDTO
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<SoB2cAbnormalDTO.ListDTO> abnormalPaging(PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> pagingParamDTO);
+    /**
+     * @description: 异常订单导出
+     * @author Will
+     * @date: 2024/4/22 19:54
+     * @param dto
+     * @param response
+     * @return Boolean
+     */
+    Boolean abnormalExportExcel(SoB2cAbnormalDTO.PagingParamDTO dto, HttpServletResponse response);
 }

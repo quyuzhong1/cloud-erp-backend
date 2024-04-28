@@ -106,4 +106,14 @@ public interface SoOutstockFeign {
 
     @PostMapping("feign/soOutstock/updateStatus")
     Boolean updateStatus(@RequestBody TmsDeclareBillDTO.UpdateStatusDTO dto);
+
+    /**
+     * 重新生成销售出库单
+     * @author Will
+     * @date: 2024/4/28 10:29
+     * @param ids
+     * @return Boolean
+     */
+    @PostMapping("feign/soOutstock/afreshGenerateB2cOutstock")
+    Boolean afreshGenerateB2cOutstock(@RequestBody List<String> ids);
 }
