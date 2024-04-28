@@ -75,4 +75,12 @@ public interface TransferDeclareFeign {
      */
     @PostMapping("/feign/transferDeclare/retryOrderForecast")
     List<BatchResultDTO> retryOrderForecast(@RequestBody String id);
+
+    /**
+     * 批量修改报关单详情上传状态
+     * @param list
+     * @return
+     */
+    @PostMapping("/feign/transferDeclare/updateTransferStatusByBatch")
+    Boolean updateTransferStatusByBatch(@RequestBody List<TransferDeclareDTO.UpdateForcastStatusDTO> list);
 }

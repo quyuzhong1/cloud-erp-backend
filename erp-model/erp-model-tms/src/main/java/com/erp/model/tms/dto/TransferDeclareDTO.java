@@ -590,4 +590,17 @@ public class TransferDeclareDTO implements Serializable {
          */
         private String status;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdateForcastStatusDTO {
+        /**
+         * 订单id
+         */
+        private String soId;
+        /**
+         * 状态
+         */
+        private String status;
+    }
 }

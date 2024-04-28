@@ -9,6 +9,7 @@ import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.server.tms.service.TransferDeclareDetailService;
 import com.erp.server.tms.service.TransferDeclareService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -105,5 +106,15 @@ public class TransferDeclareFeignController {
     @PostMapping("/retryOrderForecast")
     public List<BatchResultDTO> retryOrderForecast(@RequestBody String id) {
         return transferDeclareService.retryOrderForecast(id);
+    }
+
+    /**
+     * 批量修改报关单详情上传状态
+     * @param list
+     * @return
+     */
+    @PostMapping("/updateTransferStatusByBatch")
+    public Boolean updateTransferStatusByBatch(@RequestBody List<TransferDeclareDTO.UpdateForcastStatusDTO> list) {
+        return transferDeclareDetailService.updateTransferStatusByBatch(list);
     }
 }

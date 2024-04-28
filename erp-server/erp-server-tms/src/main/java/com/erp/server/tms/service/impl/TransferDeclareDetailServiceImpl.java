@@ -276,4 +276,16 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         }
         return lambdaQuery().in(TransferDeclareDetailEntity::getMainId, mainIds).list();
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateTransferStatusByBatch(List<TransferDeclareDTO.UpdateForcastStatusDTO> list) {
+        for (TransferDeclareDTO.UpdateForcastStatusDTO updateForcastStatusDTO : list) {
+            lambdaUpdate()
+                    .eq(TransferDeclareDetailEntity::getSoId, updateForcastStatusDTO.getSoId())
+                    .set(TransferDeclareDetailEntity::getTransferStatus, updateForcastStatusDTO.getStatus())
+                    .update();
+        }
+        return Boolean.TRUE;
+    }
 }
