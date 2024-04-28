@@ -85,22 +85,23 @@ public class SoB2cAbnormalController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量重试")
     @PostMapping(value = "/batchRetry")
     public ApiResult<List<BatchResultDTO>> batchRetry(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
         for (String id : dto.getIds()) {
-            BatchResultDTO submit;
             try {
-                submit = soB2cAbnormalService.batchRetry(id);
+                List<BatchResultDTO>  resultList = soB2cAbnormalService.batchRetry(id);
+                resultDTOS.addAll(resultList);
             }catch (Exception e){
                 log.error("b2c销售订单 批量重试失败",e);
+                BatchResultDTO batchResultDTO;
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "b2c销售订单不存在, 批量重试失败");
-                    resultDTOS.add(submit);
+                    batchResultDTO = BatchResultDTO.fail(id, id, "b2c销售订单不存在, 批量重试失败");
+                    resultDTOS.add(batchResultDTO);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                resultDTOS.add(batchResultDTO);
             }
-            resultDTOS.add(submit);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
