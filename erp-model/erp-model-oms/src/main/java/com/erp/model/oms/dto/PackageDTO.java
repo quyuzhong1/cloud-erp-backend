@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -153,6 +154,7 @@ public class PackageDTO implements Serializable {
         /**
          * 重量
          */
+        @Digits(integer = 16,fraction = 4,message = "重量最大16位数，小数位不能大于4位数")
         private BigDecimal weight;
 
         /**
