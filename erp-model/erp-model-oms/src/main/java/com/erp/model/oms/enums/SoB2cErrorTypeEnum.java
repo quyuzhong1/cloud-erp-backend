@@ -56,4 +56,13 @@ public enum SoB2cErrorTypeEnum {
         }
         return "";
     }
+
+    public static SoB2cErrorTypeEnum getEnum(String code) {
+        for (SoB2cErrorTypeEnum typeEnum : SoB2cErrorTypeEnum.values()) {
+            if (typeEnum.getCode().equals(code)) {
+                return typeEnum;
+            }
+        }
+        return null;
+    }
 }

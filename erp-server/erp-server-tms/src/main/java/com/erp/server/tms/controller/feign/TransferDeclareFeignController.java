@@ -1,6 +1,7 @@
 package com.erp.server.tms.controller.feign;
 
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
@@ -71,5 +72,17 @@ public class TransferDeclareFeignController {
     public List<TransferDeclareDetailEntity> listByLogisticsChannelIdList(@RequestBody List<String> logisticsChannelIdList) {
         List<TransferDeclareDetailEntity> list = transferDeclareDetailService.listByLogisticsChannelIdList(logisticsChannelIdList);
         return list;
+    }
+
+    /**
+     * 订单预报重试
+     * @author Will
+     * @date: 2024/4/28 9:49
+     * @param id
+     * @return List<BatchResultDTO>
+     */
+    @PostMapping("/retryOrderForecast")
+    public List<BatchResultDTO> retryOrderForecast(@RequestBody String id) {
+        return transferDeclareService.retryOrderForecast(id);
     }
 }

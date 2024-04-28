@@ -48,6 +48,12 @@ public class SoB2cAbnormalDTO  implements Serializable {
          * 销售订单主键id
          */
         private String id;
+
+        /**
+         * 销售订单明细主键id
+         */
+        private String detailId;
+
         /**
          * 销售单号【可排序】
          */

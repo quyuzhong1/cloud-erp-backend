@@ -751,6 +751,7 @@
     <select id="abnormalPaging" resultType="com.erp.model.oms.dto.SoB2cAbnormalDTO$ListDTO">
         select
             sb2c.id,
+            sb2cd.id as detailId,
             sb2c.code,
             sb2c.dict_platform as dictPlatform,
             sb2c.approve_status as approveStatus,

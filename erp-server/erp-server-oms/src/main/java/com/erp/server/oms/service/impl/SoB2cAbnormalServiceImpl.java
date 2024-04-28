@@ -1,9 +1,18 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.util.ObjUtil;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cAbnormalDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.rpc.tms.feign.TransferDeclareFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.service.SoB2cAbnormalService;
+import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +30,15 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
     @Resource
     private SoB2cService soB2cService;
 
+    @Resource
+    private SoB2cErrorService soB2cErrorService;
+
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private TransferDeclareFeign transferDeclareFeign;
+
     @Override
     public PagingVO<SoB2cAbnormalDTO.ListDTO> abnormalPaging(PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> pagingParamDTO) {
         return soB2cService.abnormalPaging(pagingParamDTO);
@@ -29,6 +47,40 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
     @Override
     public Boolean abnormalExportExcel(SoB2cAbnormalDTO.PagingParamDTO dto, HttpServletResponse response) {
         return soB2cService.abnormalExportExcel(dto,response);
+    }
+
+    @Override
+    public BatchResultDTO batchRetry(String id) {
+        SoB2cEntity soB2cEntity = soB2cService.getById(id);
+        if (ObjUtil.isEmpty(soB2cEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        SoB2cErrorTypeEnum soB2cErrorTypeEnum = SoB2cErrorTypeEnum.getEnum(soB2cEntity.getSignOrderError());
+
+        // 重试逻辑
+        switch (soB2cErrorTypeEnum) {
+            case SUBMIT_DELIVERY:
+                soB2cService.submitDelivery(id);
+                break;
+            case SIGN_DELIVERY:
+                wmsTaskFeign.retryFalseDelivery(id);
+                break;
+            case GET_LOGISTICS_CODE:
+                soB2cService.getLogisticsCode(id,Boolean.TRUE);
+                break;
+            case GENERATE_OUTSTOCK:
+                break;
+            case INTERCEPT_SUCCESS:
+                break;
+            case ORDER_FORECAST:
+                transferDeclareFeign.retryOrderForecast(id);
+                break;
+            case INSTOCK_FORECAST:
+                break;
+            default:
+                break;
+        }
+        return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "批量重试");
     }
 
 }
