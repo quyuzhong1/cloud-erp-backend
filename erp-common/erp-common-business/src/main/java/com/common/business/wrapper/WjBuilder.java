@@ -34,8 +34,12 @@ public class WjBuilder {
     	
     }
     
-    public WjBuilder(Class<? extends BaseEntity<?>> clazz) {
+    private WjBuilder(Class<? extends BaseEntity<?>> clazz) {
     	this.clazz = clazz;
+    }
+    
+    public static WjBuilder create(Class<? extends BaseEntity<?>> clazz) {
+    	return new WjBuilder(clazz);
     }
     
     public <T extends BaseEntity<T>> WjBuilder eq(boolean isTure, SFunction<T, ?> function, Object value) {
@@ -219,14 +223,9 @@ public class WjBuilder {
         return this;
 	}
 	
-	public <T extends BaseEntity<T>> List<T> list(Class<T> clazz) {
-		this.clazz = clazz;
-		return list();
-	}
-	
 	public <T extends BaseEntity<T>> List<T> list() {
 		if(clazz == null) {
-			throw new RuntimeException("获取的实体类名未设置");
+			throw new RuntimeException("实体类名未设置");
 		}
 		DictCore dictCore = ApplicationContextUtils.getBean(DictCore.class);
 		String serviceCode = clazz.getName().split("\\.")[3];
