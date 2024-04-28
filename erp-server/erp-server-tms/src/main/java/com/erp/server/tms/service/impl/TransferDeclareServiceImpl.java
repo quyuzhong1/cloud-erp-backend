@@ -522,7 +522,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listBySoIds(soIds);
         for (TransferDeclareDetailEntity transferDeclareDetailEntity : detailEntityList) {
             List<SoOutstockEntity> outstockEntities = soOutstockEntities.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getSoId())
-                    && ApproveStatusEnum.APPROVE.getCode().equals(req.getApproveStatus())
+                    && ApproveStatusEnum.APPROVE.getCode().equals(req.getApproveStatus().getStatus())
             ).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(outstockEntities)) {
                 resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), "【"+transferDeclareDetailEntity.getSoCode()+"】未完成出库无法执行入库预报"));
@@ -533,14 +533,21 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         //查询报关单包含的订单信息
         List<String> soIdList = transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIdList);
+
+
         //下单
         for (TransferDeclareDetailEntity transferDeclareDetailEntity : transferDeclareDetailList) {
             SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(e -> e.getId().equals(transferDeclareDetailEntity.getSoId())).findFirst().orElse(null);
             if (Objects.nonNull(soB2cEntity) && StringUtils.isNotEmpty(soB2cEntity.getShippingOrderNo())){
+                BigDecimal maxWeight = BigDecimal.ONE;
+                if (transferDeclareDetailEntity.getWeightUnit().equals("g")) {
+                    maxWeight = maxWeight.divide(BigDecimal.valueOf(1000));
+                }
+
                 TransferLogisticsCreateInboundReq.ReceiveItem receiveItem = TransferLogisticsCreateInboundReq.ReceiveItem.builder()
                         .orderCode(soB2cEntity.getShippingOrderNo())
                         .packNum(transferDeclareEntity.getCode())
-                        .grossWeight(transferDeclareDetailEntity.getPackageWeight())
+                        .grossWeight(maxWeight)
                         .build();
                 receiveItemList.add(receiveItem);
             }

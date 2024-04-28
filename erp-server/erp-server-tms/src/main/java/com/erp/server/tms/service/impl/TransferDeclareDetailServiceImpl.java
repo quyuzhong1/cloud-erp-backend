@@ -175,10 +175,6 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
 
         //校验有上传成功的单据不能删除
         List<TransferDeclareDetailEntity> detailEntities = this.listByMainIds(mainIds);
-        List<String> soCodeList = detailEntities.stream().filter(req -> TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(req.getOrderUploadStatus())).map(req -> req.getSoCode()).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(soCodeList)) {
-            throw new ServiceException(ApiError.ORDER_UPLOAD_SUCCESS_NOT_DELETE, soCodeList.get(0));
-        }
 
         //删除明细
         lambdaUpdate().in(TransferDeclareDetailEntity::getMainId, mainIds).remove();

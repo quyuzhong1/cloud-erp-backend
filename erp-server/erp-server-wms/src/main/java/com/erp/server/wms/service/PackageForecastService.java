@@ -77,6 +77,12 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
      */
     BatchResultDTO forecast(String id,String transferLogisticsSupplierId,String transferLogisticsChannelId);
 
+    /**
+     * 入库预报
+     * @param id
+     * @return
+     */
+    BatchResultDTO instockForcast(String id);
 
     /**
      * 导出
