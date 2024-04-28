@@ -51,6 +51,7 @@ import com.erp.server.tms.service.*;
 import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.jasperreports.engine.util.BigDecimalUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -496,20 +497,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @GlobalTransactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> instockForecast(BaseDTO.QtyDTO qtyDTO) {
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
-        if (Objects.isNull(qtyDTO.getId())){
-            throw new ServiceException(ApiError.ERROR_TRANSFER_DECLARE_ID_NOT_EXIST);
-        }
-        if (Objects.isNull(qtyDTO.getQty())){
-            throw new ServiceException(ApiError.ERROR_TRANSFER_DECLARE_QTY_NOT_EXIST);
-        }
         TransferDeclareEntity transferDeclareEntity = this.getById(qtyDTO.getId());
-        if (Objects.isNull(transferDeclareEntity)){
-            throw new ServiceException(ApiError.ERROR_TRANSFER_DECLARE_NOT_EXIST);
-        }
-        if (!TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(transferDeclareEntity.getUploadStatus())
-        || InstockForecastStatusEnum.UPLOAD_SUCCESS.getCode().equals(transferDeclareEntity.getInstockForecastStatus())) {
-            throw new ServiceException(ApiError.ERROR_UPLOAD_SUCCES_CAN_INSTOCK_FORCAST);
-        }
+
         //仅支持【订单预报(批次)】上传成功时且入库预报为【待上传/上传失败】，可操作【入库预报】
         List<TransferDeclareDetailEntity> transferDeclareDetailEntities = transferDeclareDetailService.listByMainIds(Arrays.asList(qtyDTO.getId()));
         List<TransferDeclareDetailEntity> transferDeclareDetailList = transferDeclareDetailEntities.stream()
@@ -540,8 +529,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(e -> e.getId().equals(transferDeclareDetailEntity.getSoId())).findFirst().orElse(null);
             if (Objects.nonNull(soB2cEntity) && StringUtils.isNotEmpty(soB2cEntity.getShippingOrderNo())){
                 BigDecimal maxWeight = BigDecimal.ONE;
-                if (transferDeclareDetailEntity.getWeightUnit().equals("g")) {
-                    maxWeight = maxWeight.divide(BigDecimal.valueOf(1000));
+                if (transferDeclareDetailEntity.getWeightUnit().equals("g") && transferDeclareDetailEntity.getPackageWeight().compareTo(BigDecimal.ZERO) != 0) {
+                    maxWeight = transferDeclareDetailEntity.getPackageWeight().divide(BigDecimal.valueOf(1000));
                 }
 
                 TransferLogisticsCreateInboundReq.ReceiveItem receiveItem = TransferLogisticsCreateInboundReq.ReceiveItem.builder()
