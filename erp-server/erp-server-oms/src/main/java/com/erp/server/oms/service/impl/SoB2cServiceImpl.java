@@ -6783,7 +6783,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cErrorEntity> errorList = soB2cErrorService.getByMainIdsAndType(ids, SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
         List<SoB2cErrorEntity> addOrUpdateErrors = new ArrayList<>();
         List<SoB2cLogisticsEntity> updateLogisticList = new ArrayList<>();
+        List<TransferDeclareDTO.UpdateForcastStatusDTO> updateInstockForcastList = new ArrayList<>();
         for (SoB2cEntity soB2cEntity : soB2cEntityList) {
+            TransferDeclareDTO.UpdateForcastStatusDTO updateForcastStatusDTO = new TransferDeclareDTO.UpdateForcastStatusDTO();
+            updateForcastStatusDTO.setSoId(soB2cEntity.getId());
+
             SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntityList.stream().filter(v->v.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
             if(Objects.isNull(soB2cLogisticsEntity)){
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"未找到物流信息"));
@@ -6825,11 +6829,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if(shippingOrderDTO.getSuccess()){
                 soB2cEntity.setShippingOrderNo(shippingOrderDTO.getShippingOrderNo());
                 soB2cEntity.setTransferStatus(TransferStatusEnum.SUCCESS.getCode());
+                updateForcastStatusDTO.setStatus(TransferStatusEnum.SUCCESS.getCode());
                 if(StringUtils.isNotBlank(error.getId())){
                     deleteErrorIds.add(error.getId());
                 }
             }else{
                 soB2cEntity.setTransferStatus(TransferStatusEnum.FAILURE.getCode());
+                updateForcastStatusDTO.setStatus(TransferStatusEnum.FAILURE.getCode());
                 if(StringUtils.isNotBlank(shippingOrderDTO.getSign())){
                     soB2cEntity.setSignOrderError(shippingOrderDTO.getSign());
                     error.setMainId(shippingOrderDTO.getSoId())
@@ -6841,9 +6847,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 resultDTOList.add(BatchResultDTO.fail(shippingOrderDTO.getSoId(),shippingOrderDTO.getCode(),shippingOrderDTO.getMessage()));
             }
             updateList.add(soB2cEntity);
+            updateInstockForcastList.add(updateForcastStatusDTO);
         }
         //更新操作同个事务
         service.orderForecastUpdateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors,updateLogisticList);
+
+        //更新入库预报单详情的上传状态
+        transferDeclareFeign.updateTransferStatusByBatch(updateInstockForcastList);
         return resultDTOList;
     }
 

@@ -65,4 +65,12 @@ public interface TransferDeclareFeign {
 
     @PostMapping("/feign/transferDeclare/b2cOrderForecast")
     TransferDeclareDTO.ShippingOrderDTO b2cOrderForecast(@RequestBody TransferDeclareDTO.B2cOrderForecastDTO b2cOrderForecastDTO);
+
+    /**
+     * 批量修改报关单详情上传状态
+     * @param list
+     * @return
+     */
+    @PostMapping("/feign/transferDeclare/updateTransferStatusByBatch")
+    Boolean updateTransferStatusByBatch(@RequestBody List<TransferDeclareDTO.UpdateForcastStatusDTO> list);
 }
