@@ -7057,9 +7057,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }else{
                 error.setMainId(soB2cEntity.getId())
                         .setType(SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode())
-                        .setMessage("订单预报拦截失败，请联系物流同事取消删除后再操作")
+                        .setMessage("订单预报拦截失败，请联系物流同事删除预报后再操作")
                         .setParamJson(soB2cEntity.getId());
                 addOrUpdateErrors.add(error);
+                soB2cEntity.setSignOrderError(SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode());
+                updateList.add(soB2cEntity);
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"订单预报拦截失败，请联系物流同事取消删除后再操作"));
             }
         }
