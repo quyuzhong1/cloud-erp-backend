@@ -34,7 +34,6 @@ public interface PackageForecastConverter {
             @Mapping(target = "trackNo", source = "transportNo"),
             @Mapping(target = "packageWeight", source = "weight"),
             @Mapping(target = "weightUnit", source = "weightUnit"),
-            @Mapping(target = "weightUnit", source = "weightUnit"),
     })
     TransferDeclareDetailDTO.AddDTO convertDeclareDetail(PackageForecastDetailEntity entity);
     List<TransferDeclareDetailDTO.AddDTO> convertDeclareDetail(List<PackageForecastDetailEntity> list);
