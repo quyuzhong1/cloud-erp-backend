@@ -1193,26 +1193,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public boolean hasNotShippedDeliveryAndLog(SoB2cEntity currentEntity) {
-        Integer count = this.lambdaQuery()
-                .eq(SoB2cDeliveryEntity::getSourceId, currentEntity.getId())
-                .eq(SoB2cDeliveryEntity::getSourceCode, currentEntity.getCode())
-                .eq(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.SHIPPED.getCode())
-                .count();
-        if (count > 0){
-            return false;
-        }
-        // 记录日志
-        OperateLogDTO.AddModuleOperateLogDTO operateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
-        operateLogDTO.setContent(StrUtil.format("【】因无已发货的发货单跳过生成销售出库", currentEntity.getCode()));
-        operateLogDTO.setModuleType(ModuleTypeEnum.SO_B2C.getCode());
-        operateLogDTO.setBusinessId(currentEntity.getId());
-        operateLogDTO.setOperation("重新生成销售出库单");
-        soB2cFeign.addModuleOperateLog(operateLogDTO);
-        return true;
-    }
 
     /**
      * @description: 根据id集合更新修改状态

@@ -238,10 +238,4 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      */
     List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillPreview(SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param);
 
-    /**
-     * 检查自发货订单的发货单状态
-     * true=无已发货的发货单
-     * false=有已发货的发货单
-     */
-    boolean hasNotShippedDeliveryAndLog(SoB2cEntity currentEntity);
 }
