@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -500,14 +501,19 @@ public class SoOutstockController extends BaseController {
             SoOutstockEntity entity = soOutstockService.getById(dto.getId());
 
             if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode())) {
-//                //走TMS自动生成逻辑
-//                AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
-//                        .id(entity.getId())
-//                        .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
-//                        .sourceTypeEnum(SourceTypeEnum.SO_OUTSTOCK)
-//                        .soOutstockEntity(entity)
-//                        .build();
-//                tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
+                //走TMS自动生成逻辑
+                AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+                        .id(entity.getId())
+                        .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
+                        .sourceTypeEnum(SourceTypeEnum.SO_OUTSTOCK)
+                        .soOutstockEntity(entity)
+                        .build();
+                try {
+                    tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
+                }catch (Exception e){
+                    log.error("销售出库单{} 装箱后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
+                    throw new ServiceException(StrUtil.format("销售出库单{} 装箱后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
+                }
             }
         } else {
             List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Arrays.asList(dto.getId()));
