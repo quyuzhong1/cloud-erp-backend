@@ -579,7 +579,7 @@ public class SoB2cDeliveryDTO implements Serializable {
         /**
          * 错误原因
          */
-        private Boolean errorMsg;
+        private String errorMsg;
 
         /**
          * 详情
@@ -626,6 +626,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 店铺id
          */
         private String shopId;
+        /**
+         * 物流类型
+         */
+        private String logisticType;
     }
 
     /**

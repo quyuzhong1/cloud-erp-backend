@@ -572,7 +572,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 .isDelivery(true)
                 .packQty(qtyDTO.getQty())
                 .grossWeight(receiveItemList.stream().map(TransferLogisticsCreateInboundReq.ReceiveItem::getGrossWeight).reduce(BigDecimal::add).orElse(BigDecimal.ZERO))
-                .receivingStatus("3")
+                .receivingStatus("2")
                 .receiveItemList(receiveItemList)
                 .build();
         try {

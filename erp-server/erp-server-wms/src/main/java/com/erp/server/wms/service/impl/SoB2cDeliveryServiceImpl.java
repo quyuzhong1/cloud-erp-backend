@@ -1063,7 +1063,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 case LOGISTICS_BILL :
                     //打印面单预览
                     if ("N".equalsIgnoreCase(logisticsPlatformEnum.getPrintLabel())) {
-
+                        waybillDTO.setErrorMsg("");
                     }
                     return null;
                 case ALLOCATE_CARGO_BILL :
