@@ -53,9 +53,9 @@ public class ScmJob {
      */
     @XxlJob("syncPurchaseToWms")
     public void syncPurchaseToWms() {
-        WmsSyncPurchaseService.syncPurchaseOrderToWms(purchaseOrderService.list());
-        WmsSyncPurchaseService.syncPurchaseOrderDetailToWms(purchaseOrderDetailService.list());
-        WmsSyncPurchaseService.syncPurchaseOrderSupplierToWms(purchaseOrderSupplierService.list());
+//        WmsSyncPurchaseService.syncPurchaseOrderToWms(purchaseOrderService.list());
+//        WmsSyncPurchaseService.syncPurchaseOrderDetailToWms(purchaseOrderDetailService.list());
+//        WmsSyncPurchaseService.syncPurchaseOrderSupplierToWms(purchaseOrderSupplierService.list());
     }
 
 

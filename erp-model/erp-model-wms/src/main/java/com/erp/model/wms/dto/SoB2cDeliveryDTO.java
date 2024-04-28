@@ -16,6 +16,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -392,6 +393,14 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 称重重量
          */
         private BigDecimal weight;
+        /**
+         * 重量+单位
+         */
+        private String weightName;
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
         /**
          * skuId
          */

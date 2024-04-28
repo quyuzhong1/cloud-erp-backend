@@ -6,15 +6,14 @@ package com.erp.model.plm.dto;/**
  * @Created by yl
  */
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -81,6 +80,10 @@ public class LogisticsProductDTO {
          */
         private String productPropertyName;
 
+        /**
+         * 物流产品信息id
+         */
+        private String logisticsProductId;
 
         /**
          * 出口申报价
@@ -143,6 +146,26 @@ public class LogisticsProductDTO {
          * sku 审核状态名
          */
         private String approveStatusName;
+
+        /**
+         * 备案审核状态
+         */
+        private String logisticsApproveStatus;
+
+        /**
+         * 备案审核状态名称
+         */
+        private String logisticsApproveStatusName;
+
+        /**
+         * 第一数量
+         */
+        private BigDecimal firstQty;
+
+        /**
+         * 第二数量
+         */
+        private BigDecimal secondQty;
 
         /**
          * 销售状态
@@ -286,6 +309,26 @@ public class LogisticsProductDTO {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * tab
+         */
+        private String tabFlag;
+        /**
+         * id集合
+         */
+        private List<String> idList;
+
+        /**
+         * 审核状态集合（无需传值）
+         */
+        private List<String> approveStatusList;
+
+        /**
+         * 备案审核状态集合,/api/scm/drop/down/approveStatus/list
+         */
+        private List<String> logisticsApproveStatusList;
+
         /**
          * 分类id
          */
@@ -595,7 +638,7 @@ public class LogisticsProductDTO {
 
 
         /**
-         * 报关单位
+         * 报关单位,/api/plm/dict/list?type=declareUnit
          */
         private String declareUnit;
 
@@ -662,7 +705,38 @@ public class LogisticsProductDTO {
          */
         private String combinationDeclareType;
 
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+        /**
+         * 审核人名称
+         */
+        private String approveUserName;
+        /**
+         * 审核人id
+         */
+        private String approveUserId;
 
+        /**
+         * 备案审核状态
+         */
+        private String logisticsApproveStatus;
+
+        /**
+         * 备案审核状态名称
+         */
+        private String logisticsApproveStatusName;
+
+        /**
+         * 第一数量
+         */
+        private BigDecimal firstQty;
+
+        /**
+         * 第二数量
+         */
+        private BigDecimal secondQty;
     }
 
     @Data
@@ -895,8 +969,24 @@ public class LogisticsProductDTO {
          */
         private String logisticsPropertyName;
 
+        /**
+         * 单据审核状态
+         */
+        private ApproveStatusEnum logisticsApproveStatus;
+        /**
+         * 单据审核状态
+         */
+        private String logisticsApproveStatusName;
 
+        /**
+         * 第一数量
+         */
+        private BigDecimal firstQty;
 
+        /**
+         * 第二数量
+         */
+        private BigDecimal secondQty;
 
 
     }
@@ -909,17 +999,51 @@ public class LogisticsProductDTO {
     @NoArgsConstructor
     public static class ProductDTO{
 
+        /**
+         * 备案审核状态
+         */
+        private String approveStatus;
 
+        /**
+         * 第一数量
+         */
+        private BigDecimal firstQty;
+
+        /**
+         * 第二数量
+         */
+        private BigDecimal secondQty;
+
+        /**
+         * 长
+         */
+        private BigDecimal boxSizeLength;
+
+        /**
+         * 宽
+         */
+        private BigDecimal boxSizeWide;
+        /**
+         * 高
+         */
+        private BigDecimal boxSizeHigh;
+
+        /**
+         * 产品属性
+         */
+        private String productProperty;
         /**
          * 子订单id
          */
         private String childOrderId;
 
+        private String imagesUrl;
 
        private BigDecimal price;
 
        private BigDecimal amount;
 
+       private String spuNo;
         /**
          * 数量
          */
@@ -941,16 +1065,16 @@ public class LogisticsProductDTO {
          * 是否带电
          */
         private Boolean isElectric;
-        
-        
+
+
+        /**
+         * 是否带电
+         */
+        private String batteryType;
+
         private String skuId;
 
         private String skuNo;
-
-        /**
-         * 属性
-         */
-        private String productProperty;
 
 
         /**
@@ -973,6 +1097,15 @@ public class LogisticsProductDTO {
          */
         private String declareEnglishName;
 
+        /**
+         * 产品中文品名
+         */
+        private String cnName;
+
+        /**
+         * 产品英文品名
+         */
+        private String enName;
 
 
         /**
@@ -985,6 +1118,10 @@ public class LogisticsProductDTO {
          */
         private String declareUnit;
 
+        /**
+         * 报关单位名称
+         */
+        private String declareUnitName;
         /**
          * 申报要素
          */
@@ -1049,5 +1186,36 @@ public class LogisticsProductDTO {
          */
         private String combinationDeclareType;
 
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PushRegistrationDTO{
+
+        /**
+         * 物流产品id集合
+         */
+        @NotEmpty(message = "物流产品id集合不能为空")
+        private List<String> logisticsProductIdList;
+
+        /**
+         * 报关物流商集合，/tms/transferLogisticsSupplier/listAll
+         */
+        @NotEmpty(message = "报关物流商Id集合不能为空")
+        private String declareSupplierId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编码
+         */
+        private String skuNo;
     }
 }

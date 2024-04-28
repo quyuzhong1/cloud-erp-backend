@@ -94,6 +94,10 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         //原明细数据
         List<TransferDeclareDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
         List<String> deleteIds = getDeleteIds(updateDTO.getDetailList(), oldList);
+        if (deleteIds.size() >= oldList.size()) {
+            throw new ServiceException(ApiError.PLEASE_KEEP_LEAST_ONE_DATA);
+        }
+
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<TransferDeclareDetailEntity> detailEntities = this.listByIds(deleteIds);
             long count = detailEntities.stream().filter(req -> TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(req.getOrderUploadStatus())).count();
@@ -224,6 +228,14 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
             return Collections.EMPTY_LIST;
         }
         return lambdaQuery().in(TransferDeclareDetailEntity::getLogisticsChannelId,logisticsChannelIdList).list();
+    }
+
+    @Override
+    public List<TransferDeclareDetailEntity> listBySoCodeList(List<String> soCodeList) {
+        if (CollectionUtils.isEmpty(soCodeList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(TransferDeclareDetailEntity::getSoCode,soCodeList).list();
     }
 
     /**

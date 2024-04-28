@@ -292,6 +292,10 @@ public class TransferDeclareDTO implements Serializable {
          */
         private String planTransferDate;
         /**
+         * 入库预报日期（推送保宏入库预报成功的日期）
+         */
+        private String instockForecastDate;
+        /**
          * 上传状态(批次)
          */
         private String uploadBatchStatus;
@@ -473,6 +477,7 @@ public class TransferDeclareDTO implements Serializable {
         /**
          * 订单id
          */
+        @NotBlank(message = "订单id不能为空")
         private String soId;
 
         /**
@@ -480,9 +485,18 @@ public class TransferDeclareDTO implements Serializable {
          */
         private String shippingOrderNo;
         /**
-         * 异常标识
+         * 异常标识 为空则成功
          */
         private String sign;
+        /**
+         * 异常类型
+         */
+        @NotBlank(message = "异常类型不能为空")
+        private String type;
+        /**
+         * 错误信息
+         */
+        private String message;
     }
 
     @Data

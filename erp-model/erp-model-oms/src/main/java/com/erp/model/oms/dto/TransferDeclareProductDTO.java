@@ -5,9 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
@@ -48,8 +45,11 @@ public class TransferDeclareProductDTO implements Serializable {
     /**
      * 产品sku编号
      */
-    private String skuNo;
     private String skuId;
+    /**
+     * 产品sku编号
+     */
+    private String skuNo;
 
     /**
      * 中文报关名称

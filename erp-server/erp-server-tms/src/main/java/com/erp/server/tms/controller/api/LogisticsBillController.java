@@ -2,6 +2,7 @@ package com.erp.server.tms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
@@ -34,6 +35,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**

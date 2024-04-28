@@ -116,6 +116,11 @@ public class RuleLogisticsDTO implements Serializable {
          * 是否自动获取物流单号
          */
         private Boolean autoGetTrackNo;
+
+        /**
+         * 规则名称
+         */
+        private String name;
     }
 
 

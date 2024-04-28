@@ -25,11 +25,11 @@ public class LogisticsBillCostExcelDTO  implements Serializable {
     private String  outstockCode;
 
     /**
-     * 运单号
+     * 物流跟踪单号
      */
-    @ExcelProperty(value = "*运单号")
-    @FieldValid(fieldName = "运单号",isNotBlank = true,maxLength = 50)
-    private String  transportNo;
+    @ExcelProperty(value = "*物流跟踪单号")
+    @FieldValid(fieldName = "物流跟踪单号",isNotBlank = true,maxLength = 50)
+    private String  trackNo;
 
     /**
      * 计费重[物流商]
@@ -39,11 +39,18 @@ public class LogisticsBillCostExcelDTO  implements Serializable {
     private String  billingWeightLogistics;
 
     /**
-     * 实际运费[物流商]
+     * 费用名称
      */
-    @ExcelProperty(value = "*实际运费[物流商]")
-    @FieldValid(fieldName = "实际运费[物流商]",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
-    private String  actualShippingCost;
+    @ExcelProperty(value = "*费用名称")
+    @FieldValid(fieldName = "费用名称",isNotBlank = true,maxLength = 200)
+    private String  costName;
+
+    /**
+     * 实际运费
+     */
+    @ExcelProperty(value = "*实际运费")
+    @FieldValid(fieldName = "实际运费",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
+    private String  costValue;
 
     /**
      * 币种

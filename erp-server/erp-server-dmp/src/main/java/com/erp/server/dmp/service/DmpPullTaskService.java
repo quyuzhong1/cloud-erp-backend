@@ -143,4 +143,9 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
      * 批量查询
      */
     List<DmpPullTaskEntity> findList(String platform, String sourceType, String targetPlatform, String topic, String tag, List<String> sourceIds);
+
+    /**
+     * 删除已归档数据
+     */
+    void deleteByIds(List<String> ids);
 }

@@ -12,6 +12,7 @@ import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
@@ -635,6 +636,18 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     List<SkuVO> getSkuInfoAdvanceQuery(AdvanceQueryContainer advanceQueryContainer);
 
     /**
+     * 导入产品信息
+     * @Author Luo_WG
+     * @Date 2024/3/22 10:35
+     * @param excelFile
+     * @param importType
+     * @param response
+     * @return java.lang.Boolean
+     **/
+    Boolean importProductFile(MultipartFile excelFile, Integer importType, HttpServletResponse response);
+
+
+    /**
      *搜索sku
      * @param pagingDTO
      * @return
@@ -662,4 +675,16 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return List<SkuVO>
      */
     List<SkuVO> accessoriesSku(String searchKeyword);
+
+    /**
+     * 获取已审核sku 未计算目的国申报价数据
+     * @return
+     */
+    List<ProductDetailEntity> getProductDetailByDestDeclarePrice();
+
+    /**
+     * 重算目的国申报单价
+     * @param entity
+     */
+    void recalDestDeclarePrice(ProductDetailEntity entity);
 }

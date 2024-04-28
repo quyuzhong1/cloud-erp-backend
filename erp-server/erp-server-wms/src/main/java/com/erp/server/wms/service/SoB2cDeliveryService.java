@@ -195,4 +195,13 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return
      */
     Boolean exportExcel(SoB2cDeliveryDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    /**
+     * 虚假发货(批量)
+     * @Author Luo_WG
+     * @Date 2024/4/22 18:06
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean falseDeliveryBatch(List<String> ids);
 }

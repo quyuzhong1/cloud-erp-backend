@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.TmsB2cDeclareReconciliationDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_detail_id" property="sourceDetailId" />
+       <result column="source_type" property="sourceType" />
+       <result column="source_code" property="sourceCode" />
+       <result column="so_id" property="soId" />
+       <result column="so_code" property="soCode" />
+       <result column="date" property="date" />
+       <result column="country" property="country" />
+       <result column="logistics_channel_id" property="logisticsChannelId" />
+       <result column="logistics_channel_name" property="logisticsChannelName" />
+       <result column="qty" property="qty" />
+       <result column="estimate_weight" property="estimateWeight" />
+       <result column="estimate_weight_unit" property="estimateWeightUnit" />
+       <result column="actual_weight" property="actualWeight" />
+       <result column="actual_weight_unit" property="actualWeightUnit" />
+       <result column="actual_billing_weight" property="actualBillingWeight" />
+       <result column="actual_shipping_cost" property="actualShippingCost" />
+       <result column="actual_declare_cost" property="actualDeclareCost" />
+       <result column="actual_other_cost" property="actualOtherCost" />
+       <result column="remark" property="remark" />
+       <result column="status" property="status" />
+       <result column="confirm_date" property="confirmDate" />
+       <result column="confirm_user_id" property="confirmUserId" />
+       <result column="confirm_user_name" property="confirmUserName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        tbdrd.id,
+        tbdrd.create_user_id,
+        tbdrd.create_user_name,
+        tbdrd.create_time,
+        tbdrd.update_user_id,
+        tbdrd.update_user_name,
+        tbdrd.update_time,
+        tbdrd.version,
+        tbdrd.is_deleted,
+        tbdrd.main_id,
+        tbdrd.source_id,
+        tbdrd.source_detail_id,
+        tbdrd.source_type,
+        tbdrd.source_code,
+        tbdrd.so_id,
+        tbdrd.so_detail_id,
+        tbdrd.so_code,
+        tbdrd.date,
+        tbdrd.shop_id,
+        tbdrd.country,
+        tbdrd.logistics_supplier_id,
+        tbdrd.logistics_supplier_name,
+        tbdrd.logistics_channel_id,
+        tbdrd.logistics_channel_name,
+        tbdrd.qty,
+        tbdrd.estimate_weight,
+        tbdrd.estimate_weight_unit,
+        tbdrd.actual_weight,
+        tbdrd.actual_weight_unit,
+        tbdrd.actual_billing_weight,
+        tbdrd.actual_shipping_cost,
+        tbdrd.actual_declare_cost,
+        tbdrd.actual_other_cost,
+        tbdrd.remark,
+        tbdrd.status,
+        tbdrd.confirm_date,
+        tbdrd.confirm_user_id,
+        tbdrd.confirm_user_name
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO$ListDTO">
+        select
+        <include refid="Base_Column_List" />
+        from tms_b2c_declare_reconciliation_detail tbdrd
+        <where>
+            ${params.sqlMap.default}
+            and tbdrd.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            tbdrd.date desc
+        </where>
+    </select>
+
+
+    <!-- 导出查询 -->
+    <select id="listExport" resultType="com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+            ,tbdr.code
+        from tms_b2c_declare_reconciliation_detail tbdrd
+        inner join tms_b2c_declare_reconciliation tbdr on tbdrd.main_id = tbdr.id and tbdr.is_deleted = false
+        <where>
+        tbdrd.is_deleted = false and tbdrd.main_id in
+        <foreach collection="params.mainIdList" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+        order by tbdrd.id desc
+        </where>
+    </select>
+
+    <!-- 查询币别 -->
+    <select id="getCurrencyById" resultType="java.lang.String">
+        select
+            tbdr.currency
+        from tms_b2c_declare_reconciliation tbdr
+        inner join tms_b2c_declare_reconciliation_detail tbdrd on tbdr.id = tbdrd.main_id and tbdrd.is_deleted = false
+        <where>
+            tbdr.is_deleted = false and tbdrd.id = #{id}
+        </where>
+    </select>
+
+    <!-- 查询自动生成数据 -->
+    <select id="listAutoGenerateDeclareReconciliation"
+            resultType="com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity">
+        select
+        <include refid="Base_Column_List" />
+        from
+        tms_b2c_declare_reconciliation_detail tbdrd
+        <where>
+            tbdrd.is_deleted = false and tbdrd.main_id = ''
+            and tbdrd.date >= #{startDate}
+            and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY') > tbdrd.date
+        </where>
+    </select>
+
+
+</mapper>

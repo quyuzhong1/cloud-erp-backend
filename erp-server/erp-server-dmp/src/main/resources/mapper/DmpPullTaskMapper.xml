@@ -35,6 +35,13 @@
         target_platform_name, mq_topic, mq_tag, mq_data, status, return_msg, last_sync_time, source_platform_name, source_type, source_id, source_code, retry_times
     </sql>
 
+    <delete id="deleteByIds">
+        delete from dmp_pull_task where id in
+        <foreach collection="ids" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
     <!-- 根据状态分组查询数量 -->
     <select id="listStatusCount" resultType="com.erp.model.dmp.dto.DmpPullTaskDTO$TabListDTO">
         select
@@ -71,7 +78,7 @@
         <if test="params.sourcePlatformName != null and params.sourcePlatformName != '' ">
             and source_platform_name = #{params.sourcePlatformName}
         </if>
-        <if test="params.statusList != null and params.statusList != '' ">
+        <if test="params.statusList != null and params.statusList.size > 0">
             and status in
             <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
                 #{item}

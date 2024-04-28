@@ -486,6 +486,12 @@ public class InventoryReportDTO implements Serializable {
          * 是否过滤0实际库存，默认前端页面勾上不显示0库存
          */
         private Boolean hideZeroInventory;
+        
+        /**
+         * sku编号集合
+         *
+         */
+        private List<String> skuIdList;
     }
 
     /**

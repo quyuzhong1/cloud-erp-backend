@@ -20,12 +20,10 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
-import com.erp.model.oms.enums.PackageStatusEnum;
-import com.erp.model.oms.enums.SoB2cAbnormalTypeEnum;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.TransferStatusEnum;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -374,17 +372,14 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 soB2cDeliveryService.rollbackInventory(ids);
                 soB2cDeliveryService.updateStatus(ids, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
             }
-
-        } else {
-            //修改拦截状态，冻结状态
-            SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
-            interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
-            interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
-            interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
-            interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
-            soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
-
         }
+        //修改拦截状态，冻结状态
+        SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
+        interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
+        interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
+        interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
+        interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
+        soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
 
         // 操作日志
         String logMsg = StrUtil.format("用户【{}】物流拦截结果确认【{}】", commonService.getUserInfo().getUserName(), "发货拦截单", entity.getCode());

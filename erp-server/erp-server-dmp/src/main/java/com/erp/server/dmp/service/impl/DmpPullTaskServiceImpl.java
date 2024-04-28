@@ -52,8 +52,8 @@ import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.rpc.wms.feign.SoReturnInstockFeign;
 import com.erp.server.dmp.convert.DmpOrderConverter;
+import com.erp.server.dmp.mapper.DmpPullTaskHistoryMapper;
 import com.erp.server.dmp.mapper.DmpPullTaskMapper;
 import com.erp.server.dmp.service.*;
 import com.google.common.collect.Lists;
@@ -107,7 +107,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     @Resource
     private SoOutstockFeign soOutstockFeign;
     @Resource
-    private SoReturnInstockFeign soReturnInstockFeign;
+    private DmpPullTaskHistoryMapper dmpPullTaskHistoryMapper;
     @Resource
     private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
 
@@ -274,6 +274,9 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         syncIng.setCount(syncIngCount);
         result.add(syncIng);
+        //已归档
+        DmpPullTaskDTO.TabListDTO archived = dmpPullTaskHistoryMapper.getStatusCount(dto.getPermissionSql());
+        result.add(archived);
         return result;
     }
 
@@ -1056,5 +1059,13 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                 .eq(DmpPullTaskEntity::getMqTopic, topic)
                 .eq(DmpPullTaskEntity::getMqTag, tag)
                 .list();
+    }
+
+    @Override
+    public void deleteByIds(List<String> ids) {
+        if (CollectionUtil.isEmpty(ids)) {
+            return;
+        }
+        baseMapper.deleteByIds(ids);
     }
 }

@@ -20,7 +20,6 @@
         fd.delivery_warehouse_name AS deliveryWarehouseName,
         fd.dest_warehouse_id AS destWarehouseId,
         fd.dest_warehouse_name AS destWarehouseName,
-        fdl.logistics_method AS logisticsMethod,
         fdd.platform_spu_no AS platformSpuNo,
         fdd.platform_sku_no AS platformSkuNo,
         fdd.fn_sku AS fnSku,
@@ -36,10 +35,11 @@
         fd.approve_user_name AS approveUserName,
         fd.approve_time AS approveTime,
         op.code as provideCode,
-        fdd.platform_sku_no as thirdWarehouseSku
+        fdd.platform_sku_no as thirdWarehouseSku,
+        fd.logistics_status,
+        fd.declare_status
         FROM first_mile_delivery_detail fdd
         LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
-        LEFT JOIN first_mile_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
         LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = fd.dest_warehouse_id and opw.is_deleted = false
         LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
         WHERE
@@ -79,7 +79,6 @@
         fd.delivery_warehouse_name AS deliveryWarehouseName,
         fd.dest_warehouse_id AS destWarehouseId,
         fd.dest_warehouse_name AS destWarehouseName,
-        fdl.logistics_method AS logisticsMethod,
         fdd.platform_spu_no AS platformSpuNo,
         fdd.platform_sku_no AS platformSkuNo,
         fdd.fn_sku AS fnSku,
@@ -94,10 +93,12 @@
         fd.create_time AS createTime,
         fd.approve_user_name AS approveUserName,
         fd.approve_time AS approveTime,
-        op.code as provideCode
+        op.code as provideCode,
+        fdd.platform_sku_no as thirdWarehouseSku,
+        fd.logistics_status,
+        fd.declare_status
         FROM first_mile_delivery fd
         INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
-        LEFT JOIN first_mile_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
         LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = fd.dest_warehouse_id and opw.is_deleted = false
         LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
         WHERE
@@ -134,7 +135,6 @@
         fd.approve_time AS deliveryTime
         FROM  first_mile_delivery fd
         INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
-        LEFT JOIN first_mile_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
         WHERE fd.is_deleted = FALSE
         <if test="sourceIds != null and sourceIds.size > 0">
             AND fd.source_id IN
@@ -161,7 +161,6 @@
         fdd.delivery_qty AS assembleQty
         FROM  first_mile_delivery fd
         INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
-        LEFT JOIN first_mile_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
         WHERE fd.is_deleted = FALSE
         AND fdd.is_combination = TRUE
         <if test="ids != null and ids.size > 0">
@@ -173,125 +172,144 @@
         ORDER BY fd.code DESC
     </select>
 
-    <select id="listPackingDetail" resultType="com.erp.model.wms.dto.FirstMileCartonDetailDTO$ListPackingDetailDTO">
+    <select id="listPackingDetail" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
         SELECT
+            fmd.id,
             fmcb.box_no,
             concat(box_length, '*', fmc.box_width, '*', fmc.box_height) AS boxSize,
+            box_length*box_width*box_height as multiplySize,
             fmc.package_weight,
-            fmcb.box_desc
+            fmcb.box_desc,
+            fmc.box_length as length,
+            fmc.box_width as width,
+            fmc.box_height as height,
+            (select string_agg(cd.sku_no , ',') from wms_carton_detail cd where cd.is_deleted = false and cd.carton_id = fmc.id) as sku
         FROM first_mile_delivery fmd
-        INNER JOIN first_mile_carton fmc ON fmc.main_id = fmd.id AND fmc.is_deleted = FALSE
-        INNER JOIN first_mile_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
+        INNER JOIN wms_carton fmc ON fmc.source_id = fmd.id AND fmc.is_deleted = FALSE
+        INNER JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
         WHERE fmd.is_deleted = FALSE
-        AND fmd.id = #{id}
+        <if test="ids != null and ids.size > 0">
+            AND fmd.id IN
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
         ORDER BY CAST(fmcb.box_no AS INTEGER)
     </select>
 
     <!--导出装箱清单Excel-->
-    <select id="exportPacking" resultType="com.erp.model.wms.dto.FirstMileCartonDTO$ExportPackingDTO">
+    <select id="exportPacking" resultType="com.erp.model.wms.dto.WmsCartonDTO$ExportPackingDTO">
         SELECT
-        fmd.id,
-        fmd.packing_status,
-        fmd.code,
-        fmcb.box_no,
+        DISTINCT
+        fd.id,
+        fd.packing_status,
+        fd.code,
+        CAST(fmcb.box_no AS INTEGER) AS box_no,
         concat(box_length, '*', fmc.box_width, '*', fmc.box_height) AS boxSize,
         fmc.package_weight,
         fmcb.box_desc
-        FROM first_mile_delivery fmd
-        LEFT JOIN first_mile_carton fmc ON fmc.main_id = fmd.id AND fmc.is_deleted = FALSE
-        LEFT JOIN first_mile_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
-        WHERE fmd.is_deleted = FALSE
-        <choose>
-            <when test="params.ids!=null and params.ids.size>0 ">
-                AND fmd.id IN
-                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
-            </when>
-            <otherwise>
-                <!--状态-->
-                <if test="params.tabFlag != null and params.tabFlag != ''">
-                    AND fmd.approve_status = #{params.tabFlag}
-                </if>
-                <!--单据编号-->
-                <if test="params.code != null and params.code != ''">
-                    AND fmd.code ILIKE concat('%',#{params.code}::text,'%')
-                </if>
-                <!--来源单号-->
-                <if test="params.sourceCode != null and params.sourceCode != ''">
-                    AND fmd.source_code ILIKE concat('%',#{params.sourceCode}::text,'%')
-                </if>
-                <!--备货类型-->
-                <if test="params.demandTypeList != null and params.demandTypeList.size > 0">
-                    AND fmd.demand_type in
-                    <foreach collection="params.demandTypeList" item="demandType" open="(" close=")" separator=",">
-                        #{demandType}
-                    </foreach>
-                </if>
-                <!--店铺id-->
-                <if test="params.shopIdList != null and params.shopIdList.size > 0">
-                    AND fmd.shop_id in
-                    <foreach collection="params.shopIdList" item="shopId" open="(" close=")" separator=",">
-                        #{shopId}
-                    </foreach>
-                </if>
-                <!--国家二字码-->
-                <if test="params.countryIdList != null and params.countryIdList.size > 0">
-                    AND fmd.country_id in
-                    <foreach collection="params.countryIdList" item="countryId" open="(" close=")" separator=",">
-                        #{countryId}
-                    </foreach>
-                </if>
-                <!--发货仓-->
-                <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
-                    AND fmd.delivery_warehouse_id in
-                    <foreach collection="params.deliveryWarehouseIdList" item="deliveryWarehouseId" open="(" close=")" separator=",">
-                        #{deliveryWarehouseId}
-                    </foreach>
-                </if>
-                <!--目的仓-->
-                <if test="params.destWarehouseIdList != null and params.destWarehouseIdList.size > 0">
-                    AND fmd.dest_warehouse_id in
-                    <foreach collection="params.destWarehouseIdList" item="destWarehouseId" open="(" close=")" separator=",">
-                        #{destWarehouseId}
-                    </foreach>
-                </if>
-                <!--审核状态-->
-                <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                    AND fmd.approve_status in
-                    <foreach collection="params.approveStatusList" item="approveStatus" open="(" close=")" separator=",">
-                        #{approveStatus}
-                    </foreach>
-                </if>
-
-                <!--审核时间-->
-                <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
-                    AND fmd.approve_time >= #{params.approveTimeList[0]} and
-                    (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1
-                    DAY' ) > fmd.approve_time
-                </if>
-                <!--创建时间-->
-                <if test="params.createTimeList !=null and params.createTimeList.size>0">
-                    AND fmd.create_time >= #{params.createTimeList[0]} and
-                    (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
-                    DAY' ) > fmd.create_time
-                </if>
-                <!--装箱状态-->
-                <if test="params.packingStatus != null and params.packingStatus != ''">
-                    AND fmd.delivery_status = #{params.packingStatus}
-                </if>
-                <!--是否下推入库单-->
-                <if test="params.isGenerateOverseasInbound != null">
-                    <if test="params.isGenerateOverseasInbound == true">
-                        AND EXISTS (SELECT id FROM overseas_warehouse_inbound owi WHERE owi.source_id = fmd.id AND owi.is_deleted = FALSE)
-                    </if>
-                    <if test="params.isGenerateOverseasInbound == false ">
-                        AND NOT EXISTS (SELECT id FROM overseas_warehouse_inbound owi WHERE owi.source_id = fmd.id AND owi.is_deleted = FALSE)
-                    </if>
-                </if>
-            </otherwise>
-        </choose>
-        ORDER BY fmd.code,
+        FROM first_mile_delivery fd
+        LEFT JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id
+        LEFT JOIN wms_carton fmc ON fmc.source_id = fd.id AND fmc.is_deleted = FALSE
+        LEFT JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        and fd.is_deleted = FALSE
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY fd.code,
         CAST(fmcb.box_no AS INTEGER)
+    </select>
+    <select id="getGenerateLogisticDTO"
+            resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$GenerateLogisticDTO">
+        select
+            fmd.source_id as sourceId,
+            fmd.source_code as sourceCode,
+            fmd.source_type as sourceType,
+            fmd.id as outstockId,
+            fmd.code as outstockCode,
+            fmd.shop_id as shopId,
+            fmd.shop_name as shopName,
+            fmd.approve_time as approveTime,
+            fmd.delivery_warehouse_name as fromWarehouseName,
+            fw.address as fromAddress,
+            fmd.dest_warehouse_name as toWarehouseName,
+            fmd.country_name as toCountryName,
+            fmd.country_id as toCountry,
+            tw.address as toAddress,
+            fmd.remark
+        from first_mile_delivery fmd
+                 left join warehouse fw on fmd.delivery_warehouse_id = fw.id and fw.is_deleted =false
+                 left join warehouse tw on fmd.dest_warehouse_id = tw.id and tw.is_deleted = false
+        where fmd.is_deleted = false
+        <if test="params.packingStatus != null and params.packingStatus != ''">
+            AND fmd.packing_status = #{params.packingStatus}
+        </if>
+        <if test="params.logisticsStatus != null and params.logisticsStatus != ''">
+            AND fmd.logistics_status = #{params.logisticsStatus}
+        </if>
+        <if test="params.ids != null and params.ids.size > 0">
+            AND fmd.id IN
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+    <select id="logisticStatistics"
+            resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$LogisticStatisticsDTO">
+        SELECT  EXTRACT(year FROM md.approve_time),  EXTRACT(month FROM md.approve_time) as month,
+                count(1)
+        from first_mile_delivery md
+        where md.is_deleted = false
+          and md.declare_status != 'none'
+        <if test="status != null and status != ''">
+            and  md.approve_status = #{status}
+        </if>
+        <if test="beginDate != null">
+            and md.approve_time >= #{beginDate}
+        </if>
+        <if test="endDate != null ">
+            and md.approve_time <![CDATA[<=]]>  #{endDate}
+        </if>
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        group by EXTRACT(month FROM md.approve_time), EXTRACT(year FROM md.approve_time)
+        order by  EXTRACT(year FROM md.approve_time), EXTRACT(month FROM md.approve_time)
+    </select>
+    <select id="advanceQuery" resultType="com.erp.model.wms.entity.FirstMileDeliveryEntity">
+        select
+            fmd.*
+        from first_mile_delivery fmd
+                 left join warehouse fw on fmd.delivery_warehouse_id = fw.id and fw.is_deleted =false
+                 left join warehouse tw on fmd.dest_warehouse_id = tw.id and tw.is_deleted = false
+        where   ${params.sqlMap.default}
+            and fmd.is_deleted = false
+    </select>
+    <select id="getGenerateDeclare" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$DeliveryDTO">
+        select
+            fmd.id as sourceId,
+            fmd.code as sourceCode,
+            fmd.country_id as country,
+            fmd.country_name as countryName,
+            fmd.source_type as businessType
+        from
+             first_mile_delivery fmd
+        where fmd.is_deleted = false
+        <if test="params.packingStatus != null and params.packingStatus != ''">
+            AND fmd.packing_status = #{params.packingStatus}
+        </if>
+        <if test="params.declareStatus != null and params.declareStatus != ''">
+            AND fmd.declare_status = #{params.declareStatus}
+        </if>
+        <if test="params.ids != null and params.ids.size > 0">
+            AND fmd.id IN
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
     </select>
 </mapper>

@@ -179,7 +179,6 @@
 			T LEFT JOIN overseas_warehouse_inbound_detail G ON t.id = g.main_id 
 			left join overseas_warehouse_inbound_received h on g.id = h.detail_id 
 			<include refid="OverDataCompareByCondition"/>
-		    order by h.id limit #{pageSize}
     </select>
     
     <select id="getDataCompareByConditionCount" resultType="java.lang.Integer">

@@ -1,10 +1,8 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -364,6 +362,16 @@ public class SoOutstockDTO implements Serializable {
          * 币种符号
          */
         private String currencySymbol;
+
+        /**
+         * 装箱状态
+         */
+        private String packingStatus;
+
+        /**
+         * 装箱状态中文
+         */
+        private String packingStatusName;
     }
 
     /**·
@@ -1413,6 +1421,8 @@ public class SoOutstockDTO implements Serializable {
          */
         private String carrierId;
 
+        private LocalDate billDate;
+
         /**
          * 销售组织id
          */
@@ -1499,11 +1509,7 @@ public class SoOutstockDTO implements Serializable {
          */
         private String country;
 
-        /**
-         * 单据日期
-         * 空=当前系统日期
-         */
-        private LocalDate billDate;
+
 
         /**
          * 是否是平台仓订单
@@ -1557,5 +1563,50 @@ public class SoOutstockDTO implements Serializable {
          * 数量
          */
         private Integer qty;
+    }
+
+    /**
+     * 分组汇总sku
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GroupSkuDTO {
+        /**
+         * 发货单id
+         */
+        private String id;
+        /**
+         * 箱子id
+         */
+        private String cartonId;
+        /**
+         * 产品id
+         */
+        private String skuId;
+
+        /**
+         * 产品编号
+         */
+        private String skuNo;
+
+        /**
+         * 产品产品名称
+         */
+        private String productName;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 待装箱数量
+         */
+        private Integer waitPackQty;
+
+        /**
+         * 装箱数量
+         */
+        private Integer packQty;
     }
 }
