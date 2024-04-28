@@ -573,6 +573,15 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private Integer isTransportNoNum;
         /**
+         * 是否禁用 true 禁用
+         */
+        private Boolean disabled;
+        /**
+         * 错误原因
+         */
+        private Boolean errorMsg;
+
+        /**
          * 详情
          */
         private List<PrintLogisticsWaybillDetailDTO> detailList;
