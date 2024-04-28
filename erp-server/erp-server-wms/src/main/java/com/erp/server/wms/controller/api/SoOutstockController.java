@@ -499,26 +499,6 @@ public class SoOutstockController extends BaseController {
         String packingStatus = soOutstockService.packingSave(dto);
 
         if (PackingStatusEnum.PACKING.getCode().equals(packingStatus)) {
-            SoOutstockEntity entity = soOutstockService.getById(dto.getId());
-
-            if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode())&& entity.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {
-                //走TMS自动生成逻辑
-                AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
-                        .id(entity.getId())
-                        .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
-                        .sourceTypeEnum(SourceTypeEnum.SO_OUTSTOCK)
-                        .soOutstockEntity(entity)
-                        .build();
-                try {
-                    Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
-                    if(autoGenerateResult){
-                        entity.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
-                    }
-                }catch (Exception e){
-                    log.error("销售出库单{} 装箱后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
-                    throw new ServiceException(StrUtil.format("销售出库单{} 装箱后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
-                }
-            }
         } else {
             List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Arrays.asList(dto.getId()));
             List<String> ids = tmsDeclareBillEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
