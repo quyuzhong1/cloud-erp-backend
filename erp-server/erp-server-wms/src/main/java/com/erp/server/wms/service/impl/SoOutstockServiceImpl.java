@@ -673,7 +673,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 //走TMS自动生成逻辑
                 AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
                         .id(entity.getId())
-                        .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
+                        .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_APPROVE)
                         .sourceTypeEnum(SourceTypeEnum.SO_OUTSTOCK)
                         .soOutstockEntity(entity)
                         .build();
