@@ -739,6 +739,10 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         addDTO.setGenerateTime(LocalTime.now());
         List<TransferDeclareDetailDTO.AddDTO> addDetailList = PackageForecastConverter.INSTANCE.convertDeclareDetail(detailList);
         addDTO.setDetailList(addDetailList);
+
+        addDTO.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+        addDTO.getDetailList().forEach(v->v.setOrderUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode()));
+
         BaseResultDTO.AddDTO result = transferDeclareFeign.add(addDTO);
         this.updateById(entity);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "入库预报");
