@@ -2567,7 +2567,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.APPROVE_ING_IS_PACKING);
         }
         //已装箱状态并且已报关不允许再次修改装箱数据
-        if (PackingStatusEnum.PACKING.getCode().equals(entity.getPackingStatus()) && DeclareStatusEnum.DECLARED.getCode().equals(entity.getDeclareStatus())) {
+        if (PackingStatusEnum.PACKING.getCode().equals(entity.getPackingStatus()) && WmsDeclareStatusEnum.FINISH.getCode().equals(entity.getDeclareStatus())) {
             throw new ServiceException(ApiError.SO_OUTSTOCK_NOT_PACKING);
         }
 
