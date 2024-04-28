@@ -38,4 +38,13 @@ public interface TransferDeclareConverter {
             @Mapping(target = "destCurrencySymbol", source = "currencySymbol")
     })
     LogisticsProductDTO.ProductDTO omsProductToTmsProduct(TransferDeclareProductDTO transferDeclareProductDTO);
+
+    @Mappings({
+            @Mapping(target = "skuNo", source = "skuNo"),
+            @Mapping(target = "qty", source = "qty"),
+            @Mapping(target = "productTitleEn", source = "declareEnglishName"),
+            @Mapping(target = "purposeDeclaredValue", source = "destDeclarePrice"),
+    })
+    TransferLogisticsCreateOrderReq.ProductDetail transferDeclareProductConvert(TransferDeclareProductDTO transferDeclareProductDTO);
+    List<TransferLogisticsCreateOrderReq.ProductDetail> transferDeclareProductConvert(List<TransferDeclareProductDTO> transferDeclareProductDTOList);
 }

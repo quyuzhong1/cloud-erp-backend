@@ -186,7 +186,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     public BaseResultDTO.AddDTO add(TmsFirstMileLogisticDTO.AddDTO addDTO) {
         //发货单id
         String outstockId = addDTO.getOutstockId();
-        FirstMileDeliveryDTO.GenerateLogisticDTO generateLogisticDTO = this.getGenerateLogisticDTO(outstockId);
+        FirstMileDeliveryDTO.GenerateLogisticDTO generateLogisticDTO = this.getGenerateLogisticDTO(outstockId,addDTO.getIsAuto());
         if(generateLogisticDTO == null){
             throw new ServiceException("发货单不存在或者未装箱或已生成物流单");
         }
@@ -234,7 +234,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(CollectionUtils.isNotEmpty(tmsCfgCostList)){
             defaultCost = tmsCfgCostList.get(0);
         }
-        List<TmsFirstMileLogisticDTO.LogisticFee> logisticFeeList = addDTO.getLogisticFeeList();
+        List<TmsFirstMileLogisticDTO.LogisticFee> logisticFeeList = addDTO.getLogisticFeeList() == null?new ArrayList<>():addDTO.getLogisticFeeList();
         List<TmsCostDetailDTO.AddDTO> costDetailList = new ArrayList<>();
         for (TmsFirstMileLogisticDTO.LogisticFee logisticFee : logisticFeeList) {
             if(StringUtils.isBlank(logisticFee.getCfgCostId())){
@@ -269,13 +269,14 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         attachmentService.batchSave(addDTO.getAttachmentUrlList(), addDTO.getAttachmentNameList(), type, tmsFirstMileLogisticEntity.getId());
 
         //更新发货单物流状态
-        FirstMileDeliveryDTO.UpdateStatusDTO updateDeliveryDto = new FirstMileDeliveryDTO.UpdateStatusDTO();
-        updateDeliveryDto.setIds(Arrays.asList(addDTO.getOutstockId()));
-        updateDeliveryDto.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.FINISH.code);
-        if(!wmsFirstMileDeliveryFeign.updateStatus(updateDeliveryDto)){
-            throw new ServiceException("发货单更新物流状态失败");
+        if(!addDTO.getIsAuto()){
+            FirstMileDeliveryDTO.UpdateStatusDTO updateDeliveryDto = new FirstMileDeliveryDTO.UpdateStatusDTO();
+            updateDeliveryDto.setIds(Arrays.asList(addDTO.getOutstockId()));
+            updateDeliveryDto.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.FINISH.code);
+            if(!wmsFirstMileDeliveryFeign.updateStatus(updateDeliveryDto)){
+                throw new ServiceException("发货单更新物流状态失败");
+            }
         }
-
         return new BaseResultDTO.AddDTO(tmsFirstMileLogisticEntity.getId(), tmsFirstMileLogisticEntity.getOutstockCode());
     }
 
@@ -341,10 +342,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         return costUpdateDTO;
     }
 
-    private FirstMileDeliveryDTO.GenerateLogisticDTO getGenerateLogisticDTO(String outstockId){
+    private FirstMileDeliveryDTO.GenerateLogisticDTO getGenerateLogisticDTO(String outstockId,Boolean isAuto){
         FirstMileDeliveryDTO.GenerateLogisticReqDTO dto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
         dto.setIds(Arrays.asList(outstockId));
-        dto.setPackingStatus(PackingStatusEnum.PACKING.getCode());
+        if(!isAuto){
+            dto.setPackingStatus(PackingStatusEnum.PACKING.getCode());
+        }
         dto.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.WAIT.code);
         List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(dto);
         if(CollectionUtil.isEmpty(generateLogisticDTO)){
@@ -368,7 +371,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         String outstockId = updateDTO.getOutstockId();
         FirstMileDeliveryDTO.GenerateLogisticDTO generateLogisticDTO = new FirstMileDeliveryDTO.GenerateLogisticDTO();
         if(!outstockId.equals(old.getOutstockId())){
-            generateLogisticDTO = this.getGenerateLogisticDTO(outstockId);
+            generateLogisticDTO = this.getGenerateLogisticDTO(outstockId,false);
             if(generateLogisticDTO == null){
                 throw new ServiceException("发货单不存在或者未装箱或已生成物流单");
             }
@@ -1640,5 +1643,28 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 endDate
 
         );
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean autoGenerateFirstMileLogistic(AutoGenerateBillDTO autoGenerateBillDTO) {
+        if(StringUtils.isBlank(autoGenerateBillDTO.getId()) || Objects.isNull(autoGenerateBillDTO.getSourceTypeEnum()) || Objects.isNull(autoGenerateBillDTO.getBillGenerateTimingEnum())){
+            return false;
+        }
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
+        if(cfgSettingEntity.getDisabled()){
+            return false;
+        }
+        CfgSettingValueDTO.BillAutoAddDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.BillAutoAddDTO.class);
+        if(Objects.isNull(dto) || Objects.isNull(dto.getIsAutoLogistics()) || !dto.getIsAutoLogistics() ||
+                StringUtils.isBlank(dto.getLogisticsGenerateTiming()) || !dto.getLogisticsGenerateTiming().equals(autoGenerateBillDTO.getBillGenerateTimingEnum().getCode())){
+            return false;
+        }
+        //生成物流单
+        TmsFirstMileLogisticDTO.AddDTO addDTO = new TmsFirstMileLogisticDTO.AddDTO();
+        addDTO.setOutstockId(autoGenerateBillDTO.getId());
+        addDTO.setIsAuto(true);
+        this.add(addDTO);
+        return true;
     }
 }

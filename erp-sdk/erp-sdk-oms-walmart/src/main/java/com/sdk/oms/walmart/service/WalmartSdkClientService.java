@@ -4,12 +4,11 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.JobTaskDTO;
-import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.WalmartShipOrderDetailDTO;
+import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
@@ -21,8 +20,6 @@ import com.sdk.oms.walmart.dto.WalmartShopInfoDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartOrderDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartShipOrderDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartTokenDTO;
-import com.sdk.oms.walmart.dto.walmart.item.ItemResponseBean;
-import com.sdk.oms.walmart.dto.walmart.order.OrderBean;
 import com.sdk.oms.walmart.dto.walmart.ship.*;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -304,8 +301,14 @@ public class WalmartSdkClientService {
             //运输方式。可以是以下类型之一：Standard、Express、OneDay、WhiteGlove、Value或Freight
             trackingInfo.setMethodCode("Value");
             trackingInfo.setTrackingURL("https://www.walmart.com/tracking?tracking_id="+ dto.getTrackNo() +"");
-            //跟踪单号
-            trackingInfo.setTrackingNumber(dto.getTrackNo());
+            //获取渠道标发单号
+            String trackingNumber = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),dto.getOrderDeliveryMarkType())
+                    ? dto.getTransportNo() : dto.getTrackNo();
+            if (StrUtil.isBlank(trackingNumber)) {
+                throw new ServiceException("操作失败，渠道标发单号为空");
+            }
+
+            trackingInfo.setTrackingNumber(trackingNumber);
             orderLineStatus.get(0).setTrackingInfo(trackingInfo);
 
             orderLineStatuses.setOrderLineStatus(orderLineStatus);
