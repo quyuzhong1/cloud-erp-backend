@@ -19,7 +19,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
@@ -40,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -106,7 +106,11 @@ public class DmpPushTaskHistoryServiceImpl extends ServiceImpl<DmpPushTaskHistor
         }
         //数据处理
         doOpHandleDmpPushTask(list);
-        List<DmpPushTaskExportExcelDTO> resultList = BeanMapperUtils.copyList(DmpPushTaskExportExcelDTO.class, list);
+        List<DmpPushTaskExportExcelDTO> resultList = list.stream().map(entity -> {
+            DmpPushTaskExportExcelDTO excelDTO = new DmpPushTaskExportExcelDTO();
+            BeanUtils.copyProperties(entity, excelDTO);
+            return excelDTO;
+        }).collect(Collectors.toList());
         String fileName = "中台推送任务表";
         try {
             ExcelUtil.export(fileName, "中台推送任务表", resultList, DmpPushTaskExportExcelDTO.class, response);
@@ -127,7 +131,8 @@ public class DmpPushTaskHistoryServiceImpl extends ServiceImpl<DmpPushTaskHistor
             try {
                 //查询来源上级单据
                 Boolean isSend = isSendParentBillTask(dmpPushTaskEntity);
-                DmpPushTaskEntity dmpPushTask = BeanMapperUtils.map(DmpPushTaskEntity.class, dmpPushTaskEntity);
+                DmpPushTaskEntity dmpPushTask = new DmpPushTaskEntity();
+                BeanUtils.copyProperties(dmpPushTaskEntity, dmpPushTask);
                 dmpPushTaskService.save(dmpPushTask);
                 baseMapper.deleteById(dmpPushTaskEntity.getId());
                 //判断是否存在上级单据，并且推送成功
@@ -164,7 +169,11 @@ public class DmpPushTaskHistoryServiceImpl extends ServiceImpl<DmpPushTaskHistor
         if (count > 0) {
             throw new ServiceException(new ApiResult(10000, "只允许推送自研ERP>>>>金蝶的数据"));
         }
-        List<DmpPushTaskEntity> entities = BeanMapperUtils.copyList(DmpPushTaskEntity.class, list);
+        List<DmpPushTaskEntity> entities = list.stream().map(entity -> {
+            DmpPushTaskEntity e = new DmpPushTaskEntity();
+            BeanUtils.copyProperties(entity, e);
+            return e;
+        }).collect(Collectors.toList());
         dmpPushTaskService.saveBatch(entities);
         baseMapper.deleteBatchIds(ids);
         Map<String, List<DmpPushTaskHistoryEntity>> map = list.stream().collect(Collectors.groupingBy(DmpPushTaskHistoryEntity::getSourceType));
@@ -303,7 +312,8 @@ public class DmpPushTaskHistoryServiceImpl extends ServiceImpl<DmpPushTaskHistor
         partition.parallelStream().forEach(e -> {
             // 保存至历史表
             List<DmpPushTaskHistoryEntity> taskHistory = e.stream().map(entity ->{
-                DmpPushTaskHistoryEntity history = BeanMapperUtils.map(DmpPushTaskHistoryEntity.class, e);
+                DmpPushTaskHistoryEntity history = new DmpPushTaskHistoryEntity();
+                BeanUtils.copyProperties(entity, history);
                 history.setId(null);
                 return history;
             }).collect(Collectors.toList());

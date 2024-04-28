@@ -14,7 +14,6 @@ import com.common.business.enums.SyncStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
@@ -29,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -78,7 +78,11 @@ public class DmpPullTaskHistoryServiceImpl extends ServiceImpl<DmpPullTaskHistor
         }
         //数据处理
         doOpHandleDmpPushTask(list);
-        List<DmpPullTaskExportExcelDTO> resultList = BeanMapperUtils.copyList(DmpPullTaskExportExcelDTO.class, list);
+        List<DmpPullTaskExportExcelDTO> resultList = list.stream().map(entity -> {
+            DmpPullTaskExportExcelDTO e = new DmpPullTaskExportExcelDTO();
+            BeanUtils.copyProperties(entity, e);
+            return e;
+        }).collect(Collectors.toList());
         String fileName = "中台拉取任务表";
         try {
             ExcelUtil.export(fileName, "中台拉取任务表", resultList, DmpPullTaskExportExcelDTO.class, response);
@@ -96,7 +100,11 @@ public class DmpPullTaskHistoryServiceImpl extends ServiceImpl<DmpPullTaskHistor
             throw new ServiceException(ApiError.ERROR_NOT_EXIST_DMP_PUSH_TASK);
         }
         // 移除历史表数据新增新表数据
-        List<DmpPullTaskEntity> entities = BeanMapperUtils.copyList(DmpPullTaskEntity.class, list);
+        List<DmpPullTaskEntity> entities = list.stream().map(entity -> {
+            DmpPullTaskEntity e = new DmpPullTaskEntity();
+            BeanUtils.copyProperties(entity, e);
+            return e;
+        }).collect(Collectors.toList());
         dmpPullTaskService.saveBatch(entities);
         baseMapper.deleteBatchIds(ids);
         // 完成新增数据事务提交之后,发送MQ消息
@@ -153,7 +161,8 @@ public class DmpPullTaskHistoryServiceImpl extends ServiceImpl<DmpPullTaskHistor
         partition.parallelStream().forEach(e -> {
             // 保存至历史表
             List<DmpPullTaskHistoryEntity> taskHistory = e.stream().map(entity ->{
-                DmpPullTaskHistoryEntity history = BeanMapperUtils.map(DmpPullTaskHistoryEntity.class, e);
+                DmpPullTaskHistoryEntity history = new DmpPullTaskHistoryEntity();
+                BeanUtils.copyProperties(entity, history);
                 history.setId(null);
                 return history;
             }).collect(Collectors.toList());
