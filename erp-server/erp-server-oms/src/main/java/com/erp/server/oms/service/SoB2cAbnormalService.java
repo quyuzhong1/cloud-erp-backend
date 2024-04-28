@@ -6,6 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoB2cAbnormalDTO;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * @description: b2c异常订单接口
@@ -36,7 +37,7 @@ public interface SoB2cAbnormalService {
      * @author Will
      * @date: 2024/4/28 9:01
      * @param id
-     * @return BatchResultDTO
+     * @return List<BatchResultDTO>
      */
-    BatchResultDTO batchRetry(String id);
+    List<BatchResultDTO> batchRetry(String id);
 }
