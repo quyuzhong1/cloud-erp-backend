@@ -798,8 +798,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
                    Boolean autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
                    if(autoGenerateResult){
-                       entity.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.FINISH);
-                       this.updateById(entity);
+                       FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
+                       updateStatusDTO.setIds(Arrays.asList(entity.getId()));
+                       updateStatusDTO.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.FINISH.getCode());
+                       this.updateStatus(updateStatusDTO);
                    }
                 }
             }catch (Exception e){
@@ -811,8 +813,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
                     Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
                     if(autoGenerateResult){
-                        entity.setDeclareStatus(WmsDeclareStatusEnum.FINISH);
-                        this.updateById(entity);
+                        FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
+                        updateStatusDTO.setIds(Arrays.asList(entity.getId()));
+                        updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
+                        this.updateStatus(updateStatusDTO);
                     }
                 }
             }catch (Exception e){
@@ -1551,8 +1555,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
                     Boolean autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
                     if(autoGenerateResult){
-                        entity.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.FINISH);
-                        this.updateById(entity);
+                        FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
+                        updateStatusDTO.setIds(Arrays.asList(entity.getId()));
+                        updateStatusDTO.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.FINISH.getCode());
+                        this.updateStatus(updateStatusDTO);
                     }
                 }
             }catch (Exception e){
@@ -1564,8 +1570,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
                     Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
                     if(autoGenerateResult){
-                        entity.setDeclareStatus(WmsDeclareStatusEnum.FINISH);
-                        this.updateById(entity);
+                        FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
+                        updateStatusDTO.setIds(Arrays.asList(entity.getId()));
+                        updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
+                        this.updateStatus(updateStatusDTO);
                     }
                 }
             }catch (Exception e){

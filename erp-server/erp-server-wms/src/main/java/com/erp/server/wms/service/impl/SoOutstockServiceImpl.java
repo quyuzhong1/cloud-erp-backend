@@ -677,8 +677,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 try {
                     Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
                     if(autoGenerateResult){
-                        entity.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
-                        this.updateById(entity);
+                        TmsDeclareBillDTO.UpdateStatusDTO updateStatusDTO = new TmsDeclareBillDTO.UpdateStatusDTO();
+                        updateStatusDTO.setIds(Arrays.asList(entity.getId()));
+                        updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
+                        this.updateStatus(updateStatusDTO);
                     }
                 }catch (Exception e){
                     log.error("销售出库单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
@@ -2610,8 +2612,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 try {
                     Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
                     if(autoGenerateResult){
-                        entity.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
-                        this.updateById(entity);
+                        TmsDeclareBillDTO.UpdateStatusDTO updateStatusDTO = new TmsDeclareBillDTO.UpdateStatusDTO();
+                        updateStatusDTO.setIds(Arrays.asList(entity.getId()));
+                        updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
+                        this.updateStatus(updateStatusDTO);
                     }
                 }catch (Exception e){
                     log.error("销售出库单{} 装箱后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
