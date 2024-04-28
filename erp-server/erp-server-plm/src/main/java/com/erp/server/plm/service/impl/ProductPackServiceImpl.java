@@ -131,7 +131,7 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
         List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
         List<ProductPackEntity> list = this.lambdaQuery().in(ProductPackEntity::getSkuId, skuIds).list();
         //产品详情信息
-        List<SkuVO> productDetailList = productDetailService.getSkuInfoBySkuIds(skuIds);
+        List<SkuVO> productDetailList = productDetailService.listSkuPackByIds(skuIds);
 
         List<ProductVO.ProductPackVO> resultList = new ArrayList<>(list.size());
         for (ProductPackEntity item : list) {
