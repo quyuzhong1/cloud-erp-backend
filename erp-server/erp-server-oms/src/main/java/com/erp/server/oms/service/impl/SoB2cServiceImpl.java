@@ -1981,17 +1981,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (PlatformDictEnum.WALMART.getCode().equals(entity.getDictPlatform())) {
             throw new ServiceException(ApiError.PLATFORM_WAREHOUSE_ORDER_NOT_INTERCEPT);
         }
+        //销售订单状态只有待发货、已发货的订单可以发起拦截
+        if (!SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus())) {
+            throw new ServiceException(ApiError.NOT_DELIVERY_NOT_INTERCEPT);
+        }
 
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
         if (ObjectUtils.isEmpty(logisticsEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
-
-        //预报成功不支持发起拦截
-        if (TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),StrUtil.format("B2C销售订单【{}】已预报成功不支持拦截", entity.getCode()));
-        }
-
 
         //修改拦截打标识、冻结状态
         SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
