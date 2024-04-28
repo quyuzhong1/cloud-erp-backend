@@ -1998,10 +1998,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         interceptUpdateOrderDTO.setIsIntercept(Boolean.TRUE);
         interceptUpdateOrderDTO.setIsFrozen(Boolean.TRUE);
         interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getId()));
+        interceptUpdateOrderDTO.setRemark(remark);
         Boolean flag = this.updateIntercept(interceptUpdateOrderDTO);
         if (flag) {
             // 操作日志
-            String msg = StrUtil.format("用户【{}】发起【{}】，已冻结单据单号【{}】", commonService.getUserInfo().getUserName(), "发货拦截", entity.getCode());
+            String msg ;
+            if (StrUtil.equals(remark,"平台取消")) {
+                 msg = "平台订单取消,自动发起拦截";
+            } else {
+                msg = StrUtil.format("用户【{}】发起【{}】，已冻结单据单号【{}】", commonService.getUserInfo().getUserName(), "发货拦截", entity.getCode());
+            }
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "发货拦截");
         }
 
@@ -5762,6 +5768,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .set(StringUtils.isNotBlank(interceptUpdateOrderDTO.getApproveStatus()), SoB2cEntity::getApproveStatus, interceptUpdateOrderDTO.getApproveStatus())
                 .set(StringUtils.isNotBlank(interceptUpdateOrderDTO.getBillStatus()), SoB2cEntity::getBillStatus, interceptUpdateOrderDTO.getBillStatus())
                 .set(StringUtils.isNotBlank(interceptUpdateOrderDTO.getAbnormalType()), SoB2cEntity::getAbnormalType, interceptUpdateOrderDTO.getAbnormalType())
+                .set(StringUtils.isNotBlank(interceptUpdateOrderDTO.getRemark()), SoB2cEntity::getRemark, interceptUpdateOrderDTO.getRemark())
                 .in(SoB2cEntity::getId, interceptUpdateOrderDTO.getIds())
                 .update();
     }

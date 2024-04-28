@@ -74,6 +74,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
     @Resource
     private TransferDeclareFeign transferDeclareFeign;
 
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public PackingInspectionDTO.ViewDTO scan(PackingInspectionDTO.ScanDTO dto) {
@@ -96,7 +97,9 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         }
         //验证订单平台是否取消
         if (soB2cEntity.getIsCancel()) {
-           throw new ServiceException(StrUtil.format("销售订单【{}】平台已取消，不支持验货",soB2cEntity.getCode()));
+            //订单拦截
+            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消"));
+            return null;
         }
 
         //因为明细只保存父级SKU，所以如果有组合品没办法直接更新明细，将明细sku拆分放到redis，扫描时操作redis的值，在最后全部扫描完成统一更新数据库

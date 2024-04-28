@@ -1893,6 +1893,11 @@ public class SoB2cDTO implements Serializable {
          * 取值：SoB2cAbnormalTypeEnum
          */
         private String abnormalType;
+
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
 

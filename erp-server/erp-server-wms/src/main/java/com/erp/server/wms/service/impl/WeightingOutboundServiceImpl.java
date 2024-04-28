@@ -81,7 +81,9 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
 
         //验证订单平台是否取消
         if (soB2cEntity.getIsCancel()) {
-            throw new ServiceException(StrUtil.format("销售订单【{}】平台已取消，不支持称重",soB2cEntity.getCode()));
+            //订单拦截
+            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消"));
+            return null;
         }
 
         //查询订单物流信息获取跟踪号
