@@ -304,6 +304,9 @@ public class WalmartSdkClientService {
             //获取渠道标发单号
             String trackingNumber = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),dto.getOrderDeliveryMarkType())
                     ? dto.getTransportNo() : dto.getTrackNo();
+            if (StrUtil.isBlank(trackingNumber)) {
+                throw new ServiceException("操作失败，渠道标发单号为空");
+            }
 
             trackingInfo.setTrackingNumber(trackingNumber);
             orderLineStatus.get(0).setTrackingInfo(trackingInfo);
