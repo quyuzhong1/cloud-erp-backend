@@ -589,7 +589,7 @@ public class SoB2cDeliveryDTO implements Serializable {
         /**
          * 错误原因
          */
-        private Boolean errorMsg;
+        private String errorMsg;
 
         /**
          * 详情
