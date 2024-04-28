@@ -1229,7 +1229,22 @@ public enum ApiError implements Serializable {
     ORDER_CANCEL_NOT_PACKAGE(94040,"单据对应的物流商单号被拦截/取消/异常，不可组包操作"),
     LOGISTICS_INTERCEPT_NOT_PACKAGE(94041,"订单被拦截，不可组包操作"),
 
+    ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST(94031,"物流渠道未匹配到授权信息"),
+    DUPLICATION_DELIVERY_LOGISTICS_SUPPLIER(94032,"发货物流商不可以重复设置，一个发货物流商只能有一个报关设置"),
+    TRANSFER_DELIVERY_LOGISTICS_SUPPLIER(94033,"中转物流商不可以重复设置，一个中转物流商只能有一个截单设置"),
+    GENERATE_TIME_GT_DEADLINE_TIME(94034,"生成时间不可晚于截单时间"),
+    ERROR_NOT_UPDATE_TRACK_STATUS(94035,"该运输状态为系统更新不可修改"),
+    EXIST_TRANSFER_LOGISTICS_SUPPLIER_NOT_DELETE(94036,"被其他单据引用的中转物流商不允许删除"),
+    NOT_PRODUCT_REGISTRATION(94037," 【{}】 未在【{}】平台备案，请联系关务/物流"),
+    NOT_UPDATE_CHANNEL_BY_NOT_REGISTRATION(94038," 【{}】 未在【{}】平台备案无法更换渠道【{}】，请联系关务/物流"),
+    ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
+    ERROR_TRANSFER_LOGISTICS_CHANNEL_DISABLED_EXIST(94039,"存在未停用的中转物流渠道,无法停用该物流商"),
+    ORDER_UPLOAD_SUCCESS_NOT_DELETE(94040,"订单【{}】上传成功不能删除"),
+    ERROR_LOGISTICS_MAX_LIMIT_NOT_EMPTY(94041,"长宽高单个值不能为空，需大于0"),
 
+    LOGISTICS_NOT_PRINT_LOGISTICS_BILL(94042,"物流商【{}】不支持打印物流面单"),
+    LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL(94043,"物流商【{}】不支持打印官方配货单"),
+    LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST(94044,"渠道配置的打印类型设置未找到"),
     /**
      * SRM 错误
      * 从96000 开始
@@ -1258,18 +1273,7 @@ public enum ApiError implements Serializable {
 
 
 
-    ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST(94031,"物流渠道未匹配到授权信息"),
-    DUPLICATION_DELIVERY_LOGISTICS_SUPPLIER(94032,"发货物流商不可以重复设置，一个发货物流商只能有一个报关设置"),
-    TRANSFER_DELIVERY_LOGISTICS_SUPPLIER(94033,"中转物流商不可以重复设置，一个中转物流商只能有一个截单设置"),
-    GENERATE_TIME_GT_DEADLINE_TIME(94034,"生成时间不可晚于截单时间"),
-    ERROR_NOT_UPDATE_TRACK_STATUS(94035,"该运输状态为系统更新不可修改"),
-    EXIST_TRANSFER_LOGISTICS_SUPPLIER_NOT_DELETE(94036,"被其他单据引用的中转物流商不允许删除"),
-    NOT_PRODUCT_REGISTRATION(94037," 【{}】 未在【{}】平台备案，请联系关务/物流"),
-    NOT_UPDATE_CHANNEL_BY_NOT_REGISTRATION(94038," 【{}】 未在【{}】平台备案无法更换渠道【{}】，请联系关务/物流"),
-    ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
-    ERROR_TRANSFER_LOGISTICS_CHANNEL_DISABLED_EXIST(94039,"存在未停用的中转物流渠道,无法停用该物流商"),
-    ORDER_UPLOAD_SUCCESS_NOT_DELETE(94040,"订单【{}】上传成功不能删除"),
-    ERROR_LOGISTICS_MAX_LIMIT_NOT_EMPTY(94041,"长宽高单个值不能为空，需大于0"),
+
 
     // 亚马逊公用异常
     ERROR_MARKETPLACE_UNAUTHORIZED(100000,"亚马逊店铺已被禁用:{}"),
