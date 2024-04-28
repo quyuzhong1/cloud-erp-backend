@@ -405,14 +405,16 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 soB2cDeliveryService.rollbackInventory(ids);
                 soB2cDeliveryService.updateStatus(ids, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
             }
+        } else {
+            //修改拦截状态，冻结状态
+            SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
+            interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
+            interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
+            interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
+            interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
+            soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
+
         }
-        //修改拦截状态，冻结状态
-        SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
-        interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
-        interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
-        interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
-        interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
-        soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
 
         // 操作日志
         String logMsg = StrUtil.format("用户【{}】物流拦截结果确认【{}】", commonService.getUserInfo().getUserName(), "发货拦截单", entity.getCode());
