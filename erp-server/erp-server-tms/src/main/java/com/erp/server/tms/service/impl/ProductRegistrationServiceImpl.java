@@ -552,11 +552,11 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
         if(Objects.isNull(productDTO.getDeclarePrice())){
             productDTO.setDeclarePrice(BigDecimal.ZERO);
         }
-        return Objects.equals(addEntity.getSkuNo(), productDTO.getSkuNo()) &&
+        return Objects.equals(addEntity.getSkuNo(), productDTO.getSkuNo())
 //                Objects.equals(addEntity.getProductName(), productDTO.getCnName()) &&
 //                Objects.equals(addEntity.getProductNameEn(), productDTO.getEnName()) &&
 //                (Objects.equals(addEntity.getCurrency(), productDTO.getDeclareCurrency()) || (Objects.equals(productDTO.getDeclareCurrency(), "CNY") && Objects.equals(addEntity.getCurrency(), "RMB"))) &&
-                addEntity.getDeclarePrice().compareTo(productDTO.getDeclarePrice()) == 0
+//                addEntity.getDeclarePrice().compareTo(productDTO.getDeclarePrice()) == 0
 //                &&
 //                addEntity.getGrossWeight().compareTo(productDTO.getGrossWeight()) == 0 &&
 //                Objects.equals(addEntity.getDeclareNameCn(), productDTO.getDeclareChineseName()) &&
