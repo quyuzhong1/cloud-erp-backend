@@ -678,6 +678,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
                     if(autoGenerateResult){
                         entity.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
+                        this.updateById(entity);
                     }
                 }catch (Exception e){
                     log.error("销售出库单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
@@ -2597,6 +2598,26 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<SoOutstockDTO.GroupSkuDTO> groupSkuDTOList = groupSkuList.stream().filter(req -> req.getWaitPackQty() > 0).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(groupSkuDTOList)) {
             updatePackingStatus(dto.getId(), PackingStatusEnum.PACKING.getCode());
+            //走TMS自动生成报关单逻辑
+            if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode()) && entity.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {
+                //走TMS自动生成逻辑
+                AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+                        .id(entity.getId())
+                        .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
+                        .sourceTypeEnum(SourceTypeEnum.SO_OUTSTOCK)
+                        .soOutstockEntity(entity)
+                        .build();
+                try {
+                    Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
+                    if(autoGenerateResult){
+                        entity.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
+                        this.updateById(entity);
+                    }
+                }catch (Exception e){
+                    log.error("销售出库单{} 装箱后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
+                    throw new ServiceException(StrUtil.format("销售出库单{} 装箱后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
+                }
+            }
             return PackingStatusEnum.PACKING.getCode();
         } else {
             updatePackingStatus(dto.getId(), PackingStatusEnum.NOT_PACKING.getCode());
