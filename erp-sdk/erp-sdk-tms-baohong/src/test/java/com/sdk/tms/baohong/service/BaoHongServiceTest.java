@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+//生产 customerCode: E3138 appToken : 386E6532DEA4EC65 appKey 2c5bd44acfe6f61c7421c800190781f8
+//测试 customerCode: E0207 appToken:  BAAC60E49804C53A appKey 98f8fd9bb9edfa770bc0a317b8203fc3
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes= BaoHongService.class)
 public class BaoHongServiceTest {
