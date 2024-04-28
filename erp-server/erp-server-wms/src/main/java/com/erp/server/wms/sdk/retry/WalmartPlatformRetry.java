@@ -23,6 +23,6 @@ public class WalmartPlatformRetry implements IPlatformRetryService {
 
     @Override
     public Boolean retrySoOutStock(SoB2cEntity currentEntity, List list) {
-        return soOutstockService.defaultHandleRetry(currentEntity.getId(), list);
+        return soOutstockService.defaultHandleRetry(currentEntity, list);
     }
 }

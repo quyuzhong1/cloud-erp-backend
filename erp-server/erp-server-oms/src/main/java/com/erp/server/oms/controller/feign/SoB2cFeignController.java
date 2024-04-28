@@ -8,6 +8,7 @@ import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.core.controller.BaseController;
+import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
@@ -56,6 +57,9 @@ public class SoB2cFeignController extends BaseController {
 
     @Resource
     private SoB2cStatusService b2cStatusService;
+
+    @Resource
+    private OperateLogService operateLogService;
 
 
     /**
@@ -625,5 +629,17 @@ public class SoB2cFeignController extends BaseController {
     @PostMapping("/updateCancelAndLog")
     public Boolean updateCancelAndLog(@RequestBody @Validated PlatformDeliveryInterceptDTO dto){
         return b2cStatusService.updateCancelAndLog(dto);
+    }
+
+
+    /**
+     * 添加操作日志
+     */
+    @PostMapping("/addModuleOperateLog")
+    public Boolean addModuleOperateLog(OperateLogDTO.AddModuleOperateLogDTO operateLogDTO){
+        return operateLogService.addModuleOperateLog(operateLogDTO.getContent(),
+                operateLogDTO.getModuleType(),
+                operateLogDTO.getBusinessId(),
+                operateLogDTO.getOperation());
     }
 }

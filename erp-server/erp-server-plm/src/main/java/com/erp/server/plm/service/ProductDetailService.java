@@ -675,4 +675,16 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return List<SkuVO>
      */
     List<SkuVO> accessoriesSku(String searchKeyword);
+
+    /**
+     * 获取已审核sku 未计算目的国申报价数据
+     * @return
+     */
+    List<ProductDetailEntity> getProductDetailByDestDeclarePrice();
+
+    /**
+     * 重算目的国申报单价
+     * @param entity
+     */
+    void recalDestDeclarePrice(ProductDetailEntity entity);
 }

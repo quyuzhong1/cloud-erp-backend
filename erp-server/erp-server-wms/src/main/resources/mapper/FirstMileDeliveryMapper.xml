@@ -160,7 +160,7 @@
         fdd.warehouse_location,
         fdd.delivery_qty AS assembleQty
         FROM  first_mile_delivery fd
-
+        INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         WHERE fd.is_deleted = FALSE
         AND fdd.is_combination = TRUE
         <if test="ids != null and ids.size > 0">

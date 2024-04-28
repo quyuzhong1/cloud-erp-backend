@@ -4,7 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -37,7 +36,6 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
@@ -217,6 +215,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private OmsListingInfoFeign omsListingInfoFeign;
+
+    @Resource
+    private SoB2cDeliveryService soB2cDeliveryService;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -2479,7 +2480,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean defaultHandleRetry(String id, List<SoB2cEntity> soB2cList) {
+    public Boolean defaultHandleRetry(SoB2cEntity currentEntity, List<SoB2cEntity> soB2cList) {
+        String id = currentEntity.getId();
         //已发货
         String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         SoB2cEntity soB2c = soB2cList.stream().filter(s ->
@@ -2504,7 +2506,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             flag = soB2cFeign.updateAliExpressOrderWarehouse(soB2c.getId(), soB2c.getShopId());
         }
 
-        Boolean result = this.generateB2cSoOutstock(id);
+        Boolean result = false;
+        if (!currentEntity.hasPlatformWarehouseOrder()){
+            // 检查非平台仓订单的必须存在已发货状态的B2C发货单, 记录日志
+            boolean hasNotShippedDelivery = soB2cDeliveryService.hasNotShippedDeliveryAndLog(currentEntity);
+            if (hasNotShippedDelivery){
+                // 无已发货的发货单只清理历史异常信息
+                result = true;
+            } else {
+                result = this.generateB2cSoOutstock(id);
+            }
+        } else {
+            result = this.generateB2cSoOutstock(id);
+        }
         boolean allResult = result && flag;
         if (allResult) {
             String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
