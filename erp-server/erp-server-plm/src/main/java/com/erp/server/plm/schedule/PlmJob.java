@@ -148,7 +148,7 @@ public class PlmJob {
         }
         List<String> skuIds = details.stream().filter(Objects::nonNull).map(ProductDetailEntity::getId).collect(Collectors.toList());
         List<String> skuNoList = details.stream().filter(Objects::nonNull).map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
-        List<ProductLogisticsEntity> productLogisticsList = productLogisticsService.listByIds(skuIds);
+        List<ProductLogisticsEntity> productLogisticsList = productLogisticsService.listBySkuIdList(skuIds);
         if (Objects.isNull(productLogisticsList)) {
             return;
         }
