@@ -151,12 +151,6 @@ public class SoB2cLogisticsEntity extends BaseEntity<SoB2cLogisticsEntity> {
     @TableField("transfer_logistics_channel_id")
     private String transferLogisticsChannelId;
 
-    /**
-     * 物流类型
-     */
-    @TableField("logistic_type")
-    private String logisticType;
-
     public static final String MAIN_ID = "main_id";
 
     public static final String CODE = "code";
