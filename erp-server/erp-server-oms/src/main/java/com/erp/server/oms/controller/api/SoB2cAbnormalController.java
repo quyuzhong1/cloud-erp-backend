@@ -28,6 +28,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 异常订单
@@ -86,7 +87,9 @@ public class SoB2cAbnormalController extends BaseController {
     @PostMapping(value = "/batchRetry")
     public ApiResult<List<BatchResultDTO>> batchRetry(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
-        for (String id : dto.getIds()) {
+        //id去重
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        for (String id : ids) {
             try {
                 List<BatchResultDTO>  resultList = soB2cAbnormalService.batchRetry(id);
                 resultDTOS.addAll(resultList);
