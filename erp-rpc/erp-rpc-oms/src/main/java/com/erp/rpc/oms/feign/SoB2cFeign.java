@@ -507,11 +507,4 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/updateCancelAndLog")
     Boolean updateCancelAndLog(@RequestBody @Validated PlatformDeliveryInterceptDTO dto);
-
-
-    /**
-     * 添加销售订单日志
-     */
-    @PostMapping("/feign/soB2c/addModuleOperateLog")
-    Boolean addModuleOperateLog(OperateLogDTO.AddModuleOperateLogDTO operateLogDTO);
 }
