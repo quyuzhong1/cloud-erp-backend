@@ -1019,25 +1019,49 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         List<String> soIdList = dateList.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
         List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listBySoIds(soIdList);
 
-        for (TransferDeclareDTO.ListDTO listDTO : dateList) {
-            //出库状态中文
-            SoOutstockEntity soOutstockEntity = soOutstockEntities.stream()
-                    .filter(req -> req.getSoId().equals(listDTO.getSoId())
-                            && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus().getStatus()))
-                    .findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
-                listDTO.setOutstockStatusName(TransferOutstockStatusEnum.OUTSTOCK.getName());
-            } else {
-                listDTO.setOutstockStatusName(TransferOutstockStatusEnum.UN_OUTSTOCK.getName());
+        Map<String, List<TransferDeclareDTO.ListDTO>> dateListMap = dateList.stream().collect(Collectors.groupingBy(req -> req.getId()));
+        for (Map.Entry<String, List<TransferDeclareDTO.ListDTO>> stringListEntry : dateListMap.entrySet()) {
+            List<TransferDeclareDTO.ListDTO> stringListEntryValue = stringListEntry.getValue();
+
+            //如果明细有移除需要根据明细上传状态修改主表上传状态
+            List<String> orderUploadStatusList = stringListEntryValue.stream().map(req -> req.getUploadOrderStatus()).distinct().collect(Collectors.toList());
+
+            for (TransferDeclareDTO.ListDTO listDTO : stringListEntryValue) {
+                if (orderUploadStatusList.contains(TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
+                    //如果明细包含失败，主单据改为上传失败
+                    listDTO.setUploadOrderStatus(TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode());
+                    listDTO.setUploadOrderStatusName(TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getName());
+
+                } else if (orderUploadStatusList.contains(TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode())) {
+                    //如果明细包含待上传，主单据改为上传失败
+                    listDTO.setUploadOrderStatus(TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode());
+                    listDTO.setUploadOrderStatusName(TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getName());
+
+                } else {
+                    //上传成功
+                    listDTO.setUploadOrderStatus(TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+                    listDTO.setUploadOrderStatusName(TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getName());
+                }
+
+                //出库状态中文
+                SoOutstockEntity soOutstockEntity = soOutstockEntities.stream()
+                        .filter(req -> req.getSoId().equals(listDTO.getSoId())
+                                && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus().getStatus()))
+                        .findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
+                    listDTO.setOutstockStatusName(TransferOutstockStatusEnum.OUTSTOCK.getName());
+                } else {
+                    listDTO.setOutstockStatusName(TransferOutstockStatusEnum.UN_OUTSTOCK.getName());
+                }
+                //中转状态中文
+                listDTO.setTransferStatusName(TransferLogisticsStatusEnum.getName(listDTO.getTransferStatus()));
+                //上传状态（批次）中文
+                listDTO.setUploadBatchStatusName(TransferDeclareUploadStatusEnum.getName(listDTO.getUploadBatchStatus()));
+                //上传状态（订单）中文
+                listDTO.setUploadOrderStatusName(TransferDeclareUploadStatusEnum.getName(listDTO.getUploadOrderStatus()));
+                //入库预报状态
+                listDTO.setInstockForecastStatusName(InstockForecastStatusEnum.getName(listDTO.getInstockForecastStatus()));
             }
-            //中转状态中文
-            listDTO.setTransferStatusName(TransferLogisticsStatusEnum.getName(listDTO.getTransferStatus()));
-            //上传状态（批次）中文
-            listDTO.setUploadBatchStatusName(TransferDeclareUploadStatusEnum.getName(listDTO.getUploadBatchStatus()));
-            //上传状态（订单）中文
-            listDTO.setUploadOrderStatusName(TransferDeclareUploadStatusEnum.getName(listDTO.getUploadOrderStatus()));
-            //入库预报状态
-            listDTO.setInstockForecastStatusName(InstockForecastStatusEnum.getName(listDTO.getInstockForecastStatus()));
         }
     }
 
