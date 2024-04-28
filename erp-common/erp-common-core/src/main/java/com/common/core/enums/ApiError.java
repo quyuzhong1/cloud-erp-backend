@@ -1240,6 +1240,9 @@ public enum ApiError implements Serializable {
     LOGISTICS_INTERCEPT_NOT_PACKAGE(94041,"订单被拦截，不可组包操作"),
 
 
+    LOGISTICS_NOT_PRINT_LOGISTICS_BILL(94042,"物流商【{}】不支持打印物流面单"),
+    LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL(94043,"物流商【{}】不支持打印官方配货单"),
+    LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST(94044,"渠道配置的打印类型设置未找到"),
     /**
      * SRM 错误
      * 从96000 开始

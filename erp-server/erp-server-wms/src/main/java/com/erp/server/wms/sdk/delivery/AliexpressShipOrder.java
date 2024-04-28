@@ -55,6 +55,9 @@ public class AliexpressShipOrder implements IPlatformService {
             String standardOrderType = getOrderDeliveryMarkType(PlatformDictEnum.ALI_EXPRESS.getCode(), signShipOrderDTO.getLogisticsChannelId());
             String logisticsNo = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
                     ? signShipOrderDTO.getLogisticsTransportNo() : signShipOrderDTO.getLogisticsTrackNo();
+            if (StrUtil.isBlank(logisticsNo)) {
+                throw new ServiceException("操作失败，渠道标发单号为空");
+            }
 
             DeclareDeliverRequest request = DeclareDeliverRequest.builder().
                     outRef(signShipOrderDTO.getPlatformCode()).
@@ -75,7 +78,7 @@ public class AliexpressShipOrder implements IPlatformService {
     public String getOrderDeliveryMarkType(String platform, String logisticsChannelId) {
         LogisticsMappingEntity logisticsMappingEntity = logisticsMappingFeign.getByLogisticsMappingParam(new LogisticsMappingDTO.SearchParamDTO(platform, logisticsChannelId));
         if (ObjectUtil.isEmpty(logisticsMappingEntity) || StrUtil.isBlank(logisticsMappingEntity.getOrderDeliveryMarkType())) {
-            throw new ServiceException("操作失败，渠道标发单号为空");
+            throw new ServiceException("操作失败，渠道标发单号配置为空");
         }
         return logisticsMappingEntity.getOrderDeliveryMarkType();
     }
