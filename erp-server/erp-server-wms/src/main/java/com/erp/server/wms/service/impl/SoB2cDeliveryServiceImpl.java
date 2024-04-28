@@ -257,17 +257,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (Objects.nonNull(soB2cEntity)) {
             String transferStatus = soB2cEntity.getTransferStatus();
             //表示要中转啊
-            if(!TransferStatusEnum.NOT.getCode().equals(transferStatus)){
-                TransferDeclareDetailEntity transferDeclareDetailEntity = transferDeclareFeign.getBySoId(soB2cEntity.getId());
-                if (Objects.nonNull(transferDeclareDetailEntity)) {
-                    String uploadSuccess= TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode();
-                    String uploadStatus = transferDeclareDetailEntity.getOrderUploadStatus();
-                    if (!uploadSuccess.equals(uploadStatus)) {
-                        throw new ServiceException(ApiError.NOT_TRANSFER_DECLARE);
-                    }
-                }else{
-                    throw new ServiceException(ApiError.NOT_TRANSFER_DECLARE);
-                }
+            if(!TransferStatusEnum.NOT.getCode().equals(transferStatus) &&!TransferStatusEnum.SUCCESS.getCode().equals(transferStatus) ){
+                throw new ServiceException("未预报成功不允许发货");
             }
 
         }
