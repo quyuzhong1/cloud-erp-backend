@@ -781,7 +781,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     .build();
             try {
                 if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
-                    tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
+                   Boolean autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
+                   if(autoGenerateResult){
+                       entity.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.FINISH);
+                       this.updateById(entity);
+                   }
                 }
             }catch (Exception e){
                 log.error("头程发货单{} 审核后自动生成物流单失败>>>>>>{}", entity.getCode(), e.getMessage());
@@ -790,7 +794,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
             try {
                 if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
-                    tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+                    Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+                    if(autoGenerateResult){
+                        entity.setDeclareStatus(WmsDeclareStatusEnum.FINISH);
+                        this.updateById(entity);
+                    }
                 }
             }catch (Exception e){
                 log.error("头程发货单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());

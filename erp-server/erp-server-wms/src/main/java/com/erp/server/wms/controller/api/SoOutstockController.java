@@ -9,6 +9,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -500,7 +501,7 @@ public class SoOutstockController extends BaseController {
         if (PackingStatusEnum.PACKING.getCode().equals(packingStatus)) {
             SoOutstockEntity entity = soOutstockService.getById(dto.getId());
 
-            if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode())) {
+            if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode())&& entity.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {
                 //走TMS自动生成逻辑
                 AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
                         .id(entity.getId())
@@ -509,7 +510,10 @@ public class SoOutstockController extends BaseController {
                         .soOutstockEntity(entity)
                         .build();
                 try {
-                    tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
+                    Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
+                    if(autoGenerateResult){
+                        entity.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
+                    }
                 }catch (Exception e){
                     log.error("销售出库单{} 装箱后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
                     throw new ServiceException(StrUtil.format("销售出库单{} 装箱后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
