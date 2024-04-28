@@ -139,6 +139,7 @@ public class DmpPullTaskHistoryServiceImpl extends ServiceImpl<DmpPullTaskHistor
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void syncPullTaskHistory() {
+        log.info("开始归档3个月前拉取成功的数据");
         //获取到今天3个月前同步成功的数据
         List<DmpPullTaskEntity> dmpPullTasks = dmpPullTaskService.list(Wrappers.<DmpPullTaskEntity>lambdaQuery()
                 .lt(DmpPullTaskEntity::getCreateTime, LocalDateTime.now().minusMonths(3))
@@ -163,5 +164,6 @@ public class DmpPullTaskHistoryServiceImpl extends ServiceImpl<DmpPullTaskHistor
                     .collect(Collectors.toList());
             dmpPullTaskService.deleteByIds(ids);
         });
+        log.info("完成归档3个月前拉取成功的数据");
     }
 }
