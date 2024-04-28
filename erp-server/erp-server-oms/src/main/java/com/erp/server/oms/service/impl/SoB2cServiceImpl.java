@@ -7076,6 +7076,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 updateList.add(soB2cEntity);
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"订单预报拦截失败，请联系物流同事取消删除后再操作"));
             }
+            updateInstockForcastList.add(updateForcastStatusDTO);
         }
 
         //更新操作同个事务
