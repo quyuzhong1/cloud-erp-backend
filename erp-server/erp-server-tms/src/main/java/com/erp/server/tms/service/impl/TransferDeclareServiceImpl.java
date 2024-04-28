@@ -1000,9 +1000,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             transferStatusList.add(TransferLogisticsStatusEnum.SIGNED.getCode());
         }
 
-        //上传状态
-        if (CollectionUtil.isNotEmpty(uploadStatusList)) {
-            params.setUploadStatusList(uploadStatusList);
+        //入库预报状态
+        if (CollectionUtil.isNotEmpty(instockForecastStatusList)) {
+            params.setInstockForecastStatusList(instockForecastStatusList);
         }
 
         //中转状态

@@ -163,8 +163,8 @@
         WHERE td.is_deleted = FALSE
         <if test="params.uploadStatusList != null and params.uploadStatusList.size > 0">
             and td.instock_forecast_status in
-            <foreach collection="params.uploadStatusList" item="uploadStatus" open="(" separator="," close=")">
-                #{uploadStatus}
+            <foreach collection="params.instockForecastStatusList" item="instockForecastStatus" open="(" separator="," close=")">
+                #{instockForecastStatus}
             </foreach>
         </if>
     </select>
