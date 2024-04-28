@@ -7058,6 +7058,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //保宏不支持接口拦截，只能线下，通过查询订单状态判断订单是否已经取消
             if (transferLogisticsStatusEnum == TransferLogisticsStatusEnum.DELETED){
                 soB2cEntity.setTransferStatus(TransferStatusEnum.WAIT.getCode());
+                if(SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode().equals(soB2cEntity.getSignOrderError())){
+                    soB2cEntity.setSignOrderError("");
+                }
                 updateForcastStatusDTO.setStatus(TransferStatusEnum.WAIT.getCode());
                 updateList.add(soB2cEntity);
                 if(StringUtils.isNotBlank(error.getId())){
@@ -7140,7 +7143,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if(CollectionUtils.isNotEmpty(updateB2cList)){
             updateB2cList.forEach(v->{
                 if(TransferStatusEnum.SUCCESS.getCode().equals(v.getTransferStatus())
-                        && (SoB2cErrorTypeEnum.ORDER_FORECAST.getCode().equals(v.getSignOrderError()))||SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode().equals(v.getSignOrderError())){
+                        && (SoB2cErrorTypeEnum.ORDER_FORECAST.getCode().equals(v.getSignOrderError()))){
                     v.setSignOrderError("");
                 }
             });
