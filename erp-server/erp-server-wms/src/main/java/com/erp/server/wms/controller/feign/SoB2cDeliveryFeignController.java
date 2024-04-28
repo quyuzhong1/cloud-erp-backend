@@ -121,4 +121,18 @@ public class SoB2cDeliveryFeignController extends BaseController {
     public Boolean mergePackageDelivery(@RequestBody List<String> soIdList) {
         return soB2cDeliveryService.mergePackageDelivery(soIdList);
     }
+
+
+    /**
+     * 标记发货
+     * @author Will
+     * @date: 2024/4/28 9:35
+     * @param id
+     * @return List<BatchResultDTO>
+     */
+    @PostMapping("/retryFalseDelivery")
+    public List<BatchResultDTO> retryFalseDelivery(@RequestBody String id) {
+        List<BatchResultDTO> list = soB2cDeliveryService.retryFalseDelivery(id);
+        return list;
+    }
 }

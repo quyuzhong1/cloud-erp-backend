@@ -94,4 +94,16 @@ public class TransferDeclareFeignController {
     public List<TransferDeclareDetailEntity> listBySoCodeList(@RequestBody List<String> soCodeList){
         return transferDeclareDetailService.listBySoCodeList(soCodeList);
     }
+
+    /**
+     * 订单预报重试
+     * @author Will
+     * @date: 2024/4/28 9:49
+     * @param id
+     * @return List<BatchResultDTO>
+     */
+    @PostMapping("/retryOrderForecast")
+    public List<BatchResultDTO> retryOrderForecast(@RequestBody String id) {
+        return transferDeclareService.retryOrderForecast(id);
+    }
 }
