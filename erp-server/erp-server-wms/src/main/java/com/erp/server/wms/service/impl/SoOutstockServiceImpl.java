@@ -57,6 +57,7 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
+import com.erp.model.tms.enums.DeclareStatusEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
@@ -2555,8 +2556,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (!ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.APPROVE_ING_IS_PACKING);
         }
-        //已装箱状态不允许再次修改装箱数据
-        if (PackingStatusEnum.PACKING.getCode().equals(entity.getPackingStatus())) {
+        //已装箱状态并且已报关不允许再次修改装箱数据
+        if (PackingStatusEnum.PACKING.getCode().equals(entity.getPackingStatus()) && DeclareStatusEnum.DECLARED.getCode().equals(entity.getDeclareStatus())) {
             throw new ServiceException(ApiError.SO_OUTSTOCK_NOT_PACKING);
         }
 

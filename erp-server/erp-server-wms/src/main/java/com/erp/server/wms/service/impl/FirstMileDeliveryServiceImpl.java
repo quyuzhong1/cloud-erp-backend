@@ -1490,7 +1490,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.APPROVE_ING_IS_PACKING);
         }
-
+        if(PackingStatusEnum.PACKING.getCode().equals(entity.getPackingStatus())
+                && (FmDeliveryLogisticsStatusEnum.FINISH.equals(entity.getLogisticsStatus()) || WmsDeclareStatusEnum.FINISH.equals(entity.getDeclareStatus()))){
+            throw new ServiceException("物流单/报关单已生成，不支持修改");
+        }
         //已装箱的数据，如果未下推入库单，或者下推的入库单待提交时，可以再次修改装箱信息，否则提示：已下推海外仓入库单【单号】，不允许修改装箱数据（装箱页面保存时校验）
         List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(Arrays.asList(dto.getId()));
         long count = overseasWarehouseInboundEntities.stream()
