@@ -144,7 +144,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         }
         List<SkuVO> skuVOList;
         if(StringUtils.isNotBlank(dto.getSkuId())){
-            skuVOList = plmTaskFeign.getSkuInfoByIds(Collections.singletonList(dto.getSkuId()));
+            skuVOList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(dto.getSkuId()));
         } else {
             skuVOList = plmTaskFeign.listBySkuNoList(Collections.singletonList(dto.getSkuNo()));
         }
