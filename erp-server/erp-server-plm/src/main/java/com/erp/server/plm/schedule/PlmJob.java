@@ -2,6 +2,7 @@ package com.erp.server.plm.schedule;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.MathUtil;
@@ -134,70 +135,8 @@ public class PlmJob {
         List<ProductDetailEntity> details = productDetailService.getProductDetailByDestDeclarePrice();
         if (CollectionUtil.isNotEmpty(details)){
             XxlJobHelper.log("重算目的国申报价sku数量：{}", details.size());
-            recalDestDeclarePriceList(details);
+            productDetailService.recalDestDeclarePrice(details);
         }
         XxlJobHelper.log("recalDestDeclarePrice end : {}", LocalDateTime.now());
-    }
-
-    /**
-     * 批量计算目的国申报价
-     */
-    private void recalDestDeclarePriceList(List<ProductDetailEntity> details){
-        if (CollectionUtils.isEmpty(details)) {
-            return;
-        }
-        List<String> skuIds = details.stream().filter(Objects::nonNull).map(ProductDetailEntity::getId).collect(Collectors.toList());
-        List<String> skuNoList = details.stream().filter(Objects::nonNull).map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
-        List<ProductLogisticsEntity> productLogisticsList = productLogisticsService.listBySkuIdList(skuIds);
-        if (Objects.isNull(productLogisticsList)) {
-            return;
-        }
-        //系统配置
-        CfgSettingEntity setting = cfgSettingFeign.getByKey(CfgSettingEnum.LOGISTICS_PRODUCT_DEST_DECLARE_PRICE.getCode());
-        if (Objects.isNull(setting) || Objects.isNull(setting.getDataJson()) || CollectionUtils.isEmpty(setting.getDataJson().getJSONArray("data"))) {
-            return;
-        }
-        //sku信息
-        List<DmpSkuCostEntity> skuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList);
-        BigDecimal usdRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
-        if (Objects.isNull(usdRate)) {
-            return;
-        }
-        List<ProductLogisticsEntity> updateList = new ArrayList<>();
-        for(ProductLogisticsEntity productLogistics : productLogisticsList){
-            XxlJobHelper.log("recalDestDeclarePrice : skuId:{},skuNo:{}", productLogistics.getSkuId(),productLogistics.getSkuNo());
-            //是否重算目的国申报价
-            BigDecimal destDeclarePrice = productLogistics.getDestDeclarePrice();
-            if (Objects.isNull(destDeclarePrice) || destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
-                DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuId().equals(productLogistics.getSkuId())).findFirst().orElse(null);
-                if (Objects.isNull(skuCostDTO)) {
-                    continue;
-                }
-                //含税成本 默认是人民币
-                BigDecimal actualTaxCost = BigDecimal.ZERO;
-                if (Objects.nonNull(skuCostDTO.getCostPrice())) {
-                    actualTaxCost = skuCostDTO.getCostPrice();
-                }
-                //统一换算成美元汇率
-                BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, usdRate);
-                List<CfgSettingValueDTO.LogisticsProductDestDeclarePrice> data = JSONUtil.toList(setting.getDataJson().getJSONArray("data"), CfgSettingValueDTO.LogisticsProductDestDeclarePrice.class);
-                //根据美元计算比例
-                BigDecimal finalActualTaxCostUsd = actualTaxCostUsd;
-                CfgSettingValueDTO.LogisticsProductDestDeclarePrice declarePrice = data.stream().filter(e -> e.getStartPrice().compareTo(finalActualTaxCostUsd) < 0 && e.getEndPrice().compareTo(finalActualTaxCostUsd) >= 0).findFirst().orElse(null);
-                if (Objects.isNull(declarePrice) || Objects.isNull(declarePrice.getRate())) {
-                    continue;
-                }
-                BigDecimal resultDestDeclarePrice = actualTaxCostUsd.multiply(declarePrice.getRate()).divide(MathUtil.BigDecimal_100, 4, RoundingMode.HALF_UP);
-                productLogistics.setDestDeclarePrice(resultDestDeclarePrice);
-                productLogistics.setDestCurrency(CurrencyEnum.USD.getCurrencyCode());
-                productLogistics.setDestCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
-                updateList.add(productLogistics);
-                log.info("更新目的国申报价 sku:{},目的国申报价：{}",skuCostDTO.getSkuNo(), resultDestDeclarePrice);
-            }
-        }
-        if (CollectionUtils.isNotEmpty(updateList)){
-            productLogisticsService.updateBatchById(updateList);
-        }
-
     }
 }
