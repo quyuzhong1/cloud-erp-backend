@@ -246,10 +246,6 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
             //判断是否存在redis缓存，存在则删除后更新，不存在则添加
             setRedisSkuCost(dmpSkuCostEntity);
         }
-        //同步重算plm产品物流信息
-        if (CollectionUtils.isNotEmpty(dmpSkuCostEntityList)){
-            logisticsProductFeign.recalDestDeclarePrice(dmpSkuCostEntityList);
-        }
     }
 
     /**

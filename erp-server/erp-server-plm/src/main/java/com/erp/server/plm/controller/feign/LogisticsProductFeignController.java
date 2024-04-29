@@ -65,13 +65,4 @@ public class LogisticsProductFeignController extends BaseController {
     public List<LogisticsProductDTO.ProductDTO> listBySkuNoList(@RequestBody List<String> skuNoList) {
         return logisticsProductService.listLogisticsProduct(null,skuNoList);
     }
-
-    /**
-     * 重算物流产品 目的国申报价
-     * @return
-     */
-    @PostMapping("/recalDestDeclarePrice")
-    public void recalDestDeclarePrice(@RequestBody List<DmpSkuCostEntity> dmpSkuCostEntityList) {
-        logisticsProductService.recalDestDeclarePrice(dmpSkuCostEntityList);
-    }
 }
