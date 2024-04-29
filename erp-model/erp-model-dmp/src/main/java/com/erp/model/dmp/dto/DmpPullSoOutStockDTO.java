@@ -22,4 +22,10 @@ public class DmpPullSoOutStockDTO {
      * 单号
      */
     private String platformCode;
+
+    /**
+     * 单号ID
+     */
+    private String soB2cId;
+
 }
