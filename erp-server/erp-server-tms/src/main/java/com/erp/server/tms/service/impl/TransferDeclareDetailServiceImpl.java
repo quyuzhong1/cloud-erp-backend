@@ -99,11 +99,6 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         }
 
         if (CollectionUtils.isNotEmpty(deleteIds)) {
-            List<TransferDeclareDetailEntity> detailEntities = this.listByIds(deleteIds);
-            long count = detailEntities.stream().filter(req -> TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(req.getOrderUploadStatus())).count();
-            if (count > 0) {
-                throw new ServiceException(ApiError.UPLOAD_SUCCESS_NOT_DELETE);
-            }
 
             List<TransferDeclareDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
@@ -113,14 +108,12 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
             //删除明细对应的sku拆分记录
             transferDeclareProductService.removeByDeclareDetailIds(deleteIds);
 
-            //修改订单中转状态为待中转
-            List<String> soIds = detailEntities.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-            soB2cFeign.updateTransferStatusBatch(soIds, TransferStatusEnum.WAIT.getCode());
-
             //处理订单异常信息
+            List<TransferDeclareDetailEntity> detailEntities = this.listByIds(deleteIds);
+            List<String> soIds = detailEntities.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
             SoB2cErrorDTO.BatchDeleteDTO deleteDTO = new SoB2cErrorDTO.BatchDeleteDTO();
             deleteDTO.setMainIds(soIds);
-            deleteDTO.setType(SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
+            deleteDTO.setType(SoB2cErrorTypeEnum.INSTOCK_FORECAST.getCode());
             soB2cFeign.deleteErrorByMainIds(deleteDTO);
         }
 
@@ -182,17 +175,9 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
 
         //校验有上传成功的单据不能删除
         List<TransferDeclareDetailEntity> detailEntities = this.listByMainIds(mainIds);
-        List<String> soCodeList = detailEntities.stream().filter(req -> TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(req.getOrderUploadStatus())).map(req -> req.getSoCode()).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(soCodeList)) {
-            throw new ServiceException(ApiError.ORDER_UPLOAD_SUCCESS_NOT_DELETE, soCodeList.get(0));
-        }
 
         //删除明细
         lambdaUpdate().in(TransferDeclareDetailEntity::getMainId, mainIds).remove();
-
-        //修改订单中转状态为待中转
-        List<String> soIds = detailEntities.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-        soB2cFeign.updateTransferStatusBatch(soIds, TransferStatusEnum.WAIT.getCode());
 
         //删除明细对应的sku拆分记录
         List<String> ids = detailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
@@ -250,6 +235,14 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
             logisticsChannelEntities = logisticsChannelService.listByIds(logisticsChannelIds);
         }
 
+        //校验是否存在订单
+        List<String> soCodeIds = list.stream().filter(req -> StringUtils.isBlank(req.getId())).map(req -> req.getSoCode()).distinct().collect(Collectors.toList());
+        List<TransferDeclareDetailEntity> detailEntityList = this.listBySoCodeList(soCodeIds);
+        if (CollectionUtils.isNotEmpty(detailEntityList)) {
+            throw new ServiceException(ApiError.TRANSFER_DECLARE_SO_EXISTS, detailEntityList.get(0).getSoCode());
+        }
+
+
         List<String> soIds = list.stream().map(req -> req.getSoId()).collect(Collectors.toList());
         List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listBySoIds(soIds);
 
@@ -282,5 +275,17 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
             return Collections.emptyList();
         }
         return lambdaQuery().in(TransferDeclareDetailEntity::getMainId, mainIds).list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateTransferStatusByBatch(List<TransferDeclareDTO.UpdateForcastStatusDTO> list) {
+        for (TransferDeclareDTO.UpdateForcastStatusDTO updateForcastStatusDTO : list) {
+            lambdaUpdate()
+                    .eq(TransferDeclareDetailEntity::getSoId, updateForcastStatusDTO.getSoId())
+                    .set(TransferDeclareDetailEntity::getTransferStatus, updateForcastStatusDTO.getStatus())
+                    .update();
+        }
+        return Boolean.TRUE;
     }
 }

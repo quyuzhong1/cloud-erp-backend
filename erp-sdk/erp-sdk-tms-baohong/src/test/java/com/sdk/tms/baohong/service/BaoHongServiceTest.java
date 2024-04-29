@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+//生产 customerCode: E3138 appToken : 386E6532DEA4EC65 appKey 2c5bd44acfe6f61c7421c800190781f8
+//测试 customerCode: E0207 appToken:  BAAC60E49804C53A appKey 98f8fd9bb9edfa770bc0a317b8203fc3
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes= BaoHongService.class)
 public class BaoHongServiceTest {
@@ -110,9 +112,10 @@ public class BaoHongServiceTest {
                                 .opQuantity(1)
                                 .build()
                 ))
-                .trackingNumber("1234567811011")
+                .orderStatus("2")
+                .trackingNumber("314r13212")
                 .oabName("wj")
-                .referenceNo("wj2024012311")
+                .referenceNo("wj20224012123121")
                 .deliveryAddress("深圳龙岗坂田")
                 .oabStreetAddress1("深圳龙岗坂田")
                 .build();
@@ -121,10 +124,15 @@ public class BaoHongServiceTest {
         System.out.println(response.getData());
     }
 
+    @Test
+    public void cancelOrder(){
+        BaoHongResponse<String> response = baoHongService.cancelOrder("SOE02070223440","平台发货异常");
+        System.out.println(response);
+    }
 
     @Test
     public void getOrderByCodeTest(){
-        BaoHongResponse<OrderDataArr> response = baoHongService.getOrderByCode("SOE02070222879");
+        BaoHongResponse<OrderDataArr> response = baoHongService.getOrderByCode("SOE02070223440");
         System.out.println(response);
         System.out.println(response.getData());
     }

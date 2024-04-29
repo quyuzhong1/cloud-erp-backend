@@ -166,7 +166,7 @@ public class ShopInfoFeignController extends BaseController {
     /**
      * 根据店铺ID获取所有同账号的店铺
      */
-    @GetMapping("feign/shop/getRelatedByShopId")
+    @GetMapping("/getRelatedByShopId")
     public List<ShopInfoEntity> getRelatedByShopId(@RequestParam("shopId") String shopId){
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
         if (null == shopInfo){

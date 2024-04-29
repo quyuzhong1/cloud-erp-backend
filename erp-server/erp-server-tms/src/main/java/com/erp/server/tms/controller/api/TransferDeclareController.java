@@ -252,41 +252,6 @@ public class TransferDeclareController extends BaseController {
     }
 
     /**
-     * 订单预报(批次)
-     * @Author Luo_WG
-     * @Date 2024/1/25 9:54
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @LogViewService
-    @PostMapping(value = "/upload")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:transferDeclare:upload",
-            tableAlias = "td"
-    )
-    public ApiResult<List<BatchResultDTO>> orderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            List<BatchResultDTO> result = new ArrayList<>();
-            try {
-                result = transferDeclareService.orderForecast(id);
-            } catch (Exception e) {
-                log.error("上传报关单失败", e);
-                TransferDeclareEntity entity = transferDeclareService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    result.add(BatchResultDTO.fail(id, id, "报关单不存在, 上传报关单失败"));
-                    resultDTOS.addAll(result);
-                    continue;
-                }
-                result.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
-            }
-            resultDTOS.addAll(result);
-
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-    /**
      * 重试订单预报
      * @Author Luo_WG
      * @Date 2024/1/25 9:54

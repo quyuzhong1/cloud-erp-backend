@@ -74,8 +74,8 @@ public class PackageController extends BaseController {
      * @return
      */
     @PostMapping("/merge")
-    public ApiResult<List<BatchResultDTO>> merge(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> result = packageService.mergePackage(dto.getIds());
+    public ApiResult<List<BatchResultDTO>> merge(@RequestBody @Validated PackageDTO.MergePackageDTO dto) {
+        List<BatchResultDTO> result = packageService.mergePackage(dto);
         return result.stream().allMatch(BatchResultDTO::getSuccess) ? success(result) : failure(result);
     }
 

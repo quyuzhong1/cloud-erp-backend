@@ -294,6 +294,11 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
             List<BaseChildDTO.ListChildTreeDTO> childrenList = TransferLogisticsChannelConverter.INSTANCE.convertTree(channelList);
             item.setChildren(childrenList);
         }
+        //排序
+        list = list.stream().sorted(Comparator.comparing(BaseChildDTO.ListChildTreeDTO::getDisabled)).collect(Collectors.toList());
+        list.forEach(v->{
+            v.setChildren(v.getChildren().stream().sorted(Comparator.comparing(BaseChildDTO.ListChildTreeDTO::getDisabled)).collect(Collectors.toList()));
+        });
         return list;
     }
 

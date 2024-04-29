@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -84,6 +85,21 @@ public class SettingForecastDTO implements Serializable {
          */
         private String transferLogisticsSupplierName;
 
+        /**
+         * 中转商渠道id
+         */
+        private String transferLogisticsChannelId;
+
+        /**
+         * 中转商渠道名
+         */
+        private String transferLogisticsChannelName;
+
+        /**
+         * 是否自动预报  true 是
+         */
+        private Boolean isAutoForecast;
+
     }
 
 
@@ -128,6 +144,18 @@ public class SettingForecastDTO implements Serializable {
          */
         private String transferLogisticsSupplierId;
 
+
+        /**
+         * 中转商渠道id
+         */
+        private String transferLogisticsChannelId;
+
+        /**
+         * 是否自动预报  true 是
+         */
+        @NotNull(message = "是否自动预报不能为空")
+        private Boolean isAutoForecast;
+
     }
 
 
@@ -159,12 +187,20 @@ public class SettingForecastDTO implements Serializable {
          */
         private String declarePlatformName;
 
-
         /**
          * 渠道名称
          */
         private String LogisticsChannelName;
 
+        /**
+         * 中转商渠道id
+         */
+        private String transferLogisticsChannelId;
+
+        /**
+         * 中转商渠道名
+         */
+        private String transferLogisticsChannelName;
     }
 
     @Data

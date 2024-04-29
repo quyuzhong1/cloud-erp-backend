@@ -74,6 +74,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
     @Resource
     private TransferDeclareFeign transferDeclareFeign;
 
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public PackingInspectionDTO.ViewDTO scan(PackingInspectionDTO.ScanDTO dto) {
@@ -93,6 +94,12 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
         if(ObjectUtil.isEmpty(soB2cEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        //验证订单平台是否取消
+        if (soB2cEntity.getIsCancel()) {
+            //订单拦截
+            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消"));
+            return null;
         }
 
         //因为明细只保存父级SKU，所以如果有组合品没办法直接更新明细，将明细sku拆分放到redis，扫描时操作redis的值，在最后全部扫描完成统一更新数据库
@@ -207,6 +214,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             List<SoB2cDeliveryDetailEntity> detailEntityList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
             detailEntityList.forEach(v-> v.setWaitScanQty(0));
             entity.setIsInspection(true);
+            entity.setInspectionTime(LocalDateTime.now());
             viewDTO.setStatus(true);
             if(!soB2cDeliveryService.updateById(entity)){
                 throw new ServiceException("发货单更新失败");
@@ -280,6 +288,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         List<SoB2cDeliveryDetailEntity> detailEntityList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         detailEntityList.forEach(v-> v.setWaitScanQty(v.getDeliveryQty()));
         entity.setIsInspection(false);
+        entity.setInspectionTime(null);
         if(!soB2cDeliveryService.updateById(entity)){
             throw new ServiceException("发货单更新失败");
         }

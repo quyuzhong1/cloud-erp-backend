@@ -1,10 +1,13 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.PackageForecastEntity;
+import com.erp.server.wms.query.PackageForecastQueryHandler;
+import com.erp.server.wms.query.SoOutstockQueryHandler;
 import com.erp.server.wms.service.PackageForecastDetailService;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
@@ -57,9 +60,9 @@ public class PackageForecastController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/tabList")
-    public ApiResult<List<PackageForecastDTO.TabListDTO>> tabList() {
-        List<PackageForecastDTO.TabListDTO> tabList = packageForecastService.tabList();
+    @PostMapping("/tabList")
+    public ApiResult<List<PackageForecastDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<PackageForecastDTO.TabListDTO> tabList = packageForecastService.tabList(dto);
         return success(tabList);
     }
 
@@ -75,6 +78,7 @@ public class PackageForecastController extends BaseController {
             menuCode = "wms:packageForecast:paging",
             tableAlias = "pf"
     )
+    @WebAdvanceQuery(handler = PackageForecastQueryHandler.class)
     public ApiResult<PagingVO<PackageForecastDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PackageForecastDTO.PagingParamDTO> dto) {
         PagingVO<PackageForecastDTO.PagingViewDTO> pagingVO = packageForecastService.paging(dto);
         return success(pagingVO);
@@ -197,7 +201,7 @@ public class PackageForecastController extends BaseController {
      * @param dto
      * @return
      */
-    @PostMapping("/forecast")
+    /*@PostMapping("/forecast")
     public ApiResult<List<BatchResultDTO>> forecast(@RequestBody @Valid PackageForecastDTO.TransferDeclareDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         String transferLogisticsChannelId = dto.getTransferLogisticsChannelId();
@@ -219,7 +223,37 @@ public class PackageForecastController extends BaseController {
             resultDTOS.add(deleteResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }*/
+
+    /**
+     * 入库预报
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/instockForcast")
+    public ApiResult<List<BatchResultDTO>> instockForcast(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = packageForecastService.instockForcast(id);
+            } catch (Exception e) {
+                log.error("组包预报单 入库预报失败===>{}", e.getMessage());
+                PackageForecastEntity entity = packageForecastService.getById(id);
+                if (Objects.isNull(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 入库预报失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+
 
     /**
      * 上传组包预报

@@ -61,5 +61,10 @@ public class TransferLogisticsCreateInboundReq {
          * 包裹重量
          */
         private BigDecimal grossWeight;
+
+        /**
+         * 包袋号
+         */
+        private String packNum;
     }
 }

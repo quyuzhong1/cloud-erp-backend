@@ -89,6 +89,20 @@ public class BaoHongService {
     }
 
     /**
+     * 取消订单
+     * @return
+     */
+    public BaoHongResponse<String> cancelOrder(String orderCode,String reason){
+        TransferLogisticsContext.setRequestJson(JSONObject.toJSONString(orderCode));
+        HeaderRequest headerRequest = BaoHongUtils.getOrderHeader();
+        ServiceForOrder service = BaoHongUtils.getOrderService();
+        Holder<String> askHolder = new Holder<>();
+        Holder<String> messageHolder = new Holder<>();
+        service.intercept(headerRequest,orderCode,reason,askHolder,messageHolder);
+        return BaoHongUtils.buildBaseResponse(askHolder,messageHolder,"");
+    }
+
+    /**
      * 获取单个订单信息
      * @param orderCode:创建订单时传的参考号 或者返回的 保宏orderCode都行
      * @return

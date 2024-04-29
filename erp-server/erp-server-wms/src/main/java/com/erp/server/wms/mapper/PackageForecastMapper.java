@@ -35,14 +35,14 @@ public interface PackageForecastMapper extends BaseMapper<PackageForecastEntity>
      * @param params
      * @return
      */
-    IPage<PackageForecastDTO.PagingViewDTO> paging(Page query, @Param("params") PackageForecastDTO.PagingParamDTO params,@Param("uploadStatus") String uploadStatus);
+    IPage<PackageForecastDTO.PagingViewDTO> paging(Page query, @Param("params") PackageForecastDTO.PagingParamDTO params);
 
     /**
      * 导出
      * @param dto
      * @return
      */
-    List<PackageForecastDTO.PagingViewDTO> listExcel(@Param("params") PackageForecastDTO.ExportDTO dto,@Param("uploadStatus") String uploadStatus);
+    List<PackageForecastDTO.PagingViewDTO> listExcel(@Param("params") PackageForecastDTO.ExportDTO dto);
 
     /**
      * 获取订单查询列表（速卖通订单更新使用）
