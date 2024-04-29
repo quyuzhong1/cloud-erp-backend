@@ -2168,6 +2168,15 @@ public class SoB2cDTO implements Serializable {
          */
         private String countryName;
 
+        /**
+         * 可用数量
+         */
+        private Integer useableQty;
+
+        /**
+         * 是否缺货
+         */
+        private Boolean isOutStock;
 
         /**
          * 订单分类名称
