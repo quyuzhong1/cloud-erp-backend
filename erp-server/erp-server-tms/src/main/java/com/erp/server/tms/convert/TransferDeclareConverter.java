@@ -27,12 +27,12 @@ public interface TransferDeclareConverter {
     List<TransferLogisticsCreateOrderReq.ProductDetail> declareProductEntityToCreateOrderReq(List<TransferDeclareProductEntity> declareProductEntity);
 
     @Mappings({
-            @Mapping(target = "price", source = "destDeclarePrice"),
+//            @Mapping(target = "price", source = "destDeclarePrice"),
             @Mapping(target = "declarePrice", source = "declarePrice"),
             @Mapping(target = "quantity", source = "qty"),
             @Mapping(target = "grossWeight", source = "grossWeight"),
             @Mapping(target = "weight", source = "weight"),
-            @Mapping(target = "declareCurrency", source = "currency"),
+//            @Mapping(target = "declareCurrency", source = "currency"),
             @Mapping(target = "amount", ignore = true),
             @Mapping(target = "childOrderId", ignore = true),
             @Mapping(target = "destCurrencySymbol", source = "currencySymbol")
