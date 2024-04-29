@@ -104,4 +104,6 @@ public interface SoB2cDeliveryInterceptService extends SuperService<SoB2cDeliver
      * @return void
      **/
     Boolean updateHandleStatus(List<String> sourceIds, String status);
+
+    List<SoB2cDeliveryInterceptEntity> listByStatus(String code);
 }
