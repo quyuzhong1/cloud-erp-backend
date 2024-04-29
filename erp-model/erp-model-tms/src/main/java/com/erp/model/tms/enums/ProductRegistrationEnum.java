@@ -8,6 +8,7 @@ import com.erp.model.tms.entity.ProductRegistrationEntity;
 import lombok.Getter;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.function.Function;
 
@@ -75,9 +76,9 @@ public enum ProductRegistrationEnum {
         CURRENCY_CODE("申报币种", "currencyCode", "报关币种", v-> "CNY".equals(v.getDeclareCurrency())?"RMB":v.getDeclareCurrency(), ProductRegistrationEntity::getCurrency, v-> "CNY".equals(v.getDeclareCurrency())?"RMB":v.getDeclareCurrency()),
         DECLARED_VALUE("申报价值", "declaredValue", "报关申报价", LogisticsProductDTO.ProductDTO::getDeclarePrice, ProductRegistrationEntity::getDeclarePrice, LogisticsProductDTO.ProductDTO::getDeclarePrice),
         WEIGHT("产品重量KG", "weight", "毛重（g）", LogisticsProductDTO.ProductDTO::getGrossWeight, ProductRegistrationEntity::getGrossWeight, LogisticsProductDTO.ProductDTO::getGrossWeight),
-        LENGTH("产品长CM", "length", "包装尺寸(cm)-长", LogisticsProductDTO.ProductDTO::getBoxSizeLength, ProductRegistrationEntity::getLength, LogisticsProductDTO.ProductDTO::getBoxSizeLength),
-        WIDTH("产品宽CM", "width", "包装尺寸(cm)-宽", LogisticsProductDTO.ProductDTO::getBoxSizeWide, ProductRegistrationEntity::getWidth, LogisticsProductDTO.ProductDTO::getBoxSizeWide),
-        HEIGHT("产品高CM", "height", "包装尺寸(cm)-高", LogisticsProductDTO.ProductDTO::getBoxSizeHigh, ProductRegistrationEntity::getHeight, LogisticsProductDTO.ProductDTO::getBoxSizeHigh),
+        LENGTH("产品长CM", "length", "包装尺寸(cm)-长", v->Objects.isNull(v.getProductLength())?"":v.getProductLength().divide(BigDecimal.valueOf(10),4, RoundingMode.HALF_UP), ProductRegistrationEntity::getLength, v->Objects.isNull(v.getProductLength())?"":v.getProductLength().divide(BigDecimal.valueOf(10),4, RoundingMode.HALF_UP)),
+        WIDTH("产品宽CM", "width", "包装尺寸(cm)-宽", v->Objects.isNull(v.getProductWidth())?"":v.getProductWidth().divide(BigDecimal.valueOf(10),4, RoundingMode.HALF_UP), ProductRegistrationEntity::getWidth, v->Objects.isNull(v.getProductWidth())?"":v.getProductWidth().divide(BigDecimal.valueOf(10),4, RoundingMode.HALF_UP)),
+        HEIGHT("产品高CM", "height", "包装尺寸(cm)-高", v->Objects.isNull(v.getProductHeight())?"":v.getProductHeight().divide(BigDecimal.valueOf(10),4, RoundingMode.HALF_UP), ProductRegistrationEntity::getHeight,  v->Objects.isNull(v.getProductHeight())?"":v.getProductHeight().divide(BigDecimal.valueOf(10),4, RoundingMode.HALF_UP)),
         HAS_INVOICE("是否带发票：1是、2否", "HasInvoice", "", null, ProductRegistrationEntity::getIsInvoice, null),
         HAS_BATTERY("是否带电池：0否、1是", "hasBattery", "属性【带电池**】显示为是，其他为否", LogisticsProductDTO.ProductDTO::getIsElectric, ProductRegistrationEntity::getIsBattery, LogisticsProductDTO.ProductDTO::getIsElectric),
         BATTERY_TYPE("电池类型（hasBattery=1必填）", "batteryType", "", null, ProductRegistrationEntity::getBatteryType, null),
