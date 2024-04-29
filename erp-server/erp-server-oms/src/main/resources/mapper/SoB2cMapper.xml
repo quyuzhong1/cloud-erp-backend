@@ -753,9 +753,6 @@
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
                 and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
             </if>
-            <if test="isOutStock != null and isOutStock == true">
-                and sb2c.bill_status in( 'waitDistribution','inDistribution','frozen','partialShipped')
-            </if>
         </where>
         order by sb2c.id desc
     </select>

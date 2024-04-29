@@ -156,5 +156,5 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @param params
      * @return List<ExcelExportDTO>
      */
-    List<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("params") SoB2cDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO,@Param("isOutStock") Boolean isOutStock);
+    List<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("params") SoB2cDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
 }
