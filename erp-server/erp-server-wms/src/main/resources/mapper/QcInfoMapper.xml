@@ -418,7 +418,7 @@
         select
             count(0)
         from qc_info  qb
-        inner join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
+        left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
             qb.is_deleted = false and qb.qc_date is not null
             <if test="params.qcStatusList !=null and params.qcStatusList.size>0">

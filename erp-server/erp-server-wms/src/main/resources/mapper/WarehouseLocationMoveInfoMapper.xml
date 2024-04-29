@@ -183,12 +183,6 @@
         WHERE ${params.sqlMap.default}
         and wlmi.is_deleted = FALSE
         AND wlmi.invalid_status = FALSE
-        <if test="params.codeList != null and params.codeList.size > 0">
-            and wlmi.code in
-            <foreach collection="params.codeList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and wlmi.approve_status in
             <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
