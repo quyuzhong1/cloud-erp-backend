@@ -234,22 +234,25 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), warehouseLocationMoveEntity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLogByObj(old, warehouseLocationMoveEntity, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), warehouseLocationMoveEntity.getId(), msg);
         //修改明细
-        pcUpdateDTO.getDetailList().forEach(detail->{
-            WarehouseLocationMoveDTO.ViewDTO viewDTO = new WarehouseLocationMoveDTO.ViewDTO();
-            BeanMapperUtils.copy(detail, viewDTO);
-            WarehouseLocationMoveEntity moveInfoEntity = new WarehouseLocationMoveEntity();
-            BeanMapperUtils.copy(detail, moveInfoEntity);
-            // 数据处理
-            moveInfoEntity.setBillDate(pcUpdateDTO.getBillDate());
-            moveInfoEntity.setWarehouseId(viewDTO.getWarehouseId());
-            handleData(moveInfoEntity);
-            // 修改明细数据（包含增删改）
-            WarehouseLocationMoveDTO.UpdateDTO updateDto = new WarehouseLocationMoveDTO.UpdateDTO();
-            updateDto.setDetailList(Arrays.asList(detail));
-            updateDto.setWarehouseId(detail.getWarehouseId());
-            updateDto.setPcShow(true);
-            warehouseLocationMoveDetailService.update(updateDto, warehouseLocationMoveEntity.getId());
-        });
+        WarehouseLocationMoveDTO.UpdateDTO updateDto = new WarehouseLocationMoveDTO.UpdateDTO();
+
+        List<Object> detailResultList = new ArrayList<>();
+//        detailList.forEach(detail->{
+//            WarehouseLocationMoveDTO.ViewDTO viewDTO = new WarehouseLocationMoveDTO.ViewDTO();
+//            BeanMapperUtils.copy(detail, viewDTO);
+//            WarehouseLocationMoveEntity moveInfoEntity = new WarehouseLocationMoveEntity();
+//            BeanMapperUtils.copy(detail, moveInfoEntity);
+//            // 数据处理
+//            moveInfoEntity.setBillDate(pcUpdateDTO.getBillDate());
+//            moveInfoEntity.setWarehouseId(viewDTO.getWarehouseId());
+//            handleData(moveInfoEntity);
+//            detailResultList.add(detail);
+//        });
+        // 修改明细数据（包含增删改）
+        updateDto.setDetailList(detailList);
+//        updateDto.setWarehouseId(detail.getWarehouseId());
+        updateDto.setPcShow(true);
+        warehouseLocationMoveDetailService.update(updateDto, warehouseLocationMoveEntity.getId());
 
         return Boolean.TRUE;
     }
@@ -357,7 +360,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         for (ApproveStatusEnum item : values) {
             WarehouseLocationMoveDTO.PagingParamDTO pagingParamDTO = new WarehouseLocationMoveDTO.PagingParamDTO();
             pagingParamDTO.setPermissionSql(dto.getPermissionSql());
-            pagingParamDTO.setInvalidStatus(Boolean.FALSE);
+//            pagingParamDTO.setInvalidStatus(Boolean.FALSE);
             WarehouseLocationMoveDTO.PdaTabListDTO resultDTO = new WarehouseLocationMoveDTO.PdaTabListDTO();
             Integer count = MathUtil.ZERO;
             if (ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
@@ -555,7 +558,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
     private Boolean validateDisApprove(WarehouseLocationMoveEntity entity) {
         // 已审核支持反审核
-        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
 
@@ -611,7 +614,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     public BatchResultDTO cancelProcess(String id) {
         WarehouseLocationMoveEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到仓位移动主单数据"));
         // 只有审核中的单据允许撤销
-        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         // TODO 撤销流程
@@ -752,7 +755,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             BeanMapper.copy(detailViewDTO, inventoryBySkuIdAndWarehouseDTO);
             SkuVO sku = skuVOList.stream().filter(req -> req.getSkuId().equals(detailViewDTO.getSkuId())).findFirst().orElse(null);
             if (Objects.nonNull(sku)) {
-                detailViewDTO.setProductName(sku.getBrandName());
+                detailViewDTO.setProductName(sku.getSkuName());
             }
             WarehouseLocationEntity inWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req ->
                             req.getWarehouseId().equals(detailViewDTO.getWarehouseId()) && req.getCode().equals(detailViewDTO.getInWarehouseLocation()))

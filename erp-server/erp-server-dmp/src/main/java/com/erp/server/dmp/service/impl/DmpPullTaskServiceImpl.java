@@ -276,6 +276,13 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         syncIng.setCount(syncIngCount);
         result.add(syncIng);
+        //无需同步
+        DmpPullTaskDTO.TabListDTO noNeedSync = new DmpPullTaskDTO.TabListDTO();
+        noNeedSync.setTabFlag(SyncStatusEnum.NO_NEED_SYNC.getCode());
+        int noNeedSyncCount = countList.stream().filter(a -> a.getTabFlag().equals(noNeedSync.getTabFlag())).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        noNeedSync.setCount(noNeedSyncCount);
+        result.add(noNeedSync);
         //已归档
         DmpPullTaskDTO.TabListDTO archived = dmpPullTaskHistoryMapper.getStatusCount(dto.getPermissionSql());
         result.add(archived);
