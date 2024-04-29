@@ -553,12 +553,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 LogisticsProductDTO.ProductDTO productDTO = skuInfoList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
                 if (Objects.nonNull(productDTO)) {
                     Integer qty = item.getQty();
-                    BigDecimal price = productDTO.getDestDeclarePrice();
-                    productDTO.setQuantity(qty);
-                    productDTO.setPrice(price);
-                    productDTO.setAmount(MathUtil.multiply(price, qty));
-                    //目的国申报价
                     BigDecimal destDeclarePrice = productDTO.getDestDeclarePrice();
+                    productDTO.setQuantity(qty);
+//                    productDTO.setPrice(price);
+                    productDTO.setAmount(MathUtil.multiply(destDeclarePrice, qty));
+                    //目的国申报价
+//                    BigDecimal destDeclarePrice = productDTO.getDestDeclarePrice();
                     //表示最大的报关价还小于 目的过申报价
                     if (Objects.nonNull(destDeclarePrice) && maxCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && maxCustomsAmount.compareTo(destDeclarePrice) < 0) {
                         productDTO.setDestDeclarePrice(maxCustomsAmount);

@@ -117,9 +117,9 @@ public interface LogisticsOrderConverter {
             //出口国/起始国/发件人国家_申报单价（按对应币别的法定单位，最多4位小数点）
             @Mapping(target = "declare_unit_price_export", source = "declarePrice"),
             //USD
-            @Mapping(target = "currency_export", source = "declareCurrencySymbol"),
+            @Mapping(target = "currency_export", source = "declareCurrency"),
             @Mapping(target = "declare_unit_price_import", source = "destDeclarePrice"),
-            @Mapping(target = "currency_import", source = "destCurrencySymbol")
+            @Mapping(target = "currency_import", source = "destCurrency")
     })
     DeclareProductInfo dsfProductMapping(LogisticsProductVO logisticsProductVO);
 
@@ -160,7 +160,7 @@ public interface LogisticsOrderConverter {
 
     @Mapping(target = "goodsNameCh", source = "declareChineseName")
     @Mapping(target = "goodsNameEn", source = "declareEnglishName")
-    @Mapping(target = "price", source = "price")
+    @Mapping(target = "price", source = "destDeclarePrice")
     @Mapping(target = "quantity", source = "quantity")
     @Mapping(target = "weight", source = "weight")
     @Mapping(target = "hscode", source = "customsCode")
@@ -214,8 +214,8 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "invoiceWeight", source = "weight",qualifiedByName = "divideByOneThousandWithThreeDecimal"),
             @Mapping(target = "invoiceQuantity", source = "quantity"),
             @Mapping(target = "unitCode", source = "declareUnit"),
-            @Mapping(target = "invoiceUnitcharge", source = "price"),
-            @Mapping(target = "invoiceCurrencycode", source = "declareCurrency"),
+            @Mapping(target = "invoiceUnitcharge", source = "destDeclarePrice"),
+            @Mapping(target = "invoiceCurrencycode", source = "destCurrency"),
             @Mapping(target = "hsCode", source = "customsCode"),
             @Mapping(target = "sku", source = "skuNo")
     })
@@ -271,7 +271,7 @@ public interface LogisticsOrderConverter {
     @Mapping(target = "hsCode",source = "customsCode")
     @Mapping(target = "originCountry",source = "sourceCountry")
     @Mapping(target = "itemCount",source = "quantity")
-    @Mapping(target = "unitValue",source = "price")
+    @Mapping(target = "unitValue",source = "destDeclarePrice")
     //TODO Item重量，转换成KG
     @Mapping(target = "weight",source = "weight",qualifiedByName = "gTokg")
     OrderItem orderItemRequestByUBI(LogisticsProductVO logisticsProductVO);
@@ -343,7 +343,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "productUrl" ,source = "url"),
             @Mapping(target = "sku" ,source = "skuNo"),
             @Mapping(target = "invoiceRemark" ,source = "distributionInfo"),
-            @Mapping(target = "currencyCode" ,source = "declareCurrency"),
+            @Mapping(target = "currencyCode" ,source = "destCurrency"),
             @Mapping(target = "invoicePart" ,source = "englishMaterial"),
             @Mapping(target = "invoiceUsage" ,source = "englishUsage")
     })
@@ -396,8 +396,8 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "count" ,source = "quantity"),
             @Mapping(target = "unit",source = "declareUnit"),
             @Mapping(target = "weight",source = "weight", qualifiedByName = "gTokg"),
-            @Mapping(target = "amount",source = "price"),
-            @Mapping(target = "currency",source = "declareCurrency"),
+            @Mapping(target = "amount",source = "destDeclarePrice"),
+            @Mapping(target = "currency",source = "destCurrency"),
             @Mapping(target = "sourceArea",source = "sourceCountry"),
             @Mapping(target = "hsCode",source = "customsCode"),
             @Mapping(target = "goodsCode",source = "customsCode"),
@@ -460,12 +460,12 @@ public interface LogisticsOrderConverter {
     })
     TongYouCreateOrderRequest orderRequestByTongYou(LogisticsOrderVO logisticsOrderVO);
     @Mappings({
-            @Mapping(target = "currency" ,source = "declareCurrency"),
+            @Mapping(target = "currency" ,source = "destCurrency"),
             @Mapping(target = "des" ,source = "productProperty"),
             @Mapping(target = "hs" ,source = "customsCode"),
             @Mapping(target = "nameCN" ,source = "declareChineseName"),
             @Mapping(target = "nameEN" ,source = "declareEnglishName"),
-            @Mapping(target = "price" ,source = "price"),
+            @Mapping(target = "price" ,source = "destDeclarePrice"),
             @Mapping(target = "qty" ,source = "quantity"),
             @Mapping(target = "sku" ,source = "skuNo"),
             @Mapping(target = "weight" ,source = "weight",qualifiedByName = "divideByOneThousandWithThreeDecimal"),

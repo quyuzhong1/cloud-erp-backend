@@ -133,7 +133,7 @@ public class AliExpressLogisticsHandlerImplTest {
         logisticsProductVO.setEnglishUsage("materi");
         logisticsProductVO.setDeclareChineseName("物流");
         logisticsProductVO.setDeclareEnglishName("mta");
-        logisticsProductVO.setPrice(new BigDecimal("197.07"));
+        logisticsProductVO.setDestDeclarePrice(new BigDecimal("197.07"));
         logisticsProductVO.setWeight(1);
         logisticsProductVO.setQuantity(2);
         logisticsProductVO.setSourceCountry("CN");
