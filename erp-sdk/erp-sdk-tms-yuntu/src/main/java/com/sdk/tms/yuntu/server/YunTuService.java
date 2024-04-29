@@ -51,6 +51,7 @@ public class YunTuService {
         validate(appKey,appSecret,url);
         List<Map<String,Object>> paramsMapList =  BeanMapUtil.beanToMapList(request);
         String response = YunTuUtils.sendPost(url,YunTuConstants.METHOD_CREATE_ORDER,paramsMapList,appKey,appSecret);
+        log.info("下单完成：{}",JSONObject.toJSONString(response));
         return JSONObject.parseObject(response,new TypeReference<YunTuResponse<List<YunTuCreateOrder>>>() {}.getType());
     }
 

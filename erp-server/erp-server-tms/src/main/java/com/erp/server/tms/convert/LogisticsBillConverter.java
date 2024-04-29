@@ -55,7 +55,7 @@ public interface LogisticsBillConverter {
 
     @Mappings({
             @Mapping(target = "childOrderId", source = "childOrderId" ),
-            @Mapping(target = "price", source = "price" ),
+//            @Mapping(target = "price", source = "price" ),
             @Mapping(target = "quantity", source = "quantity"),
             @Mapping(target = "isElectric", source = "isElectric"),
             @Mapping(target = "weight", source = "weight"),

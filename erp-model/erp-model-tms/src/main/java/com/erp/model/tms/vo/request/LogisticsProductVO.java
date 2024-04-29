@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 public class LogisticsProductVO  implements Serializable {
 
     //申报单价
-    private BigDecimal price;
+//    private BigDecimal price;
 
     //数量
     private Integer quantity;
