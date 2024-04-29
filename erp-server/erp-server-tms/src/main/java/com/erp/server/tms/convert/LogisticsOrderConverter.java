@@ -343,7 +343,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "productUrl" ,source = "url"),
             @Mapping(target = "sku" ,source = "skuNo"),
             @Mapping(target = "invoiceRemark" ,source = "distributionInfo"),
-            @Mapping(target = "currencyCode" ,source = "declareCurrency"),
+            @Mapping(target = "currencyCode" ,source = "destCurrency"),
             @Mapping(target = "invoicePart" ,source = "englishMaterial"),
             @Mapping(target = "invoiceUsage" ,source = "englishUsage")
     })
