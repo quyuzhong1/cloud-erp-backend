@@ -964,13 +964,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<SoB2cDeliveryEntity> deliveryEntities = this.listBySourceIds(soIdList);
 
         //调用第三方平台SDK发货
-        try {
-            this.falseDeliveryBatch(deliverySoIdList);
-        } catch (Exception e) {
-            log.error("销售单【{}】 标记发货失败 >>>错误信息{}", e.getMessage());
-            SoB2cEntity entity = soB2cFeign.getById(deliveryEntities.get(0).getSourceId());
-            throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
-        }
+        this.falseDeliveryBatch(deliverySoIdList);
+
 
         //获取一个当前时间当作发货时间
         LocalDateTime deliveryTime = LocalDateTime.now();
