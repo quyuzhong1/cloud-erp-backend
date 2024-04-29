@@ -24,6 +24,10 @@ public class LogisticsProductVO  implements Serializable {
 
     //单件重量(单位:g)
     private Integer weight;
+    /**
+     * 毛重
+     */
+    private BigDecimal grossWeight;
 
     //商品链接
     private String url;
