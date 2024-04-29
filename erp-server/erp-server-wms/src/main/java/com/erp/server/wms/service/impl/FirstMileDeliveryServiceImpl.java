@@ -1731,7 +1731,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         for (OverseasWarehouseInboundDetailDTO.ViewDTO dto : detailViewList) {
             //装箱数量
             int packQty = packDateDTOList.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).mapToInt(req -> req.getPackQty() * req.getBoxQty()).sum();
-            dto.setPackQty(packQty);
+            if (packQty > dto.getDeliveryQty()) {
+                dto.setPackQty(dto.getDeliveryQty());
+            } else {
+                dto.setPackQty(packQty);
+            }
 
             //产品信息
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).findFirst().orElse(new SkuVO());
