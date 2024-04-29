@@ -83,4 +83,5 @@ public interface TransferDeclareFeign {
      */
     @PostMapping("/feign/transferDeclare/updateTransferStatusByBatch")
     Boolean updateTransferStatusByBatch(@RequestBody List<TransferDeclareDTO.UpdateForcastStatusDTO> list);
+
 }
