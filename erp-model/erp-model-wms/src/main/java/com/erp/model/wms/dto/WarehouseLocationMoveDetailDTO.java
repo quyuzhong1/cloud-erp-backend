@@ -2,10 +2,9 @@ package com.erp.model.wms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
-import java.io.Serializable;
 import javax.validation.constraints.*;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -192,6 +191,10 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
+        /**
+         * 备注
+         */
+        private String remark;
 
     }
 
