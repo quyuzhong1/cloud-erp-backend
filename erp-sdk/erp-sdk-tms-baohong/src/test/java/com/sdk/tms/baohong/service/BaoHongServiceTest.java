@@ -103,8 +103,7 @@ public class BaoHongServiceTest {
 
     @Test
     public void getCreateOrder(){
-        String json = "{\"buyInsurance\":0,\"channel\":1,\"deliveryAddress\":\"Rua Humberto I 928\",\"grossWeight\":\"152\",\"iossNo\":\"\",\"oabCity\":\"São Paulo\",\"oabCountry\":\"BR\",\"oabName\":\"Rafaela Caixeta\",\"oabPhone\":\"+5534996757065\",\"oabPostcode\":\"04018032\",\"oabState\":\"SP\",\"oabStreetAddress1\":\"Rua Humberto I 928\",\"orderMode\":1,\"orderProduct\":[{\"opQuantity\":1,\"" +
-                "productSku\":\"240308-5\",\"productTitleEn\":\"microphone\",\"purposeDeclaredValue\":\"8.14\"}],\"orderStatus\":\"2\",\"referenceNo\":\"XSDD2404292476\",\"serialNo\":\"\",\"smCode\":\"ZY-KJWS\",\"trackingNumber\":\"WSHBR120451665YQ\",\"warehouseCode\":\"sz01\"}";
+        String json = "{\"buyInsurance\":0,\"channel\":1,\"deliveryAddress\":\"Rua Humberto I 928\",\"grossWeight\":\"152\",\"iossNo\":\"\",\"oabCity\":\"São Paulo\",\"oabCountry\":\"BR\",\"oabName\":\"Rafaela Caixeta\",\"oabPhone\":\"+5534996757065\",\"oabPostcode\":\"04018032\",\"oabState\":\"SP\",\"oabStreetAddress1\":\"Rua Humberto I 928\",\"orderMode\":1,\"orderProduct\":[{\"opQuantity\":1,\"productSku\":\"249004\",\"productTitleEn\":\"microphone\",\"purposeDeclaredValue\":\"8.14\"}],\"orderStatus\":\"2\",\"referenceNo\":\"XSDD2404292476\",\"serialNo\":\"\",\"smCode\":\"ZY-KJWS\",\"trackingNumber\":\"WSHBR120451665YQ\",\"warehouseCode\":\"sz01\"}";
         CreateOrderInfo createOrderInfo = JSONObject.parseObject(json,new TypeReference<CreateOrderInfo>() {}.getType());
 
 //        CreateOrderInfo createOrderInfo = CreateOrderInfo.builder()

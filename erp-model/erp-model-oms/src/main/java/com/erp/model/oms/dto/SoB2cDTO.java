@@ -141,6 +141,7 @@ public class SoB2cDTO implements Serializable {
          * 导出类型,parentExport(销售套装BOM按父件SKU导出),childExport(销售套装BOM按子件SKU导出)
          * 字典，/wms/dict/drop/down?type=soB2cExportType
          */
+        @NotBlank(message = "导出类型不能为空")
         private String exportType;
 
     }
@@ -2104,6 +2105,12 @@ public class SoB2cDTO implements Serializable {
          * 数量
          */
         private Integer qty;
+
+
+        /**
+         * SKU数量
+         */
+        private Integer skuQty;
 
         /**
          * 产品skuId
