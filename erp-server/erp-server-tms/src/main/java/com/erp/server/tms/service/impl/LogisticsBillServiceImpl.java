@@ -553,12 +553,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 LogisticsProductDTO.ProductDTO productDTO = skuInfoList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
                 if (Objects.nonNull(productDTO)) {
                     Integer qty = item.getQty();
-                    BigDecimal price = productDTO.getDestDeclarePrice();
-                    productDTO.setQuantity(qty);
-                    productDTO.setPrice(price);
-                    productDTO.setAmount(MathUtil.multiply(price, qty));
-                    //目的国申报价
                     BigDecimal destDeclarePrice = productDTO.getDestDeclarePrice();
+                    productDTO.setQuantity(qty);
+//                    productDTO.setPrice(price);
+                    productDTO.setAmount(MathUtil.multiply(destDeclarePrice, qty));
+                    //目的国申报价
+//                    BigDecimal destDeclarePrice = productDTO.getDestDeclarePrice();
                     //表示最大的报关价还小于 目的过申报价
                     if (Objects.nonNull(destDeclarePrice) && maxCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && maxCustomsAmount.compareTo(destDeclarePrice) < 0) {
                         productDTO.setDestDeclarePrice(maxCustomsAmount);
@@ -624,7 +624,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         ProductCustomsEntity customs = null;
         if (StringUtils.isNotEmpty(country)){
             customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
-                    && StringUtils.isNotEmpty(country) && e.getCountry().equals(country)).findFirst().orElse(null);
+                    && StringUtils.isNotEmpty(country) && e.getCountry().contains(country)).findFirst().orElse(null);
 
         }
         //存在默认值时，先取默认值

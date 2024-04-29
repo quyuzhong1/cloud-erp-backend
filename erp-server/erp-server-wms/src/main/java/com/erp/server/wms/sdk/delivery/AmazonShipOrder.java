@@ -1,10 +1,14 @@
 package com.erp.server.wms.sdk.delivery;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.constant.BusinessCommonConstants;
+import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.IPlatformService;
@@ -18,11 +22,13 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cRefEntity;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.dto.LogisticsMappingDTO;
+import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.tms.feign.LogisticsMappingFeign;
 import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
@@ -36,7 +42,10 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -53,6 +62,9 @@ public class AmazonShipOrder implements IPlatformService {
     private DictBasicService dictBasicService;
     @Resource
     private LogisticsFeign logisticsFeign;
+
+    @Resource
+    private LogisticsMappingFeign logisticsMappingFeign;
 
     @Override
     public void shipOrder(PlatformShipOrderDTO dto) {
@@ -106,20 +118,6 @@ public class AmazonShipOrder implements IPlatformService {
         }
 
         for (SoB2cEntity mainEntity : sourceOrderList) {
-            // 非线上环境需要指定订单ID
-            if (!BusinessCommonConstants.hasProfile("prod")){
-                List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("amazonAllowShipOrderId");
-                if (CollectionUtils.isEmpty(warehouseTypes)){
-                    log.warn("【{}】不存在指定的订单ID配置,不请求亚马逊接口", mainEntity.getPlatformCode());
-                    return;
-                }
-                // 允许通过的ID
-                DictBasicDTO.ListDTO configAllowPlatformOrderDTO = warehouseTypes.stream().filter(e -> mainEntity.getPlatformCode().equalsIgnoreCase(e.getValue())).findFirst().orElse(null);
-                if (null == configAllowPlatformOrderDTO){
-                    log.warn("【{}】不属于配置指定的订单ID,不请求亚马逊接口", mainEntity.getPlatformCode());
-                    return;
-                }
-            }
             //检查销售订单详情是否存在
             List<SoB2cDetailEntity> detailEntityList = soB2cDetailEntityListMap.get(mainEntity.getId());
             if (CollectionUtils.isEmpty(detailEntityList)) {
@@ -158,9 +156,37 @@ public class AmazonShipOrder implements IPlatformService {
             if (null == shopInfoDTO) {
                 throw new ServiceException("未找到店铺授权:" + mainEntity.getShopId());
             }
+            AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+            OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
+
+            //取消则需要自动发起订单拦截
+            PlatformDeliveryInterceptDTO interceptDTO = PlatformDeliveryInterceptDTO.builder()
+                    .soB2cId(mainEntity.getId())
+                    .dictPlatform(mainEntity.getDictPlatform())
+                    .oldIsCancel(mainEntity.getIsCancel())
+                    .shopId(mainEntity.getShopId())
+                    .platformCode(mainEntity.getPlatformCode())
+                    .build();
+            Boolean isCancel = deliveryIntercept(interceptDTO);
+            if (isCancel){
+                throw new ServiceException(StrUtil.format("销售订单【{}】平台已取消，不支持发货",mainEntity.getCode()));
+            }
+            // 非线上环境需要指定订单ID
+            if (!BusinessCommonConstants.hasProfile("prod")){
+                List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("amazonAllowShipOrderId");
+                if (CollectionUtils.isEmpty(warehouseTypes)){
+                    log.warn("【{}】不存在指定的订单ID配置,不请求亚马逊接口", mainEntity.getPlatformCode());
+                    return;
+                }
+                // 允许通过的ID
+                DictBasicDTO.ListDTO configAllowPlatformOrderDTO = warehouseTypes.stream().filter(e -> mainEntity.getPlatformCode().equalsIgnoreCase(e.getValue())).findFirst().orElse(null);
+                if (null == configAllowPlatformOrderDTO){
+                    log.warn("【{}】不属于配置指定的订单ID,不请求亚马逊接口", mainEntity.getPlatformCode());
+                    return;
+                }
+            }
 
             ConfirmShipmentRequest body = new ConfirmShipmentRequest();
-            AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
             body.setMarketplaceId(marketplaceEnum.getMarketplaceId());
             PackageDetail packageDetail = new PackageDetail();
             // 包裹参考 ID 支持任何正数值，用于在确认货件后编辑货件。您可以提交任何数值作为 packageReferenceID，
@@ -172,8 +198,16 @@ public class AmazonShipOrder implements IPlatformService {
             packageDetail.setCarrierName(tmsScaleChannelShipDTO.getSaleChannelSupplierName());
             // 物流服务商=物流渠道名称
             packageDetail.setShippingMethod(tmsScaleChannelShipDTO.getSaleChannelSupplierName());
+
+            //获取渠道标发单号
+            String standardOrderType = getOrderDeliveryMarkType(PlatformDictEnum.AMAZON.getCode(), tmsScaleChannelShipDTO.getChannelId());
+            String trackingNumber = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
+                    ? logisticsEntity.getCode() : logisticsEntity.getTrackNo();
+            if (StrUtil.isBlank(trackingNumber)) {
+                throw new ServiceException("操作失败，渠道标发单号为空");
+            }
             // 物流运单号
-            packageDetail.setTrackingNumber(logisticsEntity.getCode());
+            packageDetail.setTrackingNumber(trackingNumber);
 
             // 发货时间
             String shipDateTime = DateUtil.plus8SameUtcOffset(LocalDateTime.now()).toString();
@@ -189,8 +223,6 @@ public class AmazonShipOrder implements IPlatformService {
             packageDetail.setOrderItems(orderItemList);
             body.setPackageDetail(packageDetail);
 
-            OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
-
             try {
                 ApiResponse<Void> voidApiResponse = api.confirmShipmentWithHttpInfo(body, mainEntity.getPlatformCode());
                 log.warn("标记发货响应结果:{}", JSONUtil.toJsonStr(voidApiResponse));
@@ -204,5 +236,47 @@ public class AmazonShipOrder implements IPlatformService {
                 throw new ServiceException("亚马逊标记发货失败:" + e.getMessage());
             }
         }
+    }
+
+    @Override
+    public String getOrderDeliveryMarkType(String platform, String logisticsChannelId) {
+        LogisticsMappingEntity logisticsMappingEntity = logisticsMappingFeign.getByLogisticsMappingParam(new LogisticsMappingDTO.SearchParamDTO(platform, logisticsChannelId));
+        if (ObjectUtil.isEmpty(logisticsMappingEntity) || StrUtil.isBlank(logisticsMappingEntity.getOrderDeliveryMarkType())) {
+            throw new ServiceException("操作失败，渠道标发单号配置为空");
+        }
+        return logisticsMappingEntity.getOrderDeliveryMarkType();
+    }
+
+    @Override
+    public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
+        Boolean isCancel = dto.getOldIsCancel();
+        if (!dto.getOldIsCancel()){
+            // 请求亚马逊接口获取最新状态
+            // 获取店铺授权信息
+            AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(dto.getShopId());
+            if (null == shopInfoDTO) {
+                throw new ServiceException("未找到店铺授权:" + dto.getShopId());
+            }
+            AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+            OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
+            try {
+                GetOrderResponse response = api.getOrder(dto.getPlatformCode());
+                isCancel = response.getPayload().convertCancel();
+            } catch (Exception e) {
+                log.warn("查询亚马逊订单【{}】信息响应结果:, error={}", dto.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
+                throw new ServiceException("查询亚马逊订单最新信息失败:" + e.getMessage());
+            }
+            // 订单取消:分事务标记到订单
+            if (isCancel){
+                dto.setOldIsCancel(isCancel);
+                soB2cFeign.updateCancelAndLog(dto);
+            }
+        }
+
+        if (isCancel) {
+            //订单拦截
+            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(dto.getSoB2cId(), "平台取消"));
+        }
+        return isCancel;
     }
 }

@@ -27,9 +27,9 @@ public class TransferDeclareJob {
      */
     @XxlJob("declareAutoGenerationJob")
     public ReturnT declareAutoGenerationJob() {
-        XxlJobHelper.log("====开始自动生成报关单====");
-        transferDeclareService.declareAutoGenerationJob();
-        XxlJobHelper.log("====结束自动生成报关单====");
+//        XxlJobHelper.log("====开始自动生成报关单====");
+//        transferDeclareService.declareAutoGenerationJob();
+//        XxlJobHelper.log("====结束自动生成报关单====");
         return ReturnT.SUCCESS;
     }
 

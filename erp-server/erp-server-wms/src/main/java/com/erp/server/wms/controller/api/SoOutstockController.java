@@ -3,11 +3,14 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.OrderTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -21,6 +24,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
@@ -30,6 +34,7 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.PackingStatusEnum;
+import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
@@ -494,26 +499,6 @@ public class SoOutstockController extends BaseController {
         String packingStatus = soOutstockService.packingSave(dto);
 
         if (PackingStatusEnum.PACKING.getCode().equals(packingStatus)) {
-            SoOutstockEntity entity = soOutstockService.getById(dto.getId());
-            CfgSettingEntity cfgSetting = cfgSettingFeign.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
-            if (ObjectUtil.isEmpty(cfgSetting)) {
-                return StringUtils.isNotBlank(packingStatus) ? success() : failure();
-            }
-            CfgSettingValueDTO.BillAutoAddDTO billAutoAddDTO = JSONUtil.toBean(cfgSetting.getDataJson(),CfgSettingValueDTO.BillAutoAddDTO.class);
-            if (!"CN".equalsIgnoreCase(entity.getCountry()) && billAutoAddDTO.getIsAutoB2BDeclare()) {
-                //如果装箱完成自动生成报关单
-                TmsDeclareBillDTO.AddDTO addDTO = new TmsDeclareBillDTO.AddDTO();
-                addDTO.setSourceId(entity.getId());
-                addDTO.setDeclareType(DeclareDeclareTypeEnum.INDEPENDENT.getCode());
-                addDTO.setReceiverName("香港唯迹");
-                addDTO.setDictSupervisionMethod(DeclareSupervisionMethodEnum.COMMONLY.getCode());
-                addDTO.setDictNatureLevy(DeclareNatureLevyEnum.COMMONLY.getCode());
-                addDTO.setToArea(entity.getCountry());
-                addDTO.setToPort(entity.getCountry());
-                addDTO.setDictPackType(DeclarePackTypeEnum.CARTON.getCode());
-                addDTO.setDictTransactionMethod(DeclareTransactionMethodEnum.EXW.getCode());
-                tmsDeclareBillFeign.addB2BDeclare(addDTO);
-            }
         } else {
             List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Arrays.asList(dto.getId()));
             List<String> ids = tmsDeclareBillEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
