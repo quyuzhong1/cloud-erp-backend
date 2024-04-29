@@ -6753,7 +6753,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 records = this.baseMapper.exportExcel(params, shopAuthResultDTO,Boolean.TRUE);
                 // 数据处理
-                handleExport(records);
+                handleExport(records,Boolean.TRUE);
                 if (isOutStock) {
                     //缺货
                     records = records.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.getIsOutStock()) && obj.getIsOutStock()).collect(Collectors.toList());;
@@ -6763,6 +6763,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
             } else {
                 records = this.baseMapper.exportExcel(params,shopAuthResultDTO,null);
+                // 数据处理
+                handleExport(records,Boolean.FALSE);
             }
         } catch (Exception e) {
            throw new ServiceException("导出失败");
@@ -6773,9 +6775,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (records.size() >= 50000) {
             throw new ServiceException("导出条数不能超过50000");
         }
-
-        //数据赋值处理
-        handleExport(records);
         String name = "B2C销售订单";
         StringBuffer sb = new StringBuffer();
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
@@ -7093,7 +7092,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @date: 2024/4/16 18:42
      * @param records
      */
-    private void handleExport(List<SoB2cDTO.ExcelExportDTO> records) {
+    private void handleExport(List<SoB2cDTO.ExcelExportDTO> records,Boolean isOutStock) {
         if (CollectionUtils.isEmpty(records)) {
             return;
         }
@@ -7106,26 +7105,35 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> warehouseIdList = records.stream().map(SoB2cDTO.ExcelExportDTO::getWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationFeign.listByWarehouseIds(warehouseIdList);
 
-        //根据SKU查询BOM判断是否是组合SKU
-        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
-        List<String> childSkuIdList = bomChildrenList.stream().filter(obj -> StrUtil.isNotBlank(obj.getSkuId()))
-                .map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(childSkuIdList)) {
-            skuIdList.addAll(childSkuIdList);
+        //bom信息
+        List<BomChildrenSkuDTO> bomChildrenList = new ArrayList<>();
+        //库存信息
+        List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = new ArrayList<>();
+        //无需计算库存sku
+        List<String> ignoreInventorySkuIds = new ArrayList<>();
+
+        //是否缺货
+        if (isOutStock) {
+            //根据SKU查询BOM判断是否是组合SKU
+            bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+            List<String> childSkuIdList = bomChildrenList.stream().filter(obj -> StrUtil.isNotBlank(obj.getSkuId()))
+                    .map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(childSkuIdList)) {
+                skuIdList.addAll(childSkuIdList);
+            }
+
+            // 忽略库存计算SKU
+            List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+            ignoreInventorySkuIds = CollUtil.isNotEmpty(ignoreInventorySkuList) ?
+                    ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()): com.google.common.collect.Lists.newArrayList();
+
+            //获取第三方仓海外信息
+            InventoryQtyDTO.SkuInventoryStatusParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
+            skuInventoryDTO.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(), InventoryStatusEnum.FROZEN.getCode()));
+            skuInventoryDTO.setWarehouseIdList(warehouseIdList);
+            skuInventoryDTO.setSkuIdList(skuIdList);
+            inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
         }
-
-        // 忽略库存计算SKU
-        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
-        List<String> ignoreInventorySkuIds = CollUtil.isNotEmpty(ignoreInventorySkuList) ?
-                ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()): com.google.common.collect.Lists.newArrayList();
-
-        //获取第三方仓海外信息
-        InventoryQtyDTO.SkuInventoryStatusParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
-        skuInventoryDTO.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(), InventoryStatusEnum.FROZEN.getCode()));
-        skuInventoryDTO.setWarehouseIdList(warehouseIdList);
-        skuInventoryDTO.setSkuIdList(skuIdList);
-        List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
-
         for (SoB2cDTO.ExcelExportDTO exportDTO : records) {
             //审核状态
             exportDTO.setApproveStatusName(ApproveStatusEnum.getName(exportDTO.getApproveStatus()));
@@ -7147,26 +7155,29 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     .map(WarehouseLocationEntity::getName).findFirst().orElse("");
             exportDTO.setWarehouseLocationName(warehouseLocationName);
 
-            Integer useableQty = MathUtil.ZERO;
-            if (CollectionUtils.isNotEmpty(inventoryList)) {
-                //可用库存
-                useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(exportDTO.getSkuId())
-                                && obj.getWarehouseId().equals(exportDTO.getWarehouseId())
-                                && obj.getWarehouseLocationId().equals(exportDTO.getWarehouseLocation())
-                                && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
-                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
-                        .orElse(MathUtil.ZERO);
-            }
-            exportDTO.setUseableQty(useableQty);
-            //存在仓库则需要判断是否缺货
-            if (StrUtil.isNotBlank(exportDTO.getWarehouseId())) {
-                //缺货订单
-                if ((SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(exportDTO.getBillStatus())
-                        || SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(exportDTO.getBillStatus()))) {
-                    //bean转换
-                    SoB2cDetailDTO.ListDTO detailDTO = BeanMapperUtils.map(SoB2cDetailDTO.ListDTO.class, exportDTO);
-                    Boolean isOutStock = isOutStock(bomChildrenList, inventoryList, detailDTO,ignoreInventorySkuIds);
-                    exportDTO.setIsOutStock(isOutStock);
+            //是否缺货
+            if (isOutStock) {
+                Integer useableQty = MathUtil.ZERO;
+                if (CollectionUtils.isNotEmpty(inventoryList)) {
+                    //可用库存
+                    useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(exportDTO.getSkuId())
+                                    && obj.getWarehouseId().equals(exportDTO.getWarehouseId())
+                                    && obj.getWarehouseLocationId().equals(exportDTO.getWarehouseLocation())
+                                    && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
+                            .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
+                            .orElse(MathUtil.ZERO);
+                }
+                exportDTO.setUseableQty(useableQty);
+                //存在仓库则需要判断是否缺货
+                if (StrUtil.isNotBlank(exportDTO.getWarehouseId())) {
+                    //缺货订单
+                    if ((SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(exportDTO.getBillStatus())
+                            || SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(exportDTO.getBillStatus()))) {
+                        //bean转换
+                        SoB2cDetailDTO.ListDTO detailDTO = BeanMapperUtils.map(SoB2cDetailDTO.ListDTO.class, exportDTO);
+                        Boolean outStock = isOutStock(bomChildrenList, inventoryList, detailDTO,ignoreInventorySkuIds);
+                        exportDTO.setIsOutStock(outStock);
+                    }
                 }
             }
         }
