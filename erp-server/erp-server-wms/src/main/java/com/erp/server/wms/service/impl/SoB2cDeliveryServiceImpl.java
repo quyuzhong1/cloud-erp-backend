@@ -1075,7 +1075,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             //无运单号数量
             Integer notTransportNoNum = Math.toIntExact(soB2cDeliveryEntityList.stream().filter(req -> StringUtils.isBlank(req.getTransportNo())).count());
             waybillDTO.setNotTransportNoNum(notTransportNoNum);
-            waybillDTO.setDisabled(Boolean.TRUE);
+            waybillDTO.setDisabled(Boolean.FALSE);
 
             //判断打印类型校验
             LogisticsPlatformEnum logisticsPlatformEnum = LogisticsPlatformEnum.getByCode(authDTO.getLogisticsPlatform());
@@ -1085,7 +1085,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     //打印面单预览
                     if ("N".equalsIgnoreCase(logisticsPlatformEnum.getPrintLabel())) {
                         waybillDTO.setErrorMsg(StrUtil.format(ApiError.LOGISTICS_NOT_PRINT_LOGISTICS_BILL.msg, logisticsPlatformEnum.getName()));
-                        waybillDTO.setDisabled(Boolean.FALSE);
+                        waybillDTO.setDisabled(Boolean.TRUE);
 
                     }
                     break;
@@ -1094,7 +1094,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     if (LogisticsLabelTypeEnum.AUTHORITY.getCode().equals(logisticsPrintTypeEntity.getLabelType())) {
                         if ("N".equalsIgnoreCase(logisticsPlatformEnum.getPrintDelivery())) {
                             waybillDTO.setErrorMsg(StrUtil.format(ApiError.LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL.msg, logisticsPlatformEnum.getName()));
-                            waybillDTO.setDisabled(Boolean.FALSE);
+                            waybillDTO.setDisabled(Boolean.TRUE);
                         }
                     }
                     break;
