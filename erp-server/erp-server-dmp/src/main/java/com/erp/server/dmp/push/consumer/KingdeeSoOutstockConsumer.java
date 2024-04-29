@@ -53,7 +53,7 @@ public class KingdeeSoOutstockConsumer<T extends DmpSyncTaskIdDTO> extends Abstr
         KingdeeCommonService kingdeeCommonService = new KingdeeCommonServiceImpl();
         Map<String, Object> map = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode(),2);
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", "XSCKD7212897"));
         String filterStr = String.join(" and ", queryFilters);//5814757
