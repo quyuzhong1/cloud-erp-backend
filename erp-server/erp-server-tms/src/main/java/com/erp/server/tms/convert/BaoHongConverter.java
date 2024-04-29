@@ -70,6 +70,7 @@ public interface BaoHongConverter {
             @Mapping(target = "referenceNo", source = "referenceNo"),
             @Mapping(target = "deliveryAddress", source = "deliveryAddress"),
             @Mapping(target = "oabStreetAddress1", source = "streetAddress"),
+            @Mapping(target = "oabStreetAddress2", source = "streetAddress2"),
             @Mapping(target = "oabState", source = "state"),
             @Mapping(target = "oabCity", source = "city"),
             @Mapping(target = "oabPostcode", source = "postcode"),
