@@ -904,8 +904,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                     .shippingCode(transferLogisticsChannelEntity.getCode())
                     .name(soB2cReceiverEntity.getReceiverName())
                     .referenceNo(soB2cEntity.getCode())
-                    .deliveryAddress(soB2cReceiverEntity.getFullAddress())
-                    .streetAddress(soB2cReceiverEntity.getFullAddress())
+                    .deliveryAddress(soB2cReceiverEntity.getFirstAddress())
+                    .streetAddress(soB2cReceiverEntity.getFirstAddress())
+                    .streetAddress2(soB2cReceiverEntity.getSecondAddress())
                     .state(soB2cReceiverEntity.getProvinceName())
                     .city(soB2cReceiverEntity.getCityName())
                     .postcode(soB2cReceiverEntity.getPostCode())
@@ -1000,9 +1001,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             transferStatusList.add(TransferLogisticsStatusEnum.SIGNED.getCode());
         }
 
-        //上传状态
-        if (CollectionUtil.isNotEmpty(uploadStatusList)) {
-            params.setUploadStatusList(uploadStatusList);
+        //入库预报状态
+        if (CollectionUtil.isNotEmpty(instockForecastStatusList)) {
+            params.setInstockForecastStatusList(instockForecastStatusList);
         }
 
         //中转状态

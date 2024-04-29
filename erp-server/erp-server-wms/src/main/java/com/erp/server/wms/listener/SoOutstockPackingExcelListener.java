@@ -17,6 +17,7 @@ import com.erp.model.wms.dto.excel.SoOutstockPackingExcelDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.PackingStatusEnum;
+import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.server.wms.service.SoOutstockDetailService;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.Getter;
@@ -141,7 +142,7 @@ public class SoOutstockPackingExcelListener extends AnalysisEventListener<SoOuts
             }
 
             //检查发货单是否已装箱
-            if(soOutstockEntity.getPackingStatus().equals(PackingStatusEnum.PACKING.getCode()) && DeclareStatusEnum.DECLARED.getCode().equals(soOutstockEntity.getDeclareStatus())){
+            if(soOutstockEntity.getPackingStatus().equals(PackingStatusEnum.PACKING.getCode()) && WmsDeclareStatusEnum.FINISH.getCode().equals(soOutstockEntity.getDeclareStatus())){
                 packingExcelDTO.setErrorMsg("出库单已装箱并且生成报关单，无法更改装箱信息");
                 errorList.add(packingExcelDTO);
                 it.remove();

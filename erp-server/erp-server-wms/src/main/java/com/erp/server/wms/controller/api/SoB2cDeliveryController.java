@@ -351,7 +351,7 @@ public class SoB2cDeliveryController extends BaseController {
 
 
     /**
-     * 打印物流面单确认（预览）
+     * 打印物流面单确认
      *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintLogisticsWaybillDTO>>
