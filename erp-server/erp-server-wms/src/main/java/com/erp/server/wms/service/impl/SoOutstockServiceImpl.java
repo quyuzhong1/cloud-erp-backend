@@ -2407,7 +2407,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 SoB2cErrorDTO.DeleteDetailDTO deleteDTO = new SoB2cErrorDTO.DeleteDetailDTO();
                 deleteDTO.setMainId(soB2cEntity.getId());
                 deleteDTO.setType(type);
-                deleteDTO.setDetailIdList(existSourceDetailIds);
+                List<String> detailIds = detailEntityList
+                        .stream()
+                        .filter(e -> existSourceDetailIds.contains(e.getSourceDetailId()))
+                        .map(BaseEntity::getId)
+                        .collect(Collectors.toList());
+                deleteDTO.setDetailIdList(detailIds);
                 soB2cFeign.checkAndDeleteAllError(deleteDTO);
                 return true;
             }
