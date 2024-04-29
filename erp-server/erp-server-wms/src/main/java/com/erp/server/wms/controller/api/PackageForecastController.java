@@ -298,6 +298,7 @@ public class PackageForecastController extends BaseController {
             menuCode = "wms:packageForecast:paging",
             tableAlias = "pf"
     )
+    @WebAdvanceQuery(handler = PackageForecastQueryHandler.class)
     public ApiResult export(@RequestBody @Valid PackageForecastDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = packageForecastService.exportExcel(dto, response);
         return result ? success() : failure();
