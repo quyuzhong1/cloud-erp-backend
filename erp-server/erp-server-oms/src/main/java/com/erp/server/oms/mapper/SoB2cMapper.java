@@ -33,7 +33,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @param params
      * @return
      */
-    IPage<SoB2cDTO.ListDTO> paging(Page query, @Param("params") SoB2cDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
+    IPage<SoB2cDTO.ListDTO> paging(Page query, @Param("params") SoB2cDTO.PagingParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, @Param("isOutStock") Boolean isOutStock);
 
     /**
      * 状态数量
@@ -41,7 +41,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @param params
      * @return
      */
-    Integer listCount(@Param("params") SoB2cDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
+    Integer listCount(@Param("params") SoB2cDTO.PagingParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
 
     /**
      * @param query
@@ -51,7 +51,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @author Will
      * @date: 2023/8/22 16:10
      */
-    IPage<SoB2cDTO.MergeListDTO> mergePaging(Page query, @Param("params") SoB2cDTO.MergePagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
+    IPage<SoB2cDTO.MergeListDTO> mergePaging(Page query, @Param("params") SoB2cDTO.MergePagingParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
 
     /**
      * @param params
@@ -60,7 +60,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @author Will
      * @date: 2023/8/22 16:10
      */
-    List<Integer> mergePagingCount(@Param("params") SoB2cDTO.MergePagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
+    List<Integer> mergePagingCount(@Param("params") SoB2cDTO.MergePagingParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
 
     /**
      * @param mergeParamDTO
@@ -69,7 +69,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @author Will
      * @date: 2023/8/22 18:36
      */
-    List<SoB2cDTO.MergeMainDTO> listMerge(@Param("params") SoB2cDTO.MergeParamDTO mergeParamDTO,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
+    List<SoB2cDTO.MergeMainDTO> listMerge(@Param("params") SoB2cDTO.MergeParamDTO mergeParamDTO, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
 
     /**
      * 销售订单统计
@@ -92,6 +92,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
 
     /**
      * 获取标记发货的信息
+     *
      * @param soB2cId
      * @return
      */
@@ -99,37 +100,40 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
 
     /**
      * 获取客户信息
-     * @description
+     *
      * @param
+     * @return
+     * @description
      * @author Lambda
-     * @return 
      * @create 2024-01-01 9:49
      */
-    List<SoB2cDTO.CustomerDTO> listCustomer(@Param("idList")List<String> soIdList);
+    List<SoB2cDTO.CustomerDTO> listCustomer(@Param("idList") List<String> soIdList);
 
     List<SoB2cEntity> listWarehouseIsEmpty(@Param("idList") List<String> soIdList);
 
     /**
      * 根据渠道id查询需要生成中转报关单的数据
-     * @Author Luo_WG
-     * @Date 2024/1/25 19:11
+     *
      * @param channelIds
      * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDetailDTO.AddDTO>
+     * @Author Luo_WG
+     * @Date 2024/1/25 19:11
      **/
     List<TransferDeclareDetailDTO.AddDTO> listByLogisticsSupplier(@Param("channelIds") List<String> channelIds);
 
 
-     /**
-      * @description
-      * @param code
-      * @return
-      * @date 2024-01-26 15:51
-      * @author Lambda
-      */
+    /**
+     * @param code
+     * @return
+     * @description
+     * @date 2024-01-26 15:51
+     * @author Lambda
+     */
     PackageDTO.ScanResultDTO packageScanByCode(@Param("code") String code);
 
     /**
      * 分拨组包 分页
+     *
      * @param query
      * @param params
      * @return
@@ -138,23 +142,26 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
 
     /**
      * 根据销售订单ids 获取到合并的数据
+     *
      * @param ids
      * @return
      */
-    List<PackageDTO.ScanResultDTO> listMergePackageBySoIds(@Param("ids")List<String> ids);
-    
+    List<PackageDTO.ScanResultDTO> listMergePackageBySoIds(@Param("ids") List<String> ids);
+
     /**
      * 根据条件获取数据对比系统数据
+     *
      * @param params
      * @return
      */
     List<WmsDataCompareTaskDTO.SoB2cDTO> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.SoOutstockDTO params);
+
     /**
+     * @param params
+     * @return List<ExcelExportDTO>
      * @description: 导出excel
      * @author Will
      * @date: 2024/4/16 15:10
-     * @param params
-     * @return List<ExcelExportDTO>
      */
     List<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("params") SoB2cDTO.ExportParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO,@Param("isOutStock") Boolean isOutStock);
     /**
@@ -175,4 +182,15 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @return List<ListDTO>
      */
     List<SoB2cAbnormalDTO.ListDTO> abnormalExportExcel( @Param("params") SoB2cAbnormalDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
+
+    /**
+     * @param params
+     * @param shopAuthResultDTO
+     * @param isOutStock
+     * @return Integer
+     * @description: 导出excel数量查询
+     * @author Will
+     * @date: 2024/4/29 17:55
+     */
+    Integer countExportExcel(@Param("params") SoB2cDTO.ExportParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, @Param("isOutStock") Boolean isOutStock);
 }
