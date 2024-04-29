@@ -5,6 +5,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -1996,7 +1997,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
     }
 
-    private void getParentBasicCategory(String pid , Map<String, BasicCategoryEntity> idBasicCategoryMaps , List<BasicCategoryEntity> resultList){
+    public void getParentBasicCategory(String pid, Map<String, BasicCategoryEntity> idBasicCategoryMaps, List<BasicCategoryEntity> resultList){
     	BasicCategoryEntity basicCategoryEntity = idBasicCategoryMaps.get(pid);
     	if(basicCategoryEntity != null) {
     		resultList.add(basicCategoryEntity);
@@ -4243,6 +4244,142 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public List<SkuVO> accessoriesSku(String searchKeyword) {
         return baseMapper.accessoriesSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
 
+    }
+
+    @Override
+    public List<ProductDetailExcelDTO> getProductDetailExportData(String metaInfo) {
+        ProductSkuExcelDTO productSkuExcelDTO = JSON.parseObject(metaInfo, ProductSkuExcelDTO.class);
+        List<ProductDetailExcelDTO> list = productDetailMapper.getExportSkuExcel(productSkuExcelDTO);
+        if(CollUtil.isNotEmpty(list)) {
+            Map<String, String> userIdNameMaps = new HashMap<>();
+            List<FindUserDTO> userList = sysUserFeign.getUserList();
+            if(CollUtil.isNotEmpty(userList)) {
+                userIdNameMaps = userList.stream()
+                        .filter(u -> u != null && StringUtils.isNotBlank(u.getUserId()))
+                        .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName , (u1 , u2) -> StringUtils.isNotBlank(u1) ? u1 : u2));
+            }
+            Map<String, String> finalUserIdNameMaps = userIdNameMaps;
+
+            List<String> mainSupplierIds = list.stream().map(ProductDetailExcelDTO::getMainSupplier).distinct().collect(Collectors.toList());
+            List<String> secondSupplierIds = list.stream().map(ProductDetailExcelDTO::getSecondSupplier).distinct().collect(Collectors.toList());
+            mainSupplierIds.addAll(secondSupplierIds);
+            Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
+
+            String chargeId = "";
+            String productPropertyId = "";
+            String saleCountry = "";
+            List<String> chargeIds = new ArrayList<>();
+            List<String> productPropertyIdAndSaleCountrys = new ArrayList<>();
+            for(ProductDetailExcelDTO l : list) {
+                chargeId = l.getChargeId();
+                if(StringUtils.isNotBlank(chargeId)) {
+                    chargeIds.addAll(Arrays.stream(chargeId.split(",")).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
+                }
+                productPropertyId = l.getProductPropertyId();
+                if(StringUtils.isNotBlank(productPropertyId)) {
+                    productPropertyIdAndSaleCountrys.addAll(Arrays.stream(productPropertyId.split(",")).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
+                }
+                saleCountry = l.getSaleCountry();
+                if(StringUtils.isNotBlank(saleCountry)) {
+                    productPropertyIdAndSaleCountrys.addAll(Arrays.stream(saleCountry.split(",")).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
+                }
+            }
+
+            Map<String, String> chargeIdNameMaps = new HashMap<>();
+            if(CollUtil.isNotEmpty(chargeIds)) {
+                List<FindUserDTO> userListByUserIds = sysUserFeign.getUserListByUserIds(chargeIds);
+                if(CollUtil.isNotEmpty(userListByUserIds)) {
+                    chargeIdNameMaps = userListByUserIds.stream()
+                            .filter(u -> u != null && StringUtils.isNotBlank(u.getUserId()))
+                            .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName , (u1 , u2) -> StringUtils.isNotBlank(u1) ? u1 : u2));
+                }
+            }
+            Map<String, String> finalChargeIdNameMaps = chargeIdNameMaps;
+
+            Map<String, String> dictValueMaps = new HashMap<>();
+            if(CollUtil.isNotEmpty(productPropertyIdAndSaleCountrys)) {
+                List<BasicDictEntity> dictList = basicDictService.listByIds(productPropertyIdAndSaleCountrys);
+                if(CollUtil.isNotEmpty(dictList)) {
+                    dictValueMaps = dictList.stream()
+                            .filter(u -> u != null && StringUtils.isNotBlank(u.getValue()))
+                            .collect(Collectors.toMap(BasicDictEntity::getId, BasicDictEntity::getValue , (u1 , u2) -> StringUtils.isNotBlank(u1) ? u1 : u2));
+                }
+            }
+            Map<String, String> finalDictValueMaps = dictValueMaps;
+
+            Map<String, BasicCategoryEntity> idBasicCategoryMaps = basicCategoryService.list().stream().collect(Collectors.toMap(BasicCategoryEntity::getId, b -> b));
+            Map<String, List<BasicCategoryEntity>> idParentBasicCategoryListMaps = new HashMap<>();
+            for(Map.Entry<String, BasicCategoryEntity> idBasicCategoryMap : idBasicCategoryMaps.entrySet()) {
+                String key = idBasicCategoryMap.getKey();
+                List<BasicCategoryEntity> resultList = new ArrayList<>();
+                this.getParentBasicCategory(key, idBasicCategoryMaps, resultList);
+                idParentBasicCategoryListMaps.put(key , resultList);
+            }
+            list.forEach(req -> {
+                List<BasicCategoryEntity> categoryList = idParentBasicCategoryListMaps.get(req.getCategoryId());
+                if(CollUtil.isNotEmpty(categoryList)) {
+                    //一级品类
+                    BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
+                    if (ObjectUtils.isNotEmpty(bestEntity)) {
+                        req.setMainCategory(bestEntity.getName());
+                        //二级品类
+                        BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> bestEntity.getId().equals(obj.getPid())).findFirst().orElse(null);
+                        if (ObjectUtils.isNotEmpty(secondEntity)) {
+                            req.setSecondaryCategory(secondEntity.getName());
+                        }
+                    }
+                }
+
+                if (StringUtils.isNotBlank(req.getChargeId())) {
+                    req.setChargeName(Arrays.stream(req.getChargeId().split(",")).filter(StringUtils::isNotBlank)
+                            .map(c -> finalChargeIdNameMaps.get(c)).filter(d -> d != null).collect(Collectors.joining(",")));
+                }
+
+                if (StringUtils.isNotBlank(req.getProductPropertyId())) {
+                    req.setProductProperty(Arrays.stream(req.getProductPropertyId().split(",")).filter(StringUtils::isNotBlank)
+                            .map(c -> finalDictValueMaps.get(c)).filter(d -> d != null).collect(Collectors.joining(",")));
+                }
+
+                // 销售平台
+                if (StrUtils.isNotEmpty(req.getSalesPlatform())) {
+                    ProductSalesPlatformEnum salesPlatformEnum = ProductSalesPlatformEnum.getByCode(req.getSalesPlatform());
+                    if (salesPlatformEnum != null) {
+                        req.setSalesPlatform(salesPlatformEnum.getName());
+                    }
+                }
+
+                // 一级供应商名称
+                if (StrUtils.isNotEmpty(req.getMainSupplier()) && supplierMap.containsKey(req.getMainSupplier())) {
+                    req.setMainSupplier(supplierMap.get(req.getMainSupplier()).getName());
+                }
+
+                // 二级供应商名称
+                if (StrUtils.isNotEmpty(req.getSecondSupplier()) && supplierMap.containsKey(req.getSecondSupplier())) {
+                    req.setSecondSupplier(supplierMap.get(req.getSecondSupplier()).getName());
+                }
+
+                //销售状态编码转换成中文
+                req.setProductStateName(ProductDetailStateEnum.getNameByCode(Integer.valueOf(req.getProductStateName())));
+                if (StringUtils.isNotBlank(req.getSaleState())) {
+                    req.setSaleState(SaleStateEnum.getNameByCode(Integer.valueOf(req.getSaleState())));
+                }
+                //采购状态编码转换成中文
+                if (StringUtils.isNotBlank(req.getArrivalState())) {
+                    req.setArrivalState(PurchaseStateEnum.getNameByCode(Integer.valueOf(req.getArrivalState())));
+                }
+                if (StringUtils.isNotBlank(req.getPurchaseUser())) {
+                    String userName = finalUserIdNameMaps.get(req.getPurchaseUser());
+                    if(StringUtils.isNotBlank(userName)) {
+                        req.setPurchaseUser(userName);
+                    }
+                }
+                if (StringUtils.isNotBlank(req.getSaleCountry())) {
+                    req.setProductProperty(Arrays.stream(req.getSaleCountry().split(",")).filter(StringUtils::isNotBlank)
+                            .map(c -> finalDictValueMaps.get(c)).filter(d -> d != null).collect(Collectors.joining(",")));
+                }
+            });
+        }
+        return list;
     }
 
     @Override

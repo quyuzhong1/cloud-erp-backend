@@ -509,4 +509,7 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/getSkuBaseByIds")
     List<SkuVO> getSkuBaseByIds(@RequestBody List<String> skuIds);
+
+    @PostMapping("feign/product/getProductDetailExportData")
+    List<ProductDetailExcelDTO> getProductDetailExportData(@RequestBody String metaInfo);
 }

@@ -1,0 +1,15 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 172.16.100.12
+        namespace: ${NACOS_NAMESPACE:dev}
+        heart-beat-interval: 3
+        heart-beat-timeout: 10
+      config:
+        server-addr: 172.16.100.12
+        namespace: dev
+        file-extension: yml
+        shared-configs: common.yml,db-file.yml,druid-common.yml,erp-third-party.yml
+
+

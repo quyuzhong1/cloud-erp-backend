@@ -452,4 +452,9 @@ public class ProductSkuFeignController {
         List<SkuVO> skuList = productDetailService.getSkuBaseByIds(skuIds);
         return skuList;
     }
+
+    @PostMapping("/getProductDetailExportData")
+    List<ProductDetailExcelDTO> getProductDetailExportData(@RequestBody String metaInfo){
+       return productDetailService.getProductDetailExportData(metaInfo);
+    }
 }

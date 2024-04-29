@@ -640,6 +640,36 @@ public class ExcelPrintUtils {
 		}
 	}
 
+	public File patchExport(List<?> list, String fileName, String excelPath) throws IOException {
+		File file = new File(fileName);
+		//模板的路径
+		ClassPathResource classPathResource = new ClassPathResource(excelPath);
+		InputStream inputStream = classPathResource.getInputStream();
+		ExcelWriter excelWriter = EasyExcelFactory.write(file).withTemplate(inputStream).build();
+		// LocalDate转化器，导入导出都可以使用
+		LocalDateTimeConverter converter = new LocalDateTimeConverter();
+		excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey()), converter);
+		excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey(), converter.supportExcelTypeKey()), converter);
+
+		// LocalDateTime转化器，导入导出都可以使用
+		EasyExcelLocalTimeConverter localDateTimeDateConverter = new EasyExcelLocalTimeConverter();
+		excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey()), localDateTimeDateConverter);
+		excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey(), localDateTimeDateConverter.supportExcelTypeKey()), localDateTimeDateConverter);
+		// LocalDate转化器，导入导出都可以使用
+		EasyExcelLocalDateConverter localDateConverter = new EasyExcelLocalDateConverter();
+		excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey()), localDateConverter);
+		excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey(), localDateConverter.supportExcelTypeKey()), localDateConverter);
+		// list转化器，导入导出都可以使用
+		EasyExcelListConverter listConverter = new EasyExcelListConverter();
+		excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(listConverter.supportJavaTypeKey()), listConverter);
+		excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(listConverter.supportJavaTypeKey(), listConverter.supportExcelTypeKey()), listConverter);
+		WriteSheet writeSheet = EasyExcel.writerSheet().build();
+		//列表数据
+		excelWriter.fill(list, writeSheet);
+		excelWriter.finish();
+		return file;
+	}
+
 	/**
 	 * @description: 导出多个sheet页
 	 * @author Will
