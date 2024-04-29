@@ -7,6 +7,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
+import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -239,4 +240,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     boolean hasNotShippedDeliveryAndLog(SoB2cEntity currentEntity);
 
     List<BatchResultDTO> logisticsIntercept(List<String> ids);
+
+    List<BatchResultDTO> interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto);
 }
