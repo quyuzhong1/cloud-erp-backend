@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.PlatformShipOrderDTO;
@@ -140,7 +141,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
                     PlatformSaveHandler.shipOrder(platformShipOrderDTO);
                 }
             } catch (Exception e) {
-                log.error("销售单【{}】 标记发货失败 >>>错误信息{}", e.getMessage());
+                log.error("【称重出库】销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
                 throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
             }
 

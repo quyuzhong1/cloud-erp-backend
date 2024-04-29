@@ -275,7 +275,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 try {
                     PlatformSaveHandler.shipOrder(platformShipOrderDTO);
                 } catch (Exception e) {
-                    log.error("销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
+                    log.error("【发货单手动发货】销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
                     throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
                 }
             }
@@ -337,7 +337,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 PlatformSaveHandler.shipOrder(platformShipOrderDTO);
             }
         } catch (Exception e) {
-            log.error("销售单【{}】 标记发货失败 >>>错误信息{}", e.getMessage());
+            log.error("【虚假标记发货】销售单【{}】标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
             throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
         }
         //修改状态为虚假发货

@@ -1,5 +1,6 @@
 package com.erp.server.wms.sdk.delivery;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
@@ -68,7 +69,7 @@ public class AliexpressShipOrder implements IPlatformService {
                     build();
             aliExpressOrderService.declareDeliver(request);
         } catch (ApiException e) {
-           log.error("销售订单【{}】速卖通 标记发货失败 >>>>{}",soB2cId,e.getMessage());
+           log.error("销售订单【{}】速卖通 标记发货失败 >>>>{}",soB2cId, ExceptionUtil.stacktraceToString(e));
         }
 
 
