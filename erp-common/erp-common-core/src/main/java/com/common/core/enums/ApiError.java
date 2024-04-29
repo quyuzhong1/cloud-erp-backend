@@ -1288,6 +1288,8 @@ public enum ApiError implements Serializable {
     ERROR_OUT_WAREHOUSELOCATION_NOT_FOUND(94101,"取货仓位不存在"),
     ERROR_IN_WAREHOUSELOCATION_NOT_FOUND(94102,"上架仓位不存在"),
 
+
+
     // 亚马逊公用异常
     ERROR_MARKETPLACE_UNAUTHORIZED(100000,"亚马逊店铺已被禁用:{}"),
 

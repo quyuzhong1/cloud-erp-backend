@@ -15,11 +15,13 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
+import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.model.wms.enums.DeliverTypeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.query.SoB2cDeliveryQueryHandler;
+import com.erp.server.wms.service.SoB2cDeliveryInterceptService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -298,7 +300,7 @@ public class SoB2cDeliveryController extends BaseController {
 
     /**
      * 取消打印拣货单
-     *
+     * 1.24。2版本调整为取消打印（拣货单，物流单）
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
@@ -409,6 +411,24 @@ public class SoB2cDeliveryController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> logisticsIntercept(@RequestBody BaseIdsDTO.IdsDTO idsDTO) {
         List<BatchResultDTO> resultDTOS = soB2cDeliveryService.logisticsIntercept(idsDTO.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 拦截结果确认
+     * @Author Luo_WG
+     * @Date 2023/12/14 11:45
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.common.business.dto.base.BatchResultDTO>>
+     **/
+    @PostMapping("/interceptResultConfirm")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:soB2cDelivery:interceptResultConfirm",
+            serviceClass = SoB2cDeliveryService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> interceptResultConfirm(@RequestBody SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto) {
+        List<BatchResultDTO> resultDTOS = soB2cDeliveryService.interceptResultConfirm(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

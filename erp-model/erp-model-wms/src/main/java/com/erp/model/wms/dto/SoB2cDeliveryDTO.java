@@ -378,9 +378,17 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private Boolean isPrintPicking;
         /**
+         * 是否打印物流单【可排序】
+         */
+        private Boolean isPrintLogistic;
+        /**
          * 拣货单状态 中文
          */
         private String printPickingName;
+        /**
+         * 打印物流单状态 中文
+         */
+        private String printLogisticName;
         /**
          * 是否验货【可排序】
          */

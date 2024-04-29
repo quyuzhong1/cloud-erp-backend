@@ -106,8 +106,7 @@
 
     <select id="getDetail" resultType="com.erp.model.wms.dto.WarehouseLocationMoveDTO$DetailViewDTO">
         SELECT distinct
-        wlmi.id,
-        wlmd.id as detailId,
+        wlmd.id ,
         wlmi.code,
         wlmi.approve_status,
         wlmd.warehouse_id,
@@ -132,7 +131,7 @@
         WHERE wlmi.is_deleted = FALSE
         AND wlmi.invalid_status = FALSE
         <if test="id != null and id != ''">
-            and wlmi.id = #{id}
+            and wlmd.main_id = #{id}
         </if>
     </select>
     <select id="findOne" resultType="com.erp.model.wms.dto.WarehouseLocationMoveDTO$DetailViewDTO">
@@ -149,7 +148,6 @@
         wlmi.approve_time
         FROM warehouse_location_move wlmi
         WHERE wlmi.is_deleted = FALSE
-        AND wlmi.invalid_status = FALSE
         <if test="id != null and id != ''">
             and wlmi.id = #{id}
         </if>
@@ -182,7 +180,6 @@
         INNER JOIN warehouse_location_move wlmi ON wlmd.main_id = wlmi.id AND wlmd.is_deleted = FALSE
         WHERE ${params.sqlMap.default}
         and wlmi.is_deleted = FALSE
-        AND wlmi.invalid_status = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and wlmi.approve_status in
             <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">

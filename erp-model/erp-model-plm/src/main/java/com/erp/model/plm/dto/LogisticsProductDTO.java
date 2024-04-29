@@ -1042,6 +1042,20 @@ public class LogisticsProductDTO {
         private BigDecimal boxSizeHigh;
 
         /**
+         * 产品长
+         */
+        private BigDecimal productLength;
+
+        /**
+         * 产品宽
+         */
+        private BigDecimal productWidth;
+        /**
+         * 产品高
+         */
+        private BigDecimal productHeight;
+
+        /**
          * 产品属性
          */
         private String productProperty;
@@ -1052,7 +1066,7 @@ public class LogisticsProductDTO {
 
         private String imagesUrl;
 
-        private BigDecimal price;
+//       private BigDecimal price;
 
         private BigDecimal amount;
 

@@ -133,6 +133,18 @@ public class SoB2cDTO implements Serializable {
         private Map<String, String> sqlMap;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ExportParamDTO extends  PagingParamDTO{
+
+        /**
+         * 导出类型,parentExport(销售套装BOM按父件SKU导出),childExport(销售套装BOM按子件SKU导出)
+         * 字典，/wms/dict/drop/down?type=soB2cExportType
+         */
+        private String exportType;
+
+    }
+
     /**
      * 分页列表
      */

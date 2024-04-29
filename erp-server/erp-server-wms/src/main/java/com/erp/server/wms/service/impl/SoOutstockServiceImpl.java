@@ -1470,6 +1470,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //更新TMS物流跟踪号
             LogisticsBillDTO.BatchUpdateTrackNoDTO batchUpdateTrackNoDTO = new LogisticsBillDTO.BatchUpdateTrackNoDTO();
             batchUpdateTrackNoDTO.setSoOutstockEntity(soOutstock);
+            batchUpdateTrackNoDTO.setLogisticsChannelId(soOutstock.getLogisticsChannelId());
             batchUpdateTrackNoDTO.setTrackNoList(dto.getTrackNoList());
             List<BatchResultDTO> batchResultDTOList = logisticsBillFeign.updateBatchTrackNo(Collections.singletonList(batchUpdateTrackNoDTO),false);
             if(CollectionUtils.isNotEmpty(batchResultDTOList) && !batchResultDTOList.get(0).getSuccess()){
@@ -2403,7 +2404,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 SoB2cErrorDTO.DeleteDetailDTO deleteDTO = new SoB2cErrorDTO.DeleteDetailDTO();
                 deleteDTO.setMainId(soB2cEntity.getId());
                 deleteDTO.setType(type);
-                deleteDTO.setDetailIdList(existSourceDetailIds);
+                List<String> detailIds = detailEntityList
+                        .stream()
+                        .filter(e -> existSourceDetailIds.contains(e.getSourceDetailId()))
+                        .map(BaseEntity::getId)
+                        .collect(Collectors.toList());
+                deleteDTO.setDetailIdList(detailIds);
                 soB2cFeign.checkAndDeleteAllError(deleteDTO);
                 return true;
             }
