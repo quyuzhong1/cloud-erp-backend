@@ -238,4 +238,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      */
     List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillPreview(SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param);
 
+
+    List<BatchResultDTO> logisticsIntercept(List<String> ids);
 }
