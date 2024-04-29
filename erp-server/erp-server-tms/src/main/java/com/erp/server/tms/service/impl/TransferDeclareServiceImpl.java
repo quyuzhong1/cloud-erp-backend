@@ -906,6 +906,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                     .referenceNo(soB2cEntity.getCode())
                     .deliveryAddress(soB2cReceiverEntity.getFirstAddress())
                     .streetAddress(soB2cReceiverEntity.getFirstAddress())
+                    .streetAddress2(soB2cReceiverEntity.getSecondAddress())
                     .state(soB2cReceiverEntity.getProvinceName())
                     .city(soB2cReceiverEntity.getCityName())
                     .postcode(soB2cReceiverEntity.getPostCode())
