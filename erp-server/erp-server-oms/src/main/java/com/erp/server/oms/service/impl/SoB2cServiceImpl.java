@@ -6734,7 +6734,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public Boolean exportExcel(SoB2cDTO.PagingParamDTO params, HttpServletResponse response) {
+    public Boolean exportExcel(SoB2cDTO.ExportParamDTO params, HttpServletResponse response) {
         //查询店铺设置权限
         SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
         if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
@@ -6751,9 +6751,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (warehouseIdList.size() != 1) {
                     throw new ServiceException("选择缺货条件必须选择仓库且只能选择一个仓库");
                 }
-                records = this.baseMapper.exportExcel(params, shopAuthResultDTO,Boolean.TRUE);
+                List<SoB2cDTO.ExcelExportDTO> exportExcelList = this.baseMapper.exportExcel(params, shopAuthResultDTO, Boolean.TRUE);
                 // 数据处理
-                handleExport(records,Boolean.TRUE);
+                records = handleExport(exportExcelList,params.getExportType(),Boolean.TRUE);
                 if (isOutStock) {
                     //缺货
                     records = records.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.getIsOutStock()) && obj.getIsOutStock()).collect(Collectors.toList());;
@@ -6762,9 +6762,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     records = records.stream().filter(obj -> ObjectUtil.isEmpty(obj.getIsOutStock()) || !obj.getIsOutStock()).collect(Collectors.toList());;
                 }
             } else {
-                records = this.baseMapper.exportExcel(params,shopAuthResultDTO,null);
+                List<SoB2cDTO.ExcelExportDTO> exportExcelList = this.baseMapper.exportExcel(params,shopAuthResultDTO,null);
                 // 数据处理
-                handleExport(records,Boolean.FALSE);
+                records = handleExport(exportExcelList,params.getExportType(),Boolean.FALSE);
             }
         } catch (Exception e) {
            throw new ServiceException("导出失败");
@@ -7092,14 +7092,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @date: 2024/4/16 18:42
      * @param records
      */
-    private void handleExport(List<SoB2cDTO.ExcelExportDTO> records,Boolean isOutStock) {
-        if (CollectionUtils.isEmpty(records)) {
-            return;
-        }
+    private List<SoB2cDTO.ExcelExportDTO> handleExport(List<SoB2cDTO.ExcelExportDTO> records,String exportType,Boolean isOutStock) {
+        //返回集合
+        List<SoB2cDTO.ExcelExportDTO> resultList = new ArrayList<>();
 
-        //产品信息
+        if (CollectionUtils.isEmpty(records)) {
+            return resultList;
+        }
+        //skuId集合
         List<String> skuIdList = records.stream().map(SoB2cDTO.ExcelExportDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIdList);
 
         //仓位信息
         List<String> warehouseIdList = records.stream().map(SoB2cDTO.ExcelExportDTO::getWarehouseId).distinct().collect(Collectors.toList());
@@ -7112,8 +7113,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //无需计算库存sku
         List<String> ignoreInventorySkuIds = new ArrayList<>();
 
-        //是否缺货
-        if (isOutStock) {
+        //按子级SKU导出或缺货
+        if (SoB2cExportTypeEnum.CHILD_EXPORT.getCode().equals(exportType) || isOutStock) {
             //根据SKU查询BOM判断是否是组合SKU
             bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
             List<String> childSkuIdList = bomChildrenList.stream().filter(obj -> StrUtil.isNotBlank(obj.getSkuId()))
@@ -7121,7 +7122,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (CollectionUtils.isNotEmpty(childSkuIdList)) {
                 skuIdList.addAll(childSkuIdList);
             }
+        }
+        //产品信息
+        List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIdList);
 
+        //是否缺货
+        if (isOutStock) {
             // 忽略库存计算SKU
             List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
             ignoreInventorySkuIds = CollUtil.isNotEmpty(ignoreInventorySkuList) ?
@@ -7180,7 +7186,37 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     }
                 }
             }
+            //按子级SKU导出
+            if (SoB2cExportTypeEnum.CHILD_EXPORT.getCode().equals(exportType)) {
+                //销售套装bom子级信息
+                List<BomChildrenSkuDTO> childList = bomChildrenList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), exportDTO.getSkuId())
+                        && StrUtil.equals(BomTypeEnum.COMBINATION.getType(),obj.getType()))
+                        .collect(Collectors.toList());
+                //非销售套装bom则直接导出父级SKU信息
+                if (CollectionUtils.isEmpty(childList)) {
+                    resultList.add(exportDTO);
+                    continue;
+                }
+                for (BomChildrenSkuDTO bomChildrenSkuDTO : childList) {
+                    SoB2cDTO.ExcelExportDTO resultDTO = new SoB2cDTO.ExcelExportDTO();
+                    BeanMapperUtils.copy(exportDTO,resultDTO);
+                    resultDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
+                    resultDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+                    resultDTO.setQty(resultDTO.getQty() * bomChildrenSkuDTO.getQuantity());
+                    //导出子级SKU信息
+                    ProductDetailEntity childEntity = productDetailEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), bomChildrenSkuDTO.getSkuId()))
+                            .findFirst().orElse(null);
+                    if (ObjectUtil.isNotEmpty(childEntity)) {
+                        resultDTO.setProductName(childEntity.getName());
+                        resultDTO.setVariantProperty(childEntity.getVariantProperty());
+                    }
+                    resultList.add(resultDTO);
+                }
+            } else {
+                resultList.add(exportDTO);
+            }
         }
+        return resultList;
     }
 
 
