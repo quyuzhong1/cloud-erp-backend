@@ -27,8 +27,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.date.DateUtil;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import com.erp.model.oms.entity.CustomerB2bSellerChangeEntity;
@@ -122,7 +120,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         }
         //销售员信息
         CustomerSellerEntity currentSellerEntity = customerSellerService.getCurrentInfo(customerInfoEntity.getId());
-        if(Objects.nonNull(currentSellerEntity) && !addDTO.getStartDate().isAfter(currentSellerEntity.getStartDate())){
+        if(Objects.nonNull(currentSellerEntity) && Objects.nonNull(currentSellerEntity.getStartDate()) && !addDTO.getStartDate().isAfter(currentSellerEntity.getStartDate())){
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "启用时间必须晚于当前销售员开始时间");
         }
 
