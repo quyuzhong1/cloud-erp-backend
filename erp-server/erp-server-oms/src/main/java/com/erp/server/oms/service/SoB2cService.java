@@ -8,6 +8,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
@@ -335,7 +336,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @Author Jim
      * @since 2023-11-10
      **/
-    SoB2cDTO.PullOrderResultDTO saveOrUpdateEntity(PlatformOrderDTO dto);
+    SoB2cDTO.PullOrderResultDTO saveOrUpdateEntity(PlatformOrderDTO dto, ShopInfoEntity shopInfo);
 
     /**
      * 通过哟平台订单ID和类型查询
@@ -343,7 +344,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @Author Jim
      * @since 2023-11-10
      **/
-    SoB2cEntity getByPlatformInfo(String platformCode, String dictPlatform, String shopId);
+    SoB2cEntity getByPlatformInfo(String platformCode, String dictPlatform, String shopId, String code);
 
     Map<String,Object> getJson(String id);
 
@@ -664,7 +665,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      * @create 2024-01-20 15:47
      */
-    Boolean transferDeclare(List<String> ids,String transferLogisticsSupplierId,String  transferLogisticsChannelId);
+    List<BatchResultDTO> transferDeclare(List<String> ids);
 
     /**
      * 根据物流商查询待中转的订单
@@ -814,7 +815,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @date 2024-03-07
      * @author Jim
      */
-    List<SoB2cEntity> getByPlatformCodeList(List<String> platformCodeList, String dictPlatform, String shopId);
+    List<SoB2cEntity> getByPlatformCodeList(List<String> platformCodeList, String dictPlatform, String shopId, String sourceType);
 
     /**
      * 根据销售出库单信息检查和补充
@@ -856,6 +857,22 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return Boolean
      */
     Boolean exportExcel(SoB2cDTO.PagingParamDTO dto, HttpServletResponse response);
+    /**
+     * @description: 更新主表仓库匹配规则
+     * @author Will
+     * @date: 2024/4/24 12:02
+     * @param id
+     * @return Boolean
+     */
+    Boolean updateIsMatchWarehouseRuleById(String id);
+
+    List<BatchResultDTO> orderForecast(SoB2cDTO.TransferDeclareDTO dto);
+
+    List<BatchResultDTO> autoOrderForecast(List<String> soIdList);
+
+    List<BatchResultDTO> cancelOrderForecast(List<String> ids);
+
+    List<BatchResultDTO> retryOrderForecast(BaseIdsDTO.IdsDTO dto);
     /**
      * @description: 异常订单分页查询
      * @author Will

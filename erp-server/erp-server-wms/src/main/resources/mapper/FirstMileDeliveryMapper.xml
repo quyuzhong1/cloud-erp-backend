@@ -212,8 +212,13 @@
         LEFT JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id
         LEFT JOIN wms_carton fmc ON fmc.source_id = fd.id AND fmc.is_deleted = FALSE
         LEFT JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
-        WHERE
-        ${params.sqlMap.default}
+        WHERE 1 = 1
+        <if test="params.ids !=null and params.ids.size>0">
+            AND fd.id IN
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
         and fd.is_deleted = FALSE
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
@@ -245,7 +250,7 @@
                  left join warehouse tw on fmd.dest_warehouse_id = tw.id and tw.is_deleted = false
         where fmd.is_deleted = false
         <if test="params.packingStatus != null and params.packingStatus != ''">
-            AND fmd.packing_status = #{params.packingStatus}
+            AND (fmd.packing_status = #{params.packingStatus} or fmd.approve_status = 'approve')
         </if>
         <if test="params.logisticsStatus != null and params.logisticsStatus != ''">
             AND fmd.logistics_status = #{params.logisticsStatus}
@@ -300,7 +305,7 @@
              first_mile_delivery fmd
         where fmd.is_deleted = false
         <if test="params.packingStatus != null and params.packingStatus != ''">
-            AND fmd.packing_status = #{params.packingStatus}
+            AND (fmd.packing_status = #{params.packingStatus} or fmd.approve_status = 'approve')
         </if>
         <if test="params.declareStatus != null and params.declareStatus != ''">
             AND fmd.declare_status = #{params.declareStatus}

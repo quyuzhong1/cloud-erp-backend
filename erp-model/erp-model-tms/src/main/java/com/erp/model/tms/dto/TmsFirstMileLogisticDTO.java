@@ -1283,6 +1283,7 @@ public class TmsFirstMileLogisticDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
+        private Boolean isAuto = false;
 
     }
 

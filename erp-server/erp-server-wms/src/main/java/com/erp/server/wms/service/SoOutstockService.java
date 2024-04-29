@@ -426,7 +426,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @author Jim
      * @date 2024-03-07
      */
-    Boolean defaultHandleRetry(String soB2cId, List<SoB2cEntity> instantList);
+    Boolean defaultHandleRetry(SoB2cEntity soB2c, List<SoB2cEntity> instantList);
 
 
 

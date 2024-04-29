@@ -16,6 +16,9 @@ import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
+import com.erp.model.wms.enums.FmDeliveryLogisticsStatusEnum;
+import com.erp.model.wms.enums.PackingStatusEnum;
+import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.server.wms.service.FirstMileDeliveryDetailService;
 import com.erp.server.wms.service.FirstMileDeliveryService;
 import com.erp.server.wms.service.OverseasProviderService;
@@ -117,6 +120,13 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
             FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryServiceMap.get(packingExcelDTO.getCode());
             if(Objects.isNull(firstMileDeliveryEntity)){
                 packingExcelDTO.setErrorMsg("发货单号不存在");
+                errorList.add(packingExcelDTO);
+                it.remove();
+                continue;
+            }
+            if(PackingStatusEnum.PACKING.getCode().equals(firstMileDeliveryEntity.getPackingStatus())
+                    && (FmDeliveryLogisticsStatusEnum.FINISH.equals(firstMileDeliveryEntity.getLogisticsStatus()) || WmsDeclareStatusEnum.FINISH.equals(firstMileDeliveryEntity.getDeclareStatus()))){
+                packingExcelDTO.setErrorMsg("物流单/报关单已生成，不支持修改");
                 errorList.add(packingExcelDTO);
                 it.remove();
                 continue;

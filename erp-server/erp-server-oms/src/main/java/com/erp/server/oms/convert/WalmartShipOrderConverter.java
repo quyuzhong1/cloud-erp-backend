@@ -23,7 +23,8 @@ public interface WalmartShipOrderConverter {
             @Mapping(target = "shopId", source = "soB2cEntity.shopId"),
             @Mapping(target = "platformCode", source = "soB2cEntity.platformCode"),
             @Mapping(target = "soCode", source = "soB2cEntity.code"),
-            @Mapping(target = "trackNo", source = "soB2cLogisticsEntity.code"),
+            @Mapping(target = "transportNo", source = "soB2cLogisticsEntity.code"),
+            @Mapping(target = "trackNo", source = "soB2cLogisticsEntity.trackNo"),
             @Mapping(target = "shipDateTime", source = "soB2cLogisticsEntity.deliveryTime"),
             @Mapping(target = "detailList", ignore = true)
     })

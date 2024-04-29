@@ -118,6 +118,11 @@ public class LogisticsChannelDTO implements Serializable {
          * 平台是否允许打印
          */
         private Boolean isPrintPlatform;
+
+        /**
+         * 纸张大小
+         */
+        private String paperSize;
     }
 
 

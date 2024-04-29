@@ -684,9 +684,9 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
 
     /**
      * 重算目的国申报单价
-     * @param entity
+     * @param details
      */
-    void recalDestDeclarePrice(ProductDetailEntity entity);
+    void recalDestDeclarePrice(List<ProductDetailEntity> details);
 
     void initProductSizeAndBoxSize();
 }

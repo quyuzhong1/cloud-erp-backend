@@ -950,12 +950,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         //默认调拨方向：普通
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         //调入组织
-        addDTO.setInOrgId(warehouseEntity.getOrgId());
+        addDTO.setInOrgId(destWarehouse.getOrgId());
         //调出组织
         WarehouseDTO.UpdateDTO deliveryWarehouse = warehouseList.stream().filter(req -> req.getId().equals(mainEntity.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-        addDTO.setOutOrgId(deliveryWarehouse.getOrgId());
+        addDTO.setOutOrgId(warehouseEntity.getOrgId());
         //调拨类型
-        if (warehouseEntity.getOrgId().equals(deliveryWarehouse.getOrgId())) {
+        if (destWarehouse.getOrgId().equals(warehouseEntity.getOrgId())) {
             addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
         } else {
             addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
