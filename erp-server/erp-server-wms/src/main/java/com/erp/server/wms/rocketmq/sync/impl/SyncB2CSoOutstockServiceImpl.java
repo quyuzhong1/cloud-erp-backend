@@ -174,7 +174,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setWarehouseKeeperName(warehouseKeeperName);
         soOutstock.setApproveStatus(statusEnum);
         soOutstock.setSourceType(sourceType);
-        soOutstock.setOrderType(OrderTypeEnum.B2C.getCode())
+        soOutstock.setOrderType(OrderTypeEnum.B2C.getCode());
         LocalDate billDate = null;
         String billDateStr = entity.getFDate();
         if (StringUtils.isNotBlank(billDateStr)) {
