@@ -1,5 +1,6 @@
 package com.erp.server.oms.controller.api;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataPermission;
@@ -619,7 +620,7 @@ public class SoB2cController extends BaseController {
             try {
                 result = soB2cService.submitDelivery(id);
             } catch (Exception e) {
-                log.error("B2C销售订单提交发货失败", e);
+                log.error("B2C销售订单提交发货失败", ExceptionUtil.stacktraceToString(e));
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 提交发货失败");
