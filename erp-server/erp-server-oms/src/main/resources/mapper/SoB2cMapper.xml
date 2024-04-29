@@ -755,7 +755,6 @@
             </if>
             <if test="isOutStock != null and isOutStock == true">
                 and sb2c.bill_status in( 'waitDistribution','inDistribution','waitShipped','frozen','partialShipped')
-                and sb2c.invalid_status = false and sb2c.pay_status = 'paid'
             </if>
         </where>
         order by sb2c.id desc
