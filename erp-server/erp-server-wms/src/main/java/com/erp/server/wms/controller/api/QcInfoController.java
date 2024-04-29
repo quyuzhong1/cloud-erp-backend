@@ -71,7 +71,7 @@ public class QcInfoController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/tabList")
+    @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "qc_user_id",
             menuCode = "wms:qcBill:paging",
