@@ -974,7 +974,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                             .collect(Collectors.toList());
                 } else {
                     // 历史记录校验状态
-                    if (sourceDetailDTO.stream()
+                    if (currentTrackNoList.stream()
                             .anyMatch(e ->ReconciliationStatusEnum.CONFIRMED.getCode().equalsIgnoreCase(e.getStatus()) ||
                                     ReconciliationStatusEnum.DIFF_CONFIRM.getCode().equalsIgnoreCase(e.getStatus()) ||
                                     ReconciliationStatusEnum.RECONCILED.getCode().equalsIgnoreCase(e.getStatus())
@@ -1398,7 +1398,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                             .collect(Collectors.toList());
                 } else {
                     // 历史记录校验状态
-                    if (sourceDetailDTO.stream()
+                    if (currentTrackNoList.stream()
                             .anyMatch(e -> ReconciliationStatusEnum.CONFIRMED.getCode().equalsIgnoreCase(e.getStatus()) ||
                                     ReconciliationStatusEnum.DIFF_CONFIRM.getCode().equalsIgnoreCase(e.getStatus()) ||
                                     ReconciliationStatusEnum.RECONCILED.getCode().equalsIgnoreCase(e.getStatus()))
