@@ -856,7 +856,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param response
      * @return Boolean
      */
-    Boolean exportExcel(SoB2cDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(SoB2cDTO.ExportParamDTO dto, HttpServletResponse response);
     /**
      * @description: 更新主表仓库匹配规则
      * @author Will
