@@ -1155,7 +1155,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_Operate_NOT_SPLIT(92117,"B2C销售订单【{}】已合并或拆分不支持拆分"),
     ERROR_SO_B2C_Operate_NOT_MERGE(92118,"B2C销售订单【{}】已合并或拆分不支持合并"),
     NOT_DELIVERY_NOT_INTERCEPT(92119,"只有待发货订单可以发起拦截"),
-    IS_EXIST_NOT_INTERCEPT(92120,"打标拦截的订单不支持重复发起拦截"),
+    IS_EXIST_NOT_INTERCEPT(92120,"订单取消，发货被拦截"),
     CANCEL_LOGISTICS_ID_NOT_EXIST(92121,"取消物流单的渠道不能为空"),
     NOT_INTERCEPT_NOT_CANCEL_INTERCEPT(92122,"未打标拦截的订单不支持取消拦截"),
     INTERCEPT_STATUS_IS_NOT_BLANK(92123,"物流商处理状态为空，未处理才允许取消拦截"),
