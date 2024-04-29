@@ -171,6 +171,10 @@
         <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
             and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
         </if>
+        <if test="isOutStock != null and isOutStock == true">
+            and sb2c.bill_status in( 'waitDistribution','inDistribution','waitShipped','frozen','partialShipped')
+            and sb2c.invalid_status = false and sb2c.pay_status = 'paid'
+        </if>
         order by sb2c.id desc
     </select>
 
@@ -759,5 +763,33 @@
             </if>
         </where>
         order by sb2c.id desc
+    </select>
+
+    <!-- B2C销售订单导出总数量查询 -->
+    <select id="countExportExcel" resultType="java.lang.Integer">
+        select
+            count(0)
+        from so_b2c sb2c
+        inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
+        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        left join (
+        select so_b2c_id,array_to_string(array_agg(category_name), ',') as categoryNames from so_b2c_ref_category where is_deleted = false group by so_b2c_id
+        ) sbrc on sb2c.id = sbrc.so_b2c_id
+        <where>
+            ${params.sqlMap.default}
+            and sb2c.is_deleted = false
+            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
+                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
+            </if>
+            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
+                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
+            </if>
+            <if test="isOutStock != null and isOutStock == true">
+                and sb2c.bill_status in( 'waitDistribution','inDistribution','waitShipped','frozen','partialShipped')
+                and sb2c.invalid_status = false and sb2c.pay_status = 'paid'
+            </if>
+        </where>
     </select>
 </mapper>
