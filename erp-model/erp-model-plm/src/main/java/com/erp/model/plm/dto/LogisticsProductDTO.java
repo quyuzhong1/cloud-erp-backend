@@ -1039,7 +1039,7 @@ public class LogisticsProductDTO {
 
         private String imagesUrl;
 
-       private BigDecimal price;
+//       private BigDecimal price;
 
        private BigDecimal amount;
 
