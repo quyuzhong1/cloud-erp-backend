@@ -487,7 +487,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
         }
         //更新单据状态和拣货状态
-        Boolean update = updateStatusByIdList(Arrays.asList(id), SoB2cDeliveryStatusEnum.WAIT_HANDLE.getStatus(), Boolean.FALSE);
+        Boolean update = updateStatusByIdList(Arrays.asList(id), SoB2cDeliveryStatusEnum.WAIT_HANDLE.getStatus(), Boolean.FALSE,Boolean.FALSE);
         if (!update) {
             throw new ServiceException("取消打印拣货单");
         }
@@ -910,7 +910,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
         }
         //更新单据状态和拣货状态
-        Boolean update = updateStatusByIdList(Arrays.asList(id), SoB2cDeliveryStatusEnum.PICKING.getStatus(), Boolean.TRUE);
+        Boolean update = updateStatusByIdList(Arrays.asList(id), SoB2cDeliveryStatusEnum.PICKING.getStatus(), Boolean.TRUE, Boolean.TRUE);
         if (!update) {
             throw new ServiceException("完成打印失败");
         }
@@ -1221,12 +1221,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @param status
      * @return Boolean
      */
-    private Boolean updateStatusByIdList(List<String> idList,String status,Boolean isPrintPicking) {
+    private Boolean updateStatusByIdList(List<String> idList,String status,Boolean isPrintPicking,Boolean isPrintLogistics) {
         if (CollectionUtils.isEmpty(idList)) {
             return Boolean.FALSE;
         }
         return lambdaUpdate().in(SoB2cDeliveryEntity::getId,idList).set(SoB2cDeliveryEntity::getStatus,status)
                 .set(SoB2cDeliveryEntity::getIsPrintPicking,isPrintPicking)
+                .set(SoB2cDeliveryEntity::getIsPrintLogistic,isPrintLogistics)
                 .set(isPrintPicking,SoB2cDeliveryEntity::getFinishPrintTime,LocalDateTime.now())
                 .set(!isPrintPicking,SoB2cDeliveryEntity::getFinishPrintTime,null)
                 .update();
@@ -1370,6 +1371,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             record.setInspectionName(record.getIsInspection()? InspectionEnum.YES.getName(): InspectionEnum.NO.getName());
             record.setWeighName(record.getIsWeigh()? WeightEnum.YES.getName(): WeightEnum.NO.getName());
             record.setPrintPickingName(record.getIsPrintPicking()? PrintPickingEnum.YES.getName(): PrintPickingEnum.NO.getName());
+            record.setPrintLogisticName(record.getIsPrintLogistic()? PrintPickingEnum.YES.getName(): PrintPickingEnum.NO.getName());
         }
     }
 
