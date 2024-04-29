@@ -229,90 +229,8 @@
         FROM qc_info qb
         LEFT JOIN qc_result qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
         LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
-        WHERE qb.is_deleted=FALSE
-        <if test="params.searchType !=null and params.searchType!='' and params.searchType != 'waitQc' and params.searchType != 'waitReQc' ">
-            AND qb.qc_status = #{params.searchType}
-        </if>
-        <if test="params.searchType !=null and params.searchType!='' and params.searchType == 'waitQc'">
-            AND qb.qc_status in ('draft', #{params.searchType})
-        </if>
-        <if test="params.searchType !=null and params.searchType!='' and params.searchType == 'waitReQc'">
-            AND ( qb.qc_status = 'finishQc' and  qi.is_inside_qc = true  and (qi.qc_sample_result is null or qi.qc_sample_result = '') )
-        </if>
-        <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
-            AND qb.purchase_order_code ILIKE concat('%', #{params.purchaseOrderCode}::text ,'%')
-        </if>
-        <if test="params.code !=null and params.code!=''">
-            AND qb.code ilike concat('%', #{params.code}::text ,'%')
-        </if>
-        <if test="params.sourceCode !=null and params.sourceCode!=''">
-            AND qb.source_code ilike concat('%', #{params.sourceCode}::text ,'%')
-        </if>
-        <if test="params.skuNoList !=null and params.skuNoList.size>0">
-            AND qp.sku_no IN
-            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
-                #{skuNo}
-            </foreach>
-        </if>
-
-        <if test="params.qcUserIdList!=null and params.qcUserIdList.size>0">
-            AND qb.qc_user_id IN
-            <foreach collection="params.qcUserIdList" item="qcUserId" open="(" separator="," close=")">
-                #{qcUserId}
-            </foreach>
-        </if>
-
-        <if test="params.qcStatusList !=null and params.qcStatusList.size>0">
-            AND qb.qc_status IN
-            <foreach collection="params.qcStatusList" item="qcStatus" open="(" separator="," close=")">
-                #{qcStatus}
-            </foreach>
-        </if>
-        <if test="params.qcType !=null and params.qcType!=''">
-            AND qi.qc_type =#{params.qcType}
-        </if>
-        <if test="params.isInside !=null ">
-            AND qi.is_inside =#{params.isInside}
-        </if>
-        <if test="params.supplierIdList !=null and params.supplierIdList.size>0">
-            AND qb.supplier_id IN
-            <foreach collection="params.supplierIdList" item="supplierId" open="(" separator="," close=")">
-                #{supplierId}
-            </foreach>
-        </if>
-        <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
-            AND qb.warehouse_id IN
-            <foreach collection="params.warehouseIdList" item="warehouseId" open="(" separator="," close=")">
-                #{warehouseId}
-            </foreach>
-        </if>
-
-        <if test="params.qcResultList !=null and params.qcResultList.size>0">
-            AND qi.qc_result IN
-            <foreach collection="params.qcResultList" item="qcResult" open="(" separator="," close=")">
-                #{qcResult}
-            </foreach>
-        </if>
-
-        <if test="params.handleModeDictList !=null and params.handleModeDictList.size>0">
-            AND qi.handle_mode_dict IN
-            <foreach collection="params.handleModeDictList" item="handleMode" open="(" separator="," close=")">
-                #{handleMode}
-            </foreach>
-        </if>
-        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
-            AND qb.create_user_id IN
-            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
-                #{createUserId}
-            </foreach>
-        </if>
-        <if test="params.createTimeList!=null and params.createTimeList.size>0">
-            AND qb.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > qb.create_time
-        </if>
-        <if test="params.isInsideQc !=null ">
-            AND qi.is_inside_qc =#{params.isInsideQc}
-        </if>
+        WHERE ${params.sqlMap.default}
+        and qb.is_deleted=FALSE
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -361,97 +279,8 @@
         FROM qc_info qb
         LEFT JOIN qc_result qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
         LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
-        WHERE qb.is_deleted=FALSE
-        <choose>
-            <when test="params.ids!=null and params.ids.size>0">
-                AND qb.id IN
-                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
-            </when>
-            <otherwise>
-                <if test="params.searchType !=null and params.searchType!='' and params.searchType != 'waitQc' and params.searchType != 'waitReQc' ">
-                    AND qb.qc_status = #{params.searchType}
-                </if>
-                <if test="params.searchType !=null and params.searchType!='' and params.searchType == 'waitQc'">
-                    AND qb.qc_status in ('draft', #{params.searchType})
-                </if>
-                <if test="params.searchType !=null and params.searchType!='' and params.searchType == 'waitReQc'">
-                    AND ( qb.qc_status = 'finishQc' and qi.is_inside_qc = true  and (qi.qc_sample_result is null or qi.qc_sample_result = '') )
-                </if>
-                <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
-                    AND qb.purchase_order_code ilike concat('%', #{params.purchaseOrderCode}::text ,'%')
-                </if>
-                <if test="params.code !=null and params.code!=''">
-                    AND qb.code ilike concat('%', #{params.code}::text ,'%')
-                </if>
-                <if test="params.skuNoList !=null and params.skuNoList.size>0">
-                    AND qp.sku_no IN
-                    <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
-                        #{skuNo}
-                    </foreach>
-                </if>
-                <if test="params.qcStatusList !=null and params.qcStatusList.size>0">
-                    AND qb.qc_status IN
-                    <foreach collection="params.qcStatusList" item="qcStatus" open="(" separator="," close=")">
-                        #{qcStatus}
-                    </foreach>
-                </if>
-                <if test="params.qcUserIdList!=null and params.qcUserIdList.size>0">
-                    AND qb.qc_user_id IN
-                    <foreach collection="params.qcUserIdList" item="qcUserId" open="(" separator="," close=")">
-                        #{qcUserId}
-                    </foreach>
-                </if>
-                <if test="params.qcType !=null and params.qcType!=''">
-                    AND qi.qc_type =#{params.qcType}
-                </if>
-                <if test="params.isInside !=null ">
-                    AND qi.is_inside =#{params.isInside}
-                </if>
-                <if test="params.supplierIdList !=null and params.supplierIdList.size>0">
-                    AND qb.supplier_id IN
-                    <foreach collection="params.supplierIdList" item="supplierId" open="(" separator="," close=")">
-                        #{supplierId}
-                    </foreach>
-                </if>
-                <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
-                    AND qb.warehouse_id IN
-                    <foreach collection="params.warehouseIdList" item="warehouseId" open="(" separator="," close=")">
-                        #{warehouseId}
-                    </foreach>
-                </if>
-
-                <if test="params.qcResultList !=null and params.qcResultList.size>0">
-                    AND qi.qc_result IN
-                    <foreach collection="params.qcResultList" item="qcResult" open="(" separator="," close=")">
-                        #{qcResult}
-                    </foreach>
-                </if>
-
-                <if test="params.handleModeDictList !=null and params.handleModeDictList.size>0">
-                    AND qi.handle_mode_dict IN
-                    <foreach collection="params.handleModeDictList" item="handleMode" open="(" separator="," close=")">
-                        #{handleMode}
-                    </foreach>
-                </if>
-                <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
-                    AND qb.create_user_id IN
-                    <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
-                        #{createUserId}
-                    </foreach>
-                </if>
-                <if test="params.createTimeList!=null and params.createTimeList.size>0">
-                    AND qb.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
-                    INTERVAL '1
-                    DAY' ) > qb.create_time
-                </if>
-                <if test="params.isInsideQc !=null ">
-                    AND qi.is_inside_qc =#{params.isInsideQc}
-                </if>
-
-            </otherwise>
-        </choose>
+        WHERE ${params.sqlMap.default}
+        and qb.is_deleted=FALSE
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -464,6 +293,7 @@
         </if>
         qb.create_time DESC
     </select>
+
     <select id="viewGeneratePurchaseReturnOrder"
             resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$ViewGeneratePurchaseReturnOrderDTO">
         SELECT
@@ -559,97 +389,15 @@
         FROM qc_info qb
         LEFT JOIN qc_result qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
         LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
-        WHERE qb.is_deleted=FALSE
-        <choose>
-            <when test="params.ids!=null and params.ids.size>0">
-                AND qb.id IN
-                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
-            </when>
-            <otherwise>
-                <if test="params.searchType !=null and params.searchType!='' and params.searchType != 'waitQc'">
-                    AND qb.qc_status = #{params.searchType}
-                </if>
-                <if test="params.searchType !=null and params.searchType!='' and params.searchType == 'waitQc'">
-                    AND qb.qc_status in ('draft', #{params.searchType})
-                </if>
-                <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
-                    AND qb.purchase_order_code ilike concat('%', #{params.purchaseOrderCode}::text ,'%')
-                </if>
-                <if test="params.code !=null and params.code!=''">
-                    AND qb.code ilike concat('%', #{params.code}::text ,'%')
-                </if>
-                <if test="params.skuNoList !=null and params.skuNoList.size>0">
-                    AND qp.sku_no IN
-                    <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
-                        #{skuNo}
-                    </foreach>
-                </if>
-                <if test="params.qcStatusList !=null and params.qcStatusList.size>0">
-                    AND qb.qc_status IN
-                    <foreach collection="params.qcStatusList" item="qcStatus" open="(" separator="," close=")">
-                        #{qcStatus}
-                    </foreach>
-                </if>
-                <if test="params.qcUserIdList!=null and params.qcUserIdList.size>0">
-                    AND qb.qc_user_id IN
-                    <foreach collection="params.qcUserIdList" item="qcUserId" open="(" separator="," close=")">
-                        #{qcUserId}
-                    </foreach>
-                </if>
-                <if test="params.qcType !=null and params.qcType!=''">
-                    AND qi.qc_type =#{params.qcType}
-                </if>
-                <if test="params.isInside !=null ">
-                    AND qi.is_inside =#{params.isInside}
-                </if>
-                <if test="params.supplierIdList !=null and params.supplierIdList.size>0">
-                    AND qb.supplier_id IN
-                    <foreach collection="params.supplierIdList" item="supplierId" open="(" separator="," close=")">
-                        #{supplierId}
-                    </foreach>
-                </if>
-                <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
-                    AND qb.warehouse_id IN
-                    <foreach collection="params.warehouseIdList" item="warehouseId" open="(" separator="," close=")">
-                        #{warehouseId}
-                    </foreach>
-                </if>
-
-                <if test="params.qcResultList !=null and params.qcResultList.size>0">
-                    AND qi.qc_result IN
-                    <foreach collection="params.qcResultList" item="qcResult" open="(" separator="," close=")">
-                        #{qcResult}
-                    </foreach>
-                </if>
-
-                <if test="params.handleModeDictList !=null and params.handleModeDictList.size>0">
-                    AND qi.handle_mode_dict IN
-                    <foreach collection="params.handleModeDictList" item="handleMode" open="(" separator="," close=")">
-                        #{handleMode}
-                    </foreach>
-                </if>
-                <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
-                    AND qb.create_user_id IN
-                    <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
-                        #{createUserId}
-                    </foreach>
-                </if>
-                <if test="params.createTimeList!=null and params.createTimeList.size>0">
-                    AND qb.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
-                    INTERVAL '1
-                    DAY' ) > qb.create_time
-                </if>
-
-            </otherwise>
-        </choose>
+        WHERE ${params.sqlMap.default}
+        and qb.is_deleted=FALSE
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
         ORDER BY qb.create_time DESC
     </select>
+
     <select id="getQcReceiveResult" resultType="com.erp.model.wms.dto.QcInfoDTO$QcReceiveResultDTO">
         SELECT
             qi.purchase_order_detail_id as purchaseDetailId,
@@ -663,6 +411,20 @@
         <foreach collection="purchaseDetailIds" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
+    </select>
+
+    <!-- 查询tab列表数量 -->
+    <select id="listCount" resultType="java.lang.Integer">
+        select
+            count(distinct qb.id)
+        from qc_info qb
+        <where>
+            ${params.sqlMap.default}
+            and qb.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
     </select>
 
 </mapper>

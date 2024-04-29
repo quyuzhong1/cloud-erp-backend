@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
@@ -166,7 +167,7 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @param
      * @return java.util.List<com.erp.model.wms.dto.QcBillDTO.TabListDTO>
      */
-    List<QcInfoDTO.TabListDTO> tabList();
+    List<QcInfoDTO.TabListDTO> tabList(PermissionsDTO dto);
 
     
     /**
