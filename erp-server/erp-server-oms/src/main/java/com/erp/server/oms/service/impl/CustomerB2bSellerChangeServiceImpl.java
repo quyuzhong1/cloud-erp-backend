@@ -120,7 +120,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         }
         //销售员信息
         CustomerSellerEntity currentSellerEntity = customerSellerService.getCurrentInfo(customerInfoEntity.getId());
-        if(Objects.nonNull(currentSellerEntity) && Objects.nonNull(currentSellerEntity.getStartDate()) && !addDTO.getStartDate().isAfter(currentSellerEntity.getStartDate())){
+        if(Objects.nonNull(currentSellerEntity) && !addDTO.getStartDate().isAfter(currentSellerEntity.getStartDate())){
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "启用时间必须晚于当前销售员开始时间");
         }
 
