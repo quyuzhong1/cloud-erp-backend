@@ -166,6 +166,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
                 if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
                     orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+                    orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
                 } else {
                     orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
                 }
@@ -173,6 +174,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
                 if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
                     orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+                    orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
                 } else {
                     orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
                 }
@@ -209,6 +211,14 @@ public class MercadoOrderDTO extends CleanBaseDTO {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
         }
+
+
+        //平台仓审核状态已审核
+        if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
+        }
+
 
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(orderBean);
