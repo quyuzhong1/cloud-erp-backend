@@ -572,7 +572,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     String platformSpuNo = item.getPlatformSpuNo();
                     productDTO.setSkuId(platformSpuNo);
                     String sourceDetailId = item.getSourceDetailId();
-                    productDTO.setChildOrderId(sourceDetailId);
+                    if (StringUtils.isNotBlank(sourceDetailId)){
+                        productDTO.setChildOrderId(Long.valueOf(sourceDetailId));
+                    }
+
                     productDTO.setSkuNo(item.getSkuNo());
                     productDTO.setSkuId(skuId);
                     ordersSkuList.add(productDTO);
