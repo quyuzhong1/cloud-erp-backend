@@ -118,6 +118,15 @@ public class MercadoOrderDTO extends CleanBaseDTO {
 
         // 来源编码
         orderDTO.setSourceCode("");
+
+        //平台创建时间
+        if (CollectionUtils.isNotEmpty(orderBean.getDateCreated())) {
+            OffsetDateTime offsetDateTime = OffsetDateTime.parse(orderBean.getDateCreated(), formatter);
+            // 转换为 LocalDateTime
+            LocalDateTime createTime = offsetDateTime.toLocalDateTime();
+            orderDTO.setPlatformOrderCreateTime(createTime);
+        }
+
         // 标签json
         Map<String, String> lableMap = new HashMap<>();
 
