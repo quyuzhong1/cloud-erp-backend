@@ -721,7 +721,7 @@ public class LogisticsBillDTO implements Serializable {
         private String channelId;
 
         /**
-         * 客户参考号
+         * 客户参考号 (erp 销售订单code)
          */
         @NotBlank(message = "客户参考号不能为空")
         private String referenceNumber;
@@ -735,6 +735,11 @@ public class LogisticsBillDTO implements Serializable {
          * 跟踪单号（运单号和跟踪单号不能都为空）
          */
         private String trackNo;
+
+        /**
+         *  订单id(erp 销售订单id)
+         */
+        private String orderId;
 
         private String reason;
     }

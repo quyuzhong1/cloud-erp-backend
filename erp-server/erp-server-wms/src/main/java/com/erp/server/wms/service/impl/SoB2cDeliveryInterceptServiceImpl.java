@@ -257,6 +257,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 .transportNo(entity.getTransportNo())
                 .referenceNumber(soB2cEntity.getCode())
                 .reason("b2c发货拦截单自动拦截")
+                .orderId(entity.getId())
                 .build();
         //先取消订单，取消订单失败的再拦截订单
         ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(dto);
