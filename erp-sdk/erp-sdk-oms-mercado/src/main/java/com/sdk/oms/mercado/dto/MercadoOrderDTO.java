@@ -352,9 +352,10 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         }
         List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
         //自发货不用更新物流单
-        if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
+        if (!logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
             trackingNumber = "";
         }
+        BigDecimal shippingCost = orderViewDTO.getPayments().stream().map(req -> req.getShippingCost()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
 
         PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
                 .code(trackingNumber)
@@ -363,7 +364,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
                 .logisticsChannelId("")
                 .logisticsChannelName("")
                 .estimatedShippingCost(cost)
-                .actualShippingCost(BigDecimal.ZERO)
+                .actualShippingCost(shippingCost)
                 .accessoriesCostCurrency("")
                 .actualShippingCurrency("")
                 .estimatedShippingCurrency("")

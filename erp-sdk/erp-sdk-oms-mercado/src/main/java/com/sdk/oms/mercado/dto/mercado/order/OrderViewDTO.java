@@ -2,6 +2,7 @@ package com.sdk.oms.mercado.dto.mercado.order;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.sdk.oms.mercado.dto.mercado.cost.CostDTO;
 import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
 import lombok.Data;
 
@@ -87,5 +88,7 @@ public class OrderViewDTO {
     private List<PaymentsBeanX> payments;
     @JsonProperty("shipmentViewDTO")
     private ShipmentViewDTO shipmentViewDTO;
+    @JsonProperty("costDTO")
+    private CostDTO costDTO;
 
 }
