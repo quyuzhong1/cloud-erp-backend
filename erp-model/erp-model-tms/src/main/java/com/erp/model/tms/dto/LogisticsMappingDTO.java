@@ -120,6 +120,12 @@ public class LogisticsMappingDTO implements Serializable {
          * 物流渠道id
          */
         @NotBlank(message = "物流渠道id不能为空")
+        private String logisticsChannelId;
+
+        /**
+         * 销售渠道id
+         */
+        @NotBlank(message = "销售渠道id不能为空")
         private String logisticsSaleChannelId;
     }
 
