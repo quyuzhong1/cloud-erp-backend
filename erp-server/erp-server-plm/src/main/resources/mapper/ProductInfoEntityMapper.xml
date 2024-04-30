@@ -152,14 +152,20 @@
             AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
             )
         </if>
-        <if test="params.initDateBegin != null and params.initDateEnd != null">
-            AND p.approval_time BETWEEN #{params.initDateBegin} AND #{params.initDateEnd}
+        <if test="params.initDateList != null and params.initDateList.size == 2">
+            AND p.approval_time BETWEEN #{params.initDateList[0]} AND #{params.initDateList[1]}
         </if>
-        <if test="params.launchDateBegin != null and params.launchDateEnd != null">
-            AND pi.project_launch_date BETWEEN #{params.launchDateBegin} AND #{params.launchDateEnd}
+        <if test="params.launchDateList != null and params.launchDateList.size == 2">
+            AND pi.project_launch_date BETWEEN #{params.launchDateList[0]} AND #{params.launchDateList[1]}
         </if>
-        <if test="params.finishDateBegin != null and params.finishDateEnd != null">
-            AND pi.project_finish_date BETWEEN #{params.finishDateBegin} AND #{params.finishDateEnd}
+        <if test="params.finishDateList != null and params.finishDateList.size == 2">
+            AND pi.project_finish_date BETWEEN #{params.finishDateList[0]} AND #{params.finishDateList[1]}
+        </if>
+        <if test="params.projectStatusList != null and params.projectStatusList.size > 0">
+            AND pi.project_status in
+                <foreach collection="params.projectStatusList" open="(" item="status" close=")" separator=",">
+                    #{status}
+                </foreach>
         </if>
         ORDER BY p.create_time DESC
     </select>
