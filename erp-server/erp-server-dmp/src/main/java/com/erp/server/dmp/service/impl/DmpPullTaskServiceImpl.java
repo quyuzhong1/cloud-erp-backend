@@ -336,7 +336,26 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         }
         return Boolean.TRUE;
     }
-
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean batchNoNeedSync(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //获取数据
+        List<DmpPullTaskEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DATA);
+        }
+        //判断数据状态-只有同步失败的才可以变更为无需同步
+        List<String> noNeedSyncIds = list.stream().filter(obj -> SyncStatusEnum.FAILED_SYNC.getCode().equals(obj.getStatus()))
+                .map(DmpPullTaskEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(noNeedSyncIds)) {
+            throw new ServiceException(ApiError.ERROR_STATUS_NO_NEED_SYNC);
+        }
+        this.baseMapper.updateStatus(noNeedSyncIds);
+        return Boolean.TRUE;
+    }
     /**
      * @param list
      * @description: 列表查询数据格式话
