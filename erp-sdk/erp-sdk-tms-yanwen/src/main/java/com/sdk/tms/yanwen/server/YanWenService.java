@@ -51,6 +51,7 @@ public class YanWenService {
         request.getParcelInfo().setCurrency("USD");
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
         String response = YanWenUtils.sendPost(authMap.get("url"),YanWenConstants.METHOD_ORDER_CREATE,paramsMap,authMap.get("clientId"),authMap.get("clientSecret"));
+        log.info("下单完成：{}",JSONObject.toJSONString(response));
         YanWenResponse<YanWenCreateWayBill> yanWenResponseDTO;
         try {
             yanWenResponseDTO = JSONObject.parseObject(response,new TypeReference<YanWenResponse<YanWenCreateWayBill>>() {}.getType());

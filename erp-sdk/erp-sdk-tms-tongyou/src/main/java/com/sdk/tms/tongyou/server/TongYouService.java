@@ -55,6 +55,7 @@ public class TongYouService {
         String sign = TongYouUtils.getCreateOrderSign(tongYouSignDTO,authMap.get("clientSecret"));
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
         String response = TongYouUtils.sendPost(TongYouConstants.METHOD_CREATE_ORDER,paramsMap,sign,authMap.get("clientSecret"));
+        log.info("下单完成：{}",JSONObject.toJSONString(response));
         return JSONObject.parseObject(response,TongYouCreateOrder.class);
     }
 
