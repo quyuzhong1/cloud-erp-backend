@@ -15,6 +15,7 @@
         sbd.logistics_channel_id,
         sbd.logistics_channel_name AS logisticsChannelName,
         sbd.is_print_picking AS isPrintPicking,
+        sbd.is_print_logistic AS isPrintLogistic,
         sbd.is_inspection AS isInspection,
         sbd.is_weigh AS isWeigh,
         sbd.weight AS weight,

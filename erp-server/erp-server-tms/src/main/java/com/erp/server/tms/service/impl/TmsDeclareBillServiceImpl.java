@@ -393,25 +393,35 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             if(CollectionUtils.isEmpty(deliveryDTOList)){
                 throw new ServiceException("未找到发货单信息");
             }
-            TmsDeclareBillDTO.DeliveryDTO deliveryDTO = deliveryDTOList.get(0);
             List<TmsDeclareBillDTO.PackingDTO> allPackDTOList = deliveryDTOList.stream()
                     .filter(v -> CollectionUtils.isNotEmpty(v.getPackingDTOList()))
                     .flatMap(v -> v.getPackingDTOList().stream())
                     .collect(Collectors.toList());
+            if(deliveryDTOList.size()>1){
+                deliveryDTOList = deliveryDTOList.stream().filter(v->v.getSourceCode().equals(entity.getSourceCode())).collect(Collectors.toList());
+            }
+            TmsDeclareBillDTO.DeliveryDTO deliveryDTO = deliveryDTOList.get(0);
             deliveryDTO.setPackingDTOList(allPackDTOList);
             BeanUtil.copyProperties(deliveryDTO,viewDTO, CopyOptions.create().setOverride(false));
+            viewDTO.setLogisticsSupplierId(deliveryDTO.getLogisticsSupplierId());
+            viewDTO.setLogisticsSupplierName(deliveryDTO.getLogisticsSupplierName());
         }else if(entity.getType().equals(SourceTypeEnum.B2B_DECLARE_BILL.getCode())){
             List<TmsDeclareBillDTO.SoOutDTO> deliveryDTOList = this.getCanGenerateSoOut(TmsDeclareBillDTO.QuerySourceDTO.builder().ids(sourceIdList).build());
             if(CollectionUtils.isEmpty(deliveryDTOList)){
                 throw new ServiceException("未找到销售出库单信息");
             }
-            TmsDeclareBillDTO.SoOutDTO deliveryDTO = deliveryDTOList.get(0);
             List<TmsDeclareBillDTO.PackingDTO> allPackDTOList = deliveryDTOList.stream()
                     .filter(v -> CollectionUtils.isNotEmpty(v.getPackingDTOList()))
                     .flatMap(v -> v.getPackingDTOList().stream())
                     .collect(Collectors.toList());
+            if(deliveryDTOList.size()>1){
+                deliveryDTOList = deliveryDTOList.stream().filter(v->v.getSourceCode().equals(entity.getSourceCode())).collect(Collectors.toList());
+            }
+            TmsDeclareBillDTO.SoOutDTO deliveryDTO = deliveryDTOList.get(0);
             deliveryDTO.setPackingDTOList(allPackDTOList);
             BeanUtil.copyProperties(deliveryDTO,viewDTO, CopyOptions.create().setOverride(false));
+            viewDTO.setLogisticsSupplierId(deliveryDTO.getLogisticsSupplierId());
+            viewDTO.setLogisticsSupplierName(deliveryDTO.getLogisticsSupplierName());
         }
 
         fillViewDTO(viewDTO);
@@ -730,7 +740,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 ExcelData excelData = new ExcelData();
                 excelData.setData(exportDTO);
                 excelData.setDetailList(exportDTO.getProductDetailList());
-                excelData.setFilename("报关单"+DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP)+StringUtils.leftPad(String.valueOf(temp),3,"0")+".xlsx");
+                excelData.setFilename("报关单"+exportDTO.getCode()+".xlsx");
                 excelDataList.add(excelData);
                 temp++;
             }

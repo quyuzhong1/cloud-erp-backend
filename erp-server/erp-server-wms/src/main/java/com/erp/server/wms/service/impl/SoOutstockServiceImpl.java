@@ -1474,6 +1474,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //更新TMS物流跟踪号
             LogisticsBillDTO.BatchUpdateTrackNoDTO batchUpdateTrackNoDTO = new LogisticsBillDTO.BatchUpdateTrackNoDTO();
             batchUpdateTrackNoDTO.setSoOutstockEntity(soOutstock);
+            batchUpdateTrackNoDTO.setLogisticsChannelId(soOutstock.getLogisticsChannelId());
             batchUpdateTrackNoDTO.setTrackNoList(dto.getTrackNoList());
             List<BatchResultDTO> batchResultDTOList = logisticsBillFeign.updateBatchTrackNo(Collections.singletonList(batchUpdateTrackNoDTO),false);
             if(CollectionUtils.isNotEmpty(batchResultDTOList) && !batchResultDTOList.get(0).getSuccess()){
