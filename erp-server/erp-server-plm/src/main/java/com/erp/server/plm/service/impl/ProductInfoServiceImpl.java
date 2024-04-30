@@ -1,6 +1,5 @@
 package com.erp.server.plm.service.impl;
 
-import cn.hutool.core.util.IdUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
@@ -25,8 +24,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.TaskExportDTO;
@@ -1259,7 +1256,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                         projectTaskService.checkTaskFinish(taskFinish);
                         preTaskService.checkPreTaskFinish(taskIdList);
                         projectTaskService.checkSonTaskFinish(taskIdList, productId);
-                        newProduct.setApprovalTime(LocalDateTime.now());
+                        newProduct.setApprovalTime(dto.getProjectInitTime());
                     }
 
                 }
@@ -2085,12 +2082,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     /**
      * 批量立项
      *
-     * @param productIdList
+     * @param ProductInfoDTO.IdsDateDto
      * @return
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean batchEstablish(List<String> productIdList) {
+    public Boolean batchEstablish(ProductInfoDTO.IdsDateDto dto) {
+        List<String> productIdList = dto.getIds();
+        LocalDate projectInitDate = dto.getLocalDate();
         List<ProductInfoEntity> productInfoList = this.listByIds(productIdList);
         Integer suspendCode = ApprovalStatusEnum.SUSPEND.getCode();
         Integer terminateCode = ApprovalStatusEnum.TERMINATE.getCode();
@@ -2117,7 +2116,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         projectTaskService.checkSonTaskFinish(taskIdList, taskFinish);
         LocalDateTime now = LocalDateTime.now();
         for (ProductInfoEntity product : productInfoList) {
-            product.setApprovalTime(now);
+            product.setApprovalTime(projectInitDate.atTime(0, 0));
             product.setApprovalStatus(approvalCode);
         }
         Boolean result = this.updateBatchById(productInfoList);

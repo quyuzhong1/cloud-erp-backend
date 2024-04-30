@@ -970,11 +970,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
         }
         //查询发货单
-        List<SoB2cDeliveryEntity> deliveryEntities = this.listBySourceIds(soIdList);
-
+        List<SoB2cDeliveryEntity> deliveryEntityList = this.listBySourceIds(deliverySoIdList);
+        List<String> soDeliveryIds = deliveryEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
         //调用第三方平台SDK发货
-        this.falseDeliveryBatch(deliverySoIdList);
+        this.falseDeliveryBatch(soDeliveryIds);
 
+        //查询发货单
+        List<SoB2cDeliveryEntity> deliveryEntities = this.listBySourceIds(soIdList);
 
         //获取一个当前时间当作发货时间
         LocalDateTime deliveryTime = LocalDateTime.now();
