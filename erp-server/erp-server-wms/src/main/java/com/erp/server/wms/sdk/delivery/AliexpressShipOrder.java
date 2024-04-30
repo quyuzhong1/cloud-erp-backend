@@ -48,11 +48,19 @@ public class AliexpressShipOrder implements IPlatformService {
             SoB2cDTO.SignShipOrderDTO signShipOrderDTO = soB2cFeign.getSignShipParam(soB2cId);
             //渠道
             String channelId=signShipOrderDTO.getLogisticsChannelId();
-            //获取渠道信息
-            LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getSignShipInfoByChannelById(channelId);
+
+            //获取销售渠道信息
+            LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getScaleChannelByChannelById(
+                    channelId,
+                    PlatformDictEnum.ALI_EXPRESS.getCode()
+            );
+            if (null == tmsSignShipDTO){
+                throw new ServiceException("找不到渠道信息");
+            }
+
 
             //获取渠道标发单号
-            String standardOrderType = getOrderDeliveryMarkType(PlatformDictEnum.ALI_EXPRESS.getCode(), signShipOrderDTO.getLogisticsChannelId());
+            String standardOrderType = getOrderDeliveryMarkType(PlatformDictEnum.ALI_EXPRESS.getCode(), signShipOrderDTO.getLogisticsChannelId(),tmsSignShipDTO.getChannelId());
             String logisticsNo = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
                     ? signShipOrderDTO.getLogisticsTransportNo() : signShipOrderDTO.getLogisticsTrackNo();
             if (StrUtil.isBlank(logisticsNo)) {
@@ -75,8 +83,8 @@ public class AliexpressShipOrder implements IPlatformService {
     }
 
     @Override
-    public String getOrderDeliveryMarkType(String platform, String logisticsChannelId) {
-        LogisticsMappingEntity logisticsMappingEntity = logisticsMappingFeign.getByLogisticsMappingParam(new LogisticsMappingDTO.SearchParamDTO(platform, logisticsChannelId));
+    public String getOrderDeliveryMarkType(String platform, String logisticsChannelId,String logisticsSaleChannelId) {
+        LogisticsMappingEntity logisticsMappingEntity = logisticsMappingFeign.getByLogisticsMappingParam(new LogisticsMappingDTO.SearchParamDTO(platform, logisticsChannelId,logisticsSaleChannelId));
         if (ObjectUtil.isEmpty(logisticsMappingEntity) || StrUtil.isBlank(logisticsMappingEntity.getOrderDeliveryMarkType())) {
             throw new ServiceException("操作失败，渠道标发单号配置为空");
         }
