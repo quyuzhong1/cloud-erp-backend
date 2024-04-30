@@ -535,7 +535,4 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/listMergePackageBySoIds")
     List<PackageDTO.ScanResultDTO> listMergePackageBySoIds(@RequestBody List<String> ids);
-
-
-
 }

@@ -5993,7 +5993,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //查询中转服务商对应的渠道
         List<String> transferLogisticsChannelIds = list.stream().map(req -> req.getTransferLogisticsChannelId()).distinct().collect(Collectors.toList());
-        List<TransferLogisticsChannelEntity> logisticsChannelEntityList = transferLogisticsFeign.listLogisticsChannelByMainId(transferLogisticsChannelIds);
+        List<TransferLogisticsChannelDTO.ListSelectDTO> logisticsChannelEntityList = transferLogisticsFeign.listByTransferChannelIds(transferLogisticsChannelIds);
 
         for (PackageDTO.PagingViewDTO item : list) {
             String logisticsChannelId = item.getLogisticsChannelId();
@@ -6013,7 +6013,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
 
             //查询中转服务商对应的渠道
-            TransferLogisticsChannelEntity transferLogisticsChannelEntity = logisticsChannelEntityList.stream().filter(req -> item.getTransferLogisticsChannelId().equals(req.getId())).findFirst().orElse(null);
+            TransferLogisticsChannelDTO.ListSelectDTO transferLogisticsChannelEntity = logisticsChannelEntityList.stream().filter(req -> item.getTransferLogisticsChannelId().equals(req.getId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(transferLogisticsChannelEntity)) {
                 item.setTransferLogisticsChannelName(transferLogisticsChannelEntity.getName());
             }
