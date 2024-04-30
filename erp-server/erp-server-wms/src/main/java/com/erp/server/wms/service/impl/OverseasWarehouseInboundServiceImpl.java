@@ -307,7 +307,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 // 入库单创建时取0，发货单审核通过更新为1
                 .verify(verifyCode)
                 .transitWarehouseCode(mainEntity.getPlatformTransferWarehouseCode())
-                .smCode(mainEntity.getLogisticsProductName())
+                .smCode(mainEntity.getLogisticsProductCode())
                 .customsType(customsTypeValue)
                 //  OpenCollectingServiceEnum： 0=自送货物，1=上门提货
                 .collectingService(collectingService)
