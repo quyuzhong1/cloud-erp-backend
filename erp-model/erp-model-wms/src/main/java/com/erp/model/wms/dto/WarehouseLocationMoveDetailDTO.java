@@ -175,8 +175,10 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
-
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
     /**
