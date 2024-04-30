@@ -2,7 +2,9 @@ package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.server.wms.kingdee.*;
@@ -257,7 +259,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            syncKingdeeSoOutstockService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            //审核通过发送金蝶
+            if (!OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
+                syncKingdeeSoOutstockService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            } else {
+                syncKingdeeSoOutstockService.syncB2cDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            }
             syncKingdeeSoOutstockService.syncOrderToDmp(entity,syncParamDetailDTO.getSyncOperate());
         }
     }
