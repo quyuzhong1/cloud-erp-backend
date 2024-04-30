@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @FeignClient(name = "erp-oms", contextId = "soB2c")
@@ -506,4 +507,32 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/addModuleOperateLog")
     Boolean addModuleOperateLog(OperateLogDTO.AddModuleOperateLogDTO operateLogDTO);
+
+    /**
+     * 根据扫描的单号获取订单
+     * @param code
+     * @return
+     */
+    @PostMapping("/feign/soB2c/packageScanByCode")
+    PackageDTO.ScanResultDTO packageScanByCode(@RequestBody String code);
+
+    /**
+     * 修改订单物流重量
+     * @param soId 订单id
+     * @param id 订单物流表id
+     * @param weightByG 重量（g）
+     * @return
+     */
+    @GetMapping("/feign/soB2c/updateWeight")
+    Boolean updateWeight(@RequestParam("soId") String soId,
+                         @RequestParam("id") String id,
+                         @RequestParam("weightByG") BigDecimal weightByG);
+
+    /**
+     * 根据销售订单ids 获取到合并的数据
+     * @param ids
+     * @return
+     */
+    @PostMapping("/feign/soB2c/listMergePackageBySoIds")
+    List<PackageDTO.ScanResultDTO> listMergePackageBySoIds(@RequestBody List<String> ids);
 }
