@@ -186,7 +186,7 @@ public class ShopifyShipOrder implements IPlatformService {
                 ShopifyTrackingInfo trackingInfo = new ShopifyTrackingInfo();
 
                 //获取渠道标发单号
-                String standardOrderType = getOrderDeliveryMarkType(PlatformDictEnum.SHOPIFY.getCode(), tmsScaleChannelShipDTO.getChannelId());
+                String standardOrderType = getOrderDeliveryMarkType(PlatformDictEnum.SHOPIFY.getCode(),logisticsEntity.getLogisticsChannelId(), tmsScaleChannelShipDTO.getChannelId());
                 String trackingNumber = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
                         ? logisticsEntity.getCode() : logisticsEntity.getTrackNo();
                 if (StrUtil.isBlank(trackingNumber)) {
@@ -213,8 +213,8 @@ public class ShopifyShipOrder implements IPlatformService {
     }
 
     @Override
-    public String getOrderDeliveryMarkType(String platform, String logisticsChannelId) {
-        LogisticsMappingEntity logisticsMappingEntity = logisticsMappingFeign.getByLogisticsMappingParam(new LogisticsMappingDTO.SearchParamDTO(platform, logisticsChannelId));
+    public String getOrderDeliveryMarkType(String platform, String logisticsChannelId,String logisticsSaleChannelId) {
+        LogisticsMappingEntity logisticsMappingEntity = logisticsMappingFeign.getByLogisticsMappingParam(new LogisticsMappingDTO.SearchParamDTO(platform, logisticsChannelId,logisticsSaleChannelId));
         if (ObjectUtil.isEmpty(logisticsMappingEntity) || StrUtil.isBlank(logisticsMappingEntity.getOrderDeliveryMarkType())) {
             throw new ServiceException("操作失败，渠道标发单号配置为空");
         }
