@@ -74,7 +74,7 @@ public class TikTokShipOrder implements IPlatformService {
             ShipOrderUSParam paramDTO = new ShipOrderUSParam();
             paramDTO.setTrackingNumber(view.getLogisticsDTO().getCode());
             paramDTO.setOrderLineItemIds(sourceDetailIds);
-            paramDTO.setShippingProviderId(tmsScaleChannelShipDTO.getPlatformChannelId());
+            paramDTO.setShippingProviderId(tmsScaleChannelShipDTO.getCode());
             ShipOrderUS shipOrderUS = tikTokSdkClientService.sendTikTokShipOrderUS(tikTokShopInfoDTO, view.getPlatformCode(), paramDTO);
             if (shipOrderUS.getCode() != 0) {
                 throw new ServiceException("TikTok标记发货失败");
@@ -83,16 +83,11 @@ public class TikTokShipOrder implements IPlatformService {
             ShipOrderOtherParam paramDTO = new ShipOrderOtherParam();
             SelfShipmentBean selfShipmentBean = new SelfShipmentBean();
             selfShipmentBean.setTrackingNumber(view.getLogisticsDTO().getCode());
-            selfShipmentBean.setShippingProviderId(tmsScaleChannelShipDTO.getPlatformChannelId());
+            selfShipmentBean.setShippingProviderId(tmsScaleChannelShipDTO.getCode());
             paramDTO.setSelfShipment(selfShipmentBean);
             tikTokSdkClientService.sendTikTokShipOrderOther(tikTokShopInfoDTO, view.getLogisticsDTO().getPlatformPackageId(), paramDTO);
         }
 
-    }
-
-    @Override
-    public String getOrderDeliveryMarkType(String platform, String logisticsChannelId) {
-        return null;
     }
 
     @Override

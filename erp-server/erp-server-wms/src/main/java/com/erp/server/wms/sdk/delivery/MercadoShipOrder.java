@@ -52,10 +52,6 @@ public class MercadoShipOrder implements IPlatformService {
         mercadoSdkClientService.shipOrder(shipOrderDTO);
     }
 
-    @Override
-    public String getOrderDeliveryMarkType(String platform, String logisticsChannelId) {
-        return null;
-    }
 
     @Override
     public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
