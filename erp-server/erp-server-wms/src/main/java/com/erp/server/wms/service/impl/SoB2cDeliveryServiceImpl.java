@@ -1165,6 +1165,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean hasNotShippedDeliveryAndLog(SoB2cEntity currentEntity) {
+        Integer count = this.lambdaQuery()
+                .eq(SoB2cDeliveryEntity::getSourceId, currentEntity.getId())
+                .eq(SoB2cDeliveryEntity::getSourceCode, currentEntity.getCode())
+                .eq(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.SHIPPED.getCode())
+                .count();
+        if (count > 0){
+            return false;
     public List<BatchResultDTO> logisticsIntercept(List<String> ids) {
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(ids);
         List<String> sourceIds = soB2cDeliveryEntities.stream().map(SoB2cDeliveryEntity::getSourceId).collect(Collectors.toList());
