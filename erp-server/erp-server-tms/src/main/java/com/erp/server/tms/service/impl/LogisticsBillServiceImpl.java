@@ -1034,6 +1034,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 //                }
 //            }
             if(StringUtils.isNotBlank(batchUpdateTrackNoDTO.getLogisticsChannelId())){
+                LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(batchUpdateTrackNoDTO.getLogisticsChannelId());
+                if(Objects.isNull(logisticsChannelEntity)){
+                    throw new ServiceException("查询不到渠道");
+                }
+                logisticsBillEntity.setLogisticsSupplierId(logisticsChannelEntity.getMainId());
                 logisticsBillEntity.setChannelId(batchUpdateTrackNoDTO.getLogisticsChannelId());
                 if (CollectionUtils.isNotEmpty(batchUpdateTrackNoDTO.getTrackNoList())){
                     logisticsBillEntity.setTransportNo(String.join(",", batchUpdateTrackNoDTO.getTrackNoList()));

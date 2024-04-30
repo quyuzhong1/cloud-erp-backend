@@ -482,6 +482,11 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 .update();
     }
 
+    @Override
+    public List<SoB2cDeliveryInterceptEntity> listByStatus(String code) {
+        return lambdaQuery().eq(SoB2cDeliveryInterceptEntity::getHandleStatus,code).list();
+    }
+
     /**
     * 新增修改处理数据
     */
