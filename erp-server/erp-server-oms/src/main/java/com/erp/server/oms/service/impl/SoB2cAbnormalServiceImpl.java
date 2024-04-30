@@ -80,7 +80,7 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "拦截成功，无需重试"));
                 break;
             case ORDER_FORECAST:
-                resultDTOList.addAll(transferDeclareFeign.retryOrderForecast(id));
+                resultDTOList.addAll(soB2cService.retryOrderForecast(Arrays.asList(id)));
                 break;
             case INSTOCK_FORECAST:
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "入库预报无需重试"));
