@@ -171,7 +171,7 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
                 && !(CollectionUtils.isEmpty(warehouseList) || Objects.isNull(warehouseList.get(0)))) {
             InventoryDTO.InventoryBySkuIdAndWarehouseDTO inventoryBySkuIdAndWarehouseDTO = new InventoryDTO.InventoryBySkuIdAndWarehouseDTO();
             inventoryBySkuIdAndWarehouseDTO.setWarehouseId(warehouseList.get(0).getId());
-            inventoryBySkuIdAndWarehouseDTO.setSkuId(warehouseList.get(0).getId());
+            inventoryBySkuIdAndWarehouseDTO.setSkuId(pcViewDTO.getSkuId());
             inventoryBySkuIdAndWarehouseDTO.setWarehouseLocation(pcViewDTO.getOutWarehouseLocation());
             List<InventoryDTO.InventoryViewQtyDTO> inventoryQtys = inventoryService.getInventoryQty(Arrays.asList(inventoryBySkuIdAndWarehouseDTO));
             inventoryQtys.stream().forEach(inventoryQtyDTO -> {
