@@ -27,11 +27,9 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.mapper.LogisticsChannelMapper;
 import com.erp.server.tms.service.*;
-import lombok.extern.slf4j.Slf4j;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import cn.hutool.core.util.ObjectUtil;
-import lombok.extern.slf4j.Slf4j;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -539,7 +537,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         LogisticsChannelEntity channelEntity = this.getById(channelId);
         String code = "";
         if (Objects.nonNull(channelEntity)) {
-            signShipDTO.setChannelId(channelEntity.getId());
+            signShipDTO.setLogisticsChannelId(channelEntity.getId());
             code = channelEntity.getCode();
             signShipDTO.setCode(code);
         }
@@ -650,6 +648,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if (null == entity){
             throw new ServiceException("对应销售平台物流渠道信息不存在");
         }
-        return new LogisticsChannelDTO.SignShipDTO(entity.getId(), entity.getCode(), entity.getCnName(), entity.getPlatformChannelId());
+        return new LogisticsChannelDTO.SignShipDTO(entity.getId(),logisticsChannelId, entity.getCode(), entity.getCnName(), viewDTO.getOrderDeliveryMarkType());
     }
 }
