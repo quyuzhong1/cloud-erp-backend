@@ -13,7 +13,6 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
@@ -872,7 +871,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     List<BatchResultDTO> cancelOrderForecast(List<String> ids);
 
-    List<BatchResultDTO> retryOrderForecast(BaseIdsDTO.IdsDTO dto);
+    List<BatchResultDTO> retryOrderForecast(List<String> ids);
     /**
      * @description: 异常订单分页查询
      * @author Will

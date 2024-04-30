@@ -978,7 +978,7 @@ public class SoB2cController extends BaseController {
     @LogViewService
     @PostMapping(value = "/retryOrderForecast")
     public ApiResult<List<BatchResultDTO>> retryOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = soB2cService.retryOrderForecast(dto);
+        List<BatchResultDTO> resultDTOS = soB2cService.retryOrderForecast(dto.getIds());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
