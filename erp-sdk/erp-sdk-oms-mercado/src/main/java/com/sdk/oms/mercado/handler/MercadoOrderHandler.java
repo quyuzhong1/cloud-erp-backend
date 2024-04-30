@@ -96,14 +96,14 @@ public class MercadoOrderHandler extends AbstractOrderHandler<MercadoOrderDTO, P
         //设置请求头
 
         Map<String, String> shippingHeaderMap = new HashMap<>(1);
-        shippingHeaderMap.put("Authorization", "Bearer "+ "APP_USR-3457166802805723-031323-518d575dc107a24dd7710ce58ff860b8-1509269799");
+        shippingHeaderMap.put("Authorization", "Bearer "+ "APP_USR-3457166802805723-042921-7c9adc6f0be96558c4c04405f53beb85-1509269799");
 
         //拉取数据
-        ApiResult apiResult2 = HttpCommonUtil.sendOkHttpApiResult(shippingUrl4, null, null, shippingHeaderMap, RequestMethod.GET);
+        ApiResult apiResult2 = HttpCommonUtil.sendOkHttpApiResult(shippingUrl2, null, null, shippingHeaderMap, RequestMethod.GET);
         if (!Objects.equals(apiResult2.getCode(), 200)) {
-            log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", shippingUrl3, shippingParams.toString(), JSONUtil.toJsonStr(apiResult2));
+            log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", shippingUrl2, shippingParams.toString(), JSONUtil.toJsonStr(apiResult2));
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}",
-                    shippingUrl3, shippingParams.toString(), JSONUtil.toJsonStr(apiResult2)));
+                    shippingUrl2, shippingParams.toString(), JSONUtil.toJsonStr(apiResult2)));
         }
 
         System.out.println(JSONUtil.toJsonStr(apiResult2.getData()));

@@ -166,6 +166,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
                 if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
                     orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+                    orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
                 } else {
                     orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
                 }
@@ -173,6 +174,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
                 if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
                     orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+                    orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
                 } else {
                     orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
                 }
@@ -209,6 +211,14 @@ public class MercadoOrderDTO extends CleanBaseDTO {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
         }
+
+
+        //平台仓审核状态已审核
+        if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
+        }
+
 
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(orderBean);
@@ -352,9 +362,10 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         }
         List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
         //自发货不用更新物流单
-        if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
+        if (!logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
             trackingNumber = "";
         }
+        BigDecimal shippingCost = orderBean.getPayments().stream().map(req -> req.getShippingCost()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
 
         PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
                 .code(trackingNumber)
@@ -363,7 +374,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
                 .logisticsChannelId("")
                 .logisticsChannelName("")
                 .estimatedShippingCost(cost)
-                .actualShippingCost(BigDecimal.ZERO)
+                .actualShippingCost(shippingCost)
                 .accessoriesCostCurrency("")
                 .actualShippingCurrency("")
                 .estimatedShippingCurrency("")

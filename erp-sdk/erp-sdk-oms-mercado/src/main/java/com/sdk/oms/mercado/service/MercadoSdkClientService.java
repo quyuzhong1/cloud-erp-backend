@@ -1,6 +1,7 @@
 package com.sdk.oms.mercado.service;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -29,6 +30,7 @@ import com.sdk.oms.mercado.dto.MercadoShipOrderDTO;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.PlatformMercadoRefreshTokenDTO;
 import com.sdk.oms.mercado.dto.mercado.PlatformMercadoTokenDTO;
+import com.sdk.oms.mercado.dto.mercado.cost.CostDTO;
 import com.sdk.oms.mercado.dto.mercado.listing.ListingDTO;
 import com.sdk.oms.mercado.dto.mercado.listing.ListingViewDTO;
 import com.sdk.oms.mercado.dto.mercado.order.OrderDTO;
@@ -170,7 +172,7 @@ public class MercadoSdkClientService {
         } catch (Exception e) {
             log.error("调用url={},入参params={}, 美客多刷新token失败，返回值 responseMap={}, 错误信息={}", bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr));
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多刷新token失败，返回值 responseMap={}",
-                    bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr), e.getMessage()));
+                    bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr), ExceptionUtil.stacktraceToString(e)));
         }
         if (StringUtil.isBlank(refreshTokenDTO.getAccessToken())) {
             throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
@@ -308,7 +310,7 @@ public class MercadoSdkClientService {
     }
 
     /**
-     * 发送请求获取指定店铺的订单信息
+     * 发送请求获取指定店铺的订单
      * @param shopInfoDTO
      * @return
      */
@@ -401,6 +403,12 @@ public class MercadoSdkClientService {
                     if (ObjectUtil.isNotEmpty(shippingRecords)) {
                         orderViewDTO.setShipmentViewDTO(shippingRecords);
                     }
+
+                    //根据发货id查询费用信息
+                    CostDTO shippingCost = getShippingCost(shopInfoDTO, orderViewDTO.getShipping().getFid());
+                    if (ObjectUtil.isNotEmpty(shippingCost)) {
+                        orderViewDTO.setCostDTO(shippingCost);
+                    }
                     resultList.add(orderViewDTO);
                 }
             }
@@ -444,6 +452,45 @@ public class MercadoSdkClientService {
                     orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult)));
         }
         return orderViewDTO;
+
+    }
+
+    /**
+     * 根据发货id查询费用信息
+     * @param shopInfoDTO
+     * @param shippingId
+     * @return
+     */
+    private CostDTO getShippingCost(MercadoShopInfoDTO shopInfoDTO, Long shippingId) {
+        String orderUrl = "https://api.mercadolibre.com/marketplace/shipments/" + shippingId + "/costs";
+
+        //入参
+        HashMap<String, Object> orderParams = new HashMap<>(1);
+
+        //设置请求头
+        Map<String, String> orderHeaderMap = new HashMap<>(1);
+        orderHeaderMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
+        orderHeaderMap.put("x-format-new", "true");
+
+        //拉取数据
+        ApiResult shipmentResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
+        if (!Objects.equals(shipmentResult.getCode(), 200) && !Objects.equals(shipmentResult.getCode(), 201)) {
+            log.error("调用url={},入参params={}, 美客多费用明细数据失败，返回值 responseMap={}", orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 费用明细请求失败，返回值 responseMap={}",
+                    orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult)));
+        }
+
+        //解析数据
+        ObjectMapper objectMapper = new ObjectMapper();
+        CostDTO costDTO = null;
+        try {
+            costDTO = objectMapper.readValue(JSONUtil.toJsonStr(shipmentResult.getData()), CostDTO.class);
+        } catch (JsonProcessingException e) {
+            log.error("美客多费用明细接口数据解析错误，数据={}", shipmentResult.getData());
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 费用明细数据解析失败，返回值 responseMap={}",
+                    orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult)));
+        }
+        return costDTO;
 
     }
 
