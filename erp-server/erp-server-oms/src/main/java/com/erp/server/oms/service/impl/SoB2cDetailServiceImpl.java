@@ -387,8 +387,9 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         if (1 == mappingDTOList.size()){
             return mappingDTOList.get(0);
         }
-        // 兼容速卖通多个平台SKU
-        if (StringUtils.isBlank(platformSpuNo) && PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)){
+        // 美客多同店铺存在相同SkuNo需要配合平台产ID/SPU查询
+        if (StringUtils.isBlank(platformSpuNo) && (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
+            || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform))){
             throw new ServiceException("来源平台SPU为空");
         }
         // 查询相同SPU记录
