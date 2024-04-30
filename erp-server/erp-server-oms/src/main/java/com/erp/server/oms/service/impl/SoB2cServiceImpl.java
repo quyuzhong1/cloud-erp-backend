@@ -6957,16 +6957,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public List<BatchResultDTO> retryOrderForecast(BaseIdsDTO.IdsDTO dto) {
+    public List<BatchResultDTO> retryOrderForecast(List<String> orderIds) {
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
-        if(CollectionUtils.isEmpty(dto.getIds())){
+        if(CollectionUtils.isEmpty(orderIds)){
             return new ArrayList<>();
         }
-        List<SoB2cEntity> soB2cEntityList = listByIds(dto.getIds());
+        List<SoB2cEntity> soB2cEntityList = listByIds(orderIds);
         if(CollectionUtils.isEmpty(soB2cEntityList)){
             return new ArrayList<>();
         }
-        List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cLogisticsService.listByMainIds(dto.getIds());
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cLogisticsService.listByMainIds(orderIds);
         //根据物流商分类
         List<SoB2cDTO.TransferDeclareDTO> transferDeclareDTOList = new ArrayList<>();
         for (SoB2cEntity soB2cEntity : soB2cEntityList) {
