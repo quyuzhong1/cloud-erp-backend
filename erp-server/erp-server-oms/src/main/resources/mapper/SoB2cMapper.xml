@@ -779,7 +779,7 @@
         inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join (
-            select main_id,type,"max"(create_time) as signOrderErrorTime,max(message) as message from so_b2c_error GROUP BY main_id,type
+            select main_id,type,create_time as signOrderErrorTime,message from so_b2c_error where id in (select max(id) from so_b2c_error GROUP BY main_id,type)
         )sbe on sb2c.id = sbe.main_id and sbe.type = sb2c.sign_order_error
         <where>
             ${params.sqlMap.default}
@@ -816,7 +816,7 @@
         inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join (
-            select main_id,type,"max"(create_time) as signOrderErrorTime,max(message) as message from so_b2c_error GROUP BY main_id,type
+            select main_id,type,create_time as signOrderErrorTime,message from so_b2c_error where id in (select max(id) from so_b2c_error GROUP BY main_id,type)
         )sbe on sb2c.id = sbe.main_id and sbe.type = sb2c.sign_order_error
         <where>
             ${params.sqlMap.default}
