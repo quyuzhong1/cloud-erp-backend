@@ -215,7 +215,6 @@ public class MercadoOrderDTO extends CleanBaseDTO {
 
         //平台仓审核状态已审核
         if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
             orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
         }
 
