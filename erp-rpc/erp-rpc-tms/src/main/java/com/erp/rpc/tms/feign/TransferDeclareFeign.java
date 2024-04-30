@@ -63,15 +63,6 @@ public interface TransferDeclareFeign {
     @PostMapping("/feign/transferDeclare/listByLogisticsChannelIdList")
     List<TransferDeclareDetailEntity> listByLogisticsChannelIdList(@RequestBody List<String> logisticsChannelIdList);
 
-    /**
-     * 订单预报重试
-     * @author Will
-     * @date: 2024/4/28 9:48
-     * @param id
-     * @return List<BatchResultDTO>
-     */
-    @PostMapping("/feign/transferDeclare/retryOrderForecast")
-    List<BatchResultDTO> retryOrderForecast(@RequestBody String id);
 
     @PostMapping("/feign/transferDeclare/b2cOrderForecast")
     TransferDeclareDTO.ShippingOrderDTO b2cOrderForecast(@RequestBody TransferDeclareDTO.B2cOrderForecastDTO b2cOrderForecastDTO);

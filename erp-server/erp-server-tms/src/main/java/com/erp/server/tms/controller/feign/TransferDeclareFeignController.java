@@ -78,19 +78,6 @@ public class TransferDeclareFeignController {
     }
 
     /**
-     * 订单预报重试
-     * @author Will
-     * @date: 2024/4/28 9:49
-     * @param id
-     * @return List<BatchResultDTO>
-     */
-    @PostMapping("/retryOrderForecast")
-    public List<BatchResultDTO> retryOrderForecast(@RequestBody String id) {
-        return transferDeclareService.retryOrderForecast(id);
-    }
-
-
-    /**
      * b2c订单预报
      * 成功返回第三方code
      * 失败返回b2c订单code
