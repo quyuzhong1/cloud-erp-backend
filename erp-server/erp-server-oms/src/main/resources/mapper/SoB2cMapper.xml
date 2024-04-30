@@ -808,6 +808,7 @@
             sb2c.id,
             sb2cd.id as detailId,
             sb2c.code,
+            sb2c.shop_id as shopId,
             sb2c.dict_platform as dictPlatform,
             sb2c.approve_status as approveStatus,
             sb2c.bill_status as billStatus,
