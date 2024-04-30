@@ -58,7 +58,7 @@
     <!-- 根据主表ids删除 -->
     <delete id="deleteByMainIds">
         DELETE FROM so_b2c_error WHERE
-        and main_id in
+        main_id in
         <foreach collection="mainIds" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
