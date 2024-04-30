@@ -763,6 +763,7 @@
             sb2c.id,
             sb2cd.id as detailId,
             sb2c.code,
+            sb2c.shop_id as shopId,
             sb2c.dict_platform as dictPlatform,
             sb2c.approve_status as approveStatus,
             sb2c.bill_status as billStatus,
@@ -782,7 +783,7 @@
         )sbe on sb2c.id = sbe.main_id
         <where>
             ${params.sqlMap.default}
-            and sb2c.is_deleted = false and sb2c.sign_order_error != ''
+            and sb2c.is_deleted = false and sb2c.sign_order_error != '' and sb2c.invalid_status = false
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
                 and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
             </if>
@@ -818,7 +819,7 @@
         )sbe on sb2c.id = sbe.main_id
         <where>
             ${params.sqlMap.default}
-            and sb2c.is_deleted = false and sb2c.sign_order_error != ''
+            and sb2c.is_deleted = false and sb2c.sign_order_error != '' and sb2c.invalid_status = false
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
                 and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
             </if>
