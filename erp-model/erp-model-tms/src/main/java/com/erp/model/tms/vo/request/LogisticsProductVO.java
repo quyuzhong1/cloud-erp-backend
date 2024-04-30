@@ -176,10 +176,6 @@ public class LogisticsProductVO  implements Serializable {
      */
     private String scItemName;
     /**
-     * skuCode
-     */
-    private String skuCode;
-    /**
      * sku名称
      */
     private String skuName;
