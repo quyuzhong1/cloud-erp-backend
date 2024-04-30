@@ -238,9 +238,9 @@ public class ProductInfoDTO {
         private List<String> ids;
         
         /**
-         * 立项时间/启动时间/结项时间
+         * 立项日期/启动日期/结项日期
          */
-//        @NotBlank
+        @NotNull(message = "日期不能为空")
         private LocalDate localDate;
     }
 
