@@ -369,9 +369,9 @@
                so.order_type as businessType
             from so_outstock so
         where so.is_deleted = false
-          and so.country != 'CN'
+          and so.country != 'CN' and so.order_type = 'B2B'
         <if test="params.packingStatus != null and params.packingStatus != ''">
-            AND so.packing_status = #{params.packingStatus}
+            AND (so.packing_status = #{params.packingStatus} or so.approve_status ='approve')
         </if>
         <if test="params.declareStatus != null and params.declareStatus != ''">
             AND so.declare_status = #{params.declareStatus}
@@ -420,7 +420,6 @@
 			so_outstock
 			T LEFT JOIN so_outstock_detail G ON T.ID = G.main_id
 		<include refid="SoDataCompareByCondition"/>
-        	order by g.id limit #{pageSize}
     </select>
 
     <select id="getDataCompareByConditionCount" resultType="java.lang.Integer">

@@ -37,11 +37,12 @@ public interface TmsCostDetailService extends SuperService<TmsCostDetailEntity> 
      * @param mainId
      * @return Boolean
      */
-    Boolean batchUpdate(List<TmsCostDetailDTO.UpdateDTO> costDetailList, String mainId, DictCostAttributionEnum dictCostAttributionEnum);
+    Boolean batchUpdate(List<TmsCostDetailDTO.UpdateDTO> costDetailList, String mainId, DictCostAttributionEnum dictCostAttributionEnum,Boolean isImport);
 
 
     /**
      * 查询预估与实际比对列表
+
      * @return
      */
     List<TmsCostDetailDTO.CostCompareDTO> getCostCompareListById(String id);

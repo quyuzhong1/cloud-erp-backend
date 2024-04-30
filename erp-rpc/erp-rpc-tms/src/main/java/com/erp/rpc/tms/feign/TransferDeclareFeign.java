@@ -1,8 +1,10 @@
 package com.erp.rpc.tms.feign;
 
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
+import com.erp.model.tms.entity.TransferDeclareEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,6 +48,12 @@ public interface TransferDeclareFeign {
 
 
     /**
+     * @description: 根据销售订单id
+     */
+    @PostMapping("/feign/transferDeclare/listBySoCodeList")
+    List<TransferDeclareDetailEntity> listBySoCodeList(@RequestBody List<String> soCodeList);
+
+    /**
      * @description: 根据物流渠道id查询
      * @author Will
      * @date: 2024/4/1 12:31
@@ -54,4 +62,15 @@ public interface TransferDeclareFeign {
      */
     @PostMapping("/feign/transferDeclare/listByLogisticsChannelIdList")
     List<TransferDeclareDetailEntity> listByLogisticsChannelIdList(@RequestBody List<String> logisticsChannelIdList);
+
+    @PostMapping("/feign/transferDeclare/b2cOrderForecast")
+    TransferDeclareDTO.ShippingOrderDTO b2cOrderForecast(@RequestBody TransferDeclareDTO.B2cOrderForecastDTO b2cOrderForecastDTO);
+
+    /**
+     * 批量修改报关单详情上传状态
+     * @param list
+     * @return
+     */
+    @PostMapping("/feign/transferDeclare/updateTransferStatusByBatch")
+    Boolean updateTransferStatusByBatch(@RequestBody List<TransferDeclareDTO.UpdateForcastStatusDTO> list);
 }

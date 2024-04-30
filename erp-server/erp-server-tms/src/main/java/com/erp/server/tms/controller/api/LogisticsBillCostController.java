@@ -89,7 +89,7 @@ public class LogisticsBillCostController extends BaseController {
         serviceClass = LogisticsBillCostService.class,
         keyIdName = "id")
     public ApiResult update(@RequestBody @Validated LogisticsBillCostDTO.UpdateDTO dto) {
-        logisticsBillCostService.update(dto);
+        logisticsBillCostService.update(dto,Boolean.FALSE);
         return success();
     }
 

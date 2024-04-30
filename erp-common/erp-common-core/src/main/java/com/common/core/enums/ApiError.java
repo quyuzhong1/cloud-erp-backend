@@ -949,7 +949,7 @@ public enum ApiError implements Serializable {
     TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单【{}】反审删除失败，无法撤销"),
     TRANSFER_INFO_CANCEL_PROCESS_ERROR(92123,"关联的直接调拨单【{}】撤销删除失败，无法撤销"),
     JOINT_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单反审删除失败，多个联合处理的要货单，无法撤销"),
-    ALREADY_PACKAGE_TRANSFER_NOT_INTERCEPT(92124,"拦截单号【{}】已组包/中转，请取消组包/中转后操作"),
+    ALREADY_PACKAGE_TRANSFER_NOT_INTERCEPT(92124,"拦截单号【{}】已组包/已预报成功，请取消组包/预报后操作"),
     STATUS_IS_HANDLE_NOT_OPERATE(92124,"已处理不可重复操作"),
     HANDLE_STATUS_IS_HANDLE_OR_CANCEL_NOT(92124,"【处理状态】已处理、已取消的单据，不支持再次发起物流拦截"),
     B2C_SO_OUTSTOCK_NOT_DIS_APPROVE(92125,"销售出库单【{}】 订单类型为B2C 无法反审核"),
@@ -990,7 +990,9 @@ public enum ApiError implements Serializable {
     TMS_DECLARE_BILL_EXISTS(92136,"报关单【{}】已生成，不可反审核"),
     BILL_IS_GENERATE_DECLARE(92137,"单据【{}】报关状态已生成，不可修改为无需生成"),
     BILL_IS_GENERATE_LOGISTICS(92137,"单据【{}】物流状态已生成，不可修改为无需生成"),
-    SO_OUTSTOCK_NOT_PACKING(92137,"出库单已装箱，无法更改装箱信息"),
+    SO_OUTSTOCK_NOT_PACKING(92137,"出库单报关单已生成，不支持修改"),
+    TRANSFER_DECLARE_SO_EXISTS(92138,"订单【{}】已存在入库预报单，请不要重复新增"),
+    PAPER_SIZE_INCONSISTENT_NOT_PRINT(92139,"纸张大小不一致，不支持批量打印"),
 
 
 
@@ -1153,7 +1155,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_Operate_NOT_SPLIT(92117,"B2C销售订单【{}】已合并或拆分不支持拆分"),
     ERROR_SO_B2C_Operate_NOT_MERGE(92118,"B2C销售订单【{}】已合并或拆分不支持合并"),
     NOT_DELIVERY_NOT_INTERCEPT(92119,"只有待发货订单可以发起拦截"),
-    IS_EXIST_NOT_INTERCEPT(92120,"打标拦截的订单不支持重复发起拦截"),
+    IS_EXIST_NOT_INTERCEPT(92120,"订单取消，发货被拦截"),
     CANCEL_LOGISTICS_ID_NOT_EXIST(92121,"取消物流单的渠道不能为空"),
     NOT_INTERCEPT_NOT_CANCEL_INTERCEPT(92122,"未打标拦截的订单不支持取消拦截"),
     INTERCEPT_STATUS_IS_NOT_BLANK(92123,"物流商处理状态为空，未处理才允许取消拦截"),
@@ -1163,7 +1165,7 @@ public enum ApiError implements Serializable {
     B2C_APPROVE_DELIVERY(92125,"只有审核通过才能提交发货"),
     STATUS_END_NOT_INTERCEPT(92126,"订单拦截正在处理或已处理完成，无法取消拦截"),
     ERROR_WAIT_SHIPPED_TRANSFER(92125,"销售单【{}】 不属于待发货的订单 不能进行中转报关"),
-    ERROR_WAIT_TRANSFER(92126,"销售单【{}】 不属于待中转的订单,不能进行中转报关"),
+    ERROR_WAIT_TRANSFER(92126,"销售单【{}】 不属于预报成功的订单,不能进行入库预报"),
     ALREADY_PACKAGE_NOT_CAN_TRANSFER(92127,"尚未完成组包，请操作组包后中转报关"),
     ERROR_SO_B2C_LOGISTICS_COMPARE_LENGTH(92128,"产品尺寸为{}，超出渠道配置尺寸{}"),
     ERROR_LOGISTICS_ID_NOT_EXIST(92129,"物流单的渠道不能为空"),
@@ -1175,6 +1177,7 @@ public enum ApiError implements Serializable {
     IS_NOT_B2C_NOT_UPDATE_MAPPING(92134,"非平台来源的B2C销售订单不可修改映射关系"),
 
     SKU_MAPPING_INVENTORY_INSUFFICIENT(92135,"需要扣除的映射关系SKU【{}】可用库存不足"),
+    SO_B2C_IS_MATCH_WAREHOUSE_RULE(92136,"仓库匹配规则更新失败"),
 
 
     /**
@@ -1221,8 +1224,28 @@ public enum ApiError implements Serializable {
     ERROR_DECLARE_RECONCILIATION_NOT_EXIST(94034,"报关对账单不存在"),
     ERROR_DECLARE_RECONCILIATION_DETAIL_NOT_EXIST(94035,"报关对账单明细不存在"),
     ERROR_DECLARE_RECONCILIATION_ADD_DETAIL(94036,"报关对账单【{}】添加对账明细数据的供应商【{}】必须一致"),
+    TRANSFER_LOGISTICS_SUPPLIER_IS_NULL_NOT_PACKAGE(94037,"订单中转物流商不存在，请重新预报后再扫描"),
+    INVALID_NOT_PACKAGE(94038,"订单已作废，不可组包"),
+    TRANSFER_FAILURE_NOT_PACKAGE(94039,"中转报关订单待中转/上传失败不可操作组包发货"),
+    ORDER_CANCEL_NOT_PACKAGE(94040,"单据对应的物流商单号被拦截/取消/异常，不可组包操作"),
+    LOGISTICS_INTERCEPT_NOT_PACKAGE(94041,"订单被拦截，不可组包操作"),
 
+    ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST(94031,"物流渠道未匹配到授权信息"),
+    DUPLICATION_DELIVERY_LOGISTICS_SUPPLIER(94032,"发货物流商不可以重复设置，一个发货物流商只能有一个报关设置"),
+    TRANSFER_DELIVERY_LOGISTICS_SUPPLIER(94033,"中转物流商不可以重复设置，一个中转物流商只能有一个截单设置"),
+    GENERATE_TIME_GT_DEADLINE_TIME(94034,"生成时间不可晚于截单时间"),
+    ERROR_NOT_UPDATE_TRACK_STATUS(94035,"该运输状态为系统更新不可修改"),
+    EXIST_TRANSFER_LOGISTICS_SUPPLIER_NOT_DELETE(94036,"被其他单据引用的中转物流商不允许删除"),
+    NOT_PRODUCT_REGISTRATION(94037," 【{}】 未在【{}】平台备案，请联系关务/物流"),
+    NOT_UPDATE_CHANNEL_BY_NOT_REGISTRATION(94038," 【{}】 未在【{}】平台备案无法更换渠道【{}】，请联系关务/物流"),
+    ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
+    ERROR_TRANSFER_LOGISTICS_CHANNEL_DISABLED_EXIST(94039,"存在未停用的中转物流渠道,无法停用该物流商"),
+    ORDER_UPLOAD_SUCCESS_NOT_DELETE(94040,"订单【{}】上传成功不能删除"),
+    ERROR_LOGISTICS_MAX_LIMIT_NOT_EMPTY(94041,"长宽高单个值不能为空，需大于0"),
 
+    LOGISTICS_NOT_PRINT_LOGISTICS_BILL(94042,"物流商【{}】不支持打印物流面单"),
+    LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL(94043,"物流商【{}】不支持分开单独打印官方配货单"),
+    LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST(94044,"渠道【{}】配置的打印配货单的类型设置未找到"),
     /**
      * SRM 错误
      * 从96000 开始
@@ -1251,18 +1274,7 @@ public enum ApiError implements Serializable {
 
 
 
-    ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST(94031,"物流渠道未匹配到授权信息"),
-    DUPLICATION_DELIVERY_LOGISTICS_SUPPLIER(94032,"发货物流商不可以重复设置，一个发货物流商只能有一个报关设置"),
-    TRANSFER_DELIVERY_LOGISTICS_SUPPLIER(94033,"中转物流商不可以重复设置，一个中转物流商只能有一个截单设置"),
-    GENERATE_TIME_GT_DEADLINE_TIME(94034,"生成时间不可晚于截单时间"),
-    ERROR_NOT_UPDATE_TRACK_STATUS(94035,"该运输状态为系统更新不可修改"),
-    EXIST_TRANSFER_LOGISTICS_SUPPLIER_NOT_DELETE(94036,"被其他单据引用的中转物流商不允许删除"),
-    NOT_PRODUCT_REGISTRATION(94037," 【{}】 未在【{}】平台备案，请联系关务/物流"),
-    NOT_UPDATE_CHANNEL_BY_NOT_REGISTRATION(94038," 【{}】 未在【{}】平台备案无法更换渠道【{}】，请联系关务/物流"),
-    ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
-    ERROR_TRANSFER_LOGISTICS_CHANNEL_DISABLED_EXIST(94039,"存在未停用的中转物流渠道,无法停用该物流商"),
-    ORDER_UPLOAD_SUCCESS_NOT_DELETE(94040,"订单【{}】上传成功不能删除"),
-    ERROR_LOGISTICS_MAX_LIMIT_NOT_EMPTY(94041,"长宽高单个值不能为空，需大于0"),
+
 
     // 亚马逊公用异常
     ERROR_MARKETPLACE_UNAUTHORIZED(100000,"亚马逊店铺已被禁用:{}"),

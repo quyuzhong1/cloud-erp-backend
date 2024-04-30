@@ -97,9 +97,9 @@ public class PlmJob {
      */
     @XxlJob("productInfoSyncDmp")
     public void productInfoSyncDmp() {
-        List<ProductInfoEntity> list = productInfoService.getProductInfoAll();
-        syncProductService.syncProductInfoToDmp(list);
-        scmSyncProductService.syncProductInfoToScm(list);
+//        List<ProductInfoEntity> list = productInfoService.getProductInfoAll();
+//        syncProductService.syncProductInfoToDmp(list);
+//        scmSyncProductService.syncProductInfoToScm(list);
     }
 
     /**
@@ -107,13 +107,13 @@ public class PlmJob {
      */
     @XxlJob("productSkuSyncDmp")
     public void productSkuSyncDmp() {
-        wmsSyncProductService.syncProductInfoToWms();
-        wmsSyncProductService.syncProductSkuSaleToWms();
+//        wmsSyncProductService.syncProductInfoToWms();
+//        wmsSyncProductService.syncProductSkuSaleToWms();
 
-        List<ProductDetailEntity> list = productDetailService.getProductDetailAll();
-        syncProductService.syncProductSkuToDmp(list);
-        wmsSyncProductService.syncProductSkuToWms(list);
-        scmSyncProductService.syncProductSkuToScm(list);
+//        List<ProductDetailEntity> list = productDetailService.getProductDetailAll();
+//        syncProductService.syncProductSkuToDmp(list);
+//        wmsSyncProductService.syncProductSkuToWms(list);
+//        scmSyncProductService.syncProductSkuToScm(list);
     }
 
     /**

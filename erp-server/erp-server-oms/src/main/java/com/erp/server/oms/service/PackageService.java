@@ -35,8 +35,8 @@ public interface PackageService  {
 
     /**
      * 合并组包
-     * @param ids 为销售订单id
+     * @param dto
      * @return
      */
-    List<BatchResultDTO> mergePackage(List<String> ids);
+    List<BatchResultDTO> mergePackage(PackageDTO.MergePackageDTO dto);
 }
