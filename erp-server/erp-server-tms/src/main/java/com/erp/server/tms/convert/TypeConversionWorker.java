@@ -5,6 +5,8 @@ import io.seata.common.util.StringUtils;
 import org.mapstruct.Named;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Objects;
 
 /**
@@ -73,6 +75,10 @@ public class TypeConversionWorker {
         }else if (obj instanceof Double){
             Double d = (Double) obj;
             return d/1000;
+        }else if (obj instanceof BigDecimal){
+            BigDecimal d = (BigDecimal) obj;
+            BigDecimal decimal = d.divide(new BigDecimal(1000)).setScale(4, RoundingMode.DOWN);
+            return decimal.doubleValue();
         }else {
             return Double.valueOf(0);
         }

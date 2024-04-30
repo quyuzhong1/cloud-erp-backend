@@ -10,9 +10,11 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.IPlatformService;
 import com.common.core.exception.ServiceException;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsMappingDTO;
 import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.LogisticsMappingFeign;
 import com.sdk.oms.walmart.service.WalmartSdkClientService;
 import lombok.extern.slf4j.Slf4j;
@@ -47,20 +49,11 @@ public class WalmartShipOrder implements IPlatformService {
                 walmartShipDTO.setLogisticsPlatformCode("SF Express");
             }
             //标发订单类型
-            String standardOrderType = getOrderDeliveryMarkType(PlatformDictEnum.WALMART.getCode(), walmartShipDTO.getLogisticsChannelId());
+            String standardOrderType = walmartShipDTO.getOrderDeliveryMarkType();
             walmartShipDTO.setOrderDeliveryMarkType(standardOrderType);
 
             walmartSdkClientService.shipOrder(walmartShipDTO);
         }
-    }
-
-    @Override
-    public String getOrderDeliveryMarkType(String platform, String logisticsChannelId) {
-        LogisticsMappingEntity logisticsMappingEntity = logisticsMappingFeign.getByLogisticsMappingParam(new LogisticsMappingDTO.SearchParamDTO(platform, logisticsChannelId));
-        if (ObjectUtil.isEmpty(logisticsMappingEntity) || StrUtil.isBlank(logisticsMappingEntity.getOrderDeliveryMarkType())) {
-            throw new ServiceException("操作失败，渠道标发单号配置为空");
-        }
-        return logisticsMappingEntity.getOrderDeliveryMarkType();
     }
 
     @Override

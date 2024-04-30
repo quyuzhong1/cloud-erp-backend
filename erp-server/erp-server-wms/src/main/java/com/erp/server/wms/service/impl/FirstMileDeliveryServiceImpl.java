@@ -1642,6 +1642,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
     @Override
     public void exportPacking(FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
+        if (CollectionUtils.isEmpty(dto.getIds())) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+
         List<WmsCartonDTO.ExportPackingDTO> list = baseMapper.exportPacking(dto);
         if(CollUtil.isEmpty(list)) {
             return;
