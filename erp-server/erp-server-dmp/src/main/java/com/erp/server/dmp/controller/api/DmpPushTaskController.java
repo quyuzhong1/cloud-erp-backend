@@ -111,12 +111,6 @@ public class DmpPushTaskController extends BaseController {
      * @date 2024/4/11 16:51
      */
     @PostMapping(value = "/batchNoNeedSync")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "dmp:dmpPushTask:batchNoNeedSync",
-//            serviceClass = DmpPushTaskService.class,
-//            keyIdName = "ids"
-//    )
     public ApiResult batchNoNeedSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
         Boolean flag = dmpPushTaskService.batchNoNeedSync(dto.getIds());
         return flag == true ? success() : failure();
