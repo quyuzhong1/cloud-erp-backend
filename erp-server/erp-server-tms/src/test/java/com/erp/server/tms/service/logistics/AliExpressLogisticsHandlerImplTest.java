@@ -140,7 +140,7 @@ public class AliExpressLogisticsHandlerImplTest {
         logisticsProductVO.setIsElectric(false);
         logisticsProductVO.setDeclarePrice(BigDecimal.valueOf(2));
         logisticsProductVO.setDestDeclarePrice(BigDecimal.valueOf(2));
-        logisticsProductVO.setChildOrderId("8184516086176025");
+        logisticsProductVO.setChildOrderId(8184516086176025L);
         logisticsProductVO.setScItemCode("");
 //        logisticsProductVO.setScItemId(40414943126L);
 //        logisticsProductVO.setScItemName("");
