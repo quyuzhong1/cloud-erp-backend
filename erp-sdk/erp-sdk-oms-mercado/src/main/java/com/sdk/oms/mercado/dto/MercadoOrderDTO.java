@@ -355,7 +355,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         if (!logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
             trackingNumber = "";
         }
-        BigDecimal shippingCost = orderViewDTO.getPayments().stream().map(req -> req.getShippingCost()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        BigDecimal shippingCost = orderBean.getPayments().stream().map(req -> req.getShippingCost()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
 
         PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
                 .code(trackingNumber)
