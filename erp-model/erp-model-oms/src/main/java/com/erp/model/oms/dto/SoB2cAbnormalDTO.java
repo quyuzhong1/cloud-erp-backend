@@ -65,6 +65,16 @@ public class SoB2cAbnormalDTO  implements Serializable {
         private String dictPlatform;
 
         /**
+         * 店铺id【可排序】
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
          * 审核状态【可排序】
          */
         private String approveStatus;

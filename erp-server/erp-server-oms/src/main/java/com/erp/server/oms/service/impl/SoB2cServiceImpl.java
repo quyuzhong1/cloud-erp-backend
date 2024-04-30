@@ -63,13 +63,13 @@ import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.entity.*;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -7244,6 +7244,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(records)) {
             return;
         }
+        //店铺
+        List<String> shopIdList = records.stream().map(SoB2cAbnormalDTO.ListDTO::getShopId).collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = shopInfoService.listByIds(shopIdList);
+
         for (SoB2cAbnormalDTO.ListDTO listDTO : records) {
             //审核状态
             listDTO.setApproveStatusName(ApproveStatusEnum.getName(listDTO.getApproveStatus()));
@@ -7251,6 +7255,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             listDTO.setBillStatusName(SoB2cBillStatusEnum.getName(listDTO.getBillStatus()));
             //错误标识名称
             listDTO.setSignOrderErrorName(SoB2cErrorTypeEnum.getName(listDTO.getSignOrderError()));
+
+            //店铺
+            ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(listDTO.getShopId())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(shopInfoEntity)) {
+                listDTO.setShopName(shopInfoEntity.getName());
+            }
         }
     }
 
