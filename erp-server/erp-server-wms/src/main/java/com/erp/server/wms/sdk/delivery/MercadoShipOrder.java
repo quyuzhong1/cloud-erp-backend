@@ -53,11 +53,6 @@ public class MercadoShipOrder implements IPlatformService {
     }
 
     @Override
-    public String getOrderDeliveryMarkType(String platform, String logisticsChannelId) {
-        return null;
-    }
-
-    @Override
     public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
         return null;
     }

@@ -8,6 +8,7 @@ import com.common.business.dto.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.utils.StringUtil;
 import com.erp.model.oms.enums.MercadoOrderLogisticTypeEnum;
 import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -19,6 +20,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -118,6 +120,15 @@ public class MercadoOrderDTO extends CleanBaseDTO {
 
         // 来源编码
         orderDTO.setSourceCode("");
+
+        //平台创建时间
+        if (StringUtils.isNotBlank(orderBean.getDateCreated())) {
+            OffsetDateTime offsetDateTime = OffsetDateTime.parse(orderBean.getDateCreated(), formatter);
+            // 转换为 LocalDateTime
+            LocalDateTime createTime = offsetDateTime.toLocalDateTime();
+            orderDTO.setPlatformOrderCreateTime(createTime);
+        }
+
         // 标签json
         Map<String, String> lableMap = new HashMap<>();
 
