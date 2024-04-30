@@ -148,7 +148,7 @@ public class LogisticsBillDTO implements Serializable {
 
 
         /**
-         * 销售平台
+         * 销售平台 [可排序]
          */
         private String salesPlatform;
 
@@ -158,19 +158,19 @@ public class LogisticsBillDTO implements Serializable {
         private String salesPlatformName;
 
         /**
-         * 店铺 或者客户id
+         * 店铺 或者客户id [可排序]
          */
         private String shopId;
 
         /**
-         * 店铺 或者客户名
+         * 店铺 或者客户名 [可排序]
          */
         private String shopName;
 
 
 
         /**
-         * 订单类型
+         * 订单类型[可排序]
          */
         private String orderType;
 
@@ -181,35 +181,35 @@ public class LogisticsBillDTO implements Serializable {
 
 
         /**
-         * 订单号
+         * 订单号[可排序]
          */
         private String sourceCode;
 
 
         /**
-         * 出库单号
+         * 出库单号[可排序]
          */
         private String outstockCode;
 
         /**
-         * 目的国家
+         * 目的国家[可排序]
          */
         private String toCountry;
 
         /**
-         * 下单时间
+         * 下单时间[可排序]
          */
         private LocalDateTime orderTime;
 
 
         /**
-         * 发货时间
+         * 发货时间[可排序]
          */
         private LocalDateTime deliveryTime;
 
 
         /**
-         * 签收时间
+         * 签收时间[可排序]
          */
         private LocalDateTime signTime;
 
@@ -226,7 +226,7 @@ public class LogisticsBillDTO implements Serializable {
 
 
         /**
-         * 物流单
+         * 物流单[可排序]
          */
         private String trackNo;
 
@@ -236,7 +236,7 @@ public class LogisticsBillDTO implements Serializable {
         private Integer transportDays;
 
         /**
-         * 运输状态
+         * 运输状态 [可排序]
          */
         private String trackStatus;
 

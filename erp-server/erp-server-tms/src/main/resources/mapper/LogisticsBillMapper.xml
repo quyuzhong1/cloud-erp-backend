@@ -68,11 +68,12 @@
     <!--tab 页统计-->
     <select id="tabList" resultType="com.erp.model.tms.dto.LogisticsBillDTO$TabListDTO">
         SELECT
-        COUNT(lbd.id) AS count,
+        COUNT(1) AS count,
         lbd.track_status AS tabFlag
-        FROM logistics_bill_detail lbd
-        RIGHT JOIN  logistics_bill lb ON lbd.main_id=lb.id
-        WHERE  lb.is_deleted=false and lbd.is_deleted=false
+        FROM  logistics_bill lb
+        LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
+        LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
+        WHERE  lb.is_deleted=false
         and lb.order_type in ('B2B','B2C')
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
@@ -102,12 +103,10 @@
              lbd.sign_time AS signTime,
              lbd.track_query_mode AS trackQueryMode,
              lc.name AS channelName
-         FROM  logistics_bill_detail lbd
-         RIGHT JOIN  logistics_bill lb
-         ON lbd.main_id=lb.id
-         LEFT JOIN  logistics_channel lc
-         ON lc.id=lb.channel_id and lc.is_deleted=false
-        WHERE  lb.is_deleted=false and lbd.is_deleted=false
+        FROM  logistics_bill lb
+        LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
+        LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
+        WHERE  lb.is_deleted=false
         and lb.order_type in ('B2B','B2C')
         <!--状态-->
         <if test="statusList !=null and statusList.size>0">
@@ -222,10 +221,10 @@
             lbd.sign_time AS signTime,
             lbd.track_query_mode AS trackQueryMode,
             lc.name AS channelName
-        FROM  logistics_bill_detail lbd
-        RIGHT JOIN  logistics_bill lb ON lbd.main_id=lb.id and lb.is_deleted=false
+        FROM  logistics_bill lb
+        LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
         LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
-        WHERE  lbd.is_deleted=false
+        WHERE  lb.is_deleted=false
         and lb.order_type in ('B2B','B2C')
         <choose>
             <when test="params.ids!=null and params.ids.size>0">
