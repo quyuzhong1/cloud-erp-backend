@@ -26,7 +26,7 @@ public class MoveInfoExcelDTO implements Serializable {
      */
     @ColumnWidth(25)
     @ExcelProperty(value = "仓库", index = 1)
-    @FieldValid(fieldName = "仓库",isNotBlank = true,maxLength=50)
+    @FieldValid(fieldName = "仓库", isNotBlank = true)
     private String warehouseName;
 
     /**
@@ -34,7 +34,7 @@ public class MoveInfoExcelDTO implements Serializable {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "取货仓位", index = 2)
-    @FieldValid(fieldName = "取货仓位")
+    @FieldValid(fieldName = "取货仓位", isNotBlank = true)
     private String outWarehouseLocationName;
 
     /**
@@ -42,7 +42,7 @@ public class MoveInfoExcelDTO implements Serializable {
      */
     @ColumnWidth(25)
     @ExcelProperty(value = "上架仓位", index = 3)
-    @FieldValid(fieldName = "上架仓位",isNotBlank = true)
+    @FieldValid(fieldName = "上架仓位", isNotBlank = true)
     private String inWarehouseLocationName;
 
     /**
@@ -50,7 +50,7 @@ public class MoveInfoExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "移动数量", index = 4)
-    @FieldValid(fieldName = "移动数量",isNotBlank = true,fieldValues = "是,否")
+    @FieldValid(fieldName = "移动数量", isNotBlank = true)
     private Integer qty;
 
     /**
