@@ -46,6 +46,11 @@ public enum  BasicDictTypeEnum {
      * 其他认证
      */
     OTHER_ATTESTATION("otherAttestation", "其他认证"),
+
+    /**
+     * 项目状态
+     */
+    PROJECT_STATE("projectState", "项目状态")
     ;
 
 
