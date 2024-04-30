@@ -97,12 +97,6 @@ public interface LogisticsProductService  extends SuperService<ProductDetailEnti
      *@date 2023-11-27
      */
     List<LogisticsProductDTO.ProductDTO> listLogisticsProduct(List<String> skuIdList,List<String> skuNoList);
-
-    /**
-     * 根据dmp销售成本，更新物流目的国申报价
-     * @param dmpSkuCostEntityList
-     */
-    void recalDestDeclarePrice(List<DmpSkuCostEntity> dmpSkuCostEntityList);
     /**
      * @description: 提审
      * @author Will
