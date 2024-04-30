@@ -143,6 +143,36 @@ public class ProductSearchDTO extends PermissionsDTO {
          */
         private List<String> createChargeDeptUserIdList;
 
+        /**
+         * 立项日期开始
+         */
+        private LocalDate initDateBegin;
+
+        /**
+         * 立项日期结束
+         */
+        private LocalDate initDateEnd;
+
+        /**
+         * 启动日期开始
+         */
+        private LocalDate launchDateBegin;
+
+        /**
+         * 启动日期结束
+         */
+        private LocalDate launchDateEnd;
+
+        /**
+         * 结项日期开始
+         */
+        private LocalDate finishDateBegin;
+
+        /**
+         * 结项日期结束
+         */
+        private LocalDate finishDateEnd;
+
     }
 
 
