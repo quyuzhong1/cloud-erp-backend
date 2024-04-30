@@ -21,6 +21,7 @@ import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
+import org.apache.ibatis.annotations.Param;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
@@ -695,15 +696,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      **/
     Boolean updateTransferStatusBatch(List<String> soIds, String status);
 
-    
-    /** 
-     * @description
-     * @param code
-     * @return 
-     * @author Lambda
-     * @create 2024-01-26 15:26
-     */
-    PackageDTO.ScanResultDTO packageScan(PackageDTO.ScanDTO code);
     /**
      * 组包分页
      * @description
@@ -878,4 +870,18 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     List<BatchResultDTO> cancelOrderForecast(List<String> ids);
 
     List<BatchResultDTO> retryOrderForecast(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 扫描单号匹配订单
+     * @param code
+     * @return
+     */
+    PackageDTO.ScanResultDTO packageScanByCode(String code);
+
+    /**
+     * 根据销售订单ids 获取到合并的数据
+     * @param ids
+     * @return
+     */
+    List<PackageDTO.ScanResultDTO> listMergePackageBySoIds(List<String> ids);
 }
