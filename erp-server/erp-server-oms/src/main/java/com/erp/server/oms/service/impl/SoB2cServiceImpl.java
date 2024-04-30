@@ -2950,6 +2950,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         lambdaUpdate().eq(SoB2cEntity::getId, id)
                 .set(SoB2cEntity::getApproveStatus, approveStatus)
                 .set(SoB2cEntity::getAbnormalType, "")
+                .set(SoB2cEntity::getSignOrderError, "")
                 .update(new SoB2cEntity());
     }
 
