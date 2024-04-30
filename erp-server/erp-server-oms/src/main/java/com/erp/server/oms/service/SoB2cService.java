@@ -863,7 +863,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     List<BatchResultDTO> cancelOrderForecast(List<String> ids);
 
-    List<BatchResultDTO> retryOrderForecast(BaseIdsDTO.IdsDTO dto);
+    List<BatchResultDTO> retryOrderForecast(List<String> dto);
 
     /**
      * @description: 异常订单分页查询
