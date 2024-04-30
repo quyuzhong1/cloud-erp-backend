@@ -740,7 +740,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 ExcelData excelData = new ExcelData();
                 excelData.setData(exportDTO);
                 excelData.setDetailList(exportDTO.getProductDetailList());
-                excelData.setFilename("报关单"+DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP)+StringUtils.leftPad(String.valueOf(temp),3,"0")+".xlsx");
+                excelData.setFilename("报关单"+exportDTO.getCode()+".xlsx");
                 excelDataList.add(excelData);
                 temp++;
             }
