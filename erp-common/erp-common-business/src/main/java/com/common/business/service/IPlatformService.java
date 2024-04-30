@@ -21,9 +21,10 @@ public interface IPlatformService {
      * 订单发货获取标发单号类型
      * @param platform
      * @param logisticsChannelId
+     * @param logisticsSaleChannelId
      * @return
      */
-    String getOrderDeliveryMarkType(String platform, String logisticsChannelId);
+    String getOrderDeliveryMarkType(String platform,String logisticsChannelId, String logisticsSaleChannelId);
 
 
     /**
