@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.PlatformShipOrderDTO;
@@ -79,6 +80,13 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
 
+        //验证订单平台是否取消
+        if (soB2cEntity.getIsCancel()) {
+            //订单拦截
+            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消"));
+            return null;
+        }
+
         //查询订单物流信息获取跟踪号
         List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
         //设置物流跟踪单号
@@ -94,6 +102,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
 
             entity.setWeight(dto.getWeight());
             entity.setWeightUnit(dto.getWeightUnit());
+            entity.setWeighingTime(LocalDateTime.now());
             entity.setIsWeigh(true);
             if (!soB2cDeliveryService.updateById(entity)) {
                 throw new ServiceException("发货单更新失败");
@@ -132,7 +141,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
                     PlatformSaveHandler.shipOrder(platformShipOrderDTO);
                 }
             } catch (Exception e) {
-                log.error("销售单【{}】 标记发货失败 >>>错误信息{}", e.getMessage());
+                log.error("【称重出库】销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
                 throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
             }
 
@@ -175,6 +184,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
         entity.setIsWeigh(false);
         entity.setWeightUnit(UnitEnum.WeightUnitEnum.G.getCode());
         entity.setWeight(BigDecimal.ZERO);
+        entity.setWeighingTime(null);
         if (!soB2cDeliveryService.updateById(entity)) {
             throw new ServiceException("发货单更新失败");
         }

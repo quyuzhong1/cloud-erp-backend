@@ -280,6 +280,7 @@ public class SoB2cDeliveryController extends BaseController {
     public ApiResult<List<SoB2cDeliveryDTO.PrintPickingViewDTO>> printPickingView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(soB2cDeliveryService.printPickingView(dto.getIds()));
     }
+
     /**
      * 打印拣货单
      *
@@ -338,6 +339,19 @@ public class SoB2cDeliveryController extends BaseController {
     }
 
     /**
+     * 打印物流面单预览
+     * @param param
+     * @Author Luo_WG
+     * @Date 2024/4/26 11:04
+     * @return void
+     **/
+    @PostMapping("/printLogisticsWaybillPreview")
+    public ApiResult<List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO>> printLogisticsWaybillPreview(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param) {
+        return success(soB2cDeliveryService.printLogisticsWaybillPreview(param));
+    }
+
+
+    /**
      * 打印物流面单确认
      *
      * @param dto
@@ -349,8 +363,8 @@ public class SoB2cDeliveryController extends BaseController {
     @PostMapping("/printLogisticsBillConfirm")
     public void printLogisticsBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
         soB2cDeliveryService.printLogisticsBillConfirm(dto, response);
-
     }
+
 
     /**
      * 完成打印

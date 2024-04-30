@@ -1,8 +1,10 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
@@ -10,7 +12,6 @@ import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
-
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -435,8 +436,8 @@ public interface SoB2cFeign {
     @GetMapping("/feign/soB2c/getByPlatformCode")
     List<SoB2cEntity>  getByPlatformCode(@RequestParam("platformCodeList") List<String> platformCodeList,
                                          @RequestParam("dictPlatform") String dictPlatform,
-                                         @RequestParam("shopId") String shopId
-    );
+                                         @RequestParam("shopId") String shopId,
+                                         @RequestParam("sourceType") String sourceType);
 
     @PostMapping("/feign/soB2c/updateById")
     Boolean updateById(@RequestBody SoB2cEntity soB2cEntity);
@@ -481,4 +482,28 @@ public interface SoB2cFeign {
      **/
     @PostMapping("/feign/soB2cError/deleteAndAddErrorBatch")
     void deleteAndAddErrorBatch(@RequestBody SoB2cErrorDTO.AddAndDeleteDTO addAndDeleteDTO);
+
+    /**
+     * @description: 订单拦截
+     * @author Will
+     * @date: 2024/4/24 19:07
+     * @param dto
+     * @return BatchResultDTO
+     */
+    @PostMapping("/feign/soB2c/deliveryIntercept")
+    BatchResultDTO deliveryIntercept(@RequestBody @Validated SoB2cDTO.RemarkDTO dto);
+
+
+    /**
+     * 更新平台订单取消状态
+     */
+    @PostMapping("/feign/soB2c/updateCancelAndLog")
+    Boolean updateCancelAndLog(@RequestBody @Validated PlatformDeliveryInterceptDTO dto);
+
+
+    /**
+     * 添加销售订单日志
+     */
+    @PostMapping("/feign/soB2c/addModuleOperateLog")
+    Boolean addModuleOperateLog(OperateLogDTO.AddModuleOperateLogDTO operateLogDTO);
 }

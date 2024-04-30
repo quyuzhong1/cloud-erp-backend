@@ -125,10 +125,11 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @description: 更新明细的是否匹配仓库规则字段
      * @author Will
      * @date: 2023/12/14 9:21
+     * @param mainId
      * @param detailIdList
      * @return Boolean
      */
-    Boolean updateIsMatchWarehouseRule(List<String> detailIdList);
+    Boolean updateIsMatchWarehouseRule(String mainId,List<String> detailIdList);
 
     /**
      *

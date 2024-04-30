@@ -1,6 +1,15 @@
 package com.erp.model.tms.dto;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.OperationTypeEnum;
+import com.erp.model.oms.dto.TransferDeclareProductDTO;
+import com.erp.model.oms.entity.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,7 +23,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -29,7 +40,31 @@ import java.util.List;
 public class TransferDeclareDTO implements Serializable {
 
 
+    /**
+     * B2C订单预报实体
+     */
+    @Data
+    @AllArgsConstructor
+    @Builder
+    @NoArgsConstructor
+    public static class B2cOrderForecastDTO {
 
+        @NotNull(message = "b2c销售订单不能为空")
+        private SoB2cEntity soB2cEntity;
+
+        @NotNull(message = "b2c销售物流订单不能为空")
+        private SoB2cLogisticsEntity soB2cLogisticsEntity;
+
+        @NotNull(message = "b2c销售订单卖家信息不能为空")
+        private SoB2cReceiverEntity soB2cReceiverEntity;
+
+        @NotNull(message = "店铺信息不能为空")
+        private ShopInfoEntity shopInfoEntity;
+
+        @NotEmpty(message = "b2c销售订单商品信息不能为空")
+        private List<TransferDeclareProductDTO> transferDeclareProductDTOList;
+
+    }
 
     /**
     * 详情
@@ -177,6 +212,11 @@ public class TransferDeclareDTO implements Serializable {
         */
         private LocalDate planTransferDate;
 
+        /**
+         * 上传状态
+         */
+        private String uploadStatus;
+
     }
 
     /**
@@ -261,10 +301,12 @@ public class TransferDeclareDTO implements Serializable {
             this.logisticsChannelIdList = new ArrayList<>();
             this.deliveryLogisticsSupplierIdList = new ArrayList<>();
             this.transferLogisticsSupplierIdList = new ArrayList<>();
+            this.instockForecastStatusList = new ArrayList<>();
             this.uploadStatusList = new ArrayList<>();
             this.outstockStatusList = new ArrayList<>();
             this.transferStatusList = new ArrayList<>();
             this.createUserIdList = new ArrayList<>();
+            this.createTimeList = new ArrayList<>();
             this.createTimeList = new ArrayList<>();
         }
     }
@@ -473,12 +515,21 @@ public class TransferDeclareDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class ShippingOrderDTO {
         /**
          * 订单id
          */
         @NotBlank(message = "订单id不能为空")
         private String soId;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        private Boolean success;
 
         /**
          * 第三方中转服务商的发货单号
@@ -497,6 +548,34 @@ public class TransferDeclareDTO implements Serializable {
          * 错误信息
          */
         private String message;
+
+        public static ShippingOrderDTO fail(String id, String code, String msg) {
+            return ShippingOrderDTO.builder()
+                    .soId(id)
+                    .code(code)
+                    .message(msg)
+                    .success(false)
+                    .build();
+        }
+
+        public static ShippingOrderDTO fail(String id, String code, String msg,String type) {
+            return ShippingOrderDTO.builder()
+                    .soId(id)
+                    .code(code)
+                    .message(msg)
+                    .type(type)
+                    .sign(type)
+                    .success(false)
+                    .build();
+        }
+        public static ShippingOrderDTO success(String id, String code, String shippingOrderNo) {
+            return ShippingOrderDTO.builder()
+                    .soId(id)
+                    .code(code)
+                    .shippingOrderNo(shippingOrderNo)
+                    .success(true)
+                    .build();
+        }
     }
 
     @Data
@@ -506,6 +585,19 @@ public class TransferDeclareDTO implements Serializable {
          * 订单id
          */
         private List<String> soIds;
+        /**
+         * 状态
+         */
+        private String status;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdateForcastStatusDTO {
+        /**
+         * 订单id
+         */
+        private String soId;
         /**
          * 状态
          */

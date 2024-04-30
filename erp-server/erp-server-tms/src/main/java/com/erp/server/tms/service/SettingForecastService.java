@@ -90,4 +90,5 @@ public interface SettingForecastService extends SuperService<SettingForecastEnti
      */
     SettingForecastEntity getSettingForecastByLogisticsSupplierId(String logisticsSupplierId);
 
+    List<SettingForecastEntity> getSettingForecastByLogisticsSupplierIdList(List<String> logisticsSupplierId);
 }

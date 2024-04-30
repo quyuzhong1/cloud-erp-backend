@@ -8,10 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.RedisCacheConstants;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -30,11 +27,9 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
-import com.erp.model.tms.dto.DictBasicDTO;
-import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.DictBasicEnum;
-import com.erp.model.tms.enums.FmDeclareSourceTypeEnum;
+import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
@@ -127,13 +122,19 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Resource
     private SysDictFeign sysDictFeign;
 
+    @Resource
+    private CfgSettingService cfgSettingService;
+
     @Override
     public Boolean addFmDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
         TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
-                .packingStatus(PackingStatusEnum.PACKING.getCode())
+//                .packingStatus(PackingStatusEnum.PACKING.getCode())
                 .declareStatus(WmsDeclareStatusEnum.WAIT.getCode())
                 .ids(Arrays.asList(addDTO.getSourceId()))
                 .build();
+        if(!addDTO.getIsAuto()){
+            querySourceDTO.setPackingStatus(PackingStatusEnum.PACKING.getCode());
+        }
         List<TmsDeclareBillDTO.DeliveryDTO> deliveryDTOList = wmsFirstMileDeliveryFeign.getCanGenerateDeclare(querySourceDTO);
         if(CollectionUtils.isEmpty(deliveryDTOList)){
             throw new ServiceException("没有可生成报关单的发货单");
@@ -158,10 +159,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             service.add(tmsDeclareBillEntity,detailEntityList,SourceTypeEnum.FIRST_MILE_DELIVERY,false);
         }
         //更新发货单的报关状态
-        FirstMileDeliveryDTO.UpdateStatusDTO dto = new FirstMileDeliveryDTO.UpdateStatusDTO();
-        dto.setIds(Arrays.asList(addDTO.getSourceId()));
-        dto.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
-        wmsFirstMileDeliveryFeign.updateStatus(dto);
+        if(!addDTO.getIsAuto()){
+            FirstMileDeliveryDTO.UpdateStatusDTO dto = new FirstMileDeliveryDTO.UpdateStatusDTO();
+            dto.setIds(Arrays.asList(addDTO.getSourceId()));
+            dto.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
+            wmsFirstMileDeliveryFeign.updateStatus(dto);
+        }
         return true;
     }
 
@@ -850,10 +853,13 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean addB2BDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
         TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
-                .packingStatus(PackingStatusEnum.PACKING.getCode())
+//                .packingStatus(PackingStatusEnum.PACKING.getCode())
                 .declareStatus(WmsDeclareStatusEnum.WAIT.getCode())
                 .ids(Arrays.asList(addDTO.getSourceId()))
                 .build();
+        if(!addDTO.getIsAuto()){
+            querySourceDTO.setPackingStatus(PackingStatusEnum.PACKING.getCode());
+        }
         List<TmsDeclareBillDTO.SoOutDTO> soOutDTOList = soOutstockFeign.getCanGenerateDeclare(querySourceDTO);
         if(CollectionUtils.isEmpty(soOutDTOList)){
             throw new ServiceException("没有可生成报关单的单据");
@@ -878,10 +884,87 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             service.add(tmsDeclareBillEntity,detailEntityList,SourceTypeEnum.FIRST_MILE_DELIVERY,false);
         }
         //更新发货单的报关状态
-        TmsDeclareBillDTO.UpdateStatusDTO dto = new TmsDeclareBillDTO.UpdateStatusDTO();
-        dto.setIds(Arrays.asList(addDTO.getSourceId()));
-        dto.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
-        soOutstockFeign.updateStatus(dto);
+        if(!addDTO.getIsAuto()){
+            TmsDeclareBillDTO.UpdateStatusDTO dto = new TmsDeclareBillDTO.UpdateStatusDTO();
+            dto.setIds(Arrays.asList(addDTO.getSourceId()));
+            dto.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
+            soOutstockFeign.updateStatus(dto);
+        }
+        return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean autoGenerateFirstMileDeclare(AutoGenerateBillDTO autoGenerateBillDTO) {
+        if(StringUtils.isBlank(autoGenerateBillDTO.getId()) || Objects.isNull(autoGenerateBillDTO.getSourceTypeEnum()) || Objects.isNull(autoGenerateBillDTO.getBillGenerateTimingEnum())){
+            return false;
+        }
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
+        if(cfgSettingEntity.getDisabled()){
+            return false;
+        }
+        CfgSettingValueDTO.BillAutoAddDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.BillAutoAddDTO.class);
+        if(Objects.isNull(dto) || Objects.isNull(dto.getIsAutoFirstMileDeclare()) || !dto.getIsAutoFirstMileDeclare() ||
+                StringUtils.isBlank(dto.getFirstMileDeclareGenerateTiming()) || !dto.getFirstMileDeclareGenerateTiming().equals(autoGenerateBillDTO.getBillGenerateTimingEnum().getCode())){
+            return false;
+        }
+        //生成报关单
+        TmsDeclareBillDTO.AddDTO addDTO  = new TmsDeclareBillDTO.AddDTO();
+        addDTO.setSourceId(autoGenerateBillDTO.getId());
+        addDTO.setDeclareType(DeclareDeclareTypeEnum.INDEPENDENT.getCode());
+        addDTO.setReceiverName("香港唯迹");
+        addDTO.setDictSupervisionMethod(DeclareSupervisionMethodEnum.COMMONLY.getCode());
+        addDTO.setDictNatureLevy(DeclareNatureLevyEnum.COMMONLY.getCode());
+        if(Objects.nonNull(autoGenerateBillDTO.getFirstMileDeliveryEntity())){
+            addDTO.setToArea(autoGenerateBillDTO.getFirstMileDeliveryEntity().getCountryId());
+            addDTO.setToPort(autoGenerateBillDTO.getFirstMileDeliveryEntity().getCountryId());
+        }
+        //发货公司
+        List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
+        BaseIdDTO company = companyList.stream().filter(v->v.getName().equals("深圳市优篮子科技有限公司")).findFirst().orElse(new BaseIdDTO());
+        addDTO.setSenderId(company.getId());
+        addDTO.setDictPackType(DeclarePackTypeEnum.CARTON.getCode());
+        addDTO.setDictTransactionMethod(DeclareTransactionMethodEnum.EXW.getCode());
+        addDTO.setIsAuto(true);
+        this.addFmDeclare(addDTO);
+        return true;
+    }
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean autoGenerateB2bDeclare(AutoGenerateBillDTO autoGenerateBillDTO) {
+        if(StringUtils.isBlank(autoGenerateBillDTO.getId()) || Objects.isNull(autoGenerateBillDTO.getSourceTypeEnum()) || Objects.isNull(autoGenerateBillDTO.getBillGenerateTimingEnum())){
+            return false;
+        }
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
+        if(Objects.isNull(cfgSettingEntity) || cfgSettingEntity.getDisabled()){
+            return false;
+        }
+        CfgSettingValueDTO.BillAutoAddDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.BillAutoAddDTO.class);
+        if(Objects.isNull(dto) || Objects.isNull(dto.getIsAutoB2BDeclare()) || !dto.getIsAutoB2BDeclare() ||
+                StringUtils.isBlank(dto.getB2BDeclareGenerateTiming()) || !dto.getB2BDeclareGenerateTiming().equals(autoGenerateBillDTO.getBillGenerateTimingEnum().getCode())){
+            return false;
+        }
+        //生成报关单
+        TmsDeclareBillDTO.AddDTO addDTO  = new TmsDeclareBillDTO.AddDTO();
+        addDTO.setSourceId(autoGenerateBillDTO.getId());
+        addDTO.setDeclareType(DeclareDeclareTypeEnum.INDEPENDENT.getCode());
+        addDTO.setReceiverName("香港唯迹");
+        addDTO.setDictSupervisionMethod(DeclareSupervisionMethodEnum.COMMONLY.getCode());
+        addDTO.setDictNatureLevy(DeclareNatureLevyEnum.COMMONLY.getCode());
+        if(Objects.nonNull(autoGenerateBillDTO.getSoOutstockEntity())){
+            addDTO.setToArea(autoGenerateBillDTO.getSoOutstockEntity().getCountry());
+            addDTO.setToPort(autoGenerateBillDTO.getSoOutstockEntity().getCountry());
+        }
+        //发货公司
+        List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
+        BaseIdDTO company = companyList.stream().filter(v->v.getName().equals("深圳市优篮子科技有限公司")).findFirst().orElse(new BaseIdDTO());
+        addDTO.setSenderId(company.getId());
+        addDTO.setDictPackType(DeclarePackTypeEnum.CARTON.getCode());
+        addDTO.setDictTransactionMethod(DeclareTransactionMethodEnum.EXW.getCode());
+        addDTO.setIsAuto(true);
+        this.addB2BDeclare(addDTO);
         return true;
     }
 

@@ -1,22 +1,27 @@
 package com.erp.server.wms.sdk.delivery;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
+import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
-import com.common.business.dto.WalmartShipDTO;
+import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.IPlatformService;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cRefEntity;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.dto.LogisticsMappingDTO;
+import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.server.wms.convert.WalmartShipOrderConverter;
+import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.tms.feign.LogisticsMappingFeign;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClient;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClientService;
 import com.sdk.oms.shopify.api.rest.model.*;
@@ -25,7 +30,6 @@ import com.sdk.oms.shopify.service.ShopSdkServer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -40,8 +44,17 @@ public class ShopifyShipOrder implements IPlatformService {
 
     @Resource
     private SoB2cFeign soB2cFeign;
+
+    @Resource
+    private LogisticsMappingFeign logisticsMappingFeign;
+
     @Resource
     private ShopifyRestClientService shopifyRestClientService;
+
+    @Resource
+    private LogisticsFeign logisticsFeign;
+
+
 
     @Override
     public void shipOrder(PlatformShipOrderDTO dto) {
@@ -141,6 +154,12 @@ public class ShopifyShipOrder implements IPlatformService {
                 throw new ServiceException("Shopify数据异常：详情LineItems为空");
             }
 
+            //获取销售渠道信息
+            LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = logisticsFeign.getScaleChannelByChannelById(
+                    logisticsEntity.getLogisticsChannelId(),
+                    PlatformDictEnum.SHOPIFY.getCode()
+            );
+
 
             // 需要根据配送服务分组请求参数
             for (ShopifyFulfillmentOrder fulfillmentOrder : fulfillmentOrdersFromOrderList) {
@@ -165,9 +184,18 @@ public class ShopifyShipOrder implements IPlatformService {
 
                 ShopifyFulfillmentPayload payload = new ShopifyFulfillmentPayload();
                 ShopifyTrackingInfo trackingInfo = new ShopifyTrackingInfo();
-                trackingInfo.setNumber(logisticsEntity.getTrackNo());
+
+                //获取渠道标发单号
+                String standardOrderType = tmsScaleChannelShipDTO.checkAndGetOrderDeliveryMarkType();
+                String trackingNumber = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
+                        ? logisticsEntity.getCode() : logisticsEntity.getTrackNo();
+                if (StrUtil.isBlank(trackingNumber)) {
+                    throw new ServiceException("操作失败，渠道标发单号为空");
+                }
+
+                trackingInfo.setNumber(trackingNumber);
                 trackingInfo.setUrl("");
-                trackingInfo.setCompany(logisticsEntity.getCode());
+                trackingInfo.setCompany(tmsScaleChannelShipDTO.getCode());
                 payload.setLineItemsByFulfillmentOrder(orderList);
                 payload.setTrackingInfo(trackingInfo);
                 ShopifyFulfillmentPayloadRoot request = new ShopifyFulfillmentPayloadRoot();
@@ -182,5 +210,11 @@ public class ShopifyShipOrder implements IPlatformService {
             }
         }
 
+    }
+
+
+    @Override
+    public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
+        return null;
     }
 }

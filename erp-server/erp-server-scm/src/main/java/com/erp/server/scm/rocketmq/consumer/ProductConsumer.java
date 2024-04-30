@@ -24,26 +24,26 @@ public class ProductConsumer {
     @Resource
     private ProductDetailService productDetailService;
 
-    @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
-            selectorExpression = "sync_dmp_product_info_tag",
-            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-plm_product_info_consumer")
-    public class ConsumerPlmProductInfo implements RocketMQListener<List<ProductInfoEntity>> {
-        @Override
-        public void onMessage(List<ProductInfoEntity> ext) {
-            productInfoService.saveOrUpdateProductInfo(ext);
-        }
-    }
+//    @Service
+//    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
+//            selectorExpression = "sync_dmp_product_info_tag",
+//            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-plm_product_info_consumer")
+//    public class ConsumerPlmProductInfo implements RocketMQListener<List<ProductInfoEntity>> {
+//        @Override
+//        public void onMessage(List<ProductInfoEntity> ext) {
+//            productInfoService.saveOrUpdateProductInfo(ext);
+//        }
+//    }
 
-    @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
-            selectorExpression = "sync_dmp_product_sku_tag",
-            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-plm_product_detail_consumer")
-    public class ConsumerPlmProductDetail implements RocketMQListener<List<ProductDetailEntity>> {
-        @Override
-        public void onMessage(List<ProductDetailEntity> ext) {
-            productDetailService.saveOrUpdateProductDetail(ext);
-        }
-    }
+//    @Service
+//    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
+//            selectorExpression = "sync_dmp_product_sku_tag",
+//            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-plm_product_detail_consumer")
+//    public class ConsumerPlmProductDetail implements RocketMQListener<List<ProductDetailEntity>> {
+//        @Override
+//        public void onMessage(List<ProductDetailEntity> ext) {
+//            productDetailService.saveOrUpdateProductDetail(ext);
+//        }
+//    }
 }
 

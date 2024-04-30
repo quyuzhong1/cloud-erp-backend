@@ -5,10 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
-import com.common.business.enums.BusinessTypeEnum;
-import com.common.business.enums.PlatformCategoryEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SyncStatusEnum;
+import com.common.business.enums.*;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
@@ -119,7 +116,8 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.getByPlatformCode(
                 Collections.singletonList(dto.getPlatformCode()),
                 dto.getDictPlatform(),
-                ""
+                "",
+                SourceTypeEnum.SO_B2C.getCode()
         );
         if (CollectionUtils.isEmpty(soB2cEntityList)){
             log.warn("[亚马逊物流销售消费服务]:B2C销售单不存在：单号={}", dto.getPlatformCode());

@@ -2,9 +2,11 @@ package com.erp.model.tms.dto;
 
 import com.common.business.enums.UnitEnum;
 import com.common.core.enums.CurrencyEnum;
+import com.common.core.exception.ServiceException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
@@ -115,6 +117,11 @@ public class LogisticsChannelDTO implements Serializable {
          * 平台是否允许打印
          */
         private Boolean isPrintPlatform;
+
+        /**
+         * 纸张大小
+         */
+        private String paperSize;
     }
 
 
@@ -223,8 +230,19 @@ public class LogisticsChannelDTO implements Serializable {
     @AllArgsConstructor
     public static class SignShipDTO{
 
-        private String channelId;
+        /**
+         * logistics_sale_channel销售渠道ID
+         */
+        private String logisticsSaleChannelId;
 
+        /**
+         * logistics_channel渠道ID
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 销售渠道代号
+         */
         private String code;
 
         /**
@@ -233,9 +251,16 @@ public class LogisticsChannelDTO implements Serializable {
         private String saleChannelSupplierName;
 
         /**
-         * 渠道id(物流平台原始id)
+         * 标记发货订单类型（transportNo运单号、trackNo跟踪号）
          */
-        private String platformChannelId;
+        private String orderDeliveryMarkType;
+
+        public String checkAndGetOrderDeliveryMarkType(){
+            if (StringUtils.isBlank(this.getOrderDeliveryMarkType())){
+                throw new ServiceException("操作失败，渠道标发单号配置为空");
+            }
+            return this.getOrderDeliveryMarkType();
+        }
 
     }
 

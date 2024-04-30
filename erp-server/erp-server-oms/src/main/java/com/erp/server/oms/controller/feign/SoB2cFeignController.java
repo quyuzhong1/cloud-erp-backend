@@ -1,11 +1,14 @@
 package com.erp.server.oms.controller.feign;
 
 
+import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.core.controller.BaseController;
+import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
@@ -51,6 +54,12 @@ public class SoB2cFeignController extends BaseController {
 
     @Resource
     private SoB2cRefService soB2cRefService;
+
+    @Resource
+    private SoB2cStatusService b2cStatusService;
+
+    @Resource
+    private OperateLogService operateLogService;
 
 
     /**
@@ -563,9 +572,10 @@ public class SoB2cFeignController extends BaseController {
     @GetMapping("/getByPlatformCode")
     public List<SoB2cEntity> getByPlatformCode(@RequestParam("platformCodeList") List<String> platformCodeList,
                                                @RequestParam("dictPlatform") String dictPlatform,
-                                               @RequestParam("shopId") String shopId
+                                               @RequestParam("shopId") String shopId,
+                                               @RequestParam("sourceType") String sourceType
     ){
-        return soB2cService.getByPlatformCodeList(platformCodeList, dictPlatform, shopId);
+        return soB2cService.getByPlatformCodeList(platformCodeList, dictPlatform, shopId, sourceType);
     }
 
     /**
@@ -600,5 +610,38 @@ public class SoB2cFeignController extends BaseController {
     @PostMapping("/clearB2cLogisticsCode")
     public Boolean clearB2cLogisticsCode(@RequestBody List<String> soIdList) {
         return soB2cLogisticsService.clearB2cLogisticsCode(soIdList);
+    }
+
+    /**
+     * 订单拦截
+     * @author Will
+     * @date: 2024/4/24 19:05
+     * @param dto
+     * @return BatchResultDTO
+     */
+    @PostMapping("/deliveryIntercept")
+    public BatchResultDTO deliveryIntercept(@RequestBody @Validated SoB2cDTO.RemarkDTO dto) {
+        return soB2cService.deliveryIntercept(dto.getId(),dto.getRemark());
+    }
+
+
+    /**
+     * 更新平台订单取消状态
+     */
+    @PostMapping("/updateCancelAndLog")
+    public Boolean updateCancelAndLog(@RequestBody @Validated PlatformDeliveryInterceptDTO dto){
+        return b2cStatusService.updateCancelAndLog(dto);
+    }
+
+
+    /**
+     * 添加操作日志
+     */
+    @PostMapping("/addModuleOperateLog")
+    public Boolean addModuleOperateLog(OperateLogDTO.AddModuleOperateLogDTO operateLogDTO){
+        return operateLogService.addModuleOperateLog(operateLogDTO.getContent(),
+                operateLogDTO.getModuleType(),
+                operateLogDTO.getBusinessId(),
+                operateLogDTO.getOperation());
     }
 }

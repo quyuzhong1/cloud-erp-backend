@@ -19,7 +19,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -453,6 +452,25 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private LocalDateTime finishPrintTime;
 
+        /**
+         * 验货时间【可排序】
+         */
+        private LocalDateTime inspectionTime;
+
+        /**
+         * 称重时间【可排序】
+         */
+        private LocalDateTime weighingTime;
+
+        /**
+         * 平台订单号【可排序】
+         */
+        private String platformCode;
+
+        /**
+         * 订单备注
+         */
+        private String orderRemark;
 
         /**
          * 组包状态  not 不需要  wait 待组包   already 已经组包
@@ -564,6 +582,15 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 有运单号数量
          */
         private Integer isTransportNoNum;
+        /**
+         * 是否禁用 true 禁用
+         */
+        private Boolean disabled;
+        /**
+         * 错误原因
+         */
+        private String errorMsg;
+
         /**
          * 详情
          */
@@ -698,6 +725,22 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 详情
          */
         private List<PrintLogisticsWaybillDetailDTO> detailList;
+    }
+
+    /**
+     * 打印物流面单确认
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintLogisticsBillConfirmParam {
+        /**
+         * 打印类型 wms/common/enumDropDown?type=SoB2cDeliveryPrintType
+         * logisticsBill: 物流面单，allocateCargoBill：配货单
+         */
+        private String printType;
+
+        private List<String> ids;
     }
 
 

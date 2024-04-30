@@ -40,13 +40,20 @@
         lc.name,
         lc.disabled,
         ls.id as logisticsSupplierId,
-        ls.supplier_name as supplierName
+        ls.supplier_name as supplierName,
+        ls.supplier_name as transferLogisticSupplierName
         from transfer_logistics_channel lc
         inner join transfer_logistics_supplier ls on lc.main_id = ls.id and ls.is_deleted = false
         where lc.is_deleted = false
         <if test="logisticsSupplierIds != null and logisticsSupplierIds.size > 0">
             and lc.main_id in
             <foreach collection="logisticsSupplierIds" open="(" close=")" item="item" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="transferChannelIds != null and transferChannelIds.size > 0">
+            and lc.id in
+            <foreach collection="transferChannelIds" open="(" close=")" item="item" separator=",">
                 #{item}
             </foreach>
         </if>

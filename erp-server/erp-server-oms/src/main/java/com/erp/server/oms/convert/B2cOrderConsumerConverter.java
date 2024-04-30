@@ -102,7 +102,9 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "extendData", source = "dto.extendData"),
             @Mapping(target = "shopId",source = "dto.shopId"),
             @Mapping(target = "platformOrderCreateTime",source = "dto.platformOrderCreateTime"),
+            @Mapping(target = "platformOrderStatus", source = "dto.platformOrderStatus"),
             @Mapping(target = "remark", expression = "java(org.apache.commons.lang3.StringUtils.isBlank(oldEntity.getRemark()) ? dto.getRemark() : oldEntity.getRemark())"),
+            @Mapping(target = "isCancel", source = "dto.isCancel"),
             // 历史实体
             @Mapping(target = "exchangeRate", source = "oldEntity.exchangeRate"),
             @Mapping(target = "code", source = "oldEntity.code"),
