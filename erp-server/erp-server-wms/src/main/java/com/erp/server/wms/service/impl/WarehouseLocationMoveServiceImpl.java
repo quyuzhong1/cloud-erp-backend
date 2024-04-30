@@ -753,6 +753,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(detailViewDTO.getWarehouseId()));
             InventoryDTO.InventoryBySkuIdAndWarehouseDTO inventoryBySkuIdAndWarehouseDTO = new InventoryDTO.InventoryBySkuIdAndWarehouseDTO();
             BeanMapper.copy(detailViewDTO, inventoryBySkuIdAndWarehouseDTO);
+            inventoryBySkuIdAndWarehouseDTO.setWarehouseLocation(detailViewDTO.getOutWarehouseLocation());
             SkuVO sku = skuVOList.stream().filter(req -> req.getSkuId().equals(detailViewDTO.getSkuId())).findFirst().orElse(null);
             if (Objects.nonNull(sku)) {
                 detailViewDTO.setProductName(sku.getSkuName());
