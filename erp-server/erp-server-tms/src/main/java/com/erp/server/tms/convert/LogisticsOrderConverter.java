@@ -492,7 +492,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "product_declare_amount" ,source = "destDeclarePrice"),
             @Mapping(target = "product_id" ,source = "skuId"),
             @Mapping(target = "product_num" ,source = "quantity"),
-            @Mapping(target = "product_weight" ,source = "grossWeight", qualifiedByName = "gTokgStr"),
+            @Mapping(target = "product_weight" ,source = "grossWeight", qualifiedByName = "gTokg"),
             @Mapping(target = "child_order_id" ,source = "childOrderId"),
             @Mapping(target = "sc_item_code" ,source = "scItemCode"),
             @Mapping(target = "sc_item_id" ,source = "scItemId"),
