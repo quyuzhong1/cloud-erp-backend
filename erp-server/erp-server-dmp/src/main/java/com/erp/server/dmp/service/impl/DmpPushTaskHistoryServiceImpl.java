@@ -137,6 +137,7 @@ public class DmpPushTaskHistoryServiceImpl extends ServiceImpl<DmpPushTaskHistor
                 })
                 .collect(Collectors.toList());
         dmpPushTaskService.saveBatch(taskEntities);
+        baseMapper.deleteBatchIds(ids);
         List<String> idList = taskEntities.stream()
                 .map(BaseEntity::getId).collect(Collectors.toList());
         return dmpPushTaskService.batchSync(idList);
