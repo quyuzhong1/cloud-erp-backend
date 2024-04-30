@@ -149,12 +149,12 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
                     : (Objects.nonNull(locationMap) && Objects.nonNull(locationMap.get(moveInfoExcelDTO.getOutWarehouseLocationName()))
                     && Objects.nonNull(locationMap.get(moveInfoExcelDTO.getOutWarehouseLocationName()).get(0))
                     && Objects.nonNull(locationMap.get(moveInfoExcelDTO.getOutWarehouseLocationName()).get(0).getId())
-                    ? locationMap.get(moveInfoExcelDTO.getOutWarehouseLocationName()).get(0).getId() : ""));
+                    ? locationMap.get(moveInfoExcelDTO.getOutWarehouseLocationName()).get(0).getCode() : ""));
             pcViewDTO.setInWarehouseLocation(StringUtils.isBlank(moveInfoExcelDTO.getInWarehouseLocationName()) ? ""
                     : (Objects.nonNull(locationMap) && Objects.nonNull(locationMap.get(moveInfoExcelDTO.getInWarehouseLocationName()))
                     && Objects.nonNull(locationMap.get(moveInfoExcelDTO.getInWarehouseLocationName()).get(0))
                     && Objects.nonNull(locationMap.get(moveInfoExcelDTO.getInWarehouseLocationName()).get(0).getId())
-                    ? locationMap.get(moveInfoExcelDTO.getInWarehouseLocationName()).get(0).getId() : ""));
+                    ? locationMap.get(moveInfoExcelDTO.getInWarehouseLocationName()).get(0).getCode() : ""));
         }
 
         pcAddDTO.setWarehouseId((CollectionUtils.isEmpty(warehouseList) || Objects.isNull(warehouseList.get(0))) ? "" : warehouseList.get(0).getId());
@@ -168,7 +168,7 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
         pcViewDTO.setWarehouseName((CollectionUtils.isEmpty(warehouseList) || Objects.isNull(warehouseList.get(0))) ? "" : warehouseList.get(0).getName());
         //设置库存
         if (StringUtils.isNotBlank(moveInfoExcelDTO.getSkuNo()) && StringUtils.isNotBlank(pcViewDTO.getSkuId())
-                && (CollectionUtils.isEmpty(warehouseList) || Objects.isNull(warehouseList.get(0)))) {
+                && !(CollectionUtils.isEmpty(warehouseList) || Objects.isNull(warehouseList.get(0)))) {
             InventoryDTO.InventoryBySkuIdAndWarehouseDTO inventoryBySkuIdAndWarehouseDTO = new InventoryDTO.InventoryBySkuIdAndWarehouseDTO();
             inventoryBySkuIdAndWarehouseDTO.setWarehouseId(warehouseList.get(0).getId());
             inventoryBySkuIdAndWarehouseDTO.setSkuId(warehouseList.get(0).getId());
