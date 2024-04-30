@@ -110,7 +110,8 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
     @Override
     public LogisticsMappingEntity getByLogisticsMappingParam(LogisticsMappingDTO.SearchParamDTO paramDTO) {
         return lambdaQuery().eq(LogisticsMappingEntity::getSalesPlatform,paramDTO.getSalesPlatform())
-                .eq(LogisticsMappingEntity::getLogisticsChannelId,paramDTO.getLogisticsSaleChannelId())
+                .eq(LogisticsMappingEntity::getLogisticsChannelId,paramDTO.getLogisticsChannelId())
+                .eq(LogisticsMappingEntity::getLogisticsSaleChannelId,paramDTO.getLogisticsSaleChannelId())
                 .last("limit 1")
                 .one();
     }

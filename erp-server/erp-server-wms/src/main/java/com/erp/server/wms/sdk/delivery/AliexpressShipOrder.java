@@ -53,7 +53,7 @@ public class AliexpressShipOrder implements IPlatformService {
             LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getSignShipInfoByChannelById(channelId);
 
             //获取渠道标发单号
-            String standardOrderType = getOrderDeliveryMarkType(PlatformDictEnum.ALI_EXPRESS.getCode(), signShipOrderDTO.getLogisticsChannelId());
+            String standardOrderType = tmsSignShipDTO.checkAndGetOrderDeliveryMarkType();
             String logisticsNo = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
                     ? signShipOrderDTO.getLogisticsTransportNo() : signShipOrderDTO.getLogisticsTrackNo();
             if (StrUtil.isBlank(logisticsNo)) {
@@ -73,15 +73,6 @@ public class AliexpressShipOrder implements IPlatformService {
         }
 
 
-    }
-
-    @Override
-    public String getOrderDeliveryMarkType(String platform, String logisticsChannelId) {
-        LogisticsMappingEntity logisticsMappingEntity = logisticsMappingFeign.getByLogisticsMappingParam(new LogisticsMappingDTO.SearchParamDTO(platform, logisticsChannelId));
-        if (ObjectUtil.isEmpty(logisticsMappingEntity) || StrUtil.isBlank(logisticsMappingEntity.getOrderDeliveryMarkType())) {
-            throw new ServiceException("操作失败，渠道标发单号配置为空");
-        }
-        return logisticsMappingEntity.getOrderDeliveryMarkType();
     }
 
     @Override
