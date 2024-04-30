@@ -515,6 +515,8 @@ public enum ApiError implements Serializable {
     ERROR_BOX_QTY_NOT_EXIST(95266,"SKU【{}】单箱数量不能为空"),
     ERROR_PRODUCT_ITERATE_REF_SKU_NOT_EXIST(95267,"迭代产品不能为空"),
     ERROR_PRODUCT_CERTIFICATE_EXIST(95268,"SKU【{}】下已存在证书项目【{}】的证书"),
+    ERROR_95269(95269, "启动日期应当晚于立项日期"),
+    ERROR_95270(95270, "结项日期应当晚于启动日期"),
 
 
     /**
