@@ -102,7 +102,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
             ResponseMsg responseMsg = dsfShipperService.createOrder(logisticsOrderVO.getAuthMap(), orderRequest);
             if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
                 responseVO.failure(LogisticsPlatformEnum.DSF.getName(), logisticsOrderVO.getDeliveryNo(), JSONObject.toJSONString(responseMsg.getErrors()));
-                logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(responseMsg));
                 success = false;
@@ -115,13 +115,13 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         .logisticsChannelNo(orderResponse.getLogistics_channel_no())
                         .odaResultSign(orderResponse.getOda_result_sign())
                         .build();
-                logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(responseMsg));
             }
         } catch (Exception e) {
             log.error("递四方创建订单异常：{}", e.getMessage());
-            logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e));
             success = false;
@@ -150,7 +150,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         .build();
                 ValidatorUtil.validateEntity(orderCancelRequest);
                 ResponseMsg orderResponse = dsfShipperService.cancelOrder(logisticsCancelOrderVO.getAuthMap(), orderCancelRequest);
-                logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsQueryVO.getOrderId(),
                         logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderResponse));
                 responseVO.setDeliveryNo(logisticsQueryVO.getDeliveryNo());
@@ -160,14 +160,14 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     responseVO.success();
                 } else {
                     isSuccess = false;
-                    logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+                    logisticsOperateService.pushOperateLog(logisticsQueryVO.getOrderId(),
                             logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                             RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderResponse));
                     responseVO.failure(LogisticsPlatformEnum.DSF.getName(), logisticsQueryVO.getDeliveryNo(), orderResponse.getMsg());
                 }
                 responseVOS.add(responseVO);
             } catch (Exception e) {
-                logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsQueryVO.getOrderId(),
                         logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(e));
                 isSuccess = false;
@@ -201,19 +201,19 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 responseVO.setTrackNo(logisticsQueryVO.getTrackNo());
                 if ("1".equalsIgnoreCase(orderResponse.getResult())) {
                     responseVO.success();
-                    logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+                    logisticsOperateService.pushOperateLog(logisticsQueryVO.getOrderId(),
                             logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.INTERCEPT_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                             RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderResponse));
                 } else {
                     isSuccess = false;
-                    logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+                    logisticsOperateService.pushOperateLog(logisticsQueryVO.getOrderId(),
                             logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.INTERCEPT_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                             RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderResponse));
                     responseVO.failure(LogisticsPlatformEnum.DSF.getName(), logisticsQueryVO.getDeliveryNo(), orderResponse.getMsg());
                 }
                 responseVOS.add(responseVO);
             } catch (Exception e) {
-                logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsQueryVO.getOrderId(),
                         logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.INTERCEPT_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(e));
                 isSuccess = false;
