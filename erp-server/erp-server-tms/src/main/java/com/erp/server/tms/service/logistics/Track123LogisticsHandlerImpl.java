@@ -149,7 +149,29 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                 //查询成功的单号
                 List<OceanTrackInfo> accepted = track.getData().getAccepted();
                 if (CollectionUtils.isNotEmpty(accepted)) {
-
+                    accepted.forEach(trackDetail -> {
+                        List<OceanTrackingDetail> trackingDetails = trackDetail.getCarrierInfo().getTrackingDetails();
+                        if(CollectionUtils.isNotEmpty(trackingDetails)){
+                            //本地物流
+                            trackingDetails.forEach(trackingDetail -> {
+                                LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
+                                logisticsTrackEntity.setTrackNo(trackDetail.getTrackingNo());
+                                logisticsTrackEntity.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));//转换类型
+                                LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                                logisticsTrackEntity.setTrackTime(eventTime);
+                                logisticsTrackEntity.setContent(trackingDetail.getEventDetails());
+                                logisticsTrackList.add(logisticsTrackEntity);
+                            });
+                        }else if (StringUtils.isNotEmpty(trackDetail.getCarrierInfo().getTransitStatus())){
+                            LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
+                            logisticsTrackEntity.setTrackNo(trackDetail.getTrackingNo());
+                            logisticsTrackEntity.setStatus(convertTrackStatus(trackDetail.getCarrierInfo().getTransitStatus()));//转换类型
+                            LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                            logisticsTrackEntity.setTrackTime(eventTime);
+                            logisticsTrackEntity.setContent("暂无信息");
+                            logisticsTrackList.add(logisticsTrackEntity);
+                        }
+                    });
                 }
                 //查询失败的单号
                 List<Rejected> rejecteds = track.getData().getRejected();
