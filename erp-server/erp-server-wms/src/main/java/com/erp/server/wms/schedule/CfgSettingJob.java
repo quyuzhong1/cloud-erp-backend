@@ -119,7 +119,7 @@ public class CfgSettingJob {
         //质检单总计
         Integer totalCount = list.stream().filter(obj -> StrUtil.equals(obj.getType(), "总计")).map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount).findFirst().orElse(MathUtil.ZERO);
         //已质检数量
-        Integer hasQcCount = list.stream().filter(obj -> StrUtil.equals(obj.getType(), QcBillStatusEnum.FINISH_QC.getName())).map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount).findFirst().orElse(MathUtil.ZERO);
+        Integer hasQcCount = list.stream().filter(obj -> StrUtil.equals(obj.getType(), QcBillStatusEnum.FINISH_QC.getName()) || StrUtil.equals(obj.getType(), QcBillStatusEnum.EXEMPTION.getName())).map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount).findFirst().orElse(MathUtil.ZERO);
         //未质检数量
         Integer notQcCount = list.stream().filter(obj -> StrUtil.equals(obj.getType(), QcBillStatusEnum.WAIT_QC.getName())).map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount).findFirst().orElse(MathUtil.ZERO);
         //累计未质检
