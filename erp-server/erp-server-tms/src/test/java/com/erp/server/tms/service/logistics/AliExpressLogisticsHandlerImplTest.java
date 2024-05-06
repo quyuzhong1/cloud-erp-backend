@@ -133,14 +133,14 @@ public class AliExpressLogisticsHandlerImplTest {
         logisticsProductVO.setEnglishUsage("materi");
         logisticsProductVO.setDeclareChineseName("物流");
         logisticsProductVO.setDeclareEnglishName("mta");
-        logisticsProductVO.setPrice(new BigDecimal("197.07"));
+        logisticsProductVO.setDestDeclarePrice(new BigDecimal("197.07"));
         logisticsProductVO.setWeight(1);
         logisticsProductVO.setQuantity(2);
         logisticsProductVO.setSourceCountry("CN");
         logisticsProductVO.setIsElectric(false);
         logisticsProductVO.setDeclarePrice(BigDecimal.valueOf(2));
         logisticsProductVO.setDestDeclarePrice(BigDecimal.valueOf(2));
-        logisticsProductVO.setChildOrderId("8184516086176025");
+        logisticsProductVO.setChildOrderId(8184516086176025L);
         logisticsProductVO.setScItemCode("");
 //        logisticsProductVO.setScItemId(40414943126L);
 //        logisticsProductVO.setScItemName("");

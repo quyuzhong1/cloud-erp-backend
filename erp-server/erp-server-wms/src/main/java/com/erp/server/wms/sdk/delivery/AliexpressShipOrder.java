@@ -1,5 +1,6 @@
 package com.erp.server.wms.sdk.delivery;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
@@ -60,7 +61,7 @@ public class AliexpressShipOrder implements IPlatformService {
 
 
             //获取渠道标发单号
-            String standardOrderType = getOrderDeliveryMarkType(PlatformDictEnum.ALI_EXPRESS.getCode(), signShipOrderDTO.getLogisticsChannelId(),tmsSignShipDTO.getChannelId());
+            String standardOrderType = tmsSignShipDTO.checkAndGetOrderDeliveryMarkType();
             String logisticsNo = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
                     ? signShipOrderDTO.getLogisticsTransportNo() : signShipOrderDTO.getLogisticsTrackNo();
             if (StrUtil.isBlank(logisticsNo)) {
@@ -76,19 +77,10 @@ public class AliexpressShipOrder implements IPlatformService {
                     build();
             aliExpressOrderService.declareDeliver(request);
         } catch (ApiException e) {
-           log.error("销售订单【{}】速卖通 标记发货失败 >>>>{}",soB2cId,e.getMessage());
+           log.error("销售订单【{}】速卖通 标记发货失败 >>>>{}",soB2cId, ExceptionUtil.stacktraceToString(e));
         }
 
 
-    }
-
-    @Override
-    public String getOrderDeliveryMarkType(String platform, String logisticsChannelId,String logisticsSaleChannelId) {
-        LogisticsMappingEntity logisticsMappingEntity = logisticsMappingFeign.getByLogisticsMappingParam(new LogisticsMappingDTO.SearchParamDTO(platform, logisticsChannelId,logisticsSaleChannelId));
-        if (ObjectUtil.isEmpty(logisticsMappingEntity) || StrUtil.isBlank(logisticsMappingEntity.getOrderDeliveryMarkType())) {
-            throw new ServiceException("操作失败，渠道标发单号配置为空");
-        }
-        return logisticsMappingEntity.getOrderDeliveryMarkType();
     }
 
     @Override

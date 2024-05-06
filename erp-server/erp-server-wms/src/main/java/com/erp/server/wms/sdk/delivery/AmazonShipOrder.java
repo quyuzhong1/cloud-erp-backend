@@ -171,20 +171,6 @@ public class AmazonShipOrder implements IPlatformService {
             if (isCancel){
                 throw new ServiceException(StrUtil.format("销售订单【{}】平台已取消，不支持发货",mainEntity.getCode()));
             }
-            // 非线上环境需要指定订单ID
-            if (!BusinessCommonConstants.hasProfile("prod")){
-                List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("amazonAllowShipOrderId");
-                if (CollectionUtils.isEmpty(warehouseTypes)){
-                    log.warn("【{}】不存在指定的订单ID配置,不请求亚马逊接口", mainEntity.getPlatformCode());
-                    return;
-                }
-                // 允许通过的ID
-                DictBasicDTO.ListDTO configAllowPlatformOrderDTO = warehouseTypes.stream().filter(e -> mainEntity.getPlatformCode().equalsIgnoreCase(e.getValue())).findFirst().orElse(null);
-                if (null == configAllowPlatformOrderDTO){
-                    log.warn("【{}】不属于配置指定的订单ID,不请求亚马逊接口", mainEntity.getPlatformCode());
-                    return;
-                }
-            }
 
             ConfirmShipmentRequest body = new ConfirmShipmentRequest();
             body.setMarketplaceId(marketplaceEnum.getMarketplaceId());
@@ -200,7 +186,7 @@ public class AmazonShipOrder implements IPlatformService {
             packageDetail.setShippingMethod(tmsScaleChannelShipDTO.getSaleChannelSupplierName());
 
             //获取渠道标发单号
-            String standardOrderType = getOrderDeliveryMarkType(PlatformDictEnum.AMAZON.getCode(), logisticsEntity.getLogisticsChannelId(),tmsScaleChannelShipDTO.getChannelId());
+            String standardOrderType = tmsScaleChannelShipDTO.checkAndGetOrderDeliveryMarkType();
             String trackingNumber = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
                     ? logisticsEntity.getCode() : logisticsEntity.getTrackNo();
             if (StrUtil.isBlank(trackingNumber)) {
@@ -223,9 +209,25 @@ public class AmazonShipOrder implements IPlatformService {
             packageDetail.setOrderItems(orderItemList);
             body.setPackageDetail(packageDetail);
 
+            // 非线上环境需要指定订单ID
+            if (!BusinessCommonConstants.hasProfile("prod")){
+                List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("amazonAllowShipOrderId");
+                if (CollectionUtils.isEmpty(warehouseTypes)){
+                    log.warn("【{}】不存在指定的订单ID配置,不请求亚马逊接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(body));
+                    return;
+                }
+                // 允许通过的ID
+                DictBasicDTO.ListDTO configAllowPlatformOrderDTO = warehouseTypes.stream().filter(e -> mainEntity.getPlatformCode().equalsIgnoreCase(e.getValue())).findFirst().orElse(null);
+                if (null == configAllowPlatformOrderDTO){
+                    log.warn("【{}】不属于配置指定的订单ID,不请求亚马逊接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(body));
+                    return;
+                }
+            }
+
             try {
+                log.warn("【{}】亚马逊标记发货:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(body));
                 ApiResponse<Void> voidApiResponse = api.confirmShipmentWithHttpInfo(body, mainEntity.getPlatformCode());
-                log.warn("标记发货响应结果:{}", JSONUtil.toJsonStr(voidApiResponse));
+                log.warn("【{}】亚马逊标记发货:响应结果={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(voidApiResponse));
             } catch (ApiException e){
                 if (e.getMessage().contains("ErrorCode: NonexistentOrderItem Description: Failed to find order item list by order ID:")){
                     throw new ServiceException("平台取消发货，不允许出库，请处理订单发货拦截后，取消发货");
@@ -238,14 +240,6 @@ public class AmazonShipOrder implements IPlatformService {
         }
     }
 
-    @Override
-    public String getOrderDeliveryMarkType(String platform, String logisticsChannelId,String logisticsSaleChannelId) {
-        LogisticsMappingEntity logisticsMappingEntity = logisticsMappingFeign.getByLogisticsMappingParam(new LogisticsMappingDTO.SearchParamDTO(platform, logisticsChannelId,logisticsSaleChannelId));
-        if (ObjectUtil.isEmpty(logisticsMappingEntity) || StrUtil.isBlank(logisticsMappingEntity.getOrderDeliveryMarkType())) {
-            throw new ServiceException("操作失败，渠道标发单号配置为空");
-        }
-        return logisticsMappingEntity.getOrderDeliveryMarkType();
-    }
 
     @Override
     public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {

@@ -14,7 +14,6 @@ import com.common.business.enums.SyncStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
@@ -24,11 +23,12 @@ import com.erp.model.dmp.entity.DmpPullTaskHistoryEntity;
 import com.erp.server.dmp.mapper.DmpPullTaskHistoryMapper;
 import com.erp.server.dmp.service.DmpPullTaskHistoryService;
 import com.erp.server.dmp.service.DmpPullTaskService;
-import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.beans.BeanUtils;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -37,7 +37,10 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 /**
@@ -56,6 +59,8 @@ public class DmpPullTaskHistoryServiceImpl extends ServiceImpl<DmpPullTaskHistor
     private DmpPullTaskService dmpPullTaskService;
     @Resource
     private MQProducerService mqProducerService;
+    @Resource(name = "pullErpOpenApi")
+    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
 
     @Override
@@ -78,7 +83,11 @@ public class DmpPullTaskHistoryServiceImpl extends ServiceImpl<DmpPullTaskHistor
         }
         //数据处理
         doOpHandleDmpPushTask(list);
-        List<DmpPullTaskExportExcelDTO> resultList = BeanMapperUtils.copyList(DmpPullTaskExportExcelDTO.class, list);
+        List<DmpPullTaskExportExcelDTO> resultList = list.stream().map(entity -> {
+            DmpPullTaskExportExcelDTO e = new DmpPullTaskExportExcelDTO();
+            BeanUtils.copyProperties(entity, e);
+            return e;
+        }).collect(Collectors.toList());
         String fileName = "中台拉取任务表";
         try {
             ExcelUtil.export(fileName, "中台拉取任务表", resultList, DmpPullTaskExportExcelDTO.class, response);
@@ -96,7 +105,11 @@ public class DmpPullTaskHistoryServiceImpl extends ServiceImpl<DmpPullTaskHistor
             throw new ServiceException(ApiError.ERROR_NOT_EXIST_DMP_PUSH_TASK);
         }
         // 移除历史表数据新增新表数据
-        List<DmpPullTaskEntity> entities = BeanMapperUtils.copyList(DmpPullTaskEntity.class, list);
+        List<DmpPullTaskEntity> entities = list.stream().map(entity -> {
+            DmpPullTaskEntity e = new DmpPullTaskEntity();
+            BeanUtils.copyProperties(entity, e);
+            return e;
+        }).collect(Collectors.toList());
         dmpPullTaskService.saveBatch(entities);
         baseMapper.deleteBatchIds(ids);
         // 完成新增数据事务提交之后,发送MQ消息
@@ -137,31 +150,56 @@ public class DmpPullTaskHistoryServiceImpl extends ServiceImpl<DmpPullTaskHistor
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void syncPullTaskHistory() {
-        //获取到今天3个月前同步成功的数据
-        List<DmpPullTaskEntity> dmpPullTasks = dmpPullTaskService.list(Wrappers.<DmpPullTaskEntity>lambdaQuery()
+        log.info("开始归档3个月前拉取成功的数据");
+        int count = dmpPullTaskService.count(Wrappers.<DmpPullTaskEntity>lambdaQuery()
                 .lt(DmpPullTaskEntity::getCreateTime, LocalDateTime.now().minusMonths(3))
                 .eq(DmpPullTaskEntity::getStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
         );
-        if (CollectionUtil.isEmpty(dmpPullTasks)) {
-            return;
+        int pageSize = 500;
+        int page = count / pageSize;
+        List<CompletableFuture<List<String>>>  futures = new ArrayList<>();
+        for (int i = 0; i <= page; i++) {
+            int finalI = i;
+            // 组装异步任务CompletableFuture
+            CompletableFuture<List<String>> future = CompletableFuture.supplyAsync(() -> {
+                //获取到今天3个月前同步成功的数据
+                List<DmpPullTaskEntity> dmpPullTasks = dmpPullTaskService.list(Wrappers.<DmpPullTaskEntity>lambdaQuery()
+                        .lt(DmpPullTaskEntity::getCreateTime, LocalDateTime.now().minusMonths(3))
+                        .eq(DmpPullTaskEntity::getStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
+                        .last(String.format("LIMIT %s OFFSET %s", pageSize, finalI * pageSize))
+                );
+                if (CollectionUtil.isEmpty(dmpPullTasks)) {
+                    return new ArrayList<>();
+                }
+                // 保存至历史表
+                List<DmpPullTaskHistoryEntity> taskHistory = dmpPullTasks.stream().map(entity -> {
+                    DmpPullTaskHistoryEntity history = new DmpPullTaskHistoryEntity();
+                    BeanUtils.copyProperties(entity, history);
+                    history.setId(null);
+                    return history;
+                }).collect(Collectors.toList());
+                saveOrUpdateBatch(taskHistory);
+                return dmpPullTasks.stream()
+                        .map(DmpPullTaskEntity::getId)
+                        .collect(Collectors.toList());
+            }, threadPoolTaskExecutor);
+            futures.add(future);
         }
-        // 分批保存防止数据量过大
-        List<List<DmpPullTaskEntity>> partition = Lists.partition(dmpPullTasks, 500);
-        partition.parallelStream().forEach(e -> {
-            // 保存至历史表
-            List<DmpPullTaskHistoryEntity> taskHistory = e.stream().map(entity ->{
-                DmpPullTaskHistoryEntity history = BeanMapperUtils.map(DmpPullTaskHistoryEntity.class, e);
-                history.setId(null);
-                return history;
-            }).collect(Collectors.toList());
-            saveOrUpdateBatch(taskHistory);
-            // 物理删除已经保存数据
-            List<String> ids = e.stream()
-                    .map(DmpPullTaskEntity::getId)
-                    .collect(Collectors.toList());
-            dmpPullTaskService.deleteByIds(ids);
+        // 批量执行异步任务
+        CompletableFuture<Void> allFuture = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        // 等待任务执行完毕，分批删除原表数据
+        allFuture.thenRun(() ->{
+            for (CompletableFuture<List<String>> future : futures) {
+                try {
+                    List<String> ids = future.get();
+                    dmpPullTaskService.deleteByIds(ids);
+                } catch (InterruptedException | ExecutionException e) {
+                    log.error("执行失败，请重试");
+                    Thread.currentThread().interrupt();
+                }
+            }
         });
+        log.info("完成归档3个月前拉取成功的数据");
     }
 }

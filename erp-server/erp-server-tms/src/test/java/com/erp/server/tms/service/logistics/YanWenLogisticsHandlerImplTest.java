@@ -68,7 +68,7 @@ public class YanWenLogisticsHandlerImplTest {
         logisticsProductVO.setEnglishUsage("materi");
         logisticsProductVO.setDeclareChineseName("物流");
         logisticsProductVO.setDeclareEnglishName("mta");
-        logisticsProductVO.setPrice(new BigDecimal("12345"));
+        logisticsProductVO.setDestDeclarePrice(new BigDecimal("12345"));
         logisticsProductVO.setWeight(123456);
         logisticsProductVO.setQuantity(1324);
         LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();

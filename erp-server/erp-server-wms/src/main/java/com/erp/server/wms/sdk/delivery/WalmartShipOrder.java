@@ -62,20 +62,11 @@ public class WalmartShipOrder implements IPlatformService {
                 walmartShipDTO.setLogisticsPlatformCode("SF Express");
             }
             //标发订单类型
-            String standardOrderType = getOrderDeliveryMarkType(PlatformDictEnum.WALMART.getCode(), walmartShipDTO.getLogisticsChannelId(),tmsScaleChannelShipDTO.getChannelId());
+            String standardOrderType = walmartShipDTO.getOrderDeliveryMarkType();
             walmartShipDTO.setOrderDeliveryMarkType(standardOrderType);
 
             walmartSdkClientService.shipOrder(walmartShipDTO);
         }
-    }
-
-    @Override
-    public String getOrderDeliveryMarkType(String platform, String logisticsChannelId,String logisticsSaleChannelId) {
-        LogisticsMappingEntity logisticsMappingEntity = logisticsMappingFeign.getByLogisticsMappingParam(new LogisticsMappingDTO.SearchParamDTO(platform, logisticsChannelId,logisticsSaleChannelId));
-        if (ObjectUtil.isEmpty(logisticsMappingEntity) || StrUtil.isBlank(logisticsMappingEntity.getOrderDeliveryMarkType())) {
-            throw new ServiceException("操作失败，渠道标发单号配置为空");
-        }
-        return logisticsMappingEntity.getOrderDeliveryMarkType();
     }
 
     @Override

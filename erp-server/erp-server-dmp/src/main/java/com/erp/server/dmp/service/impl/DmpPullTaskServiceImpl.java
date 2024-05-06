@@ -63,6 +63,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -90,6 +91,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     private DmpPullTaskMapper dmpPullTaskMapper;
     @Resource
     private ProductDetailService productDetailService;
+    @Lazy
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
     @Resource
