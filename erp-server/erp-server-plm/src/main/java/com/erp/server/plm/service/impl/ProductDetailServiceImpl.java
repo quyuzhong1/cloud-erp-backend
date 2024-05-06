@@ -70,7 +70,6 @@ import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
 import com.erp.server.plm.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -4784,12 +4783,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //产品包装信息
             ProductPackDTO productPackDTO = new ProductPackDTO();
             BeanMapper.copy(dto, productPackDTO);
-            productPackDTO.setProductLength(LengthConverterUtil.cmToMm(new BigDecimal(dto.getProductLength())));
-            productPackDTO.setProductWidth(LengthConverterUtil.cmToMm(new BigDecimal(dto.getProductWidth())));
-            productPackDTO.setProductHeight(LengthConverterUtil.cmToMm(new BigDecimal(dto.getProductHeight())));
-            productPackDTO.setBoxLength(LengthConverterUtil.cmToMm(new BigDecimal(dto.getBoxLength())));
-            productPackDTO.setBoxWidth(LengthConverterUtil.cmToMm(new BigDecimal(dto.getBoxWidth())));
-            productPackDTO.setBoxHeight(LengthConverterUtil.cmToMm(new BigDecimal(dto.getBoxHeight())));
+            productPackDTO.setProductLength(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductLength())));
+            productPackDTO.setProductWidth(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductWidth())));
+            productPackDTO.setProductHeight(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductHeight())));
+            productPackDTO.setBoxLength(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxLength())));
+            productPackDTO.setBoxWidth(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxWidth())));
+            productPackDTO.setBoxHeight(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxHeight())));
             /**
              * 毛重
              */
