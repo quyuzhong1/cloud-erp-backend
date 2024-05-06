@@ -56,7 +56,7 @@
         sum (case when wr.approve_time::timestamp + INTERVAL '1 DAY' >= qb.qc_finish_time then 1 else 0 end) as qcTimelyQty,
         sum (case when qb.qc_finish_time > wr.approve_time::timestamp + INTERVAL '1 DAY' and qb.qc_status in ('finishQc','exemption')
         then 1 else 0 end) as qcTimeOutQty,
-        sum (case when now() > wr.approve_time::timestamp + INTERVAL '1 DAY' and qb.qc_status = 'waitQc' then 1 else 0
+        sum (case when now() > wr.approve_time::timestamp + INTERVAL '1 DAY' and qb.qc_status in ('waitQc','draft','waitReQc')  then 1 else 0
         end) as unQcTimeOutQty
         from qc_info qb
         left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
@@ -104,7 +104,7 @@
             </if>
             <if test="params.isTimeOut != null">
                 <if test="params.isTimeOut == false">
-                    and wr.approve_time::timestamp + '1 day' >= qb.qc_finish_time::timestamp
+                    and ((wr.approve_time::timestamp + '1 day' >= qb.qc_finish_time::timestamp and  qb.qc_finish_time is not null) or (wr.approve_time::timestamp + '1 day' >= now() and  qb.qc_finish_time is null))
                 </if>
                 <if test="params.isTimeOut == true">
                     and qb.qc_status != 'exemption'  and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status in ('waitQc','draft','waitReQc')))
@@ -127,7 +127,7 @@
             sum (case when wr.approve_time::timestamp + INTERVAL '1 DAY' >= qb.qc_finish_time then 1 else 0 end) as qcTimelyQty,
             sum (case when qb.qc_finish_time > wr.approve_time::timestamp + INTERVAL '1 DAY' and qb.qc_status in ('finishQc','exemption')
             then 1 else 0 end) as qcTimeOutQty,
-            sum (case when now() > wr.approve_time::timestamp + INTERVAL '1 DAY' and qb.qc_status = 'waitQc' then 1 else 0
+            sum (case when now() > wr.approve_time::timestamp + INTERVAL '1 DAY' and qb.qc_status in ('waitQc','draft','waitReQc')  then 1 else 0
             end) as unQcTimeOutQty
         from qc_info qb
         left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
@@ -150,17 +150,17 @@
     <select id="viewExportQcForDocument"
             resultType="com.erp.model.wms.dto.QcEffectivenessDTO$ViewQcForDocumentDTO">
         select
-            qb.id as qcId,
-            qb.source_id as sourceId,
-            qb.qc_date as qcDate,
-            qb.qc_user_name as qcUserName,
-            qb.code as qcCode,
-            qb.purchase_order_code as purchaseOrderCode,
-            qp.sku_id as skuId,
-            qp.sku_no as skuNo,
-            qi.qc_qty as qcQty,
-            qb.qc_status as qcStatus,
-            qb.qc_finish_time as qcEndTime
+        qb.id as qcId,
+        qb.source_id as sourceId,
+        qb.qc_date as qcDate,
+        qb.qc_user_name as qcUserName,
+        qb.code as qcCode,
+        qb.purchase_order_code as purchaseOrderCode,
+        qp.sku_id as skuId,
+        qp.sku_no as skuNo,
+        qi.qc_qty as qcQty,
+        qb.qc_status as qcStatus,
+        qb.qc_finish_time as qcEndTime
         from qc_info qb
         inner join qc_result qi on qb.id = qi.main_id and qi.is_deleted = false
         inner join qc_product qp on qb.id = qp.main_id and qp.is_deleted = false
@@ -179,10 +179,10 @@
             </if>
             <if test="params.isTimeOut != null">
                 <if test="params.isTimeOut == false">
-                    and wr.approve_time::timestamp + '1 day' >= qb.qc_finish_time::timestamp
+                    and ((wr.approve_time::timestamp + '1 day' >= qb.qc_finish_time::timestamp and  qb.qc_finish_time is not null) or (wr.approve_time::timestamp + '1 day' >= now() and  qb.qc_finish_time is null))
                 </if>
                 <if test="params.isTimeOut == true">
-                    and qb.qc_status != 'exemption' and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status in ('waitQc','draft','waitReQc')))
+                    and qb.qc_status != 'exemption'  and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status in ('waitQc','draft','waitReQc')))
                 </if>
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
@@ -429,7 +429,7 @@
             </if>
             <if test="params.isTimeOut != null">
                 <if test="params.isTimeOut == false">
-                    and wr.approve_time::timestamp + '1 day' >= qb.qc_finish_time::timestamp
+                    and ((wr.approve_time::timestamp + '1 day' >= qb.qc_finish_time::timestamp and  qb.qc_finish_time is not null) or (wr.approve_time::timestamp + '1 day' >= now() and  qb.qc_finish_time is null))
                 </if>
                 <if test="params.isTimeOut == true">
                     and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status in ('waitQc','draft','waitReQc')))

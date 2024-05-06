@@ -904,7 +904,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
         //物流跟踪号存在值则清除异常
-        boolean isCleanError = StrUtil.isNotBlank(soB2cLogisticsEntity.getTrackNo());
+        boolean isCleanError = StrUtil.isNotBlank(soB2cLogisticsEntity.getCode());
         if (isCleanError) {
             //清除异常订单的类型和异常订单表数据
             soB2cErrorService.deleteByMainIds(Arrays.asList(id));
