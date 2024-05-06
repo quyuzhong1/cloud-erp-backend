@@ -890,6 +890,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //物流跟踪号存在值则清除异常
         boolean isCleanError = StrUtil.isNotBlank(soB2cLogisticsEntity.getTrackNo());
+        if (isCleanError) {
+            //清除异常订单的类型和异常订单表数据
+            soB2cErrorService.deleteByMainIds(Arrays.asList(id));
+        }
 
         // 更新单据审核状态
         log.info("提交 开始修改B2C销售订单表状态数据，id：【{}】", id);
@@ -906,9 +910,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
         interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getId()));
         this.updateIntercept(interceptUpdateOrderDTO);
-
-        //清除异常订单的类型和异常订单表数据
-        soB2cErrorService.deleteByMainIds(Arrays.asList(id));
 
         // 记录操作日志
         log.info("提交 开始记录B2C销售订单表日志数据，id：【{}】", id);
