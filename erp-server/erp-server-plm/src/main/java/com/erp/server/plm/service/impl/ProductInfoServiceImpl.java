@@ -1256,7 +1256,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                         projectTaskService.checkTaskFinish(taskFinish);
                         preTaskService.checkPreTaskFinish(taskIdList);
                         projectTaskService.checkSonTaskFinish(taskIdList, productId);
-                        newProduct.setApprovalTime(dto.getProjectInitTime());
+                        newProduct.setApprovalTime(dto.getLocalDate().atTime(0, 0, 0));
                     }
 
                 }
