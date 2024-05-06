@@ -9,6 +9,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -34,6 +35,7 @@ import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.dto.excel.DmpPushTaskExportExcelDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.entity.DmpPushTaskHistoryEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
@@ -320,15 +322,16 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             return Boolean.TRUE;
         }
         List<String> parentIdList = Arrays.stream(entity.getParentId().split(",")).collect(Collectors.toList());
-
-        DmpPushTaskEntity dmpPushTaskEntity = this.lambdaQuery().in(DmpPushTaskEntity::getSourceId,parentIdList).last("limit 1").one();
-
-        if (ObjectUtil.isEmpty(dmpPushTaskEntity)) {
+        List<DmpPushTaskEntity> dmpPushTaskEntities = list(Wrappers.<DmpPushTaskEntity>lambdaQuery().in(DmpPushTaskEntity::getSourceId, parentIdList));
+        Integer historyCount = dmpPushTaskHistoryMapper.selectCount(Wrappers.<DmpPushTaskHistoryEntity>lambdaQuery().in(DmpPushTaskHistoryEntity::getSourceId, parentIdList));
+        if (CollectionUtil.isEmpty(dmpPushTaskEntities) && historyCount == 0) {
             entity.setReturnMsg("未找到上级单据推送任务");
             entity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
             return Boolean.FALSE;
         }
-        if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(dmpPushTaskEntity.getStatus())) {
+        boolean match = dmpPushTaskEntities.stream()
+                .anyMatch(e -> !SyncStatusEnum.SUCCESS_SYNC.getCode().equals(e.getStatus()));
+        if (match) {
             entity.setReturnMsg("上级单据未推送成功，不支持推送下级单据");
             entity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
             return Boolean.FALSE;
