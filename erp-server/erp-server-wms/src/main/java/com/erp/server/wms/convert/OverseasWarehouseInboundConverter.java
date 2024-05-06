@@ -73,9 +73,8 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "updateTime", ignore = true),
             @Mapping(target = "updateUserId", ignore = true),
             @Mapping(target = "updateUserName", ignore = true),
-
-            @Mapping(target = "platformProductName",  expression = "java(null == skuMappingView ? \"\" : skuMappingView.getStockSkuName())"),
-            @Mapping(target = "platformSkuNo",  expression = "java(null == skuMappingView ? \"\" : skuMappingView.getStockSku())"),
+            @Mapping(target = "platformProductName",  source = "platformProductName"),
+            @Mapping(target = "platformSkuNo",  source = "detailEntity.platformSkuNo"),
             @Mapping(target = "productName",  source = "detailEntity.productName"),
             @Mapping(target = "skuNo",  source = "detailEntity.skuNo"),
             @Mapping(target = "skuId",  source = "detailEntity.skuId"),
@@ -89,7 +88,7 @@ public interface OverseasWarehouseInboundConverter {
     })
     OverseasWarehouseInboundDetailEntity deliveryDetailToDetail(FirstMileDeliveryDetailEntity detailEntity,
                                                                 OverseasWarehouseInboundEntity mainEntity,
-                                                                SkuMappingDTO.ListStockSkuNoByProductSkuIdView skuMappingView,
+                                                                String platformProductName,
                                                                 String createUserId, String createUserName, LocalDateTime createTime);
 
     @Mappings({
