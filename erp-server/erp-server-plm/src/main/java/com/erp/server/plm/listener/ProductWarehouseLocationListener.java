@@ -5,17 +5,13 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.plm.dto.ProductDetailExcelDTO;
-import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.server.plm.service.ProductDetailService;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 导入产品仓位信息
@@ -67,7 +63,7 @@ public class ProductWarehouseLocationListener extends AnalysisEventListener<Prod
             return;
         }
 
-        productDetailService.updateWarehouseLocationById(entity.getId(), dto.getWarehouseLocation());
+        productDetailService.updateWarehouseLocationById(entity.getId(), dto.getWarehouseLocation(), dto.getWarehouseLocationLarge());
     }
 
     public List<ProductWarehouseLocationExcelDTO> getDateList() {

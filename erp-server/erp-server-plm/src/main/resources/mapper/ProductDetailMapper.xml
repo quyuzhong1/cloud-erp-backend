@@ -520,7 +520,9 @@
         pl.product_property_id,
         pd.charge_id,
         pi.iterate_ref_sku_id,
-        pi.iterate_ref_sku_no
+        pi.iterate_ref_sku_no,
+        pd.warehouse_location,
+        pd.warehouse_location_large
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
@@ -948,7 +950,8 @@
         pd.variant_property as variantProperty,
         pd.unit_name,
         pd.status,
-        pd.warehouse_location as warehouseLocation
+        pd.warehouse_location as warehouseLocation,
+        pd.warehouse_location_large as warehouseLocationLarge,
         FROM  product_detail pd
         WHERE
             pd.is_deleted = FALSE
