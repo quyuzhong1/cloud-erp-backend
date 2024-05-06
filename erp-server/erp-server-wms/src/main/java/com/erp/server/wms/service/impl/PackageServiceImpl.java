@@ -300,15 +300,9 @@ public class PackageServiceImpl implements PackageService {
 
             //自动发货
             if (isAutoOut) {
-
-                List<String> soIdList = detailList.stream().map(req -> req.getSoId()).collect(Collectors.toList());
-                soB2cDeliveryService.mergePackageDelivery(soIdList);
-
-
-                soIdList.forEach(req -> {
+                soIdList.forEach(soId -> {
                     mqProducerService.asyncClassMsg(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),
-                            "", StrUtil.uuid().toLowerCase());
-
+                            soId, StrUtil.uuid().toLowerCase());
                 });
             }
         }
