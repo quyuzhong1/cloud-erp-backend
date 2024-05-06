@@ -1,6 +1,7 @@
 package com.erp.server.sys.controller.api;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
@@ -21,11 +22,14 @@ import com.alibaba.fastjson.JSON;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.OpenApiInputDTO;
 import com.erp.model.sys.dto.OpenApiReqDTO;
+import com.erp.model.sys.entity.SysRefererConfigEntity;
 import com.erp.server.sys.service.IOpenApiService;
+import com.erp.server.sys.service.SysRefererConfigService;
 import com.erp.server.sys.utils.IPUtils;
 import com.erp.server.sys.utils.SignType;
 import com.erp.server.sys.utils.SignUtil;
 
+import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Controller
@@ -38,6 +42,9 @@ public class OpenApiController {
 
     @Resource
     private IOpenApiService openApiService;
+    
+    @Resource
+    private SysRefererConfigService sysRefererConfigService;
     
     @PostMapping("/service")
     @ResponseBody
@@ -66,13 +73,16 @@ public class OpenApiController {
     }
 
     private String getSecretKey(String referer) {
-    	if("prod".equalsIgnoreCase(currentEnvironment)) {
-    		Map<String , String> map = new HashMap<>();
-        	map.put("test", "25d1ee3daa3f437f");
-        	return map.get(referer);
-    	}else {
-    		return "25d1ee3daa3f437f";
+    	Map<String , String> map = new HashMap<>();
+    	String secretKey = map.get(referer);
+    	if(secretKey == null) {
+    		List<SysRefererConfigEntity> list = sysRefererConfigService.lambdaQuery().eq(SysRefererConfigEntity::getReferer, referer).select(SysRefererConfigEntity::getSecretKey).list();
+    		if(CollUtil.isNotEmpty(list)) {
+    			secretKey = list.get(0).getSecretKey();
+				map.put(referer, secretKey);
+    		}
     	}
+		return secretKey;
     }
     
     @PostMapping("/getMD5/{serviceMethod}")
@@ -97,7 +107,7 @@ public class OpenApiController {
         if(map != null) {
         	input.setBizContent(JSON.toJSONString(map));
         }
-        input.setSign(SignUtil.genSign(SignUtil.getSignStr(input), input.getCharset(), input.getSignType(), getSecretKey(null)));
+        input.setSign(SignUtil.genSign(SignUtil.getSignStr(input), input.getCharset(), input.getSignType(), getSecretKey("test")));
         return input;
     }
 
