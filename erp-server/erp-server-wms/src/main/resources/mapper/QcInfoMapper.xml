@@ -432,7 +432,7 @@
                     and wr.approve_time::timestamp + '1 day' >= qb.qc_finish_time::timestamp
                 </if>
                 <if test="params.isTimeOut == true">
-                    and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status = 'waitQc'))
+                    and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status in ('waitQc','draft','waitReQc')))
                 </if>
             </if>
         </where>
