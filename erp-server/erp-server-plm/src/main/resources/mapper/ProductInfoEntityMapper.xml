@@ -194,7 +194,10 @@
         pi.start_time,
         p.create_user_name,
         p.spu_no,
-        pph.name as projectPhase
+        pph.name as projectPhase,
+        p.approval_time AS project_init_date,
+        pi.project_launch_date,
+        pi.project_finish_date
         FROM product_info p
         LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
@@ -306,6 +309,21 @@
             and p.create_user_id in
             <foreach collection="params.createChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
                 #{item}
+            </foreach>
+        </if>
+        <if test="params.initDateList != null and params.initDateList.size == 2">
+            AND p.approval_time BETWEEN #{params.initDateList[0]} AND #{params.initDateList[1]}
+        </if>
+        <if test="params.launchDateList != null and params.launchDateList.size == 2">
+            AND pi.project_launch_date BETWEEN #{params.launchDateList[0]} AND #{params.launchDateList[1]}
+        </if>
+        <if test="params.finishDateList != null and params.finishDateList.size == 2">
+            AND pi.project_finish_date BETWEEN #{params.finishDateList[0]} AND #{params.finishDateList[1]}
+        </if>
+        <if test="params.projectStatusList != null and params.projectStatusList.size > 0">
+            AND pi.project_status in
+            <foreach collection="params.projectStatusList" open="(" item="status" close=")" separator=",">
+                #{status}
             </foreach>
         </if>
         ORDER BY p.create_time DESC
