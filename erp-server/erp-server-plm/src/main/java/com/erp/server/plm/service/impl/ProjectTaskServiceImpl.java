@@ -702,18 +702,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         LoginUser loginUser = commonService.getUserInfo();
 
-        String scheduleStatus = entity.getScheduleStatus();
-        if (BaseStatusEnum.AUDIT_PASS.getStatus().equals(scheduleStatus)) {
-            if (!"admin".equals(loginUser.getUserAccount())) {
-                throw new ServiceException(ApiError.ERROR_95137);
-            }
-        }
-        Integer IsFixed = entity.getIsFixed();
-
-        //如果是固定任务
-        if (IsConstant.YES.equals(IsFixed) && !"admin".equals(loginUser.getUserAccount())) {
-            throw new ServiceException(ApiError.ERROR_95014);
-        }
+//        String scheduleStatus = entity.getScheduleStatus();
+//        if (BaseStatusEnum.AUDIT_PASS.getStatus().equals(scheduleStatus)) {
+//            if (!"admin".equals(loginUser.getUserAccount())) {
+//                throw new ServiceException(ApiError.ERROR_95137);
+//            }
+//        }
+//        Integer IsFixed = entity.getIsFixed();
+//
+//        //如果是固定任务
+//        if (IsConstant.YES.equals(IsFixed) && !"admin".equals(loginUser.getUserAccount())) {
+//            throw new ServiceException(ApiError.ERROR_95014);
+//        }
         //检查是否是子任务
         checkTaskIfExistPid(taskId);
         Boolean flag = this.removeById(entity);
@@ -5047,15 +5047,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         for (ProjectTaskEntity req : entity) {
 
-            if (BaseStatusEnum.AUDIT_PASS.getStatus().equals(req.getScheduleStatus())) {
-                if (!"admin".equals(loginUser.getUserAccount())) {
-                    throw new ServiceException(ApiError.ERROR_95137);
-                }
-            }
-            //如果是固定任务
-            if (IsConstant.YES.equals(req.getIsFixed()) && !"admin".equals(loginUser.getUserAccount())) {
-                throw new ServiceException(ApiError.ERROR_95014);
-            }
+//            if (BaseStatusEnum.AUDIT_PASS.getStatus().equals(req.getScheduleStatus())) {
+//                if (!"admin".equals(loginUser.getUserAccount())) {
+//                    throw new ServiceException(ApiError.ERROR_95137);
+//                }
+//            }
+//            //如果是固定任务
+//            if (IsConstant.YES.equals(req.getIsFixed()) && !"admin".equals(loginUser.getUserAccount())) {
+//                throw new ServiceException(ApiError.ERROR_95014);
+//            }
 
             //检查是否是子任务
             checkTaskIfExistPid(req.getId());
