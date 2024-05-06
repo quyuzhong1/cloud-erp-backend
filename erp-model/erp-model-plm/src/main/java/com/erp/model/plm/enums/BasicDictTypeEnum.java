@@ -50,7 +50,12 @@ public enum  BasicDictTypeEnum {
     /**
      * 项目状态
      */
-    PROJECT_STATE("projectState", "项目状态")
+    PROJECT_STATE("projectState", "项目状态"),
+
+    /**
+     * 立项状态
+     */
+    APPROVAL_STATUS("approvalStatus", "立项状态")
     ;
 
 
