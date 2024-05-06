@@ -18,7 +18,7 @@ public interface EnumMessage {
     static Map<Class<? extends EnumMessage>, Map<String, EnumMessage>> nameEnumMessageMaps = new HashMap<>();
 
     // 默认方法，通过code获取枚举实例
-    static <T extends Enum<T> & EnumMessage> T getByCode(Class<T> enumType, Object code) {
+    static <T extends EnumMessage> T getByCode(Class<T> enumType, Object code) {
     	Map<Object, EnumMessage> codeEnumMessageMap = codeEnumMessageMaps.get(enumType);
     	if(codeEnumMessageMap == null) {
     		codeEnumMessageMap = new HashMap<>();
@@ -31,7 +31,7 @@ public interface EnumMessage {
     }
     
     // 默认方法，通过code获取name实例
-    static <T extends Enum<T> & EnumMessage> String getNameByCode(Class<T> enumType, Object code) {
+    static <T extends EnumMessage> String getNameByCode(Class<T> enumType, Object code) {
     	T enumMessage = getByCode(enumType, code);
     	if(enumMessage != null) {
     		return enumMessage.getName();
@@ -40,7 +40,7 @@ public interface EnumMessage {
     }
 
     // 默认方法，通过name获取枚举实例
-    static <T extends Enum<T> & EnumMessage> T getByName(Class<T> enumType, String name) {
+    static <T extends EnumMessage> T getByName(Class<T> enumType, String name) {
     	Map<String, EnumMessage> nameEnumMessageMap = nameEnumMessageMaps.get(enumType);
     	if(nameEnumMessageMap == null) {
     		nameEnumMessageMap = new HashMap<>();
@@ -53,7 +53,7 @@ public interface EnumMessage {
     }
     
     // 默认方法，通过name获取code实例
-    static <T extends Enum<T> & EnumMessage> Object getCodeByName(Class<T> enumType, String name) {
+    static <T extends EnumMessage> Object getCodeByName(Class<T> enumType, String name) {
     	T enumMessage = getByName(enumType, name);
     	if(enumMessage != null) {
     		return enumMessage.getCode();

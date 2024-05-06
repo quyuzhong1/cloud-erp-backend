@@ -1,6 +1,7 @@
 package com.common.business.wrapper;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.alibaba.fastjson.JSON;
@@ -19,30 +20,30 @@ import cn.hutool.core.collection.CollUtil;
 import lombok.Data;
 
 @Data
-public class WjBuilder {
+public class FeignBuilder {
 
     private final List<QueryParam> queryParams = new ArrayList<>();
     
-    private Class<? extends BaseEntity<?>> clazz;
+    private Class<?> clazz;
     
-    public <T extends BaseEntity<T>> WjBuilder eq(SFunction<T, ?> function, Object value) {
+    public <T extends BaseEntity<T>> FeignBuilder eq(SFunction<T, ?> function, Object value) {
         queryParams.add(new QueryParam(QueryTypeEnum.EQ, getColumn(function), value));
         return this;
     }
 
-    public WjBuilder() {
+    public FeignBuilder() {
     	
     }
     
-    private WjBuilder(Class<? extends BaseEntity<?>> clazz) {
+    private FeignBuilder(Class<?> clazz) {
     	this.clazz = clazz;
     }
     
-    public static WjBuilder create(Class<? extends BaseEntity<?>> clazz) {
-    	return new WjBuilder(clazz);
+    public static FeignBuilder create(Class<?> clazz) {
+    	return new FeignBuilder(clazz);
     }
     
-    public <T extends BaseEntity<T>> WjBuilder eq(boolean isTure, SFunction<T, ?> function, Object value) {
+    public <T extends BaseEntity<T>> FeignBuilder eq(boolean isTure, SFunction<T, ?> function, Object value) {
         if (isTure) {
             queryParams.add(new QueryParam(QueryTypeEnum.EQ, getColumn(function), value));
         }
@@ -50,18 +51,18 @@ public class WjBuilder {
     }
 
     
-    public <T extends BaseEntity<T>> WjBuilder in(SFunction<T, ?> function, Object... values) {
+    public <T extends BaseEntity<T>> FeignBuilder in(SFunction<T, ?> function, Object... values) {
         queryParams.add(new QueryParam(QueryTypeEnum.IN, getColumn(function), values));
         return this;
     }
     
-    public <T extends BaseEntity<T>> WjBuilder notIn(SFunction<T, ?> function, Object... values) {
+    public <T extends BaseEntity<T>> FeignBuilder notIn(SFunction<T, ?> function, Object... values) {
         queryParams.add(new QueryParam(QueryTypeEnum.NOT_IN, getColumn(function), values));
         return this;
     }
 
     
-    public <T extends BaseEntity<T>> WjBuilder notIn(boolean isTure, SFunction<T, ?> function, Object... values) {
+    public <T extends BaseEntity<T>> FeignBuilder notIn(boolean isTure, SFunction<T, ?> function, Object... values) {
         if (isTure) {
             queryParams.add(new QueryParam(QueryTypeEnum.NOT_IN, getColumn(function), values));
         }
@@ -69,7 +70,7 @@ public class WjBuilder {
     }
 
     
-    public <T extends BaseEntity<T>> WjBuilder groupBy(SFunction<T, ?>... columns) {
+    public <T extends BaseEntity<T>> FeignBuilder groupBy(SFunction<T, ?>... columns) {
     	List<Object> list = new ArrayList<Object>();
 		for(SFunction<T, ?>  column : columns) {
 			list.add(getColumn(column));
@@ -79,58 +80,58 @@ public class WjBuilder {
     }
 
     
-    public <T extends BaseEntity<T>> WjBuilder orderByAsc(SFunction<T, ?> function) {
+    public <T extends BaseEntity<T>> FeignBuilder orderByAsc(SFunction<T, ?> function) {
         queryParams.add(new QueryParam(QueryTypeEnum.ORDER_BY_ASC, getColumn(function)));
         return this;
     }
 
     
-    public <T extends BaseEntity<T>> WjBuilder orderByDesc(SFunction<T, ?> function) {
+    public <T extends BaseEntity<T>> FeignBuilder orderByDesc(SFunction<T, ?> function) {
         queryParams.add(new QueryParam(QueryTypeEnum.ORDER_BY_DESC, getColumn(function)));
         return this;
     }
 
 
     
-    public <T extends BaseEntity<T>> WjBuilder apply(String data) {
+    public <T extends BaseEntity<T>> FeignBuilder apply(String data) {
         queryParams.add(new QueryParam(QueryTypeEnum.APPLY, data));
         return this;
     }
 
     
-    public <T extends BaseEntity<T>> WjBuilder last(String data) {
+    public <T extends BaseEntity<T>> FeignBuilder last(String data) {
         queryParams.add(new QueryParam(QueryTypeEnum.LAST, data));
         return this;
     }
     
-    public <T extends BaseEntity<T>> WjBuilder isNull(String data) {
+    public <T extends BaseEntity<T>> FeignBuilder isNull(String data) {
         queryParams.add(new QueryParam(QueryTypeEnum.IS_NULL, data));
         return this;
     }
     
-    public <T extends BaseEntity<T>> WjBuilder isNotNull(String data) {
+    public <T extends BaseEntity<T>> FeignBuilder isNotNull(String data) {
         queryParams.add(new QueryParam(QueryTypeEnum.IS_NOT_NULL, data));
         return this;
     }
     
-    public <T extends BaseEntity<T>> WjBuilder isNull(SFunction<T, ?> function) {
+    public <T extends BaseEntity<T>> FeignBuilder isNull(SFunction<T, ?> function) {
         queryParams.add(new QueryParam(QueryTypeEnum.IS_NULL, getColumn(function)));
         return this;
     }
     
-    public <T extends BaseEntity<T>> WjBuilder isNotNull(SFunction<T, ?> function) {
+    public <T extends BaseEntity<T>> FeignBuilder isNotNull(SFunction<T, ?> function) {
         queryParams.add(new QueryParam(QueryTypeEnum.IS_NOT_NULL, getColumn(function)));
         return this;
     }
 
     
-    public <T extends BaseEntity<T>> WjBuilder ne(SFunction<T, ?> function, Object value) {
+    public <T extends BaseEntity<T>> FeignBuilder ne(SFunction<T, ?> function, Object value) {
         queryParams.add(new QueryParam(QueryTypeEnum.NE, getColumn(function), value));
         return this;
     }
 
     
-    public <T extends BaseEntity<T>> WjBuilder ne(boolean isTure, SFunction<T, ?> function, Object value) {
+    public <T extends BaseEntity<T>> FeignBuilder ne(boolean isTure, SFunction<T, ?> function, Object value) {
         if (isTure) {
             queryParams.add(new QueryParam(QueryTypeEnum.NE, getColumn(function), value));
         }
@@ -138,13 +139,13 @@ public class WjBuilder {
     }
 
     
-    public <T extends BaseEntity<T>> WjBuilder le(SFunction<T, ?> function, Object value) {
+    public <T extends BaseEntity<T>> FeignBuilder le(SFunction<T, ?> function, Object value) {
         queryParams.add(new QueryParam(QueryTypeEnum.LE, getColumn(function), value));
         return this;
     }
 
     
-    public <T extends BaseEntity<T>> WjBuilder le(boolean isTure, SFunction<T, ?> function, Object value) {
+    public <T extends BaseEntity<T>> FeignBuilder le(boolean isTure, SFunction<T, ?> function, Object value) {
         if (isTure) {
             queryParams.add(new QueryParam(QueryTypeEnum.LE, getColumn(function), value));
         }
@@ -153,13 +154,13 @@ public class WjBuilder {
 
 
     
-    public <T extends BaseEntity<T>> WjBuilder ge(SFunction<T, ?> function, Object value) {
+    public <T extends BaseEntity<T>> FeignBuilder ge(SFunction<T, ?> function, Object value) {
         queryParams.add(new QueryParam(QueryTypeEnum.GE, getColumn(function), value));
         return this;
     }
 
     
-    public <T extends BaseEntity<T>> WjBuilder ge(boolean isTure, SFunction<T, ?> function, Object value) {
+    public <T extends BaseEntity<T>> FeignBuilder ge(boolean isTure, SFunction<T, ?> function, Object value) {
         if (isTure) {
             queryParams.add(new QueryParam(QueryTypeEnum.GE, getColumn(function), value));
         }
@@ -168,13 +169,13 @@ public class WjBuilder {
 
 
     
-    public <T extends BaseEntity<T>> WjBuilder lt(SFunction<T, ?> function, Object value) {
+    public <T extends BaseEntity<T>> FeignBuilder lt(SFunction<T, ?> function, Object value) {
         queryParams.add(new QueryParam(QueryTypeEnum.LT, getColumn(function), value));
         return this;
     }
 
     
-    public <T extends BaseEntity<T>> WjBuilder lt(boolean isTure, SFunction<T, ?> function, Object value) {
+    public <T extends BaseEntity<T>> FeignBuilder lt(boolean isTure, SFunction<T, ?> function, Object value) {
         if (isTure) {
             queryParams.add(new QueryParam(QueryTypeEnum.LT, getColumn(function), value));
         }
@@ -182,13 +183,13 @@ public class WjBuilder {
     }
 
     
-	public <T extends BaseEntity<T>> WjBuilder like(SFunction<T, ?> function, Object value) {
+	public <T extends BaseEntity<T>> FeignBuilder like(SFunction<T, ?> function, Object value) {
     	queryParams.add(new QueryParam(QueryTypeEnum.LIKE, getColumn(function), value));
     	return this;
 	}
 
 	
-	public <T extends BaseEntity<T>> WjBuilder like(boolean isTure, SFunction<T, ?> function, Object value) {
+	public <T extends BaseEntity<T>> FeignBuilder like(boolean isTure, SFunction<T, ?> function, Object value) {
 		if (isTure) {
             queryParams.add(new QueryParam(QueryTypeEnum.LIKE, getColumn(function), value));
         }
@@ -196,25 +197,25 @@ public class WjBuilder {
 	}
 
     
-    public <T extends BaseEntity<T>> WjBuilder gt(SFunction<T, ?> function, Object value) {
+    public <T extends BaseEntity<T>> FeignBuilder gt(SFunction<T, ?> function, Object value) {
         queryParams.add(new QueryParam(QueryTypeEnum.GT, getColumn(function), value));
         return this;
     }
 
     
-    public <T extends BaseEntity<T>> WjBuilder gt(boolean isTure, SFunction<T, ?> function, Object value) {
+    public <T extends BaseEntity<T>> FeignBuilder gt(boolean isTure, SFunction<T, ?> function, Object value) {
         if (isTure) {
             queryParams.add(new QueryParam(QueryTypeEnum.GT, getColumn(function), value));
         }
         return this;
     }
 
-	public <T extends BaseEntity<T>> WjBuilder select(Object... values) {
+	public <T extends BaseEntity<T>> FeignBuilder select(Object... values) {
 		queryParams.add(new QueryParam(QueryTypeEnum.SELECT , values));
         return this;
 	}
 	
-	public <T extends BaseEntity<T>> WjBuilder select(SFunction<T, ?>... columns) {
+	public <T extends BaseEntity<T>> FeignBuilder select(SFunction<T, ?>... columns) {
 		List<Object> list = new ArrayList<Object>();
 		for(SFunction<T, ?>  column : columns) {
 			list.add(getColumn(column));
@@ -223,6 +224,11 @@ public class WjBuilder {
         return this;
 	}
 	
+	/**
+	 * 查询远程数据
+	 * @param <T>
+	 * @return
+	 */
 	public <T extends BaseEntity<T>> List<T> list() {
 		if(clazz == null) {
 			throw new RuntimeException("实体类名未设置");
@@ -247,6 +253,34 @@ public class WjBuilder {
 		return data;
 	}
 
+	public <T> T invoke(ServiceCodeNameEnum serviceCode , FeignInvoke feignInvoke) {
+		ApiResult<?> result = invokeFeign(serviceCode, feignInvoke);
+    	T data = null;
+    	if(result.isSuccess()) {
+    		if(result.getData() != null) {
+    			data = (T) JSON.parseObject(JSON.toJSONString(result.getData()) , clazz);
+    		}
+    	}
+    	return data;
+	}
+	
+	public <T> List<T> invokeList(ServiceCodeNameEnum serviceCode , FeignInvoke feignInvoke) {
+		ApiResult<?> result = invokeFeign(serviceCode, feignInvoke);
+		List<T> data = null;
+    	if(result.isSuccess()) {
+    		if(result.getData() != null) {
+    			data = (List<T>) JSON.parseArray(JSON.toJSONString(result.getData()), clazz);
+    		}
+    	}
+    	return data;
+	}
+	
+	private ApiResult<?> invokeFeign(ServiceCodeNameEnum serviceCode , FeignInvoke feignInvoke){
+		DictCore dictCore = ApplicationContextUtils.getBean(DictCore.class);
+    	BaseDataFeign baseDataFeign = dictCore.getBaseDataFeign(serviceCode);
+    	return JSON.parseObject(baseDataFeign.invoke(feignInvoke) , ApiResult.class);
+	}
+	
 	private static <T> String getColumn(SFunction<T, ?> function) {
         return StringUtil.camelToUnderline(FunctionUtil.getFieldName(function));
     }

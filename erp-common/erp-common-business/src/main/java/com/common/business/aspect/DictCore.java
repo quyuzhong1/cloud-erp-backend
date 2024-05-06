@@ -489,7 +489,7 @@ public class DictCore {
     	return table;
     }
     
-    public static String getFieldVal(Object targetClass, Class<?> objClass) throws Exception {
+    public static String getFieldVal(Object targetClass, Class<? extends EnumMessage> objClass) throws Exception {
         if(targetClass == null){
             return "";
         }
@@ -503,11 +503,7 @@ public class DictCore {
              } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException ignored) {
              }
         }else {
-        	try {
-                Method method = objClass.getMethod(getMethodName , String.class);
-				result = method.invoke(Class.forName(objClass.getName()) , targetClass);
-            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException ignored) {
-            }
+        	result = EnumMessage.getNameByCode(objClass, targetClass);
         }
         if(result == null) {
         	return "";

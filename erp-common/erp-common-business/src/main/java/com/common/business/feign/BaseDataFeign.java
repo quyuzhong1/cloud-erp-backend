@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.common.business.wrapper.WjBuilder;
+import com.common.business.wrapper.FeignBuilder;
+import com.common.business.wrapper.FeignInvoke;
 
 public interface BaseDataFeign {
 	@GetMapping("feign/baseData/queryValueByValue")
@@ -20,5 +21,8 @@ public interface BaseDataFeign {
 			@RequestParam("returnFieldName") String returnFieldName, @RequestParam("queryTypeField") String queryTypeField);
 	
 	@PostMapping("feign/baseData/list")
-	String list(@RequestBody WjBuilder builder);
+	String list(@RequestBody FeignBuilder builder);
+	
+	@PostMapping("feign/baseData/invoke")
+	String invoke(@RequestBody FeignInvoke feignInvoke);
 }

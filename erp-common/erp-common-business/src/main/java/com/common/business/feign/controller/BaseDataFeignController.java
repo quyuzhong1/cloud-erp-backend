@@ -1,6 +1,8 @@
 package com.common.business.feign.controller;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,13 +23,17 @@ import com.common.business.feign.BaseDataFeign;
 import com.common.business.mapper.BaseDataMapper;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.utils.StringUtil;
+import com.common.business.wrapper.FeignBuilder;
+import com.common.business.wrapper.FeignInvoke;
 import com.common.business.wrapper.QueryParam;
 import com.common.business.wrapper.QueryTypeEnum;
-import com.common.business.wrapper.WjBuilder;
 import com.common.core.controller.BaseController;
+import com.common.core.exception.ServiceException;
 
 import cn.hutool.core.collection.CollUtil;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("feign/baseData")
 public class BaseDataFeignController extends BaseController implements BaseDataFeign{
@@ -48,17 +54,49 @@ public class BaseDataFeignController extends BaseController implements BaseDataF
 		return baseDataMapper.queryValueByType(tableName, queryFieldName, returnFieldName , queryTypeField);
 	}
 
-
 	@PostMapping("/list")
 	@Override
-	public String list(WjBuilder builder) {
+	public String list(FeignBuilder builder) {
 		String[] classPackeNames = builder.getClazz().getName().split("\\.");
 		ServiceImpl bean = ApplicationContextUtils.getBean(StringUtils.uncapitalize(classPackeNames[classPackeNames.length - 1].replace("Entity", "")) + "ServiceImpl" , ServiceImpl.class);
 		List list = bean.list(getQueryWrapper(builder.getQueryParams()));
 		return JSON.toJSONString(success(list));
 	}
 	
-	public QueryWrapper<?> getQueryWrapper(List<QueryParam> queryParams) {
+	@PostMapping("/invoke")
+	@Override
+	public String invoke(FeignInvoke feignInvoke) {
+		String className = feignInvoke.getClassName();
+		String methodName = feignInvoke.getMethodName();
+		LinkedHashMap<Class<?>, Object> param = feignInvoke.getParam();
+		Object result = null;
+		Object bean = ApplicationContextUtils.getBean(className);
+		try {
+			Class<?> clazz = Class.forName(className);
+			if(param != null && param.size() > 0) {
+				Method method = clazz.getMethod(methodName);
+				result = method.invoke(bean);
+			}else {
+				Method method = clazz.getMethod(methodName , param.keySet().toArray(new Class<?>[] {}));
+				result = method.invoke(bean , param.values().toArray());
+			}
+		} catch (ClassNotFoundException e) {
+			log.error("调用远程类不存在{}" , e);
+			throw new ServiceException("调用"+ className +"远程类不存在");
+		} catch (NoSuchMethodException e) {
+			log.error("调用远程类方法不存在{}" , e);
+			throw new ServiceException("调用远程"+ className + "#" + methodName +"方法不存在");
+		} catch (IllegalArgumentException e) {
+			log.error("调用远程方法参数错误{}" , e);
+			throw new ServiceException("调用远程"+ className + "#" + methodName +"方法参数错误");
+		} catch (Exception e) {
+			log.error("调用远程方法错误{}" , e);
+			throw new ServiceException("调用远程"+ className + "#" + methodName +"方法错误");
+		} 
+		return JSON.toJSONString(success(result));
+	}
+	
+	private QueryWrapper<?> getQueryWrapper(List<QueryParam> queryParams) {
         QueryWrapper<?> wrapper = new QueryWrapper<>();
 
         if (CollUtil.isEmpty(queryParams)) {
