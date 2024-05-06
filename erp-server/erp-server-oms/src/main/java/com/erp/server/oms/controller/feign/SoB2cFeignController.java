@@ -8,10 +8,7 @@ import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.core.controller.BaseController;
-import com.erp.model.oms.dto.OperateLogDTO;
-import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cLogisticsDTO;
-import com.erp.model.oms.dto.TransferDeclareProductDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import com.erp.model.tms.dto.TransferDeclareDTO;
@@ -26,6 +23,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 
@@ -643,4 +641,40 @@ public class SoB2cFeignController extends BaseController {
                 operateLogDTO.getBusinessId(),
                 operateLogDTO.getOperation());
     }
+
+
+    /**
+     * 根据扫描的单号获取订单
+     * @param code
+     * @return
+     */
+    @PostMapping("/packageScanByCode")
+    public PackageDTO.ScanResultDTO packageScanByCode(@RequestBody String code) {
+        return soB2cService.packageScanByCode(code);
+    }
+
+    /**
+     * 修改订单物流重量
+     * @param soId 订单id
+     * @param id 订单物流表id
+     * @param weightByG 重量（g）
+     * @return
+     */
+    @GetMapping("/updateWeight")
+    public Boolean updateWeight(@RequestParam("soId") String soId,
+                                @RequestParam("id") String id,
+                                @RequestParam("weightByG") BigDecimal weightByG) {
+        return soB2cLogisticsService.updateWeight(soId, id, weightByG);
+    }
+
+    /**
+     * 根据销售订单ids 获取到合并的数据
+     * @param ids
+     * @return
+     */
+    @PostMapping("/listMergePackageBySoIds")
+    public List<PackageDTO.ScanResultDTO> listMergePackageBySoIds(@RequestBody List<String> ids) {
+        return soB2cService.listMergePackageBySoIds(ids);
+    }
+
 }

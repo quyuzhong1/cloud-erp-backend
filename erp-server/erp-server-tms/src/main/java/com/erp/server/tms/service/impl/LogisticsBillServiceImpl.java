@@ -524,17 +524,25 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (Objects.nonNull(isAliExpress) && isAliExpress){
             //速卖通不做sku拆分
             ordersSkuList = new ArrayList<>(skuInfoList.size());
+            List<String> skuIds = dto.getSkuList().stream().map(LogisticsBillDTO.SkuDTO::getSkuId).distinct().collect(Collectors.toList());
+            //获取sku目的国海关编码映射关系
+            List<ProductCustomsEntity> productCustomsList = plmTaskFeign.listProductCustomsBySkuIds(ProductCustomsSkuDTO.builder().skuIds(skuIds).country(country).build());
             for (LogisticsBillDTO.SkuDTO item : dto.getSkuList()){
                 String skuId = item.getSkuId();
                 LogisticsProductDTO.ProductDTO productDTO = skuInfoList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+                String customCode = "";
+                ProductCustomsEntity customs = getCustomsByCountry(country,skuId,productCustomsList);
+                if (Objects.nonNull(customs)){
+                    customCode = customs.getCustomsCode();
+                }
                 if (Objects.nonNull(productDTO)) {
                     Integer qty = item.getQty();
-                    BigDecimal price = productDTO.getDestDeclarePrice();
-                    productDTO.setQuantity(qty);
-                    productDTO.setPrice(price);
-                    productDTO.setAmount(MathUtil.multiply(price, qty));
-                    //目的国申报价
                     BigDecimal destDeclarePrice = productDTO.getDestDeclarePrice();
+                    productDTO.setQuantity(qty);
+//                    productDTO.setPrice(price);
+                    productDTO.setAmount(MathUtil.multiply(destDeclarePrice, qty));
+                    //目的国申报价
+//                    BigDecimal destDeclarePrice = productDTO.getDestDeclarePrice();
                     //表示最大的报关价还小于 目的过申报价
                     if (Objects.nonNull(destDeclarePrice) && maxCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && maxCustomsAmount.compareTo(destDeclarePrice) < 0) {
                         productDTO.setDestDeclarePrice(maxCustomsAmount);
@@ -548,9 +556,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     String platformSpuNo = item.getPlatformSpuNo();
                     productDTO.setSkuId(platformSpuNo);
                     String sourceDetailId = item.getSourceDetailId();
-                    productDTO.setChildOrderId(sourceDetailId);
+                    if (StringUtils.isNotBlank(sourceDetailId)){
+                        productDTO.setChildOrderId(Long.valueOf(sourceDetailId));
+                    }
+
                     productDTO.setSkuNo(item.getSkuNo());
                     productDTO.setSkuId(skuId);
+                    productDTO.setCustomsCode(customCode);
                     ordersSkuList.add(productDTO);
                 }
             }

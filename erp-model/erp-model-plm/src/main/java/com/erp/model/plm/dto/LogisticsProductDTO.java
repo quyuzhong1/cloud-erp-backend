@@ -1035,11 +1035,11 @@ public class LogisticsProductDTO {
         /**
          * 子订单id
          */
-        private String childOrderId;
+        private Long childOrderId;
 
         private String imagesUrl;
 
-       private BigDecimal price;
+//       private BigDecimal price;
 
        private BigDecimal amount;
 
