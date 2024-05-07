@@ -597,7 +597,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             taskEntity.setIsChangeDocs(Boolean.TRUE);
             ProjectTaskEntity taskEntity1 = projectTaskService.getById(taskEntity.getId());
             log.warn("流程启动更新任务，taskEntity1 = {}", JSONUtil.toJsonStr(taskEntity1));
-            log.warn("流程启动更新任务，taskEntity = {}", JSONUtil.toJsonStr(taskEntity1));
+            log.warn("流程启动更新任务，taskEntity = {}", JSONUtil.toJsonStr(taskEntity));
             return projectTaskService.updateById(taskEntity);
         }
         return Boolean.TRUE;
