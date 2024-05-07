@@ -252,6 +252,7 @@ public class PackageServiceImpl implements PackageService {
         List<PackageForecastDTO.AddDTO> result = new ArrayList<>(map.size());
         for (Map.Entry<String, List<PackageDTO.ScanResultDTO>> entry : map.entrySet()) {
             List<PackageDTO.ScanResultDTO> detailList = entry.getValue();
+
             BigDecimal totalPackageWeight=detailList.stream().
                     map(PackageDTO.ScanResultDTO::getWeight).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
             PackageForecastDTO.AddDTO addDTO = new PackageForecastDTO.AddDTO();
@@ -269,7 +270,7 @@ public class PackageServiceImpl implements PackageService {
 
             //自动发货
             if (isAutoOut) {
-                List<String> soIdList = list.stream().map(req -> req.getSoId()).collect(Collectors.toList());
+                List<String> soIdList = detailList.stream().map(req -> req.getSoId()).collect(Collectors.toList());
                 soB2cDeliveryService.mergePackageDelivery(soIdList);
             }
         }
