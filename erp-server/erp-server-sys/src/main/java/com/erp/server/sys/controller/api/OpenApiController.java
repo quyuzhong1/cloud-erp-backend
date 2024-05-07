@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Controller
 @Slf4j
-@RequestMapping("/openapi")
+@RequestMapping("/open/api")
 public class OpenApiController {
 
     @Value("${spring.profiles.active}")
@@ -102,10 +102,10 @@ public class OpenApiController {
     	input.setTimestamp(System.currentTimeMillis());
         input.setSignType(signType);
         input.setVersion("1.0.0");
-        input.setServiceMethod(serviceMethod);
+        input.setMethod(serviceMethod);
         input.setCharset("UTF-8");
         if(map != null) {
-        	input.setBizContent(JSON.toJSONString(map));
+        	input.setData(JSON.toJSONString(map));
         }
         input.setSign(SignUtil.genSign(SignUtil.getSignStr(input), input.getCharset(), input.getSignType(), getSecretKey("test")));
         return input;

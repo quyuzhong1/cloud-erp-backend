@@ -21,12 +21,12 @@ public class OpenApiReqDTO {
     private String version;// 接口版本号 1.0
 
     @NotBlank(message = "请传入接口方法名")
-    private String serviceMethod;// 接口名
+    private String method;// 接口名
 
     @NotBlank(message = "请传入编码格式")
     private String charset;
 
     // 业务参数
-    private String bizContent;
+    private String data;
 
 }

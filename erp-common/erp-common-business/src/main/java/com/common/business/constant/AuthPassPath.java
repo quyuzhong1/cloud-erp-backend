@@ -12,7 +12,7 @@ public class AuthPassPath {
             "/user/forgotPassword;/shop/shopAuthorize;/shop/shopifyAuthorizeIndex;/shop/shopifyUrl;/shopifyWebhook/customersDataRequest;" +
             "/shopifyWebhook/customersRedact;/shopifyWebhook/shopRedact;" +
             "/user/srmAccountLogin;/user/srmForgotPassword;/user/srmForgotPasswordGetCode;/shop/shopifyUrl;/webVersion/update;/webVersion/sse;"
-            + "/openapi/";
+            + "/open/api/";
 
 
 

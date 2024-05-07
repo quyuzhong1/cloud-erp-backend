@@ -1,12 +1,9 @@
 package com.erp.server.sys.controller.openapi;
 
-import org.springframework.stereotype.Component;
-
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.OpenApiReqDTO;
 import com.erp.server.sys.config.OpenApi;
 
-@Component
 @OpenApi
 public class TestOpenApi {
 	

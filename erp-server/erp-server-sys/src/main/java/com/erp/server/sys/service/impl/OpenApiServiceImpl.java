@@ -32,14 +32,14 @@ public class OpenApiServiceImpl implements IOpenApiService {
     @Override
     public ApiResult<?> unitPlatformService(OpenApiInputDTO input) {
     	ApiResult<?> response = null;
-    	String method = input.getServiceMethod();
+    	String method = input.getMethod();
         String signType = input.getSignType();
         if (!SignUtil.equalsAny(input.getVersion(), "1.0.0") || !StringUtils.equalsIgnoreCase("UTF-8", input.getCharset())){
         	response = ApiResult.error(500, "版本号和编码方式不能为空");
         	return response;
         }
         
-        String content = input.getBizContent();
+        String content = input.getData();
         String secretKey = input.getSecretKey();
         
         String charset = input.getCharset();
