@@ -28,19 +28,10 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-server-file</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.alibaba.cloud</groupId>
-                    <artifactId>spring-cloud-starter-alibaba-seata</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>io.seata</groupId>
-                    <artifactId>seata-spring-boot-starter</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>io.seata</groupId>
+            <artifactId>seata-spring-boot-starter</artifactId>
+            <version>1.5.2</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
