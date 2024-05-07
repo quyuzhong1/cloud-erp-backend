@@ -49,49 +49,16 @@
             ad.track_no AS trackNo,
             ad.trade_create_time AS tradeCreateTime,
             ad.out_bound_time AS outBoundTime,
-            ad.warehouse_name AS warehouseName
+            ad.warehouse_name AS warehouseName,
+            add.platform_sku as platformSku,
+            add.sku_no as skuNo,
+            add.order_line_qty as qty,
+        case when (select 1 from so_outstock so where so.so_id = ad.so_id and so.is_deleted = false limit 1) is null then false else true end as isSystemOut
         FROM aliexpress_delivery ad
-        WHERE ad.is_deleted = FALSE
-        <!--ids-->
-        <if test="params.ids != null and params.ids.size > 0">
-            AND ad.id IN
-            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
-                #{id}
-            </foreach>
-        </if>
-        <!--平台订单号-->
-        <if test="params.platformCode != null and params.platformCode != ''">
-            and  ad.platform_code ILIKE concat('%',#{params.platformCode}::text,'%')
-        </if>
-        <!--销售单编号-->
-        <if test="params.soCode != null and params.soCode != ''">
-            and  ad.so_code ILIKE concat('%',#{params.soCode}::text,'%')
-        </if>
-        <!--店铺-->
-        <if test="params.shopIdList !=null and params.shopIdList.size > 0">
-            and ad.shop_id in
-            <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
-                #{shopId}
-            </foreach>
-        </if>
-        <!--物流跟踪号-->
-        <if test="params.trackNo != null and params.trackNo != ''">
-            and  ad.track_no ILIKE concat('%',#{params.trackNo}::text,'%')
-        </if>
-        <!--平台发货仓库-->
-        <if test="params.warehouseName != null and params.warehouseName != ''">
-            and  ad.warehouse_name ILIKE concat('%',#{params.warehouseName}::text,'%')
-        </if>
-        <!--订单创建时间-->
-        <if test="params.tradeCreateTimeList != null and params.tradeCreateTimeList.size > 0">
-            and ad.trade_create_time >= #{params.tradeCreateTimeList[0]}
-            and (#{params.tradeCreateTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ad.trade_create_time
-        </if>
-        <!--订单出库时间-->
-        <if test="params.outBoundTimeList != null and params.outBoundTimeList.size > 0">
-            and ad.out_bound_time >= #{params.outBoundTimeList[0]}
-            and (#{params.outBoundTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ad.out_bound_time
-        </if>
+        left join aliexpress_delivery_detail add on ad.id = add.main_id and add.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        and ad.is_deleted = FALSE
     </select>
 
     <!--导出excel-->
@@ -106,49 +73,16 @@
             ad.track_no AS trackNo,
             ad.trade_create_time AS tradeCreateTime,
             ad.out_bound_time AS outBoundTime,
-            ad.warehouse_name AS warehouseName
+            ad.warehouse_name AS warehouseName,
+            add.platform_sku as platformSku,
+            add.sku_no as skuNo,
+            add.order_line_qty as qty,
+        case when (select 1 from so_outstock so where so.so_id = ad.so_id and so.is_deleted = false limit 1) is null then false else true end as isSystemOut
         FROM aliexpress_delivery ad
-        WHERE ad.is_deleted = FALSE
-        <!--ids-->
-        <if test="params.ids != null and params.ids.size  > 0">
-            and ad.id in
-            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
-                #{id}
-            </foreach>
-        </if>
+                 left join aliexpress_delivery_detail add on ad.id = add.main_id and add.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+          and  ad.is_deleted = FALSE
 
-        <!--平台订单号-->
-        <if test="params.platformCode != null and params.platformCode != ''">
-            and  ad.platform_code ILIKE concat('%',#{params.platformCode}::text,'%')
-        </if>
-        <!--销售单编号-->
-        <if test="params.soCode != null and params.soCode != ''">
-            and  ad.so_code ILIKE concat('%',#{params.soCode}::text,'%')
-        </if>
-        <!--店铺-->
-        <if test="params.shopIdList !=null and params.shopIdList.size > 0">
-            and bty.shop_id in
-            <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
-                #{shopId}
-            </foreach>
-        </if>
-        <!--物流跟踪号-->
-        <if test="params.trackNo != null and params.trackNo != ''">
-            and  ad.track_no concat('%',#{params.trackNo}::text,'%')
-        </if>
-        <!--平台发货仓库-->
-        <if test="params.warehouseName != null and params.warehouseName != ''">
-            and  ad.warehouse_name concat('%',#{params.warehouseName}::text,'%')
-        </if>
-        <!--订单创建时间-->
-        <if test="params.tradeCreateTimeList != null and params.tradeCreateTimeList.size > 0">
-            and ad.trade_create_time >= #{params.tradeCreateTimeList[0]}
-            and (#{params.tradeCreateTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ad.trade_create_time
-        </if>
-        <!--订单出库时间-->
-        <if test="params.outBoundTimeList != null and params.outBoundTimeList.size > 0">
-            and ad.out_bound_time >= #{params.outBoundTimeList[0]}
-            and (#{params.outBoundTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ad.out_bound_time
-        </if>
     </select>
 </mapper>
