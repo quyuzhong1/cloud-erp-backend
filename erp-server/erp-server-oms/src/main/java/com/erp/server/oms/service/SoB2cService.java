@@ -863,8 +863,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     List<BatchResultDTO> cancelOrderForecast(List<String> ids);
 
-    List<BatchResultDTO> retryOrderForecast(List<String> dto);
-
+    List<BatchResultDTO> retryOrderForecast(List<String> ids);
     /**
      * @description: 异常订单分页查询
      * @author Will
@@ -882,7 +881,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return Boolean
      */
     Boolean abnormalExportExcel(SoB2cAbnormalDTO.PagingParamDTO dto, HttpServletResponse response);
-
     /**
      * 扫描单号匹配订单
      * @param code
@@ -896,4 +894,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     List<PackageDTO.ScanResultDTO> listMergePackageBySoIds(List<String> ids);
+
+    PackageDTO.ScanResultDTO packageScan(PackageDTO.ScanDTO scanDTO);
 }
