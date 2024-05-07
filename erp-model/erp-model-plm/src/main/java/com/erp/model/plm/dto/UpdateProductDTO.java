@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -86,6 +86,6 @@ public class UpdateProductDTO  implements Serializable {
     /**
      * 项目立项日期
      */
-    private LocalDateTime projectInitTime;
+    private LocalDate localDate;
 
 }
