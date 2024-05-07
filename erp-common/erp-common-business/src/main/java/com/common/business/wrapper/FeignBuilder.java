@@ -253,8 +253,8 @@ public class FeignBuilder {
 		return data;
 	}
 
-	public <T> T invoke(ServiceCodeNameEnum serviceCode , FeignInvoke feignInvoke) {
-		ApiResult<?> result = invokeFeign(serviceCode, feignInvoke);
+	public <T> T invoke(FeignInvoke feignInvoke) {
+		ApiResult<?> result = invokeFeign(feignInvoke);
     	T data = null;
     	if(result.isSuccess()) {
     		if(result.getData() != null) {
@@ -264,8 +264,8 @@ public class FeignBuilder {
     	return data;
 	}
 	
-	public <T> List<T> invokeList(ServiceCodeNameEnum serviceCode , FeignInvoke feignInvoke) {
-		ApiResult<?> result = invokeFeign(serviceCode, feignInvoke);
+	public <T> List<T> invokeList(FeignInvoke feignInvoke) {
+		ApiResult<?> result = invokeFeign(feignInvoke);
 		List<T> data = null;
     	if(result.isSuccess()) {
     		if(result.getData() != null) {
@@ -275,9 +275,14 @@ public class FeignBuilder {
     	return data;
 	}
 	
-	private ApiResult<?> invokeFeign(ServiceCodeNameEnum serviceCode , FeignInvoke feignInvoke){
+	private ApiResult<?> invokeFeign(FeignInvoke feignInvoke){
 		DictCore dictCore = ApplicationContextUtils.getBean(DictCore.class);
-    	BaseDataFeign baseDataFeign = dictCore.getBaseDataFeign(serviceCode);
+		String serviceCode = feignInvoke.getClassName().split("\\.")[3];
+    	ServiceCodeNameEnum serviceCodeNameEnum = EnumMessage.getByCode(ServiceCodeNameEnum.class, serviceCode);
+    	if(serviceCodeNameEnum == null) {
+    		throw new RuntimeException("获取远程基础信息查询失败，截取到的服务名是：" + serviceCode);
+    	}
+    	BaseDataFeign baseDataFeign = dictCore.getBaseDataFeign(serviceCodeNameEnum);
     	return JSON.parseObject(baseDataFeign.invoke(feignInvoke) , ApiResult.class);
 	}
 	

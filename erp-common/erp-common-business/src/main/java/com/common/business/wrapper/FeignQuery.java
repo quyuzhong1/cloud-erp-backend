@@ -2,13 +2,11 @@ package com.common.business.wrapper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.alibaba.nacos.common.utils.Objects;
-import com.common.business.enums.ServiceCodeNameEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 
@@ -100,19 +98,38 @@ public class FeignQuery{
     }
     
     /**
-     * 统一远程有参方法
+     * 统一远程无参方法，无返回值
      * @param <T>
-     * @param returnClazz 返回对象类名
-     * @param serviceCode 远程服务
+     * @param className 远程类全名称
+     * @param methodName 远程方法名称
+     * @return
+     */
+    public static void invoke(String className , String methodName) {
+    	invoke(null, className, methodName);
+    }
+    
+    /**
+     * 统一远程有参方法，无返回值
+     * @param <T>
      * @param className 远程类全名称
      * @param methodName 远程方法名称
      * @param param 远程方法参数
      * @return
      */
-    public static <T> T invoke(Class<T> returnClazz , ServiceCodeNameEnum serviceCode , String className , String methodName , LinkedHashMap<Class<?>, Object> param) {
-    	if(serviceCode == null) {
-    		throw new ServiceException("远程服务serviceCode不能为空");
-    	}
+    public static void invoke(String className , String methodName , List<Object> param) {
+    	invoke(null, className, methodName, param);
+    }
+    
+    /**
+     * 统一远程有参方法，有返回值
+     * @param <T>
+     * @param returnClazz 返回对象类名
+     * @param className 远程类全名称
+     * @param methodName 远程方法名称
+     * @param param 远程方法参数
+     * @return
+     */
+    public static <T> T invoke(Class<T> returnClazz , String className , String methodName , List<Object> param) {
     	if(className == null || "".equals(className)) {
     		throw new ServiceException("调用远程类不能为空");
     	}
@@ -120,36 +137,31 @@ public class FeignQuery{
     		throw new ServiceException("调用远程方法不能为空");
     	}
     	FeignInvoke feignInvoke = new FeignInvoke(className , methodName , param);
-		return FeignBuilder.create(returnClazz).invoke(serviceCode, feignInvoke);
+		return FeignBuilder.create(returnClazz).invoke(feignInvoke);
     }
     
     /**
-     * 统一远程无参方法
+     * 统一远程无参方法，有返回值
      * @param <T>
      * @param returnClazz 返回对象类名
-     * @param serviceCode 远程服务
      * @param className 远程类全名称
      * @param methodName 远程方法名称
      * @return
      */
-    public static <T> T invoke(Class<T> returnClazz , ServiceCodeNameEnum serviceCode , String className , String methodName) {
-    	return invoke(returnClazz , serviceCode, className, methodName , null);
+    public static <T> T invoke(Class<T> returnClazz , String className , String methodName) {
+    	return invoke(returnClazz , className, methodName , null);
     }
     
     /**
      * 统一远程有参方法，返回集合
      * @param <T>
      * @param returnClazz 返回对象类名
-     * @param serviceCode 远程服务
      * @param className 远程类全名称
      * @param methodName 远程方法名称
      * @param param 远程方法参数
      * @return
      */
-    public static <T> List<T> invokeList(Class<T> returnClazz , ServiceCodeNameEnum serviceCode , String className , String methodName , LinkedHashMap<Class<?>, Object> param) {
-    	if(serviceCode == null) {
-    		throw new ServiceException("远程服务serviceCode不能为空");
-    	}
+    public static <T> List<T> invokeList(Class<T> returnClazz , String className , String methodName , List<Object> param) {
     	if(className == null || "".equals(className)) {
     		throw new ServiceException("调用远程类不能为空");
     	}
@@ -157,20 +169,19 @@ public class FeignQuery{
     		throw new ServiceException("调用远程方法不能为空");
     	}
     	FeignInvoke feignInvoke = new FeignInvoke(className , methodName , param);
-		return FeignBuilder.create(returnClazz).invoke(serviceCode, feignInvoke);
+		return FeignBuilder.create(returnClazz).invokeList(feignInvoke);
     }
     
     /**
      * 统一远程无参方法，返回集合
      * @param <T>
      * @param returnClazz 返回对象类名
-     * @param serviceCode 远程服务
      * @param className 远程类全名称
      * @param methodName 远程方法名称
      * @return
      */
-    public static <T> List<T> invokeList(Class<T> returnClazz , ServiceCodeNameEnum serviceCode , String className , String methodName) {
-    	return invokeList(returnClazz , serviceCode, className, methodName , null);
+    public static <T> List<T> invokeList(Class<T> returnClazz , String className , String methodName) {
+    	return invokeList(returnClazz , className, methodName , null);
     }
     
 }

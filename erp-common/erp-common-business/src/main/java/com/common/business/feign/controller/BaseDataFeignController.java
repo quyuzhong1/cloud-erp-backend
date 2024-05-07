@@ -2,11 +2,13 @@ package com.common.business.feign.controller;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,17 +70,32 @@ public class BaseDataFeignController extends BaseController implements BaseDataF
 	public String invoke(FeignInvoke feignInvoke) {
 		String className = feignInvoke.getClassName();
 		String methodName = feignInvoke.getMethodName();
-		LinkedHashMap<Class<?>, Object> param = feignInvoke.getParam();
+		List<Object> param = feignInvoke.getParam();
 		Object result = null;
-		Object bean = ApplicationContextUtils.getBean(className);
 		try {
 			Class<?> clazz = Class.forName(className);
-			if(param != null && param.size() > 0) {
+			Object bean = ApplicationContextUtils.getBean(clazz);
+			if(CollUtil.isNotEmpty(param)) {
+				Method[] methods = clazz.getMethods();
+				Method invokeMethod = null;
+				for(Method method : methods) {
+					if(method.getName().equals(methodName) && method.getParameterCount() == param.size()) {
+						invokeMethod = method;
+						break;
+					}
+				}
+				if(invokeMethod == null) {
+					throw new ServiceException("调用远程"+ className + "#" + methodName +"方法不存在");
+				}
+				Object [] paramVarArgs = new Object[param.size()];
+				Class<?>[] parameterTypes = invokeMethod.getParameterTypes();
+				for(int i = 0; i < parameterTypes.length; i++) {
+					paramVarArgs[i] = JSON.parseObject(JSON.toJSONString(param.get(i)), parameterTypes[i]);
+				}
+				result = invokeMethod.invoke(bean , paramVarArgs);
+			}else {
 				Method method = clazz.getMethod(methodName);
 				result = method.invoke(bean);
-			}else {
-				Method method = clazz.getMethod(methodName , param.keySet().toArray(new Class<?>[] {}));
-				result = method.invoke(bean , param.values().toArray());
 			}
 		} catch (ClassNotFoundException e) {
 			log.error("调用远程类不存在{}" , e);
@@ -89,6 +106,8 @@ public class BaseDataFeignController extends BaseController implements BaseDataF
 		} catch (IllegalArgumentException e) {
 			log.error("调用远程方法参数错误{}" , e);
 			throw new ServiceException("调用远程"+ className + "#" + methodName +"方法参数错误");
+		} catch (ServiceException e) {
+			throw e;
 		} catch (Exception e) {
 			log.error("调用远程方法错误{}" , e);
 			throw new ServiceException("调用远程"+ className + "#" + methodName +"方法错误");

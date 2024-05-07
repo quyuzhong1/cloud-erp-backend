@@ -1,6 +1,6 @@
 package com.common.business.wrapper;
 
-import java.util.LinkedHashMap;
+import java.util.List;
 
 import lombok.Data;
 
@@ -13,19 +13,14 @@ import lombok.Data;
 public class FeignInvoke {
 	private String className;
 	private String methodName;
-	private LinkedHashMap<Class<?>, Object> param;
+	private List<Object> param;
 	
-	public FeignInvoke(String className, String methodName, LinkedHashMap<Class<?>, Object> param) {
+	public FeignInvoke(String className, String methodName, List<Object> param) {
 		this.className = className;
 		this.methodName = methodName;
 		this.param = param;
 	}
 
-	public FeignInvoke(String className, String methodName) {
-		this.className = className;
-		this.methodName = methodName;
-	}
-	
 	public FeignInvoke() {
 		
 	}
