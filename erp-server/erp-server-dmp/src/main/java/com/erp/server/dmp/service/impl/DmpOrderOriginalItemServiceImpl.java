@@ -10,6 +10,7 @@ import com.erp.server.dmp.mapper.DmpOrderOriginalItemMapper;
 import com.erp.server.dmp.service.DmpOrderItemService;
 import com.erp.server.dmp.service.DmpOrderOriginalItemService;
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
  * </p>
  */
 @Service
+@Slf4j
 public class DmpOrderOriginalItemServiceImpl extends ServiceImpl<DmpOrderOriginalItemMapper, DmpOrderOriginalItemEntity> implements DmpOrderOriginalItemService {
     @Resource
     private DmpOrderItemService dmpOrderItemService;
@@ -84,23 +86,26 @@ public class DmpOrderOriginalItemServiceImpl extends ServiceImpl<DmpOrderOrigina
         for (int i = 0; i <= page; i++) {
             int finalI = i;
             CompletableFuture.runAsync(() -> {
-                List<DmpOrderItemEntity> orderItemEntities = dmpOrderItemService.list(Wrappers.<DmpOrderItemEntity>lambdaQuery()
-                        .eq(DmpOrderItemEntity::getIsSplitSku, MathUtil.TWO)
-                        .last(String.format("LIMIT %s OFFSET %s", pageSize, finalI * pageSize))
-                );
-                List<DmpOrderOriginalItemEntity> originalItems = orderItemEntities.stream()
-                                .map(item ->{
-                                    DmpOrderOriginalItemEntity entity = new DmpOrderOriginalItemEntity();
-                                    BeanUtils.copyProperties(item, entity);
-                                    entity.setOriginalQuantity(item.getQuantity());
-                                    entity.setOriginalAmountAfter(item.getAmountAfter());
-                                    entity.setOriginalCostPrice(item.getCleanCostPrice());
-                                    return entity;
-                                }).collect(Collectors.toList());
-                boolean update = saveOrUpdateBatch(originalItems);
-                if (update) {
-                    orderItemEntities.forEach(item -> item.setOriginalItemId(item.getId()));
-                    dmpOrderItemService.updateBatchById(orderItemEntities);
+                try {
+                    List<DmpOrderItemEntity> orderItemEntities = dmpOrderItemService.list(Wrappers.<DmpOrderItemEntity>lambdaQuery()
+                            .eq(DmpOrderItemEntity::getIsSplitSku, MathUtil.TWO)
+                            .last(String.format("LIMIT %s OFFSET %s", pageSize, finalI * pageSize)));
+                    List<DmpOrderOriginalItemEntity> originalItems = orderItemEntities.stream()
+                                    .map(item ->{
+                                        DmpOrderOriginalItemEntity entity = new DmpOrderOriginalItemEntity();
+                                        BeanUtils.copyProperties(item, entity);
+                                        entity.setOriginalQuantity(item.getQuantity());
+                                        entity.setOriginalAmountAfter(item.getAmountAfter());
+                                        entity.setOriginalCostPrice(item.getCleanCostPrice());
+                                        return entity;
+                                    }).collect(Collectors.toList());
+                    boolean update = saveOrUpdateBatch(originalItems);
+                    if (update) {
+                        orderItemEntities.forEach(item -> item.setOriginalItemId(item.getId()));
+                        dmpOrderItemService.updateBatchById(orderItemEntities);
+                    }
+                } catch (Exception e) {
+                    log.error("第{}页数据处理失败，原因是：{}", finalI, e.getMessage(), e);
                 }
             }, threadPoolTaskExecutor);
         }
