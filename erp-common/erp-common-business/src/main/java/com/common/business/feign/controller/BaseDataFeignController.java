@@ -3,12 +3,10 @@ package com.common.business.feign.controller;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,7 +88,11 @@ public class BaseDataFeignController extends BaseController implements BaseDataF
 				Object [] paramVarArgs = new Object[param.size()];
 				Class<?>[] parameterTypes = invokeMethod.getParameterTypes();
 				for(int i = 0; i < parameterTypes.length; i++) {
-					paramVarArgs[i] = JSON.parseObject(JSON.toJSONString(param.get(i)), parameterTypes[i]);
+					if(parameterTypes[i].newInstance() instanceof Collection) {
+						paramVarArgs[i] = JSON.parseArray(JSON.toJSONString(param.get(i)), parameterTypes[i]);
+					}else {
+						paramVarArgs[i] = JSON.parseObject(JSON.toJSONString(param.get(i)), parameterTypes[i]);
+					}
 				}
 				result = invokeMethod.invoke(bean , paramVarArgs);
 			}else {
