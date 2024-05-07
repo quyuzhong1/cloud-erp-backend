@@ -312,13 +312,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             statusList = trackStatusList.stream().filter(s -> s.getRemark().equals(group)).
                     map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
         }
-
-        dto.getParams().setExcludeOrderTypeList(Arrays.asList(OrderTypeEnum.FIRST_MILE.getCode()));
+        Long total = baseMapper.pageCount(params, statusList);
         IPage pageData = baseMapper.paging(query, params, statusList);
+        pageData.setTotal(total);
         List<LogisticsBillDTO.PagingVO> list = pageData.getRecords();
         fillPagingDb(list);
         return new PagingVO<>(pageData);
     }
+
 
 
     @Override
@@ -453,6 +454,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 orderSource(sourceType).
                 trackNo(dto.getTrackNo()).
                 topUserKey(dto.getTopUserKey()).
+                sourceId(dto.getOrderId()).
                 oaid(dto.getOaid()).
                 deliveryNo(dto.getOrderCode()).
                 iossCode(dto.getIossTaxNo()).
@@ -649,6 +651,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         cancelOrderVO.setDeliveryNo(dto.getReferenceNumber());
         cancelOrderVO.setTransportNo(dto.getTransportNo());
         cancelOrderVO.setReason(dto.getReason());
+        cancelOrderVO.setOrderId(dto.getOrderId());
         cancelOrderList.add(cancelOrderVO);
         if (StringUtils.isBlank(dto.getTransportNo())) {
             LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(dto.getTrackNo());
@@ -695,6 +698,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         interceptOrderVO.setDeliveryNo(dto.getReferenceNumber());
         interceptOrderVO.setTransportNo(dto.getTransportNo());
         interceptOrderVO.setInterceptReason(dto.getReason());
+        interceptOrderVO.setOrderId(dto.getOrderId());
         interceptOrderVOList.add(interceptOrderVO);
         if (StringUtils.isBlank(dto.getTransportNo())) {
             LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(dto.getTrackNo());

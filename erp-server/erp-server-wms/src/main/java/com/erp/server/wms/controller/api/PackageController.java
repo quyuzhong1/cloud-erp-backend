@@ -1,4 +1,4 @@
-package com.erp.server.oms.controller.api;
+package com.erp.server.wms.controller.api;
 
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -6,11 +6,13 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.PackageDTO;
-import com.erp.server.oms.service.PackageService;
-import com.erp.server.oms.service.SoB2cService;
+import com.erp.server.wms.service.PackageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -28,8 +30,6 @@ import java.util.List;
 @RequestMapping("/package")
 public class PackageController extends BaseController {
 
-    @Resource
-    private SoB2cService soB2cService;
 
     @Resource
     private PackageService packageService;
@@ -45,24 +45,10 @@ public class PackageController extends BaseController {
      */
     @PostMapping("/scan")
     public ApiResult<PackageDTO.ScanResultDTO> scan(@RequestBody @Validated PackageDTO.ScanDTO dto) {
-        PackageDTO.ScanResultDTO scanResultDTO = soB2cService.packageScan(dto);
+        PackageDTO.ScanResultDTO scanResultDTO = packageService.packageScan(dto);
         return success(scanResultDTO);
     }
 
-    /**
-     * 批量分包分页查询
-     *
-     * @param
-     * @return
-     * @description
-     * @date 2024-01-26 17:45
-     * @author Lambda
-     */
-    @PostMapping("/paging")
-    public ApiResult<PagingVO<PackageDTO.PagingViewDTO>> paging(@RequestBody PagingDTO<PackageDTO.PagingParamDTO> dto) {
-        PagingVO<PackageDTO.PagingViewDTO> pagingView = soB2cService.packagePing(dto);
-        return success(pagingView);
-    }
 
     /**
      * 组包合并  注意对应的ids 为销售订单ids  就是 soId 的集合
@@ -74,6 +60,5 @@ public class PackageController extends BaseController {
         List<BatchResultDTO> result = packageService.mergePackage(dto);
         return result.stream().allMatch(BatchResultDTO::getSuccess) ? success(result) : failure(result);
     }
-
 
 }
