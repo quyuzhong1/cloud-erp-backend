@@ -6,7 +6,6 @@ import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.common.business.service.SuperService;
 
 import java.time.LocalDate;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -73,5 +72,5 @@ public interface FbaShipmentReceiveService extends SuperService<FbaShipmentRecei
     /**
      * 根据md5查询历史
      */
-    List<FbaShipmentReceiveEntity> listByUniqueMd5(List<String> md5List, String fbaShipmentId);
+    List<FbaShipmentReceiveEntity> listByUniqueMd5AndReceivedDate(List<String> md5List, String fbaShipmentId, LocalDate billDate);
 }
