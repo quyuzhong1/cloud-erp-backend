@@ -83,6 +83,7 @@
         pc.actual_tax_cost,
         pc.target_tax_cost,
         pd.warehouse_location,
+        pd.warehouse_location_large,
         pi.iterate_ref_sku_id,
         pi.iterate_ref_sku_no
         FROM product_info pi
@@ -951,7 +952,7 @@
         pd.unit_name,
         pd.status,
         pd.warehouse_location as warehouseLocation,
-        pd.warehouse_location_large as warehouseLocationLarge,
+        pd.warehouse_location_large as warehouseLocationLarge
         FROM  product_detail pd
         WHERE
             pd.is_deleted = FALSE

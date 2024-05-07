@@ -467,7 +467,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 //匹配sku信息
                 SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(requisitionApplicationDetailEntity.getSkuId())).distinct().findFirst().orElse(new SkuVO());
                 viewDTO.setProductName(skuVO.getSkuName());
-                viewDTO.setWarehouseLocation(StringUtils.isBlank(skuVO.getWarehouseLocation()) ? "" : skuVO.getWarehouseLocation());
+                //修改仓位设置为 推荐仓位(大货区)
+                viewDTO.setWarehouseLocation(StringUtils.isBlank(skuVO.getWarehouseLocationLarge()) ? "" : skuVO.getWarehouseLocationLarge());
                 if (viewDTO.getPickingQty() == null || viewDTO.getPickingQty() == 0) {
                     viewDTO.setPickingQty(requisitionApplicationDetailEntity.getApproveQty());
                 }
