@@ -60,11 +60,6 @@ import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
 import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
-import com.erp.model.wms.dto.SoB2cDeliveryDTO;
-import com.erp.model.wms.dto.SoB2cDeliveryDetailDTO;
-import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.SoOutstockDetailDTO;
-import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
@@ -880,7 +875,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             return false;
         }
         String msg = StrUtil.format("用户【{}】更新重量为{} ", commonService.getUserInfo().getUserName(),dto.getWeight()+dto.getWeightUnit());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), deliveryEntity.getId(), msg);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), deliveryEntity.getId(), "【组包称重】");
         deliveryEntity.setWeight(dto.getWeight());
         deliveryEntity.setWeighingTime(LocalDateTime.now());
         deliveryEntity.setWeightUnit(dto.getWeightUnit());
