@@ -5946,8 +5946,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (Objects.nonNull(baseDTO)) {
                 scanResult.setLogisticsChannelName(baseDTO.getName());
                 scanResult.setLogisticsSupplierId(baseDTO.getMainId());
-                scanResult.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
                 scanResult.setLogisticsSupplierShortName(baseDTO.getLogisticsSupplierShortName());
+                scanResult.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
             }
 
             if (TransferStatusEnum.NOT.getCode().equals(entity.getTransferStatus())) {
@@ -6003,8 +6003,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (Objects.nonNull(base)) {
                 item.setLogisticsChannelName(base.getName());
                 item.setLogisticsSupplierId(base.getLogisticsSupplierId());
-                item.setLogisticsSupplierName(base.getLogisticsSupplierName());
                 item.setLogisticsSupplierShortName(base.getLogisticsSupplierShortName());
+                item.setLogisticsSupplierName(base.getLogisticsSupplierName());
             }
 
             //查询对应的中转服务商
