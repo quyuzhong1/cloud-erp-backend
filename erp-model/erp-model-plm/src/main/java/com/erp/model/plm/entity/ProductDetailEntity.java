@@ -140,10 +140,17 @@ public class ProductDetailEntity extends BaseEntity<ProductDetailEntity> impleme
     private Boolean occupyStatus;
 
     /**
-     * 仓位
+     * 推荐仓位(小货区)
      */
     @TableField("warehouse_location")
     private String warehouseLocation;
+
+    /**
+     * 推荐仓位(大货区)
+     */
+    @TableField("warehouse_location_large")
+    private String warehouseLocationLarge;
+
 
     /**
      * 目的国申报价
