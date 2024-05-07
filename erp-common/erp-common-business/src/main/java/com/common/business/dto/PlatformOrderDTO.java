@@ -204,6 +204,11 @@ public class PlatformOrderDTO extends UniqueDto {
     private List<PlatformOrderDetailDTO> details;
 
     /**
+     * 发货明细
+     */
+    private List<PlatformDeliveryDetailDTO> deliveryDetailDTOList;
+
+    /**
      * 订单财务信息
      */
     private PlatformOrderFinanceDTO finances;
