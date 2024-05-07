@@ -998,7 +998,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         warnMsgInfo.setTitle(StrUtil.format("单据【{}】从{}推送至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
         warnMsgInfo.setTableId(entity.getSourceId());
-        warnMsgInfo.setKeyInfo("");
+        warnMsgInfo.setKeyInfo(entity.getReturnMsg());
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         mqProducerService.sendWarnMsg(warnMsgInfo);
     }
