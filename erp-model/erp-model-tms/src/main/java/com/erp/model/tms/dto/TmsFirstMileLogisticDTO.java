@@ -1363,7 +1363,7 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         /**
          * 船司/航司
          */
-        private String shippingName;
+        private String carrier;
         /**
         * 币种
         */
