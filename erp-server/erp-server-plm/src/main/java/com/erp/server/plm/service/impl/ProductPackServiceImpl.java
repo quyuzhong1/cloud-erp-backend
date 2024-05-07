@@ -3,6 +3,7 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.LengthConverterUtil;
 import com.erp.model.plm.dto.ProductPackDTO;
 import com.erp.model.plm.dto.ProductPackShowDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
@@ -20,7 +21,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.*;
 
 /**
@@ -140,65 +140,18 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
             //产品毛重
             packVO.setProductGrossWeight(item.getGrossWeight());
             packVO.setBoxQty(item.getBoxQty());
-            //产品大小
-            String productSize = item.getProductSize();
-            if (StringUtils.isNotBlank(productSize)) {
-                String[] productSizes = productSize.split("X");
-                //长
-                if (productSizes.length > 0) {
-                    if (StringUtils.isNotBlank(productSizes[0])) {
-                        packVO.setProductLength(new BigDecimal(productSizes[0]));
-                    } else {
-                        packVO.setProductLength(new BigDecimal(BigInteger.ZERO));
-                    }
-                }
-                //宽
-                if (productSizes.length > 1) {
-                    if (StringUtils.isNotBlank(productSizes[1])) {
-                        packVO.setProductWidth(new BigDecimal(productSizes[1]));
-                    } else {
-                        packVO.setProductWidth(new BigDecimal(BigInteger.ZERO));
-                    }
-                }
-                //高
-                if (productSizes.length > 2) {
-                    if (StringUtils.isNotBlank(productSizes[2])) {
-                        packVO.setProductHeight(new BigDecimal(productSizes[2]));
-                    } else {
-                        packVO.setProductHeight(new BigDecimal(BigInteger.ZERO));
-                    }
-                }
-            }
-
-            //外箱大小
-            String boxSize = item.getBoxSize();
-            if (StringUtils.isNotBlank(boxSize)) {
-                String[] boxSizes = boxSize.split("X");
-                //长
-                if (boxSizes.length > 0) {
-                    if (StringUtils.isNotBlank(boxSizes[0])) {
-                        packVO.setBoxLength(new BigDecimal(boxSizes[0]));
-                    } else {
-                        packVO.setBoxLength(new BigDecimal(BigInteger.ZERO));
-                    }
-                }
-                //宽
-                if (boxSizes.length > 1) {
-                    if (StringUtils.isNotBlank(boxSizes[1])) {
-                        packVO.setBoxWidth(new BigDecimal(boxSizes[1]));
-                    } else {
-                        packVO.setBoxWidth(new BigDecimal(BigInteger.ZERO));
-                    }
-                }
-                //高
-                if (boxSizes.length > 2) {
-                    if (StringUtils.isNotBlank(boxSizes[2])) {
-                        packVO.setBoxHeight(new BigDecimal(boxSizes[2]));
-                    } else {
-                        packVO.setBoxHeight(new BigDecimal(BigInteger.ZERO));
-                    }
-                }
-            }
+            //长
+            packVO.setProductLength(LengthConverterUtil.mmToCm(item.getProductLength()));
+            //宽
+            packVO.setProductWidth(LengthConverterUtil.mmToCm(item.getProductWidth()));
+            //高
+            packVO.setProductHeight(LengthConverterUtil.mmToCm(item.getProductHeight()));
+            //长
+            packVO.setBoxLength(LengthConverterUtil.mmToCm(item.getBoxLength()));
+            //宽
+            packVO.setBoxWidth(LengthConverterUtil.mmToCm(item.getBoxWidth()));
+            //高
+            packVO.setBoxHeight(LengthConverterUtil.mmToCm(item.getBoxHeight()));
             //外箱重量
             BigDecimal boxWeight = item.getBoxWeight();
             if (boxWeight != null) {
@@ -254,7 +207,7 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     @Override
     public List<ProductPackEntity> listBySkuIdList(List<String> skuIdList) {
         if (CollectionUtils.isEmpty(skuIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return  lambdaQuery().in(ProductPackEntity::getSkuId,skuIdList).list();
     }
@@ -268,8 +221,12 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     private void updateProductPackPackaging (ProductPackDTO productPackDTO) {
         lambdaUpdate()
                 .eq(ProductPackEntity::getSkuId,productPackDTO.getSkuId())
-                .set(ProductPackEntity::getProductSize,productPackDTO.getProductSize())
-                .set(ProductPackEntity::getBoxSize,productPackDTO.getBoxSize())
+                .set(ProductPackEntity::getProductLength,productPackDTO.getProductLength())
+                .set(ProductPackEntity::getProductWidth,productPackDTO.getProductWidth())
+                .set(ProductPackEntity::getProductHeight,productPackDTO.getProductHeight())
+                .set(ProductPackEntity::getBoxLength,productPackDTO.getBoxLength())
+                .set(ProductPackEntity::getBoxWidth,productPackDTO.getBoxWidth())
+                .set(ProductPackEntity::getBoxHeight,productPackDTO.getBoxHeight())
                 .set(ProductPackEntity::getBoxQty,productPackDTO.getBoxQty())
                 .set(ProductPackEntity::getBoxWeight,productPackDTO.getBoxWeight())
                 .set(ProductPackEntity::getNetWeight,productPackDTO.getNetWeight())

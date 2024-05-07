@@ -1,26 +1,18 @@
 package com.erp.server.oms.convert;
 
-import com.common.business.dto.PlatformProductDTO;
-import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
-import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.LogisticsBillDTO;
-import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
-import com.sdk.tms.weishi.dto.response.WeiShiChannel;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.util.List;
 
 /**
