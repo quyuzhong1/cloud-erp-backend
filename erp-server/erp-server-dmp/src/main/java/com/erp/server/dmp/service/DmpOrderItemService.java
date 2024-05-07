@@ -1,15 +1,14 @@
 package com.erp.server.dmp.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.dmp.dto.DmpOrderItemGroup;
 import com.erp.model.dmp.dto.SplitSkuDTO;
 import com.erp.model.dmp.entity.DmpBomEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
-import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.NewProductDTO;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -124,4 +123,9 @@ public interface DmpOrderItemService extends IService<DmpOrderItemEntity> {
      */
     List<SplitSkuDTO> splitSku(SplitSkuDTO splitSkuDTO, List<DmpBomEntity> machining, List<BomChildrenSkuDTO> allBomList);
 
+    /**
+     * 根据orderId，itemId,sku分组
+     * @return 分组后的数据 {@link DmpOrderItemGroup}
+     */
+    List<DmpOrderItemGroup> listByGroup();
 }

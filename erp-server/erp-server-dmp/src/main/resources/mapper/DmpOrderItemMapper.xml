@@ -54,4 +54,10 @@
         GROUP BY
             T."sku_no", T."LatestPurchaseDate";
     </select>
+    <select id="listByGroup" resultType="com.erp.model.dmp.dto.DmpOrderItemGroup">
+        SELECT order_id, item_id, platform_sku
+        FROM dmp_order_item
+        WHERE is_split_sku = 1
+        GROUP BY order_id, item_id, platform_sku
+    </select>
 </mapper>

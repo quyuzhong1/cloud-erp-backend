@@ -1,12 +1,12 @@
 package com.erp.server.dmp.pull.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.dmp.dto.DmpOrderItemGroup;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +26,9 @@ public interface DmpOrderItemMapper extends BaseMapper<DmpOrderItemEntity> {
     List<Map<String,String>> getOrderListingTime(@Param("skuNoList") List<String> skuNoList);
 
     List<DmpSkuCostEntity> listDmpSkuCostEntity();
+
+    List<DmpOrderItemGroup> listByGroup();
+
 }
 
 

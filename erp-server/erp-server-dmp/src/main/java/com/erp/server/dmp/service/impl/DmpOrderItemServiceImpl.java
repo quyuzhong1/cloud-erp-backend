@@ -15,23 +15,18 @@ import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.dto.DmpOrderItemGroup;
 import com.erp.model.dmp.dto.SplitSkuDTO;
-import com.erp.model.dmp.entity.DmpBomEntity;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
-import com.erp.model.dmp.entity.DmpSkuCostEntity;
-import com.erp.model.dmp.entity.DmpSplitErrorLogEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.dmp.mapper.DmpOrderOriginalItemMapper;
 import com.erp.server.dmp.pull.mapper.DmpOrderItemMapper;
-import com.erp.server.dmp.service.DmpBomService;
-import com.erp.server.dmp.service.DmpOrderItemService;
-import com.erp.server.dmp.service.DmpSkuCostService;
-import com.erp.server.dmp.service.DmpSplitErrorLogService;
+import com.erp.server.dmp.service.*;
 import com.google.common.collect.Lists;
-import com.sun.org.apache.bcel.internal.generic.NEWARRAY;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -66,6 +61,9 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private DmpOrderOriginalItemMapper dmpOrderOriginalItemMapper;
 
     @Resource
     private DmpSkuCostService dmpSkuCostService;
@@ -340,6 +338,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         }
         //遍历订单详情
         for (DmpOrderItemEntity dmpOrderItemEntity : itemEntityList) {
+            DmpOrderOriginalItemEntity originalItem = BeanMapperUtils.map(DmpOrderOriginalItemEntity.class, dmpOrderItemEntity);
             //设置通用参数
             SplitSkuDTO splitSkuDTO = new SplitSkuDTO();
             splitSkuDTO.setPlatformSign(platformSign);
@@ -360,18 +359,19 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             if (CollectionUtil.isEmpty(splitSkuDTOS)){
                 continue;
             }
-            for (int i = 0;i < splitSkuDTOS.size(); i++) {
-                SplitSkuDTO skuDTO = splitSkuDTOS.get(i);
+            SplitSkuDTO splitSku = splitSkuDTOS.get(0);
+            // 保存拆分前数据
+            originalItem.setIsGift(splitSkuDTO.getIsGift());
+            originalItem.setOriginalQuantity(splitSku.getOriginalQuantity());
+            originalItem.setOriginalCostPrice(splitSku.getOriginalCostPrice());
+            originalItem.setOriginalAmountAfter(splitSku.getOriginalAmountAfter());
+            dmpOrderOriginalItemMapper.insert(originalItem);
+            for (SplitSkuDTO skuDTO : splitSkuDTOS) {
                 DmpOrderItemEntity entity = new DmpOrderItemEntity();
                 BeanMapper.copy(dmpOrderItemEntity, entity);
-                //仅第一条拆分数据保存原单的成本、金额、数量
-                if (i == 0) {
-                    entity.setOriginalQuantity(skuDTO.getOriginalQuantity());
-                    entity.setOriginalCostPrice(skuDTO.getOriginalCostPrice());
-                    entity.setOriginalAmountAfter(skuDTO.getOriginalAmountAfter());
-                }
                 entity.setIsSplitSku(skuDTO.getIsSplitSku());
                 entity.setAmountAfter(skuDTO.getAmountAfter());
+                entity.setOriginalItemId(originalItem.getId());
                 entity.setCleanCostPrice(skuDTO.getCleanCostPrice());
                 entity.setSkuNo(skuDTO.getSkuNo());
                 entity.setOriginalSkuNo(skuDTO.getOriginalSkuNo());
@@ -435,6 +435,9 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
          */
         if (CollectionUtils.isEmpty(bomList)) {
             List<DmpSplitErrorLogEntity> errorList = new ArrayList<>();
+            splitSkuDTO.setOriginalSkuNo(splitSkuDTO.getSkuNo() == null ? "" : splitSkuDTO.getSkuNo());
+            splitSkuDTO.setOriginalQuantity(splitSkuDTO.getQuantity());
+            splitSkuDTO.setOriginalAmountAfter(splitSkuDTO.getAmountAfter());
             SplitSkuDTO newSplitSkuDTO = handleNewSplitSku(splitSkuDTO,splitSkuDTO.getSkuNo(),errorList,null);
             if (CollectionUtil.isNotEmpty(errorList)) {
                 dmpSplitErrorLogService.saveBatch(errorList);
@@ -449,6 +452,11 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         shareCost(itemListAll, splitSkuDTO.getAmountAfter());
 
         return itemListAll;
+    }
+
+    @Override
+    public List<DmpOrderItemGroup> listByGroup() {
+        return baseMapper.listByGroup();
     }
 
     /**
@@ -480,6 +488,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         BeanMapperUtils.copy(splitSkuDTO,newSplitSkuDTO);
         String existKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, skuNo);
         DmpSkuCostEntity dmpSkuCostEntity = (DmpSkuCostEntity) redisUtil.get(existKey);
+        newSplitSkuDTO.setOriginalCostPrice(ObjectUtil.isEmpty(dmpSkuCostEntity) ? BigDecimal.ZERO : dmpSkuCostEntity.getCostPrice());
         //未找到成本添加错误日志
         if (ObjectUtil.isEmpty(dmpSkuCostEntity)) {
             DmpSplitErrorLogEntity errorLogEntity = new DmpSplitErrorLogEntity();

@@ -250,6 +250,12 @@ public class DmpOrderItemEntity implements Serializable {
     @TableField(value = "source_item_id")
     private String sourceItemId;
 
+    /**
+     * 拆分前原数据id
+     */
+    @TableField(value = "original_item_id")
+    private String originalItemId;
+
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
