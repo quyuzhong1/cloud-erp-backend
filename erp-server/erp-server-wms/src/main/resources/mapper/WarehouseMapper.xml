@@ -297,4 +297,18 @@
         GROUP BY spuNo,category,skuId, skuNo, productImgUrl,productName,warehouseId,warehouseName,warehouseLocation,warehouseArea,warehouseAreaName,inv.org_id
         ORDER BY skuNo ASC,warehouseName ASC, inventoryId ASC
     </select>
+
+    <!--根据仓库id查询映射信息-->
+    <select id="getByNames" resultType="com.erp.model.wms.dto.WarehouseDTO$ListDTO">
+        SELECT
+        id,
+        name
+        FROM warehouse  WHERE is_deleted=false and approve_status = 'approve'
+        <if test="nameList != null and nameList.size > 0">
+            and name in
+            <foreach collection="nameList" item="name" open="(" close=")" separator=",">
+                #{name}
+            </foreach>
+        </if>
+    </select>
 </mapper>

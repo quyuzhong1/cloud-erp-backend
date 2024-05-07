@@ -23,8 +23,8 @@
        <result column="from_country" property="fromCountry" />
        <result column="to_country" property="toCountry" />
        <result column="receive_date" property="receiveDate" />
-       <result column="billing_method" property="billingMethod" />
-       <result column="billing_method_name" property="billingMethodName" />
+       <result column="fee_rule" property="feeRule" />
+       <result column="fee_rule_name" property="feeRuleName" />
        <result column="type" property="type" />
        <result column="total_logistics_cost" property="totalLogisticsCost" />
        <result column="actual_weight" property="actualWeight" />
@@ -68,8 +68,8 @@
          from_country,
          to_country,
           receive_date,
-           billing_method,
-           billing_method_name,
+           fee_rule,
+           fee_rule_name,
            "type",
            total_logistics_cost,
             actual_weight,
@@ -90,46 +90,6 @@
             transport_status,
             logistics_channel_id,
             transport_no
-    </sql>
-
-    <sql id="Clause_Column_List">
-        tfmr.id,
-        tfmr.create_user_id,
-        tfmr.create_user_name,
-        tfmr.create_time,
-        tfmr.update_user_id,
-        tfmr.update_user_name,
-        tfmr.update_time,
-        tfmr.version,
-        tfmr.is_deleted,
-        tfmr.main_id,
-        tfmr.source_id,
-        tfmr.source_type,
-        tfmr.source_code,
-        tfmr.relation_code,
-         tfmr.shop_id,
-         tfmr.shop_name,
-         tfmr.from_country,
-         tfmr.to_country,
-          tfmr.receive_date,
-           tfmr.billing_method,
-           tfmr.billing_method_name,
-           tfmr.type,
-           tfmr.total_logistics_cost,
-            tfmr.actual_weight,
-            tfmr.actual_weight_unit,
-            tfmr.volume_weight,
-            tfmr.volume_weight_unit,
-            tfmr.billing_weight,
-            tfmr.billing_weight_unit,
-            tfmr.actual_shipping_cost,
-            tfmr.actual_declare_cost,
-            tfmr.actual_other_cost,
-            tfmr.remark,
-            tfmr.status,
-            tfmr.confirm_date,
-            tfmr.confirm_user_id,
-            tfmr.confirm_user_name
     </sql>
 
     <select id="paging" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO$ListDTO">
@@ -190,8 +150,8 @@
         tfmrd.from_country,
         tfmrd.to_country,
         tfmrd.receive_date,
-        tfmrd.billing_method,
-        tfmrd.billing_method_name,
+        tfmrd.fee_rule,
+        tfmrd.fee_rule_name,
         tfmrd.type,
         tfmrd.total_logistics_cost,
         tfmrd.actual_weight,

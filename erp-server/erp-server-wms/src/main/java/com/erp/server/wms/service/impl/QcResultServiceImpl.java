@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONObject;
@@ -455,8 +456,10 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
             noticeMsgInfoDTO.setReceiverUserIds(userIdList);
             noticeMsgInfoDTO.setTitle(NoticeMsgConstant.QC_BACK_FILL_PACK_HEAD);
-            String msgContent = StrUtil.format(NoticeMsgConstant.QC_BACK_FILL_PACK_CONTENT,productPackDTO.getSkuNo(),productPackDTO.getProductSize(),
-                    productPackDTO.getBoxSize(),productPackDTO.getNetWeight(),productPackDTO.getBoxQty(), LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            String productSize = CharSequenceUtil.format("{}X{}X{}", productPackDTO.getProductLength(), productPackDTO.getProductWidth(), productPackDTO.getProductHeight());
+            String boxSize = CharSequenceUtil.format("{}X{}X{}", productPackDTO.getBoxLength(), productPackDTO.getBoxWeight(), productPackDTO.getBoxHeight());
+            String msgContent = StrUtil.format(NoticeMsgConstant.QC_BACK_FILL_PACK_CONTENT, productPackDTO.getSkuNo(), productSize,
+                    boxSize, productPackDTO.getNetWeight(), productPackDTO.getBoxQty(), LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             noticeMsgInfoDTO.setContent(msgContent);
             noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.WMS_TASK);
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,

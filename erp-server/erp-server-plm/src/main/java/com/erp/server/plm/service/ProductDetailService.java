@@ -687,4 +687,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param details
      */
     void recalDestDeclarePrice(List<ProductDetailEntity> details);
+
+    void initProductSizeAndBoxSize();
 }

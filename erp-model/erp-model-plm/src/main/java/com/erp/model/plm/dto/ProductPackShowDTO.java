@@ -2,10 +2,10 @@ package com.erp.model.plm.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -38,9 +38,17 @@ public class ProductPackShowDTO implements Serializable {
     private String skuNo;
 
     /**
-     * 产品尺寸
+     * 产品尺寸长
      */
-    private String productSize;
+    private BigDecimal productLength;
+    /**
+     * 产品尺寸宽
+     */
+    private BigDecimal productWidth;
+    /**
+     * 产品尺寸高
+     */
+    private BigDecimal productHeight;
 
     /**
      * 毛重
@@ -53,9 +61,17 @@ public class ProductPackShowDTO implements Serializable {
     private BigDecimal netWeight;
 
     /**
-     * 箱规
+     * 箱规长
      */
-    private String boxSize;
+    private BigDecimal boxLength;
+    /**
+     * 箱规宽
+     */
+    private BigDecimal boxWidth;
+    /**
+     * 箱规高
+     */
+    private BigDecimal boxHeight;
 
     /**
      * 单箱重量
@@ -96,7 +112,6 @@ public class ProductPackShowDTO implements Serializable {
      * 修改人名称
      */
     private String updateUserName;
-
 
     /**
      *禁止修改的字段

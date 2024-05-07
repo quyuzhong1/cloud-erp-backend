@@ -1,19 +1,9 @@
 package com.erp.server.tms.convert;
 
-import com.common.business.dto.base.BaseChildDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.mapper.BooleanMapperWork;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
-import com.sdk.tms.disifang.model.chanel.response.ChanelInfo;
-import com.sdk.tms.shopee.model.logistics.response.LogisticsChannel;
-import com.sdk.tms.tongyou.dto.response.TongYouChannel;
-import com.sdk.tms.ubi.model.catalog.response.ServiceCataLog;
-import com.sdk.tms.weishi.dto.response.WeiShiChannel;
-import com.sdk.tms.yanwen.dto.response.YanWenChannel;
-import com.sdk.tms.yuntu.dto.response.YunTuChannel;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -46,6 +36,6 @@ public interface LogisticsSupplierConverter {
             @Mapping(target = "disabled", source = "disabled"),
 
     })
-    BaseChildDTO.ListChildTreeDTO convertTree(LogisticsSupplierEntity entity);
-    List<BaseChildDTO.ListChildTreeDTO> convertTree(List<LogisticsSupplierEntity> dbList);
+    LogisticsSupplierDTO.ListChildTreeDTO convertTree(LogisticsSupplierEntity entity);
+    List<LogisticsSupplierDTO.ListChildTreeDTO> convertTree(List<LogisticsSupplierEntity> dbList);
 }
