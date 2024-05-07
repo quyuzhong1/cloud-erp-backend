@@ -7,6 +7,7 @@ import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.business.utils.StringUtil;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -16,6 +17,7 @@ import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.service.LogisticsOperateService;
+import io.seata.common.util.StringUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
@@ -71,12 +73,12 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
     }
 
     @Override
-    public String pushOperateLog(String authId, String sourceId, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson) {
+    public String pushOperateLog(String sourceId, String sourceCode, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson) {
         DmpPushTaskEntity dmpPushTaskEntity = new DmpPushTaskEntity();
         dmpPushTaskEntity.setSourcePlatformName(PlatformEnum.ERP_TMS.getDesc());
         dmpPushTaskEntity.setSourceType(businessType);
-        dmpPushTaskEntity.setSourceId(sourceId);
-        dmpPushTaskEntity.setSourceCode(sourceId);
+        dmpPushTaskEntity.setSourceId(StringUtils.isBlank(sourceId)?sourceCode:sourceId);
+        dmpPushTaskEntity.setSourceCode(sourceCode);
         dmpPushTaskEntity.setTargetPlatformName(logisticsPlatform);
         //请求状态（0请求中 1请求成功 2请求失败）
         if (RequestStatusEnums.SUCCESS.getCode().equals(status)) {
