@@ -66,7 +66,7 @@
         order by lbd.track_time desc
     </select>
     <select id="getTrackDtoPage" resultType="com.erp.model.tms.dto.LogisticsTrackDTO$UpdateTrackDTO">
-        select lbd.id,lbd.track_no
+        select lbd.id,lbd.track_no, lb.carrier
         from logistics_bill_detail lbd
         inner join logistics_bill lb on lbd.main_id = lb.id and lb.is_deleted = false
         where lbd.track_status != 'sign'

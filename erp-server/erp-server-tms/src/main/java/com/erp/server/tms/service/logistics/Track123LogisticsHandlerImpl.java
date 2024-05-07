@@ -156,7 +156,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                             trackingDetails.forEach(trackingDetail -> {
                                 LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
                                 logisticsTrackEntity.setTrackNo(trackDetail.getTrackingNo());
-                                logisticsTrackEntity.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));//转换类型
+                                logisticsTrackEntity.setStatus(convertOceanTrackStatus(trackingDetail.getEventStatus()));//转换类型
                                 LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                                 logisticsTrackEntity.setTrackTime(eventTime);
                                 logisticsTrackEntity.setContent(trackingDetail.getEventDetails());
@@ -201,6 +201,22 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(oceanTrackRequestList), JSONUtil.toJsonStr(e));
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + e.getMessage());
         }
+    }
+
+    /**
+     * 【与track123轨迹对应关系-到港之前均为运输中，到港后更新「已到港」，查验变更为[查验中]】
+     * @param eventStatus
+     * @return
+     */
+    private String convertOceanTrackStatus(String eventStatus) {
+        if (StringUtils.isBlank(eventStatus)) {
+            return LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode();
+        } else if (eventStatus.contains("ARRI")) {
+            return LogisticTrackStatusEnum.OCEAN_ARRIVE.getCode();
+        } else if (eventStatus.contains("HOLD")) {
+            return LogisticTrackStatusEnum.OCEAN_HOLD.getCode();
+        }
+        return LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode();
     }
 
     @Override
@@ -278,7 +294,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                 List<Accepted> accepted = data.getAccepted();
                 if (CollectionUtils.isNotEmpty(accepted)) {
                     accepted.forEach(accepted1 -> {
-                        registerResponseVOS.add(RegisterResponseVO.builder().trackNo(accepted1.getTrackNo()).trackStatus(true).build());
+                        registerResponseVOS.add(RegisterResponseVO.builder().trackNo(accepted1.getTrackNo()).orderNo(accepted1.getOrderNo()).trackStatus(true).build());
                     });
                 }
                 List<Rejected> rejected = data.getRejected();
@@ -287,7 +303,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                         if (Objects.nonNull(rejected1.getError()) && StringUtils.isNotEmpty(rejected1.getError().getMsg())
                                 && rejected1.getError().getMsg().equals(HAS_BEEN_IMPORTED)){
                             //已导入的运单号，返回成功
-                            registerResponseVOS.add(RegisterResponseVO.builder().trackNo(rejected1.getTrackNo()).trackStatus(true).build());
+                            registerResponseVOS.add(RegisterResponseVO.builder().trackNo(rejected1.getTrackNo()).orderNo(rejected1.getOrderNo()).trackStatus(true).build());
                         }else {
                             registerResponseVOS.add(RegisterResponseVO.builder().trackNo(rejected1.getTrackNo()).trackStatus(false)
                                     .code(rejected1.getError().getCode())
@@ -325,6 +341,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
         for (LogisticsTrackBaseDTO.OceanRegisterRequestDTO oceanRegisterRequestDTO : list) {
             OceanRegisterRequest build = OceanRegisterRequest.builder()
                     .trackNo(oceanRegisterRequestDTO.getTrackNo())
+                    .carrierCode(oceanRegisterRequestDTO.getCarrierCode())
                     .type(MathUtil.THREE)
                     .build();
             registerRequests.add(build);

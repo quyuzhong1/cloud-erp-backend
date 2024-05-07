@@ -328,11 +328,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if (Objects.isNull(channel)) {
             new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
-        LogisticsChannelEntity addChannel = new LogisticsChannelEntity();
         String addChannelId = IdWorker.getIdStr();
-        BeanMapperUtils.copy(channel, addChannel);
-        addChannel.setId(addChannelId);
-        Boolean result = this.save(addChannel);
+        channel.setId(addChannelId);
+        Boolean result = this.save(channel);
 
         //平台物流映射
         logisticsMappingService.copy(id, addChannelId);

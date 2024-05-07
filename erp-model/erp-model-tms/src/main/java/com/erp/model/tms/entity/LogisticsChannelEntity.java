@@ -69,6 +69,10 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     */
     @TableField("track_query_mode")
     private String trackQueryMode;
+    /**
+     * 船司/航司
+     */
+    private String carrier;
 
     @TableField("paper_size")
     private String paperSize;
