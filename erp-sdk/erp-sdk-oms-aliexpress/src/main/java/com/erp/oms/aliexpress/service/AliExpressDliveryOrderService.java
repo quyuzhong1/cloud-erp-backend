@@ -1,21 +1,23 @@
 package com.erp.oms.aliexpress.service;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.common.core.exception.ServiceException;
 import com.erp.oms.aliexpress.api.IopClient;
 import com.erp.oms.aliexpress.api.IopClientImpl;
 import com.erp.oms.aliexpress.api.IopRequest;
 import com.erp.oms.aliexpress.api.IopResponse;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
+import com.erp.oms.aliexpress.dto.request.OrderRequest;
+import com.erp.oms.aliexpress.dto.response.AliExpressDeliveryDetail;
 import com.erp.oms.aliexpress.enums.Protocol;
 import com.erp.oms.aliexpress.util.ApiException;
 import io.seata.common.util.StringUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 @Component
@@ -42,25 +44,44 @@ public class AliExpressDliveryOrderService {
 //        return JSONObject.parseObject(response.getBody(), LabelResult.class);
     }
 
+
     private void validate(String appKey,String appSecret,String token,String url){
         if (StringUtils.isBlank(appKey) || StringUtils.isBlank(appSecret) || StringUtils.isBlank(token) || StringUtils.isBlank(token) ) throw new ServiceException("授权信息不能为空");
     }
 //
+//    public static void main(String[] args) throws ApiException {
+//        String appKey = "502978";
+//        String appSecret = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
+//        String baseUrl = "https://api-sg.aliexpress.com";
+//        String token = "50000200216zwXSmacvxdR9mlN3Q173edb18whDaGtElRAyxCAEBR9sxVko62BrXG7tj";
+//        IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
+//        IopRequest request = new IopRequest();
+//        request.setApiName(AliexpressConstants.ALIEXPRESS_ASCP_FFO_QUERY);
+//        Map<String, Object> paramMap = new HashMap<>();
+//        paramMap.put("biz_type", 288000);
+//        paramMap.put("customer_order_number_list", Arrays.asList("1102876023215566"));
+//        System.out.println();
+//        request.addApiParameter("fulfillment_forward_order_query", JSONObject.toJSONString(paramMap));
+//        IopResponse response = client.execute(request, token, Protocol.TOP);
+//        System.out.println(response.getBody());
+//
+//    }
+
     public static void main(String[] args) throws ApiException {
         String appKey = "502978";
         String appSecret = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
         String baseUrl = "https://api-sg.aliexpress.com";
-        String token = "50000700205zwXSma1e2c8625cUveuFpAPxMtBCci0HmUhuSd9BfP4kTtgICMZMOGaag";
+        String token = "50000200216zwXSmacvxdR9mlN3Q173edb18whDaGtElRAyxCAEBR9sxVko62BrXG7tj";
         IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
         IopRequest request = new IopRequest();
-        request.setApiName(AliexpressConstants.ALIEXPRESS_ASCP_FFO_QUERY);
+        request.setApiName(AliexpressConstants.ALIEXPRESS_ASCP_FFO_ITEM_QUERY);
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("biz_type", 288000);
-        paramMap.put("customer_order_number_list", Arrays.asList("3031020994550558"));
+        paramMap.put("fulfillment_order_no", "WH4062610069835019");
         System.out.println();
-        request.addApiParameter("fulfillment_forward_order_query", JSONObject.toJSONString(paramMap));
+        request.addApiParameter("fulfillment_forward_order_item_query", JSONObject.toJSONString(paramMap));
         IopResponse response = client.execute(request, token, Protocol.TOP);
-        System.out.println(response.getBody());
+
 
     }
 }

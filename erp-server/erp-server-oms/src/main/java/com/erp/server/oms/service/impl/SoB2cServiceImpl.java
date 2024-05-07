@@ -58,7 +58,10 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.*;
-import com.erp.model.tms.entity.*;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.SettingForecastEntity;
+import com.erp.model.tms.entity.TransferDeclareDetailEntity;
+import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.wms.dto.*;
@@ -108,7 +111,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.math3.util.Pair;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -3183,10 +3185,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailDTO.getSkuId())&& bomType.equals(e.getType())).count();
                     if (count > 0) {
                         isCombination = Boolean.TRUE;
+                        //设置明细SKU是否组合品
+                        detailDTO.setIsCombination(Boolean.TRUE);
                     }
                 }
-                //设置明细SKU是否组合品
-                detailDTO.setIsCombination(isCombination);
                 //库存SKU
                 SkuMappingDTO.ListSkuDTO warehouseListSkuDTO = skuMappingList.stream().filter(obj -> StrUtil.equals(obj.getProductSkuId(), detailDTO.getSkuId()) && StrUtil.equals(obj.getWarehouseId(), detailDTO.getWarehouseId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(warehouseListSkuDTO)) {
@@ -7279,6 +7281,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         .collect(Collectors.toList());
                 //非销售套装bom则直接导出父级SKU信息
                 if (CollectionUtils.isEmpty(childList)) {
+                    exportDTO.setSkuQty(exportDTO.getQty());
                     resultList.add(exportDTO);
                     continue;
                 }
@@ -7299,6 +7302,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     resultList.add(resultDTO);
                 }
             } else {
+                exportDTO.setSkuQty(exportDTO.getQty());
                 resultList.add(exportDTO);
             }
         }
