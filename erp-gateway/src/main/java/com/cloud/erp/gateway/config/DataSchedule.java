@@ -46,13 +46,13 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     @Resource
     private DynamicRouteService dynamicRouteService;
     
-    private static final AtomicInteger systemOrder = new AtomicInteger(1000);
-    private static final AtomicInteger matchOrder = new AtomicInteger(100000);
+    private static final AtomicInteger pathMatchOrder = new AtomicInteger(100000);
     private static final AtomicInteger pathOrder = new AtomicInteger(200000);
     private static final AtomicInteger refererOrder = new AtomicInteger(400000);
     private static final AtomicInteger hostMatchOrder = new AtomicInteger(800000);
     private static final AtomicInteger hostOrder = new AtomicInteger(1600000);
     
+    private static final String openApiPath = "/open/api";
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
 
@@ -82,17 +82,23 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
                     PredicateDefinition predicate = null;
                     
                     Integer order = 0;
-                    if(rateLimiterPath != null && !"".equals(rateLimiterPath)) {
-                    	if(!rateLimiterPath.startsWith("/")) {
-    						rateLimiterPath = "/" + rateLimiterPath;
-    					}
-                    	predicate = new PredicateDefinition("Path=/api/"+ serviceCode + rateLimiterPath);
-                        predicates.add(predicate);
-                        if(rateLimiterPath.contains("*")) {
-                        	order = order + matchOrder.incrementAndGet();
-                        }else {
-                        	order = order + pathOrder.incrementAndGet();
-                        }
+                    
+                    if(rateLimiterPath == null || "".equals(rateLimiterPath)) {
+                    	rateLimiterPath = "/api/"+ serviceCode + "/**";
+                    }
+                    if(!rateLimiterPath.startsWith("/")) {
+						rateLimiterPath = "/" + rateLimiterPath;
+					}
+                	if(rateLimiterPath.startsWith(openApiPath)) {
+                		predicate = new PredicateDefinition("Path="+ rateLimiterPath);
+                	}else {
+                		predicate = new PredicateDefinition("Path=/api/"+ serviceCode + rateLimiterPath);
+                	}
+                    predicates.add(predicate);
+                    if(rateLimiterPath.contains("*")) {
+                    	order = order + pathMatchOrder.incrementAndGet();
+                    }else {
+                    	order = order + pathOrder.incrementAndGet();
                     }
                     
                     if(referer != null && !"".equals(referer)) {
@@ -111,12 +117,6 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
                         	order = order + hostOrder.incrementAndGet();
                         }
                         predicate = new PredicateDefinition("Host="+ host);
-                        predicates.add(predicate);
-                    }
-                    
-                    if(order == 0) {
-                    	order = systemOrder.incrementAndGet();
-                    	predicate = new PredicateDefinition("Path=/api/"+ serviceCode + "/**");
                         predicates.add(predicate);
                     }
                     
@@ -144,7 +144,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
                 	dynamicRouteService.updateList(definitionList);
                 }
             } catch (Exception e) {
-                log.error("任务失败", e);
+                log.error("动态路由任务失败", e);
             }
         }, routereFreshTime, routereFreshTime, TimeUnit.SECONDS);
     }
@@ -155,92 +155,78 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     private String username;
     @Value("${spring.datasource.password:}")
     private String password;
-    private static boolean isFirst = true;
+    private static boolean dealFinish = true;
     
     private DataSource dataSource;
     
     public List<CustomKeyResolverConfig.RateLimiterPathMap> getSysRouteConfig() {
     	List<CustomKeyResolverConfig.RateLimiterPathMap> sysRouteConfigList = new ArrayList<>();
-    	String queryCondition = null;
-    	try {
-			if(isFirst) {
-				int retryCount = 0;
-				while(dataSource == null && retryCount < 3) {
-					HikariConfig config = new HikariConfig();
-				    config.setJdbcUrl(url);
-				    config.setUsername(username);
-				    config.setPassword(password);
+    	if(dealFinish) {
+    		try {
+    			String queryCondition = null;
+    			if(dataSource == null) {
+    				HikariConfig config = new HikariConfig();
+    			    config.setJdbcUrl(url);
+    			    config.setUsername(username);
+    			    config.setPassword(password);
 
-				    // 设置其他连接池参数，例如最大连接数、最小空闲连接数等
-				    config.setMaximumPoolSize(5);
-				    config.setMinimumIdle(2);
+    			    // 设置其他连接池参数，例如最大连接数、最小空闲连接数等
+    			    config.setMaximumPoolSize(3);
+    			    config.setMinimumIdle(1);
+    			    dataSource = new HikariDataSource(config);
+    			    queryCondition = "is_deleted = 'f'";
+    			}else {
+    				queryCondition = "update_time >= '" + DateUtil.formatDateTime(DateUtil.offsetSecond(new Date(), -(routereFreshTime + 1))) + "'";
+    			}
+    			
+    			Connection connection = null;
+    	        Statement statement = null;
+    	        ResultSet resultSet = null;
+    	        
+    	        try {
+    	            connection = dataSource.getConnection();
 
-				    dataSource = new HikariDataSource(config);
-				    
-				    if(dataSource == null) {
-				    	try {
-							Thread.sleep(1000);
-						} catch (InterruptedException e) {
-						}
-				    	retryCount = retryCount + 1;
-				    }
-				}
-			    
-			    queryCondition = "is_deleted = 'f'";
-			}else {
-				queryCondition = "update_time >= '" + DateUtil.formatDateTime(DateUtil.offsetSecond(new Date(), -(routereFreshTime + 1))) + "'";
-			}
-		} finally {
-			isFirst = false;
-		}
-    	
-    	if(dataSource == null) {
-    		return sysRouteConfigList;
+    	            String sql = "SELECT id,is_deleted,rate,count,rate_limiter_path,service_code,referer,host FROM sys_route_config where " + queryCondition;
+    	            statement = connection.createStatement();
+    	            resultSet = statement.executeQuery(sql);
+
+    	            CustomKeyResolverConfig.RateLimiterPathMap rateLimiterPathMap = null;
+    	            while (resultSet.next()) {
+    	            	rateLimiterPathMap = new RateLimiterPathMap();
+    	            	rateLimiterPathMap.setId(String.valueOf(resultSet.getInt("id")));
+    	            	rateLimiterPathMap.setIsDeleted(resultSet.getBoolean("is_deleted"));
+    	            	rateLimiterPathMap.setRate(resultSet.getInt("rate"));
+    	            	rateLimiterPathMap.setCount(resultSet.getInt("count"));
+    	            	rateLimiterPathMap.setRateLimiterPath(resultSet.getString("rate_limiter_path"));
+    	            	rateLimiterPathMap.setServiceCode(EnumMessage.getByCode(ServiceCodeNameEnum.class , resultSet.getString("service_code")));
+    	            	rateLimiterPathMap.setReferer(resultSet.getString("referer"));
+    	            	rateLimiterPathMap.setHost(resultSet.getString("host"));
+    	            	
+    	                sysRouteConfigList.add(rateLimiterPathMap);
+    	            }
+    	        } catch (Exception e) {
+    	            e.printStackTrace();
+    	        } finally {
+    	            try {
+    	                if (resultSet != null) {
+    	                    resultSet.close();
+    	                }
+    	                if (statement != null) {
+    	                    statement.close();
+    	                }
+    	                if (connection != null) {
+    	                    connection.close();
+    	                }
+    	            } catch (Exception e) {
+    	                e.printStackTrace();
+    	            }
+    	        }
+    		}catch(Exception e) {
+    			log.error("获取动态路由数据失败" , e);
+    		}finally {
+    			dealFinish = true;
+    		}
     	}
-
-        Connection connection = null;
-        Statement statement = null;
-        ResultSet resultSet = null;
-
-        try {
-            connection = dataSource.getConnection();
-
-            String sql = "SELECT id,is_deleted,rate,count,rate_limiter_path,service_code,referer,host FROM sys_route_config where " + queryCondition;
-            statement = connection.createStatement();
-            resultSet = statement.executeQuery(sql);
-
-            CustomKeyResolverConfig.RateLimiterPathMap rateLimiterPathMap = null;
-            while (resultSet.next()) {
-            	rateLimiterPathMap = new RateLimiterPathMap();
-            	rateLimiterPathMap.setId(String.valueOf(resultSet.getInt("id")));
-            	rateLimiterPathMap.setIsDeleted(resultSet.getBoolean("is_deleted"));
-            	rateLimiterPathMap.setRate(resultSet.getInt("rate"));
-            	rateLimiterPathMap.setCount(resultSet.getInt("count"));
-            	rateLimiterPathMap.setRateLimiterPath(resultSet.getString("rate_limiter_path"));
-            	rateLimiterPathMap.setServiceCode(EnumMessage.getByCode(ServiceCodeNameEnum.class , resultSet.getString("service_code")));
-            	rateLimiterPathMap.setReferer(resultSet.getString("referer"));
-            	rateLimiterPathMap.setHost(resultSet.getString("host"));
-            	
-                sysRouteConfigList.add(rateLimiterPathMap);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (resultSet != null) {
-                    resultSet.close();
-                }
-                if (statement != null) {
-                    statement.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        
         return sysRouteConfigList;
     }
 }
