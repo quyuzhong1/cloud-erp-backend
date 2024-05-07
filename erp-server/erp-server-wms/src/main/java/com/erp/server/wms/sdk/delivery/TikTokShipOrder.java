@@ -3,6 +3,7 @@ package com.erp.server.wms.sdk.delivery;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.annotation.PlatformShipOrderAnno;
+import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.IPlatformService;
@@ -73,7 +74,7 @@ public class TikTokShipOrder implements IPlatformService {
             ShipOrderUSParam paramDTO = new ShipOrderUSParam();
             paramDTO.setTrackingNumber(view.getLogisticsDTO().getCode());
             paramDTO.setOrderLineItemIds(sourceDetailIds);
-            paramDTO.setShippingProviderId(tmsScaleChannelShipDTO.getPlatformChannelId());
+            paramDTO.setShippingProviderId(tmsScaleChannelShipDTO.getCode());
             ShipOrderUS shipOrderUS = tikTokSdkClientService.sendTikTokShipOrderUS(tikTokShopInfoDTO, view.getPlatformCode(), paramDTO);
             if (shipOrderUS.getCode() != 0) {
                 throw new ServiceException("TikTok标记发货失败");
@@ -82,10 +83,15 @@ public class TikTokShipOrder implements IPlatformService {
             ShipOrderOtherParam paramDTO = new ShipOrderOtherParam();
             SelfShipmentBean selfShipmentBean = new SelfShipmentBean();
             selfShipmentBean.setTrackingNumber(view.getLogisticsDTO().getCode());
-            selfShipmentBean.setShippingProviderId(tmsScaleChannelShipDTO.getPlatformChannelId());
+            selfShipmentBean.setShippingProviderId(tmsScaleChannelShipDTO.getCode());
             paramDTO.setSelfShipment(selfShipmentBean);
             tikTokSdkClientService.sendTikTokShipOrderOther(tikTokShopInfoDTO, view.getLogisticsDTO().getPlatformPackageId(), paramDTO);
         }
 
+    }
+
+    @Override
+    public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
+        return null;
     }
 }

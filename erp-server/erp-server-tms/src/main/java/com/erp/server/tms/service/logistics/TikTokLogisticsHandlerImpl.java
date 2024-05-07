@@ -56,7 +56,7 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<ShippingProvidersBean> providersBeanList = tikTokShipperService.sendTikTokLogisticsChannel(authMap.get("shopId"));
         for (ShippingProvidersBean providerDTO : providersBeanList) {
             LogisticsSaleChannelEntity logisticsSaleChannelEntity = new LogisticsSaleChannelEntity()
-                    .setCode(providerDTO.getName())
+                    .setCode(providerDTO.getId())
                     .setPlatformChannelId(providerDTO.getId())
                     .setCnName(providerDTO.getName())
                     .setLogisticsPlatform(LogisticsPlatformEnum.TIK_TOK.getCode());
