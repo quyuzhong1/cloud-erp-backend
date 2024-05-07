@@ -1,6 +1,5 @@
 package com.erp.server.plm.service.impl;
 
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -534,9 +533,6 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
      * @date 2022-11-14 18:29
      */
     public Boolean startChangeDocsProcess(String userId, ProjectTaskEntity taskEntity) {
-
-        log.warn("流程启动更新任务，taskEntity2 = {}", JSONUtil.toJsonStr(taskEntity));
-
         //任务类型
         Integer taskType = taskEntity.getType();
         List<List<String>> membersIds = new ArrayList<>();
@@ -589,15 +585,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
         String processId = processResult.getProcessId();
         if (StringUtils.isNotBlank(processId)) {
-
             //更改任务的状态为未待审核 以及流程id
             taskEntity.setProcessId(processId);
             taskEntity.setStatus(TaskStateEnum.WAIT_CONFIRM.getCode());
             taskEntity.setBusinessProcessId(businessProcess.getId());
             taskEntity.setIsChangeDocs(Boolean.TRUE);
-            ProjectTaskEntity taskEntity1 = projectTaskService.getById(taskEntity.getId());
-            log.warn("流程启动更新任务，taskEntity1 = {}", JSONUtil.toJsonStr(taskEntity1));
-            log.warn("流程启动更新任务，taskEntity = {}", JSONUtil.toJsonStr(taskEntity));
             return projectTaskService.updateById(taskEntity);
         }
         return Boolean.TRUE;
