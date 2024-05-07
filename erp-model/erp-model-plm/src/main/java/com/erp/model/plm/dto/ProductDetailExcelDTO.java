@@ -499,15 +499,4 @@ public class ProductDetailExcelDTO {
      * 报关产品属性Id
      */
     private String productPropertyId;
-    /**
-     * 仓位
-     */
-    @FieldValid(fieldName = "推荐仓位(小货区)")
-    private String warehouseLocation;
-
-    /**
-     * 仓位
-     */
-    @FieldValid(fieldName = "推荐仓位(大货区)")
-    private String warehouseLocationLarge;
 }
