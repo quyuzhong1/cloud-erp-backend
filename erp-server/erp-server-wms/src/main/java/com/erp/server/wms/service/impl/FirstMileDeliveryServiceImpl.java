@@ -1346,19 +1346,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         for(FirstMileDeliveryDTO.ListDTO data : list) {
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(data.getSkuNo())).findFirst().orElse(new SkuVO());
 
-            //设置第三方SKU信息
-            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = null;
-            if(StringUtils.isNotBlank(data.getProvideCode())){
-                listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
-                        v->v.getProductSkuId().equals(data.getSkuId()) && v.getDictPlatform().equals(data.getProvideCode()) && (v.getHasMappingAll() || v.getWarehouseId().equals(data.getDestWarehouseId()))
-                        )
-                        .findFirst().orElse(null);
-            }
-
-            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
-                data.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
-            }
-
             //库存sku
             String stockSku = listSkuDTOS.stream()
                     .filter(req -> data.getSkuId().equals(req.getProductSkuId())
