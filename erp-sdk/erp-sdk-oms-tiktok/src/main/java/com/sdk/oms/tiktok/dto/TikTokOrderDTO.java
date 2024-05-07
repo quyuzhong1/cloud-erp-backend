@@ -153,6 +153,9 @@ public class TikTokOrderDTO extends CleanBaseDTO {
             orderDTO.setRemark("平台取消");
         }
 
+        //创建时间
+        LocalDateTime createTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(ordersBean.getCreateTime()), ZoneOffset.UTC);
+        orderDTO.setPlatformOrderCreateTime(createTime);
 
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(ordersBean);
