@@ -32,6 +32,7 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -114,14 +115,20 @@ public class CfgSettingJob {
         QcEffectivenessDTO.CommonSearchParamDTO paramDTO = new  QcEffectivenessDTO.CommonSearchParamDTO();
         LocalDate now = LocalDate.now();
         paramDTO.setDateList(Arrays.asList(now, now));
-        QcEffectivenessDTO.ViewQcOverviewDTO viewQcOverviewDTO = qcEffectivenessService.viewQcOverview(paramDTO);
-        List<QcEffectivenessDTO.ViewQcOverviewDetailDTO> list = viewQcOverviewDTO.getList();
+        List<QcEffectivenessDTO.ViewQcOverviewDetailDTO> list = qcEffectivenessService.listQcBillGroupQcStatus(paramDTO);
         //质检单总计
-        Integer totalCount = list.stream().filter(obj -> StrUtil.equals(obj.getType(), "总计")).map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount).findFirst().orElse(MathUtil.ZERO);
+        Integer totalCount = list.stream().map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount).reduce(MathUtil.ZERO,Integer::sum);
         //已质检数量
-        Integer hasQcCount = list.stream().filter(obj -> StrUtil.equals(obj.getType(), QcBillStatusEnum.FINISH_QC.getName())).map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount).findFirst().orElse(MathUtil.ZERO);
+        Integer hasQcCount = list.stream().filter(obj -> StrUtil.equals(obj.getType(), QcBillStatusEnum.FINISH_QC.getCode())
+                || StrUtil.equals(obj.getType(), QcBillStatusEnum.EXEMPTION.getCode()))
+                .map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount)
+                .reduce(MathUtil.ZERO,Integer::sum);
         //未质检数量
-        Integer notQcCount = list.stream().filter(obj -> StrUtil.equals(obj.getType(), QcBillStatusEnum.WAIT_QC.getName())).map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount).findFirst().orElse(MathUtil.ZERO);
+        Integer notQcCount = list.stream().filter(obj -> StrUtil.equals(obj.getType(), QcBillStatusEnum.DRAFT.getCode())
+                ||  StrUtil.equals(obj.getType(), QcBillStatusEnum.WAIT_QC.getCode())
+                ||  StrUtil.equals(obj.getType(), QcBillStatusEnum.WAIT_RE_QC.getCode()))
+                .map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount)
+                .reduce(MathUtil.ZERO,Integer::sum);
         //累计未质检
         QcEffectivenessDTO.CountQcParamDTO qcParamDTO = new QcEffectivenessDTO.CountQcParamDTO();
         qcParamDTO.setQcStatusList(Arrays.asList(QcBillStatusEnum.WAIT_QC.getCode(),QcBillStatusEnum.DRAFT.getCode(),QcBillStatusEnum.WAIT_RE_QC.getCode()));
@@ -131,8 +138,11 @@ public class CfgSettingJob {
         qcParamDTO.setIsTimeOut(Boolean.TRUE);
         Integer timeOutTotalCount = qcInfoService.countTotalNotQc(qcParamDTO);
 
+        //已质检比例
+        String rate = MathUtil.divide(new BigDecimal(hasQcCount), new BigDecimal(totalCount)).multiply(MathUtil.BigDecimal_100).stripTrailingZeros().toPlainString() + "%";
+
         //消息头
-        String title = StrUtil.format(NoticeMsgConstant.FS_QC_SETTING_HEAD,totalCount,hasQcCount,viewQcOverviewDTO.getCompletionRate().stripTrailingZeros().toPlainString() + "%",notQcCount,notQcTotalCount,timeOutTotalCount);
+        String title = StrUtil.format(NoticeMsgConstant.FS_QC_SETTING_HEAD,totalCount,hasQcCount,rate,notQcCount,notQcTotalCount,timeOutTotalCount);
         noticeMsgInfoDTO.setTitle(title);
         //消息体
         String msgContent = StrUtil.format(NoticeMsgConstant.FS_QC_SETTING_CONTENT,"质检通知", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));

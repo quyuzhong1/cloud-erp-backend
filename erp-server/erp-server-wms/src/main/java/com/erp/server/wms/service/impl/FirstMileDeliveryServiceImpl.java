@@ -42,6 +42,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -1734,18 +1735,22 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         List<OverseasWarehouseInboundDetailDTO.ViewDTO> detailViewList = FirstMileDeliveryConverter.INSTANCE.fmdToOverseasWarehouseInboundDetailView(firstMileDeliveryDetailEntities);
 
+        //设置第三方产品名称
+        List<String> platformSkuNoList = firstMileDeliveryDetailEntities.stream()
+                .map(FirstMileDeliveryDetailEntity::getPlatformSkuNo)
+                .distinct()
+                .collect(Collectors.toList());
+        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+        listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+        listingInfoParamDTO.setPlatform(dictPlatform);
+        List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+        detailViewList.forEach(e->{
+            SkuMappingDTO.MappingSkuViewDTO view = mappingSkuViewDTOList.stream().filter(v->v.getPlatformSkuNo().equals(e.getPlatformSkuNo())).findFirst().orElse(new SkuMappingDTO.MappingSkuViewDTO());
+            e.setPlatformProductName(view.getPlatformProductName());
+        });
+
         //查询已装箱信息
         List<WmsCartonDTO.PackDateDTO> packDateDTOList = wmsCartonService.listPackDateBySourceId(entity.getId());
-
-        //查询库存sku
-        List<SkuMappingDTO.ListSkuParamDTO> skuParamDTOList = new ArrayList<>();
-        for (OverseasWarehouseInboundDetailDTO.ViewDTO detailEntity : detailViewList) {
-            SkuMappingDTO.ListSkuParamDTO paramDTO = new SkuMappingDTO.ListSkuParamDTO();
-            paramDTO.setSkuNo(detailEntity.getSkuNo());
-            paramDTO.setWarehouseId(viewDTO.getToWarehouseId());
-            skuParamDTOList.add(paramDTO);
-        }
-        List<SkuMappingDTO.ListSkuDTO> listSkuDTOS = skuMappingFeign.listBySkuNoList(skuParamDTOList);
 
         for (OverseasWarehouseInboundDetailDTO.ViewDTO dto : detailViewList) {
             //装箱数量
@@ -1760,15 +1765,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).findFirst().orElse(new SkuVO());
             dto.setProductName(skuVO.getSkuName());
             dto.setImagesUrl(skuVO.getSkuImagesUrl());
-
-            //库存sku
-            SkuMappingDTO.ListSkuDTO view = listSkuDTOS.stream()
-                    .filter(req -> req.getProductSkuId().equals(dto.getSkuId())
-                            && req.getWarehouseId().equals(viewDTO.getToWarehouseId()))
-                    .distinct()
-                    .findFirst().orElse(new SkuMappingDTO.ListSkuDTO());
-            dto.setPlatformSkuNo(view.getPlatformSkuNo());
-            dto.setPlatformProductName(view.getPlatformProductName());
         }
 
         viewDTO.setDetailList(detailViewList);

@@ -23,9 +23,13 @@ import java.util.Map;
 @NoArgsConstructor
 public class LogisticsQueryBaseVO implements Serializable {
     /**
-     * 发货单号
+     * 发货单号 (erp销售订单code)
      */
     String deliveryNo;
+    /**
+     * 订单id(erp销售订单id)
+     */
+    String orderId;
     /**
      * 运单号
      */

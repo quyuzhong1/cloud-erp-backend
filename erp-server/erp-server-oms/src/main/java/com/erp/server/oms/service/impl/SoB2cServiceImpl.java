@@ -904,7 +904,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
         //物流跟踪号存在值则清除异常
-        boolean isCleanError = StrUtil.isNotBlank(soB2cLogisticsEntity.getTrackNo());
+        boolean isCleanError = StrUtil.isNotBlank(soB2cLogisticsEntity.getCode());
         if (isCleanError) {
             //清除异常订单的类型和异常订单表数据
             soB2cErrorService.deleteByMainIds(Arrays.asList(id));
@@ -1270,7 +1270,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     //取消物流单
                     LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
                             channelId(existChannelId).transportNo(code).
-                            referenceNumber(entity.getCode()).build();
+                            referenceNumber(entity.getCode()).orderId(entity.getId()).build();
                     ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
                     //取消失败
                     if (!cancelResult.isSuccess()) {
@@ -5631,7 +5631,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //取消物流单
             LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
                     channelId(existChannelId).transportNo(code).
-                    referenceNumber(entity.getCode()).build();
+                    referenceNumber(entity.getCode()).orderId(entity.getId()).build();
             ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
             //取消失败
             if (!cancelResult.isSuccess() && !"功能未开放".equals(cancelResult.getMsg())) {
@@ -7088,6 +7088,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         return baseMapper.listMergePackageBySoIds(ids);
     }
+
 
     @Override
     public PagingVO<SoB2cAbnormalDTO.ListDTO> abnormalPaging(PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> pagingParamDTO) {
