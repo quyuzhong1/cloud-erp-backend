@@ -19,10 +19,7 @@ import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
-import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
-import com.erp.model.wms.enums.ReturnModeEnum;
-import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseChangeDetailMapper;
 import com.erp.server.scm.service.*;
@@ -219,30 +216,15 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
         //入库信息
         List<PoInstockDetailEntity> purchaseStockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
 
-        //退货信息
-        List<PoReturnDetailEntity> purchaseReturnOrderDetailList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
-
 
         for (PurchaseChangeDetailEntity purchaseChangeDetailEntity : list) {
-            //质检退货数量
-            Integer returnQty = MathUtil.ZERO;
-            if (CollectionUtils.isNotEmpty(purchaseReturnOrderDetailList)) {
-                //质检退货数量
-                returnQty = purchaseReturnOrderDetailList.stream()
-                        .filter(req -> req.getPurchaseOrderDetailId().equals(purchaseChangeDetailEntity.getPurchaseOrderDetailId())
-                                && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())
-                                && ReturnOrderSourceEnum.QC.getCode().equals(req.getSourceType()))
-                        .map(PoReturnDetailEntity::getReturnQty)
-                        .reduce(MathUtil.ZERO, Integer::sum);
-            }
-
             //变更后数量不能小于收货数量
             if (CollectionUtils.isNotEmpty(receiveDetailList)) {
                 Integer receiveQty = receiveDetailList.stream()
                         .filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseChangeDetailEntity.getPurchaseOrderDetailId()))
                         .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                if (receiveQty - returnQty >  purchaseChangeDetailEntity.getQty()) {
-                    throw new ServiceException(new ApiResult(1,String.format("SKU【%s】数量不能小于(收货数量-质检退货量)【%s】",purchaseChangeDetailEntity.getSkuNo(),receiveQty - returnQty)));
+                if (receiveQty > purchaseChangeDetailEntity.getQty()) {
+                    throw new ServiceException(new ApiResult(1,String.format("SKU【%s】数量不能小于收货数量【%s】",purchaseChangeDetailEntity.getSkuNo(),receiveQty)));
                 }
             }
             //变更后数量不能小于入库数量
