@@ -93,7 +93,8 @@ public class DmpOrderOriginalItemServiceImpl extends ServiceImpl<DmpOrderOrigina
                                     DmpOrderOriginalItemEntity entity = new DmpOrderOriginalItemEntity();
                                     BeanUtils.copyProperties(item, entity);
                                     entity.setOriginalQuantity(item.getQuantity());
-                                    entity.setOriginalAmountAfter(item.getOriginalAmountAfter());
+                                    entity.setOriginalAmountAfter(item.getAmountAfter());
+                                    entity.setOriginalCostPrice(item.getCleanCostPrice());
                                     return entity;
                                 }).collect(Collectors.toList());
                 boolean update = saveOrUpdateBatch(originalItems);
