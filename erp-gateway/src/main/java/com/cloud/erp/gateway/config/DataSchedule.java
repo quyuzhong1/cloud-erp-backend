@@ -64,78 +64,82 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
         		datas = datas.stream().filter(d -> d.getIsDeleted() == null || !d.getIsDeleted()).collect(Collectors.toList());
                 List<RouteDefinition> definitionList = new ArrayList<>();
                 for (RateLimiterPathMap data : datas) {
-                	ServiceCodeNameEnum serviceCodeNameEnum = data.getServiceCode();
-                	if(serviceCodeNameEnum == null) {
-                		continue;
-                	}
-                	String serviceCode = serviceCodeNameEnum.getCode();
-					String rateLimiterPath = data.getRateLimiterPath();
-					String host = data.getHost();
-					String referer = data.getReferer();
-					
-					String id = serviceCode + "_route_" + data.getId();
-                    RouteDefinition definition = new RouteDefinition();
-                    definition.setId(id);
-                    definition.setUri(new URI("lb://erp-" + serviceCode));
-                    // 断言
-                    List<PredicateDefinition> predicates = new ArrayList<>();
-                    PredicateDefinition predicate = null;
-                    
-                    Integer order = 0;
-                    
-                    if(rateLimiterPath == null || "".equals(rateLimiterPath)) {
-                    	rateLimiterPath = "/api/"+ serviceCode + "/**";
-                    }
-                    if(!rateLimiterPath.startsWith("/")) {
-						rateLimiterPath = "/" + rateLimiterPath;
+                	try {
+						ServiceCodeNameEnum serviceCodeNameEnum = data.getServiceCode();
+						if(serviceCodeNameEnum == null) {
+							continue;
+						}
+						String serviceCode = serviceCodeNameEnum.getCode();
+						String rateLimiterPath = data.getRateLimiterPath();
+						String host = data.getHost();
+						String referer = data.getReferer();
+						
+						String id = serviceCode + "_route_" + data.getId();
+						RouteDefinition definition = new RouteDefinition();
+						definition.setId(id);
+						definition.setUri(new URI("lb://erp-" + serviceCode));
+						// 断言
+						List<PredicateDefinition> predicates = new ArrayList<>();
+						PredicateDefinition predicate = null;
+						
+						Integer order = 0;
+						
+						if(rateLimiterPath == null || "".equals(rateLimiterPath)) {
+							rateLimiterPath = "/api/"+ serviceCode + "/**";
+						}
+						if(!rateLimiterPath.startsWith("/")) {
+							rateLimiterPath = "/" + rateLimiterPath;
+						}
+						if(rateLimiterPath.startsWith(openApiPath)) {
+							predicate = new PredicateDefinition("Path="+ rateLimiterPath);
+						}else {
+							predicate = new PredicateDefinition("Path=/api/"+ serviceCode + rateLimiterPath);
+						}
+						predicates.add(predicate);
+						if(rateLimiterPath.contains("*")) {
+							order = order + pathMatchOrder.incrementAndGet();
+						}else {
+							order = order + pathOrder.incrementAndGet();
+						}
+						
+						if(referer != null && !"".equals(referer)) {
+							predicate = new PredicateDefinition("Header=Referer, " + referer);
+						    predicates.add(predicate);
+						    order = order + refererOrder.incrementAndGet();
+						}
+						
+						if(host != null && !"".equals(host)) {
+							if(!host.contains(":")) {
+								host = host + "*";
+							}
+						    if(host.contains("*")) {
+						    	order = order + hostMatchOrder.incrementAndGet();
+						    }else {
+						    	order = order + hostOrder.incrementAndGet();
+						    }
+						    predicate = new PredicateDefinition("Host="+ host);
+						    predicates.add(predicate);
+						}
+						
+						definition.setPredicates(predicates);
+						// 过滤器
+						List<FilterDefinition> filters = new ArrayList<>();
+						FilterDefinition filter = new FilterDefinition("RewritePath=/api/" + serviceCode +"/(?<segment>.*),/$\\{segment}");
+						filters.add(filter);
+						filter = new FilterDefinition();
+						filter.setName("RequestRateLimiter");
+						Map<String, String> filterArgs = new HashMap<>();
+						filterArgs.put("key-resolver", id);
+						filterArgs.put("redis-rate-limiter.replenishRate", data.getRate().toString());
+						filterArgs.put("redis-rate-limiter.burstCapacity", data.getCount().toString());
+						filter.setArgs(filterArgs);
+						filters.add(filter);
+						definition.setFilters(filters);
+						definition.setOrder(order * -1);
+						definitionList.add(definition);
+					} catch (Exception e) {
+						log.error("动态路由id={}创建失败" , data.getId() , e);
 					}
-                	if(rateLimiterPath.startsWith(openApiPath)) {
-                		predicate = new PredicateDefinition("Path="+ rateLimiterPath);
-                	}else {
-                		predicate = new PredicateDefinition("Path=/api/"+ serviceCode + rateLimiterPath);
-                	}
-                    predicates.add(predicate);
-                    if(rateLimiterPath.contains("*")) {
-                    	order = order + pathMatchOrder.incrementAndGet();
-                    }else {
-                    	order = order + pathOrder.incrementAndGet();
-                    }
-                    
-                    if(referer != null && !"".equals(referer)) {
-                    	predicate = new PredicateDefinition("Header=Referer, " + referer);
-                        predicates.add(predicate);
-                        order = order + refererOrder.incrementAndGet();
-                    }
-                    
-                    if(host != null && !"".equals(host)) {
-                    	if(!host.contains(":")) {
-                    		host = host + "*";
-                    	}
-                        if(host.contains("*")) {
-                        	order = order + hostMatchOrder.incrementAndGet();
-                        }else {
-                        	order = order + hostOrder.incrementAndGet();
-                        }
-                        predicate = new PredicateDefinition("Host="+ host);
-                        predicates.add(predicate);
-                    }
-                    
-                    definition.setPredicates(predicates);
-                    // 过滤器
-                    List<FilterDefinition> filters = new ArrayList<>();
-                    FilterDefinition filter = new FilterDefinition("RewritePath=/api/" + serviceCode +"/(?<segment>.*),/$\\{segment}");
-                    filters.add(filter);
-                    filter = new FilterDefinition();
-                    filter.setName("RequestRateLimiter");
-                    Map<String, String> filterArgs = new HashMap<>();
-                    filterArgs.put("key-resolver", id);
-                    filterArgs.put("redis-rate-limiter.replenishRate", data.getRate().toString());
-                    filterArgs.put("redis-rate-limiter.burstCapacity", data.getCount().toString());
-                    filter.setArgs(filterArgs);
-                    filters.add(filter);
-                    definition.setFilters(filters);
-                    definition.setOrder(order * -1);
-                    definitionList.add(definition);
                 }
                 if(CollUtil.isNotEmpty(deleteList)) {
                 	deleteList.forEach(d -> dynamicRouteService.deleteById(d));
