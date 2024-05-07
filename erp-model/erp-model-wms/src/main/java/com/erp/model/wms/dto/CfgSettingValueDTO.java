@@ -1,16 +1,14 @@
 package com.erp.model.wms.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
 
 /**
  * <p>
@@ -101,6 +99,29 @@ public class CfgSettingValueDTO implements Serializable {
          */
         @Digits(integer = 12, fraction = 2, message = "比例整数位不能超过12位，小数位不能超过2位")
         private BigDecimal rate;
+    }
+
+    /**
+     * 飞书质检通知DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FsQcNoticeDTO{
+
+        /**
+         * 岗位id集合,post请求,/api/sys/post/list
+         */
+        private List<String> postIdList;
+
+        /**
+         * 抄送人员id集合,post请求,/api/plm/common/findUserList
+         */
+        private List<String> userIdList;
+
+        /**
+         * 发送时间
+         */
+        private LocalTime sendTime;
     }
 
 }

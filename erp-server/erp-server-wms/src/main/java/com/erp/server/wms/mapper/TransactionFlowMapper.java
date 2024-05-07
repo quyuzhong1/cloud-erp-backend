@@ -41,6 +41,13 @@ public interface TransactionFlowMapper extends BaseMapper<TransactionFlowEntity>
      */
     IPage<InventoryDTO.TransFlowPagingViewDTO> pagingForInv(Page query, @Param("params") InventoryDTO.TransFlowSearchParamDTO params);
 
+    /**
+     * 出入库列表导出
+     * @param params
+     * @return
+     */
+    List<InventoryDTO.TransFlowPagingViewDTO> exportTransFlow(@Param("params") InventoryDTO.ExportInvFlowSearchParamDTO params);
+
 
     /**
      * 出入库流水分页查询

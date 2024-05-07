@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -34,10 +33,7 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchasePriceTabFlagEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.DictBasicDTO;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
-import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -55,7 +51,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.hibernate.validator.constraints.EAN;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -276,11 +271,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (Objects.isNull(purchasePrice)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
-        List<PurchasePriceDetailEntity> detailList = priceDetailService.listDetailByMainId(id);
-        List<String> detailIds = detailList.stream().map(PurchasePriceDetailEntity::getId).collect(Collectors.toList());
         ApproveStatusEnum status = purchasePrice.getApproveStatus();
-
-
         PurchasePriceEntity old = new PurchasePriceEntity();
         BeanMapper.copy(purchasePrice, old);
         //待审核
@@ -293,7 +284,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (!statusList.contains(status.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98019);
         }
-        List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchasePriceDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         BeanMapper.copy(dto, purchasePrice);
         //编号
         String code = purchasePrice.getCode();
@@ -306,15 +296,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             purchasePrice.setPricingUserName(user != null ? user.getUserName() : "");
         }
 
-        String orgId = dto.getPurchaseOrgId();
-        //获取组织
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
-        if (CollectionUtils.isNotEmpty(orgList)) {
-            purchasePrice.setPurchaseOrgName(orgList.get(0).getName());
-        }
-
         //修改成功
-        Boolean result = this.updateById(purchasePrice);
+        boolean result = this.updateById(purchasePrice);
         if (result) {
             /**
              * 添加修改日志

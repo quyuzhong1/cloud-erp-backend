@@ -3,6 +3,7 @@ package com.erp.rpc.wms.feign;
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.workflow.dto.WorkOptionDTO;
@@ -282,6 +283,16 @@ public interface WmsTaskFeign {
     void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 
     /**
+     * wms同步马帮数据
+     * @Author Luo_WG
+     * @Date 2023/10/30 12:22
+     * @param syncParamDTO
+     * @return void
+     **/
+    @PostMapping("/feign/wmsSyncTask/findMaBangDataSendSyncTask")
+    void findMaBangDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+
+    /**
      * FBA发货单审核通过
      * @Author Luo_WG
      * @Date 2023/11/15 18:01
@@ -323,4 +334,13 @@ public interface WmsTaskFeign {
     @PostMapping("/feign/warehouseReceive/getReceiveListByPurchaseOrderIdsAll")
     List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIdsAll(@RequestBody List<String> purchaseOrderIds);
 
+    /**
+     * @description: 标记发货
+     * @author Will
+     * @date: 2024/4/28 9:36
+     * @param id
+     * @return List<BatchResultDTO>
+     */
+    @PostMapping("/feign/soB2cDelivery/retryFalseDelivery")
+    List<BatchResultDTO> retryFalseDelivery(String id);
 }

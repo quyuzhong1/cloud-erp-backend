@@ -55,4 +55,6 @@ public interface DmpPushTaskMapper extends BaseMapper<DmpPushTaskEntity> {
     DmpPushTaskEntity getEntityByCondition(@Param("params") DmpPushTaskEntity params);
 
     void deleteByIds(List<String> ids);
+
+    void updateStatus(@Param("noNeedSyncIds")List<String> noNeedSyncIds);
 }

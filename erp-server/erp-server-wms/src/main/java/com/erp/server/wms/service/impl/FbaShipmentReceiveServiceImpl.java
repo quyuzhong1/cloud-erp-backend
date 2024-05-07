@@ -1,16 +1,26 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.InventoryClosedRecordEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.RedisUtil;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
+import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.lingxing.FbaReceiveGroupEntity;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -34,6 +44,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,10 +52,6 @@ import java.util.Map;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import org.springframework.util.CollectionUtils;
-
-import javax.annotation.Resource;
 
 /**
  * <p>
@@ -72,6 +79,10 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
     private ShopInfoFeign shopInfoFeign;
     @Resource
     private MQProducerService mqProducerService;
+    @Resource
+    private TransferInfoService transferInfoService;
+    @Resource
+    private RedisUtil redisUtil;
 
 
     @Override
@@ -126,14 +137,16 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean saveAndCheckTransfer(List<FbaShipmentReceiveEntity> entityList, FbaShipmentEntity fbaShipmentEntity) {
+    public Boolean saveAndCheckTransfer(List<FbaShipmentReceiveEntity> saveList, FbaShipmentEntity fbaShipmentEntity) {
         // 检查数据
-        long count = entityList.stream().map(FbaShipmentReceiveEntity::getFbaShipmentId).distinct().count();
+        long count = saveList.stream().map(FbaShipmentReceiveEntity::getFbaShipmentId).distinct().count();
         if (1 != count){
             throw new ServiceException("消费数据异常,需要FbaShipmentId一致");
         }
+        // 单据日期
+        LocalDate billDate = saveList.get(0).getReceiveDate().toLocalDate();
 
-        for (FbaShipmentReceiveEntity entity : entityList) {
+        for (FbaShipmentReceiveEntity entity : saveList) {
             if (StringUtils.isBlank(entity.getUniqueMd5()) ||
                     StringUtils.isBlank(entity.getFbaShipmentId()) ||
                     StringUtils.isBlank(entity.getMsku()) ||
@@ -147,19 +160,26 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         }
 
         // 查询记录是否已存在
-        List<String> uniqueMd5List = entityList.stream().map(FbaShipmentReceiveEntity::getUniqueMd5).distinct().collect(Collectors.toList());
-        List<FbaShipmentReceiveEntity> oldEntityList = this.lambdaQuery()
-                .in(FbaShipmentReceiveEntity::getUniqueMd5, uniqueMd5List)
-                .list();
-        if (!CollectionUtils.isEmpty(oldEntityList) && oldEntityList.size() == entityList.size()){
-            log.warn("FBA签收记录数据已存在跳过:UniqueMd5List={}", uniqueMd5List);
-            return true;
+        List<String> uniqueMd5List = saveList.stream().map(FbaShipmentReceiveEntity::getUniqueMd5).distinct().collect(Collectors.toList());
+        List<FbaShipmentReceiveEntity> oldEntityList =  this.listByUniqueMd5AndReceivedDate(uniqueMd5List, fbaShipmentEntity.getFbaShipmentId(), billDate);
+        if (!CollectionUtils.isEmpty(oldEntityList)){
+            // 查询数量变成的记录并反审核删除之前的的记录
+            // 校验是否有变更签收记录或数量
+            boolean hasChange = checkRecordSizeAndReceiveQty(oldEntityList, saveList);
+            if (!hasChange){
+                log.warn("FBA签收记录数据已存在, 并且签收数量没有变更,跳过:UniqueMd5List={}", uniqueMd5List);
+                return true;
+            } else {
+                // 反审核并删除历史调拨单, 遇到关账发送预警
+                this.checkAndSendWarn(fbaShipmentEntity, billDate);
+            }
         }
-        List<String> oldList = oldEntityList.stream().map(FbaShipmentReceiveEntity::getUniqueMd5).collect(Collectors.toList());
-        // 过滤得到不存在的记录
-        List<FbaShipmentReceiveEntity> saveList = entityList.stream().filter(e -> !oldList.contains(e.getUniqueMd5())).collect(Collectors.toList());
+        // 生成所有
+//        List<String> oldList = skipOldList.stream().map(FbaShipmentReceiveEntity::getUniqueMd5).collect(Collectors.toList());
+//        // 过滤得到不存在的记录
+//        List<FbaShipmentReceiveEntity> saveList = entityList.stream().filter(e -> !oldList.contains(e.getUniqueMd5())).distinct().collect(Collectors.toList());
         if (CollectionUtils.isEmpty(saveList)){
-            throw new ServiceException(StrUtil.format("FBA签收记录消费异常:不存在需要保存的记录, list={}", JSONUtil.toJsonStr(entityList)));
+            throw new ServiceException(StrUtil.format("FBA签收记录消费异常:不存在需要保存的记录, list={}", JSONUtil.toJsonStr(saveList)));
         }
 
         // 历史货件的签收记录只按指定时间保存
@@ -179,8 +199,45 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
 
         // 补充关联数据并保存
         fillData(saveList, detailEntityList, fbaShipmentEntity);
-        if (!this.saveBatch(saveList)) {
-            throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(entityList));
+        // 查询历史签收记录
+        if (CollectionUtils.isEmpty(oldEntityList)){
+            // 保存
+            if (!this.saveBatch(saveList)) {
+                throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(saveList));
+            }
+        } else {
+            // 更新历史签收数量
+            Map<String, FbaShipmentReceiveEntity> oldReceivedMap = oldEntityList
+                    .stream()
+                    .collect(Collectors.toMap(FbaShipmentReceiveEntity::getUniqueMd5, Function.identity()));
+            for (FbaShipmentReceiveEntity entity : saveList) {
+                FbaShipmentReceiveEntity old = oldReceivedMap.get(entity.getUniqueMd5());
+                if (null != old){
+                    entity.setId(old.getId());
+                    entity.setCreateTime(old.getCreateTime());
+                    entity.setVersion(old.getVersion());
+                    if (StringUtils.isNotBlank(old.getSkuId())){
+                        entity.setSkuId(old.getSkuId());
+                    }
+                    if (StringUtils.isNotBlank(old.getSkuNo())){
+                        entity.setSkuNo(old.getSkuNo());
+                    }
+                }
+            }
+            List<String> deleteIdList = oldEntityList.stream()
+                    .filter(e -> !uniqueMd5List.contains(e.getUniqueMd5()))
+                    .map(BaseEntity::getId)
+                    .collect(Collectors.toList());
+            if (!CollectionUtils.isEmpty(deleteIdList)){
+                // 移除历史明细
+                if (!this.removeByIds(deleteIdList)) {
+                    throw new ServiceException("[FbaShipmentReceivedEntity] 批量移除失败: entity=" + JSONUtil.toJsonStr(saveList));
+                }
+            }
+            // 更新或保存
+            if (!this.saveOrUpdateBatch(saveList)) {
+                throw new ServiceException("[FbaShipmentReceivedEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(saveList));
+            }
         }
 
         // 需要挑拨的列表
@@ -192,7 +249,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
             // 补充关联数据并保存
             fillData(updateEntityList, detailEntityList, fbaShipmentEntity);
             if (!this.updateBatchById(updateEntityList)) {
-                throw new ServiceException("[FbaShipmentDetailEntity] 批量更新失败: entity=" + JSONUtil.toJsonStr(entityList));
+                throw new ServiceException("[FbaShipmentDetailEntity] 批量更新失败: entity=" + JSONUtil.toJsonStr(saveList));
             }
             handleEntityList.addAll(updateEntityList);
         }
@@ -216,7 +273,6 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         // 查询最新库存关账记录
         Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId(InventoryClosedRecordEnum.STK.getCode());
 
-        LocalDate billDate = entityList.get(0).getReceiveDate().toLocalDate();
         // 执行调拨逻辑
         fbaShipmentService.handlerWarehouse(fbaShipmentEntity, handleEntityList, billDate, closedDateMap);
         return true;
@@ -325,6 +381,77 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         return lambdaQuery()
                 .in(FbaShipmentReceiveEntity::getDetailId, detailIds)
                 .eq(FbaShipmentReceiveEntity::getSourceType, sourceType)
+                .list();
+    }
+
+    @Override
+    public void sendWarnMsg(String tableId, String errorMsg) {
+        //查询redis,预警8小时发送一次
+        String existKey = StrUtil.format(RedisKeyConstant.DMP_PUSH_TASK_WARN, tableId);
+        boolean isHas = redisUtil.hasKey(existKey);
+        if (isHas) {
+            return;
+        } else {
+            //添加缓存
+            redisUtil.set(existKey, tableId, RedisService.EIGHT_HOURS_CACHE_TIME);
+        }
+        SourceTypeEnum sourceTypeEnum = SourceTypeEnum.FBA_SHIPMENT;
+        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setBizName(sourceTypeEnum.getName());
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
+        String title = StrUtil.format("亚马逊FBA货件【{}】签收变化,发审核处理异常", tableId);
+        warnMsgInfo.setTitle(title);
+        warnMsgInfo.setTableName(sourceTypeEnum.getTableName());
+        warnMsgInfo.setTableId(tableId);
+        warnMsgInfo.setKeyInfo(errorMsg);
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        mqProducerService.sendWarnMsg(warnMsgInfo);
+    }
+
+    /**
+     * 校验是否有变更签收记录或数量
+     */
+    private boolean checkRecordSizeAndReceiveQty(List<FbaShipmentReceiveEntity> oldEntityList, List<FbaShipmentReceiveEntity> entityList) {
+        if (oldEntityList.size() != entityList.size()){
+            return true;
+        }
+        Map<String, FbaShipmentReceiveEntity> oldEntityMap = oldEntityList.stream().collect(Collectors.toMap(FbaShipmentReceiveEntity::getUniqueMd5, Function.identity()));
+        return entityList.stream().anyMatch(e -> {
+            FbaShipmentReceiveEntity entity = oldEntityMap.get(e.getUniqueMd5());
+            if (null == entity) {
+                // 历史记录不存在,属于有变更
+                return true;
+            } else {
+                // 签收数量不一样,属于有变更
+                return !Objects.equals(entity.getReceiveQty(), e.getReceiveQty());
+            }
+        });
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void checkAndSendWarn(FbaShipmentEntity fbaShipmentEntity, LocalDate billDate) {
+        try {
+            // 反审核并删除历史调拨单, 遇到关账或异常发送预警
+            transferInfoService.checkHistoryAndDel(fbaShipmentEntity.getFbaShipmentId(), SourceTypeEnum.FBA_SHIPMENT.getCode(), billDate);
+        } catch (Exception e) {
+            log.error("反审核或删除FBA相关调拨单失败, 订单号:{}，日期:{}, 异常信息:{}",
+                    fbaShipmentEntity.getFbaShipmentId(),
+                    billDate,
+                    ExceptionUtil.stacktraceToString(e));
+            // 发送预警
+            this.sendWarnMsg(fbaShipmentEntity.getFbaShipmentId(), ExceptionUtil.stacktraceToString(e, 1000));
+        }
+    }
+
+    @Override
+    public List<FbaShipmentReceiveEntity> listByUniqueMd5AndReceivedDate(List<String> md5List, String fbaShipmentId, LocalDate billDate) {
+        return this.lambdaQuery()
+                .eq(FbaShipmentReceiveEntity::getFbaShipmentId, fbaShipmentId)
+                .eq(FbaShipmentReceiveEntity::getSourceType, "lingxing")
+                .and( st -> st.in(FbaShipmentReceiveEntity::getUniqueMd5, md5List)
+                    .or(i-> i.eq(FbaShipmentReceiveEntity::getReceiveDate, LocalDateTime.of(billDate, LocalTime.MIN))
+                    ))
                 .list();
     }
 }

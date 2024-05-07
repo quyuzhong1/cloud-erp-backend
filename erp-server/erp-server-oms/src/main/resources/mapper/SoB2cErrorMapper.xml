@@ -54,4 +54,13 @@
             #{item}
         </foreach>
     </delete>
+
+    <!-- 根据主表ids删除 -->
+    <delete id="deleteByMainIds">
+        DELETE FROM so_b2c_error WHERE
+        main_id in
+        <foreach collection="mainIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </delete>
 </mapper>
