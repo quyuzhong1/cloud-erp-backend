@@ -337,6 +337,11 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          */
         @NotNull(message = "运输方式不能为空")
         private String shippingMethod;
+
+        /**
+         * 船司/航司
+         */
+        private String carrier;
     }
 
     /**

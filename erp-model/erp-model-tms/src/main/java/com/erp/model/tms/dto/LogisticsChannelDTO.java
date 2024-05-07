@@ -317,11 +317,6 @@ public class LogisticsChannelDTO implements Serializable {
         private String trackQueryMode;
 
         /**
-         * 船司/航司
-         */
-        private String carrier;
-
-        /**
          * 纸张长
          */
         private Integer paperLength;
@@ -559,10 +554,6 @@ public class LogisticsChannelDTO implements Serializable {
         @Size(max = 30, message = "物流轨迹查询方式最大长度不能超过30位")
         private String trackQueryMode;
 
-        /**
-         * 船司/航司
-         */
-        private String carrier;
 
         /**
          * 纸张大小
