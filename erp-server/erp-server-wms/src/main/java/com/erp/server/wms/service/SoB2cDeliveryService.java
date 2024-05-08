@@ -242,4 +242,11 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     List<BatchResultDTO> logisticsIntercept(List<String> ids);
 
     List<BatchResultDTO> interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto);
+
+    /**
+     * 查询不是取消发货的发货单
+     * @param soId
+     * @return
+     */
+    SoB2cDeliveryEntity getNotCancelBySoId(String soId);
 }
