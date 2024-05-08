@@ -312,9 +312,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             statusList = trackStatusList.stream().filter(s -> s.getRemark().equals(group)).
                     map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
         }
-        Long total = baseMapper.pageCount(params, statusList);
         IPage pageData = baseMapper.paging(query, params, statusList);
-        pageData.setTotal(total);
         List<LogisticsBillDTO.PagingVO> list = pageData.getRecords();
         fillPagingDb(list);
         return new PagingVO<>(pageData);
