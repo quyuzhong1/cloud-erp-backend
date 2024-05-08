@@ -53,7 +53,7 @@ public interface FmLogisticsConverter {
             @Mapping(target = "toCountry", source = "deliveryDTO.toCountryName"),
             @Mapping(target = "orderType", expression = "java(com.common.business.enums.OrderTypeEnum.FIRST_MILE.getCode())"),
             @Mapping(target = "counterNo", source = "addDTO.counterNo"),
-            @Mapping(target = "carrier", source = "addDTO.carrier"),
+            @Mapping(target = "carrierId", source = "addDTO.carrierId"),
             @Mapping(target = "shippingMethod", source = "addDTO.shippingMethod"),
             @Mapping(target = "logisticsSupplierId", source = "addDTO.logisticsSupplierId"),
             @Mapping(target = "remark", source = "addDTO.remark"),

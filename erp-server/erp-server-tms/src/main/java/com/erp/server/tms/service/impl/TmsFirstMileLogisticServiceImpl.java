@@ -180,6 +180,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     @Resource
     private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
 
+    @Resource
+    private LogisticsCarrierService logisticsCarrierService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -507,7 +510,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         FirstMileDeliveryDTO.GenerateLogisticReqDTO dto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
         dto.setIds(outstockIdList);
         List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTOList = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(dto);
-
+        List<String> carrierIds = list.stream().map(TmsFirstMileLogisticDTO.PagingVO::getCarrierId).distinct().collect(Collectors.toList());
+        List<LogisticsCarrierEntity> carrierList = logisticsCarrierService.listByIds(carrierIds);
         for (TmsFirstMileLogisticDTO.PagingVO pagingVO : list) {
             //处理枚举值
             pagingVO.setLogisticsStatusName(EnumMessage.getNameByCode(FmLogisticTrackStatusEnum.class,pagingVO.getLogisticsStatus()));
@@ -573,6 +577,10 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 }else{
                     pagingVO.setWarnMsg(StrUtil.format("已超期[]小时",pagingVO.getWarnHour()));
                 }
+            }
+            if (StringUtils.isNotEmpty(pagingVO.getCarrierId())){
+                LogisticsCarrierEntity carrier = carrierList.stream().filter(e -> e.getId().equals(pagingVO.getCarrierId())).findFirst().orElse(null);
+                pagingVO.setCarrierName(Objects.nonNull(carrier)? carrier.getCarrierCN() : pagingVO.getCarrierId());
             }
         }
     }
@@ -671,6 +679,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
         }
         dto.setTimeLineList(FmTimeLineEnum.convertToViewList(timeInfoDTO));
+        //船司航司名称
+        if (StringUtils.isNotEmpty(dto.getCarrierId())){
+            LogisticsCarrierEntity carrier = logisticsCarrierService.getById(dto.getCarrierId());
+            dto.setCarrierName(Objects.nonNull(carrier)? carrier.getCarrierCN() : "");
+        }
+
     }
 
     @Override
@@ -931,7 +945,10 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             logisticsBillEntity.setShippingMethod(dto.getShippingMethod());
             logisticsBillEntity.setChannelId(dto.getLogisticsChannelId());
             logisticsBillEntity.setLogisticsSupplierId(dto.getLogisticsSupplierId());
-            logisticsBillEntity.setCarrier(dto.getCarrier());
+            if (StringUtils.isNotEmpty(dto.getCarrierId())){
+                LogisticsCarrierEntity carrier = logisticsCarrierService.getById(dto.getCarrierId());
+                logisticsBillEntity.setCarrierCode(Objects.nonNull(carrier)? carrier.getCarrierCode():dto.getCarrierId());
+            }
             updateList.add(logisticsBillEntity);
             //更新体积重
             FirstMileDeliveryDTO.GenerateLogisticDTO deliveryLogisticDto = generateLogisticDTOList.stream().filter(v->v.getOutstockId().equals(logisticsBillEntity.getOutstockId())).findFirst().orElse(null);

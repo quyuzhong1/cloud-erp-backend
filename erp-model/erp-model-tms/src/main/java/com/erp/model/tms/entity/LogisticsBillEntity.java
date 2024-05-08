@@ -109,9 +109,10 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     private String counterNo;
 
     /**
-     * 船司/航司
+     * 船司/航司编码
      */
-    private String carrier;
+    @TableField("carrier_id")
+    private String carrierId;
     /**
      * 发票状态
      */
