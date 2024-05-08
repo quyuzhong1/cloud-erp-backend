@@ -52,7 +52,6 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     private static final AtomicInteger hostMatchOrder = new AtomicInteger(800000);
     private static final AtomicInteger hostOrder = new AtomicInteger(1600000);
     
-    private static final String openApiPath = "/open/api";
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
 
@@ -90,12 +89,10 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
 						if(!rateLimiterPath.startsWith("/")) {
 							rateLimiterPath = "/" + rateLimiterPath;
 						}
-						if(rateLimiterPath.startsWith(openApiPath)) {
-							predicate = new PredicateDefinition("Path="+ rateLimiterPath);
-						}else {
-							predicate = new PredicateDefinition("Path=/api/"+ serviceCode + rateLimiterPath);
-						}
+						
+						predicate = new PredicateDefinition("Path="+ rateLimiterPath);
 						predicates.add(predicate);
+						
 						if(rateLimiterPath.contains("*")) {
 							order = order + pathMatchOrder.incrementAndGet();
 						}else {
