@@ -71,7 +71,7 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
     }
 
     @Override
-    public String pushOperateLog(String authId, String sourceId, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson) {
+    public String pushOperateLog(String authId, String sourceId, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson, Boolean isSendMsg) {
         DmpPushTaskEntity dmpPushTaskEntity = new DmpPushTaskEntity();
         dmpPushTaskEntity.setSourcePlatformName(PlatformEnum.ERP_TMS.getDesc());
         dmpPushTaskEntity.setSourceType(businessType);
@@ -92,7 +92,7 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
         try {
             id = dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
             //增加异常预警
-            if (!RequestStatusEnums.SUCCESS.getCode().equals(status)){
+            if (!RequestStatusEnums.SUCCESS.getCode().equals(status) && isSendMsg){
                 dmpPushTaskEntity.setId(id);
                 this.sendPushWarnMsg(dmpPushTaskEntity);
             }
