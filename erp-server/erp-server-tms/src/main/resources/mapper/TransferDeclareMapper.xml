@@ -47,6 +47,7 @@
             tdd.id AS detailId,
             td.code AS code,
             td.plan_transfer_date AS planTransferDate,
+            td.instock_forecast_date AS instockForecastDate,
             td.upload_status AS uploadBatchStatus,
             td.delivery_logistics_supplier_name AS deliveryLogisticsSupplierName,
             td.transfer_logistics_supplier_name AS transferLogisticsSupplierName,
@@ -154,21 +155,16 @@
         td.create_time desc
     </select>
 
-    <!--tab页数量-->
-    <select id="listCount" resultType="java.lang.Integer">
-
-    </select>
-
     <!--查询上传状态数量-->
     <select id="listUploadStatusCount" resultType="java.lang.Integer">
         SELECT
             count(DISTINCT td.id)
         FROM transfer_declare td
         WHERE td.is_deleted = FALSE
-        <if test="params.uploadStatusList != null and params.uploadStatusList.size > 0">
-            and td.upload_status in
-            <foreach collection="params.uploadStatusList" item="uploadStatus" open="(" separator="," close=")">
-                #{uploadStatus}
+        <if test="params.instockForecastStatusList != null and params.instockForecastStatusList.size > 0">
+            and td.instock_forecast_status in
+            <foreach collection="params.instockForecastStatusList" item="instockForecastStatus" open="(" separator="," close=")">
+                #{instockForecastStatus}
             </foreach>
         </if>
     </select>
@@ -195,6 +191,7 @@
             tdd.id AS detailId,
             td.code AS code,
             td.plan_transfer_date AS planTransferDate,
+            td.instock_forecast_date AS instockForecastDate,
             td.upload_status AS uploadBatchStatus,
             td.delivery_logistics_supplier_name AS deliveryLogisticsSupplierName,
             td.transfer_logistics_supplier_name AS transferLogisticsSupplierName,

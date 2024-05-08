@@ -85,6 +85,14 @@ public class BaoHongUtils {
         return service.getServiceForAsnSOAP();
     }
 
+    public static <T> BaoHongResponse<T> buildBaseResponse(String ask, String message,T data){
+        BaoHongResponse<T> response = new BaoHongResponse<>();
+        response.setAsk(ask);
+        response.setMessage(message);
+        response.setData(data);
+        return response;
+    }
+
     public static <T> BaoHongResponse<T> buildBaseResponse(Holder<String> askHolder, Holder<String> messageHolder,T data){
         BaoHongResponse<T> response = new BaoHongResponse<>();
         response.setAsk(askHolder.value);

@@ -52,8 +52,8 @@ import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.rpc.wms.feign.SoReturnInstockFeign;
 import com.erp.server.dmp.convert.DmpOrderConverter;
+import com.erp.server.dmp.mapper.DmpPullTaskHistoryMapper;
 import com.erp.server.dmp.mapper.DmpPullTaskMapper;
 import com.erp.server.dmp.service.*;
 import com.google.common.collect.Lists;
@@ -63,6 +63,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -90,6 +91,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     private DmpPullTaskMapper dmpPullTaskMapper;
     @Resource
     private ProductDetailService productDetailService;
+    @Lazy
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
     @Resource
@@ -107,7 +109,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     @Resource
     private SoOutstockFeign soOutstockFeign;
     @Resource
-    private SoReturnInstockFeign soReturnInstockFeign;
+    private DmpPullTaskHistoryMapper dmpPullTaskHistoryMapper;
     @Resource
     private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
 
@@ -274,6 +276,16 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         syncIng.setCount(syncIngCount);
         result.add(syncIng);
+        //无需同步
+        DmpPullTaskDTO.TabListDTO noNeedSync = new DmpPullTaskDTO.TabListDTO();
+        noNeedSync.setTabFlag(SyncStatusEnum.NO_NEED_SYNC.getCode());
+        int noNeedSyncCount = countList.stream().filter(a -> a.getTabFlag().equals(noNeedSync.getTabFlag())).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        noNeedSync.setCount(noNeedSyncCount);
+        result.add(noNeedSync);
+        //已归档
+        DmpPullTaskDTO.TabListDTO archived = dmpPullTaskHistoryMapper.getStatusCount(dto.getPermissionSql());
+        result.add(archived);
         return result;
     }
 
@@ -324,7 +336,26 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         }
         return Boolean.TRUE;
     }
-
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean batchNoNeedSync(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //获取数据
+        List<DmpPullTaskEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DATA);
+        }
+        //判断数据状态-只有同步失败的才可以变更为无需同步
+        List<String> noNeedSyncIds = list.stream().filter(obj -> SyncStatusEnum.FAILED_SYNC.getCode().equals(obj.getStatus()))
+                .map(DmpPullTaskEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(noNeedSyncIds)) {
+            throw new ServiceException(ApiError.ERROR_STATUS_NO_NEED_SYNC);
+        }
+        this.baseMapper.updateStatus(noNeedSyncIds);
+        return Boolean.TRUE;
+    }
     /**
      * @param list
      * @description: 列表查询数据格式话
@@ -993,7 +1024,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         warnMsgInfo.setTitle(StrUtil.format("单据【{}】从{}推送至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
         warnMsgInfo.setTableId(entity.getSourceId());
-        warnMsgInfo.setKeyInfo("");
+        warnMsgInfo.setKeyInfo(entity.getReturnMsg());
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         mqProducerService.sendWarnMsg(warnMsgInfo);
     }
@@ -1056,5 +1087,13 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                 .eq(DmpPullTaskEntity::getMqTopic, topic)
                 .eq(DmpPullTaskEntity::getMqTag, tag)
                 .list();
+    }
+
+    @Override
+    public void deleteByIds(List<String> ids) {
+        if (CollectionUtil.isEmpty(ids)) {
+            return;
+        }
+        baseMapper.deleteByIds(ids);
     }
 }

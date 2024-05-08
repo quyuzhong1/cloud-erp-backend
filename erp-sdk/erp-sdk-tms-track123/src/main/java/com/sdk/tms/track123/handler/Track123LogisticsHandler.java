@@ -4,10 +4,7 @@ import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.dto.JobTaskDTO;
-import com.common.business.enums.BusinessTypeEnum;
-import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.business.enums.PlatformCategoryEnum;
-import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.*;
 import com.common.business.handler.AbstractLogisticsTrackHandler;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
@@ -17,10 +14,9 @@ import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
-import com.sdk.tms.track123.dto.PlatformTrackDTO;
 import com.sdk.tms.track123.dto.PlatformTrack123TrackDTO;
+import com.sdk.tms.track123.dto.PlatformTrackDTO;
 import com.sdk.tms.track123.dto.PlatformTrackDetail;
 import com.sdk.tms.track123.model.request.TrackRequest;
 import com.sdk.tms.track123.model.response.*;
@@ -82,6 +78,7 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
                 .current(current)
                 .registerStatus(1)
                 .trackEnable(true)
+                .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
                 .build();
         List<ResponseData> responseDataList = new ArrayList<>();
         getTrackData(query, responseDataList, cfgAppClient);

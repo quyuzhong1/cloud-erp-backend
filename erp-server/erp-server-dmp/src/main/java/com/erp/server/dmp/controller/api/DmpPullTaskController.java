@@ -87,4 +87,17 @@ public class DmpPullTaskController extends BaseController {
         Boolean flag = dmpPullTaskService.batchSync(dto.getIds());
         return flag == true ? success() : failure();
     }
+    /**
+     * 批量修改无需同步
+     *
+     * @param dto
+     * @return ApiResult
+     * @author hyj
+     * @date 2024/4/30 10:51
+     */
+    @PostMapping(value = "/batchNoNeedSync")
+    public ApiResult batchNoNeedSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = dmpPullTaskService.batchNoNeedSync(dto.getIds());
+        return flag == true ? success() : failure();
+    }
 }

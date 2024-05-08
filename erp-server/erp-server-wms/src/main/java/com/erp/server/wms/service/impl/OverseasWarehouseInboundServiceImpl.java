@@ -27,6 +27,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -35,12 +36,13 @@ import com.erp.model.sys.entity.ImlDictCityEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO.OverseasInboundDTO;
 import com.erp.model.wms.dto.excel.ExportOverseasWarehouseInboundExcelDTO;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCancelInboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
@@ -110,7 +112,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @Resource
     private DictBasicService dictBasicService;
     @Resource
-    private FirstMileCartonDetailService firstMileCartonDetailService;
+    private WmsCartonDetailService wmsCartonDetailService;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
@@ -120,6 +122,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
     @Resource
     private OverseasWarehouseInboundReceivedService overseasWarehouseInboundReceivedService;
+
+    @Resource
+    private SkuMappingFeign skuMappingFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -161,22 +166,19 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (!save) {
             throw new ServiceException("海外仓入库单保存失败");
         }
-        List<String> skuIds = deliveryDetailEntityList.stream()
-                .map(FirstMileDeliveryDetailEntity::getSkuId)
+        List<String> platformSkuNoList = deliveryDetailEntityList.stream()
+                .map(FirstMileDeliveryDetailEntity::getPlatformSkuNo)
                 .distinct()
                 .collect(Collectors.toList());
-        // 查询关联信息
-        Map<String, List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView>> currentSkuMap = checkAdnQuerySkuMap(skuIds, dictPlatform, deliveryDetailEntityList);
-
+        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+        listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+        listingInfoParamDTO.setPlatform(dictPlatform);
+        List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
         // 明细处理
         List<OverseasWarehouseInboundDetailEntity> detailEntityList = deliveryDetailEntityList.stream()
                 .map(e -> {
-                            List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> viewList = currentSkuMap.get(e.getSkuId());
-                            SkuMappingDTO.ListStockSkuNoByProductSkuIdView view = null;
-                            if (!CollectionUtils.isEmpty(viewList)){
-                                view = viewList.stream().findFirst().orElse(null);
-                            }
-                            return OverseasWarehouseInboundConverter.INSTANCE.deliveryDetailToDetail(e, mainEntity, view, mainEntity.getCreateUserId(), mainEntity.getCreateUserName(), mainEntity.getCreateTime());
+                            SkuMappingDTO.MappingSkuViewDTO view = mappingSkuViewDTOList.stream().filter(v->v.getPlatformSkuNo().equals(e.getPlatformSkuNo())).findFirst().orElse(new SkuMappingDTO.MappingSkuViewDTO());
+                            return OverseasWarehouseInboundConverter.INSTANCE.deliveryDetailToDetail(e, mainEntity, view.getPlatformProductName(), mainEntity.getCreateUserId(), mainEntity.getCreateUserName(), mainEntity.getCreateTime());
                         })
                 .collect(Collectors.toList());
 
@@ -200,7 +202,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // 推送到第三方草稿
         if (null != providerEntity) {
             // 推送到第三方草稿
-            ApiResult<String> resultInfo = this.pullThirdOverseasPlatformWithSkuMapping(currentSkuMap, providerEntity, mainEntity, deliveryDetailEntityList, OverseasVerifyEnum.INIT.getCode());
+            ApiResult<String> resultInfo = this.pullThirdOverseasPlatformWithSkuMapping( providerEntity, mainEntity, deliveryDetailEntityList, OverseasVerifyEnum.INIT.getCode());
             if (200 != resultInfo.getCode()) {
                 log.error("推送第三方仓库新增失败:msg={}", JSONUtil.toJsonStr(resultInfo));
                 throw new ServiceException("推送第三方仓库失败:" + resultInfo.getMsg());
@@ -216,37 +218,14 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     }
 
     /**
-     * 查询和校验映射关系
-     */
-    private Map<String, List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView>> checkAdnQuerySkuMap(List<String> skuIds, String dictPlatform, List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList) {
-        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> skuList = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIds);
-        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> currentSkuList = skuList.stream().filter(e -> e.getDictPlatform().equalsIgnoreCase(dictPlatform)).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(currentSkuList) && StringUtils.isNotBlank(dictPlatform)) {
-            throw new ServiceException("数据异常：未找到SKU的映射关系");
-        }
-        Map<String, List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView>> currentSkuMap = currentSkuList.stream()
-                .collect(Collectors.groupingBy(SkuMappingDTO.ListStockSkuNoByProductSkuIdView::getProductSkuId));
-        // 校验映射关系
-        if (StringUtils.isNotBlank(dictPlatform)) {
-            deliveryDetailEntityList.forEach(e -> {
-                List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIdViews = currentSkuMap.get(e.getSkuId());
-                if (CollectionUtils.isEmpty(listStockSkuNoByProductSkuIdViews)) {
-                    throw new ServiceException("未找到映射关系：skuId=" + e.getSkuId());
-                }
-            });
-        }
-        return currentSkuMap;
-    }
-
-    /**
      * 构建请求参数
      */
     private ThirdWarehouseCreateInboundReq entityToCreateInboundBill(OverseasWarehouseInboundEntity mainEntity,
-                                                                     List<FirstMileCartonDTO.PackingItemDTO> itemDTOList,
-                                                                     Map<String, List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView>> currentSkuMap,
+                                                                     List<WmsCartonDTO.PackingItemDTO> itemDTOList,
                                                                      Map<SettingEnum, String> shipperInfo,
                                                                      String verifyCode,
-                                                                     String code
+                                                                     String code,
+                                                                     List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList
     ) {
 
         // 交货方式
@@ -267,15 +246,14 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         // 装箱信息item
         List<ThirdWarehouseCreateInboundReq.Item> itemList = new LinkedList<>();
-        for (FirstMileCartonDTO.PackingItemDTO itemDTO : itemDTOList) {
-            List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> viewList = currentSkuMap.get(itemDTO.getSkuId());
-            SkuMappingDTO.ListStockSkuNoByProductSkuIdView view = viewList.stream().findFirst().orElse(null);
-            if (null == view) {
-                String msg = StrUtil.format("未找到绑定的库存SKU, skuId={}，skuNo={}", itemDTO.getSkuId(), itemDTO.getSkuNo());
+        for (WmsCartonDTO.PackingItemDTO itemDTO : itemDTOList) {
+            FirstMileDeliveryDetailEntity  firstMileDeliveryDetailEntity = deliveryDetailEntityList.stream().filter(v->v.getSkuId().equals(itemDTO.getSkuId())).findFirst().orElse(null);
+            if (null == firstMileDeliveryDetailEntity) {
+                String msg = StrUtil.format("海外仓入库单明细中找不到skuId为【{}】的明细", itemDTO.getSkuId());
                 throw new ServiceException(msg);
             }
             ThirdWarehouseCreateInboundReq.Item currentItem = ThirdWarehouseCreateInboundReq.Item.builder()
-                    .productSku(view.getStockSku())
+                    .productSku(firstMileDeliveryDetailEntity.getPlatformSkuNo())
                     .boxNo(Integer.parseInt(itemDTO.getBoxNo()))
                     .quantity(itemDTO.getPackQty())
                     .build();
@@ -307,11 +285,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 // 入库单创建时取0，发货单审核通过更新为1
                 .verify(verifyCode)
                 .transitWarehouseCode(mainEntity.getPlatformTransferWarehouseCode())
-                .smCode(mainEntity.getLogisticsProductName())
+                .smCode(mainEntity.getLogisticsProductCode())
                 .customsType(customsTypeValue)
                 //  OpenCollectingServiceEnum： 0=自送货物，1=上门提货
                 .collectingService(collectingService)
                 .deliveryCode(mainEntity.getExpressNo())
+                .declareType(mainEntity.getDeclareType())
                 //发货信息
                 .shiperInfo(ThirdWarehouseCreateInboundReq.ShiperInfo.builder()
                         .contacterName(contactName)
@@ -478,6 +457,17 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 }
                 // 设置其他参数为空
                 commonDTO.setBlankOtherByTransferAgentAndSelfDelivery();
+            }
+
+            if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)) {
+                if (StringUtils.isBlank(commonDTO.getLogisticsProductCode())) {
+                    throw new ServiceException("【logisticsProductCode】 物流产品代码不能为空");
+                }
+                List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey("imlLogisticProduct");
+                commonDTO.setLogisticsProductName(dictList.stream().filter(v->v.getValue().equals(commonDTO.getLogisticsProductCode())).findFirst().orElse(new DictBasicDTO.ListDTO()).getName());
+                if (StringUtils.isBlank(commonDTO.getDeclareType())) {
+                    throw new ServiceException("报关类型不能为空");
+                }
             }
         }
 
@@ -687,7 +677,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         resultDTO.setCustomsTypeName(OverseasCustomsTypeNewEnum.getNameByCode(resultDTO.getCustomsType()));
         // 交货方式名称
         resultDTO.setDeliveryModeName(OverseasDeliveryModeEnum.getNameByCode(resultDTO.getDeliveryMode()));
-
+        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey("imlDeclareType");
+        resultDTO.setDeclareTypeName(dictList.stream().filter(v->v.getValue().equals(resultDTO.getDeclareType())).findFirst().orElse(new DictBasicDTO.ListDTO()).getName());
         // 查询详情信息
         List<OverseasWarehouseInboundDetailEntity> detailEntityList = overseasWarehouseInboundDetailService.getByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailEntityList)) {
@@ -937,12 +928,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         //默认调拨方向：普通
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         //调入组织
-        addDTO.setInOrgId(warehouseEntity.getOrgId());
+        addDTO.setInOrgId(destWarehouse.getOrgId());
         //调出组织
         WarehouseDTO.UpdateDTO deliveryWarehouse = warehouseList.stream().filter(req -> req.getId().equals(mainEntity.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-        addDTO.setOutOrgId(deliveryWarehouse.getOrgId());
+        addDTO.setOutOrgId(warehouseEntity.getOrgId());
         //调拨类型
-        if (warehouseEntity.getOrgId().equals(deliveryWarehouse.getOrgId())) {
+        if (destWarehouse.getOrgId().equals(warehouseEntity.getOrgId())) {
             addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
         } else {
             addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
@@ -988,23 +979,20 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .map(FirstMileDeliveryDetailEntity::getSkuId)
                 .distinct()
                 .collect(Collectors.toList());
-        // 查询关联信息
-        Map<String, List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView>> currentSkuMap = checkAdnQuerySkuMap(skuIds, mainEntity.getDictPlatform(), deliveryDetailEntityList);
         // 调用
-        return this.pullThirdOverseasPlatformWithSkuMapping(currentSkuMap, providerEntity, mainEntity, deliveryDetailEntityList, verityCode);
+        return this.pullThirdOverseasPlatformWithSkuMapping( providerEntity, mainEntity, deliveryDetailEntityList, verityCode);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public ApiResult<String> pullThirdOverseasPlatformWithSkuMapping(Map<String, List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView>> skuViewMap,
-                                                                     OverseasProviderEntity providerEntity,
+    public ApiResult<String> pullThirdOverseasPlatformWithSkuMapping(OverseasProviderEntity providerEntity,
                                                                      OverseasWarehouseInboundEntity mainEntity,
                                                                      List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList,
                                                                      String verityCode
     ) {
         // 查询包装信息
-        List<FirstMileCartonDTO.PackingItemDTO> packingQtyDTOS = firstMileCartonDetailService.boxInfoByMainId(mainEntity.getSourceId());
+        List<WmsCartonDTO.PackingItemDTO> packingQtyDTOS = wmsCartonDetailService.boxInfoBySourceId(mainEntity.getSourceId());
         if (CollectionUtils.isEmpty(packingQtyDTOS)) {
             String format = StrUtil.format("【{}】发货单：未找到包装信息", mainEntity.getSourceCode());
             throw new ServiceException(format);
@@ -1017,7 +1005,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         String code = mainEntity.getCode();
 
         // 请求第三方
-        ThirdWarehouseCreateInboundReq createInboundReq = entityToCreateInboundBill(mainEntity, packingQtyDTOS, skuViewMap, shipperInfo, verityCode, code);
+        ThirdWarehouseCreateInboundReq createInboundReq = entityToCreateInboundBill(mainEntity, packingQtyDTOS, shipperInfo, verityCode, code,deliveryDetailEntityList);
         ThirdWarehouseService handlerService = thirdWarehouseRegistry.getHandlerByAuthId(providerEntity.getId());
         log.info("推送第三方仓库: dto={}", JSONUtil.toJsonStr(createInboundReq));
         if (StringUtils.isBlank(code)){

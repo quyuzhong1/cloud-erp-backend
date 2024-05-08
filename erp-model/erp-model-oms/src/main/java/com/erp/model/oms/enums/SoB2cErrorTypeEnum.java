@@ -19,6 +19,7 @@ public enum SoB2cErrorTypeEnum {
     INTERCEPT_SUCCESS("interceptSuccess",  "物流拦截成功"),
     ORDER_FORECAST("orderForecast",  "订单预报失败"),
     INSTOCK_FORECAST("instockForecast",  "入库预报失败"),
+    CANCEL_ORDER_FORECAST("cancelOrderForecast",  "取消订单预报失败"),
     ;
     /**
      * 类型
@@ -55,5 +56,14 @@ public enum SoB2cErrorTypeEnum {
             }
         }
         return "";
+    }
+
+    public static SoB2cErrorTypeEnum getEnum(String code) {
+        for (SoB2cErrorTypeEnum typeEnum : SoB2cErrorTypeEnum.values()) {
+            if (typeEnum.getCode().equals(code)) {
+                return typeEnum;
+            }
+        }
+        return null;
     }
 }

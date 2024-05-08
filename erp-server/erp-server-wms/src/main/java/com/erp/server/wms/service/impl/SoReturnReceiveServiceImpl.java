@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -17,17 +16,17 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
-import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
+import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.*;
@@ -161,23 +160,23 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Override
     public List<SoReturnReceiveDTO.StatusCountDTO> listCount(PermissionsDTO dto) {
-        SOReturnChangeListTypeEnum[] values = SOReturnChangeListTypeEnum.values();
+        SoReturnChangeListTypeEnum[] values = SoReturnChangeListTypeEnum.values();
         List<SoReturnReceiveDTO.StatusCountDTO> list = new ArrayList<>();
-        for (SOReturnChangeListTypeEnum item : values) {
+        for (SoReturnChangeListTypeEnum item : values) {
             SoReturnReceiveDTO.PagingParam pagingParam = new SoReturnReceiveDTO.PagingParam();
             pagingParam.setPermissionSql(dto.getPermissionSql());
             pagingParam.setInvalidStatus(Boolean.FALSE);
             SoReturnReceiveDTO.StatusCountDTO resultDTO = new SoReturnReceiveDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
-            if (SOReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+            if (SoReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
                 pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
-            if (SOReturnChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
+            if (SoReturnChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
                 pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
-            if (SOReturnChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
+            if (SoReturnChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
                 pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
@@ -527,13 +526,13 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             item.setProductGrade(sku.getProductGrade());
             item.setSaleMethod(productDetailEntity.getSaleMethod());
             item.setVariantProperty(sku.getVariantProperty());
-            item.setBoxHeight(sku.getBoxHeight());
-            item.setBoxLength(sku.getBoxHeight());
-            item.setBoxWeight(sku.getBoxWeight());
-            item.setBoxWidth(sku.getBoxWidth());
-            item.setProductHeight(sku.getProductHeight());
-            item.setProductLength(sku.getProductLength());
-            item.setProductWidth(sku.getProductWidth());
+            item.setBoxHeight(LengthConverterUtil.mmToCm(sku.getBoxHeight()));
+            item.setBoxLength(LengthConverterUtil.mmToCm(sku.getBoxLength()));
+            item.setBoxWeight(LengthConverterUtil.mmToCm(sku.getBoxWeight()));
+            item.setBoxWidth(LengthConverterUtil.mmToCm(sku.getBoxWidth()));
+            item.setProductHeight(LengthConverterUtil.mmToCm(sku.getProductHeight()));
+            item.setProductLength(LengthConverterUtil.mmToCm(sku.getProductLength()));
+            item.setProductWidth(LengthConverterUtil.mmToCm(sku.getProductWidth()));
             item.setProductNetWeight(sku.getProductNetWeight());
 
         }

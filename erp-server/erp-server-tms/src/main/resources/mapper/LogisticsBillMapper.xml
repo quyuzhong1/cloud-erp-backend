@@ -68,13 +68,16 @@
     <!--tab 页统计-->
     <select id="tabList" resultType="com.erp.model.tms.dto.LogisticsBillDTO$TabListDTO">
         SELECT
-        COUNT(id) AS count,
-        track_status AS tabFlag
-        FROM logistics_bill_detail
+        COUNT(1) AS count,
+        lbd.track_status AS tabFlag
+        FROM  logistics_bill lb
+        LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
+        LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
+        WHERE  lb.is_deleted=false
+        and lb.order_type in ('B2B','B2C')
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
-        WHERE is_deleted=false
         GROUP BY track_status
     </select>
     <!--分页列表-->
@@ -100,12 +103,11 @@
              lbd.sign_time AS signTime,
              lbd.track_query_mode AS trackQueryMode,
              lc.name AS channelName
-         FROM  logistics_bill_detail lbd
-         RIGHT JOIN  logistics_bill lb
-         ON lbd.main_id=lb.id
-         LEFT JOIN  logistics_channel lc
-         ON lc.id=lb.channel_id and lc.is_deleted=false
-        WHERE  lb.is_deleted=false and (lbd.is_deleted=false or lbd.is_deleted is null)
+        FROM  logistics_bill lb
+        LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
+        LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
+        WHERE  lb.is_deleted=false
+        and lb.order_type in ('B2B','B2C')
         <!--状态-->
         <if test="statusList !=null and statusList.size>0">
             AND lbd.track_status in
@@ -134,6 +136,13 @@
                 #{item}
             </foreach>
          </if>
+        <!--需要排除的订单类型-->
+        <if test="params.excludeOrderTypeList !=null and params.excludeOrderTypeList.size>0">
+            AND lb.order_type not in
+            <foreach collection="params.excludeOrderTypeList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         <!--订单类型-->
         <if test="params.orderTypeList !=null and params.orderTypeList.size>0">
             AND lb.order_type in
@@ -188,7 +197,96 @@
         </if>
         lb.create_time DESC
     </select>
+    <select id="pageCount" resultType="java.lang.Long">
+        SELECT
+        count(1)
+        FROM  logistics_bill lb
+        LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
+        LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
+        WHERE  lb.is_deleted=false
+        and lb.order_type in ('B2B','B2C')
+        <!--状态-->
+        <if test="statusList !=null and statusList.size>0">
+            AND lbd.track_status in
+            <foreach collection="statusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <!--物流单号-->
+        <if test="params.trackNoList !=null and params.trackNoList.size>0">
+            AND lbd.track_no in
+            <foreach collection="params.trackNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <!--订单号-->
+        <if test="params.orderNoList !=null and params.orderNoList.size>0">
+            AND lb.source_code in
+            <foreach collection="params.orderNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <!--销售平台-->
+        <if test="params.salesPlatformList !=null and params.salesPlatformList.size>0">
+            AND lb.sales_platform in
+            <foreach collection="params.salesPlatformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <!--需要排除的订单类型-->
+        <if test="params.excludeOrderTypeList !=null and params.excludeOrderTypeList.size>0">
+            AND lb.order_type not in
+            <foreach collection="params.excludeOrderTypeList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <!--订单类型-->
+        <if test="params.orderTypeList !=null and params.orderTypeList.size>0">
+            AND lb.order_type in
+            <foreach collection="params.orderTypeList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <!--店铺-->
+        <if test="params.shopIdList !=null and params.shopIdList.size>0">
+            AND lb.shop_id in
+            <foreach collection="params.shopIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
 
+        <!--下单时间-->
+        <if test="params.orderTimeList !=null and params.orderTimeList.size>0">
+            AND lb.order_time >= #{params.orderTimeList[0]} and (#{params.orderTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > lb.order_time
+        </if>
+
+        <!--发货时间-->
+        <if test="params.deliveryTimeList !=null and params.deliveryTimeList.size>0">
+            AND lb.delivery_time >= #{params.deliveryTimeList[0]} and (#{params.deliveryTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > lb.delivery_time
+        </if>
+
+        <!--物流渠道-->
+        <if test="params.channelIdList !=null and params.channelIdList.size>0">
+            AND lb.channel_id in
+            <foreach collection="params.channelIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <!--包裹状态-->
+        <if test="params.trackStatusList !=null and params.trackStatusList.size>0">
+            AND lbd.track_status in
+            <foreach collection="params.trackStatusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+    </select>
     <!--导出-->
     <select id="listExport" resultType="com.erp.model.tms.dto.LogisticsBillDTO$PagingVO">
         SELECT
@@ -212,12 +310,11 @@
             lbd.sign_time AS signTime,
             lbd.track_query_mode AS trackQueryMode,
             lc.name AS channelName
-        FROM  logistics_bill_detail lbd
-        RIGHT JOIN  logistics_bill lb
-        ON lbd.main_id=lb.id
-        LEFT JOIN  logistics_channel lc
-        ON lc.id=lb.channel_id and (lbd.is_deleted=false or lbd.is_deleted is null)
-        WHERE  lb.is_deleted=false and lbd.is_deleted=false
+        FROM  logistics_bill lb
+        LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
+        LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
+        WHERE  lb.is_deleted=false
+        and lb.order_type in ('B2B','B2C')
         <choose>
             <when test="params.ids!=null and params.ids.size>0">
                 AND lbd.id IN
@@ -375,5 +472,372 @@
         WHERE
             ${params.sqlMap.default}
         and  lbd.is_deleted = false
+    </select>
+    <select id="firstMilePaging" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$PagingVO">
+        SELECT lb.id,
+                lb.shop_id as  shopId,
+               lb.outstock_id as outstockId,
+               lb.transport_no as transportNo,
+               lb.counter_no as counterNo,
+               lb.source_code as businessCode,
+               lb.outstock_code as outstockCode,
+               lbd.track_status as logisticsStatus,
+               (select lt.content from logistics_track lt where lt.track_no = lbd.track_no and lt.is_deleted = false order by lt.update_time desc limit 1) as logisticsTrack,
+               lb.invoices_status as invoicesStatus,
+               lbc.reconciliation_status as reconciliationStatus,
+               lb.shipping_method as shippingMethod,
+               lb.channel_id as logisticsChannelId,
+               lb.logistics_supplier_id as logisticsSupplierId,
+               lb.shop_name as shopName,
+               lb.to_country as country,
+               lbc.actual_weight as weight,
+               lbc.volume_weight as volumeWeight,
+               lbc.weight_unit as weightUnit,
+               (select sum(lbcd.cost_value) from tms_cost_detail lbcd where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'estimated') as estimatedFee,
+               (select sum(lbcd.cost_value) from tms_cost_detail lbcd where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'actual') as actualFee,
+               lbc.currency as  currency,
+               lb.order_time as orderTime,
+               lbd.sign_time as  signTime,
+               lb.remark,
+                case when lb.ship_time is not  null then FLOOR(EXTRACT(EPOCH FROM (now()-lb.ship_time))/3600)
+                else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour
+        from
+            logistics_bill lb
+                inner join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id
+                inner join logistics_bill_detail lbd on lbd.main_id = lb.id
+        where
+            ${params.sqlMap.default}
+          and lb.order_type = #{params.orderType}
+          and lb.is_deleted =false
+          and lbc.is_deleted = false
+          and lbd.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        order by lb.create_time desc
+    </select>
+    <select id="firstMileView" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$ViewDTO">
+        SELECT lb.id,
+               lbd.id as  detailId,
+        lb.outstock_id as outstockId,
+        lb.transport_no as transportNo,
+        lb.outstock_code as outstockCode,
+        lb.shop_id as shopId,
+        lb.shop_name as shopName,
+        lbd.track_status as logisticsStatus,
+               (select lt.content from logistics_track lt where lt.track_no = lbd.track_no and lt.is_deleted = false order by lt.update_time desc limit 1) as logisticsTrack,
+               lb.counter_no as counterNo,
+        lb.source_code as businessCode,
+        lb.invoices_status as invoicesStatus,
+        lbc.reconciliation_status as reconciliationStatus,
+        lb.shipping_method as shippingMethod,
+        lb.remark,
+        lb.channel_id as logisticsChannelId,
+        lb.logistics_supplier_id as logisticsSupplierId,
+        lb.to_country as toCountryName,
+        lbc.actual_weight as weight,
+        lbc.volume_weight as volumeWeight,
+        lbc.weight_logistics as actualWeight,
+        lbc.volume_weight_logistics as actualVolumeWeight,
+        lbc.weight_unit as weightUnit,
+        (select sum(lbcd.cost_value) from tms_cost_detail lbcd where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'estimated') as estimatedFee,
+        lbc.currency as  currency,
+               lb.ship_time as shipTime,
+        lb.order_time as orderTime,
+        lbd.sign_time as  signTime,
+        lb.remark,
+        (select lbcd.exchange_rate from tms_cost_detail lbcd where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'estimated' limit 1) as exchangeRate,
+               case when lb.ship_time is not  null then FLOOR(EXTRACT(EPOCH FROM (now()-lb.ship_time))/3600) else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour
+        from
+        logistics_bill lb
+        inner join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id
+        inner join logistics_bill_detail lbd on lbd.main_id = lb.id
+        where lb.id = #{id}
+        and lb.is_deleted =false
+        and lbc.is_deleted = false
+        and lbd.is_deleted = false
+    </select>
+    <select id="firstMileTabList" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$TabListDTO">
+        SELECT lbd.track_status as tabFlag,
+               count(1)   as count
+        FROM logistics_bill lb
+                 inner join logistics_bill_detail lbd on lb.id = lbd.main_id
+        where lb.is_deleted = false and lbd.is_deleted = false
+          and lb.order_type = #{orderType}
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        group by lbd.track_status
+    </select>
+    <select id="statistics" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$LogisticStatisticsDTO">
+        SELECT  EXTRACT(year FROM lb.order_time),  EXTRACT(month FROM lb.order_time) as month,
+        count(1)
+        FROM logistics_bill lb
+        inner join logistics_bill_detail lbd on lb.id = lbd.main_id
+        where lb.is_deleted = false and lbd.is_deleted = false
+        and lb.order_type = #{params.orderType}
+        <if test="params.logisticStatusList != null and params.logisticStatusList.size() > 0 ">
+            and  lbd.track_status in
+            <foreach collection="params.logisticStatusList" item="status" open="(" separator="," close=")">
+                #{status}
+            </foreach>
+        </if>
+        <if test="params.beginOrderTime != null">
+            and lb.order_time >= #{params.beginOrderTime}
+        </if>
+        <if test="params.endOrderTime != null ">
+            and lb.order_time <![CDATA[<=]]>  #{params.endOrderTime}
+        </if>
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        group by EXTRACT(month FROM lb.order_time), EXTRACT(year FROM lb.order_time)
+        order by  EXTRACT(year FROM lb.order_time), EXTRACT(month FROM lb.order_time)
+    </select>
+    <select id="reconciliationStatistics"
+            resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$StatisticsVO$ReconciliationStatistics">
+        SELECT
+            COUNT(CASE WHEN reconciliation_status = 'toBeGenerated' THEN 1 END) AS toBeCreate,
+            COUNT(CASE WHEN reconciliation_status = 'toBeConfirm' THEN 1 END) AS toBeConfirm,
+            COUNT(CASE WHEN reconciliation_status = 'confirmed' THEN 1 END) AS confirm,
+            COUNT(CASE WHEN reconciliation_status = 'Reconciled' THEN 1 END) AS reconciliation
+        FROM (
+                 SELECT lbc.reconciliation_status
+                 FROM logistics_bill lb
+                          INNER JOIN logistics_bill_cost lbc ON lb.id = lbc.logistics_bill_id
+                 WHERE lb.is_deleted = false AND lbc.is_deleted = false
+                 and lb.order_type = #{orderType}
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+             ) AS subquery
+    </select>
+    <select id="overdueStatistics" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$OverdueDTO">
+        SELECT
+            case when lb.ship_time is not  null then FLOOR(EXTRACT(EPOCH FROM (now()-lb.ship_time))/3600)
+                 else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour,
+            lc.effective_time as effectiveTime,
+            lb.shop_id as shopId
+        from logistics_bill lb
+                 inner join logistics_channel lc on lb.channel_id = lc.id
+        where lb.is_deleted =false
+          and lc.is_deleted = false
+          and lb.order_time is not null
+          and lc.effective_time != '0'
+          and lb.order_type = #{orderType}
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+    </select>
+    <select id="firstMileFeeCostExport"
+            resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$ExportCostDTO">
+        select
+                lb.outstock_code as outstockCode,
+                lb.source_code as sourceCode,
+                lb.transport_no as transportNo,
+        lbc.actual_weight || lbc.weight_unit as weight,
+        lbc.volume_weight || lbc.weight_unit as volumeWeight,
+        lbc.weight_logistics || lbc.weight_unit as weightLogistics,
+        lbc.volume_weight_logistics || lbc.weight_unit as volumeWeightLogistics,
+                lbc.currency,
+                lbc.id as costId
+        from
+        logistics_bill lb
+        inner join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id
+        inner join logistics_bill_detail lbd on lbd.main_id = lb.id
+        where
+        ${params.sqlMap.default}
+        and lb.order_type = #{params.orderType}
+        and lb.is_deleted =false
+        and lbc.is_deleted = false
+        and lbd.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+    </select>
+    <select id="hasWarnPaging" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$PagingVO">
+        SELECT lb.id,
+               lb.shop_id as  shopId,
+               lb.outstock_id as outstockId,
+               lb.transport_no as transportNo,
+               lb.counter_no as counterNo,
+               lb.source_code as businessCode,
+               lb.outstock_code as outstockCode,
+               lbd.track_status as logisticsStatus,
+               (select lt.content from logistics_track lt where lt.track_no = lbd.track_no and lt.is_deleted = false order by lt.update_time desc limit 1) as logisticsTrack,
+               lb.invoices_status as invoicesStatus,
+               lbc.reconciliation_status as reconciliationStatus,
+               lb.shipping_method as shippingMethod,
+               lb.channel_id as logisticsChannelId,
+               lb.logistics_supplier_id as logisticsSupplierId,
+               lb.shop_name as shopName,
+               lb.to_country as country,
+               lbc.actual_weight as weight,
+               lbc.volume_weight as volumeWeight,
+               lbc.weight_unit as weightUnit,
+               (select sum(lbcd.cost_value) from tms_cost_detail lbcd where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'estimated') as estimatedFee,
+               (select sum(lbcd.cost_value) from tms_cost_detail lbcd where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'actual') as actualFee,
+               lbc.currency as  currency,
+               lb.order_time as orderTime,
+               lbd.sign_time as  signTime,
+               lb.remark,
+               case when lb.ship_time is not  null then FLOOR(EXTRACT(EPOCH FROM (now()-lb.ship_time))/3600)
+                    else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour
+        from
+            logistics_bill lb
+                inner join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id
+                inner join logistics_bill_detail lbd on lbd.main_id = lb.id
+                inner join logistics_channel lc on lc.id = lb.channel_id and lc.is_deleted = false
+        where
+             lb.order_type = #{params.orderType}
+          and lc.effective_time != '0'
+          and lb.order_time is not null
+          and lb.is_deleted =false
+          and lbc.is_deleted = false
+          and lbd.is_deleted = false
+    </select>
+
+    <select id="waitReconciliationPaging"
+            resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO$ListDTO">
+        SELECT
+               lb.shop_id as shopId,
+               lb.shop_name as shopName,
+               lb.source_code as sourceCode,
+               lb.source_id as relationId,
+               lb.source_id as deliveryId,
+               lb.source_code as businessCode,
+               lb.id as sourceId,
+               lb.transport_no as transportNo,
+               lb.outstock_id as outstockId,
+               lb.outstock_code as relationCode,
+               lb.remark as remark,
+               lbd.track_status as transportStatus,
+               lbc.reconciliation_status as reconciliationStatus,
+               lb.shipping_method as shippingMethod,
+               lb.channel_id as logisticsChannelId,
+               lb.logistics_supplier_id as logisticsSupplierId,
+               lb.to_country as toCountry,
+               lbc.logistics_bill_id as logisticBillId,
+               lbc.actual_weight as actualWeight,
+               lbc.volume_weight as volumeWeight,
+               lbc.billing_weight as billingWeight,
+               lbc.volume_weight_logistics as volumeWeightLogistics,
+               lbc.weight_logistics as weightLogistics,
+               lbc.weight_unit as actualWeightUnit,
+               lbc.currency as  currency,
+               lb.order_time as orderTime,
+               lbd.track_no as trackNo,
+               lbd.sign_time as receiveDate
+        from
+            logistics_bill lb
+                inner join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id
+                inner join logistics_bill_detail lbd on lbd.main_id = lb.id
+                inner join logistics_channel lc on lc.id = lb.channel_id and lc.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and lb.is_deleted =false
+            and lbc.is_deleted = false
+            and lbd.is_deleted = false
+            <if test="orderType!=null and orderType!=''">
+                 and lb.order_type = #{orderType}
+            </if>
+            <if test="reconciliationStatus!=null and reconciliationStatus!=''">
+                and lbc.reconciliation_status = #{reconciliationStatus}
+            </if>
+            <if test="trackStatus!=null and trackStatus!=''">
+                and lbd.track_status = #{trackStatus}
+            </if>
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            lb.id desc
+        </where>
+    </select>
+
+    <select id="waitReconciliationList" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO$ListDTO">
+        SELECT
+            lb.shop_id as shopId,
+            lb.shop_name as shopName,
+            lb.source_code as sourceCode,
+            lb.source_id as relationId,
+            lb.source_id as deliveryId,
+            lb.id as sourceId,
+            lb.outstock_code as relationCode,
+            lb.transport_no as transportNo,
+            lb.outstock_id as outstockId,
+            lb.source_code as businessCode,
+            lbd.track_status as transportStatus,
+            lbc.reconciliation_status as reconciliationStatus,
+            lb.shipping_method as shippingMethod,
+            lb.channel_id as logisticsChannelId,
+            lb.logistics_supplier_id as logisticsSupplierId,
+            lb.to_country as toCountry,
+            lbc.logistics_bill_id as logisticBillId,
+            lbc.actual_weight as actualWeight,
+            lbc.volume_weight as volumeWeight,
+            lbc.billing_weight as billingWeight,
+            lbc.volume_weight_logistics as volumeWeightLogistics,
+            lbc.weight_logistics as weightLogistics,
+            lbc.weight_unit as actualWeightUnit,
+            lbc.weight_unit as volumeWeightUnit,
+            lbc.weight_unit as billingWeightUnit,
+            lbc.currency as currency,
+            lb.order_time as orderTime,
+            lbd.track_no as trackNo,
+            lbd.sign_time as receiveDate
+        from
+        logistics_bill lb
+        inner join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id
+        inner join logistics_bill_detail lbd on lbd.main_id = lb.id
+        inner join logistics_channel lc on lc.id = lb.channel_id and lc.is_deleted = false
+        <where>
+            and lb.is_deleted =false
+            and lbc.is_deleted = false
+            and lbd.is_deleted = false
+            <if test="orderType!=null and orderType!=''">
+                and lb.order_type = #{orderType}
+            </if>
+            <if test="reconciliationStatus!=null and reconciliationStatus!=''">
+                and lbc.reconciliation_status = #{reconciliationStatus}
+            </if>
+            <if test="trackStatus!=null and trackStatus!=''">
+                and lbd.track_status = #{trackStatus}
+            </if>
+            <if test="mainIds != null and mainIds.size() > 0 ">
+                and lb.id in
+                <foreach collection="mainIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="transportNoList != null and transportNoList.size() > 0 ">
+                and lb.transport_no in
+                <foreach collection="transportNoList" item="trackNo" open="(" separator="," close=")">
+                    #{trackNo}
+                </foreach>
+            </if>
+            <if test="startDate != null and endDate != null ">
+                and lbd.sign_time >= #{startDate}
+                and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY') > lbd.sign_time
+            </if>
+            <if test="logisticsSupplierIdList != null and logisticsSupplierIdList.size() > 0 ">
+                and lb.logistics_supplier_id in
+                <foreach collection="logisticsSupplierIdList" item="logisticsSupplierId" open="(" separator="," close=")">
+                    #{logisticsSupplierId}
+                </foreach>
+            </if>
+        </where>
     </select>
 </mapper>

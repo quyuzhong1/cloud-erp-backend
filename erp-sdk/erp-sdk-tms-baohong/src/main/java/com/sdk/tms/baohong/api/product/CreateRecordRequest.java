@@ -43,6 +43,10 @@ public class CreateRecordRequest {
     @XmlElement(name = "RecordItem", required = true)
     protected List<RecordItemRequest> recordItem;
 
+    public void setRecordItem(List<RecordItemRequest> recordItem) {
+        this.recordItem = recordItem;
+    }
+
     /**
      * ��ȡheaderRequest���Ե�ֵ��
      * 

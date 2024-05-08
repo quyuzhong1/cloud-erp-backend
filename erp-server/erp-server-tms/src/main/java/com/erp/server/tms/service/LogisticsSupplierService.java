@@ -116,7 +116,7 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      *@author yl
      *@date 2023-12-05
      */
-    List<BaseChildDTO.ListChildTreeDTO> tree();
+    List<LogisticsSupplierDTO.ListChildTreeDTO> tree();
     /**
      * @description: 查询渠道
      * @author Will
@@ -125,4 +125,13 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      * @return List<LogisticsSupplierListDTO>
      */
     List<LogisticsSupplierDTO.LogisticsSupplierListDTO> listLogisticsChannel(List<String> logisticsSupplierIdList);
+
+    /**
+     *
+     * @param id 主键id
+     * @return {@link LogisticsSupplierDTO.ViewDTO}
+     */
+    LogisticsSupplierDTO.ViewDTO detail(String id);
+
+    List<LogisticsSupplierEntity> listByName(List<String> supplierNameList);
 }

@@ -12,10 +12,7 @@ import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.tms.dto.SettingForecastChannelDTO;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.tms.entity.LogisticsSupplierEntity;
-import com.erp.model.tms.entity.SettingForecastChannelEntity;
-import com.erp.model.tms.entity.SettingForecastEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.TransferLogisticsAuthStatusEnum;
 import com.erp.server.tms.mapper.SettingForecastMapper;
 import com.erp.server.tms.service.*;
@@ -56,10 +53,12 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
     @Resource
     private SettingForecastChannelService settingForecastChannelService;
 
+    @Resource
+    private TransferLogisticsChannelService transferLogisticsChannelService;
 
     @Override
     public List<SettingForecastDTO.ListDTO> listAll() {
-        List<SettingForecastEntity> list = this.list();
+        List<SettingForecastEntity> list = this.lambdaQuery().orderByAsc(SettingForecastEntity::getId).list();
         List<SettingForecastDTO.ListDTO> resultList = BeanMapperUtils.copyList(SettingForecastDTO.ListDTO.class, list);
         //数据处理
         handleListData(resultList);
@@ -166,6 +165,8 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
             LogisticsPlatformEnum declarePlatformEnum = LogisticsPlatformEnum.getByCode(declarePlatform);
             String declarePlatformName = Objects.nonNull(declarePlatformEnum) ? declarePlatformEnum.getName() : "";
             forecastStatus.setDeclarePlatformName(declarePlatformName);
+            forecastStatus.setTransferLogisticsChannelId(entity.getTransferLogisticsChannelId());
+            forecastStatus.setTransferLogisticsChannelName(entity.getTransferLogisticsChannelName());
             return forecastStatus;
         }
 
@@ -259,6 +260,11 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
         return this.lambdaQuery().eq(SettingForecastEntity::getLogisticsSupplierId, logisticsSupplierId).last("LIMIT 1").one();
     }
 
+    @Override
+    public List<SettingForecastEntity> getSettingForecastByLogisticsSupplierIdList(List<String> logisticsSupplierId) {
+        return this.lambdaQuery().in(SettingForecastEntity::getLogisticsSupplierId, logisticsSupplierId).list();
+    }
+
 
     private SettingForecastDTO.SaveOrUpdateDTO getSaveOrUpdateByDb(SettingForecastEntity entity) {
         SettingForecastDTO.SaveOrUpdateDTO dto = new SettingForecastDTO.SaveOrUpdateDTO();
@@ -275,6 +281,8 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
         List<String> logisticsChannelIdList = settingForecastChannelList.stream().filter(obj -> StrUtil.equals(dto.getId(), obj.getMainId()))
                 .map(SettingForecastChannelEntity::getLogisticsChannelId).collect(Collectors.toList());
         dto.setLogisticsChannelIdList(logisticsChannelIdList);
+        dto.setTransferLogisticsChannelId(entity.getTransferLogisticsChannelId());
+        dto.setIsAutoForecast(entity.getIsAutoForecast());
         return dto;
     }
 
@@ -291,14 +299,20 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
         //中转商ids
         List<String> transferSupplierIdList = list.stream().map(SettingForecastEntity::getTransferLogisticsSupplierId).collect(Collectors.toList());
         List<LogisticsSupplierEntity> logisticsSupplierList = CollectionUtils.isNotEmpty(logisticsSupplierIdList) ? logisticsSupplierService.listByIds(logisticsSupplierIdList) : Collections.emptyList();
-
         List<TransferLogisticsSupplierDTO.AuthDTO> transferLogisticsSupplierList = CollectionUtils.isNotEmpty(transferSupplierIdList) ? transferLogisticsSupplierService.listAuthByMainIds(transferSupplierIdList) : Collections.emptyList();
+
+        //中转渠道id
+        List<String> transferChannelIdList = list.stream().map(SettingForecastEntity::getTransferLogisticsChannelId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<TransferLogisticsChannelEntity> transferLogisticsChannelEntityList = transferLogisticsChannelService.listByIds(transferChannelIdList);
         for (SettingForecastEntity item : list) {
             String logisticsSupplierId = item.getLogisticsSupplierId();
             String logisticsSupplierName = logisticsSupplierList.stream().filter(l -> l.getId().equals(logisticsSupplierId)).
                     findFirst().map(LogisticsSupplierEntity::getSupplierName).orElse("");
             item.setLogisticsSupplierName(logisticsSupplierName);
 
+            if(item.getIsMustTransfer() && (StringUtils.isBlank(item.getTransferLogisticsSupplierId()) || StringUtils.isBlank(item.getTransferLogisticsChannelId()))){
+                throw new ServiceException("强制中转，必须选择中转物流商和渠道");
+            }
             String transferLogisticsSupplierId = item.getTransferLogisticsSupplierId();
             //如果为空就不校验
             if (StringUtils.isBlank(transferLogisticsSupplierId)) {
@@ -318,6 +332,14 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
             }
             item.setTransferLogisticsSupplierName(supplierName);
             item.setDeclarePlatform(declarePlatform);
+            TransferLogisticsChannelEntity transferLogisticsChannelEntity = transferLogisticsChannelEntityList.stream().filter(l -> l.getId().equals(item.getTransferLogisticsChannelId())).findFirst().orElse(null);
+            if(Objects.nonNull(transferLogisticsChannelEntity)){
+                item.setTransferLogisticsChannelName(transferLogisticsChannelEntity.getName());
+            }
+
+            if(item.getIsAutoForecast() && !item.getIsMustTransfer()){
+                throw new ServiceException("启用订单自动预报，必须启用强制中转报关");
+            }
         }
 
     }

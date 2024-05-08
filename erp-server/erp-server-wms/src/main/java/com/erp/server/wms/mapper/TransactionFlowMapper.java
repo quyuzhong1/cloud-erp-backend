@@ -41,6 +41,13 @@ public interface TransactionFlowMapper extends BaseMapper<TransactionFlowEntity>
      */
     IPage<InventoryDTO.TransFlowPagingViewDTO> pagingForInv(Page query, @Param("params") InventoryDTO.TransFlowSearchParamDTO params);
 
+    /**
+     * 出入库列表导出
+     * @param params
+     * @return
+     */
+    List<InventoryDTO.TransFlowPagingViewDTO> exportTransFlow(@Param("params") InventoryDTO.ExportInvFlowSearchParamDTO params);
+
 
     /**
      * 出入库流水分页查询
@@ -115,4 +122,11 @@ public interface TransactionFlowMapper extends BaseMapper<TransactionFlowEntity>
      * @return List<ListDailyInventoryDTO>
      */
     List<InventoryReportDTO.ListDailyInventoryDTO> listDailyInventory(@Param("params") InventoryReportDTO.DailyInventoryParamDTO params);
+    
+    /**
+     * 只查询库存数量
+     * @param params
+     * @return
+     */
+    List<InventoryReportDTO.ListDailyInventoryDTO> listDailyInventoryQty(@Param("params") InventoryReportDTO.DailyInventoryParamDTO params);
 }

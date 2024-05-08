@@ -1,6 +1,5 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.lang.Dict;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -25,7 +24,6 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
-import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -37,7 +35,6 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cDetailMapper;
 import com.erp.server.oms.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -270,7 +267,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         if(CollectionUtils.isEmpty(dto.getDetails())){
             if (CollectionUtils.isEmpty(oldDetailEntityList)){
                 // 新建空
-                SoB2cDetailEntity detailEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(null, mainEntity.getId(),"", "","");
+                SoB2cDetailEntity detailEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(null, mainEntity.getId(),"", "","", "");
                 if(!this.save(detailEntity)){
                     throw new ServiceException("[SoB2cDetailEntity] 保存失败");
                 }
@@ -307,20 +304,24 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             String skuId = null == oldEntity ? "" : oldEntity.getSkuId();
             String skuNO= null == oldEntity ? "" : oldEntity.getSkuNo();
             String imageUrl= null == oldEntity ? "" : oldEntity.getImageUrl();
+            String platformSpuNo = null == oldEntity ? "" : oldEntity.getPlatformSpuNo();
             // 历史不为空不更新
             if(null != mappingDTO && StringUtils.isBlank(skuNO) && StringUtils.isBlank(skuId)){
                 skuId = mappingDTO.checkAndGetProductSkuId();
                 skuNO = mappingDTO.checkAndGetProductSkuNo();
                 imageUrl = mappingDTO.checkAndGetProductImageUrl();
             }
+            if (null != mappingDTO && StringUtils.isBlank(platformSpuNo)){
+                platformSpuNo = mappingDTO.getPlatformSpuNo();
+            }
 
             SoB2cDetailEntity saveOrUpdateEntity;
             if (null != oldEntity) {
                 // 更新指定内容
-                saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertUpdateDetail(oldEntity, detailDTO, skuId, skuNO, imageUrl);
+                saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertUpdateDetail(oldEntity, detailDTO, skuId, skuNO, imageUrl, platformSpuNo);
             } else {
                 // 新记录
-                saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(detailDTO, mainEntity.getId(), skuId, skuNO, imageUrl);
+                saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(detailDTO, mainEntity.getId(), skuId, skuNO, imageUrl, platformSpuNo);
             }
 
             if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform()) && mainEntity.hasPlatformWarehouseOrder() && isShipped) {
@@ -412,9 +413,6 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             detailEntity.setCurrency(mainEntity.getCurrency());
             detailEntity.setExchangeRate(mainEntity.getExchangeRate());
 
-            // 毛重
-            BigDecimal currentNetWeight = null == skuVO ? BigDecimal.ZERO : MathUtil.multiply(skuVO.getGrossWeight(), detailEntity.getQty());
-            detailEntity.setCurrentNetWeight(currentNetWeight);
 
             //建议售价
             BigDecimal advicePrice = null == skuVO ? BigDecimal.ZERO : skuVO.getRetailPrice();
@@ -455,10 +453,16 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     }
 
     @Override
-    public Boolean updateIsMatchWarehouseRule(List<String> detailIdList) {
+    public Boolean updateIsMatchWarehouseRule(String mainId,List<String> detailIdList) {
         if (CollectionUtils.isEmpty(detailIdList)) {
             return Boolean.TRUE;
         }
+        //更新主表库存匹配状态
+        Boolean isMatchWarehouseRule = soB2cService.updateIsMatchWarehouseRuleById(mainId);
+        if (!isMatchWarehouseRule) {
+            throw new ServiceException(ApiError.SO_B2C_IS_MATCH_WAREHOUSE_RULE);
+        }
+
         return  lambdaUpdate()
                 .in(SoB2cDetailEntity::getId,detailIdList)
                 .set(SoB2cDetailEntity::getIsMatchWarehouseRule,Boolean.FALSE)

@@ -54,4 +54,25 @@ public class SysPostFeignContriller extends BaseController {
     public List<SysPostUserEntity> getPostUserByUserId(@RequestParam("userId") String userId) {
         return sysPostUserService.getByUserId(userId);
     }
+
+    /**
+     * 根据用户id查询用户岗位
+     * @author Will
+     * @date: 2024/4/10 16:41
+     * @param postIdList
+     * @return List<SysPostUserEntity>
+     */
+    @GetMapping("/listPostUserByPostIdList")
+    public List<SysPostUserEntity> listPostUserByPostIdList(@RequestParam("postIdList")  List<String> postIdList) {
+        return sysPostUserService.listPostUserByPostIdList(postIdList);
+    }
+
+
+    /**
+     * 通过岗位id查询岗位下全部人员
+     **/
+    @PostMapping("/getUserIdByPostIds")
+    public List<SysPostUserEntity> getUserIdByPostIds(@RequestBody List<String> ids) {
+        return sysPostUserService.getUserIdByPostIds(ids);
+    }
 }

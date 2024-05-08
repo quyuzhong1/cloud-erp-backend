@@ -48,6 +48,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -243,6 +244,24 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 .collect(Collectors.toList());
 
 
+    }
+
+    @Override
+    public List<WarehouseDTO.UpdateDTO> listWarehouseByNameList(List<String> warehouseNameList) {
+        if (CollectionUtils.isEmpty(warehouseNameList)) {
+            return new ArrayList<>();
+        }
+        List<WarehouseEntity> list = lambdaQuery().in(WarehouseEntity::getName,warehouseNameList).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        List<WarehouseDTO.UpdateDTO> resultList = new ArrayList<>();
+        for (WarehouseEntity warehouseEntity : list) {
+            WarehouseDTO.UpdateDTO updateDTO = BeanMapperUtils.map(WarehouseDTO.UpdateDTO.class, warehouseEntity);
+            updateDTO.setApproveStatusEnum(warehouseEntity.getApproveStatus());
+            resultList.add(updateDTO);
+        }
+         return resultList;
     }
 
     /**
@@ -1095,5 +1114,17 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             resultList.add(listTreeDTO);
         }
         return resultList;
+    }
+
+    /**
+     * 根据名称获取仓库id
+     *
+     * @param nameList
+     * @author hyj
+     * @date 2024/4/18 10:26
+     */
+    @Override
+    public List<WarehouseDTO.ListDTO> getByNames(@Param("nameList") List<String> nameList) {
+        return baseMapper.getByNames(nameList);
     }
 }

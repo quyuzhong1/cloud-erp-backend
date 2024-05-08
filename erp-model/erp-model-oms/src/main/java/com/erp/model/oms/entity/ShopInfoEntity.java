@@ -180,6 +180,12 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     @TableField("platform_status")
     private String platformStatus;
 
+    /**
+     * 默认币种
+     */
+    @TableField("default_currency")
+    private String defaultCurrency;
+
 
     public static final String PLATFORM_DICT = "platform_dict";
 

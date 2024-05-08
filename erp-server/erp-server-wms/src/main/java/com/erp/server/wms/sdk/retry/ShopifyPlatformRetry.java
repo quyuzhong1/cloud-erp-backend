@@ -22,6 +22,6 @@ public class ShopifyPlatformRetry implements IPlatformRetryService {
     private SoOutstockService soOutstockService;
     @Override
     public Boolean retrySoOutStock(SoB2cEntity currentEntity, List list) {
-        return soOutstockService.defaultHandleRetry(currentEntity.getId(), list);
+        return soOutstockService.defaultHandleRetry(currentEntity, list);
     }
 }

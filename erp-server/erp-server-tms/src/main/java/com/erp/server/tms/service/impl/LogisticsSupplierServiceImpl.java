@@ -24,9 +24,7 @@ import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.DictBasicEnum;
-import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
-import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
+import com.erp.model.tms.enums.*;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsFbaOverseasFeign;
@@ -396,19 +394,18 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     }
 
     @Override
-    public List<BaseChildDTO.ListChildTreeDTO> tree() {
-        List<LogisticsSupplierEntity> dbList = this.list();
-        List<BaseChildDTO.ListChildTreeDTO> list = LogisticsSupplierConverter.INSTANCE.convertTree(dbList);
+    public List<LogisticsSupplierDTO.ListChildTreeDTO> tree() {
+        List<LogisticsSupplierEntity> dbList = list();
+        List<LogisticsSupplierDTO.ListChildTreeDTO> list = LogisticsSupplierConverter.INSTANCE.convertTree(dbList);
         List<LogisticsChannelEntity> allChannelList = logisticsChannelService.list();
-        for (BaseChildDTO.ListChildTreeDTO item : list) {
+        for (LogisticsSupplierDTO.ListChildTreeDTO item : list) {
             String id = item.getId();
             List<LogisticsChannelEntity> channelList = allChannelList.stream().
                     filter(c -> c.getMainId().equals(id)).sorted(Comparator.comparing(LogisticsChannelEntity::getDisabled)).
                     collect(Collectors.toList());
-            List<BaseChildDTO.ListChildTreeDTO> childrenList = LogisticsChannelConverter.INSTANCE.convertTree(channelList);
+            List<LogisticsSupplierDTO.ListChildTreeDTO> childrenList = LogisticsChannelConverter.INSTANCE.convertTree(channelList);
             item.setChildren(childrenList);
         }
-
         return list;
     }
 
@@ -431,6 +428,19 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             resultList.add(resultDTO);
         }
         return resultList;
+    }
+
+    @Override
+    public LogisticsSupplierDTO.ViewDTO detail(String id) {
+        return baseMapper.detail(id);
+    }
+
+    @Override
+    public List<LogisticsSupplierEntity> listByName(List<String> supplierNameList) {
+        if(CollectionUtils.isEmpty(supplierNameList)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(LogisticsSupplierEntity::getSupplierName, supplierNameList).list();
     }
 
 

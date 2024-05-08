@@ -1,45 +1,55 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
-import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.OrderTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.entity.BaseEntity;
-import com.common.core.enums.ApiError;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.tms.dto.AutoGenerateBillDTO;
+import com.erp.model.tms.dto.CfgSettingValueDTO;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.entity.CfgSettingEntity;
+import com.erp.model.tms.entity.TmsDeclareBillEntity;
+import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.enums.PackingStatusEnum;
+import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.tms.feign.CfgSettingFeign;
+import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.server.wms.query.SoOutstockQueryHandler;
-import com.erp.server.wms.service.impl.PlatformRetryHandler;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -59,6 +69,13 @@ public class SoOutstockController extends BaseController {
 
     @Resource
     private SoB2cFeign soB2cFeign;
+
+    @Resource
+    private TmsDeclareBillFeign tmsDeclareBillFeign;
+
+
+    @Resource
+    private CfgSettingFeign cfgSettingFeign;
 
 
     /**
@@ -81,7 +98,7 @@ public class SoOutstockController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:paging",
             tableAlias = "so"
     )
@@ -101,7 +118,7 @@ public class SoOutstockController extends BaseController {
      */
     @PostMapping("/getTotalByQuery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:paging",
             tableAlias = "so"
     )
@@ -110,6 +127,7 @@ public class SoOutstockController extends BaseController {
         SoOutstockDTO.PagingTotalDTO pagingTotalDTO = soOutstockService.getTotalByQuery(dto);
         return success(pagingTotalDTO);
     }
+
 
     /**
      * 创建
@@ -133,7 +151,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交销售出库单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:submit",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids"
@@ -166,7 +184,7 @@ public class SoOutstockController extends BaseController {
     @LogViewService
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:view",
             serviceClass = SoOutstockService.class,
             keyIdName = "id"
@@ -185,7 +203,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改销售出库单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:update",
             serviceClass = SoOutstockService.class,
             keyIdName = "id"
@@ -204,7 +222,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交销售出库单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:update",
             serviceClass = SoOutstockService.class,
             keyIdName = "id"
@@ -225,7 +243,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "销售出库单列表修改:运输单号={trackNo},ids={idList}")
     @PostMapping("/pagingUpdate")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:update",
             serviceClass = SoOutstockService.class,
             keyIdName = "id"
@@ -244,7 +262,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核销售出库单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:approve",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids"
@@ -287,30 +305,7 @@ public class SoOutstockController extends BaseController {
      */
     @PostMapping("afreshGenerateB2cOutstock")
     public ApiResult<Void> afreshGenerateB2cOutstock(@RequestBody BaseIdsDTO.IdsDTO dto) {
-
-        List<SoB2cEntity> soB2cList = soB2cFeign.listWarehouseIsEmpty(dto.getIds());
-        Map<String, SoB2cEntity> mainMap = soB2cFeign.listByIds(dto.getIds())
-                .stream()
-                .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
-        for (String id : dto.getIds()) {
-            try {
-                SoB2cEntity currentEntity = mainMap.get(id);
-                if (null == currentEntity){
-                    throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
-                }
-                PlatformRetryHandler.retrySoOutStock(currentEntity, soB2cList);
-            } catch (Exception e) {
-                String message = e.getMessage();
-                log.error("重新创建或者修改B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", id, id, message);
-                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
-                addError.setMainId(id);
-                addError.setMessage(message);
-                addError.setParamJson(id);
-                soB2cFeign.addSoB2cError(addError);
-            }
-
-        }
+          soOutstockService.afreshGenerateB2cOutstock(dto.getIds());
         return success();
     }
 
@@ -320,7 +315,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核销售出库单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:disApprove",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids"
@@ -340,7 +335,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销销售出库单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:cancelProcess",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids")
@@ -358,7 +353,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除销售出库单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:delete",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids")
@@ -378,7 +373,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.INVALID, desc = "作废销售出库单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:invalid",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids")
@@ -394,7 +389,7 @@ public class SoOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售出库单")
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:paging",
             serviceClass = SoOutstockService.class,
             keyIdName = "so"
@@ -461,5 +456,114 @@ public class SoOutstockController extends BaseController {
 
 
         return success();
+    }
+
+
+    /**
+     * 装箱
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:21
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/packingSave")
+    @LogAction(value = LogActionEnum.INSERT, desc = "头程发货单装箱保存")
+    public ApiResult packingSave(@RequestBody @Validated WmsCartonDTO.WmsCartonAdd dto) {
+        String packingStatus = soOutstockService.packingSave(dto);
+
+        if (PackingStatusEnum.PACKING.getCode().equals(packingStatus)) {
+        } else {
+            List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Arrays.asList(dto.getId()));
+            List<String> ids = tmsDeclareBillEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+            if (CollectionUtil.isNotEmpty(ids)) {
+                TmsDeclareBillDTO.DeleteDTO deleteDTO = new TmsDeclareBillDTO.DeleteDTO();
+                deleteDTO.setIds(ids);
+                tmsDeclareBillFeign.delete(deleteDTO);
+            }
+        }
+        return StringUtils.isNotBlank(packingStatus) ? success() : failure();
+    }
+
+    /**
+     * 装箱详情
+     * @Author Luo_WG
+     * @Date 2023/11/28 17:44
+     * @param id
+     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
+     **/
+    @GetMapping("/packingView")
+    public ApiResult<WmsCartonDTO.WmsCartonView> packingView(@RequestParam("id") String id) {
+        WmsCartonDTO.WmsCartonView wmsCartonView = soOutstockService.packingView(id);
+        return success(wmsCartonView);
+    }
+
+    /**
+     * 装箱清单
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:21
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/listPacking")
+    public ApiResult<WmsCartonDTO.ListPackingDTO> listPacking(@RequestParam("id") String id) {
+        WmsCartonDTO.ListPackingDTO result = soOutstockService.listPacking(id);
+        return success(result);
+    }
+
+    /**
+     * 导出装箱清单Excel
+     * @author Luo_WG
+     * @date 2023-10-30
+     * @param dto
+     * @param response
+     */
+    @PostMapping("/exportPacking")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:fbaDelivery:exportPacking",
+            tableAlias = "fd"
+    )
+    @LogAction(value = LogActionEnum.EXPORT, desc = "销售出库单导出装箱清单Excel")
+    @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
+    public ApiResult exportPacking(@RequestBody @Validated SoOutstockDTO.ExportDTO dto, HttpServletResponse response) {
+        soOutstockService.exportPacking(dto, response);
+        return success();
+    }
+
+    /**
+     * 下载装箱模板
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载装箱模板数据")
+    @GetMapping("/downloadPackingTemplate")
+    public ApiResult downloadPackingTemplate(HttpServletResponse response) {
+        soOutstockService.downloadPackingTemplate(response);
+        return success();
+    }
+
+
+    /**
+     * 导入装箱数据
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入装箱模板数据")
+    @PostMapping("/importPacking")
+    public ApiResult importPacking(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = soOutstockService.importFile(excelFile, response);
+        return result == true ? success() : failure();
+    }
+
+    /**
+     *
+     * 快粘贴查询sku
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:21
+     * @param id 销售出库单Id
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/listGroupSkuById")
+    public ApiResult<List<WmsCartonDTO.GroupSkuDTO>> listGroupSkuById(@RequestParam("id") String id) {
+        List<WmsCartonDTO.GroupSkuDTO> result = soOutstockService.listGroupSkuById(id);
+        return success(result);
     }
 }

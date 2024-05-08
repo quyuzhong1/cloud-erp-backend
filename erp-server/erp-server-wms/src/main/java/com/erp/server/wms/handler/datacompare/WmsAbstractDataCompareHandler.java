@@ -38,22 +38,22 @@ public abstract class WmsAbstractDataCompareHandler<M extends WmsDataCompareDbSe
 		T dataCompareDTO = JSON.parseObject(systemDataCondition, entityClass);
 		dataCompareDTO.setTaskId(taskId);
 		dataCompareDTO.setId("0");
-		List<T> resultList = new ArrayList<>();
-		while(true) {
-			List<T> list = wmsDataCompareDbService.getDataCompareByCondition(dataCompareDTO , pageSize);
-			
-			if(CollUtil.isEmpty(list)) {
-				break;
-			}
-			
-			resultList.addAll(list);
-			dataCompareDTO.setId(list.get(list.size() - 1).getId());
-			
-			if(list.size() < pageSize) {
-				break;
-			}
-		}
-		return resultList;
+//		List<T> resultList = new ArrayList<>();
+//		while(true) {
+//			List<T> list = wmsDataCompareDbService.getDataCompareByCondition(dataCompareDTO , pageSize);
+//			
+//			if(CollUtil.isEmpty(list)) {
+//				break;
+//			}
+//			
+//			resultList.addAll(list);
+//			dataCompareDTO.setId(list.get(list.size() - 1).getId());
+//			
+//			if(list.size() < pageSize) {
+//				break;
+//			}
+//		}
+		return wmsDataCompareDbService.getDataCompareByCondition(dataCompareDTO , pageSize);
 	}
 	
 	@Override

@@ -2,7 +2,6 @@ package com.erp.server.plm.controller.api;
 
 import com.alibaba.excel.EasyExcel;
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
@@ -20,13 +19,15 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
-import com.erp.model.plm.entity.*;
+import com.erp.model.plm.entity.ProductDetailApproverEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
+import com.erp.model.plm.entity.ProductUnitEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
-import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.listener.ProductWarehouseLocationListener;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -184,7 +185,12 @@ public class ProductDetailController extends BaseController {
      * @Date 2022/10/9 10:21
      **/
     @GetMapping("/getNoSpecDetailById")
-    //@RequestPermissions("plm:product:detail:getNoSpecDetailById")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:product:detail:getNoSpecDetailById",
+            serviceClass = ProductInfoService.class,
+            keyIdName = "productId"
+    )
     public ApiResult<ProductNoSpecDetailAllDTO> getNoSpecDetailById(@RequestParam(value = "productId") String productId) {
         ProductNoSpecDetailAllDTO list = productDetailService.getNoSpecDetailById(productId);
         return this.success(list);
@@ -199,7 +205,6 @@ public class ProductDetailController extends BaseController {
      * @Date 2022/10/9 10:21
      **/
     @GetMapping("/getNoSpecDetailBySkuId")
-    //@RequestPermissions("plm:product:detail:getNoSpecDetailById")
     public ApiResult<ProductNoSpecDetailAllDTO> getNoSpecDetailBySkuId(@RequestParam(value = "skuId") String skuId) {
         ProductNoSpecDetailAllDTO list = productDetailService.getNoSpecDetailBySkuId(skuId);
         return this.success(list);
@@ -214,7 +219,12 @@ public class ProductDetailController extends BaseController {
      * @Date 2022/10/9 10:22
      **/
     @GetMapping("/getManySpecDetailById")
-    //@RequestPermissions("plm:product:detail:getManySpecDetailById")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:product:detail:getManySpecDetailById",
+            serviceClass = ProductInfoService.class,
+            keyIdName = "productId"
+    )
     public ApiResult<ProductManyDetailDTO> getManySpecDetailById(@RequestParam(value = "productId") String productId) {
         ProductManyDetailDTO list = productDetailService.getManySpecDetailById(productId);
         return this.success(list);
@@ -674,35 +684,8 @@ public class ProductDetailController extends BaseController {
     @PostMapping("/importProductFile")
     //@RequestPermissions("plm:product:detail:importProductFile")
     public ApiResult importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
-        List<BasicDictEntity> basicDictList = basicDictService.list();
-        ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productUnitService, basicCategoryService, basicDictService, userList, basicDictList,scmTaskFeign);
-        try {
-            EasyExcel.read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95124);
-        }
-        List<ProductDetailExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
-        if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
-        }
-        List<ProductDetailExcelDTO> list = excelListenerUtil.getDateList();
-        if (list.size() > 0) {
-            StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/productNoSpecDetail.xlsx";
-            String name = "productNoSpecDetail";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
-            }
-
-            return failure();
-        }
-        return success();
+        Boolean flag = productDetailService.importProductFile(excelFile, importType, response);
+        return flag == true ? success() : failure();
     }
 
     /**
@@ -1242,5 +1225,14 @@ public class ProductDetailController extends BaseController {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 初始化尺寸历史数据
+     */
+    @GetMapping("/initProductSizeAndBoxSize")
+    public ApiResult<String> initProductSizeAndBoxSize(){
+        productDetailService.initProductSizeAndBoxSize();
+        return success();
     }
 }

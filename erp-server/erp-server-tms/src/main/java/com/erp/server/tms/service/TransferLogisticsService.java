@@ -3,13 +3,11 @@ package com.erp.server.tms.service;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
-import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
-import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
-import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
-import com.erp.model.tms.dto.transfer.TransferLogisticsProductDTO;
+import com.erp.model.tms.dto.transfer.*;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
@@ -47,6 +45,11 @@ public interface TransferLogisticsService {
     ApiResult<List<ProductRegistrationEntity>> getAllProductInfo(String authId);
 
     /**
+     * 查询单个sku
+     */
+    ApiResult<ProductRegistrationEntity> getProductBySku(String skuNo,String authId);
+
+    /**
      * 创建入库单
      * @return 服务商入库单号
      */
@@ -59,6 +62,10 @@ public interface TransferLogisticsService {
      */
     ApiResult<String> printLabel(String orderCode, String authId);
 
-
-
+    /**
+     * 备案产品
+     * @param authId
+     * @return
+     */
+    ApiResult<String> createProduct(@Valid TransferLogisticsCreateProductReq createProductReq, String authId);
 }

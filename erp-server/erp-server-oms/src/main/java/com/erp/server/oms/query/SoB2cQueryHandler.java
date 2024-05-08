@@ -5,9 +5,7 @@ import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.common.business.threadlocal.AdvanceQueryContext;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cPayStatusEnum;
-import com.erp.model.oms.enums.SoB2cTabEnum;
+import com.erp.model.oms.enums.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
@@ -147,7 +145,42 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                 return getQueryAllSql();
             }
         }
-        return null;
+        /**
+         * B2C订单待处理类型归类,SoB2cWaitHandleTypeEnum枚举
+         * 审核不通过（自动）：订单审核状态为审核不通过，不通过原因是自动审核条件不通过或拦截成功后自动不通过
+         * 审核不通过（人工）：订单审核状态为审核不通过，不通过原因是人工审核条件不通过
+         * 订单反审核：订单审核状态为待提交，待提交原因是人工反审核
+         * 仓库规则不通过：订单状态是待配货，待配货原因是仓库规则不通过（注意区分没有走仓库规则的数据）
+         * 物流规则不通过：订单状态是待配货，待配货原因是物流规则不通过
+         */
+        if ("waitHandle".equals(field))  {
+
+            //审核不通过（自动）
+            if (SoB2cWaitHandleTypeEnum.APPROVE_REJECT.getCode().equals(value)) {
+                super.buildDefaultDTO("sb2c.approve_status", Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+                super.buildDefaultDTO("sb2c.abnormal_type", Arrays.asList(SoB2cAbnormalTypeEnum.ENUM_APPROVE_REJECT.getCode()));
+            }
+            //审核不通过（手动）
+            if (SoB2cWaitHandleTypeEnum.MANUAL_REJECT.getCode().equals(value)) {
+                super.buildDefaultDTO("sb2c.approve_status", Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+                super.buildDefaultDTO("sb2c.abnormal_type", Arrays.asList(SoB2cAbnormalTypeEnum.ENUM_MANUAL_REJECT.getCode()));
+            }
+            //订单反审核
+            if (SoB2cWaitHandleTypeEnum.WAIT_SUBMIT.getCode().equals(value)) {
+                super.buildDefaultDTO("sb2c.approve_status", Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
+            }
+            //仓库规则不通过
+            if (SoB2cWaitHandleTypeEnum.WAREHOUSE_RULE_REJECT.getCode().equals(value)) {
+                super.buildSplicingSQLDTO("sb2c.is_match_warehouse_rule", QueryConditionEnum.EQ,Boolean.FALSE, QueryDataTypeEnum.BOOLEAN);
+                super.buildDefaultDTO("sb2c.abnormal_type", Arrays.asList(SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT.getCode()));
+            }
+            //物流规则不通过
+            if (SoB2cWaitHandleTypeEnum.LOGISTICS_RULE_REJECT.getCode().equals(value)) {
+                super.buildSplicingSQLDTO("sb2c.is_match_logistics_rule", QueryConditionEnum.EQ,Boolean.FALSE, QueryDataTypeEnum.BOOLEAN);
+                super.buildDefaultDTO("sb2c.abnormal_type", Arrays.asList(SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT.getCode()));
+            }
+        }
+         return null;
     }
 
 
@@ -220,6 +253,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         //订单异常
         if (SoB2cTabEnum.ENUM_ORDER_ERROR.getCode().equals(value)) {
             super.buildSplicingSQLDTO("sb2c.sign_order_error", QueryConditionEnum.NE,"", QueryDataTypeEnum.STRING);
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
         if (CollectionUtils.isNotEmpty(approveStatusList)) {
             super.buildDefaultDTO("sb2c.approve_status", approveStatusList);

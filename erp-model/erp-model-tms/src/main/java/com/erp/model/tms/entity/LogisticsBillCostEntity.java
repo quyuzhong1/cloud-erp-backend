@@ -1,14 +1,16 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
+import com.erp.model.tms.dto.TmsCostDetailDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.List;
 
 
 /**
@@ -44,10 +46,22 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     private String logisticsBillId;
 
     /**
+     * 物流单明细id
+     */
+    @TableField("logistics_bill_detail_id")
+    private String logisticsBillDetailId;
+
+    /**
      * 运输单号
      */
     @TableField("transport_no")
     private String transportNo;
+
+    /**
+     * 跟踪单号
+     */
+    @TableField("track_no")
+    private String trackNo;
 
     /**
     * 实重
@@ -74,28 +88,10 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     private String weightUnit;
 
     /**
-    * 预估运费
-    */
-    @TableField("estimated_shipping_cost")
-    private BigDecimal estimatedShippingCost ;
-
-    /**
     * 计费重（物流商）
     */
     @TableField("billing_weight_logistics")
     private BigDecimal billingWeightLogistics;
-
-    /**
-    * 实际运费（物流商）
-    */
-    @TableField("actual_shipping_cost")
-    private BigDecimal actualShippingCost;
-
-    /**
-    * 运费差异
-    */
-    @TableField("diff_shipping_cost")
-    private BigDecimal diffShippingCost;
 
     /**
     * 币别
@@ -109,6 +105,23 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     @TableField("remark")
     private String remark;
 
+    /**
+     * 实际体积重(物流商)
+     */
+    @TableField("volume_weight_logistics")
+    private BigDecimal volumeWeightLogistics;
+
+    /**
+     * 实重(物流商)
+     */
+    @TableField("weight_logistics")
+    private BigDecimal weightLogistics;
+
+    /**
+     * 费用编辑（导入数据返回）
+     */
+    @TableField(exist = false)
+    private List<TmsCostDetailDTO.UpdateDTO> updateList;
 
     public static final String RECONCILIATION_STATUS = "reconciliation_status";
 
@@ -125,8 +138,6 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     public static final String ESTIMATED_SHIPPING_COST  = "estimated_shipping_cost ";
 
     public static final String BILLING_WEIGHT_LOGISTICS = "billing_weight_logistics";
-
-    public static final String LACTUAL_SHIPPING_COST = "lactual_shipping_cost";
 
     public static final String DIFF_SHIPPING_COST = "diff_shipping_cost";
 

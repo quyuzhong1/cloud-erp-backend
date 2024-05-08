@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.TmsCostDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.TmsCostDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="cost_code" property="costCode" />
+       <result column="cost_name" property="costName" />
+       <result column="cost_value" property="costValue" />
+       <result column="currency" property="currency" />
+       <result column="exchange_rate" property="exchangeRate" />
+       <result column="cfg_cost_id" property="cfgCostId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        main_id, cost_code, cost_name, cost_value, currency, exchange_rate, cfg_cost_id
+    </sql>
+    <select id="getCostCompareListById"
+            resultType="com.erp.model.tms.dto.TmsCostDetailDTO$CostCompareDTO">
+
+        SELECT
+            lbc.cfg_cost_id,
+            MAX ( CASE WHEN lbc.TYPE = 'estimated' THEN lbc.id END ) AS id,
+            MAX(CASE WHEN type = 'estimated' then main_id end ) as mainId,
+               MAX(CASE WHEN lbc.type = 'estimated' then lbc.cost_value end ) as estimatedFee,
+               MAX(CASE WHEN lbc.type = 'actual' then lbc.cost_value end ) as actualFee,
+               cc.dict_cost_category as costCode,
+               cc.cost_name as costName
+        from tms_cost_detail lbc
+                 inner join tms_cfg_cost cc on cc.id = lbc.cfg_cost_id and cc.is_deleted =false
+        where lbc.main_id = #{id}
+          and lbc.is_deleted = false
+        group by lbc.cfg_cost_id,	 cc.dict_cost_category,cc.cost_name
+    </select>
+
+    <select id="listCostByMainIdList"
+            resultType="com.erp.model.tms.dto.TmsCostDetailDTO$CostViewDTO">
+        select
+                lbc.id,
+                lbc.main_id,
+                cc.dict_cost_attribution,
+                cc.dict_cost_category,
+                cc.cost_name,
+                cc.id as cfgCostId,
+                lbc.cost_value,
+                lbc.cfg_cost_id,
+                lbc.currency,
+                lbc.type
+        from tms_cost_detail lbc
+        inner join tms_cfg_cost cc on cc.id = lbc.cfg_cost_id and cc.is_deleted =false
+        where  lbc.is_deleted = false and lbc.main_id in
+        <foreach collection="mainIdList" separator="," item="item" open="(" close=")" >
+            #{item}
+        </foreach>
+    </select>
+
+
+</mapper>

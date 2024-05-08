@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderLogisticsDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -36,6 +37,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.swing.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -196,6 +198,19 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 }
                 return entity;
             } else {
+                // 保留历史
+                if (null != oldEntity.getWeight() && oldEntity.getWeight().compareTo(BigDecimal.ZERO) > 0){
+                    allNetWeight = oldEntity.getWeight();
+                }
+                if (null != oldEntity.getLength() && oldEntity.getLength().compareTo(BigDecimal.ZERO) > 0){
+                    maxLength = oldEntity.getLength();
+                }
+                if (null != oldEntity.getWidth() && oldEntity.getWidth().compareTo(BigDecimal.ZERO) > 0){
+                    maxWidth = oldEntity.getWidth();
+                }
+                if (null != oldEntity.getHeight() && oldEntity.getHeight().compareTo(BigDecimal.ZERO) > 0){
+                    totalHeight  = oldEntity.getHeight();
+                }
                 oldEntity.setWeight(allNetWeight);
                 oldEntity.setLength(maxLength);
                 oldEntity.setWidth(maxWidth);
@@ -247,6 +262,19 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                     if (CollectionUtils.isNotEmpty(channelByNames)){
                         entity2.setLogisticsChannelId(channelByNames.get(0).getId());
                     }
+                }
+                // 保留历史
+                if (null != entity.getWeight() && entity.getWeight().compareTo(BigDecimal.ZERO) > 0){
+                    allNetWeight = entity.getWeight();
+                }
+                if (null != entity.getLength() && entity.getLength().compareTo(BigDecimal.ZERO) > 0){
+                    maxLength = entity.getLength();
+                }
+                if (null != entity.getWidth() && entity.getWidth().compareTo(BigDecimal.ZERO) > 0){
+                    maxWidth = entity.getWidth();
+                }
+                if (null != entity.getHeight() && entity.getHeight().compareTo(BigDecimal.ZERO) > 0){
+                    totalHeight  = entity.getHeight();
                 }
                 entity2.setWeight(allNetWeight);
                 entity2.setLength(maxLength);
@@ -344,7 +372,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     @Override
     public Boolean updateWeight(String soId,String id, BigDecimal weightByG) {
         String msg = StrUtil.format("用户【{}】更新重量为{} ", commonService.getUserInfo().getUserName(),weightByG+"g");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soId, msg);
+        operateLogService.addModuleOperateLog("【组包称重】", ModuleTypeEnum.SO_B2C.getCode(), soId, msg);
         return lambdaUpdate()
                 .set(SoB2cLogisticsEntity::getWeight, weightByG)
                 .eq(SoB2cLogisticsEntity::getId, id)
@@ -362,10 +390,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         addDTO.setDetailList(buildDetailList(entity));
         addDTO.setSourceId(mainEntity.getId());
         addDTO.setSourceCode(mainEntity.getPlatformCode());
-        addDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
+        addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
         addDTO.setOutstockId("");
         addDTO.setOutstockCode("");
         addDTO.setChannelId(entity.getLogisticsChannelId());
+        addDTO.setOrderType(OrderTypeEnum.B2C.getCode());
         return addDTO;
     }
 

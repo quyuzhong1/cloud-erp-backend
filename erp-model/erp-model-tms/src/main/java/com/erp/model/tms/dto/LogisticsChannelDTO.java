@@ -1,18 +1,19 @@
 package com.erp.model.tms.dto;
 
-import java.math.BigDecimal;
-
 import com.common.business.enums.UnitEnum;
 import com.common.core.enums.CurrencyEnum;
+import com.common.core.exception.ServiceException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
-import java.io.Serializable;
-import java.util.List;
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * <p>
@@ -47,7 +48,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 渠道名
          */
         private String name;
-
+        /**
+         * 物流商简称
+         */
+        private String logisticsSupplierShortName;
         /**
          * 物流商名
          */
@@ -88,6 +92,11 @@ public class LogisticsChannelDTO implements Serializable {
          * 平台是否允许打印
          */
         private Boolean isPrintPlatform;
+
+        /**
+         * 纸张大小
+         */
+        private String paperSize;
     }
 
 
@@ -196,14 +205,37 @@ public class LogisticsChannelDTO implements Serializable {
     @AllArgsConstructor
     public static class SignShipDTO{
 
-        private String channelId;
+        /**
+         * logistics_sale_channel销售渠道ID
+         */
+        private String logisticsSaleChannelId;
 
+        /**
+         * logistics_channel渠道ID
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 销售渠道代号
+         */
         private String code;
 
         /**
          * 渠道供应商名称 logistics_sale_channel
          */
         private String saleChannelSupplierName;
+
+        /**
+         * 标记发货订单类型（transportNo运单号、trackNo跟踪号）
+         */
+        private String orderDeliveryMarkType;
+
+        public String checkAndGetOrderDeliveryMarkType(){
+            if (StringUtils.isBlank(this.getOrderDeliveryMarkType())){
+                throw new ServiceException("操作失败，渠道标发单号配置为空");
+            }
+            return this.getOrderDeliveryMarkType();
+        }
 
     }
 
@@ -636,12 +668,22 @@ public class LogisticsChannelDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class IdsDTO {
+    @AllArgsConstructor
+    public static class ParamDTO {
 
         /**
          * 物流商ids
          */
         private List<String> ids;
+
+        /**
+         * 渠道名称
+         */
+        private String name;
+
+        public ParamDTO(List<String> ids) {
+            this.ids = ids;
+        }
     }
 
     @Data

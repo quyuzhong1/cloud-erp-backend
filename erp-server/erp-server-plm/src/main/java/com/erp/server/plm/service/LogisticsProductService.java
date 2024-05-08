@@ -6,6 +6,8 @@ package com.erp.server.plm.service;/**
  * @Created by yl
  */
 
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -13,6 +15,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductLogisticsEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -93,11 +96,55 @@ public interface LogisticsProductService  extends SuperService<ProductDetailEnti
      *@author yl
      *@date 2023-11-27
      */
-    List<LogisticsProductDTO.ProductDTO> listLogisticsProduct(List<String> skuIdList);
-
+    List<LogisticsProductDTO.ProductDTO> listLogisticsProduct(List<String> skuIdList,List<String> skuNoList);
     /**
-     * 根据dmp销售成本，更新物流目的国申报价
-     * @param dmpSkuCostEntityList
+     * @description: 提审
+     * @author Will
+     * @date: 2024/3/18 16:45
+     * @param id 
+     * @param aTrue 
+     * @return BatchResultDTO 
      */
-    void recalDestDeclarePrice(List<DmpSkuCostEntity> dmpSkuCostEntityList);
+    BatchResultDTO submit(String id, Boolean aTrue);
+    /**
+     * @description: 撤销流程
+     * @author Will
+     * @date: 2024/3/18 18:38
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO cancelProcess(String id);
+    /**
+     * @description: 审核
+     * @author Will
+     * @date: 2024/3/18 18:38
+     * @param approveOneDTO
+     * @return BatchResultDTO
+     */
+    BatchResultDTO approve(ApproveOneDTO approveOneDTO);
+    /**
+     * @description: 反审核
+     * @author Will
+     * @date: 2024/3/18 18:38
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO disApprove(String id);
+    /**
+     * @description: 结束审核
+     * @author Will
+     * @date: 2024/3/18 18:54
+     * @param dto
+     * @param entity
+     * @return Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO dto, ProductLogisticsEntity entity);
+    /**
+     * @description: 推送备案
+     * @author Will
+     * @date: 2024/3/19 14:22
+     * @param dto
+     */
+    List<BatchResultDTO>  pushRegistration(LogisticsProductDTO.PushRegistrationDTO dto);
+
 }

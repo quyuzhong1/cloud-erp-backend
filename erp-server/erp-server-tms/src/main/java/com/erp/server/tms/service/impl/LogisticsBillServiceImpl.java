@@ -17,6 +17,7 @@ import com.common.core.constant.CommonConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -121,6 +122,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     private LogisticsPrintTypeService logisticsPrintTypeService;
 
     @Autowired
+    private TmsCfgCostService tmsCfgCostService;
+
+    @Autowired
+    private LogisticsBillService logisticsBillService;
+
+
+    @Autowired
     private PlmTaskFeign plmTaskFeign;
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -134,10 +142,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             throw new ServiceException("物流单保存失败");
         }
 
-        logisticsBillDetailService.add(logisticsBillEntity, addDTO.getDetailList());
+        logisticsBillDetailService.add(logisticsBillEntity, addDTO.getDetailList(),true);
 
-        //新增物流费用单
-        addLogisticsBillCost(logisticsBillEntity, addDTO.getCurrency());
+
         return save;
     }
 
@@ -176,7 +183,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         List<LogisticsBillEntity> billEntityList = listByOutstockIds(outstockIdList);
         if (CollectionUtils.isNotEmpty(billEntityList)) {
             List<String> ids = billEntityList.stream().map(LogisticsBillEntity::getId).collect(Collectors.toList());
-            logisticsBillDetailService.removeByMainIds(ids);
+            logisticsBillDetailService.removeByMainIds(ids,true);
             return this.removeByIds(ids);
         }
         return Boolean.FALSE;
@@ -187,7 +194,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      * 新增修改处理数据
      */
     private void handleData(LogisticsBillEntity logisticsBillEntity) {
-
+        if(StringUtils.isBlank(logisticsBillEntity.getLogisticsSupplierId()) && StringUtils.isNotBlank(logisticsBillEntity.getChannelId())){
+            LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsBillEntity.getChannelId());
+            if(Objects.nonNull(channelEntity)){
+                logisticsBillEntity.setLogisticsSupplierId(channelEntity.getMainId());
+            }
+        }
     }
 
     public List<LogisticsBillEntity> listByOutstockIds(List<String> outstockIds) {
@@ -205,17 +217,16 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         for (LogisticsBillDTO.AddDTO addDTO : addDTOList) {
             LogisticsBillEntity saveEntity = new LogisticsBillEntity();
             BeanMapper.copy(addDTO, saveEntity);
+            this.handleData(saveEntity);
             LogisticsBillEntity logisticsBillEntity = billEntityList.stream().filter(req -> req.getSourceId().equals(addDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(logisticsBillEntity)) {
                 saveEntity.setId(logisticsBillEntity.getId());
                 this.saveOrUpdate(saveEntity);
             } else {
                 this.save(saveEntity);
-                //新增物流费用单
-                addLogisticsBillCost(saveEntity, addDTO.getCurrency());
             }
 
-            logisticsBillDetailService.removeByMainIds(Arrays.asList(saveEntity.getId()));
+            logisticsBillDetailService.removeByMainIds(Arrays.asList(saveEntity.getId()),true);
             List<LogisticsBillDetailDTO.AddDTO> detailList = addDTO.getDetailList();
             List<LogisticsBillDetailEntity> detailEntityList = new ArrayList<>();
             for (LogisticsBillDetailDTO.AddDTO dto : detailList) {
@@ -226,6 +237,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 detailEntityList.add(saveDetailEntity);
             }
             logisticsBillDetailService.saveOrUpdateBatch(detailEntityList);
+            //新增物流费用单
+            addLogisticsBillCost(saveEntity,detailEntityList);
         }
         return Boolean.TRUE;
     }
@@ -299,12 +312,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             statusList = trackStatusList.stream().filter(s -> s.getRemark().equals(group)).
                     map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
         }
-
+        Long total = baseMapper.pageCount(params, statusList);
         IPage pageData = baseMapper.paging(query, params, statusList);
+        pageData.setTotal(total);
         List<LogisticsBillDTO.PagingVO> list = pageData.getRecords();
         fillPagingDb(list);
         return new PagingVO<>(pageData);
     }
+
 
 
     @Override
@@ -439,6 +454,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 orderSource(sourceType).
                 trackNo(dto.getTrackNo()).
                 topUserKey(dto.getTopUserKey()).
+                sourceId(dto.getOrderId()).
                 oaid(dto.getOaid()).
                 deliveryNo(dto.getOrderCode()).
                 iossCode(dto.getIossTaxNo()).
@@ -509,17 +525,25 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (Objects.nonNull(isAliExpress) && isAliExpress){
             //速卖通不做sku拆分
             ordersSkuList = new ArrayList<>(skuInfoList.size());
+            List<String> skuIds = dto.getSkuList().stream().map(LogisticsBillDTO.SkuDTO::getSkuId).distinct().collect(Collectors.toList());
+            //获取sku目的国海关编码映射关系
+            List<ProductCustomsEntity> productCustomsList = plmTaskFeign.listProductCustomsBySkuIds(ProductCustomsSkuDTO.builder().skuIds(skuIds).country(country).build());
             for (LogisticsBillDTO.SkuDTO item : dto.getSkuList()){
                 String skuId = item.getSkuId();
                 LogisticsProductDTO.ProductDTO productDTO = skuInfoList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+                String customCode = "";
+                ProductCustomsEntity customs = getCustomsByCountry(country,skuId,productCustomsList);
+                if (Objects.nonNull(customs)){
+                    customCode = customs.getCustomsCode();
+                }
                 if (Objects.nonNull(productDTO)) {
                     Integer qty = item.getQty();
-                    BigDecimal price = productDTO.getDestDeclarePrice();
-                    productDTO.setQuantity(qty);
-                    productDTO.setPrice(price);
-                    productDTO.setAmount(MathUtil.multiply(price, qty));
-                    //目的国申报价
                     BigDecimal destDeclarePrice = productDTO.getDestDeclarePrice();
+                    productDTO.setQuantity(qty);
+//                    productDTO.setPrice(price);
+                    productDTO.setAmount(MathUtil.multiply(destDeclarePrice, qty));
+                    //目的国申报价
+//                    BigDecimal destDeclarePrice = productDTO.getDestDeclarePrice();
                     //表示最大的报关价还小于 目的过申报价
                     if (Objects.nonNull(destDeclarePrice) && maxCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && maxCustomsAmount.compareTo(destDeclarePrice) < 0) {
                         productDTO.setDestDeclarePrice(maxCustomsAmount);
@@ -533,9 +557,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     String platformSpuNo = item.getPlatformSpuNo();
                     productDTO.setSkuId(platformSpuNo);
                     String sourceDetailId = item.getSourceDetailId();
-                    productDTO.setChildOrderId(sourceDetailId);
+                    if (StringUtils.isNotBlank(sourceDetailId)){
+                        productDTO.setChildOrderId(Long.valueOf(sourceDetailId));
+                    }
+
                     productDTO.setSkuNo(item.getSkuNo());
                     productDTO.setSkuId(skuId);
+                    productDTO.setCustomsCode(customCode);
                     ordersSkuList.add(productDTO);
                 }
             }
@@ -585,7 +613,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         ProductCustomsEntity customs = null;
         if (StringUtils.isNotEmpty(country)){
             customs = productCustomsList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuId()) && StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
-                    && StringUtils.isNotEmpty(country) && e.getCountry().equals(country)).findFirst().orElse(null);
+                    && StringUtils.isNotEmpty(country) && e.getCountry().contains(country)).findFirst().orElse(null);
 
         }
         //存在默认值时，先取默认值
@@ -623,6 +651,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         cancelOrderVO.setDeliveryNo(dto.getReferenceNumber());
         cancelOrderVO.setTransportNo(dto.getTransportNo());
         cancelOrderVO.setReason(dto.getReason());
+        cancelOrderVO.setOrderId(dto.getOrderId());
         cancelOrderList.add(cancelOrderVO);
         if (StringUtils.isBlank(dto.getTransportNo())) {
             LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(dto.getTrackNo());
@@ -669,6 +698,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         interceptOrderVO.setDeliveryNo(dto.getReferenceNumber());
         interceptOrderVO.setTransportNo(dto.getTransportNo());
         interceptOrderVO.setInterceptReason(dto.getReason());
+        interceptOrderVO.setOrderId(dto.getOrderId());
         interceptOrderVOList.add(interceptOrderVO);
         if (StringUtils.isBlank(dto.getTransportNo())) {
             LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(dto.getTrackNo());
@@ -772,7 +802,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      * @author Will
      * @date: 2023/11/20 12:27
      */
-    public void addLogisticsBillCost(LogisticsBillEntity logisticsBillEntity, String currency) {
+    @Override
+    public void addLogisticsBillCost(LogisticsBillEntity logisticsBillEntity,List<LogisticsBillDetailEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
         LogisticsBillCostDTO.AddDTO addDTO = new LogisticsBillCostDTO.AddDTO();
         //渠道关联模板
         ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(logisticsBillEntity.getChannelId());
@@ -835,14 +869,28 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
                 ShippingCalculationDTO.ViewDTO viewDTO = shippingCalculationService.calculationFinalShippingCost(shippingTemplateEntity, shippingTemplateRule, logisticsChannelEntity, weight,
                         length, width, height);
-                addDTO.setEstimatedShippingCost(viewDTO.getTotalShippingCost());
+
+                List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listCostAttributionAndCategory(DictCostAttributionEnum.SELF_DELIVER.getCode(), DictCostCategoryEnum.SHIPPING_COST.getCode());
+                if (CollectionUtils.isEmpty(tmsCfgCostList)) {
+                    throw new ServiceException("未找到自发货物流费用配置");
+                }
+                TmsCostDetailDTO.AddDTO costDetailAddDTO = new TmsCostDetailDTO.AddDTO();
+                costDetailAddDTO.setCfgCostId(tmsCfgCostList.get(0).getId());
+                costDetailAddDTO.setCostValue(viewDTO.getTotalShippingCost());
+                costDetailAddDTO.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+                costDetailAddDTO.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
+                addDTO.setCostDetailList(Arrays.asList(costDetailAddDTO));
             }
         }
-        addDTO.setCurrency(ObjectUtil.isNotEmpty(shippingTemplateEntity) ? shippingTemplateEntity.getCurrency() : "");
+        addDTO.setCurrency(ObjectUtil.isNotEmpty(shippingTemplateEntity) ? shippingTemplateEntity.getCurrency() : CurrencyEnum.CNY.getCurrencyCode());
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
-        addDTO.setTransportNo(logisticsBillEntity.getTransportNo());
         addDTO.setChannelId(logisticsBillEntity.getChannelId());
-        logisticsBillCostService.add(addDTO);
+
+        for (LogisticsBillDetailEntity detailEntity : list) {
+            addDTO.setLogisticsBillDetailId(detailEntity.getId());
+            addDTO.setTrackNo(detailEntity.getTrackNo());
+            logisticsBillCostService.add(addDTO);
+        }
     }
 
     public static void main(String[] args) {
@@ -1030,10 +1078,20 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         //如果不是新增的，将原来的删除
         if(!isAdd && CollectionUtils.isNotEmpty(logisticsBillEntityList)){
-            logisticsBillDetailService.removeByMainIds(logisticsBillEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+            logisticsBillDetailService.removeByMainIds(logisticsBillEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()),true);
         }
         if(CollectionUtils.isNotEmpty(addDetailEntityList)){
             logisticsBillDetailService.saveBatch(addDetailEntityList);
+
+            //新增物流费用
+            for (LogisticsBillEntity billEntity: logisticsBillEntityList) {
+                List<LogisticsBillDetailEntity> detailList = addDetailEntityList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), billEntity.getId())).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(detailList)) {
+                    continue;
+                }
+                //新增物流费用单
+                logisticsBillService.addLogisticsBillCost(billEntity, detailList);
+            }
         }
         return batchResultDTOList;
     }
@@ -1082,7 +1140,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //删除物流详情
         List<LogisticsBillEntity> logisticsBillEntityList = this.listBySourceIds(sourceId);
         List<String> ids = logisticsBillEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
-        logisticsBillDetailService.removeByMainIds(ids);
+        logisticsBillDetailService.removeByMainIds(ids,Boolean.TRUE);
 
         //删除主表
         return lambdaUpdate().in(LogisticsBillEntity::getSourceId, sourceId).remove();

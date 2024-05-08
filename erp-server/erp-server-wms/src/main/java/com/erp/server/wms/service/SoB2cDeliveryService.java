@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 
@@ -204,4 +205,36 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return java.lang.Boolean
      **/
     Boolean falseDeliveryBatch(List<String> ids);
+
+    /**
+     * 添加发货单日志
+     * @Author Luo_WG
+     * @Date 2023/12/27 16:00
+     * @param deliveryEntities
+     * @return java.lang.Boolean
+     **/
+    Boolean addDeliveryLog(List<SoB2cDeliveryEntity> deliveryEntities);
+
+    /**
+     * 合并组包发货
+     * @Author Luo_WG
+     * @Date 2024/4/24 19:29
+     * @param soIdList
+     * @return java.lang.Boolean
+     **/
+    Boolean mergePackageDelivery(List<String> soIdList);
+
+    /**
+     * 打印面单预览
+     * @param param
+     * @return
+     */
+    List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillPreview(SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param);
+
+    /**
+     * 检查自发货订单的发货单状态
+     * true=无已发货的发货单
+     * false=有已发货的发货单
+     */
+    boolean hasNotShippedDeliveryAndLog(SoB2cEntity currentEntity);
 }

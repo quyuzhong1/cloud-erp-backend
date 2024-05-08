@@ -94,7 +94,7 @@ public class PartneredLtlDataOutput {
 
    /**
    * The number of boxes in the shipment.
-   * @return boxCount
+   * @return boxQty
   **/
 
   public Integer getBoxCount() {
@@ -378,7 +378,7 @@ public class PartneredLtlDataOutput {
     sb.append("class PartneredLtlDataOutput {\n");
     
     sb.append("    contact: ").append(toIndentedString(contact)).append("\n");
-    sb.append("    boxCount: ").append(toIndentedString(boxCount)).append("\n");
+    sb.append("    boxQty: ").append(toIndentedString(boxCount)).append("\n");
     sb.append("    sellerFreightClass: ").append(toIndentedString(sellerFreightClass)).append("\n");
     sb.append("    freightReadyDate: ").append(toIndentedString(freightReadyDate)).append("\n");
     sb.append("    palletList: ").append(toIndentedString(palletList)).append("\n");

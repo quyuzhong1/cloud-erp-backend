@@ -6,15 +6,17 @@ package com.erp.model.plm.dto;/**
  * @Created by yl
  */
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.utils.LengthConverterUtil;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -81,6 +83,10 @@ public class LogisticsProductDTO {
          */
         private String productPropertyName;
 
+        /**
+         * 物流产品信息id
+         */
+        private String logisticsProductId;
 
         /**
          * 出口申报价
@@ -145,6 +151,26 @@ public class LogisticsProductDTO {
         private String approveStatusName;
 
         /**
+         * 备案审核状态
+         */
+        private String logisticsApproveStatus;
+
+        /**
+         * 备案审核状态名称
+         */
+        private String logisticsApproveStatusName;
+
+        /**
+         * 第一数量
+         */
+        private BigDecimal firstQty;
+
+        /**
+         * 第二数量
+         */
+        private BigDecimal secondQty;
+
+        /**
          * 销售状态
          */
         private Integer salesStatus;
@@ -190,7 +216,7 @@ public class LogisticsProductDTO {
 
     @Data
     @NoArgsConstructor
-    public static class TabListDTO{
+    public static class TabListDTO {
         /**
          * 数量
          */
@@ -201,7 +227,7 @@ public class LogisticsProductDTO {
 
     @Data
     @NoArgsConstructor
-    public static class UpdatePagingParamDTO extends SortDTO{
+    public static class UpdatePagingParamDTO extends SortDTO {
         /**
          * skulist
          */
@@ -219,21 +245,21 @@ public class LogisticsProductDTO {
         private String productName;
 
         /**
-         *  操作项
+         * 操作项
          */
         private String operate;
 
         /**
-         *  操作内容
+         * 操作内容
          */
         private String operateContent;
         /**
-         *  操作人
+         * 操作人
          */
         private String operateUserId;
 
         /**
-         *  操作时间
+         * 操作时间
          */
         private List<LocalDate> operateTimeList;
 
@@ -249,7 +275,7 @@ public class LogisticsProductDTO {
 
         private String skuId;
 
-        private String  skuNo;
+        private String skuNo;
 
         /**
          * spu
@@ -263,21 +289,21 @@ public class LogisticsProductDTO {
         private String productName;
 
         /**
-         *  操作项
+         * 操作项
          */
         private String operate;
 
         /**
-         *  操作内容
+         * 操作内容
          */
         private String operateContent;
         /**
-         *  操作人
+         * 操作人
          */
         private String operateUserName;
 
         /**
-         *  操作时间
+         * 操作时间
          */
         private LocalDateTime operateTime;
 
@@ -286,6 +312,26 @@ public class LogisticsProductDTO {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * tab
+         */
+        private String tabFlag;
+        /**
+         * id集合
+         */
+        private List<String> idList;
+
+        /**
+         * 审核状态集合（无需传值）
+         */
+        private List<String> approveStatusList;
+
+        /**
+         * 备案审核状态集合,/api/scm/drop/down/approveStatus/list
+         */
+        private List<String> logisticsApproveStatusList;
+
         /**
          * 分类id
          */
@@ -388,7 +434,6 @@ public class LogisticsProductDTO {
     @Data
     @NoArgsConstructor
     public static class UpdateDTO {
-
 
 
         /**
@@ -494,7 +539,6 @@ public class LogisticsProductDTO {
         private String ean;
 
 
-
         /**
          * 不含税成本
          */
@@ -505,11 +549,18 @@ public class LogisticsProductDTO {
          */
         private String actualTaxCost;
 
-
         /**
-         * 产品尺寸
+         * 产品尺寸长
          */
-        private String productSize;
+        private BigDecimal productLength;
+        /**
+         * 产品尺寸宽
+         */
+        private BigDecimal productWidth;
+        /**
+         * 产品尺寸高
+         */
+        private BigDecimal productHeight;
         /**
          * 毛重
          */
@@ -561,19 +612,19 @@ public class LogisticsProductDTO {
         /**
          * 中文报关名
          */
-        @Size(max =50,message = "中文报关名最大100字符")
+        @Size(max = 50, message = "中文报关名最大100字符")
         private String declareChineseName;
 
         /**
          * 英文报关名
          */
-        @Size(max =50,message = "英文报关名最大100字符")
+        @Size(max = 50, message = "英文报关名最大100字符")
         private String declareEnglishName;
 
         /**
          * 报关型号
          */
-        @Size(max =50,message = "报关型号最大100字符")
+        @Size(max = 50, message = "报关型号最大100字符")
         private String declareModel;
 
 
@@ -593,9 +644,8 @@ public class LogisticsProductDTO {
         private String declareCurrencySymbol;
 
 
-
         /**
-         * 报关单位
+         * 报关单位,/api/plm/dict/list?type=declareUnit
          */
         private String declareUnit;
 
@@ -623,7 +673,6 @@ public class LogisticsProductDTO {
         private String destCurrencySymbol;
 
 
-
         /**
          * 申报要素
          */
@@ -633,7 +682,7 @@ public class LogisticsProductDTO {
         /**
          * 境内货源地
          */
-        @Size(max =50,message = "境内货源地最大50字符")
+        @Size(max = 50, message = "境内货源地最大50字符")
         private String sourceCargo;
 
 
@@ -646,7 +695,7 @@ public class LogisticsProductDTO {
          * 原产国
          * 来源 http://172.16.100.11:3002/project/36/interface/api/13390
          */
-        @Size(max =50,message = "原产国最大50字符")
+        @Size(max = 50, message = "原产国最大50字符")
         private String sourceCountry;
 
         /**
@@ -662,21 +711,50 @@ public class LogisticsProductDTO {
          */
         private String combinationDeclareType;
 
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+        /**
+         * 审核人名称
+         */
+        private String approveUserName;
+        /**
+         * 审核人id
+         */
+        private String approveUserId;
 
+        /**
+         * 备案审核状态
+         */
+        private String logisticsApproveStatus;
+
+        /**
+         * 备案审核状态名称
+         */
+        private String logisticsApproveStatusName;
+
+        /**
+         * 第一数量
+         */
+        private BigDecimal firstQty;
+
+        /**
+         * 第二数量
+         */
+        private BigDecimal secondQty;
     }
 
     @Data
     @NoArgsConstructor
-    public static class ExportDTO extends PagingParamDTO{
+    public static class ExportDTO extends PagingParamDTO {
         private List<String> ids;
     }
 
 
-    @Data
-    @NoArgsConstructor
+    @Getter
+    @Setter
     public static class ExportInfoDTO {
-
-
 
         /**
          * 分类id
@@ -701,7 +779,6 @@ public class LogisticsProductDTO {
         private String skuId;
 
 
-
         /**
          * 产品经理
          */
@@ -717,7 +794,6 @@ public class LogisticsProductDTO {
          * 产品名称
          */
         private String productName;
-
 
 
         /**
@@ -756,11 +832,18 @@ public class LogisticsProductDTO {
          */
         private BigDecimal actualTaxCost;
 
-
         /**
-         * 产品尺寸
+         * 产品尺寸长
          */
-        private String productSize;
+        private BigDecimal productLength;
+        /**
+         * 产品尺寸宽
+         */
+        private BigDecimal productWidth;
+        /**
+         * 产品尺寸高
+         */
+        private BigDecimal productHeight;
         /**
          * 毛重
          */
@@ -786,9 +869,6 @@ public class LogisticsProductDTO {
          * 中文报关名
          */
         private String declareChineseName;
-
-
-
 
 
         /**
@@ -831,9 +911,7 @@ public class LogisticsProductDTO {
         private BigDecimal destDeclarePrice;
 
 
-        private String  destCurrencySymbol;
-
-
+        private String destCurrencySymbol;
 
 
         /**
@@ -845,7 +923,7 @@ public class LogisticsProductDTO {
         /**
          * 境内货源地
          */
-        @Size(max =50,message = "境内货源地最大50字符")
+        @Size(max = 50, message = "境内货源地最大50字符")
         private String sourceCargo;
 
 
@@ -857,7 +935,7 @@ public class LogisticsProductDTO {
         /**
          * 原产国
          */
-        @Size(max =50,message = "原产国最大50字符")
+        @Size(max = 50, message = "原产国最大50字符")
         private String sourceCountry;
 
 
@@ -867,7 +945,6 @@ public class LogisticsProductDTO {
          * combine 合并
          */
         private String combinationDeclareType;
-
 
 
         /**
@@ -895,10 +972,36 @@ public class LogisticsProductDTO {
          */
         private String logisticsPropertyName;
 
+        /**
+         * 单据审核状态
+         */
+        private ApproveStatusEnum logisticsApproveStatus;
+        /**
+         * 单据审核状态
+         */
+        private String logisticsApproveStatusName;
 
+        /**
+         * 第一数量
+         */
+        private BigDecimal firstQty;
 
+        /**
+         * 第二数量
+         */
+        private BigDecimal secondQty;
 
+        public void setProductLength(BigDecimal productLength) {
+            this.productLength = LengthConverterUtil.mmToCm(productLength);
+        }
 
+        public void setProductWidth(BigDecimal productWidth) {
+            this.productWidth = LengthConverterUtil.mmToCm(productWidth);
+        }
+
+        public void setProductHeight(BigDecimal productHeight) {
+            this.productHeight = LengthConverterUtil.mmToCm(productHeight);
+        }
     }
 
 
@@ -907,19 +1010,53 @@ public class LogisticsProductDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class ProductDTO{
+    public static class ProductDTO {
 
+        /**
+         * 备案审核状态
+         */
+        private String approveStatus;
 
+        /**
+         * 第一数量
+         */
+        private BigDecimal firstQty;
+
+        /**
+         * 第二数量
+         */
+        private BigDecimal secondQty;
+
+        /**
+         * 长
+         */
+        private BigDecimal boxSizeLength;
+
+        /**
+         * 宽
+         */
+        private BigDecimal boxSizeWide;
+        /**
+         * 高
+         */
+        private BigDecimal boxSizeHigh;
+
+        /**
+         * 产品属性
+         */
+        private String productProperty;
         /**
          * 子订单id
          */
-        private String childOrderId;
+        private Long childOrderId;
 
+        private String imagesUrl;
 
-       private BigDecimal price;
+//       private BigDecimal price;
 
-       private BigDecimal amount;
+        private BigDecimal amount;
 
+       private String spuNo;
         /**
          * 数量
          */
@@ -941,16 +1078,16 @@ public class LogisticsProductDTO {
          * 是否带电
          */
         private Boolean isElectric;
-        
-        
+
+
+        /**
+         * 是否带电
+         */
+        private String batteryType;
+
         private String skuId;
 
         private String skuNo;
-
-        /**
-         * 属性
-         */
-        private String productProperty;
 
 
         /**
@@ -973,7 +1110,15 @@ public class LogisticsProductDTO {
          */
         private String declareEnglishName;
 
+        /**
+         * 产品中文品名
+         */
+        private String cnName;
 
+        /**
+         * 产品英文品名
+         */
+        private String enName;
 
         /**
          * 海关编码
@@ -985,6 +1130,10 @@ public class LogisticsProductDTO {
          */
         private String declareUnit;
 
+        /**
+         * 报关单位名称
+         */
+        private String declareUnitName;
         /**
          * 申报要素
          */
@@ -1049,5 +1198,36 @@ public class LogisticsProductDTO {
          */
         private String combinationDeclareType;
 
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PushRegistrationDTO{
+
+        /**
+         * 物流产品id集合
+         */
+        @NotEmpty(message = "物流产品id集合不能为空")
+        private List<String> logisticsProductIdList;
+
+        /**
+         * 报关物流商集合，/tms/transferLogisticsSupplier/listAll
+         */
+        @NotEmpty(message = "报关物流商Id集合不能为空")
+        private String declareSupplierId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编码
+         */
+        private String skuNo;
     }
 }

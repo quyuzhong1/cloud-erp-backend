@@ -23,6 +23,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -61,8 +62,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -589,10 +588,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     .mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty)
                     .sum();
             detailDto.setUseDeliveryQty(useDeliveryQty);
-
-            //拆分产品尺寸
-            splitProductSizeView(detailDto, skuVO.getProductSize());
-
+            detailDto.setProductSizeLength(skuVO.getProductLength());
+            detailDto.setProductSizeWidth(skuVO.getProductWidth());
+            detailDto.setProductSizeHeight(skuVO.getProductHeight());
             //来源详情id
             detailDto.setSourceDetailId(detailEntity.getId());
             detailList.add(detailDto);
@@ -650,9 +648,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             List<FbaShipmentDTO.GenerateDeliverView> shipmentList = entry.getValue();
             //映射字段
             FirstMileDeliveryDTO.AddDTO addDTO = FbaShipmentConverter.INSTANCE.fbaGenerateDeliverViewToDeliveryAdd(shipmentList.get(0));
-            FirstMileDeliveryLogisticsDTO.AddDTO logisticsAddDTO = new FirstMileDeliveryLogisticsDTO.AddDTO();
-            logisticsAddDTO.setLogisticsRemark("");
-            logisticsAddDTO.setTrackingNoList(new ArrayList<>());
+
             addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
             addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
             //设置仓库名称
@@ -683,16 +679,15 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(generateDeliverView.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
                 detailAdd.setSkuId(skuVO.getSkuId());
                 detailAdd.setNetWeight(skuVO.getNetWeight());
-                //拆分产品尺寸
-                String productSize = skuVO.getProductSize();
-                splitProductSize(detailAdd, productSize);
+                detailAdd.setProductSizeLength(LengthConverterUtil.mmToCm(skuVO.getProductLength()));
+                detailAdd.setProductSizeWidth(LengthConverterUtil.mmToCm(skuVO.getProductWidth()));
+                detailAdd.setProductSizeHeight(LengthConverterUtil.mmToCm(skuVO.getProductHeight()));
 
                 detailAdd.setWarehouseLocation(generateDeliverView.getWarehouseLocation());
                 detailAdd.setSourceDetailId(generateDeliverView.getId());
                 detailAddList.add(detailAdd);
             }
             addDTO.setDetailList(detailAddList);
-            addDTO.setLogisticsView(logisticsAddDTO);
             if (isSubmit) {
                 firstMileDeliveryService.addAndSubmit(addDTO);
             } else {
@@ -791,45 +786,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
 
         return view;
-    }
-
-    /**
-     * 拆分产品尺寸长宽高存入数据集
-     *
-     * @param detailAdd   数据集
-     * @param productSize 需要拆分的尺寸
-     * @return void
-     * @Author Luo_WG
-     * @Date 2023/11/2 17:28
-     **/
-    private void splitProductSize(FirstMileDeliveryDetailDTO.AddDTO detailAdd, String productSize) {
-        if (StringUtils.isNotBlank(productSize)) {
-            String[] productSizes = productSize.split("X");
-            //长
-            if (productSizes.length > 0) {
-                if (StringUtils.isNotBlank(productSizes[0])) {
-                    detailAdd.setProductSizeLength(new BigDecimal(productSizes[0]));
-                } else {
-                    detailAdd.setProductSizeLength(new BigDecimal(BigInteger.ZERO));
-                }
-            }
-            //宽
-            if (productSizes.length > 1) {
-                if (StringUtils.isNotBlank(productSizes[1])) {
-                    detailAdd.setProductSizeWidth(new BigDecimal(productSizes[1]));
-                } else {
-                    detailAdd.setProductSizeWidth(new BigDecimal(BigInteger.ZERO));
-                }
-            }
-            //高
-            if (productSizes.length > 2) {
-                if (StringUtils.isNotBlank(productSizes[2])) {
-                    detailAdd.setProductSizeHeight(new BigDecimal(productSizes[2]));
-                } else {
-                    detailAdd.setProductSizeHeight(new BigDecimal(BigInteger.ZERO));
-                }
-            }
-        }
     }
 
     @Override
@@ -1623,45 +1579,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             handlerWarehouse(entity, entry.getValue(), entry.getKey(), closedDateMap);
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.REGENERATE);
-    }
-
-    /**
-     * 拆分产品尺寸长宽高存入数据集
-     *
-     * @param detailAdd   数据集
-     * @param productSize 需要拆分的尺寸
-     * @return void
-     * @Author Luo_WG
-     * @Date 2023/11/2 17:28
-     **/
-    private void splitProductSizeView(FirstMileDeliveryDetailDTO.ViewDTO detailAdd, String productSize) {
-        if (StringUtils.isNotBlank(productSize)) {
-            String[] productSizes = productSize.split("X");
-            //长
-            if (productSizes.length > 0) {
-                if (StringUtils.isNotBlank(productSizes[0])) {
-                    detailAdd.setProductSizeLength(new BigDecimal(productSizes[0]));
-                } else {
-                    detailAdd.setProductSizeLength(new BigDecimal(BigInteger.ZERO));
-                }
-            }
-            //宽
-            if (productSizes.length > 1) {
-                if (StringUtils.isNotBlank(productSizes[1])) {
-                    detailAdd.setProductSizeWidth(new BigDecimal(productSizes[1]));
-                } else {
-                    detailAdd.setProductSizeWidth(new BigDecimal(BigInteger.ZERO));
-                }
-            }
-            //高
-            if (productSizes.length > 2) {
-                if (StringUtils.isNotBlank(productSizes[2])) {
-                    detailAdd.setProductSizeHeight(new BigDecimal(productSizes[2]));
-                } else {
-                    detailAdd.setProductSizeHeight(new BigDecimal(BigInteger.ZERO));
-                }
-            }
-        }
     }
 
     /**

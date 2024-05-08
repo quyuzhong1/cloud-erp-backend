@@ -23,4 +23,13 @@ public interface CommonService {
 
 
     String getUidByUnionId(String fsPlatform, String fsUnionId);
+
+    /**
+     * @description: 获取当前审核人
+     * @author Will
+     * @date: 2024/3/18 19:26
+     * @param businessKey
+     * @return List<String>
+     */
+    List<String> listProcessCurBusinessIds (String businessKey);
 }

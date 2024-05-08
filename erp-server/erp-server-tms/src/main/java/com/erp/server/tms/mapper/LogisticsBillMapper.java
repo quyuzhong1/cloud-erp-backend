@@ -3,12 +3,15 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
+import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -51,6 +54,13 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
     IPage<LogisticsBillDTO.PagingVO> paging(Page query, @Param("params")LogisticsBillDTO.PagingParamDTO params,@Param("statusList") List<String> statusList);
 
     /**
+     * 自己统计分页总数
+     * @param params
+     * @param statusList
+     * @return
+     */
+    Long pageCount(@Param("params")LogisticsBillDTO.PagingParamDTO params,@Param("statusList") List<String> statusList);
+    /**
      * 导出
      *@parms dto
      *@return 
@@ -76,4 +86,35 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
     List<LogisticsBillDTO.BaseDTO> listLogisticsBillByTransportNos(@Param("transportNoList") List<String> transportNoList);
 
     List<String> listSoOutIdByQuery(@Param("params") AdvanceQueryContainer advanceQueryContainer);
+
+    IPage<TmsFirstMileLogisticDTO.PagingVO> firstMilePaging(Page query, @Param("params") TmsFirstMileLogisticDTO.PagingParamDTO params);
+
+    TmsFirstMileLogisticDTO.ViewDTO firstMileView(@Param("id") String id);
+
+    List<TmsFirstMileLogisticDTO.TabListDTO> firstMileTabList(@Param("orderType") String orderType,@Param("permissionSql") String permissionSql);
+
+    List<TmsFirstMileLogisticDTO.LogisticStatisticsDTO> statistics(@Param("params") TmsFirstMileLogisticDTO.LogisticStatisticsReq logisticStatisticsReq,@Param("permissionSql") String permissionSql);
+
+    TmsFirstMileLogisticDTO.StatisticsVO.ReconciliationStatistics reconciliationStatistics(@Param("orderType") String orderType,@Param("permissionSql") String permissionSql);
+
+    List<TmsFirstMileLogisticDTO.OverdueDTO> overdueStatistics(@Param("orderType") String code,@Param("permissionSql") String permissionSql);
+
+    List<TmsFirstMileLogisticDTO.ExportCostDTO> firstMileFeeCostExport(@Param("params") TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO);
+
+    List<TmsFirstMileLogisticDTO.PagingVO> hasWarnPaging(@Param("params") TmsFirstMileLogisticDTO.PagingParamDTO dto);
+
+    IPage<TmsFirstMileReconciliationDetailDTO.ListDTO> waitReconciliationPaging(Page<?> query,
+                                                                                @Param("params") TmsFirstMileReconciliationDetailDTO.PagingParamDTO params,
+                                                                                @Param("orderType") String orderType,
+                                                                                @Param("reconciliationStatus") String reconciliationStatus,
+                                                                                @Param("trackStatus") String trackStatus
+    );
+
+    List<TmsFirstMileReconciliationDetailDTO.ListDTO> waitReconciliationList(@Param("orderType") String orderType,
+                                                                             @Param("reconciliationStatus") String reconciliationStatus,
+                                                                             @Param("trackStatus") String trackStatus,
+                                                                             @Param("mainIds") List<String> mainIds,
+                                                                             @Param("transportNoList") List<String> transportNoList,
+                                                                             @Param("logisticsSupplierIdList") List<String> logisticsSupplierIdList,
+                                                                             LocalDate startDate, LocalDate endDate);
 }

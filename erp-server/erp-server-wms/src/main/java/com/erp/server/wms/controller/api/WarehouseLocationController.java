@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
@@ -48,6 +49,14 @@ public class WarehouseLocationController extends BaseController {
     @PostMapping(value = "/all")
     public ApiResult<List<WarehouseLocationDTO.LocationSelectDTO>> all() {
         return success(warehouseLocationService.all( ));
+    }
+    /**
+     * 批量根据仓库获取仓位
+     * @return
+     */
+    @PostMapping(value = "/selectByWarehouseIds")
+    public ApiResult<List<WarehouseLocationDTO.WarehouseLocationListDTO>> selectByWarehouseIds(@RequestBody ValidList<String> warehouseIds) {
+        return success(warehouseLocationService.selectByWarehouseIds(warehouseIds.getList()));
     }
 
     /**

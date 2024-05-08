@@ -1,19 +1,21 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
+import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -47,7 +49,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     List<SoOutstockEntity> listBySoIds(@RequestBody List<String> soIds);
 
     /**
-     * 添加销售出库单
+     * 添加销售出库单a
      * @author yl
      * @date 2023-05-19 9:50
      * @param dto
@@ -424,6 +426,81 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @author Jim
      * @date 2024-03-07
      */
-    Boolean defaultHandleRetry(String soB2cId, List<SoB2cEntity> instantList);
-    
+    Boolean defaultHandleRetry(SoB2cEntity soB2c, List<SoB2cEntity> instantList);
+
+
+
+    /**
+     * 装箱
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:52
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    String packingSave(WmsCartonDTO.WmsCartonAdd dto);
+
+    /**
+     * 装箱详情
+     * @Author Luo_WG
+     * @Date 2023/11/28 17:44
+     * @param id
+     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
+     **/
+    WmsCartonDTO.WmsCartonView packingView(String id);
+
+    /**
+     * 装箱清单
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:52
+     * @param id
+     * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ListPackingDTO>
+     **/
+    WmsCartonDTO.ListPackingDTO listPacking(String id);
+
+    /**
+     * 导出装箱清单Excel
+     * @param dto
+     * @param response
+     */
+    void exportPacking(SoOutstockDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 下载装箱模板
+     * @param response
+     */
+    void downloadPackingTemplate(HttpServletResponse response);
+
+    /**
+     * 导入装箱数据
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 据主表id分组查询发货单已包装发货及待装箱数
+     * @description
+     * @param id
+     * @return
+     * @date 2024-03-26 14:10
+     * @author Lambda
+     */
+    List<WmsCartonDTO.GroupSkuDTO> listGroupSkuById(String id);
+
+    List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
+
+    List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq);
+
+    Boolean updateStatus(TmsDeclareBillDTO.UpdateStatusDTO dto);
+
+    List<SoOutstockEntity> listByCodes(List<String> codes);
+    /**
+     * @description: 重新生成销售出库单
+     * @author Will
+     * @date: 2024/4/28 10:18
+     * @param ids
+     * @return Boolean
+     */
+    Boolean afreshGenerateB2cOutstock(List<String> ids);
 }

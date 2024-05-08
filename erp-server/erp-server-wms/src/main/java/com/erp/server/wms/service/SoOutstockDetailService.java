@@ -149,4 +149,13 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * 批量更新备注
      */
     void updateDetailRemark(String soOutStockId, String remark, boolean updateErrorThrow);
+
+    /**
+     * 根据主表id分组sku查询发货单所有产品发货及待装箱数
+     * @Author Luo_WG
+     * @Date 2023/11/28 18:41
+     * @param mainId 单据id
+     * @return java.util.List<com.erp.model.wms.dto.FirstMileDeliveryDTO.GroupSkuDTO>
+     **/
+    List<SoOutstockDTO.GroupSkuDTO> listGroupSkuByMainId(String mainId);
 }

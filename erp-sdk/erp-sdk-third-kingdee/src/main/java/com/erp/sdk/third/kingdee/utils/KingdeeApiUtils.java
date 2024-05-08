@@ -459,9 +459,42 @@ public class KingdeeApiUtils {
         return result;
     }
 
-    public OperatorResult CancelAssign(List<String> numberList) {
-        // TODO
-        return null;
+    /**
+     *  撤销
+     */
+    public RepoRet cancelAssign(List<String> idList) {
+        return submit(idList, false);
+    }
+
+    /**
+     * @description: 撤销
+     * @param idList
+     * @param ignoreError
+     * @return RepoRet
+     */
+    public RepoRet cancelAssign(List<String> idList, boolean ignoreError) {
+        RepoRet  repoRet;
+        OperateParam param = new OperateParam();
+        param.setIds(String.join(",", idList));
+        try {
+           String resultJson = client.cancelAssign(this.formId,JSONUtil.toJsonStr(param));
+            //用于记录结果
+            Gson gson = new Gson();
+            //对返回结果进行解析和校验
+             repoRet = gson.fromJson(resultJson, RepoRet.class);
+            if (repoRet.getResult().getResponseStatus().isIsSuccess()) {
+                System.out.printf("接口返回结果: %s%n", gson.toJson(repoRet.getResult()));
+            } else {
+                if (!ignoreError) {
+                    throw new RuntimeException("【撤销单据】出错:" + joinErrors("\r\n", repoRet.getResult().getResponseStatus().getErrors()));
+                } else {
+                    System.err.println("【撤销单据】出错:" + joinErrors("\r\n", repoRet.getResult().getResponseStatus().getErrors()));
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return repoRet;
     }
 
     /**

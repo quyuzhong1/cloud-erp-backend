@@ -28,15 +28,15 @@ public interface LogisticsOperateService {
     /**
      * 增加接口调用记录
      *
-     * @param authId
      * @param sourceId
+     * @param sourceCode
      * @param businessType
      * @param logisticsPlatform
      * @param status
      * @param requestParamJson
      * @param responseParamJson
      */
-    String pushOperateLog(String authId, String sourceId, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson);
+    String pushOperateLog(String sourceId, String sourceCode, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson);
 
     /**
      * 拉取数据 增加飞书预警

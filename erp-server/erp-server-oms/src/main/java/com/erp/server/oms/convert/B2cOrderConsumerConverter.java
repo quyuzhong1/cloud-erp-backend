@@ -44,14 +44,15 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "skuId", source = "skuId"),
             @Mapping(target = "skuNo", source = "skuNo"),
             @Mapping(target = "imageUrl", source = "imageUrl"),
+            @Mapping(target = "platformSpuNo", source = "platformSpuNo"),
     })
-    SoB2cDetailEntity convertNewDetail(PlatformOrderDetailDTO detailDTO, String mainId, String skuId, String skuNo,String imageUrl);
+    SoB2cDetailEntity convertNewDetail(PlatformOrderDetailDTO detailDTO, String mainId, String skuId, String skuNo, String imageUrl, String platformSpuNo);
 
 
     @Mappings({
             // 更新的内容
             @Mapping(target = "platformSkuNo", source = "detailDTO.platformSkuNo"),
-            @Mapping(target = "platformSpuNo", source = "detailDTO.platformSpuNo"),
+//            @Mapping(target = "platformSpuNo", source = "detailDTO.platformSpuNo"),
             @Mapping(target = "warehouseSkuNo", source = "detailDTO.warehouseSkuNo"),
             @Mapping(target = "qty", source = "detailDTO.qty"),
             @Mapping(target = "price", source = "detailDTO.price"),
@@ -76,9 +77,10 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "skuId", source = "skuId"),
             @Mapping(target = "skuNo", source = "skuNo"),
             @Mapping(target = "imageUrl", source = "imageUrl"),
+            @Mapping(target = "platformSpuNo", source = "platformSpuNo"),
 
     })
-    SoB2cDetailEntity convertUpdateDetail(SoB2cDetailEntity oldEntity, PlatformOrderDetailDTO detailDTO, String skuId, String skuNo,String imageUrl);
+    SoB2cDetailEntity convertUpdateDetail(SoB2cDetailEntity oldEntity, PlatformOrderDetailDTO detailDTO, String skuId, String skuNo, String imageUrl, String platformSpuNo);
 
 
     @Mappings({
@@ -99,7 +101,9 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "extendData", source = "dto.extendData"),
             @Mapping(target = "shopId",source = "dto.shopId"),
             @Mapping(target = "platformOrderCreateTime",source = "dto.platformOrderCreateTime"),
+            @Mapping(target = "platformOrderStatus", source = "dto.platformOrderStatus"),
             @Mapping(target = "remark", expression = "java(org.apache.commons.lang3.StringUtils.isBlank(oldEntity.getRemark()) ? dto.getRemark() : oldEntity.getRemark())"),
+            @Mapping(target = "isCancel", source = "dto.isCancel"),
             // 历史实体
             @Mapping(target = "exchangeRate", source = "oldEntity.exchangeRate"),
             @Mapping(target = "code", source = "oldEntity.code"),

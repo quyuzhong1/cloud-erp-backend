@@ -1,6 +1,7 @@
 package com.sdk.tms.baohong.service;
 
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.business.threadlocal.TransferLogisticsContext;
 import com.sdk.tms.baohong.api.asn.ASNData;
@@ -12,6 +13,8 @@ import com.sdk.tms.baohong.api.order.ProductDeatil;
 import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.api.product.DataRow;
 import com.sdk.tms.baohong.api.product.ProductRow;
+import com.sdk.tms.baohong.api.product.RecordItemRequest;
+import com.sdk.tms.baohong.api.product.RecordItemResponse;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+//生产 customerCode: E3138 appToken : 386E6532DEA4EC65 appKey 2c5bd44acfe6f61c7421c800190781f8
+//测试 customerCode: E0207 appToken:  BAAC60E49804C53A appKey 98f8fd9bb9edfa770bc0a317b8203fc3
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes= BaoHongService.class)
 public class BaoHongServiceTest {
@@ -60,38 +65,79 @@ public class BaoHongServiceTest {
 
     @Test
     public void getProductInfo(){
-        BaoHongResponse<ProductRow> response = baoHongService.getProductInfo("20221121013-1");
+        BaoHongResponse<ProductRow> response = baoHongService.getProductInfo("2460");
+        System.out.println(response);
+        System.out.println(response.getData());
+        long now = System.currentTimeMillis();
+        for(int i = 0;i<=800;i++){
+            BaoHongResponse<ProductRow> response2 = baoHongService.getProductInfo("2460");
+            System.out.println(response2);
+        }
+        long end = System.currentTimeMillis();
+        System.out.println(end - now);
+    }
+
+    @Test
+    public void filingProduct(){
+        RecordItemRequest recordItemRequest = RecordItemRequest.builder()
+                .sku("2461")
+                .name("三脚架")
+                .englishName("Tripod")
+                .unit("007")
+                .currencyCode("RMB")
+                .declaredValue(14.4400f)
+                .weight(342)
+                .length(9.5f)
+                .width(5.5f)
+                .height(18f)
+                .hasBattery(0)
+                .hsName("三脚架")
+                .hsCode("9620009000")
+                .hsElement("1|0|品牌:Ulanzi|相机拍摄用|型号:MT-40|cas|w")
+                .firstQauntity(342)
+                .build();
+        BaoHongResponse<RecordItemResponse> response = baoHongService.filingProduct(recordItemRequest);
         System.out.println(response);
         System.out.println(response.getData());
     }
 
     @Test
     public void getCreateOrder(){
+        String json = "{\"buyInsurance\":0,\"channel\":1,\"deliveryAddress\":\"Rua Humberto I 928\",\"grossWeight\":\"152\",\"iossNo\":\"\",\"oabCity\":\"São Paulo\",\"oabCountry\":\"BR\",\"oabName\":\"Rafaela Caixeta\",\"oabPhone\":\"+5534996757065\",\"oabPostcode\":\"04018032\",\"oabState\":\"SP\",\"oabStreetAddress1\":\"Rua Humberto I 928\",\"orderMode\":1,\"orderProduct\":[{\"opQuantity\":1,\"" +
+                "productSku\":\"240308-5\",\"productTitleEn\":\"microphone\",\"purposeDeclaredValue\":\"8.14\"}],\"orderStatus\":\"2\",\"referenceNo\":\"XSDD2404292476\",\"serialNo\":\"\",\"smCode\":\"ZY-KJWS\",\"trackingNumber\":\"WSHBR120451665YQ\",\"warehouseCode\":\"sz01\"}";
+        CreateOrderInfo createOrderInfo = JSONObject.parseObject(json,new TypeReference<CreateOrderInfo>() {}.getType());
 
-        CreateOrderInfo createOrderInfo = CreateOrderInfo.builder()
-                .oabCountry("CN")
-                .smCode("TY-DHL")
-                .orderProduct(Arrays.asList(
-                        ProductDeatil.builder()
-                                .productSku("484654-6")
-                                .opQuantity(1)
-                                .build()
-                ))
-                .trackingNumber("1234567811011")
-                .oabName("wj")
-                .referenceNo("wj2024012311")
-                .deliveryAddress("深圳龙岗坂田")
-                .oabStreetAddress1("深圳龙岗坂田")
-                .build();
+//        CreateOrderInfo createOrderInfo = CreateOrderInfo.builder()
+//                .oabCountry("CN")
+//                .smCode("TY-DHL")
+//                .orderProduct(Arrays.asList(
+//                        ProductDeatil.builder()
+//                                .productSku("484654-6")
+//                                .opQuantity(1)
+//                                .purposeDeclaredValue("8.14")
+//                                .build()
+//                ))
+//                .orderStatus("2")
+//                .trackingNumber("314r132212")
+//                .oabName("wj")
+//                .referenceNo("wj202240121231221")
+//                .deliveryAddress("深圳龙岗坂田")
+//                .oabStreetAddress1("深圳龙岗坂田")
+//                .build();
         BaoHongResponse<String> response = baoHongService.createOrder(createOrderInfo);
         System.out.println(response);
         System.out.println(response.getData());
     }
 
+    @Test
+    public void cancelOrder(){
+        BaoHongResponse<String> response = baoHongService.cancelOrder("SOE02070223440","平台发货异常");
+        System.out.println(response);
+    }
 
     @Test
     public void getOrderByCodeTest(){
-        BaoHongResponse<OrderDataArr> response = baoHongService.getOrderByCode("SOE02070222879");
+        BaoHongResponse<OrderDataArr> response = baoHongService.getOrderByCode("SOE02070223440");
         System.out.println(response);
         System.out.println(response.getData());
     }

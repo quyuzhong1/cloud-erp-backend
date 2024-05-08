@@ -76,6 +76,10 @@ public enum ModuleTypeEnum {
     CUSTOMER_B2B_SELLER_CHANGE("63", "b2b客户销售员变更单"),
     PRODUCT_CERTIFICATE("64", "产品认证"),
     DATA_COMPARE("68", "数据对比"),
+    PRODUCT_REGISTRATION("68", "产品备案"),
+    TMS_B2C_DECLARE_RECONCILIATION("69", "B2C报关账单"),
+    TMS_FIRST_MILE_RECONCILIATION("70", "头程对账单"),
+    CFG_FIELD_RECONCILIATION("71", "字段配置"),
     ;
 
 

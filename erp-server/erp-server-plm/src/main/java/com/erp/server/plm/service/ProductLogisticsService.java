@@ -1,6 +1,8 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.plm.dto.LogisticsProductDTO;
+import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductLogisticsDTO;
 import com.erp.model.plm.dto.ProductLogisticsShowDTO;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
@@ -74,4 +76,21 @@ public interface ProductLogisticsService extends IService<ProductLogisticsEntity
      * @return java.util.List<com.erp.model.plm.entity.ProductLogisticsEntity>
      */
     List<ProductLogisticsEntity> listBySkuIdList(List<String> skuIdList);
+    /**
+     * @description: 已审核备案SKU下拉
+     * @author Will
+     * @date: 2024/3/19 15:09
+     * @return List<SelectDTO>
+     */
+    List<LogisticsProductDTO.SelectDTO> selectSku();
+    /**
+     * @description: 关联查询
+     * @author Will
+     * @date: 2024/3/21 17:00
+     * @param id
+     * @return ProductLogisticsEntity
+     */
+    ProductLogisticsEntity getEntityById(String id);
+
+    List<ProductDetailDTO.ProductLogisticDTO> listProductLogisticsByIds(List<String> skuIdList);
 }

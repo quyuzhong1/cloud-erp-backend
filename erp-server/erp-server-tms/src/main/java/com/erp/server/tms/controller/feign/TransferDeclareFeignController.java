@@ -1,12 +1,16 @@
 package com.erp.server.tms.controller.feign;
 
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
+import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.server.tms.service.TransferDeclareDetailService;
 import com.erp.server.tms.service.TransferDeclareService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -71,5 +75,33 @@ public class TransferDeclareFeignController {
     public List<TransferDeclareDetailEntity> listByLogisticsChannelIdList(@RequestBody List<String> logisticsChannelIdList) {
         List<TransferDeclareDetailEntity> list = transferDeclareDetailService.listByLogisticsChannelIdList(logisticsChannelIdList);
         return list;
+    }
+
+    /**
+     * b2c订单预报
+     * 成功返回第三方code
+     * 失败返回b2c订单code
+     */
+    @PostMapping("/b2cOrderForecast")
+    public TransferDeclareDTO.ShippingOrderDTO b2cOrderForecast(@RequestBody @Validated TransferDeclareDTO.B2cOrderForecastDTO b2cOrderForecastDTO) {
+        return transferDeclareService.b2cOrderForecast(b2cOrderForecastDTO);
+    }
+
+    /**
+     * 通过销售单id查询
+     */
+    @PostMapping("/listBySoCodeList")
+    public List<TransferDeclareDetailEntity> listBySoCodeList(@RequestBody List<String> soCodeList){
+        return transferDeclareDetailService.listBySoCodeList(soCodeList);
+    }
+
+    /**
+     * 批量修改报关单详情上传状态
+     * @param list
+     * @return
+     */
+    @PostMapping("/updateTransferStatusByBatch")
+    public Boolean updateTransferStatusByBatch(@RequestBody List<TransferDeclareDTO.UpdateForcastStatusDTO> list) {
+        return transferDeclareDetailService.updateTransferStatusByBatch(list);
     }
 }

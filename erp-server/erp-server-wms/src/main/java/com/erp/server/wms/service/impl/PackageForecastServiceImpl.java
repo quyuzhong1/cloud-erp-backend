@@ -7,10 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -27,6 +24,7 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -187,7 +185,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
      * @return
      */
     @Override
-    public List<PackageForecastDTO.TabListDTO> tabList() {
+    public List<PackageForecastDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<PackageForecastDTO.TabListDTO> resultList = new ArrayList<>(5);
         List<PackageForecastDTO.TabListDTO> tabListList = baseMapper.tabList();
         PackageForecastDTO.TabListDTO all = new PackageForecastDTO.TabListDTO();
@@ -217,11 +215,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         PackageForecastDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         String uploadStatus = "";
-        if (!"all".equals(params.getTabFlag())) {
-            uploadStatus = params.getTabFlag();
-        }
+
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params, uploadStatus);
+        IPage pageData = baseMapper.paging(query, params);
         List<PackageForecastDTO.PagingViewDTO> list = pageData.getRecords();
         //处理分页数据
         fillPaging(list);
@@ -705,26 +701,58 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         List<TransferDeclareDetailDTO.AddDTO> addDetailList = PackageForecastConverter.INSTANCE.convertDeclareDetail(detailList);
         addDTO.setDetailList(addDetailList);
         BaseResultDTO.AddDTO result = transferDeclareFeign.add(addDTO);
-        String transferStatus = TransferStatusEnum.ALREADY.getCode();
-        if (StringUtils.isNotBlank(result.getId())) {
-            UpdateStateDTO.UpdateByStrStatusDTO dto = new UpdateStateDTO.UpdateByStrStatusDTO();
-            dto.setStatus(transferStatus);
-            dto.setIds(soIdList);
-            soB2cFeign.updateTransferStatus(dto);
-        }
-        entity.setTransferStatus(transferStatus);
         this.updateById(entity);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "中转报关");
 
     }
 
     @Override
+    public BatchResultDTO instockForcast(String id) {
+        PackageForecastEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+        }
+        List<String> uploadStatusList = new ArrayList<>(2);
+        uploadStatusList.add(PackageUploadStatusEnum.NOT.getCode());
+        uploadStatusList.add(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+        String uploadStatus = entity.getUploadStatus();
+        if (!uploadStatusList.contains(uploadStatus)) {
+            throw new ServiceException("只有无需上传和上传成功的组包 才能入库预报");
+        }
+        List<PackageForecastDetailEntity> detailList = packageForecastDetailService.listDbByMainId(id);
+        List<String> soIdList = detailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
+        //校验订单中转状态 （先去掉校验，因为历史数据问题）
+//        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIdList);
+//        List<String> alreadyTransferList = soB2cEntityList.stream().filter(v->TransferStatusEnum.ALREADY.getCode().equals(v.getTransferStatus())).map(SoB2cEntity::getCode).collect(Collectors.toList());
+//        if(CollectionUtils.isNotEmpty(alreadyTransferList)){
+//            return BatchResultDTO.fail(entity.getId(), entity.getCode(), StrUtil.format("{}已中转不可重复中转",alreadyTransferList));
+//        }
+
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(soIdList);
+        if (CollectionUtils.isEmpty(soB2cLogisticsEntities)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
+        TransferDeclareDTO.AddDTO addDTO = new TransferDeclareDTO.AddDTO();
+        addDTO.setTransferLogisticsSupplierId(soB2cLogisticsEntities.get(0).getTransferLogisticsSupplierId());
+        addDTO.setTransferChannelId(soB2cLogisticsEntities.get(0).getTransferLogisticsChannelId());
+        addDTO.setDeliveryLogisticsSupplierId(entity.getLogisticsSupplierId());
+        addDTO.setGenerateTime(LocalTime.now());
+        List<TransferDeclareDetailDTO.AddDTO> addDetailList = PackageForecastConverter.INSTANCE.convertDeclareDetail(detailList);
+        addDTO.setDetailList(addDetailList);
+
+        addDTO.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+        addDTO.getDetailList().forEach(v->v.setOrderUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode()));
+
+        BaseResultDTO.AddDTO result = transferDeclareFeign.add(addDTO);
+        this.updateById(entity);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "入库预报");
+    }
+
+    @Override
     public Boolean exportExcel(PackageForecastDTO.ExportDTO dto, HttpServletResponse response) {
         String uploadStatus = "";
-        if (!"all".equals(dto.getTabFlag())) {
-            uploadStatus = dto.getTabFlag();
-        }
-        List<PackageForecastDTO.PagingViewDTO> list = baseMapper.listExcel(dto, uploadStatus);
+
+        List<PackageForecastDTO.PagingViewDTO> list = baseMapper.listExcel(dto);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
