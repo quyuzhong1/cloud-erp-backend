@@ -1,6 +1,7 @@
 package com.erp.model.srm.dto;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
@@ -234,6 +235,15 @@ public class DeliveryOrderDTO implements Serializable {
          * id
          */
         private String id;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
 
         /**
          * 采购单号
