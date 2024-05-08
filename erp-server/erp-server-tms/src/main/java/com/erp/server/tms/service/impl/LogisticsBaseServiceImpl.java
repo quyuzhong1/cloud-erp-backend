@@ -328,7 +328,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         for (LogisticsTrackDTO.UpdateTrackDTO updateTrackDTO :records) {
             LogisticsTrackBaseDTO.OceanRegisterRequestDTO oceanRegisterRequestDTO = LogisticsTrackBaseDTO.OceanRegisterRequestDTO.builder()
                     .trackNo(updateTrackDTO.getTrackNo())
-                    .carrierCode(updateTrackDTO.getCarrier())
+                    .carrierCode(updateTrackDTO.getCarrierCode())
                     .id(updateTrackDTO.getId())
                     .type(MathUtil.THREE)
                     .authMap(mapList.get(0))

@@ -389,7 +389,7 @@
                lb.outstock_id as outstockId,
                lb.transport_no as transportNo,
                lb.counter_no as counterNo,
-               lb.carrier as carrier,
+               lb.carrier_id as carrierId,
                lb.source_code as businessCode,
                lb.outstock_code as outstockCode,
                lbd.track_status as logisticsStatus,

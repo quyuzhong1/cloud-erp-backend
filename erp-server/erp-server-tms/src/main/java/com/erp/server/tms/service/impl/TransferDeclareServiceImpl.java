@@ -12,12 +12,10 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -54,6 +52,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.util.BigDecimalUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jsoup.internal.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -769,10 +768,19 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             if (Objects.isNull(service)){
                 return TransferDeclareDTO.ShippingOrderDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"未开发平台【" + LogisticsPlatformEnum.getByName(authEntity.getLogisticsPlatform()).getName() + "】报关功能",SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
             }
+            LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(soB2cLogisticsEntity.getLogisticsChannelId());
+            if(Objects.isNull(logisticsChannelEntity)){
+                return TransferDeclareDTO.ShippingOrderDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"未找到物流渠道",SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
+            }
+            String trackingNumber = logisticsChannelEntity.getDeclareCodeType().equals(DeclareCodeTypeEnum.TRANSPORT_NO.getCode())?soB2cLogisticsEntity.getCode():soB2cLogisticsEntity.getTrackNo();
+            if(StringUtil.isBlank(trackingNumber)){
+                String codeType = EnumMessage.getNameByCode(DeclareCodeTypeEnum.class,logisticsChannelEntity.getDeclareCodeType());
+                return TransferDeclareDTO.ShippingOrderDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),StrUtil.format("{}为空",codeType),SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
+            }
             List<TransferLogisticsCreateOrderReq.ProductDetail> productDetails = TransferDeclareConverter.INSTANCE.transferDeclareProductConvert(transferDeclareProductDTOList);
             //组装SDK需要的下报关单单信息
             TransferLogisticsCreateOrderReq orderReq = TransferLogisticsCreateOrderReq.builder()
-                    .trackingNumber(soB2cLogisticsEntity.getCode())
+                    .trackingNumber(trackingNumber)
                     .country(soB2cReceiverEntity.getCountry())
                     .shippingCode(transferLogisticsChannelEntity.getCode())
                     .name(soB2cReceiverEntity.getReceiverName())

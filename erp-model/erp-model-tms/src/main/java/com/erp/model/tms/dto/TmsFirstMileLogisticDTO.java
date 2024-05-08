@@ -336,9 +336,9 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String shippingMethod;
 
         /**
-         * 船司/航司
+         * 船司/航司id
          */
-        private String carrier;
+        private String carrierId;
     }
 
     /**
@@ -645,7 +645,14 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         @ExcelProperty(value = "柜号")
         @ColumnWidth(20)
         private String counterNo;
-
+        /**
+         * 船司航司id
+         */
+        private String carrierId;
+        /**
+         * 船司航司名称
+         */
+        private String carrierName;
         /**
          * 业务单号
          */
@@ -1129,9 +1136,14 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String counterNo;
 
         /**
-         * 船司/航司
+         * 船司/航司id
          */
-        private String carrier;
+        private String carrierId;
+
+        /**
+         * 船司/航司名称
+         */
+        private String carrierName;
 
         /**
         * 备注
@@ -1365,7 +1377,7 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         /**
          * 船司/航司
          */
-        private String carrier;
+        private String carrierId;
         /**
         * 币种
         */
