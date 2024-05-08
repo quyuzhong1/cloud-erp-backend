@@ -46,12 +46,16 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     @Resource
     private DynamicRouteService dynamicRouteService;
     
-    private static final AtomicInteger sysPathOrder = new AtomicInteger(1000);
+    /*-----------------------------路由优先级开始--------------------------------*/
+    
+    private static final AtomicInteger sysPathOrder = new AtomicInteger(10000);
     private static final AtomicInteger pathMatchOrder = new AtomicInteger(100000);
     private static final AtomicInteger pathOrder = new AtomicInteger(200000);
     private static final AtomicInteger refererOrder = new AtomicInteger(400000);
     private static final AtomicInteger hostMatchOrder = new AtomicInteger(800000);
     private static final AtomicInteger hostOrder = new AtomicInteger(1600000);
+    
+    /*-----------------------------路由优先级结束--------------------------------*/
     
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
@@ -71,7 +75,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
 						}
 						String serviceCode = serviceCodeNameEnum.getCode();
 						String rateLimiterPath = data.getRateLimiterPath();
-						String host = data.getHost();
+						String remoteAddr = data.getRemoteAddr();
 						String referer = data.getReferer();
 						
 						String id = serviceCode + "_route_" + data.getId();
@@ -109,16 +113,15 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
 						    order = order + refererOrder.incrementAndGet();
 						}
 						
-						if(host != null && !"".equals(host)) {
-							if(!host.contains(":")) {
-								host = host + "*";
+						if(remoteAddr != null && !"".equals(remoteAddr)) {
+							if(remoteAddr.contains("/")) {
+								order = order + hostMatchOrder.incrementAndGet();
+							}else {
+								remoteAddr = remoteAddr + "/32";
+								order = order + hostOrder.incrementAndGet();
 							}
-						    if(host.contains("*")) {
-						    	order = order + hostMatchOrder.incrementAndGet();
-						    }else {
-						    	order = order + hostOrder.incrementAndGet();
-						    }
-						    predicate = new PredicateDefinition("Host="+ host);
+						    
+						    predicate = new PredicateDefinition("RemoteAddr="+ remoteAddr);
 						    predicates.add(predicate);
 						}
 						
@@ -193,7 +196,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     	        try {
     	            connection = dataSource.getConnection();
 
-    	            String sql = "SELECT id,is_deleted,rate,count,rate_limiter_path,service_code,referer,host FROM sys_route_config where " + queryCondition;
+    	            String sql = "SELECT id,is_deleted,rate,count,rate_limiter_path,service_code,referer,remote_addr FROM sys_route_config where " + queryCondition;
     	            statement = connection.createStatement();
     	            resultSet = statement.executeQuery(sql);
 
@@ -207,7 +210,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     	            	rateLimiterPathMap.setRateLimiterPath(resultSet.getString("rate_limiter_path"));
     	            	rateLimiterPathMap.setServiceCode(EnumMessage.getByCode(ServiceCodeNameEnum.class , resultSet.getString("service_code")));
     	            	rateLimiterPathMap.setReferer(resultSet.getString("referer"));
-    	            	rateLimiterPathMap.setHost(resultSet.getString("host"));
+    	            	rateLimiterPathMap.setRemoteAddr(resultSet.getString("remote_addr"));
     	            	
     	                sysRouteConfigList.add(rateLimiterPathMap);
     	            }
