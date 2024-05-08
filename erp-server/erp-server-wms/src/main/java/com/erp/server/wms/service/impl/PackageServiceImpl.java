@@ -103,16 +103,19 @@ public class PackageServiceImpl implements PackageService {
         if (entity.getIsCancel()) {
             throw new ServiceException("平台订单已取消，无法组包");
         } else {
-            //如果订单原始状态非取消，这里需要再次调用平台接口查询，是否已取消
-            PlatformDeliveryInterceptDTO deliveryInterceptDTO = new PlatformDeliveryInterceptDTO();
-            deliveryInterceptDTO.setSoB2cId(entity.getSourceId());
-            deliveryInterceptDTO.setDictPlatform(entity.getDictPlatform());
-            deliveryInterceptDTO.setOldIsCancel(entity.getIsCancel());
-            deliveryInterceptDTO.setPlatformCode(entity.getPlatformCode());
-            deliveryInterceptDTO.setShopId(entity.getShopId());
-            Boolean flag = PlatformSaveHandler.deliveryIntercept(deliveryInterceptDTO);
+            Boolean flag = soB2cFeign.checkPlatformShipOrder(entity.getSourceId());
             if (flag) {
-                throw new ServiceException("平台订单已取消，无法组包");
+                //如果订单原始状态非取消，这里需要再次调用平台接口查询，是否已取消
+                PlatformDeliveryInterceptDTO deliveryInterceptDTO = new PlatformDeliveryInterceptDTO();
+                deliveryInterceptDTO.setSoB2cId(entity.getSourceId());
+                deliveryInterceptDTO.setDictPlatform(entity.getDictPlatform());
+                deliveryInterceptDTO.setOldIsCancel(entity.getIsCancel());
+                deliveryInterceptDTO.setPlatformCode(entity.getPlatformCode());
+                deliveryInterceptDTO.setShopId(entity.getShopId());
+                Boolean flag = PlatformSaveHandler.deliveryIntercept(deliveryInterceptDTO);
+                if (flag) {
+                    throw new ServiceException("平台订单已取消，无法组包");
+                }
             }
         }
 
