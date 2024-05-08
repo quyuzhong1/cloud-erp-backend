@@ -26,6 +26,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -477,12 +478,15 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             }
         }
 
-        List<RequisitionApplicationDTO.printPickingViewDTO> resultList = printPickingViewList.stream()
-                .sorted(Comparator.comparing(RequisitionApplicationDTO.printPickingViewDTO::getSkuNo).reversed()
-                    .thenComparing(RequisitionApplicationDTO.printPickingViewDTO::getFromWarehouseName).reversed()
-                    .thenComparing(RequisitionApplicationDTO.printPickingViewDTO::getWarehouseLocation)
-                ).collect(Collectors.toList());
-        return resultList;
+        Collections.sort(printPickingViewList, (s1, s2) -> {
+            if (s1.getWarehouseLocation().isEmpty()) {
+                return 1;
+            } else if (s2.getWarehouseLocation().isEmpty()) {
+                return -1;
+            }
+            return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
+        });
+        return printPickingViewList;
     }
 
     @Override
