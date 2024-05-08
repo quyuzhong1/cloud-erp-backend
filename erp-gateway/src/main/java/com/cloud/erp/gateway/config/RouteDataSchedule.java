@@ -36,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
-public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> {
+public class RouteDataSchedule implements ApplicationListener<ContextRefreshedEvent> {
 
     @Value("${route.refresh.time:3}")
     private int routereFreshTime;
