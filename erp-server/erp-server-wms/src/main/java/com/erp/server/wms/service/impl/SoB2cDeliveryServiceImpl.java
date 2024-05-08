@@ -1160,7 +1160,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> logisticsIntercept(List<String> ids) {
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(ids);
         List<String> sourceIds = soB2cDeliveryEntities.stream().map(SoB2cDeliveryEntity::getSourceId).collect(Collectors.toList());
