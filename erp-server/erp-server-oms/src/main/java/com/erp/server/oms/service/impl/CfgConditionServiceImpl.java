@@ -117,6 +117,12 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
         return baseMapper.listAllCondition();
     }
 
+    @Override
+    public List<CfgConditionDTO.ListDTO> listDeclareCondition() {
+        //后面需要根据类型进行配置条件列表
+        return baseMapper.listDeclareCondition();
+    }
+
 
     /**
      * 条件树结构

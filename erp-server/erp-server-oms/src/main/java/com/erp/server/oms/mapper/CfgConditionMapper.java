@@ -37,4 +37,10 @@ public interface CfgConditionMapper extends BaseMapper<CfgConditionEntity> {
      * @return java.util.List<com.erp.model.oms.dto.CfConditionDTO.ListDTO>
      */
     List<CfgConditionDTO.ListDTO> listAllCondition();
+
+    /**
+     * 申报规则列表查询
+     * @return
+     */
+    List<CfgConditionDTO.ListDTO> listDeclareCondition();
 }
