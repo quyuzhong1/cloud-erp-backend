@@ -46,13 +46,17 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     @Resource
     private DynamicRouteService dynamicRouteService;
     
+    /*-----------------------------路由优先级开始--------------------------------*/
+    
+    private static final AtomicInteger sysPathOrder = new AtomicInteger(10000);
     private static final AtomicInteger pathMatchOrder = new AtomicInteger(100000);
     private static final AtomicInteger pathOrder = new AtomicInteger(200000);
     private static final AtomicInteger refererOrder = new AtomicInteger(400000);
     private static final AtomicInteger hostMatchOrder = new AtomicInteger(800000);
     private static final AtomicInteger hostOrder = new AtomicInteger(1600000);
     
-    private static final String openApiPath = "/open/api";
+    /*-----------------------------路由优先级结束--------------------------------*/
+    
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
 
@@ -71,7 +75,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
 						}
 						String serviceCode = serviceCodeNameEnum.getCode();
 						String rateLimiterPath = data.getRateLimiterPath();
-						String host = data.getHost();
+						String remoteAddr = data.getRemoteAddr();
 						String referer = data.getReferer();
 						
 						String id = serviceCode + "_route_" + data.getId();
@@ -84,19 +88,20 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
 						
 						Integer order = 0;
 						
+						String sysPath = "/api/"+ serviceCode + "/**";
 						if(rateLimiterPath == null || "".equals(rateLimiterPath)) {
-							rateLimiterPath = "/api/"+ serviceCode + "/**";
+							rateLimiterPath = sysPath;
 						}
 						if(!rateLimiterPath.startsWith("/")) {
 							rateLimiterPath = "/" + rateLimiterPath;
 						}
-						if(rateLimiterPath.startsWith(openApiPath)) {
-							predicate = new PredicateDefinition("Path="+ rateLimiterPath);
-						}else {
-							predicate = new PredicateDefinition("Path=/api/"+ serviceCode + rateLimiterPath);
-						}
+						
+						predicate = new PredicateDefinition("Path="+ rateLimiterPath);
 						predicates.add(predicate);
-						if(rateLimiterPath.contains("*")) {
+						
+						if(sysPath.equals(rateLimiterPath)) {
+							order = order + sysPathOrder.incrementAndGet();
+						}else if(rateLimiterPath.contains("*")) {
 							order = order + pathMatchOrder.incrementAndGet();
 						}else {
 							order = order + pathOrder.incrementAndGet();
@@ -108,16 +113,15 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
 						    order = order + refererOrder.incrementAndGet();
 						}
 						
-						if(host != null && !"".equals(host)) {
-							if(!host.contains(":")) {
-								host = host + "*";
+						if(remoteAddr != null && !"".equals(remoteAddr)) {
+							if(remoteAddr.contains("/")) {
+								order = order + hostMatchOrder.incrementAndGet();
+							}else {
+								remoteAddr = remoteAddr + "/32";
+								order = order + hostOrder.incrementAndGet();
 							}
-						    if(host.contains("*")) {
-						    	order = order + hostMatchOrder.incrementAndGet();
-						    }else {
-						    	order = order + hostOrder.incrementAndGet();
-						    }
-						    predicate = new PredicateDefinition("Host="+ host);
+						    
+						    predicate = new PredicateDefinition("RemoteAddr="+ remoteAddr);
 						    predicates.add(predicate);
 						}
 						
@@ -166,6 +170,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     public List<CustomKeyResolverConfig.RateLimiterPathMap> getSysRouteConfig() {
     	List<CustomKeyResolverConfig.RateLimiterPathMap> sysRouteConfigList = new ArrayList<>();
     	if(dealFinish) {
+    		dealFinish = false;
     		try {
     			String queryCondition = null;
     			if(dataSource == null) {
@@ -178,6 +183,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     			    config.setMaximumPoolSize(3);
     			    config.setMinimumIdle(1);
     			    dataSource = new HikariDataSource(config);
+    			    log.warn("初始化动态路由数据库连接池成功");
     			    queryCondition = "is_deleted = 'f'";
     			}else {
     				queryCondition = "update_time >= '" + DateUtil.formatDateTime(DateUtil.offsetSecond(new Date(), -(routereFreshTime + 1))) + "'";
@@ -190,7 +196,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     	        try {
     	            connection = dataSource.getConnection();
 
-    	            String sql = "SELECT id,is_deleted,rate,count,rate_limiter_path,service_code,referer,host FROM sys_route_config where " + queryCondition;
+    	            String sql = "SELECT id,is_deleted,rate,count,rate_limiter_path,service_code,referer,remote_addr FROM sys_route_config where " + queryCondition;
     	            statement = connection.createStatement();
     	            resultSet = statement.executeQuery(sql);
 
@@ -204,12 +210,12 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     	            	rateLimiterPathMap.setRateLimiterPath(resultSet.getString("rate_limiter_path"));
     	            	rateLimiterPathMap.setServiceCode(EnumMessage.getByCode(ServiceCodeNameEnum.class , resultSet.getString("service_code")));
     	            	rateLimiterPathMap.setReferer(resultSet.getString("referer"));
-    	            	rateLimiterPathMap.setHost(resultSet.getString("host"));
+    	            	rateLimiterPathMap.setRemoteAddr(resultSet.getString("remote_addr"));
     	            	
     	                sysRouteConfigList.add(rateLimiterPathMap);
     	            }
     	        } catch (Exception e) {
-    	            e.printStackTrace();
+    	            log.error("查询动态路由数据失败" , e);
     	        } finally {
     	            try {
     	                if (resultSet != null) {
@@ -222,7 +228,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     	                    connection.close();
     	                }
     	            } catch (Exception e) {
-    	                e.printStackTrace();
+    	            	log.error("关闭动态路由数据连接失败" , e);
     	            }
     	        }
     		}catch(Exception e) {

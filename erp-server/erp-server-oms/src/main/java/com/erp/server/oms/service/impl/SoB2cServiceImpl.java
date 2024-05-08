@@ -7016,31 +7016,45 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"中转报关商为空"));
                 continue;
             }
-            SoB2cErrorEntity error = errorList.stream().filter(e -> e.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(new SoB2cErrorEntity());
-            TransferLogisticsStatusEnum transferLogisticsStatusEnum = transferLogisticsFeign.getPlatformTransferStatus(soB2cEntity.getShippingOrderNo(),soB2cLogisticsEntity.getTransferLogisticsSupplierId());
 
-            //保宏不支持接口拦截，只能线下，通过查询订单状态判断订单是否已经取消
-            if (transferLogisticsStatusEnum == TransferLogisticsStatusEnum.DELETED){
+            SoB2cErrorEntity error = errorList.stream().filter(e -> e.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(new SoB2cErrorEntity());
+            //如果平台取消，直接操作取消预报
+            if(soB2cEntity.getIsCancel()!=null && soB2cEntity.getIsCancel()){
                 soB2cEntity.setTransferStatus(TransferStatusEnum.WAIT.getCode());
                 if(SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode().equals(soB2cEntity.getSignOrderError())){
                     soB2cEntity.setSignOrderError("");
                 }
                 updateForcastStatusDTO.setStatus(TransferStatusEnum.WAIT.getCode());
+                updateInstockForcastList.add(updateForcastStatusDTO);
                 updateList.add(soB2cEntity);
                 if(StringUtils.isNotBlank(error.getId())){
                     deleteErrorIds.add(error.getId());
                 }
             }else{
-                error.setMainId(soB2cEntity.getId())
-                        .setType(SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode())
-                        .setMessage("订单预报拦截失败，请联系物流同事删除预报后再操作")
-                        .setParamJson(soB2cEntity.getId());
-                addOrUpdateErrors.add(error);
-                soB2cEntity.setSignOrderError(SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode());
-                updateList.add(soB2cEntity);
-                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"订单预报拦截失败，请联系物流同事取消删除后再操作"));
+                TransferLogisticsStatusEnum transferLogisticsStatusEnum = transferLogisticsFeign.getPlatformTransferStatus(soB2cEntity.getShippingOrderNo(),soB2cLogisticsEntity.getTransferLogisticsSupplierId());
+                //保宏不支持接口拦截，只能线下，通过查询订单状态判断订单是否已经取消
+                if (transferLogisticsStatusEnum == TransferLogisticsStatusEnum.DELETED){
+                    soB2cEntity.setTransferStatus(TransferStatusEnum.WAIT.getCode());
+                    if(SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode().equals(soB2cEntity.getSignOrderError())){
+                        soB2cEntity.setSignOrderError("");
+                    }
+                    updateForcastStatusDTO.setStatus(TransferStatusEnum.WAIT.getCode());
+                    updateInstockForcastList.add(updateForcastStatusDTO);
+                    updateList.add(soB2cEntity);
+                    if(StringUtils.isNotBlank(error.getId())){
+                        deleteErrorIds.add(error.getId());
+                    }
+                }else{
+                    error.setMainId(soB2cEntity.getId())
+                            .setType(SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode())
+                            .setMessage("订单预报拦截失败，请联系物流同事删除预报后再操作")
+                            .setParamJson(soB2cEntity.getId());
+                    addOrUpdateErrors.add(error);
+                    soB2cEntity.setSignOrderError(SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode());
+                    updateList.add(soB2cEntity);
+                    resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"订单预报拦截失败，请联系物流同事取消删除后再操作"));
+                }
             }
-            updateInstockForcastList.add(updateForcastStatusDTO);
         }
 
         //更新操作同个事务
@@ -7221,6 +7235,46 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 listDTO.setShopName(shopInfoEntity.getName());
             }
         }
+    }
+
+    @Override
+    public Boolean autoCancelOrderForecast(SoB2cEntity mainEntity) {
+        if(!TransferStatusEnum.SUCCESS.getCode().equals(mainEntity.getTransferStatus())){
+            return false;
+        }
+        if(PackageStatusEnum.ALREADY.getCode().equals(mainEntity.getPackageStatus())){
+            return false;
+        }
+        List<TransferDeclareDetailEntity> transferDeclareDetailEntityList = transferDeclareFeign.listBySoCodeList(Arrays.asList(mainEntity.getCode()));
+        TransferDeclareDetailEntity transferDeclareDetailEntity = transferDeclareDetailEntityList.stream().filter(v->v.getSoCode().equals(mainEntity.getCode())).findFirst().orElse(null);
+        if(Objects.nonNull(transferDeclareDetailEntity)){
+            return false;
+        }
+        List<SoB2cEntity> updateList = new ArrayList<>();
+        List<String> deleteErrorIds = new ArrayList<>();
+        List<TransferDeclareDTO.UpdateForcastStatusDTO> updateInstockForcastList = new ArrayList<>();
+        List<SoB2cErrorEntity> errorList = soB2cErrorService.getByMainIdsAndType(Arrays.asList(mainEntity.getId()), SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode());
+        SoB2cErrorEntity error = errorList.stream().filter(e -> e.getMainId().equals(mainEntity.getId())).findFirst().orElse(new SoB2cErrorEntity());
+        mainEntity.setTransferStatus(TransferStatusEnum.WAIT.getCode());
+        if (SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode().equals(mainEntity.getSignOrderError())) {
+            mainEntity.setSignOrderError("");
+        }
+        TransferDeclareDTO.UpdateForcastStatusDTO updateForcastStatusDTO = new TransferDeclareDTO.UpdateForcastStatusDTO();
+        updateForcastStatusDTO.setSoId(mainEntity.getId());
+        updateForcastStatusDTO.setStatus(TransferStatusEnum.WAIT.getCode());
+        updateInstockForcastList.add(updateForcastStatusDTO);
+        updateList.add(mainEntity);
+        if (StringUtils.isNotBlank(error.getId())) {
+            deleteErrorIds.add(error.getId());
+        }
+
+        operateLogService.addModuleOperateLog("平台订单取消后自动取消订单预报", ModuleTypeEnum.SO_B2C.getCode(), mainEntity.getId(), "取消预报");
+        //更新操作同个事务
+        service.orderForecastUpdateSoAndError(updateList,deleteErrorIds,new ArrayList<>(),new ArrayList<>());
+
+        //更新入库预报单详情的上传状态
+        transferDeclareFeign.updateTransferStatusByBatch(updateInstockForcastList);
+        return true;
     }
 
     /**
