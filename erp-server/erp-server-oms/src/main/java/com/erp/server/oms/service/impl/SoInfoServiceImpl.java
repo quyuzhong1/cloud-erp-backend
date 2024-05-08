@@ -539,7 +539,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 viewDTO.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
             }
         }
-        view.setDetailList(detailList);
+        // 仓位排序
+        List<SoDetailDTO.ViewDTO> resultList = detailList.stream()
+                .sorted(Comparator.comparing(SoDetailDTO.ViewDTO::getWarehouseLocation)
+                ).collect(Collectors.toList());
+        view.setDetailList(resultList);
         return view;
     }
 

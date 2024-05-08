@@ -480,7 +480,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationDTO.printPickingViewDTO> resultList = printPickingViewList.stream()
                 .sorted(Comparator.comparing(RequisitionApplicationDTO.printPickingViewDTO::getSkuNo).reversed()
                     .thenComparing(RequisitionApplicationDTO.printPickingViewDTO::getFromWarehouseName).reversed()
-                    .thenComparing(RequisitionApplicationDTO.printPickingViewDTO::getWarehouseLocation).reversed()
+                    .thenComparing(RequisitionApplicationDTO.printPickingViewDTO::getWarehouseLocation)
                 ).collect(Collectors.toList());
         return resultList;
     }
