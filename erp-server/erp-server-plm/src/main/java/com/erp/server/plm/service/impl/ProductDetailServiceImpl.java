@@ -4091,10 +4091,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public Boolean updateWarehouseLocationById(String id, String warehouseLocation) {
+    public Boolean updateWarehouseLocationById(String id, String warehouseLocation, String warehouseLocationLarge) {
         boolean flag = lambdaUpdate()
                 .eq(ProductDetailEntity::getId, id)
                 .set(ProductDetailEntity::getWarehouseLocation, warehouseLocation)
+                .set(ProductDetailEntity::getWarehouseLocationLarge, warehouseLocationLarge)
                 .update();
 
         List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getId, id).list();
@@ -4276,7 +4277,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
                 productSkuBaseInfoDTO.setId(productBy.getId());
                 productInfoDTO.setId(productBy.getProductId());
-
+                //设置推荐仓位（大货区/小货区）
+                if (StringUtils.isEmpty(dto.getWarehouseLocationLarge())) {
+                    dto.setWarehouseLocationLarge(productBy.getWarehouseLocationLarge());
+                }
+                if (StringUtils.isEmpty(dto.getWarehouseLocation())) {
+                    dto.setWarehouseLocation(productBy.getWarehouseLocation());
+                }
             } else {
                 //sku重复
                 if (ObjectUtil.isNotEmpty(productBy)) {

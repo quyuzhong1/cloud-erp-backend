@@ -304,16 +304,16 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             if (Objects.nonNull(skuVO)) {
                 pdaPcListDTO.setProductName(skuVO.getSkuName());
             }
-            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(pdaPcListDTO.getWarehouseId()) && req.getCode().equals(pdaPcListDTO.getInWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
-            pdaPcListDTO.setInWarehouseLocationName(warehouseLocationEntity.getName());
-            WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(pdaPcListDTO.getWarehouseId()) && req.getCode().equals(pdaPcListDTO.getOutWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
-            pdaPcListDTO.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
             if (StringUtils.isBlank(pdaPcListDTO.getWarehouseId())){
                 pdaPcListDTO.setWarehouseId(pdaPcListDTO.getInfoWarehouseId());
             }
             if (StringUtils.isBlank(pdaPcListDTO.getWarehouseName())){
                 pdaPcListDTO.setWarehouseName(pdaPcListDTO.getInfoWarehouseName());
             }
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(pdaPcListDTO.getWarehouseId()) && req.getCode().equals(pdaPcListDTO.getInWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            pdaPcListDTO.setInWarehouseLocationName(warehouseLocationEntity.getName());
+            WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(pdaPcListDTO.getWarehouseId()) && req.getCode().equals(pdaPcListDTO.getOutWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            pdaPcListDTO.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
         }
         return new PagingVO(pageData);
     }
@@ -687,14 +687,17 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 transferDTO.setSourceCode(infoEntity.getCode());
                 transferDTO.setBillDate(infoEntity.getBillDate());
                 transferDTO.setSourceDetailId(detailEntity.getId());
-                transferDTO.setCurWarehouseId(dto.getPcShow()?detailEntity.getWarehouseId():infoEntity.getWarehouseId());
+                transferDTO.setCurWarehouseId(dto.getPcShow()?
+                        (StringUtils.isNotBlank(detailEntity.getWarehouseId()) ? detailEntity.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
                 transferDTO.setCurWarehouseLocation(detailEntity.getOutWarehouseLocation());
-                transferDTO.setTargetWarehouseId(dto.getPcShow()?detailEntity.getWarehouseId():infoEntity.getWarehouseId());
+                transferDTO.setTargetWarehouseId(dto.getPcShow()?
+                        (StringUtils.isNotBlank(detailEntity.getWarehouseId()) ? detailEntity.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
                 transferDTO.setTargetWarehouseLocation(detailEntity.getInWarehouseLocation());
                 transferDTO.setQty(detailEntity.getQty());
                 transferDTO.setSkuId(detailEntity.getSkuId());
                 transferDTO.setSkuNo(detailEntity.getSkuNo());
-                transferDTO.setWarehouseId(dto.getPcShow()?detailEntity.getWarehouseId():infoEntity.getWarehouseId());
+                transferDTO.setWarehouseId(dto.getPcShow() ?
+                        (StringUtils.isNotBlank(detailEntity.getWarehouseId()) ? detailEntity.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
 //            transferDTO.setWarehouseLocation("");
                 transferDTO.setInventoryStatus(InventoryStatusEnum.USABLE);
                 transferDTOList.add(transferDTO);
@@ -748,6 +751,9 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         pcViewDTO.setApproveStatusName(ApproveStatusEnum.getName(pcViewDTO.getApproveStatus()));
         List<WarehouseLocationMoveDTO.DetailViewDTO> detailViewDTOs = baseMapper.getDetail(id);
         detailViewDTOs.stream().forEach(detailViewDTO -> {
+            if (StringUtils.isBlank(detailViewDTO.getWarehouseId())){
+                detailViewDTO.setWarehouseId(detailViewDTO.getInfoWarehouseId());
+            }
             String skuId = detailViewDTO.getSkuId();
             List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(skuId));
             List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(detailViewDTO.getWarehouseId()));
@@ -943,6 +949,12 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(pdaPcListDTO.getSkuId())).findFirst().orElse(null);
             if (Objects.nonNull(skuVO)) {
                 pdaPcListDTO.setProductName(skuVO.getSkuName());
+            }
+            if (StringUtils.isBlank(pdaPcListDTO.getWarehouseId())){
+                pdaPcListDTO.setWarehouseId(pdaPcListDTO.getInfoWarehouseId());
+            }
+            if (StringUtils.isBlank(pdaPcListDTO.getWarehouseName())){
+                pdaPcListDTO.setWarehouseName(pdaPcListDTO.getInfoWarehouseName());
             }
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(pdaPcListDTO.getWarehouseId()) && req.getCode().equals(pdaPcListDTO.getInWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             pdaPcListDTO.setInWarehouseLocationName(warehouseLocationEntity.getName());
