@@ -82,5 +82,31 @@ public class CfgDeclareController extends BaseController {
         PagingVO<CfgDeclareDTO.PagingViewDTO> pagingVO = cfgDeclareService.paging(dto);
         return success(pagingVO);
     }
+    /**
+     * 申报规则详情
+     *
+     * @param id
+     * @return ApiResult
+     * @author Lambda
+     * @date: 2023-08-28
+     */
+    @GetMapping("/view")
+    public ApiResult<CfgDeclareDTO.ViewDTO> view(@RequestParam("id") String id) {
+        CfgDeclareDTO.ViewDTO viewDTO = cfgDeclareService.view(id);
+        return success(viewDTO);
+    }
 
+    /**
+     * 申报规则更改启用禁用状态
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-08-30 14:13
+     */
+    @PostMapping("/updateStatus")
+    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
+        Boolean result = cfgDeclareService.updateStatus(dto);
+        return result ? success() : failure();
+    }
 }
