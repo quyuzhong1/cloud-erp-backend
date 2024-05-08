@@ -46,12 +46,16 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     @Resource
     private DynamicRouteService dynamicRouteService;
     
-    private static final AtomicInteger sysPathOrder = new AtomicInteger(1000);
+    /*-----------------------------路由优先级开始--------------------------------*/
+    
+    private static final AtomicInteger sysPathOrder = new AtomicInteger(10000);
     private static final AtomicInteger pathMatchOrder = new AtomicInteger(100000);
     private static final AtomicInteger pathOrder = new AtomicInteger(200000);
     private static final AtomicInteger refererOrder = new AtomicInteger(400000);
     private static final AtomicInteger hostMatchOrder = new AtomicInteger(800000);
     private static final AtomicInteger hostOrder = new AtomicInteger(1600000);
+    
+    /*-----------------------------路由优先级结束--------------------------------*/
     
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
