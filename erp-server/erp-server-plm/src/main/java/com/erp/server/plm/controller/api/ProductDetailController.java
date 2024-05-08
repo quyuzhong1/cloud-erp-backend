@@ -1235,4 +1235,18 @@ public class ProductDetailController extends BaseController {
         productDetailService.initProductSizeAndBoxSize();
         return success();
     }
+
+    /**
+     *初始化目的国海关信息
+     *
+     * @param skuIds  skuIds
+     * @Author zdy
+     * @Date 2024/5/08 11:46
+     * @Desc 历史数据sku 增加默认值 并且把已存在目的国海关编码值移到custom中
+     **/
+    @PostMapping("/initProductCustom")
+    public ApiResult initProductCustom(@RequestBody(required = false) List<String> skuIds) {
+        productDetailService.initProductCustom(skuIds);
+        return success();
+    }
 }

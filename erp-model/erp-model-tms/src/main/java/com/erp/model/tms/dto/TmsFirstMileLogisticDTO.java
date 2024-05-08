@@ -334,6 +334,11 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          */
         @NotNull(message = "运输方式不能为空")
         private String shippingMethod;
+
+        /**
+         * 船司/航司
+         */
+        private String carrier;
     }
 
     /**
@@ -1124,6 +1129,11 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String counterNo;
 
         /**
+         * 船司/航司
+         */
+        private String carrier;
+
+        /**
         * 备注
         */
         private String remark;
@@ -1352,7 +1362,10 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * 柜号
          */
         private String counterNo;
-
+        /**
+         * 船司/航司
+         */
+        private String carrier;
         /**
         * 币种
         */

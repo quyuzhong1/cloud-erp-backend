@@ -15,6 +15,7 @@ import java.io.Serializable;
 public class Rejected implements Serializable {
     private Integer index;
     private String trackNo;
+    private String orderNo;
     private String courierCode;
     private RejectError error;
 }

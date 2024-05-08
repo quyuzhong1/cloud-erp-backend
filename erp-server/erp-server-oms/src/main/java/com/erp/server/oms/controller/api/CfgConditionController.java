@@ -91,6 +91,20 @@ public class CfgConditionController extends BaseController {
     }
 
     /**
+     * 申报规则的条件下拉
+     *
+     * @param
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.CfConditionDTO.CommonDTO>>
+     * @author yl
+     * @date 2023-10-08 14:38
+     */
+    @GetMapping("/listDeclareCondition")
+    public ApiResult<List<CfgConditionDTO.ListDTO>> listDeclareCondition() {
+        List<CfgConditionDTO.ListDTO> result = cfConditionService.listDeclareCondition();
+        return success(result);
+    }
+
+    /**
      * 条件 树结构
      * @author yl
      * @date 2023-10-08 15:08

@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
@@ -100,12 +101,12 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
     public void copy(String channelId, String addChannelId) {
         List<LogisticsPrintTypeEntity> list = listDbByChannelId(channelId);
         if (CollectionUtils.isNotEmpty(list)) {
-            List<LogisticsPrintTypeEntity> addList = BeanMapperUtils.copyList(LogisticsPrintTypeEntity.class, list);
-            addList.forEach(obj ->{
+//            List<LogisticsPrintTypeEntity> addList = BeanMapperUtils.copyList(LogisticsPrintTypeEntity.class, list);
+            list.forEach(obj ->{
                 obj.setLogisticsChannelId(addChannelId);
-                obj.setId("");
+                obj.setId(IdWorker.getIdStr());
             });
-            this.saveBatch(addList);
+            this.saveBatch(list);
         }
     }
 
