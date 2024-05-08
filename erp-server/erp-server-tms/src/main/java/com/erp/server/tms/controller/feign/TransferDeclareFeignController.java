@@ -77,7 +77,6 @@ public class TransferDeclareFeignController {
         return list;
     }
 
-
     /**
      * b2c订单预报
      * 成功返回第三方code

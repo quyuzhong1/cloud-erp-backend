@@ -58,7 +58,10 @@ public class ShipmentFeignController extends BaseController {
         }
         List<FbaShipmentReceiveEntity> receiveEntityList = FbaShipmentReceiveConverter.INSTANCE.sourceListToEntityList(groupEntity.getDetailList());
         Map<String, List<FbaShipmentReceiveEntity>> groupMap = receiveEntityList.stream().collect(Collectors.groupingBy(e -> StrUtil.format("{}_{}", e.getFbaShipmentId(), e.getReceiveDate())));
-        groupMap.forEach((key, value) -> fbaShipmentReceiveService.saveAndCheckTransfer(value, entity));
+//        groupMap.forEach((key, value) -> fbaShipmentReceiveService.saveAndCheckTransfer(value, entity));
+        for (Map.Entry<String, List<FbaShipmentReceiveEntity>> entry : groupMap.entrySet()) {
+            fbaShipmentReceiveService.saveAndCheckTransfer(entry.getValue(), entity);
+        }
         return true;
     }
 

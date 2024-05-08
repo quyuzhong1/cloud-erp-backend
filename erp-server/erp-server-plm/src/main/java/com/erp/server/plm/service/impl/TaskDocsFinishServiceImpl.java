@@ -590,7 +590,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             taskEntity.setStatus(TaskStateEnum.WAIT_CONFIRM.getCode());
             taskEntity.setBusinessProcessId(businessProcess.getId());
             taskEntity.setIsChangeDocs(Boolean.TRUE);
-            return projectTaskService.updateById(taskEntity);
+            projectTaskService.updateById(taskEntity);
         }
         return Boolean.TRUE;
     }

@@ -6,11 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.dto.BomDTO;
-import com.erp.model.plm.dto.BomSkuDTO;
-import com.erp.model.plm.dto.ProductBomInfoDTO;
-import com.erp.model.plm.dto.BomSkuPageDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
@@ -181,7 +177,7 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
     @Override
     public List<BomChildrenSkuDTO> listBomChildBySkuIds(List<String> parentSkuIds) {
         if (CollectionUtils.isEmpty(parentSkuIds)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return baseMapper.listBomChildBySkuIds(parentSkuIds);
     }
@@ -217,6 +213,14 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
             return Collections.EMPTY_LIST;
         }
         return baseMapper.listAllBomByParentSkuNos(parentSkuNos);
+    }
+
+    @Override
+    public List<BomDTO.BomSku> listAllBomByChildSkuIdList(List<String> childSkuIdList) {
+        if (CollectionUtils.isEmpty(childSkuIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listAllBomByChildSkuIdList(childSkuIdList);
     }
 
     @Override
@@ -284,6 +288,7 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         return this.lambdaQuery().eq(BomSkuEntity::getBomId, bomId).list();
     }
 
+
     @Override
     public List<BomDTO.BomSku> listBySkuIds(List<String> skuIdList) {
         if (CollectionUtils.isEmpty(skuIdList)) {
@@ -291,6 +296,7 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         }
         return baseMapper.listBySkuIds(skuIdList);
     }
+
 
     @Override
     public List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(List<String> skuNos) {

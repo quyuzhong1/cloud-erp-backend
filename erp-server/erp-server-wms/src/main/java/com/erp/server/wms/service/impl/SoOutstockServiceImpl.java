@@ -70,11 +70,7 @@ import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.oms.feign.CustomerFeign;
-import com.erp.rpc.oms.feign.OmsListingInfoFeign;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.oms.feign.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -2407,7 +2403,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 SoB2cErrorDTO.DeleteDetailDTO deleteDTO = new SoB2cErrorDTO.DeleteDetailDTO();
                 deleteDTO.setMainId(soB2cEntity.getId());
                 deleteDTO.setType(type);
-                deleteDTO.setDetailIdList(existSourceDetailIds);
+                List<String> detailIds = detailEntityList
+                        .stream()
+                        .filter(e -> existSourceDetailIds.contains(e.getSourceDetailId()))
+                        .map(BaseEntity::getId)
+                        .collect(Collectors.toList());
+                deleteDTO.setDetailIdList(detailIds);
                 soB2cFeign.checkAndDeleteAllError(deleteDTO);
                 return true;
             }
@@ -2948,6 +2949,32 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return lambdaQuery().in(SoOutstockEntity::getCode, codes).list();
     }
 
+    @Override
+    public Boolean afreshGenerateB2cOutstock(List<String> ids) {
+        List<SoB2cEntity> soB2cList = soB2cFeign.listWarehouseIsEmpty(ids);
+        Map<String, SoB2cEntity> mainMap = soB2cFeign.listByIds(ids)
+                .stream()
+                .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
+        for (String id : ids) {
+            try {
+                SoB2cEntity currentEntity = mainMap.get(id);
+                if (null == currentEntity){
+                    throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+                }
+                PlatformRetryHandler.retrySoOutStock(currentEntity, soB2cList);
+            } catch (Exception e) {
+                String message = e.getMessage();
+                log.error("重新创建或者修改B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", id, id, message);
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+                addError.setMainId(id);
+                addError.setMessage(message);
+                addError.setParamJson(id);
+                soB2cFeign.addSoB2cError(addError);
+            }
+        }
+        return Boolean.TRUE;
+    }
 
 
     /**

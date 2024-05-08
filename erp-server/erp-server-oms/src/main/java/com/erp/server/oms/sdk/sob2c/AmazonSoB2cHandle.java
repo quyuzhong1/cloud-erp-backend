@@ -3,6 +3,7 @@ package com.erp.server.oms.sdk.sob2c;
 import com.common.business.annotation.PlatformSoB2cAnnotate;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
+import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
@@ -51,7 +52,7 @@ public class AmazonSoB2cHandle implements ISoB2cHandleService {
         // 新的亚马逊FBA订单检查历史配送记录
         if (resultDTO.isNewInsertOrder() && mainEntity.hasPlatformWarehouseOrder()) {
             try {
-                Boolean result = dmpMongoDbFeign.checkSoOutStock(dto);
+                Boolean result = dmpMongoDbFeign.checkSoOutStock(new DmpPullSoOutStockDTO(mainEntity.getShopId(), mainEntity.getPlatformCode(), mainEntity.getId()));
                 if (!result){
                     log.warn("处理检查历史销售出库记录失败:platformOrderId={}", dto.getPlatformCode());
                 }

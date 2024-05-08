@@ -185,7 +185,12 @@ public class ProductDetailController extends BaseController {
      * @Date 2022/10/9 10:21
      **/
     @GetMapping("/getNoSpecDetailById")
-    //@RequestPermissions("plm:product:detail:getNoSpecDetailById")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:product:detail:getNoSpecDetailById",
+            serviceClass = ProductInfoService.class,
+            keyIdName = "productId"
+    )
     public ApiResult<ProductNoSpecDetailAllDTO> getNoSpecDetailById(@RequestParam(value = "productId") String productId) {
         ProductNoSpecDetailAllDTO list = productDetailService.getNoSpecDetailById(productId);
         return this.success(list);
@@ -200,7 +205,6 @@ public class ProductDetailController extends BaseController {
      * @Date 2022/10/9 10:21
      **/
     @GetMapping("/getNoSpecDetailBySkuId")
-    //@RequestPermissions("plm:product:detail:getNoSpecDetailById")
     public ApiResult<ProductNoSpecDetailAllDTO> getNoSpecDetailBySkuId(@RequestParam(value = "skuId") String skuId) {
         ProductNoSpecDetailAllDTO list = productDetailService.getNoSpecDetailBySkuId(skuId);
         return this.success(list);
@@ -215,7 +219,12 @@ public class ProductDetailController extends BaseController {
      * @Date 2022/10/9 10:22
      **/
     @GetMapping("/getManySpecDetailById")
-    //@RequestPermissions("plm:product:detail:getManySpecDetailById")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:product:detail:getManySpecDetailById",
+            serviceClass = ProductInfoService.class,
+            keyIdName = "productId"
+    )
     public ApiResult<ProductManyDetailDTO> getManySpecDetailById(@RequestParam(value = "productId") String productId) {
         ProductManyDetailDTO list = productDetailService.getManySpecDetailById(productId);
         return this.success(list);
@@ -1216,6 +1225,15 @@ public class ProductDetailController extends BaseController {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 初始化尺寸历史数据
+     */
+    @GetMapping("/initProductSizeAndBoxSize")
+    public ApiResult<String> initProductSizeAndBoxSize(){
+        productDetailService.initProductSizeAndBoxSize();
+        return success();
     }
 
     /**

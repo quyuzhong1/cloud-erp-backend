@@ -77,7 +77,7 @@ public class DataIdempotentAspect {
                 sb.append(value);
             }
         }
-        System.out.println("获取参数：" + sb.toString());
+        log.debug("幂等切面获取参数：" + sb.toString());
         if (StringUtils.isNotEmpty(sb)) {
             List<RLock> rLocks = new ArrayList<>();
             String submitKey = "DataIdempotent:" + sb + "_" + businessType;
