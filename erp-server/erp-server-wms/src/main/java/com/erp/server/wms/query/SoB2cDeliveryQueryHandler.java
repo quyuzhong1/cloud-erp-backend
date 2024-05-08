@@ -51,6 +51,11 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
             // 待处理
             if (SoB2cDeliveryStatusEnum.WAIT_HANDLE.getStatus().equals(searchType)) {
                 super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getStatus());
+                List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntityList = soB2cDeliveryInterceptService.listByStatus(SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getCode());
+                if(CollectionUtils.isNotEmpty(soB2cDeliveryInterceptEntityList)){
+                    List<String> ids = soB2cDeliveryInterceptEntityList.stream().map(SoB2cDeliveryInterceptEntity::getSourceId).collect(Collectors.toList());
+                    super.buildSplicingSQLDTO("sbd.source_id", QueryConditionEnum.NOT_IN_LIST ,ids,QueryDataTypeEnum.STRING);
+                }
             }
             //拣货中
             if (SoB2cDeliveryStatusEnum.PICKING.getStatus().equals(searchType)) {

@@ -660,6 +660,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         List<ProductDetailEntity> detailEntityList = productDetailService.listSkuByProductIds(productInfoIds);
         List<String> detailIds = detailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
 
+        //实际情况下，detailIds可能为空
+        if(CollectionUtils.isEmpty(detailIds)){
+            throw new ServiceException(ApiError.ERROR_95271);
+        }
+
         switch (ProjectStateEnum.getEnum(projectState)) {
             case YES_START:
                 //如果状态为已启动，更新产品信息{产品开发状态}：开发中
