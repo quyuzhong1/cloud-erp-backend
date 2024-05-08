@@ -68,7 +68,7 @@ public class CustomKeyResolverConfig implements Converter<String, KeyResolver>{
 		/**
 		 *  被限流ip
 		 */
-		private String host;
+		private String remoteAddr;
 //		private String[] rateLimiterPaths;
 	}
     
