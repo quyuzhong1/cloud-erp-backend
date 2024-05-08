@@ -7,6 +7,7 @@ import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -15,6 +16,8 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.CalculateSizeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
@@ -31,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -278,5 +282,56 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 //            throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
 //        }
         return resultDTO;
+    }
+
+    private List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> detailList, List<SkuInfoSimpleVO> skuList) {
+        if (CollectionUtils.isEmpty(detailList)){
+            return Collections.emptyList();
+        }
+        Map<String, SkuInfoSimpleVO> sourceSkuMap = skuList.stream().collect(Collectors.toMap(SkuInfoSimpleVO::getSkuId, Function.identity()));
+
+        List<String> skuIds = detailList.stream().map(SoB2cDetailEntity::getSkuId).filter(StringUtils::isNotEmpty).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        List<SplitSkuDTO> splitSkuDTOS = new ArrayList<>();
+        detailList.forEach(addDTO -> {
+            BomChildrenSkuDTO skuVO = bomChildrenSkuDTOS.stream().filter(e -> StrUtil.isNotEmpty(e.getParentSkuId()) && StrUtil.isNotEmpty(e.getParentSkuNo()) && e.getParentSkuId().equals(addDTO.getSkuId()))
+                    .findFirst().orElse(null);
+            if (Objects.nonNull(skuVO) && StringUtils.isNotEmpty(skuVO.getType()) && BomTypeEnum.COMBINATION.getType().equals(skuVO.getType())){
+                //组合品时进行拆分
+                List<BomChildrenSkuDTO> childrenSkuDTOS = bomChildrenSkuDTOS.stream().filter(e -> Objects.nonNull(e.getParentSkuId()) && addDTO.getSkuId().equals(e.getParentSkuId()))
+                        .collect(Collectors.toList());
+
+                //子sku数量需要乘订单数量
+                childrenSkuDTOS.forEach(bomChildrenSkuDTO -> {
+                    splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty() * bomChildrenSkuDTO.getQuantity())
+                            .skuNo( StrUtil.isNotEmpty(bomChildrenSkuDTO.getSkuNo()) ? bomChildrenSkuDTO.getSkuNo() : "")
+                            .length( Objects.nonNull(bomChildrenSkuDTO.getLength()) ? LengthConverterUtil.mmToCm(bomChildrenSkuDTO.getLength()) : BigDecimal.ZERO)
+                            .width( Objects.nonNull(bomChildrenSkuDTO.getWidth()) ? LengthConverterUtil.mmToCm(bomChildrenSkuDTO.getWidth()) : BigDecimal.ZERO)
+                            .height( Objects.nonNull(bomChildrenSkuDTO.getHeight()) ? LengthConverterUtil.mmToCm(bomChildrenSkuDTO.getHeight()) : BigDecimal.ZERO)
+                            .build());
+                });
+            }else {
+
+                SkuInfoSimpleVO simpleSkuVO = sourceSkuMap.get(addDTO.getSkuId());
+                if (null == simpleSkuVO){
+                    // 部分无映射关系设置为空
+                    splitSkuDTOS.add(new SplitSkuDTO(addDTO.getSkuId(), addDTO.getSkuNo()));
+                } else {
+                    skuVO = BomChildrenSkuDTO.builder()
+                            .skuId(simpleSkuVO.getSkuId())
+                            .length(simpleSkuVO.getProductLength())
+                            .width(simpleSkuVO.getProductWidth())
+                            .height(simpleSkuVO.getProductHeight())
+                            .build();
+                    splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
+                            .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
+                            .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? LengthConverterUtil.mmToCm(skuVO.getLength()) : BigDecimal.ZERO)
+                            .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? LengthConverterUtil.mmToCm(skuVO.getWidth()) : BigDecimal.ZERO)
+                            .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? LengthConverterUtil.mmToCm(skuVO.getHeight()) : BigDecimal.ZERO)
+                            .build());
+                }
+            }
+        });
+        return splitSkuDTOS;
     }
 }

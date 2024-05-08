@@ -412,37 +412,37 @@ public class ProductDetailExcelDTO {
      * 产品尺寸(长)
      */
     @FieldValid(fieldName = "产品尺寸(长)")
-    private String productSizeLength;
+    private String productLength;
 
     /**
      * 产品尺寸(宽)
      */
     @FieldValid(fieldName = "产品尺寸(宽)")
-    private String productSizeWide;
+    private String productWidth;
 
     /**
      * 产品尺寸(高)
      */
     @FieldValid(fieldName = "产品尺寸(高)")
-    private String productSizeHigh;
+    private String productHeight;
 
     /**
      * 箱规(长)
      */
     @FieldValid(fieldName = "箱规(长)")
-    private String boxSizeLength;
+    private String boxLength;
 
     /**
      * 箱规(宽)
      */
     @FieldValid(fieldName = "箱规(宽)")
-    private String boxSizeWide;
+    private String boxWidth;
 
     /**
      * 箱规(高)
      */
     @FieldValid(fieldName = "箱规(高)")
-    private String boxSizeHigh;
+    private String boxHeight;
 
     /**
      * 毛重

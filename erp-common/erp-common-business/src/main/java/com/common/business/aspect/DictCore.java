@@ -46,6 +46,8 @@ public class DictCore {
 	@Value("${spring.application.name}")
 	private String serviceName;
 	
+	private static final String ERP_PRI = "erp-";
+	
 	private Map<ServiceCodeNameEnum, BaseDataFeign> serviceBaseDataFeignMap;
 
 	public BaseDataFeign getBaseDataFeign(ServiceCodeNameEnum serviceCodeNameEnum) {
@@ -54,7 +56,7 @@ public class DictCore {
 		}
 		BaseDataFeign baseDataFeign = serviceBaseDataFeignMap.get(serviceCodeNameEnum);
 		if(baseDataFeign == null) {
-			if(serviceCodeNameEnum == null || ServiceCodeNameEnum.DEFAULT == serviceCodeNameEnum || serviceName.equals("erp-" + serviceCodeNameEnum.getCode())) {
+			if(serviceCodeNameEnum == null || ServiceCodeNameEnum.DEFAULT == serviceCodeNameEnum || serviceName.equals(ERP_PRI + serviceCodeNameEnum.getCode())) {
 				baseDataFeign = ApplicationContextUtils.getBean(BaseDataFeignController.class);
 			}else {
 				String code = serviceCodeNameEnum.getCode();
@@ -101,6 +103,13 @@ public class DictCore {
 
             Object recordObj = this.parseDictTextPlus(resultData, lang , true);
             ((ApiResult) result).setData(recordObj);
+        }else if(result instanceof List) {
+        	Object recordObj = this.parseDictTextPlus(result, lang , true);
+        	List<Object> items = new ArrayList<>();
+        	((List) result).clear();
+        	for (Object record : ((List) recordObj)) {
+        		((List) result).add(record);
+            }
         }
     }
 
@@ -463,14 +472,9 @@ public class DictCore {
         return dictAspectFieldMap;
     }
 
-    private ServiceCodeNameEnum convertServiceCode(ServiceCodeNameEnum serviceCode) {
+    private  ServiceCodeNameEnum convertServiceCode(ServiceCodeNameEnum serviceCode) {
     	if(serviceCode == ServiceCodeNameEnum.DEFAULT) {
-        	ServiceCodeNameEnum[] values = ServiceCodeNameEnum.values();
-        	for(ServiceCodeNameEnum value : values) {
-        		if(serviceName.contains(value.getCode())) {
-        			return value;
-        		}
-        	}
+    		return EnumMessage.getByCode(ServiceCodeNameEnum.class, serviceName.replace(ERP_PRI, ""));
         }
     	return serviceCode;
     }
@@ -485,7 +489,7 @@ public class DictCore {
     	return table;
     }
     
-    public static String getFieldVal(Object targetClass, Class<?> objClass) throws Exception {
+    public static String getFieldVal(Object targetClass, Class<? extends EnumMessage> objClass) throws Exception {
         if(targetClass == null){
             return "";
         }
@@ -499,11 +503,7 @@ public class DictCore {
              } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException ignored) {
              }
         }else {
-        	try {
-                Method method = objClass.getMethod(getMethodName , String.class);
-				result = method.invoke(Class.forName(objClass.getName()) , targetClass);
-            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException ignored) {
-            }
+        	result = EnumMessage.getNameByCode(objClass, targetClass);
         }
         if(result == null) {
         	return "";

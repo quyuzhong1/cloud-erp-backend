@@ -211,9 +211,19 @@ public class SkuVO implements Serializable {
     private String secondSupplierName;
 
     /**
-     * 尺寸
+     * 产品尺寸（长）
      */
-    private String productSize;
+    private BigDecimal productLength;
+
+    /**
+     * 产品尺寸（宽）
+     */
+    private BigDecimal productWidth;
+
+    /**
+     * 产品尺寸（高）
+     */
+    private BigDecimal productHeight;
 
     /**
      * 净重

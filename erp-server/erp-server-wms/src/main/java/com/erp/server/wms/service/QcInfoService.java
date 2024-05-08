@@ -298,4 +298,11 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
     void repairQcInfoSourceCode();
 
     List<QcInfoDTO.QcReceiveResultDTO> getQcReceiveResult(List<String> purchaseDetailIds);
+    /**
+     * @description: 统计未质检数量
+     * @author Will
+     * @date: 2024/4/11 9:10
+     * @return Integer
+     */
+    Integer countTotalNotQc(QcEffectivenessDTO.CountQcParamDTO qcParamDTO);
 }

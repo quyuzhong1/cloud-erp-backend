@@ -38,6 +38,15 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
     Boolean delete(SoB2cErrorDTO.DeleteDTO dto);
 
     /**
+     * @description: 根据主表ids删除
+     * @author Will
+     * @date: 2024/4/30 17:13
+     * @param mainIds
+     * @return Boolean
+     */
+    Boolean deleteByMainIds(List<String> mainIds);
+
+    /**
      * 生成异常订单
      * @param mainId 订单id
      * @param type 类型

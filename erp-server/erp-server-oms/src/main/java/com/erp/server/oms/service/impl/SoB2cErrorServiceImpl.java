@@ -84,6 +84,16 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deleteByMainIds(List<String> mainIds)  {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Boolean.TRUE;
+        }
+        Boolean result = baseMapper.deleteByMainIds(mainIds);
+        return result;
+    }
+
+    @Override
     public void generateErrorOrder(String mainId, String type, String message, String paramJson, String returnJson) {
         SoB2cErrorEntity soB2cErrorEntity = new SoB2cErrorEntity();
         soB2cErrorEntity.setMainId(mainId);

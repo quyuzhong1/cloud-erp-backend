@@ -55,6 +55,31 @@ public class WarehouseLocationMoveDetailEntity extends BaseEntity<WarehouseLocat
     @TableField("qty")
     private Integer qty;
 
+    /**
+     * 仓库id
+     */
+    @TableField("warehouse_id")
+    private String warehouseId;
+    /**
+     * 仓库名称
+     */
+    @TableField("warehouse_name")
+    private String warehouseName;
+    /**
+     * 库存组织id
+     */
+    @TableField("inventory_org_id")
+    private String inventoryOrgId;
+    /**
+     * 库存组织名称
+     */
+    @TableField("inventory_org_name")
+    private String inventoryOrgName;
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
 
     public static final String MAIN_ID = "main_id";
 
@@ -68,6 +93,15 @@ public class WarehouseLocationMoveDetailEntity extends BaseEntity<WarehouseLocat
 
     public static final String QTY = "qty";
 
+    public static final String WAREHOUSE_ID = "warehouse_id";
+
+    public static final String WAREHOUSE_NAME = "warehouse_name";
+
+    public static final String INVENTORY_ORG_ID = "inventory_org_id";
+
+    public static final String INVENTORY_ORG_NAME = "inventory_org_name";
+
+    public static final String REMARK = "remark";
     @Override
     public Serializable pkVal() {
         return null;
