@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.AliexpressDeliveryDetailDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 速卖通发货单详情 服务类
@@ -21,16 +23,8 @@ public interface AliexpressDeliveryDetailService extends SuperService<Aliexpress
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(AliexpressDeliveryDetailDTO.AddDTO dto);
+    Boolean add(List<AliexpressDeliveryDetailDTO.AddDTO> dto);
 
-    /**
-    * 修改
-    * @author lrp
-    * @date: 2024-05-06
-    * @param dto
-    * @return
-    */
-    Boolean update(AliexpressDeliveryDetailDTO.UpdateDTO dto);
 
 
 }

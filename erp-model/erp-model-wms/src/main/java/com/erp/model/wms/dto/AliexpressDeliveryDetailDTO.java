@@ -90,23 +90,29 @@ public class AliexpressDeliveryDetailDTO implements Serializable {
         /**
         * 主表id
         */
-        @NotBlank(message = "主表id不能为空")
-        @Size(max = 19,message = "主表id最大长度不能超过19位")
         private String mainId;
 
         /**
         * 平台sku
         */
-        @NotBlank(message = "平台sku不能为空")
-        @Size(max = 64,message = "平台sku最大长度不能超过64位")
         private String platformSku;
 
         /**
         * 平台发货数量
         */
-        @NotNull(message = "平台发货数量不能为空")
         private Integer orderLineQty;
 
+
+        /**
+         * erp sku编号
+         */
+        private String skuNo;
+
+
+        /**
+         * erp sku id
+         */
+        private String skuId;
 
     }
 

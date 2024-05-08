@@ -46,7 +46,7 @@ public class AliExpressDeliveryDetail implements Serializable {
      * 发货数量
      */
     @Alias("order_line_qty")
-    private Integer deliveryQty;
+    private String deliveryQty;
 
 
     /**
@@ -89,16 +89,10 @@ public class AliExpressDeliveryDetail implements Serializable {
     @Alias("extend_fields")
     private String extendFields;
 
-
-
-
-
-
-
-
-
-
-
+    /**
+     * 发货仓库名称
+     */
+    private String warehouseName;
 
 
 }

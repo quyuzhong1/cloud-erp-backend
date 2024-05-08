@@ -332,12 +332,12 @@ public class AliExpressOrderService {
         try {
             response = client.execute(request, token, Protocol.TOP);
         } catch (ApiException e) {
-            log.error("查询速卖通发货单请求失败>>>>>>>{}", request.toString());
+            log.error("查询速卖通发货单明细请求失败>>>>>>>{}", request.toString());
         }
         JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
         JSONObject resultJsONObject = jsonObject.getJSONObject("aliexpress_ascp_ffo_item_query_response");
         JSONObject resultJson = JSONUtil.parseObj(resultJsONObject.get("result"));
-        JSONObject dataListJson = JSONUtil.parseObj(resultJsONObject.get("data_list"));
+        JSONObject dataListJson = JSONUtil.parseObj(resultJson.get("data_list"));
         Boolean success = resultJson.getBool("success", Boolean.FALSE);
         //失败
         if (!success) {

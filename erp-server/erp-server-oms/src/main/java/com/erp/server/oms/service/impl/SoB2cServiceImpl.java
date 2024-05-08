@@ -77,6 +77,7 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.oms.aliexpress.api.IopResponse;
 import com.erp.oms.aliexpress.dto.response.AliExpressAscpFfoQueryResponse;
+import com.erp.oms.aliexpress.dto.response.AliExpressDeliveryDetail;
 import com.erp.oms.aliexpress.dto.response.DataListBean;
 import com.erp.oms.aliexpress.dto.response.ErpFulfillmentForwardDtoBean;
 import com.erp.oms.aliexpress.service.AliExpressDliveryOrderService;
@@ -6161,14 +6162,58 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (CollectionUtils.isEmpty(erpFulfillmentForwardDto)) {
                     return Boolean.FALSE;
                 }
+                //速卖通分仓发货，可能有多个发货单，根据仓库分组生成数据
+                Map<String,List<ErpFulfillmentForwardDtoBean>> eroBeanMap = erpFulfillmentForwardDto.stream().collect(Collectors.groupingBy(ErpFulfillmentForwardDtoBean::getWarehouseName));
+                eroBeanMap.forEach((key,val)->{
+                    //校验仓库是否匹配到
+                    WarehouseMappingDTO.MappingViewDTO mappingViewDTO = mappingViewDTOS.stream().filter(req -> key.equals(req.getThirdWarehouseName())).findFirst().orElse(null);
+                    if(Objects.isNull(mappingViewDTO)){
+                        throw new ServiceException(StrUtil.format("发货单仓库【{}】未匹配系统仓库", key));
+                    }
+                    List<String> fulfillmentOrderNoList = val.stream().map(ErpFulfillmentForwardDtoBean::getFulfillmentOrderNo).distinct().collect(Collectors.toList());
+                    List<AliExpressDeliveryDetail> detailList = new ArrayList<>();
+                    for (String fulfillmentOrderNo : fulfillmentOrderNoList) {
+                        detailList.addAll(aliExpressDliveryOrderService.getDeliveryDetail(aliExpressCfgClientMap,fulfillmentOrderNo));
+                    }
+                    if(CollectionUtils.isEmpty(detailList)){
+                        return;
+                    }
+                    //校验sku
+                    List<String> platformSkuNoList = detailList.stream().map(AliExpressDeliveryDetail::getPlatformSku).distinct().collect(Collectors.toList());
+                    ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+                    listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+                    listingInfoParamDTO.setPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+                    listingInfoParamDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
+                    List<SkuMappingDTO.MappingSkuViewDTO> skuMappingList = skuMappingService.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+                    List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTOList = new ArrayList<>();
+                    for (AliExpressDeliveryDetail deliveryDetailDTO : detailList) {
+                        SkuMappingDTO.MappingSkuViewDTO mappingSkuViewDTO = skuMappingList.stream().filter(v->v.getPlatformSkuNo().equals(deliveryDetailDTO.getPlatformSku())).findFirst().orElse(null);
+                        if(Objects.isNull(mappingSkuViewDTO) || Objects.isNull(mappingSkuViewDTO.getProductSkuId())){
+                            throw new ServiceException(StrUtil.format("自动生成销售出库单失败：订单未匹配Sku映射关系,sku:【{}】", deliveryDetailDTO.getPlatformSku()));
+                        }
+                        PlatformDeliveryDetailDTO platformDeliveryDetailDTO = new PlatformDeliveryDetailDTO();
+                        platformDeliveryDetailDTO.setSkuId(mappingSkuViewDTO.getProductSkuId());
+                        platformDeliveryDetailDTO.setSkuNo(mappingSkuViewDTO.getProductSkuNo());
+                        platformDeliveryDetailDTO.setWarehouseId(mappingViewDTO.getWarehouseId());
+                        platformDeliveryDetailDTO.setWarehouseName(mappingViewDTO.getWarehouseName());
+                        platformDeliveryDetailDTO.setWarehouseOrgId(mappingViewDTO.getWarehouseOrgId());
+                        platformDeliveryDetailDTO.setWarehouseOrgName(mappingViewDTO.getWarehouseOrgName());
+                        platformDeliveryDetailDTO.setPlatformWarehouseName(key);
+                        platformDeliveryDetailDTO.setPlatformSkuNo(deliveryDetailDTO.getPlatformSku());
+                        platformDeliveryDetailDTO.setQty(Integer.valueOf(deliveryDetailDTO.getDeliveryQty()));
+                        platformDeliveryDetailDTO.setMainId(entity.getId());
+                        platformDeliveryDetailDTOList.add(platformDeliveryDetailDTO);
+                    }
+                    //生成速卖通发货单
+                    addAliExpressDelivery(logisticsEntity, val.get(0), entity,platformDeliveryDetailDTOList);
+                    //生成销售出库单
+                    soOutstockFeign.generateB2cSoOutstockByPlatformData(platformDeliveryDetailDTOList);
+                });
+
                 //查询映射的仓库信息
                 WarehouseMappingDTO.MappingViewDTO mappingViewDTO = mappingViewDTOS.stream().filter(req -> erpFulfillmentForwardDto.get(0).getWarehouseName().equals(req.getThirdWarehouseName())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(mappingViewDTO)) {
                     soB2cDetailService.updateWarehouseByMapping(mappingViewDTO);
-
-                    //生成速卖通发货单
-                    addAliExpressDelivery(logisticsEntity, erpFulfillmentForwardDto.get(0), entity);
-
                     return Boolean.TRUE;
                 }
             }
@@ -6342,7 +6387,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param fulfillmentForwardDtoBean
      * @param entity
      */
-    private void addAliExpressDelivery(SoB2cLogisticsEntity logisticsEntity, ErpFulfillmentForwardDtoBean fulfillmentForwardDtoBean ,SoB2cEntity entity) {
+    private void addAliExpressDelivery(SoB2cLogisticsEntity logisticsEntity, ErpFulfillmentForwardDtoBean fulfillmentForwardDtoBean ,SoB2cEntity entity,List<PlatformDeliveryDetailDTO> detailDTOList) {
         AliexpressDeliveryDTO.AddDTO addDTO = new AliexpressDeliveryDTO.AddDTO();
         addDTO.setOutBoundTime(logisticsEntity.getDeliveryTime());
         addDTO.setPlatformCode(entity.getPlatformCode());
@@ -6358,6 +6403,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         addDTO.setTrackNo(logisticsEntity.getCode());
         addDTO.setTradeCreateTime(LocalDateTimeUtil.of(fulfillmentForwardDtoBean.getTradeCreateTime()));
+        addDTO.setWarehouseName(fulfillmentForwardDtoBean.getWarehouseName());
+        List<AliexpressDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
+        for (PlatformDeliveryDetailDTO detailDTO : detailDTOList) {
+            AliexpressDeliveryDetailDTO.AddDTO detailAddDTO = new AliexpressDeliveryDetailDTO.AddDTO();
+            detailAddDTO.setOrderLineQty(detailDTO.getQty());
+            detailAddDTO.setPlatformSku(detailDTO.getPlatformSkuNo());
+            detailAddDTO.setSkuId(detailDTO.getSkuId());
+            detailAddDTO.setSkuNo(detailDTO.getSkuNo());
+            detailAddList.add(detailAddDTO);
+        }
+        addDTO.setDetailList(detailAddList);
         aliexpressDeliveryFeign.add(addDTO);
     }
 

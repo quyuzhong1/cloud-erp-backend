@@ -122,16 +122,22 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
         for (PlatformAliExpressOrderDTO platformAliExpressOrderDTO : orderList) {
             List<LogisitcsDTO> logisticInfoList = platformAliExpressOrderDTO.getAliExpressOrder().getDetail().getLogisticInfoList();
             if (!CollectionUtils.isEmpty(logisticInfoList)){
-            for (LogisitcsDTO logisitcsDTO : logisticInfoList) {
-                ErpFulfillmentForwardDtoBean erpFulfillmentForwardDtoBean = deliveryList.stream().filter(req -> req.getTradeOrderNo().equals(platformAliExpressOrderDTO.getAliExpressOrder().getOrderId()) && req.getTrackingNo().equals(logisitcsDTO.getLogisticsNo())).findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(erpFulfillmentForwardDtoBean)) {
-                    //封装发货明细
-                    platformAliExpressOrderDTO.setAliExpressDeliveryDetailList(aliExpressOrderService.listDeliveryDetailQuery(deliveryRequest,erpFulfillmentForwardDtoBean.getFulfillmentOrderNo()));
-                    logisitcsDTO.setWarehouseName(erpFulfillmentForwardDtoBean.getWarehouseName());
-                } else {
-                    logisitcsDTO.setWarehouseName("");
+                for (LogisitcsDTO logisitcsDTO : logisticInfoList) {
+                    ErpFulfillmentForwardDtoBean erpFulfillmentForwardDtoBean = deliveryList.stream().filter(req -> req.getTradeOrderNo().equals(platformAliExpressOrderDTO.getAliExpressOrder().getOrderId()) && req.getTrackingNo().equals(logisitcsDTO.getLogisticsNo())).findFirst().orElse(null);
+                    if (ObjectUtil.isNotEmpty(erpFulfillmentForwardDtoBean)) {
+                        logisitcsDTO.setWarehouseName(erpFulfillmentForwardDtoBean.getWarehouseName());
+                    } else {
+                        logisitcsDTO.setWarehouseName("");
+                    }
                 }
-            }
+                List<ErpFulfillmentForwardDtoBean> erpFulfillmentForwardDtoBeanList = deliveryList.stream().filter(req -> req.getTradeOrderNo().equals(platformAliExpressOrderDTO.getAliExpressOrder().getOrderId())).collect(Collectors.toList());
+                platformAliExpressOrderDTO.setAliExpressDeliveryDetailList(new ArrayList<>());
+                for (ErpFulfillmentForwardDtoBean erpFulfillmentForwardDtoBean : erpFulfillmentForwardDtoBeanList) {
+                    //封装发货明细
+                    List<AliExpressDeliveryDetail> aliExpressDeliveryDetailList = aliExpressOrderService.listDeliveryDetailQuery(deliveryRequest,erpFulfillmentForwardDtoBean.getFulfillmentOrderNo());
+                    aliExpressDeliveryDetailList.forEach(v->v.setWarehouseName(erpFulfillmentForwardDtoBean.getWarehouseName()));
+                    platformAliExpressOrderDTO.getAliExpressDeliveryDetailList().addAll(aliExpressDeliveryDetailList);
+                }
             }
         }
     }

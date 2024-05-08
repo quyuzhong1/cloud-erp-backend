@@ -45,6 +45,11 @@ public class AliexpressDeliveryDetailEntity extends BaseEntity<AliexpressDeliver
     @TableField("sku_no")
     private String skuNo;
 
+    /**
+     * ERP的sku id
+     */
+    @TableField("sku_id")
+    private String skuId;
 
     public static final String MAIN_ID = "main_id";
 
