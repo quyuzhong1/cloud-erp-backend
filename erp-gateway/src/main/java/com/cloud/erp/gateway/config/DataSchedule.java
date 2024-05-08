@@ -46,6 +46,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     @Resource
     private DynamicRouteService dynamicRouteService;
     
+    private static final AtomicInteger sysPathOrder = new AtomicInteger(1000);
     private static final AtomicInteger pathMatchOrder = new AtomicInteger(100000);
     private static final AtomicInteger pathOrder = new AtomicInteger(200000);
     private static final AtomicInteger refererOrder = new AtomicInteger(400000);
@@ -83,8 +84,9 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
 						
 						Integer order = 0;
 						
+						String sysPath = "/api/"+ serviceCode + "/**";
 						if(rateLimiterPath == null || "".equals(rateLimiterPath)) {
-							rateLimiterPath = "/api/"+ serviceCode + "/**";
+							rateLimiterPath = sysPath;
 						}
 						if(!rateLimiterPath.startsWith("/")) {
 							rateLimiterPath = "/" + rateLimiterPath;
@@ -93,7 +95,9 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
 						predicate = new PredicateDefinition("Path="+ rateLimiterPath);
 						predicates.add(predicate);
 						
-						if(rateLimiterPath.contains("*")) {
+						if(sysPath.equals(rateLimiterPath)) {
+							order = order + sysPathOrder.incrementAndGet();
+						}else if(rateLimiterPath.contains("*")) {
 							order = order + pathMatchOrder.incrementAndGet();
 						}else {
 							order = order + pathOrder.incrementAndGet();
