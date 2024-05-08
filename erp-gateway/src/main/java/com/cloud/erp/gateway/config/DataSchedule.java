@@ -46,13 +46,13 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     @Resource
     private DynamicRouteService dynamicRouteService;
     
+    private static final AtomicInteger sysPathOrder = new AtomicInteger(1000);
     private static final AtomicInteger pathMatchOrder = new AtomicInteger(100000);
     private static final AtomicInteger pathOrder = new AtomicInteger(200000);
     private static final AtomicInteger refererOrder = new AtomicInteger(400000);
     private static final AtomicInteger hostMatchOrder = new AtomicInteger(800000);
     private static final AtomicInteger hostOrder = new AtomicInteger(1600000);
     
-    private static final String openApiPath = "/open/api";
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
 
@@ -84,19 +84,20 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
 						
 						Integer order = 0;
 						
+						String sysPath = "/api/"+ serviceCode + "/**";
 						if(rateLimiterPath == null || "".equals(rateLimiterPath)) {
-							rateLimiterPath = "/api/"+ serviceCode + "/**";
+							rateLimiterPath = sysPath;
 						}
 						if(!rateLimiterPath.startsWith("/")) {
 							rateLimiterPath = "/" + rateLimiterPath;
 						}
-						if(rateLimiterPath.startsWith(openApiPath)) {
-							predicate = new PredicateDefinition("Path="+ rateLimiterPath);
-						}else {
-							predicate = new PredicateDefinition("Path=/api/"+ serviceCode + rateLimiterPath);
-						}
+						
+						predicate = new PredicateDefinition("Path="+ rateLimiterPath);
 						predicates.add(predicate);
-						if(rateLimiterPath.contains("*")) {
+						
+						if(sysPath.equals(rateLimiterPath)) {
+							order = order + sysPathOrder.incrementAndGet();
+						}else if(rateLimiterPath.contains("*")) {
 							order = order + pathMatchOrder.incrementAndGet();
 						}else {
 							order = order + pathOrder.incrementAndGet();
@@ -166,6 +167,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     public List<CustomKeyResolverConfig.RateLimiterPathMap> getSysRouteConfig() {
     	List<CustomKeyResolverConfig.RateLimiterPathMap> sysRouteConfigList = new ArrayList<>();
     	if(dealFinish) {
+    		dealFinish = false;
     		try {
     			String queryCondition = null;
     			if(dataSource == null) {
@@ -178,6 +180,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     			    config.setMaximumPoolSize(3);
     			    config.setMinimumIdle(1);
     			    dataSource = new HikariDataSource(config);
+    			    log.warn("初始化动态路由数据库连接池成功");
     			    queryCondition = "is_deleted = 'f'";
     			}else {
     				queryCondition = "update_time >= '" + DateUtil.formatDateTime(DateUtil.offsetSecond(new Date(), -(routereFreshTime + 1))) + "'";
@@ -209,7 +212,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     	                sysRouteConfigList.add(rateLimiterPathMap);
     	            }
     	        } catch (Exception e) {
-    	            e.printStackTrace();
+    	            log.error("查询动态路由数据失败" , e);
     	        } finally {
     	            try {
     	                if (resultSet != null) {
@@ -222,7 +225,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     	                    connection.close();
     	                }
     	            } catch (Exception e) {
-    	                e.printStackTrace();
+    	            	log.error("关闭动态路由数据连接失败" , e);
     	            }
     	        }
     		}catch(Exception e) {
