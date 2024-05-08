@@ -95,7 +95,7 @@ public class AliexpressDeliveryDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        private List<AliexpressDeliveryDetailDTO.AddDTO> detailList;
     }
 
     @Data
@@ -172,6 +172,11 @@ public class AliexpressDeliveryDTO implements Serializable {
          * id
          */
         private String id;
+
+        /**
+         * 明细id
+         */
+        private String detailId;
         /**
          * 平台订单号
          */

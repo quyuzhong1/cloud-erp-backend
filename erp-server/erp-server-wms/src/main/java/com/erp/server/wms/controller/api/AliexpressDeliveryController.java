@@ -65,7 +65,7 @@ public class AliexpressDeliveryController extends BaseController {
      * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出中转报关单")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出速卖通发货单")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",

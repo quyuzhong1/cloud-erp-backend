@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
@@ -503,4 +504,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return Boolean
      */
     Boolean afreshGenerateB2cOutstock(List<String> ids);
+
+    Boolean generateB2cSoOutstockByPlatformData(List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO);
 }
