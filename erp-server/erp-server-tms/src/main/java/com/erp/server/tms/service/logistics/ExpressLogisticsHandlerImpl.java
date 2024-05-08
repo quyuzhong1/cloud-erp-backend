@@ -95,11 +95,11 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             responseVO.failure(getPlatForm().getName(), logisticsOrderVO.getDeliveryNo(), e.getMessage());
         }
         if (success) {
-            logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(baseResult));
         } else {
-            logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(baseResult));
         }
@@ -190,11 +190,11 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 responseVO.failure(getPlatForm().getName(), logisticsQueryVO.getDeliveryNo(), e.getMessage());
             }
             if (success) {
-                logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsQueryVO.getOrderId(),
                         logisticsQueryVO.getTransportNo(), BusinessTypeEnum.CONFIRM_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
             } else {
-                logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsQueryVO.getOrderId(),
                         logisticsQueryVO.getTransportNo(), BusinessTypeEnum.CONFIRM_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
             }
@@ -244,11 +244,11 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 responseVO.failure(getPlatForm().getName(), logisticsQueryVO.getDeliveryNo(), e.getMessage());
             }
             if (success) {
-                logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsQueryVO.getOrderId(),
                         logisticsQueryVO.getTransportNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
             } else {
-                logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsQueryVO.getOrderId(),
                         logisticsQueryVO.getTransportNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
             }
@@ -299,11 +299,11 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 responseVO.failure(getPlatForm().getName(), logisticsQueryVO.getDeliveryNo(), e.getMessage());
             }
             if (success) {
-                logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsQueryVO.getOrderId(),
                         logisticsQueryVO.getTransportNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
             } else {
-                logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsQueryVO.getOrderId(),
                         logisticsQueryVO.getTransportNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
             }

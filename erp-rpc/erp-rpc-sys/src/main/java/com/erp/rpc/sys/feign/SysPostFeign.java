@@ -46,6 +46,17 @@ public interface SysPostFeign {
 
 
     /**
+     * 根据岗位id集合查询岗位用户关联信息
+     * @author Will
+     * @date: 2024/4/10 16:40
+     * @param postIdList
+     * @return List<SysPostUserEntity>
+     */
+    @GetMapping("/feign/post/listPostUserByPostIdList")
+    List<SysPostUserEntity> listPostUserByPostIdList(@RequestParam("postIdList") List<String> postIdList);
+
+
+    /**
      * 通过岗位id查询岗位下全部人员
      **/
     @PostMapping("/feign/post/getUserIdByPostIds")

@@ -20,6 +20,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -1087,5 +1088,40 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         //删除主表数据
         return this.removeByIds(ids);
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean checkHistoryAndDel(String sourceCode, String sourceType, LocalDate billDate) {
+        List<TransferInfoEntity> list = this.lambdaQuery()
+                .eq(TransferInfoEntity::getSourceCode, sourceCode)
+                .eq(TransferInfoEntity::getSourceType, sourceType)
+                .eq(TransferInfoEntity::getBillDate, billDate)
+                .eq(TransferInfoEntity::getInvalidStatus, false)
+                .list();
+        if (CollectionUtils.isEmpty(list)){
+            return true;
+        }
+        List<TransferInfoEntity> approveList = list.stream()
+                .filter(e -> ApproveStatusEnum.APPROVE.getStatus().equalsIgnoreCase(e.getApproveStatus()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(approveList)){
+            List<String> approveIds = approveList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+            // 反审核
+            disApprove(approveIds, true);
+        }
+
+        List<TransferInfoEntity> unSubmitList = list.stream()
+                .filter(e -> ApproveStatusEnum.APPROVE_ING.getStatus().equalsIgnoreCase(e.getApproveStatus()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(unSubmitList)){
+            List<String> unSubmitIds = unSubmitList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+            cancelProcess(unSubmitIds);
+        }
+        List<String> delIds = list.stream().map(BaseEntity::getId).distinct().collect(Collectors.toList());
+        // 删除
+        delete(delIds);
+        return true;
     }
 }
