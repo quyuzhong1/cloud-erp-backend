@@ -103,8 +103,7 @@ public class PackageServiceImpl implements PackageService {
         if (entity.getIsCancel()) {
             throw new ServiceException("平台订单已取消，无法组包");
         } else {
-            Boolean flag = soB2cFeign.checkPlatformShipOrder(entity.getSourceId());
-            if (flag) {
+            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
                 //如果订单原始状态非取消，这里需要再次调用平台接口查询，是否已取消
                 PlatformDeliveryInterceptDTO deliveryInterceptDTO = new PlatformDeliveryInterceptDTO();
                 deliveryInterceptDTO.setSoB2cId(entity.getSourceId());
