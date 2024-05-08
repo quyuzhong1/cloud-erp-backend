@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
@@ -14,6 +15,8 @@ import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.dto.RuleLogisticsDTO;
 import com.erp.model.oms.entity.CfgDeclareEntity;
 import com.erp.model.oms.entity.RuleLogisticsEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.CfgDeclareMapper;
 import com.erp.server.oms.service.CfgDeclareService;
@@ -132,6 +135,33 @@ public class CfgDeclareServiceImpl extends SuperServiceImpl<CfgDeclareMapper, Cf
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
         return new PagingVO<>(pageData);
+
+    }
+
+    @Override
+    public CfgDeclareDTO.ViewDTO view(String id) {
+        CfgDeclareEntity entity = this.getById(id);
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "申报规则单"));
+        CfgDeclareDTO.ViewDTO view = new CfgDeclareDTO.ViewDTO();
+        BeanMapper.copy(entity, view);
+        String type = DictBasicTypeEnum.FIELD.getType();
+        List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleId(id, type);
+        view.setConditionList(conditionList);
+        return view;
+    }
+
+    @Override
+    public Boolean updateStatus(UpdateStateDTO dto) {
+        CfgDeclareEntity entity = this.getById(dto.getId());
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "申报规则单"));
+        Boolean disabled = entity.getDisabled();
+        if (disabled.equals(dto.getState())) {
+            throw new ServiceException(ApiError.ERROR_98027);
+        }
+        String content = String.format("启用状态[%s]变更为[%s]", disabled ? "启用" : "停用", disabled ? "停用" : "启用");
+        entity.setDisabled(dto.getState());
+        operateLogService.addModuleOperateLog(content, ModuleTypeEnum.RULE_DECLARE.getCode(), dto.getId(), "状态变更");
+        return this.updateById(entity);
 
     }
 

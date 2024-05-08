@@ -39,4 +39,18 @@ public interface CfgDeclareService extends SuperService<CfgDeclareEntity> {
      * @return
      */
     PagingVO<CfgDeclareDTO.PagingViewDTO> paging(PagingDTO<CfgDeclareDTO.PagingParamDTO> dto);
+
+    /**
+     * 查询详情
+     * @param id
+     * @return
+     */
+    CfgDeclareDTO.ViewDTO view(String id);
+
+    /**
+     * 更新状态
+     * @param dto
+     * @return
+     */
+    Boolean updateStatus(UpdateStateDTO dto);
 }

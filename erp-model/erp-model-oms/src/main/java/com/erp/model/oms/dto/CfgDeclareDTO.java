@@ -107,7 +107,10 @@ public class CfgDeclareDTO implements Serializable {
         * 最低申报价
         */
         private BigDecimal minDeclarePrice;
-
+        /**
+         * 条件
+         */
+        private List<RuleConditionDTO.ViewDTO> conditionList;
 
     }
 
