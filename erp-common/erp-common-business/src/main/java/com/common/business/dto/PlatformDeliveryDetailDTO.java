@@ -15,6 +15,11 @@ import java.math.BigDecimal;
 public class PlatformDeliveryDetailDTO {
 
     /**
+     * erp 主记录id
+     */
+    private String mainId;
+
+    /**
      * skuId
      */
     private String skuId;
@@ -37,18 +42,29 @@ public class PlatformDeliveryDetailDTO {
      */
     private Integer qty;
     /**
-     * 仓库id
+     * ERP仓库id
      */
     private String warehouseId;
     /**
-     * 仓库名称
+     * ERP仓库名称
      */
     private String warehouseName;
+    /**
+     * 平台仓库名称
+     */
+    private String platformWarehouseName;
     /**
      * 单价
      */
     private BigDecimal price;
-
+    /**
+     * ERP仓库组织id
+     */
+    private String warehouseOrgId;
+    /**
+     * ERP仓库组织名称
+     */
+    private String warehouseOrgName;
     /**
      *来源平台
      */
