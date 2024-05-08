@@ -130,7 +130,11 @@ public class SoB2cDeliveryInterceptEntity extends BaseEntity<SoB2cDeliveryInterc
      */
     @TableField("bill_type")
     private String billType;
-
+    /**
+     * 发货单id
+     */
+    @TableField("delivery_id")
+    private String deliveryId;
 
     public static final String CODE = "code";
 

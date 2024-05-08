@@ -1162,13 +1162,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public List<BatchResultDTO> logisticsIntercept(List<String> ids) {
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(ids);
-        List<String> sourceIds = soB2cDeliveryEntities.stream().map(SoB2cDeliveryEntity::getSourceId).collect(Collectors.toList());
-        List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntityList = soB2cDeliveryInterceptService.listBySourceIds(sourceIds);
+        List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntityList = soB2cDeliveryInterceptService.listByDeliveryIds(ids);
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         for (String id : ids) {
             BatchResultDTO result;
             SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryEntities.stream().filter(v->v.getId().equals(id)).findFirst().orElse(new SoB2cDeliveryEntity());
-            SoB2cDeliveryInterceptEntity soB2cDeliveryInterceptEntity = soB2cDeliveryInterceptEntityList.stream().filter(v->v.getSourceId().equals(soB2cDelivery.getSourceId())).findFirst().orElse(null);
+            SoB2cDeliveryInterceptEntity soB2cDeliveryInterceptEntity = soB2cDeliveryInterceptEntityList.stream().filter(v->v.getDeliveryId().equals(soB2cDelivery.getId())).findFirst().orElse(null);
             if(Objects.isNull(soB2cDeliveryInterceptEntity)){
                 resultDTOS.add(BatchResultDTO.fail(id,id,"物流拦截单不存在, 物流拦截失败"));
                 continue;
@@ -1191,13 +1190,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             return new ArrayList<>();
         }
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(ids);
-        List<String> sourceIds = soB2cDeliveryEntities.stream().map(SoB2cDeliveryEntity::getSourceId).collect(Collectors.toList());
-        List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntityList = soB2cDeliveryInterceptService.listBySourceIds(sourceIds);
+        List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntityList = soB2cDeliveryInterceptService.listByDeliveryIds(ids);
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         for (String id : ids) {
             BatchResultDTO result;
             SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryEntities.stream().filter(v->v.getId().equals(id)).findFirst().orElse(new SoB2cDeliveryEntity());
-            SoB2cDeliveryInterceptEntity soB2cDeliveryInterceptEntity = soB2cDeliveryInterceptEntityList.stream().filter(v->v.getSourceId().equals(soB2cDelivery.getSourceId())).findFirst().orElse(null);
+            SoB2cDeliveryInterceptEntity soB2cDeliveryInterceptEntity = soB2cDeliveryInterceptEntityList.stream().filter(v->v.getDeliveryId().equals(soB2cDelivery.getId())).findFirst().orElse(null);
             if(Objects.isNull(soB2cDeliveryInterceptEntity)){
                 resultDTOS.add(BatchResultDTO.fail(id,id,"物流拦截单不存在, 确认失败"));
                 continue;
@@ -1211,6 +1209,21 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             resultDTOS.add(result);
         }
         return resultDTOS;
+    }
+
+    /**
+     *
+     * @param soId
+     * @return
+     */
+    @Override
+    public SoB2cDeliveryEntity getNotCancelBySoId(String soId) {
+        if(StringUtils.isBlank(soId)){
+            return null;
+        }
+        return lambdaQuery().eq(SoB2cDeliveryEntity ::getSourceId,soId)
+                .ne(SoB2cDeliveryEntity::getStatus,SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
+                .last(" LIMIT 1").one();
     }
 
     /**
