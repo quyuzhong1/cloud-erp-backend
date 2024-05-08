@@ -37,12 +37,12 @@ public class LogisticsBillDetailEntity extends BaseEntity<LogisticsBillDetailEnt
     @TableField("track_status")
     private String trackStatus;
     /**
-    * 运单号
+    * 跟踪号
     */
     @TableField("track_no")
     private String trackNo;
     /**
-    * 运单号
+    * 查询方式
     */
     @TableField("track_query_mode")
     private String trackQueryMode;
