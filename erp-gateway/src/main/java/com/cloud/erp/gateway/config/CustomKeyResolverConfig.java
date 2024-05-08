@@ -60,7 +60,7 @@ public class CustomKeyResolverConfig implements Converter<String, KeyResolver>{
 		/**
 		 * 限流系统
 		 */
-		private ServiceCodeNameEnum serviceCode;
+		private String serviceCode;
 		/**
 		 * 被 限流来源
 		 */
