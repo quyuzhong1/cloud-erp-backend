@@ -651,6 +651,8 @@
         LEFT JOIN so_b2c_receiver sbr
         ON sb.id = sbr.main_id AND sbr.is_deleted = FALSE
         WHERE sb.is_deleted = FALSE
+        AND sb.invalid_status = FALSE
+        AND sb.is_intercept = FALSE
         <if test="params.billStatusList !=null and params.billStatusList.size>0">
           AND sb.bill_status IN
            <foreach collection="params.billStatusList" item="item" open="(" separator="," close=")">
