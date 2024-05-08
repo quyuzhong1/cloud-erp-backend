@@ -497,7 +497,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             map.put("FSrcType", "SAL_SaleOrder");
             map.put("FSrcBillNo", soB2cEntity.getCode());
             map.put("FSoorDerno", soB2cEntity.getCode());
-
+            // 第三方单据编号
+            if (StringUtils.isNotBlank(detailEntity.getPlatformCode())){
+                map.put("FETHIRDBILLNO", detailEntity.getPlatformCode());
+            }
             fEntityList.add(map);
         }
         resultMap.put("FEntity", fEntityList);
