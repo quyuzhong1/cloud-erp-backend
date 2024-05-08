@@ -166,6 +166,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     public List<CustomKeyResolverConfig.RateLimiterPathMap> getSysRouteConfig() {
     	List<CustomKeyResolverConfig.RateLimiterPathMap> sysRouteConfigList = new ArrayList<>();
     	if(dealFinish) {
+    		dealFinish = false;
     		try {
     			String queryCondition = null;
     			if(dataSource == null) {
@@ -178,6 +179,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     			    config.setMaximumPoolSize(3);
     			    config.setMinimumIdle(1);
     			    dataSource = new HikariDataSource(config);
+    			    log.warn("初始化动态路由数据库连接池成功");
     			    queryCondition = "is_deleted = 'f'";
     			}else {
     				queryCondition = "update_time >= '" + DateUtil.formatDateTime(DateUtil.offsetSecond(new Date(), -(routereFreshTime + 1))) + "'";
@@ -209,7 +211,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     	                sysRouteConfigList.add(rateLimiterPathMap);
     	            }
     	        } catch (Exception e) {
-    	            e.printStackTrace();
+    	            log.error("查询动态路由数据失败" , e);
     	        } finally {
     	            try {
     	                if (resultSet != null) {
@@ -222,7 +224,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     	                    connection.close();
     	                }
     	            } catch (Exception e) {
-    	                e.printStackTrace();
+    	            	log.error("关闭动态路由数据连接失败" , e);
     	            }
     	        }
     		}catch(Exception e) {
