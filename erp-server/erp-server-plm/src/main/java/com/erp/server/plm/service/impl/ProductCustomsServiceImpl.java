@@ -2,6 +2,8 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.CollectionUtils;
+import com.common.core.constant.CommonConstants;
 import com.erp.model.plm.dto.ProductCustomsSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -9,6 +11,7 @@ import com.erp.server.plm.mapper.ProductCustomsMapper;
 import com.erp.server.plm.service.ProductCustomsService;
 import com.erp.server.plm.service.ProductDetailService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -16,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -70,5 +74,34 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
             return Collections.emptyList();
         }
         return baseMapper.listProductCustomsBySkuIds(dto);
+    }
+
+    @Override
+    public void addDefaultCustoms(List<String> skuIds) {
+        if (CollectionUtil.isEmpty(skuIds)){
+            return;
+        }
+        //默认记录是否存在 不存在则新增
+        List<ProductCustomsEntity> list = lambdaQuery().in(ProductCustomsEntity::getSkuId, skuIds)
+                .eq(ProductCustomsEntity::getIsDeleted, Boolean.FALSE).list();
+        List<String> existSkuIds = list.stream().map(ProductCustomsEntity::getSkuId).collect(Collectors.toList());
+        List<String> noExistSkuIds = skuIds.stream().filter(e -> CollectionUtil.isEmpty(existSkuIds) || !existSkuIds.contains(e)).collect(Collectors.toList());
+        if (CollectionUtil.isEmpty(noExistSkuIds)){
+            List<ProductCustomsEntity> entityList = new ArrayList<>(noExistSkuIds.size());
+            noExistSkuIds.forEach(skuId -> {
+                entityList.add(new ProductCustomsEntity().setSkuId(skuId).setCountry(CommonConstants.DEFAULT));
+            });
+            this.saveBatch(entityList);
+        }
+    }
+
+    @Override
+    public List<ProductCustomsEntity> listBySkuIds(List<String> skuIds, String country) {
+        if (CollectionUtil.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(ProductCustomsEntity::getSkuId,skuIds)
+                .eq(StringUtils.isNotEmpty(country), ProductCustomsEntity::getCountry, country)
+                .list();
     }
 }

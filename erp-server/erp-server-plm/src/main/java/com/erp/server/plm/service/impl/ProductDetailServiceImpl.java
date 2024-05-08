@@ -1,6 +1,8 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -28,6 +30,7 @@ import com.common.business.service.impl.RedisService;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.CommonConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
@@ -1114,8 +1117,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             addProductCustomsLog(productCustomsDTO, id);
             productCustomsService.saveOrUpdateBatch(customsEntityList);
         }
+        //增加默认记录
+        productCustomsService.addDefaultCustoms(Collections.singletonList(skuId));
         return true;
     }
+
 
 
     /**
@@ -1304,6 +1310,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             addProductCustomsLog(productCustomsDTO, productInfoDTO.getId());
             productCustomsService.saveOrUpdateBatch(customsEntityList);
         }
+        //增加默认记录
+        productCustomsService.addDefaultCustoms(productDetailLists.stream().map(ProductDetailDTO::getId).collect(Collectors.toList()));
         return true;
     }
 
@@ -2166,6 +2174,80 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productLogisticsService.updateBatchById(updateList);
         }
         log.info("recalDestDeclarePrice end======");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void initProductCustom(List<String> skuIds) {
+        //有传值 按照传值进行sku同步 没有则同步全量
+        List<ProductDetailEntity> list = null;
+        if (CollectionUtil.isEmpty(skuIds)){
+            list = lambdaQuery().select(ProductDetailEntity::getId).list();
+        }else {
+            list = lambdaQuery().select(ProductDetailEntity::getId).in(ProductDetailEntity::getId, skuIds).list();
+        }
+        if (CollectionUtil.isEmpty(list)){
+            log.info("需要同步的sku列表为空：{}", skuIds);
+            return;
+        }
+        log.info("同步的sku列表数量：{}", list.size());
+        //当list过大时 切割处理
+        if (list.size() > 100){
+            List<List<ProductDetailEntity>> partition = ListUtil.partition(list, 100);
+            for (List<ProductDetailEntity> list1 : partition){
+                customDataProcess(list1);
+            }
+        }else {
+            customDataProcess(list);
+        }
+
+    }
+
+    private void customDataProcess(List<ProductDetailEntity> list) {
+        if (CollectionUtils.isEmpty(list)){
+            return;
+        }
+        List<String> skuIds = list.stream().map(ProductDetailEntity::getId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(skuIds)){
+            return;
+        }
+        //根据sku获取sku物流信息
+        List<ProductLogisticsEntity> logisticsList = productLogisticsService.listBySkuIdList(skuIds);
+        //根据sku获取默认目的国申报信息
+        List<ProductCustomsEntity> customsList = productCustomsService.listBySkuIds(skuIds, CommonConstants.DEFAULT);
+        List<ProductCustomsEntity> addCustomsList = new ArrayList<>();
+        List<ProductCustomsEntity> updateCustomsList = new ArrayList<>();
+        //查询
+        list.forEach(productDetailEntity -> {
+            //查询sku product_logistics 目的国申报价不为o 时同步
+            ProductLogisticsEntity logistics = logisticsList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotEmpty(e.getSkuId())
+                                    && e.getSkuId().equals(productDetailEntity.getId())).findFirst().orElse(new ProductLogisticsEntity());
+            //查询是否存在默认 product_customs 不存在则赋值 新增，存在则更新
+            ProductCustomsEntity customs = customsList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotEmpty(e.getSkuId())
+                    && e.getSkuId().equals(productDetailEntity.getId())).findFirst().orElse(new ProductCustomsEntity());
+            if (StringUtils.isEmpty(customs.getId())){
+                //新增默认
+                addCustomsList.add(new ProductCustomsEntity()
+                        .setSkuId(productDetailEntity.getId())
+                        .setCountry(CommonConstants.DEFAULT)
+                        .setToDeclarePrice(logistics.getDestDeclarePrice())
+                        .setToCurrency(logistics.getDestCurrency())
+                        .setToCurrencySymbol(logistics.getDestCurrencySymbol()));
+            }else if (Objects.nonNull(logistics.getDestDeclarePrice()) && logistics.getDestDeclarePrice().compareTo(BigDecimal.ZERO) != 0){
+                customs.setToCurrency(logistics.getDestCurrency());
+                customs.setToDeclarePrice(logistics.getDestDeclarePrice());
+                customs.setToCurrencySymbol(logistics.getDestCurrencySymbol());
+                customs.setCountry(CommonConstants.DEFAULT);
+                updateCustomsList.add(customs);
+            }
+        });
+        //批量操作
+        if (CollectionUtil.isNotEmpty(addCustomsList)){
+            productCustomsService.saveBatch(addCustomsList);
+        }
+        if (CollectionUtil.isNotEmpty(updateCustomsList)){
+            productCustomsService.updateBatchById(updateCustomsList);
+        }
     }
 
     @Override

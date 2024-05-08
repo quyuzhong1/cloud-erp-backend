@@ -687,4 +687,10 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param details
      */
     void recalDestDeclarePrice(List<ProductDetailEntity> details);
+
+    /**
+     * 历史数据sku 增加默认值 并且把已存在目的国海关编码值移到custom中
+     * @param skuIds
+     */
+    void initProductCustom(List<String> skuIds);
 }
