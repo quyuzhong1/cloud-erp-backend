@@ -896,4 +896,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     List<PackageDTO.ScanResultDTO> listMergePackageBySoIds(List<String> ids);
 
     PackageDTO.ScanResultDTO packageScan(PackageDTO.ScanDTO scanDTO);
+
+    Boolean autoCancelOrderForecast(SoB2cEntity mainEntity);
 }

@@ -138,6 +138,11 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
         // 销售出库单处理(分平台)
         SoB2cHandler.handleSoOutStock(dto, resultDTO, mainEntity);
+
+        //平台取消订单后自动取消预报
+        if(Objects.nonNull(mainEntity.getIsCancel()) && mainEntity.getIsCancel()){
+            soB2cService.autoCancelOrderForecast(mainEntity);
+        }
     }
 
 
