@@ -2110,18 +2110,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return true;
     }
 
+    /**
+     * 重算目的国申报价
+     * @param details
+     */
     @Override
     public void recalDestDeclarePrice(List<ProductDetailEntity> details) {
         log.info("recalDestDeclarePrice start======{}",details.size());
         if (CollectionUtils.isEmpty(details)) {
             return;
         }
-        List<String> skuIds = details.stream().filter(Objects::nonNull).map(ProductDetailEntity::getId).collect(Collectors.toList());
-        List<String> skuNoList = details.stream().filter(Objects::nonNull).map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
-        List<ProductLogisticsEntity> productLogisticsList = productLogisticsService.listBySkuIdList(skuIds);
-        if (Objects.isNull(productLogisticsList)) {
+        List<String> skuIds = details.stream().filter(Objects::nonNull).map(ProductDetailEntity::getId).distinct().collect(Collectors.toList());
+        List<String> skuNoList = details.stream().filter(Objects::nonNull).map(ProductDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
+        if (CollectionUtil.isEmpty(skuIds)) {
             return;
         }
+        //目的国申报信息
+        List<ProductCustomsEntity> customsEntityList = productCustomsService.listBySkuIds(skuIds, CommonConstants.DEFAULT);
         //系统配置
         CfgSettingEntity setting = cfgSettingFeign.getByKey(CfgSettingEnum.LOGISTICS_PRODUCT_DEST_DECLARE_PRICE.getCode());
         if (Objects.isNull(setting) || Objects.isNull(setting.getDataJson()) || CollectionUtils.isEmpty(setting.getDataJson().getJSONArray("data"))) {
@@ -2135,13 +2140,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (Objects.isNull(usdRate)) {
             return;
         }
-        List<ProductLogisticsEntity> updateList = new ArrayList<>();
-        for(ProductLogisticsEntity productLogistics : productLogisticsList){
-            log.info("recalDestDeclarePrice : skuId:{},destDeclarePrice:{}", productLogistics.getSkuId(),productLogistics.getDestDeclarePrice());
+        List<ProductCustomsEntity> addList = new ArrayList<>();
+        List<ProductCustomsEntity> updateList = new ArrayList<>();
+        for(String skuId : skuIds){
+            //目的国申报信息 默认
+            ProductCustomsEntity customs = customsEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(skuId)).findFirst().orElse(new ProductCustomsEntity());
+
+            log.info("recalDestDeclarePrice : skuId:{},destDeclarePrice:{}", skuId,customs.getToDeclarePrice());
             //是否重算目的国申报价
-            BigDecimal destDeclarePrice = productLogistics.getDestDeclarePrice();
-            if (Objects.isNull(destDeclarePrice) || destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
-                DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuId().equals(productLogistics.getSkuId())).findFirst().orElse(null);
+            BigDecimal destDeclarePrice = Objects.isNull(customs.getToDeclarePrice()) ? BigDecimal.ZERO: customs.getToDeclarePrice();
+            if (destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
+                DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
                 log.info("skuCostDTO: {}", JSONUtil.toJsonStr(skuCostDTO));
                 if (Objects.isNull(skuCostDTO)) {
                     continue;
@@ -2162,16 +2171,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
                 BigDecimal resultDestDeclarePrice = actualTaxCostUsd.multiply(declarePrice.getRate()).divide(MathUtil.BigDecimal_100, 4, RoundingMode.HALF_UP);
                 log.info("resultDestDeclarePrice: {}", resultDestDeclarePrice);
-                productLogistics.setDestDeclarePrice(resultDestDeclarePrice);
-                productLogistics.setDestCurrency(CurrencyEnum.USD.getCurrencyCode());
-                productLogistics.setDestCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
-                updateList.add(productLogistics);
+                customs.setToDeclarePrice(resultDestDeclarePrice);
+                customs.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                customs.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+                if (Objects.isNull(customs.getId())){
+                    addList.add(customs);
+                }else {
+                    updateList.add(customs);
+                }
+
                 log.info("更新目的国申报价 sku:{},目的国申报价：{}",skuCostDTO.getSkuNo(), resultDestDeclarePrice);
             }
         }
         if (CollectionUtils.isNotEmpty(updateList)){
             log.info("updateList: {}", JSONUtil.toJsonStr(updateList));
-            productLogisticsService.updateBatchById(updateList);
+            productCustomsService.updateBatchById(updateList);
+        }
+        if (CollectionUtils.isNotEmpty(addList)){
+            log.info("addList: {}", JSONUtil.toJsonStr(addList));
+            productCustomsService.saveBatch(addList);
         }
         log.info("recalDestDeclarePrice end======");
     }

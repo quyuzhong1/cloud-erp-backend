@@ -1763,15 +1763,14 @@
     <select id="getProductDetailByDestDeclarePrice" resultType="com.erp.model.plm.entity.ProductDetailEntity">
         SELECT
             pd."id",
-            pd.sku_no AS skuNo,
-            pl.dest_declare_price
+            pd.sku_no AS skuNo
         FROM
             product_detail pd
-                LEFT JOIN product_logistics pl ON pl.sku_id = pd."id"
-                AND pl.is_deleted = FALSE
+                LEFT JOIN product_customs pc ON pc.sku_id = pd."id" and country = 'default'
+                AND pc.is_deleted = FALSE
         WHERE
             pd.is_deleted = FALSE
           AND pd.status = '2'
-          AND pl.dest_declare_price = 0
+          AND pc.to_declare_price = 0
     </select>
 </mapper>
