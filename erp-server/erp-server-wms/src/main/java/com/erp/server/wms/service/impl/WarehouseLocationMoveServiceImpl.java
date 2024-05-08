@@ -687,14 +687,17 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 transferDTO.setSourceCode(infoEntity.getCode());
                 transferDTO.setBillDate(infoEntity.getBillDate());
                 transferDTO.setSourceDetailId(detailEntity.getId());
-                transferDTO.setCurWarehouseId(dto.getPcShow()?detailEntity.getWarehouseId():infoEntity.getWarehouseId());
+                transferDTO.setCurWarehouseId(dto.getPcShow()?
+                        (StringUtils.isNotBlank(detailEntity.getWarehouseId()) ? detailEntity.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
                 transferDTO.setCurWarehouseLocation(detailEntity.getOutWarehouseLocation());
-                transferDTO.setTargetWarehouseId(dto.getPcShow()?detailEntity.getWarehouseId():infoEntity.getWarehouseId());
+                transferDTO.setTargetWarehouseId(dto.getPcShow()?
+                        (StringUtils.isNotBlank(detailEntity.getWarehouseId()) ? detailEntity.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
                 transferDTO.setTargetWarehouseLocation(detailEntity.getInWarehouseLocation());
                 transferDTO.setQty(detailEntity.getQty());
                 transferDTO.setSkuId(detailEntity.getSkuId());
                 transferDTO.setSkuNo(detailEntity.getSkuNo());
-                transferDTO.setWarehouseId(dto.getPcShow()?detailEntity.getWarehouseId():infoEntity.getWarehouseId());
+                transferDTO.setWarehouseId(dto.getPcShow() ?
+                        (StringUtils.isNotBlank(detailEntity.getWarehouseId()) ? detailEntity.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
 //            transferDTO.setWarehouseLocation("");
                 transferDTO.setInventoryStatus(InventoryStatusEnum.USABLE);
                 transferDTOList.add(transferDTO);
