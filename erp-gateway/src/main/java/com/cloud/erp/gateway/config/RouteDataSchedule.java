@@ -19,11 +19,11 @@ import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.cloud.gateway.filter.FilterDefinition;
 import org.springframework.cloud.gateway.handler.predicate.PredicateDefinition;
 import org.springframework.cloud.gateway.route.RouteDefinition;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
 import com.cloud.erp.gateway.config.CustomKeyResolverConfig.RateLimiterPathMap;
@@ -36,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
-public class RouteDataSchedule implements ApplicationListener<ContextRefreshedEvent> {
+public class RouteDataSchedule implements ApplicationRunner {
 
     @Value("${route.refresh.time:3}")
     private int routereFreshTime;
@@ -56,8 +56,7 @@ public class RouteDataSchedule implements ApplicationListener<ContextRefreshedEv
     /*-----------------------------路由优先级结束--------------------------------*/
     
     @Override
-    public void onApplicationEvent(ContextRefreshedEvent event) {
-
+    public void run(ApplicationArguments args) throws Exception {
         ScheduledExecutorService routeRefreshPool = Executors.newScheduledThreadPool(1);
         routeRefreshPool.scheduleAtFixedRate(()->{
             try {
@@ -75,7 +74,7 @@ public class RouteDataSchedule implements ApplicationListener<ContextRefreshedEv
 						String remoteAddr = data.getRemoteAddr();
 						String referer = data.getReferer();
 						
-						String id = serviceCode + "_route_" + data.getId();
+						String id = data.getId();
 						RouteDefinition definition = new RouteDefinition();
 						definition.setId(id);
 						definition.setUri(new URI("lb://erp-" + serviceCode));
@@ -236,4 +235,5 @@ public class RouteDataSchedule implements ApplicationListener<ContextRefreshedEv
     	}
         return sysRouteConfigList;
     }
+
 }
