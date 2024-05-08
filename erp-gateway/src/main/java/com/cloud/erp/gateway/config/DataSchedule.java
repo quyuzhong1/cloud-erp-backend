@@ -27,8 +27,6 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
 import com.cloud.erp.gateway.config.CustomKeyResolverConfig.RateLimiterPathMap;
-import com.common.business.enums.ServiceCodeNameEnum;
-import com.common.core.constant.EnumMessage;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -69,11 +67,10 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
                 List<RouteDefinition> definitionList = new ArrayList<>();
                 for (RateLimiterPathMap data : datas) {
                 	try {
-						ServiceCodeNameEnum serviceCodeNameEnum = data.getServiceCode();
-						if(serviceCodeNameEnum == null) {
+                		String serviceCode = data.getServiceCode();
+						if(serviceCode == null || "".equals(serviceCode)) {
 							continue;
 						}
-						String serviceCode = serviceCodeNameEnum.getCode();
 						String rateLimiterPath = data.getRateLimiterPath();
 						String remoteAddr = data.getRemoteAddr();
 						String referer = data.getReferer();
@@ -208,7 +205,7 @@ public class DataSchedule implements ApplicationListener<ContextRefreshedEvent> 
     	            	rateLimiterPathMap.setRate(resultSet.getInt("rate"));
     	            	rateLimiterPathMap.setCount(resultSet.getInt("count"));
     	            	rateLimiterPathMap.setRateLimiterPath(resultSet.getString("rate_limiter_path"));
-    	            	rateLimiterPathMap.setServiceCode(EnumMessage.getByCode(ServiceCodeNameEnum.class , resultSet.getString("service_code")));
+    	            	rateLimiterPathMap.setServiceCode(resultSet.getString("service_code"));
     	            	rateLimiterPathMap.setReferer(resultSet.getString("referer"));
     	            	rateLimiterPathMap.setRemoteAddr(resultSet.getString("remote_addr"));
     	            	
