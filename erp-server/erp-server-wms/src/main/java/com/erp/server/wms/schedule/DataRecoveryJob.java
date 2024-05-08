@@ -51,6 +51,7 @@ public class DataRecoveryJob {
         JSONObject param = JSONUtil.parseObj(jobParam);
         List<String> ids = param.getBeanList("ids", String.class);
         String type = param.get("type", String.class);
+        Boolean isPushKingdee = param.getBool("isPushKingdee", Boolean.FALSE);
         if(CollectionUtil.isEmpty(ids)){
             if("soReturnInstockService".equals(type)){
                 ids = soOutstockService.getIdsByTemp("so_return_instock");
@@ -71,11 +72,11 @@ public class DataRecoveryJob {
             idsDTO.setIds(Arrays.asList(item));
             try {
                 if(StrUtil.isNotBlank(type) && "soReturnInstockService".equals(type)){
-                    soReturnInstockService.disApprove(idsDTO.getIds(), Boolean.FALSE);
+                    soReturnInstockService.disApprove(idsDTO.getIds(), isPushKingdee);
                 }else if(StrUtil.isNotBlank(type) && "transferInfoService".equals(type)){
-                    transferInfoService.disApprove(idsDTO.getIds(), Boolean.FALSE);
+                    transferInfoService.disApprove(idsDTO.getIds(), isPushKingdee);
                 }else if(StrUtil.isNotBlank(type) && "soOutstockService".equals(type)){
-                    soOutstockService.disApprove(idsDTO, Boolean.FALSE);
+                    soOutstockService.disApprove(idsDTO, isPushKingdee);
                 }
             } catch (Exception e) {
                 XxlJobHelper.log("数据修复失败，id={} e ={}", item, e);
