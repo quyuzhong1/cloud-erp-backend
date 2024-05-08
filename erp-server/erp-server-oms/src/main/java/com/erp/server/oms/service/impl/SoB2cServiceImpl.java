@@ -7093,6 +7093,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StringUtils.isNotBlank(error.getId())) {
             deleteErrorIds.add(error.getId());
         }
+
+        operateLogService.addModuleOperateLog("平台订单取消后自动取消订单预报", ModuleTypeEnum.SO_B2C.getCode(), mainEntity.getId(), "取消预报");
         //更新操作同个事务
         service.orderForecastUpdateSoAndError(updateList,deleteErrorIds,new ArrayList<>(),new ArrayList<>());
 
