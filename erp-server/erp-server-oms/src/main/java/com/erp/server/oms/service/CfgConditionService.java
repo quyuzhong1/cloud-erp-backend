@@ -50,6 +50,12 @@ public interface CfgConditionService extends SuperService<CfgConditionEntity> {
     List<CfgConditionDTO.ListDTO> listAllCondition();
 
     /**
+     * 申报规则下拉列表
+     * @return
+     */
+    List<CfgConditionDTO.ListDTO> listDeclareCondition();
+
+    /**
      * 条件树结构
      * @author yl
      * @date 2023-10-08 15:09
