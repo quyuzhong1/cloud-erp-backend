@@ -517,6 +517,7 @@ public enum ApiError implements Serializable {
     ERROR_PRODUCT_CERTIFICATE_EXIST(95268,"SKU【{}】下已存在证书项目【{}】的证书"),
     ERROR_95269(95269, "启动日期应当晚于立项日期"),
     ERROR_95270(95270, "结项日期应当晚于启动日期"),
+    ERROR_95271(95271, "SKU为空，不允许进行此操作"),
 
 
     /**
