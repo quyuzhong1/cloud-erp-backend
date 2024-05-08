@@ -96,6 +96,10 @@ public interface SoB2cDeliveryInterceptService extends SuperService<SoB2cDeliver
     List<SoB2cDeliveryInterceptEntity> listBySourceIds(List<String> sourceIds);
 
     /**
+     * 根据发货id查询拦截单
+     **/
+    List<SoB2cDeliveryInterceptEntity> listByDeliveryIds(List<String> deliveryIds);
+    /**
      * 根据来源id修改拦截单状态
      * @Author Luo_WG
      * @Date 2024/1/3 19:36
