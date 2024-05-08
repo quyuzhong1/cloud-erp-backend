@@ -84,6 +84,12 @@ public class WarehouseLocationDTO implements Serializable {
         private String remark;
 
     }
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseLocationListDTO {
+        private String warehouseId;
+        private List<LocationListDTO> locationList;
+    }
 
     /**
      * 仓位列表

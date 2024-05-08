@@ -97,11 +97,7 @@ public class DmpMongoDbFeignController {
      * @since 2024-02-14
      **/
     @PostMapping("/checkSoOutStock")
-    public Boolean checkSoOutStock(@RequestBody PlatformOrderDTO resultDTO){
-        if (StringUtils.isBlank(resultDTO.getPlatformCode()) || StringUtils.isBlank(resultDTO.getShopId())){
-            return false;
-        }
-        DmpPullSoOutStockDTO dto = new DmpPullSoOutStockDTO(resultDTO.getShopId(), resultDTO.getPlatformCode());
-        return amzBusinessHandleService.checkAndSendSoOutStock(dto);
+    public Boolean checkSoOutStock(@RequestBody DmpPullSoOutStockDTO resultDTO){
+        return amzBusinessHandleService.checkAndSendSoOutStock(resultDTO);
     }
 }

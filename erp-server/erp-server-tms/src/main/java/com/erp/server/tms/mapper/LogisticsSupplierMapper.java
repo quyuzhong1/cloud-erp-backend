@@ -60,4 +60,11 @@ public interface LogisticsSupplierMapper extends BaseMapper<LogisticsSupplierEnt
      * @return List<LogisticsSupplierListDTO>
      */
     List<LogisticsSupplierDTO.LogisticsSupplierListDTO> listLogisticsChannel(@Param("logisticsSupplierIdList")List<String> logisticsSupplierIdList);
+
+    /**
+     * 物流商详情
+     * @param id 主键id
+     * @return {@link LogisticsSupplierDTO.ViewDTO}
+     */
+    LogisticsSupplierDTO.ViewDTO detail(String id);
 }

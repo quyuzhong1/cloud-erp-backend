@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -53,14 +54,29 @@ public class PdaProductDetailDTO implements Serializable {
         private String netWeight;
 
         /**
-         * 产品尺寸
+         * 产品尺寸长
          */
-        private String productSize;
-
+        private BigDecimal productLength;
         /**
-         * 箱规
+         * 产品尺寸宽
          */
-        private String boxSize;
+        private BigDecimal productWidth;
+        /**
+         * 产品尺寸高
+         */
+        private BigDecimal productHeight;
+        /**
+         * 箱规长
+         */
+        private BigDecimal boxLength;
+        /**
+         * 箱规宽
+         */
+        private BigDecimal boxWidth;
+        /**
+         * 箱规高
+         */
+        private BigDecimal boxHeight;
 
         /**
          * 单箱重量
