@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.CfgRuleOrderHandleMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.CfgRuleOrderHandleEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="name" property="name" />
+       <result column="disabled" property="disabled" />
+       <result column="remark" property="remark" />
+       <result column="priority" property="priority" />
+       <result column="is_push_city" property="isPushCity" />
+       <result column="is_push_province" property="isPushProvince" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        croh.id,
+        croh.create_user_id,
+        croh.create_user_name,
+        croh.create_time,
+        croh.update_user_id,
+        croh.update_user_name,
+        croh.update_time,
+        croh.version,
+        croh.is_deleted,
+        croh.name, croh.disabled, croh.remark, croh.priority, croh.is_push_city, croh.is_push_province
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.oms.dto.CfgRuleOrderHandleDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+        from cfg_rule_order_handle croh
+        <where>
+            ${params.sqlMap.default}
+            and is_deleted = false
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            croh.id desc
+        </where>
+    </select>
+
+
+</mapper>
