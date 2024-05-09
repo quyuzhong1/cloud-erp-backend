@@ -39,6 +39,8 @@ public class OpenApiController {
 
     @Value("${spring.profiles.active}")
     private String currentEnvironment;
+    
+    private final static Map<String, String> secretKeyMap = new HashMap<>();
 
     @Resource
     private IOpenApiService openApiService;
@@ -73,13 +75,12 @@ public class OpenApiController {
     }
 
     private String getSecretKey(String referer) {
-    	Map<String , String> map = new HashMap<>();
-    	String secretKey = map.get(referer);
+    	String secretKey = secretKeyMap.get(referer);
     	if(secretKey == null) {
     		List<SysRefererConfigEntity> list = sysRefererConfigService.lambdaQuery().eq(SysRefererConfigEntity::getReferer, referer).select(SysRefererConfigEntity::getSecretKey).list();
     		if(CollUtil.isNotEmpty(list)) {
     			secretKey = list.get(0).getSecretKey();
-				map.put(referer, secretKey);
+    			secretKeyMap.put(referer, secretKey);
     		}
     	}
 		return secretKey;
@@ -107,7 +108,11 @@ public class OpenApiController {
         if(map != null) {
         	input.setData(JSON.toJSONString(map));
         }
-        input.setSign(SignUtil.genSign(SignUtil.getSignStr(input), input.getCharset(), input.getSignType(), getSecretKey("test")));
+        if("prod".equalsIgnoreCase(currentEnvironment)) {
+        	input.setSign("生产环境不允许调用");
+        }else {
+        	input.setSign(SignUtil.genSign(SignUtil.getSignStr(input), input.getCharset(), input.getSignType(), getSecretKey("test")));
+        }
         return input;
     }
 
