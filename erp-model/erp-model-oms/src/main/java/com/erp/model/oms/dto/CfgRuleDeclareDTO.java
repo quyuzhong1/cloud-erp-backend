@@ -57,12 +57,12 @@ public class CfgRuleDeclareDTO implements Serializable {
         /**
         * 报关中文名称
         */
-        private String declareChineseName;
+        private String declareCn;
 
         /**
         * 报关英文名称
         */
-        private String declareEnglishName;
+        private String declareEn;
 
         /**
         * 目的国海关编码
@@ -170,14 +170,14 @@ public class CfgRuleDeclareDTO implements Serializable {
         */
 //        @NotBlank(message = "报关中文名称不能为空")
         @Size(max = 255,message = "报关中文名称最大长度不能超过255位")
-        private String declareChineseName;
+        private String declareCn;
 
         /**
         * 报关英文名称
         */
 //        @NotBlank(message = "报关英文名称不能为空")
         @Size(max = 255,message = "报关英文名称最大长度不能超过255位")
-        private String declareEnglishName;
+        private String declareEn;
 
         /**
         * 目的国海关编码
@@ -318,5 +318,9 @@ public class CfgRuleDeclareDTO implements Serializable {
         private LocalDateTime updateTime;
 
 
+    }
+    @Data
+    @NoArgsConstructor
+    public static class RuleMatchResultDTO {
     }
 }

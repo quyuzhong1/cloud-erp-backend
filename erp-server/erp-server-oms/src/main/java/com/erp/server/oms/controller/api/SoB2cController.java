@@ -135,8 +135,9 @@ public class SoB2cController extends BaseController {
                 if(isRuleMatch){
                     //检查是否备案并修改状态
                     soB2cService.checkProductRegistrationAndUpdate(id, "");
+                    //申报信息规则
+                    soB2cService.declareRule(id, new HashMap<>());
                 }
-
                 if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
                     soB2cService.getLogisticsCode(id, autoGetTrackNo);
                 }
@@ -144,6 +145,19 @@ public class SoB2cController extends BaseController {
 
         }
         return success(add.getId());
+    }
+
+    /**
+     * 批量获取报关
+     * @param ids
+     * @return
+     */
+    @PostMapping("/batchDeclare")
+    public ApiResult declareRule(@RequestBody List<String> ids){
+        ids.forEach(id ->{
+            soB2cService.declareRule(id, new HashMap<>());
+        });
+        return success();
     }
 
     /**
