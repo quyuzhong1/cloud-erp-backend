@@ -50,5 +50,13 @@ public interface SpElServer {
      */
     Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, Map<String,Object> obj);
 
+    /**
+     * 匹配明细表达式结果
+     * @param conditionList
+     * @param obj
+     * @return
+     */
+    Boolean matchDetailExpressionByConditionList(List<ConditionElement> conditionList, Map<String,Object> obj);
+
 
 }

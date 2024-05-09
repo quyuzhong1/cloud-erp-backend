@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -11,27 +12,37 @@ import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.server.rule.SpElServer;
 import com.erp.model.oms.dto.RuleConditionDTO;
+import com.erp.model.oms.dto.RuleLogisticsDTO;
 import com.erp.model.oms.entity.CfgRuleDeclareEntity;
+import com.erp.model.oms.entity.RuleConditionEntity;
+import com.erp.model.oms.entity.RuleLogisticsEntity;
+import com.erp.model.oms.entity.SoB2cDeclareProductEntity;
+import com.erp.model.oms.enums.DeclareTypeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.mapper.CfgRuleDeclareMapper;
-import com.erp.server.oms.service.CfgRuleDeclareService;
+import com.erp.server.oms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
-import com.erp.server.oms.service.RuleConditionService;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.CfgRuleDeclareDTO;
+
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 申报规则表 服务实现类
@@ -51,6 +62,8 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
     private SpElServer spElServer;
     @Autowired
     private RuleConditionService ruleConditionService;
+    @Resource
+    private SoB2cDeclareProductService soB2cDeclareProductService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -159,6 +172,92 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.RULE_DECLARE.getCode(), dto.getId(), "状态变更");
         return this.updateById(entity);
 
+    }
+
+    /**
+     * 获取申报规则匹配结果
+     * @param map
+     * @return
+     */
+    @Override
+    public void getRuleDeclareMatchResult(HashMap<String, Object> map) {
+        if (Objects.isNull(map)) {
+            return;
+        }
+        List<Map<String, Object>> mapList = (List<Map<String, Object>>) map.get("detailList");
+        //要匹配渠道id 是空的 如果有就 不用匹配了返回成功
+        List<CfgRuleDeclareEntity> cfgRuleDeclareList = this.listOrderByPriority();
+        List<String> ruleIdList = cfgRuleDeclareList.stream().map(CfgRuleDeclareEntity::getId).collect(Collectors.toList());
+        //规则条件
+        List<RuleConditionEntity> allRuleConditionList = ruleConditionService.listDbRuleIds(ruleIdList);
+        List<SoB2cDeclareProductEntity> addList = new ArrayList<>(mapList.size());
+        //根据明细进行遍历规则
+        for (Map<String, Object> detailMap : mapList){
+            SoB2cDeclareProductEntity entity = compareRules(detailMap, cfgRuleDeclareList,allRuleConditionList);
+            if (Objects.isNull(entity)){
+                entity = B2cOrderConverter.INSTANCE.convertDeclareProductByMap(detailMap);
+            }
+            addList.add(entity);
+        }
+        if (CollectionUtil.isNotEmpty(addList)){
+            soB2cDeclareProductService.saveBatch(addList);
+        }
+    }
+
+    private SoB2cDeclareProductEntity compareRules(Map<String, Object> detailMap, List<CfgRuleDeclareEntity> cfgRuleDeclareList,List<RuleConditionEntity> allRuleConditionList) {
+        for (CfgRuleDeclareEntity item : cfgRuleDeclareList) {
+            String ruleId = item.getId();
+            List<RuleConditionEntity> ruleConditionList = allRuleConditionList.stream().
+                    filter(r -> r.getRuleId().equals(ruleId)).
+                    sorted(Comparator.comparing(RuleConditionEntity::getIndex)).collect(Collectors.toList());
+
+            List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
+            //获取到表达式
+            Boolean matchResult = spElServer.matchDetailExpressionByConditionList(conditionElementList, detailMap);
+            if (matchResult) {
+                //返回申报明细
+                SoB2cDeclareProductEntity entity = B2cOrderConverter.INSTANCE.convertDeclareProductByMap(detailMap);
+                //重置固定值
+                if (StringUtils.isNotEmpty(item.getDeclareCn())){
+                    entity.setDeclareCn(item.getDeclareCn());
+                }
+                if (StringUtils.isNotEmpty(item.getDeclareEn())){
+                    entity.setDeclareEn(item.getDeclareEn());
+                }
+                if (StringUtils.isNotEmpty(item.getToCustomsCode())){
+                    entity.setToCustomsCode(item.getToCustomsCode());
+                }
+                if (StringUtils.isNotEmpty(item.getToDeclarePriceType())){
+                    //固定申报
+                    if (DeclareTypeEnum.FIXED_PRICE.getCode().equals(item.getToDeclarePriceType())){
+                        entity.setToDeclarePrice(item.getToDeclarePrice());
+                        entity.setToCurrency(item.getToCurrency());
+                        entity.setToCurrencySymbol(item.getToCurrencySymbol());
+                    }else if (DeclareTypeEnum.PRICE_PERCENTAGE.getCode().equals(item.getToDeclarePriceType())){
+                        BigDecimal toDeclarePrice = entity.getToDeclarePrice();
+                        BigDecimal rate = item.getRate();
+                        BigDecimal toDeclarePrice1 = MathUtil.multiply(toDeclarePrice, rate);
+                        //重置目的国申报价
+                        if (Objects.nonNull(item.getMaxDeclarePrice()) && toDeclarePrice1.compareTo(item.getMaxDeclarePrice()) > 0){
+                            toDeclarePrice1 = item.getMaxDeclarePrice();
+                        }else if (Objects.nonNull(item.getMinDeclarePrice()) && item.getMinDeclarePrice().compareTo(toDeclarePrice1) > 0){
+                            toDeclarePrice1 = item.getMinDeclarePrice();
+                        }
+                        entity.setToDeclarePrice(toDeclarePrice1);
+                        entity.setToCurrency(item.getToCurrency());
+                        entity.setToCurrencySymbol(item.getToCurrencySymbol());
+                    }
+                }
+//                String msg = StrUtil.format("申报规则匹配成功，规则名称：{}", item.getName());
+//                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getSoId(), "申报规则匹配");
+                return entity;
+            }
+        }
+        return null;
+    }
+
+    private List<CfgRuleDeclareEntity> listOrderByPriority() {
+        return this.lambdaQuery().orderByAsc(CfgRuleDeclareEntity::getPriority).orderByDesc(CfgRuleDeclareEntity::getUpdateTime).list();
     }
 
 

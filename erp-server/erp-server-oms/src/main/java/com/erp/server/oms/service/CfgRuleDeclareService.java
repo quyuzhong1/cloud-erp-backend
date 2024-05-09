@@ -5,6 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.CfgRuleDeclareDTO;
 
+import java.util.HashMap;
+
 /**
  * <p>
  * 申报规则表 服务类
@@ -53,4 +55,11 @@ public interface CfgRuleDeclareService extends SuperService<CfgRuleDeclareEntity
      * @return
      */
     Boolean updateStatus(UpdateStateDTO dto);
+
+    /**
+     * 获取申报规则匹配结果
+     * @param map
+     * @return
+     */
+    void getRuleDeclareMatchResult(HashMap<String, Object> map);
 }
