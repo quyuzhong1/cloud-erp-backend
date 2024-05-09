@@ -217,4 +217,32 @@ public class CfgRuleOrderHandleDTO implements Serializable {
     }
 
 
+    /**
+     * 规则匹配结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class RuleMatchDTO{
+
+        /**
+         * 通过结果
+         */
+        private Boolean approveSuccess;
+
+        /**
+         * 规则名称
+         */
+        private String ruleName;
+
+
+        /**
+         * 城市（推送物流商下单为空）
+         */
+        private Boolean isPushCity;
+
+        /**
+         * 州（推送物流商下单为空）
+         */
+        private Boolean isPushProvince;
+    }
 }

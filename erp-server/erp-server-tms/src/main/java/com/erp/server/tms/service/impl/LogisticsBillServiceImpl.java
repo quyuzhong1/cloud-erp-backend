@@ -24,6 +24,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -39,6 +40,7 @@ import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.rpc.oms.feign.CfgRuleFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -127,9 +129,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Autowired
     private LogisticsBillService logisticsBillService;
 
-
     @Autowired
     private PlmTaskFeign plmTaskFeign;
+
+    @Autowired
+    private CfgRuleFeign cfgRuleFeign;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(LogisticsBillDTO.AddDTO addDTO) {
@@ -458,6 +463,22 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (Objects.isNull(saleChannel)) {
             throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannel.getName());
         }
+
+        //根据订单处理规则，判断是否需要清空国家、省市数据
+        Map<String,Object> map = getRuleOrderHandleMap(dto);
+        CfgRuleOrderHandleDTO.RuleMatchDTO ruleOrderHandleMatchResult = cfgRuleFeign.getRuleOrderHandleMatchResult(map);
+        Boolean approveSuccess = ruleOrderHandleMatchResult.getApproveSuccess();
+        //匹配审核规则通过,自动提交并审核
+        if (Objects.nonNull(approveSuccess) && approveSuccess) {
+            //清空城市
+            if (ruleOrderHandleMatchResult.getIsPushCity()) {
+                receiverInfo.setCity("");
+            }
+            //清空省份/州
+            if (ruleOrderHandleMatchResult.getIsPushProvince()) {
+                receiverInfo.setProvince("");
+            }
+        }
         LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder().authMap(authMap).
                 orderSource(sourceType).
                 trackNo(dto.getTrackNo()).
@@ -493,6 +514,29 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     }
 
+    /**
+     * @description: 订单处理规则匹配
+     * @author Will
+     * @date: 2024/5/9 17:02
+     * @return Map<Object>
+     */
+    private Map<String,Object> getRuleOrderHandleMap (LogisticsBillDTO.GenerateBillDTO dto) {
+        Map<String,Object> resultMap = new HashMap<>(4);
+        resultMap.put("dictPlatform", dto.getSalesPlatform());
+        resultMap.put("shop", dto.getShopId());
+        resultMap.put("destCountry", ObjectUtil.isEmpty(dto.getReceiver()) ? "" : dto.getReceiver().getCountry());
+        resultMap.put("logisticsChannelId", dto.getChannelId());
+
+        //现有规则解析必须包含明细信息
+        Map<String,Object> detailMap = new HashMap<>(4);
+        detailMap.put("dictPlatform", dto.getSalesPlatform());
+        detailMap.put("shop", dto.getShopId());
+        detailMap.put("destCountry", ObjectUtil.isEmpty(dto.getReceiver()) ? "" : dto.getReceiver().getCountry());
+        detailMap.put("logisticsChannelId", dto.getChannelId());
+
+        resultMap.put("detailList", Arrays.asList(detailMap));
+        return  resultMap;
+    }
 
     @Transactional(rollbackFor = Exception.class)
     public LogisticsBillDTO.GenerateBillResultDTO handleBill(LogisticsOrderResponseVO responseVO, LogisticsBillDTO.GenerateBillDTO dto) {

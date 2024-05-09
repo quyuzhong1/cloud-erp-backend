@@ -20,6 +20,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.CfgRuleOrderHandleEntity;
+import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.CfgRuleOrderHandleMapper;
@@ -33,9 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -160,6 +159,38 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         return this.updateById(ruleOrderHandle);
     }
 
+    @Override
+    public CfgRuleOrderHandleDTO.RuleMatchDTO getRuleOrderHandleMatchResult(Map<String, Object> map) {
+        CfgRuleOrderHandleDTO.RuleMatchDTO ruleMatch = new CfgRuleOrderHandleDTO.RuleMatchDTO();
+        if (Objects.isNull(map)) {
+            ruleMatch.setApproveSuccess(Boolean.FALSE);
+            return ruleMatch;
+        }
+        log.info("参数为=========={}", map);
+        List<CfgRuleOrderHandleEntity> ruleOrderHandleList = this.listRuleOrderHandleByPriority();
+        List<String> ruleIdList = ruleOrderHandleList.stream().map(CfgRuleOrderHandleEntity::getId).collect(Collectors.toList());
+        //规则条件
+        List<RuleConditionEntity> allRuleConditionList = ruleConditionService.listDbRuleIds(ruleIdList);
+        for (CfgRuleOrderHandleEntity item : ruleOrderHandleList) {
+            String ruleId = item.getId();
+            List<RuleConditionEntity> ruleConditionList = allRuleConditionList.stream().
+                    filter(r -> r.getRuleId().equals(ruleId)).
+                    sorted(Comparator.comparing(RuleConditionEntity::getIndex)).collect(Collectors.toList());
+
+            List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
+            //获取到表达式
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
+            if (matchResult) {
+                ruleMatch.setIsPushCity(item.getIsPushCity());
+                ruleMatch.setIsPushProvince(item.getIsPushProvince());
+                ruleMatch.setApproveSuccess(Boolean.TRUE);
+                ruleMatch.setRuleName(item.getName());
+                return ruleMatch;
+            }
+        }
+        return ruleMatch;
+    }
+
     /**
      * 根据规则名称查询
      */
@@ -188,4 +219,15 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         }
     }
 
+    /**
+     * 根据有限级获取到订单审核
+     *
+     * @return
+     */
+    private List<CfgRuleOrderHandleEntity> listRuleOrderHandleByPriority() {
+        return this.lambdaQuery().eq(CfgRuleOrderHandleEntity::getDisabled, Boolean.FALSE).
+                orderByAsc(CfgRuleOrderHandleEntity::getPriority).
+                orderByDesc(CfgRuleOrderHandleEntity::getUpdateTime).
+                list();
+    }
 }
