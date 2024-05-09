@@ -23,15 +23,15 @@
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         croh.id,
-        croh.create_user_id,
-        croh.create_user_name,
-        croh.create_time,
-        croh.update_user_id,
-        croh.update_user_name,
-        croh.update_time,
+        croh.create_user_id as createUserId,
+        croh.create_user_name as createUserName,
+        croh.create_time as createTime,
+        croh.update_user_id as updateUserId,
+        croh.update_user_name as updateUserName,
+        croh.update_time as updateTime,
         croh.version,
-        croh.is_deleted,
-        croh.name, croh.disabled, croh.remark, croh.priority, croh.is_push_city, croh.is_push_province
+        croh.is_deleted as isDeleted,
+        croh.name, croh.disabled, croh.remark, croh.priority, croh.is_push_city as isPushCity, croh.is_push_province as isPushProvince
     </sql>
 
     <!-- 分页查询 -->
@@ -42,6 +42,10 @@
         <where>
             ${params.sqlMap.default}
             and is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
             ORDER BY
             <if test="params.sortList != null and params.sortList.size > 0">
                 <foreach collection="params.sortList" item="item" separator="," close=",">

@@ -1,18 +1,16 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.CfgConditionDTO;
+import com.erp.server.oms.service.CfgConditionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.oms.service.CfgConditionService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.oms.dto.CfgConditionDTO;
 
 import java.util.List;
 
@@ -101,6 +99,18 @@ public class CfgConditionController extends BaseController {
     @GetMapping("/listDeclareCondition")
     public ApiResult<List<CfgConditionDTO.ListDTO>> listDeclareCondition() {
         List<CfgConditionDTO.ListDTO> result = cfConditionService.listDeclareCondition();
+        return success(result);
+    }
+
+    /**
+     * 订单处理规则的条件下拉
+     * @author Will
+     * @date: 2024/5/9 14:33
+     * @return ApiResult<List<ListDTO>>
+     */
+    @GetMapping("/listOrderHandleCondition")
+    public ApiResult<List<CfgConditionDTO.ListDTO>> listOrderHandleCondition() {
+        List<CfgConditionDTO.ListDTO> result = cfConditionService.listOrderHandleCondition();
         return success(result);
     }
 
