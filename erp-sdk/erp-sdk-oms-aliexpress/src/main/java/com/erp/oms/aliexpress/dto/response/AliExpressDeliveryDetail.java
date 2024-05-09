@@ -49,11 +49,11 @@ public class AliExpressDeliveryDetail implements Serializable {
     private String deliveryQty;
 
 
-    /**
-     * 货品条码
-     */
-    @Alias("barcode")
-    private String barcode;
+//    /**
+//     * 货品条码
+//     */
+//    @Alias("barcode")
+//    private String barcode;
 
 
     /**
@@ -63,9 +63,9 @@ public class AliExpressDeliveryDetail implements Serializable {
     private String scItemId;
 
     /**
-     * SKUid
+     *  货品条码 barcode (速卖通barcode 相当于sku code)
      */
-    @Alias("sku_id")
+    @Alias("barcode")
     private String platformSku;
 
 

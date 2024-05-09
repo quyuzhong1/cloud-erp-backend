@@ -14,10 +14,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
-import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.dto.PlatformShipOrderDTO;
-import com.common.business.dto.PrintWayBillPdfDTO;
-import com.common.business.dto.PrintWayBillPdfDetailDTO;
+import com.common.business.dto.*;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -465,6 +462,20 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
             }
         }
+        // 异步查询亚马逊状态和更新
+        soB2cEntities.parallelStream().forEach(soB2cEntity ->{
+            try {
+                PlatformDeliveryInterceptDTO deliveryInterceptDTO = new PlatformDeliveryInterceptDTO();
+                deliveryInterceptDTO.setSoB2cId(soB2cEntity.getId());
+                deliveryInterceptDTO.setDictPlatform(soB2cEntity.getDictPlatform());
+                deliveryInterceptDTO.setOldIsCancel(soB2cEntity.getIsCancel());
+                deliveryInterceptDTO.setPlatformCode(soB2cEntity.getPlatformCode());
+                deliveryInterceptDTO.setShopId(soB2cEntity.getShopId());
+                PlatformSaveHandler.queryAndUpdateOrderStatus(deliveryInterceptDTO);
+            } catch (Exception e) {
+                log.error("异常查询并更新平台订单状态失败: platformCode={}, error={}", soB2cEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
+            }
+        });
 
         List<Pair<String, String>> addPairList = soB2cDeliveryEntities.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("打印了一张拣货单【%s】", ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), addPairList, "打印拣货单");
