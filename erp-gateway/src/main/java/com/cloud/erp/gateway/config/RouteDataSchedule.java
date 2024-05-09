@@ -199,7 +199,7 @@ public class RouteDataSchedule implements ApplicationRunner {
     	            CustomKeyResolverConfig.RateLimiterPathMap rateLimiterPathMap = null;
     	            while (resultSet.next()) {
     	            	rateLimiterPathMap = new RateLimiterPathMap();
-    	            	rateLimiterPathMap.setId(String.valueOf(resultSet.getInt("id")));
+    	            	rateLimiterPathMap.setId(resultSet.getString("id").trim());
     	            	rateLimiterPathMap.setIsDeleted(resultSet.getBoolean("is_deleted"));
     	            	rateLimiterPathMap.setRate(resultSet.getInt("rate"));
     	            	rateLimiterPathMap.setCount(resultSet.getInt("count"));
