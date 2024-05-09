@@ -2,6 +2,7 @@ package com.erp.server.wms.rocketmq.consumer;
 
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.utils.CollectionUtils;
@@ -72,18 +73,7 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
                 addError.setMainId(soId);
                 addError.setMessage(e.getMessage());
                 soB2cFeign.addSoB2cError(addError);
-                return;
-            }
-
-            if (!resultDTO.getSuccess()) {
-                String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
-                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                addError.setType(type);
-                addError.setParamJson(soId);
-                addError.setReturnJson(resultDTO.toString());
-                addError.setMainId(soId);
-                addError.setMessage(resultDTO.getMsg());
-                soB2cFeign.addSoB2cError(addError);
+                log.error("【组包预报虚假标记发货】销售单【{}】标记发货失败 >>>错误信息{}", deliveryEntities.get(0).getSoCode(), ExceptionUtil.stacktraceToString(e));
                 return;
             }
         }
