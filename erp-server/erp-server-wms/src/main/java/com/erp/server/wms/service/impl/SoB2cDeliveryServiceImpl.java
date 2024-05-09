@@ -438,18 +438,24 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         // 仓库+仓位排序
         List<SoB2cDeliveryDTO.PrintPickingViewDTO> resultList = printPickingViewList.stream()
-                .sorted(Comparator.comparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseName)
-                        .thenComparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseLocation)
-                ).collect(Collectors.toList());
+                .sorted(Comparator.comparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseName))
+                .sorted((s1, s2) -> {
+                    if (s1.getWarehouseLocation().isEmpty()) {
+                        return 1;
+                    } else if (s2.getWarehouseLocation().isEmpty()) {
+                        return -1;
+                    }
+                    return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
+                }).collect(Collectors.toList());
 
-        Collections.sort(resultList, (s1, s2) -> {
-            if (s1.getWarehouseLocation().isEmpty()) {
-                return 1;
-            } else if (s2.getWarehouseLocation().isEmpty()) {
-                return -1;
-            }
-            return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
-        });
+//        resultList.sort((s1, s2) -> {
+//            if (s1.getWarehouseLocation().isEmpty()) {
+//                return 1;
+//            } else if (s2.getWarehouseLocation().isEmpty()) {
+//                return -1;
+//            }
+//            return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
+//        });
         return resultList;
     }
 
