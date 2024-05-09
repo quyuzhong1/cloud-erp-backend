@@ -945,10 +945,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             logisticsBillEntity.setShippingMethod(dto.getShippingMethod());
             logisticsBillEntity.setChannelId(dto.getLogisticsChannelId());
             logisticsBillEntity.setLogisticsSupplierId(dto.getLogisticsSupplierId());
-            if (StringUtils.isNotEmpty(dto.getCarrierId())){
-                LogisticsCarrierEntity carrier = logisticsCarrierService.getById(dto.getCarrierId());
-                logisticsBillEntity.setCarrierCode(Objects.nonNull(carrier)? carrier.getCarrierCode():dto.getCarrierId());
-            }
+            logisticsBillEntity.setCarrierId(dto.getCarrierId());
             updateList.add(logisticsBillEntity);
             //更新体积重
             FirstMileDeliveryDTO.GenerateLogisticDTO deliveryLogisticDto = generateLogisticDTOList.stream().filter(v->v.getOutstockId().equals(logisticsBillEntity.getOutstockId())).findFirst().orElse(null);
