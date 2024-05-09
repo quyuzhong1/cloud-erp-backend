@@ -1075,9 +1075,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 throw new ServiceException(ApiError.LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST, deliveryEntities.get(0).getLogisticsChannelName());
             }
 
-            //设置配货单打印类型
-            waybillDTO.setPrintDeliveryType(logisticsPrintTypeEntity.getLabelType());
-
             //根据渠道id查询渠道名称
             List<SoB2cDeliveryEntity> soB2cDeliveryEntityList = deliveryEntities.stream().filter(req -> req.getLogisticsChannelId().equals(logisticsChannelId)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(soB2cDeliveryEntityList)) {
@@ -1098,11 +1095,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
             switch (SoB2cDeliveryPrintTypeEnum.getByCode(param.getPrintType())){
                 case LOGISTICS_BILL :
+                    //设置配货单打印类型
+                    waybillDTO.setPrintDeliveryType("authority");
                     //打印面单预览
                     if ("N".equalsIgnoreCase(logisticsPlatformEnum.getPrintLabel())) {
                         waybillDTO.setErrorMsg(StrUtil.format(ApiError.LOGISTICS_NOT_PRINT_LOGISTICS_BILL.msg, logisticsPlatformEnum.getName()));
                         waybillDTO.setDisabled(Boolean.TRUE);
-
                     }
                     break;
                 case ALLOCATE_CARGO_BILL :
@@ -1113,6 +1111,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                             waybillDTO.setDisabled(Boolean.TRUE);
                         }
                     }
+                    //设置配货单打印类型
+                    waybillDTO.setPrintDeliveryType(logisticsPrintTypeEntity.getLabelType());
                     break;
                 case ALL :
                 default:
