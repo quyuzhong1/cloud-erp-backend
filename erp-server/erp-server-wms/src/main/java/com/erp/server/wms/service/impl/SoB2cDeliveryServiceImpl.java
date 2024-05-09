@@ -14,10 +14,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
-import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.dto.PlatformShipOrderDTO;
-import com.common.business.dto.PrintWayBillPdfDTO;
-import com.common.business.dto.PrintWayBillPdfDetailDTO;
+import com.common.business.dto.*;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -465,6 +462,20 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
             }
         }
+        // 异步查询亚马逊状态和更新
+        soB2cEntities.parallelStream().forEach(soB2cEntity ->{
+            try {
+                PlatformDeliveryInterceptDTO deliveryInterceptDTO = new PlatformDeliveryInterceptDTO();
+                deliveryInterceptDTO.setSoB2cId(soB2cEntity.getId());
+                deliveryInterceptDTO.setDictPlatform(soB2cEntity.getDictPlatform());
+                deliveryInterceptDTO.setOldIsCancel(soB2cEntity.getIsCancel());
+                deliveryInterceptDTO.setPlatformCode(soB2cEntity.getPlatformCode());
+                deliveryInterceptDTO.setShopId(soB2cEntity.getShopId());
+                PlatformSaveHandler.queryAndUpdateOrderStatus(deliveryInterceptDTO);
+            } catch (Exception e) {
+                log.error("异常查询并更新平台订单状态失败: platformCode={}, error={}", soB2cEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
+            }
+        });
 
         List<Pair<String, String>> addPairList = soB2cDeliveryEntities.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("打印了一张拣货单【%s】", ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), addPairList, "打印拣货单");
@@ -1064,9 +1075,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 throw new ServiceException(ApiError.LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST, deliveryEntities.get(0).getLogisticsChannelName());
             }
 
-            //设置配货单打印类型
-            waybillDTO.setPrintDeliveryType(logisticsPrintTypeEntity.getLabelType());
-
             //根据渠道id查询渠道名称
             List<SoB2cDeliveryEntity> soB2cDeliveryEntityList = deliveryEntities.stream().filter(req -> req.getLogisticsChannelId().equals(logisticsChannelId)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(soB2cDeliveryEntityList)) {
@@ -1087,11 +1095,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
             switch (SoB2cDeliveryPrintTypeEnum.getByCode(param.getPrintType())){
                 case LOGISTICS_BILL :
+                    //设置配货单打印类型
+                    waybillDTO.setPrintDeliveryType("authority");
                     //打印面单预览
                     if ("N".equalsIgnoreCase(logisticsPlatformEnum.getPrintLabel())) {
                         waybillDTO.setErrorMsg(StrUtil.format(ApiError.LOGISTICS_NOT_PRINT_LOGISTICS_BILL.msg, logisticsPlatformEnum.getName()));
                         waybillDTO.setDisabled(Boolean.TRUE);
-
                     }
                     break;
                 case ALLOCATE_CARGO_BILL :
@@ -1102,6 +1111,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                             waybillDTO.setDisabled(Boolean.TRUE);
                         }
                     }
+                    //设置配货单打印类型
+                    waybillDTO.setPrintDeliveryType(logisticsPrintTypeEntity.getLabelType());
                     break;
                 case ALL :
                 default:

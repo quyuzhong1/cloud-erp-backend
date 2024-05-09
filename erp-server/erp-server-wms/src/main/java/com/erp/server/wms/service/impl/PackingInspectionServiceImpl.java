@@ -102,7 +102,9 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             //订单拦截
             soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消"));
             return null;
-        } else {
+        }
+        //请求接口过慢，暂时取消 TODO
+        /*else {
             if (soB2cFeign.checkPlatformShipOrder(soB2cEntity.getId())) {
                 //如果订单原始状态非取消，这里需要再次调用平台接口查询，是否已取消
                 PlatformDeliveryInterceptDTO deliveryInterceptDTO = new PlatformDeliveryInterceptDTO();
@@ -117,7 +119,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                     return null;
                 }
             }
-        }
+        }*/
 
         if (soB2cEntity.getIsIntercept()) {
             throw new ServiceException(ApiError.LOGISTICS_INTERCEPT_NOT_PACKAGE);
