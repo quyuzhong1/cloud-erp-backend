@@ -50,6 +50,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -307,15 +308,17 @@ public class PackageServiceImpl implements PackageService {
 
             //自动发货
             if (isAutoOut) {
-
                 List<String> soIdList = detailList.stream().map(req -> req.getSoId()).collect(Collectors.toList());
-                soIdList.forEach(soId -> {
-                    mqProducerService.asyncClassMsg(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),
+                // 异步推送到MQ
+                soIdList.stream().peek(soId ->{
+                    SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),
                             soId, StrUtil.uuid().toLowerCase());
-                });
+                    if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())){
+                        throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
+                    }
+                }).collect(Collectors.toList());
             }
         }
-
         return result;
     }
 
