@@ -60,7 +60,21 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
         if (flag) {
             List<String> soDeliveryIds = deliveryEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
             //调用第三方平台SDK发货
-            BatchResultDTO resultDTO = soB2cDeliveryService.falseDelivery(soDeliveryIds.get(0));
+            BatchResultDTO resultDTO = new BatchResultDTO();
+            try {
+                resultDTO = soB2cDeliveryService.falseDelivery(soDeliveryIds.get(0));
+            } catch (Exception e) {
+                String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(type);
+                addError.setParamJson(soId);
+                addError.setReturnJson(resultDTO.toString());
+                addError.setMainId(soId);
+                addError.setMessage(e.getMessage());
+                soB2cFeign.addSoB2cError(addError);
+                return;
+            }
+
             if (!resultDTO.getSuccess()) {
                 String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
