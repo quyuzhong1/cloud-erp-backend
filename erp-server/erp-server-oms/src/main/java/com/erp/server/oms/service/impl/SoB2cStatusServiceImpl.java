@@ -40,8 +40,7 @@ public class SoB2cStatusServiceImpl implements SoB2cStatusService {
                 .update();
         if (update){
             // 添加日志
-            String msg = StrUtil.format("系统更新平台订单为取消状态");
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), dto.getSoB2cId(), "系统更新");
+            operateLogService.addModuleOperateLog("系统更新平台订单为取消状态", ModuleTypeEnum.SO_B2C.getCode(), dto.getSoB2cId(), "系统更新");
         }
         return true;
     }
