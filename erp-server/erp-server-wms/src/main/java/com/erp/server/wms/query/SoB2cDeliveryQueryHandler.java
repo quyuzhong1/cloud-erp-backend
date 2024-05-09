@@ -60,18 +60,38 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
             //拣货中
             if (SoB2cDeliveryStatusEnum.PICKING.getStatus().equals(searchType)) {
                 super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.PICKING.getStatus());
+                List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntityList = soB2cDeliveryInterceptService.listByStatus(SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getCode());
+                if(CollectionUtils.isNotEmpty(soB2cDeliveryInterceptEntityList)){
+                    List<String> ids = soB2cDeliveryInterceptEntityList.stream().map(SoB2cDeliveryInterceptEntity::getSourceId).collect(Collectors.toList());
+                    super.buildSplicingSQLDTO("sbd.source_id", QueryConditionEnum.NOT_IN_LIST ,ids,QueryDataTypeEnum.STRING);
+                }
             }
             //虚假发货
             if (SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus().equals(searchType)) {
                 super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
+                List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntityList = soB2cDeliveryInterceptService.listByStatus(SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getCode());
+                if(CollectionUtils.isNotEmpty(soB2cDeliveryInterceptEntityList)){
+                    List<String> ids = soB2cDeliveryInterceptEntityList.stream().map(SoB2cDeliveryInterceptEntity::getSourceId).collect(Collectors.toList());
+                    super.buildSplicingSQLDTO("sbd.source_id", QueryConditionEnum.NOT_IN_LIST ,ids,QueryDataTypeEnum.STRING);
+                }
             }
             //已发货
             if (SoB2cDeliveryStatusEnum.SHIPPED.getStatus().equals(searchType)) {
                 super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.SHIPPED.getStatus());
+                List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntityList = soB2cDeliveryInterceptService.listByStatus(SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getCode());
+                if(CollectionUtils.isNotEmpty(soB2cDeliveryInterceptEntityList)){
+                    List<String> ids = soB2cDeliveryInterceptEntityList.stream().map(SoB2cDeliveryInterceptEntity::getSourceId).collect(Collectors.toList());
+                    super.buildSplicingSQLDTO("sbd.source_id", QueryConditionEnum.NOT_IN_LIST ,ids,QueryDataTypeEnum.STRING);
+                }
             }
             //取消发货
             if (SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus().equals(searchType)) {
                 super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
+                List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntityList = soB2cDeliveryInterceptService.listByStatus(SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getCode());
+                if(CollectionUtils.isNotEmpty(soB2cDeliveryInterceptEntityList)){
+                    List<String> ids = soB2cDeliveryInterceptEntityList.stream().map(SoB2cDeliveryInterceptEntity::getSourceId).collect(Collectors.toList());
+                    super.buildSplicingSQLDTO("sbd.source_id", QueryConditionEnum.NOT_IN_LIST ,ids,QueryDataTypeEnum.STRING);
+                }
             }
 
             //拦截中
