@@ -2,7 +2,7 @@ package com.erp.server.dmp.pull.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.dmp.dto.DmpOrderItemGroup;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -14,7 +14,7 @@ import java.util.Map;
  * @Entity com.erp.model.plm.entity.DmpOrderItem
  */
 @Mapper
-public interface DmpOrderItemMapper extends BaseMapper<DmpOrderItemEntity> {
+public interface DmpOrderItemSplitMapper extends BaseMapper<DmpOrderItemSplitEntity> {
     /**
      * 根据sku以及年份获取订单明细表Id
      * @Author Luo_WG

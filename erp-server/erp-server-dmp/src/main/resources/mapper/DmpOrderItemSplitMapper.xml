@@ -2,13 +2,13 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.dmp.pull.mapper.DmpOrderItemMapper">
+<mapper namespace="com.erp.server.dmp.pull.mapper.DmpOrderItemSplitMapper">
 
     <select id="getItemIdBySkuAndYear" resultType="string">
         SELECT
         poit.id
         FROM dmp_order_info poi
-        LEFT JOIN dmp_order_item poit ON poi.id = poit.order_id
+        LEFT JOIN dmp_order_item_split poit ON poi.id = poit.order_id
         WHERE 1 = 1
         AND poit.sku_no = #{skuNo}
         AND poit.new_sign NOT IN (1)
@@ -20,7 +20,7 @@
         poit.sku_no AS skuNo,
         min(to_char(platform_create_time, 'yyyy-MM-dd')) AS listingTime
         FROM dmp_order_info poi
-        LEFT JOIN dmp_order_item poit ON poi.id = poit.order_id
+        LEFT JOIN dmp_order_item_split poit ON poi.id = poit.order_id
         WHERE 1 = 1
         AND poit.sku_no IN
         <foreach collection="skuNoList" item="skuNo" open="(" separator="," close=")">
@@ -56,7 +56,7 @@
     </select>
     <select id="listByGroup" resultType="com.erp.model.dmp.dto.DmpOrderItemGroup">
         SELECT order_id, item_id, platform_sku
-        FROM dmp_order_item
+        FROM dmp_order_item_split
         WHERE is_split_sku = 1
         GROUP BY order_id, item_id, platform_sku
     </select>
