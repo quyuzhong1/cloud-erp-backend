@@ -28,14 +28,14 @@ public class LogisticsCarrierExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "物流商英文名称", index = 1)
     @FieldValid(fieldName = "物流商英文名称", isNotBlank = true ,maxLength = 64)
-    private String carrierEN;
+    private String carrierEn;
 
     /**
      * 物流商中文名称
      */
     @ExcelProperty(value = "物流商中文名称", index = 2)
     @FieldValid(fieldName = "物流商中文名称",isNotBlank = true ,maxLength = 64)
-    private String carrierCN;
+    private String carrierCn;
 
     /**
      * 错误数据

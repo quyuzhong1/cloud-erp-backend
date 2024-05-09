@@ -2,8 +2,8 @@ package com.erp.server.oms.mapper;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.oms.dto.CfgDeclareDTO;
-import com.erp.model.oms.entity.CfgDeclareEntity;
+import com.erp.model.oms.dto.CfgRuleDeclareDTO;
+import com.erp.model.oms.entity.CfgRuleDeclareEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -19,7 +19,7 @@ import org.apache.ibatis.annotations.Param;
  * @since 2024-05-08
  */
 @Mapper
-public interface CfgDeclareMapper extends BaseMapper<CfgDeclareEntity> {
+public interface CfgRuleDeclareMapper extends BaseMapper<CfgRuleDeclareEntity> {
 
-    IPage<CfgDeclareDTO.PagingViewDTO> paging(Page query, @Param("params") CfgDeclareDTO.PagingParamDTO params);
+    IPage<CfgRuleDeclareDTO.PagingViewDTO> paging(Page query, @Param("params") CfgRuleDeclareDTO.PagingParamDTO params);
 }

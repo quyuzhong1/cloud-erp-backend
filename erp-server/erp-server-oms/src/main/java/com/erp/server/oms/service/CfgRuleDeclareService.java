@@ -1,9 +1,9 @@
 package com.erp.server.oms.service;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.entity.CfgDeclareEntity;
+import com.erp.model.oms.entity.CfgRuleDeclareEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.oms.dto.CfgDeclareDTO;
+import com.erp.model.oms.dto.CfgRuleDeclareDTO;
 
 /**
  * <p>
@@ -13,7 +13,7 @@ import com.erp.model.oms.dto.CfgDeclareDTO;
  * @author zdy
  * @since 2024-05-08
  */
-public interface CfgDeclareService extends SuperService<CfgDeclareEntity> {
+public interface CfgRuleDeclareService extends SuperService<CfgRuleDeclareEntity> {
 
     /**
     * 新增
@@ -22,7 +22,7 @@ public interface CfgDeclareService extends SuperService<CfgDeclareEntity> {
     * @param dto
     * @return
     */
-    String add(CfgDeclareDTO.AddDTO dto);
+    String add(CfgRuleDeclareDTO.AddDTO dto);
 
     /**
     * 修改
@@ -31,21 +31,21 @@ public interface CfgDeclareService extends SuperService<CfgDeclareEntity> {
     * @param dto
     * @return
     */
-    Boolean update(CfgDeclareDTO.UpdateDTO dto);
+    Boolean update(CfgRuleDeclareDTO.UpdateDTO dto);
 
     /**
      * 申报规则分页查询
      * @param dto
      * @return
      */
-    PagingVO<CfgDeclareDTO.PagingViewDTO> paging(PagingDTO<CfgDeclareDTO.PagingParamDTO> dto);
+    PagingVO<CfgRuleDeclareDTO.PagingViewDTO> paging(PagingDTO<CfgRuleDeclareDTO.PagingParamDTO> dto);
 
     /**
      * 查询详情
      * @param id
      * @return
      */
-    CfgDeclareDTO.ViewDTO view(String id);
+    CfgRuleDeclareDTO.ViewDTO view(String id);
 
     /**
      * 更新状态

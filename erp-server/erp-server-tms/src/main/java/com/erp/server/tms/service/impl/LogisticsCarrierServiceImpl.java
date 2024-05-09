@@ -4,7 +4,11 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.excel.LogisticsCarrierExcelDTO;
 import com.erp.model.tms.entity.LogisticsCarrierEntity;
 import com.erp.server.tms.listener.LogisticsCarrierExcelListener;
@@ -143,11 +147,17 @@ public class LogisticsCarrierServiceImpl extends SuperServiceImpl<LogisticsCarri
         return Boolean.TRUE;
     }
 
+    /**
+     * 物流下拉框
+     * @param searchDTO
+     * @return
+     */
     @Override
-    public List<LogisticsCarrierEntity> dropDown(String logisticsType) {
-        return lambdaQuery().select(LogisticsCarrierEntity::getId,LogisticsCarrierEntity::getCarrierCode, LogisticsCarrierEntity::getLogisticsType,
-                LogisticsCarrierEntity::getCarrierCN, LogisticsCarrierEntity::getCarrierEN, LogisticsCarrierEntity::getDisabled)
-                .eq(StringUtils.isNotEmpty(logisticsType), LogisticsCarrierEntity::getLogisticsType, logisticsType).orderByAsc(LogisticsCarrierEntity::getDisabled).list();
+    public PagingVO<LogisticsCarrierDTO.PagingVO> dropDown(PagingDTO<LogisticsCarrierDTO.SearchDTO> searchDTO) {
+        Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
+        LogisticsCarrierDTO.SearchDTO params = searchDTO.getParams();
+        IPage<LogisticsCarrierDTO.PagingVO> listIPage = baseMapper.dropDown(query, params);
+        return new PagingVO<>(listIPage);
     }
 
 
