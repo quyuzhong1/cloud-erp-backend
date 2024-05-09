@@ -42,12 +42,12 @@ public class LogisticsCarrierEntity extends BaseEntity<LogisticsCarrierEntity> {
     * 物流商中文名称
     */
     @TableField("carrier_cn")
-    private String carrierCN;
+    private String carrierCn;
     /**
     * 物流商英文名称
     */
     @TableField("carrier_en")
-    private String carrierEN;
+    private String carrierEn;
 
 
     public static final String LOGISTICS_TYPE = "logistics_type";

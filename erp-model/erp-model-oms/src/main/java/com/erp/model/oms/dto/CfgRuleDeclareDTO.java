@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,7 +21,7 @@ import javax.validation.constraints.*;
 */
 @Data
 @NoArgsConstructor
-public class CfgDeclareDTO implements Serializable {
+public class CfgRuleDeclareDTO implements Serializable {
 
 
 
@@ -215,7 +215,8 @@ public class CfgDeclareDTO implements Serializable {
         private String toCurrencySymbol;
 
         /**
-        * 目的国申报类型（dictType=toDeclarePriceType）
+        * 目的国申报类型 （type=toDeclarePriceType）
+         * http://172.16.100.11:3002/project/110/interface/api/13435
         */
 //        @NotBlank(message = "目的国申报类型（dictType=toDeclarePriceType）不能为空")
         @Size(max = 30,message = "目的国申报类型最大长度不能超过30位")

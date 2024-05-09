@@ -4,7 +4,6 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
@@ -12,14 +11,11 @@ import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.server.rule.SpElServer;
 import com.erp.model.oms.dto.RuleConditionDTO;
-import com.erp.model.oms.dto.RuleLogisticsDTO;
-import com.erp.model.oms.entity.CfgDeclareEntity;
-import com.erp.model.oms.entity.RuleLogisticsEntity;
+import com.erp.model.oms.entity.CfgRuleDeclareEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
-import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.server.oms.mapper.CfgDeclareMapper;
-import com.erp.server.oms.service.CfgDeclareService;
+import com.erp.server.oms.mapper.CfgRuleDeclareMapper;
+import com.erp.server.oms.service.CfgRuleDeclareService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
@@ -30,7 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.CfgDeclareDTO;
+import com.erp.model.oms.dto.CfgRuleDeclareDTO;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -46,7 +42,7 @@ import com.common.core.enums.ApiError;
  */
 @Slf4j
 @Service
-public class CfgDeclareServiceImpl extends SuperServiceImpl<CfgDeclareMapper, CfgDeclareEntity> implements CfgDeclareService {
+public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMapper, CfgRuleDeclareEntity> implements CfgRuleDeclareService {
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
@@ -59,7 +55,7 @@ public class CfgDeclareServiceImpl extends SuperServiceImpl<CfgDeclareMapper, Cf
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public String add(CfgDeclareDTO.AddDTO addDTO) {
+    public String add(CfgRuleDeclareDTO.AddDTO addDTO) {
         List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
@@ -71,7 +67,7 @@ public class CfgDeclareServiceImpl extends SuperServiceImpl<CfgDeclareMapper, Cf
         if (!checkResult) {
             throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
         }
-        CfgDeclareEntity entity = new CfgDeclareEntity();
+        CfgRuleDeclareEntity entity = new CfgRuleDeclareEntity();
         BeanMapperUtils.copy(addDTO, entity);
         handleData(entity);
         boolean save = super.save(entity);
@@ -93,9 +89,9 @@ public class CfgDeclareServiceImpl extends SuperServiceImpl<CfgDeclareMapper, Cf
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(CfgDeclareDTO.UpdateDTO updateDTO) {
+    public Boolean update(CfgRuleDeclareDTO.UpdateDTO updateDTO) {
         String id = updateDTO.getId();
-        CfgDeclareEntity old = super.getById(id);
+        CfgRuleDeclareEntity old = super.getById(id);
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "申报规则单"));
         List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
@@ -108,7 +104,7 @@ public class CfgDeclareServiceImpl extends SuperServiceImpl<CfgDeclareMapper, Cf
         if (!checkResult) {
             throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
         }
-        CfgDeclareEntity entity = BeanMapperUtils.map(CfgDeclareEntity.class, updateDTO);
+        CfgRuleDeclareEntity entity = BeanMapperUtils.map(CfgRuleDeclareEntity.class, updateDTO);
         // 数据处理
         handleData(entity);
         boolean save = super.updateById(entity);
@@ -129,8 +125,8 @@ public class CfgDeclareServiceImpl extends SuperServiceImpl<CfgDeclareMapper, Cf
      * @return
      */
     @Override
-    public PagingVO<CfgDeclareDTO.PagingViewDTO> paging(PagingDTO<CfgDeclareDTO.PagingParamDTO> dto) {
-        CfgDeclareDTO.PagingParamDTO params = dto.getParams();
+    public PagingVO<CfgRuleDeclareDTO.PagingViewDTO> paging(PagingDTO<CfgRuleDeclareDTO.PagingParamDTO> dto) {
+        CfgRuleDeclareDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
@@ -139,10 +135,10 @@ public class CfgDeclareServiceImpl extends SuperServiceImpl<CfgDeclareMapper, Cf
     }
 
     @Override
-    public CfgDeclareDTO.ViewDTO view(String id) {
-        CfgDeclareEntity entity = this.getById(id);
+    public CfgRuleDeclareDTO.ViewDTO view(String id) {
+        CfgRuleDeclareEntity entity = this.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "申报规则单"));
-        CfgDeclareDTO.ViewDTO view = new CfgDeclareDTO.ViewDTO();
+        CfgRuleDeclareDTO.ViewDTO view = new CfgRuleDeclareDTO.ViewDTO();
         BeanMapper.copy(entity, view);
         String type = DictBasicTypeEnum.FIELD.getType();
         List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleId(id, type);
@@ -152,7 +148,7 @@ public class CfgDeclareServiceImpl extends SuperServiceImpl<CfgDeclareMapper, Cf
 
     @Override
     public Boolean updateStatus(UpdateStateDTO dto) {
-        CfgDeclareEntity entity = this.getById(dto.getId());
+        CfgRuleDeclareEntity entity = this.getById(dto.getId());
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "申报规则单"));
         Boolean disabled = entity.getDisabled();
         if (disabled.equals(dto.getState())) {
@@ -169,7 +165,7 @@ public class CfgDeclareServiceImpl extends SuperServiceImpl<CfgDeclareMapper, Cf
     /**
     * 新增修改处理数据
     */
-    private void handleData(CfgDeclareEntity cfgDeclareEntity) {
+    private void handleData(CfgRuleDeclareEntity CfgRuleDeclareEntity) {
     // TODO 验证数据 & 数据赋值
     }
 }

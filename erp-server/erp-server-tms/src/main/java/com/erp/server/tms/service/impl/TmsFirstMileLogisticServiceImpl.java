@@ -581,7 +581,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
             if (StringUtils.isNotEmpty(pagingVO.getCarrierId())){
                 LogisticsCarrierEntity carrier = carrierList.stream().filter(e -> e.getId().equals(pagingVO.getCarrierId())).findFirst().orElse(null);
-                pagingVO.setCarrierName(Objects.nonNull(carrier)? carrier.getCarrierCN() : pagingVO.getCarrierId());
+                pagingVO.setCarrierName(Objects.nonNull(carrier)? carrier.getCarrierCn() : pagingVO.getCarrierId());
             }
         }
     }
@@ -683,7 +683,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         //船司航司名称
         if (StringUtils.isNotEmpty(dto.getCarrierId())){
             LogisticsCarrierEntity carrier = logisticsCarrierService.getById(dto.getCarrierId());
-            dto.setCarrierName(Objects.nonNull(carrier)? carrier.getCarrierCN() : "");
+            dto.setCarrierName(Objects.nonNull(carrier)? carrier.getCarrierCn() : dto.getCarrierId());
         }
 
     }

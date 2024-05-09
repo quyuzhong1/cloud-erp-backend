@@ -8,7 +8,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -22,8 +21,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("cfg_declare")
-public class CfgDeclareEntity extends BaseEntity<CfgDeclareEntity> {
+@TableName("cfg_rule_declare")
+public class CfgRuleDeclareEntity extends BaseEntity<CfgRuleDeclareEntity> {
 
     /**
     * 规则名称
