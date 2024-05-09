@@ -110,6 +110,21 @@ public class SpElServerImpl implements SpElServer {
 
     }
 
+    @Override
+    public Boolean matchDetailExpressionByConditionList(List<ConditionElement> conditionList, Map<String, Object> detailMap) {
+        SpElExpressionDTO spElDTO = getConditionExpression(conditionList, detailMap);
+        List<SpElAddFieldDTO> addFieldList = spElDTO.getSpElAddFieldList();
+        for (SpElAddFieldDTO item : addFieldList) {
+            //原始字段
+            String originalField = item.getOriginalField();
+            Object value = detailMap.get(originalField);
+            String addField = item.getNeedAddField();
+            detailMap.put(addField, value);
+        }
+        return matchExpression(spElDTO.getExpression(), detailMap);
+
+    }
+
     /**
      * 获取对应字段的值
      *
@@ -125,7 +140,6 @@ public class SpElServerImpl implements SpElServer {
         }
         return list;
     }
-
 
     /**
      * 获取到 传值为map 的 表达式
