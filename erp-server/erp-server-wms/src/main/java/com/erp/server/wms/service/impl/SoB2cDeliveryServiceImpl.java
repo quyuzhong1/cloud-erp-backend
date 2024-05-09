@@ -986,6 +986,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             deliveryEntity.setDeliveryTime(deliveryTime);
         }
 
+        //修改订单状态已发货
+        SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
+        updateDeliveryTimeDTO.setSoB2cIds(soIdList);
+        updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+        updateDeliveryTimeDTO.setDeliveryTime(LocalDateTime.now());
+        soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
+
         //将发货状态更新为已发货
         if (!this.updateBatchById(deliveryEntities)) {
             throw new ServiceException("发货单更新失败");
