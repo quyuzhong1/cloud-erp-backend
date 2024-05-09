@@ -537,18 +537,22 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(skuVO)) {
                 viewDTO.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
+                if ("1719993256843939842".equals(viewDTO.getSkuId())){
+                    viewDTO.setWarehouseLocation("DA111");
+                }
             }
         }
         // 仓位排序
-        detailList.stream().sorted((s1, s2) -> {
-            if (s1.getWarehouseLocation().isEmpty() && s2.getWarehouseLocation().isEmpty()) {
-                return 0;
-            } else if (s1.getWarehouseLocation().isEmpty()) {
+        detailList.sort((s1, s2) -> {
+            if (StringUtils.isBlank(s1.getWarehouseLocation())) {
                 return 1;
-            } else if (s2.getWarehouseLocation().isEmpty()) {
+            } else if (StringUtils.isBlank(s2.getWarehouseLocation())) {
                 return -1;
+            } else if (StringUtils.equals(s1.getWarehouseLocation(), s2.getWarehouseLocation())) {
+                return -1;
+            } else {
+                return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
             }
-            return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
         });
         view.setDetailList(detailList);
         return view;
