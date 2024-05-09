@@ -540,16 +540,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
         }
         // 仓位排序
-        Collections.sort(detailList, new Comparator<SoDetailDTO.ViewDTO>() {
-            @Override
-            public int compare(SoDetailDTO.ViewDTO s1, SoDetailDTO.ViewDTO s2) {
-                if (s1.getWarehouseLocation().isEmpty()) {
-                    return 1;
-                } else if (s2.getWarehouseLocation().isEmpty()) {
-                    return -1;
-                }
-                return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
+        detailList.sort((s1, s2) -> {
+            if (s1.getWarehouseLocation().isEmpty()) {
+                return 1;
+            } else if (s2.getWarehouseLocation().isEmpty()) {
+                return -1;
             }
+            return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
         });
         view.setDetailList(detailList);
         return view;

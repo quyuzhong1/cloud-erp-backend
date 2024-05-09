@@ -128,9 +128,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         // 取消订单不走规则
         // 审核不通过的订单不走规则
         boolean unHandleRule = mainEntity.hasPlatformWarehouseOrder()
-                || mainEntity.getIsMatchOrderRule()
                 || mainEntity.getIsCancel()
-                || ApproveStatusEnum.REJECT.equals(mainEntity.getApproveStatus());
+                || ApproveStatusEnum.REJECT.equals(mainEntity.getApproveStatus())
+                ;
         if (! unHandleRule){
             // 规则处理(分平台)
             SoB2cHandler.handleRule(mainEntity);

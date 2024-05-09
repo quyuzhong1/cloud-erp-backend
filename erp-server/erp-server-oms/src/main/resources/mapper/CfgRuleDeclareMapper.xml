@@ -54,10 +54,8 @@
         update_user_name,
         update_time
         FROM cfg_rule_declare cd
-        WHERE cd.is_deleted=FALSE
-        <if test="params.name !=null and params.name!=''">
-            AND name ILIKE concat('%',#{params.name}::text,'%')
-        </if>
+        WHERE ${params.sqlMap.default}
+        and cd.is_deleted=FALSE
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
