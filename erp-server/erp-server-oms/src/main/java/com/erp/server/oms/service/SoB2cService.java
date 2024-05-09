@@ -20,10 +20,10 @@ import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
-import org.apache.ibatis.annotations.Param;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -900,4 +900,21 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Boolean autoCancelOrderForecast(SoB2cEntity mainEntity);
 
     List<BatchResultDTO> deliveryWithNotOutbound(List<String> ids);
+
+    /**
+     * 申报信息规则信息整理
+     * @param id
+     * @param map
+     * @return
+     */
+    SoB2cDTO.RuleResultDTO declareRule(String id, HashMap<String, Object> map);
+
+    /**
+     * 根据订单拆分 申报明细
+     *
+     * @param detailList
+     * @param soB2cEntity
+     * @return
+     */
+    List<LogisticsDeclareProductDTO> splitLogisticsBySoDetail(List<SoB2cDetailEntity> detailList, SoB2cEntity soB2cEntity);
 }

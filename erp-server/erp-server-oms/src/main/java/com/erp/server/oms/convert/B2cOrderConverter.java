@@ -1,5 +1,9 @@
 package com.erp.server.oms.convert;
 
+import com.common.business.mapper.BigDecimalMapperWork;
+import com.common.business.mapper.BooleanMapperWork;
+import com.common.business.mapper.NumberMapperWork;
+import com.common.business.mapper.ObjectMapperWork;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
@@ -14,6 +18,7 @@ import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -23,8 +28,9 @@ import java.util.List;
  * @author Jim
  * @since 2023-11-15
  */
-@Mapper
+
 @Component
+@Mapper(uses = {ObjectMapperWork.class})
 public interface B2cOrderConverter {
     B2cOrderConverter INSTANCE = Mappers.getMapper(B2cOrderConverter.class);
 
@@ -165,4 +171,28 @@ public interface B2cOrderConverter {
     @Mappings({
     })
     SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO skuMappingDTOToGenDTO(ListingInfoWithSkuMappingDTO sourceDTO);
+    @Mappings({
+            @Mapping(target = "soId", source = "soId", qualifiedByName = "objToString"),
+            @Mapping(target = "soDetailId", source = "soDetailId", qualifiedByName = "objToString"),
+            @Mapping(target = "skuId", source = "skuId", qualifiedByName = "objToString"),
+            @Mapping(target = "skuNo", source = "skuNo", qualifiedByName = "objToString"),
+            @Mapping(target = "qty", source = "qty", qualifiedByName = "objToString"),
+            @Mapping(target = "declareCn", source = "declareCn", qualifiedByName = "objToString"),
+            @Mapping(target = "declareEn", source = "declareEn", qualifiedByName = "objToString"),
+            @Mapping(target = "toDeclarePrice", source = "toDeclarePrice", qualifiedByName = "objToBigDecimal"),
+            @Mapping(target = "toCurrency", source = "toCurrency", qualifiedByName = "objToString"),
+            @Mapping(target = "toCurrencySymbol", source = "toCurrencySymbol", qualifiedByName = "objToString"),
+            @Mapping(target = "weight", source = "grossWeight", qualifiedByName = "objToBigDecimal"),
+            @Mapping(target = "toCustomsCode", source = "toCustomsCode", qualifiedByName = "objToString"),
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "version", ignore = true)
+    })
+    SoB2cDeclareProductEntity convertDeclareProductByMap(Map<String, Object> detailMap);
 }

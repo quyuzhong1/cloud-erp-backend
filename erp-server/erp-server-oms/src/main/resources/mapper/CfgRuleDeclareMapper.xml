@@ -15,8 +15,8 @@
        <result column="name" property="name" />
        <result column="disabled" property="disabled" />
        <result column="remark" property="remark" />
-       <result column="declare_chinese_name" property="declareChineseName" />
-       <result column="declare_english_name" property="declareEnglishName" />
+       <result column="declare_cn" property="declareCn" />
+       <result column="declare_en" property="declareEn" />
        <result column="to_customs_code" property="toCustomsCode" />
        <result column="priority" property="priority" />
        <result column="to_declare_price" property="toDeclarePrice" />
@@ -39,7 +39,7 @@
         update_time,
         version,
         is_deleted,
-        name, disabled, remark, declare_chinese_name, declare_english_name, to_customs_code, priority, to_declare_price, to_currency, to_currency_symbol, to_declare_price_type, rate, max_declare_price, min_declare_price
+        name, disabled, remark, declare_cn, declare_en, to_customs_code, priority, to_declare_price, to_currency, to_currency_symbol, to_declare_price_type, rate, max_declare_price, min_declare_price
     </sql>
 
     <select id="paging" resultType="com.erp.model.oms.dto.CfgRuleDeclareDTO$PagingViewDTO">
@@ -49,10 +49,10 @@
         priority,
         disabled,
         remark,
-        create_user_name,
-        create_time,
-        update_user_name,
-        update_time
+        create_user_name as createUserName,
+        create_time as createTime,
+        update_user_name as updateUserName,
+        update_time as updateTime
         FROM cfg_rule_declare cd
         WHERE ${params.sqlMap.default}
         and cd.is_deleted=FALSE
@@ -60,7 +60,13 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        ORDER BY cd.update_time DESC
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        cd.id desc
     </select>
 
 

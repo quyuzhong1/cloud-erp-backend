@@ -42,13 +42,13 @@ public class CfgRuleDeclareEntity extends BaseEntity<CfgRuleDeclareEntity> {
     /**
     * 报关中文名称
     */
-    @TableField("declare_chinese_name")
-    private String declareChineseName;
+    @TableField("declare_cn")
+    private String declareCn;
     /**
     * 报关英文名称
     */
-    @TableField("declare_english_name")
-    private String declareEnglishName;
+    @TableField("declare_en")
+    private String declareEn;
     /**
     * 目的国海关编码
     */
