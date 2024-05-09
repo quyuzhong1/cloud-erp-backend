@@ -8,6 +8,7 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.tms.dto.transfer.TransferCancelOrderReq;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -40,6 +41,23 @@ import java.util.Objects;
 public class TransferDeclareDTO implements Serializable {
 
 
+    /**
+     * 取消订单预报实体
+     */
+    @Data
+    @AllArgsConstructor
+    @Builder
+    @NoArgsConstructor
+    public static class CancelOrderForecastDTO {
+
+        /**
+         * 中转物流商id
+         */
+        private String transferLogisticsSupplierId;
+
+        private TransferCancelOrderReq transferCancelOrderReq;
+
+    }
     /**
      * B2C订单预报实体
      */
