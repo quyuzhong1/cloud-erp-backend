@@ -2,10 +2,8 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -18,8 +16,8 @@ import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -29,8 +27,6 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -134,9 +130,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Resource
     private PurchaseOrderDetailService purchaseOrderDetailService;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;
@@ -497,7 +490,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //调用审核流程
         approveProcess(entity, dto);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "采购订单", approveType.getName(), dto.getComment());
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "采购订单", approveType.getName(), dto.getComment());
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_ORDER.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
@@ -620,7 +613,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         inventoryFeign.purchaseOrderUnApproveBatch(Arrays.asList(id));
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "采购订单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "采购订单");
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_ORDER.getCode(), entity.getId(), "反审核操作");
         //审核通过发送金蝶
         syncKingdeePurchaseOrderService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
@@ -650,7 +643,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         log.info("采购订单撤销流程，ids=【{}】", ids);
 
         //撤销现有流程
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
             revokeDTO.setBusinessId(obj);
@@ -955,7 +948,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_98036);
         }
 
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewGenerateReceiveDTOS = baseMapper.viewGenerateReceive(purchaseDetailIdList);
 
         List<String> detailIdList = viewGenerateReceiveDTOS.stream().map(PurchaseOrderDTO.ViewGenerateReceiveDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
@@ -1619,7 +1612,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @param list
      */
     private void startProcess(List<PurchaseOrderEntity> list) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
         list.forEach(obj -> {
             ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
@@ -1645,7 +1638,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @param dto
      */
     private void approveProcess(PurchaseOrderEntity entity, ApproveOneDTO dto) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
         approveDTO.setBusinessKey(SourceTypeEnum.PURCHASE_ORDER.getCode());
@@ -1755,7 +1748,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      */
     private Boolean updateApproveStatusForApprove(List<String> ids, String approveStatus) {
         //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
 
        return this.lambdaUpdate().in(PurchaseOrderEntity::getId, ids)
                 .set(PurchaseOrderEntity::getApproveUserId, userInfo.getUid())
@@ -2572,7 +2565,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     public SupplierUserInfoVO getSrmSupplierUserInfo() {
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         if (Objects.isNull(loginUser)){
             throw new ServiceException(ApiError.ERROR_403);
         }

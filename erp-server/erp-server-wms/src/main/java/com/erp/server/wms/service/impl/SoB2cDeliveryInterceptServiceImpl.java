@@ -11,6 +11,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -22,7 +23,6 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
-import com.erp.model.oms.enums.*;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.SoB2cAbnormalTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -40,8 +40,6 @@ import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.dto.*;
-import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -64,11 +62,6 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.annotation.Resource;
 
 /**
  * <p>
@@ -142,7 +135,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c发货拦截单" , soB2cDeliveryInterceptEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货拦截单" , soB2cDeliveryInterceptEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), soB2cDeliveryInterceptEntity.getId(), "新增操作");
         // 新增明细（如果有明细的话）
         soB2cDeliveryInterceptDetailService.add(addDTO, soB2cDeliveryInterceptEntity.getId());
@@ -308,7 +301,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         this.updateById(entity);
 
         // 操作日志
-        String logMsg = StrUtil.format("用户【{}】发起物流拦截,单据【{}】", commonService.getUserInfo().getUserName(), "发货拦截单", entity.getCode());
+        String logMsg = StrUtil.format("用户【{}】发起物流拦截,单据【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货拦截单", entity.getCode());
         operateLogService.addModuleOperateLog(logMsg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "处理操作");
         if(isSuccess){
             return BatchResultDTO.success(entity.getId(),entity.getCode(),msg);
@@ -331,7 +324,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             throw new ServiceException(ApiError.STATUS_IS_HANDLE_NOT_OPERATE);
         }
 
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
 
         Boolean isSuccess= HandleResultEnum.SUCCESS.getCode().equals(dto.getHandleResult());
         if (isSuccess) {
@@ -413,7 +406,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         }
 
         // 操作日志
-        String logMsg = StrUtil.format("用户【{}】物流拦截结果确认【{}】", commonService.getUserInfo().getUserName(), "发货拦截单", entity.getCode());
+        String logMsg = StrUtil.format("用户【{}】物流拦截结果确认【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货拦截单", entity.getCode());
         operateLogService.addModuleOperateLog(logMsg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "处理操作");
 
         return BatchResultDTO.success(entity.getId(),entity.getCode(), "拦截结果确认");
@@ -482,7 +475,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         if (CollectionUtils.isEmpty(sourceIds)) {
             return Boolean.FALSE;
         }
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
 
         return lambdaUpdate()
                 .in(SoB2cDeliveryInterceptEntity::getSourceId, sourceIds)

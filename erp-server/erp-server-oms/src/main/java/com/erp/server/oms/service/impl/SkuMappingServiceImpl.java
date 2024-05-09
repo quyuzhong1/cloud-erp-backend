@@ -16,6 +16,7 @@ import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -82,9 +83,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Resource
     private OperateLogService operateLogService;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -177,7 +175,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             String key = DictBasicTypeEnum.SALES_PLATFORM.getType();
             List<DictBasicDTO.ViewDTO> dictBasicList = dictBasicService.getByKey(key);
             List<ShopInfoEntity> shopInfoList = shopInfoService.list();
-            SkuMappingExcelListener excelListenerUtil = new SkuMappingExcelListener(this, skuList, shopInfoList, skuMappingList, dictBasicList, list, listingInfoService,operateLogService,commonService);
+            SkuMappingExcelListener excelListenerUtil = new SkuMappingExcelListener(this, skuList, shopInfoList, skuMappingList, dictBasicList, list, listingInfoService,operateLogService);
             try {
                 EasyExcel.read(excelFile.getInputStream(), SkuMappingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             } catch (Exception e) {
@@ -416,9 +414,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
 
         // 操作日志
-//        String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", commonService.getUserInfo().getUserName(), "sku映射表", addSkuMaping.getId());
+//        String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", addSkuMaping.getId());
 //        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMaping.getId(), "新增操作");
-        operateLogService.addModuleOperateLogByObj(skuMaping, addSkuMaping, ModuleTypeEnum.LISTING_INFO.getCode(), addSkuMaping.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",commonService.getUserInfo().getUserName()));
+        operateLogService.addModuleOperateLogByObj(skuMaping, addSkuMaping, ModuleTypeEnum.LISTING_INFO.getCode(), addSkuMaping.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName()));
         return addSkuMaping.getId();
     }
 
@@ -519,7 +517,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
         if (this.save(skuMappingEntity)) {
             // 操作日志
-            String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", commonService.getUserInfo().getUserName(), "sku映射表", skuMappingEntity.getId());
+            String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", skuMappingEntity.getId());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingId, "新增操作");
             return skuMappingEntity.getId();
         }
@@ -654,7 +652,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException("[SkuMapping] 数据新增失败");
         }
         // 操作日志
-//        String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", commonService.getUserInfo().getUserName(), "sku映射表", addSkuMapping.getId());
+//        String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", addSkuMapping.getId());
 //        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMapping.getId(), "新增操作");
         operateLogService.addModuleOperateLogByObj(skuMapping, addSkuMapping, ModuleTypeEnum.LISTING_INFO.getCode(), addSkuMapping.getListingId(), "编辑sku映射表");
         return addSkuMapping.getId();

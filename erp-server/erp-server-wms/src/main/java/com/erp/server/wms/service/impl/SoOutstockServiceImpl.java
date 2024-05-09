@@ -24,6 +24,7 @@ import com.common.business.dto.PlatformSoOutStockDetailDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -55,9 +56,8 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
-import com.erp.model.tms.enums.DeclareStatusEnum;
-import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
+import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SoOutstockPackingExcelDTO;
@@ -589,7 +589,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         // 调用流程审核
         approveProcess(entity, dto);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "销售出库单", approveType.getName(), dto.getComment());
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "销售出库单", approveType.getName(), dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
@@ -603,7 +603,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @param dto
      */
     public void approveProcess(SoOutstockEntity entity, ApproveOneDTO dto) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
         approveDTO.setBusinessKey(SourceTypeEnum.SO_OUTSTOCK.getCode());
@@ -741,7 +741,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     public void updateForApprove(String id, String approveStatus, Boolean isB2c) {
         //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         this.lambdaUpdate().eq(SoOutstockEntity::getId, id)
                 .set(SoOutstockEntity::getApproveUserName, userInfo.getUserName())
                 .set(SoOutstockEntity::getApproveStatus, approveStatus)

@@ -12,6 +12,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -121,8 +122,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Resource
     private ShopeeMerchantService shopeeMerchantService;
 
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private ShopSysUserAuthService shopSysUserAuthService;
@@ -757,7 +756,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Override
     public List<ShopInfoEntity> listAuth(ShopDTO.PlatformDTO platformDTO) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
         if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
             return Collections.EMPTY_LIST;
@@ -1084,7 +1083,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     public List<ShopSysUserAuthDTO.ViewShopDTO> listShopByAmazonAuth() {
         ShopSysUserAuthDTO.UserAuthShopParamDTO dto = new ShopSysUserAuthDTO.UserAuthShopParamDTO();
         dto.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
-        dto.setUserId(commonService.getUserInfo().getUid());
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
         return shopSysUserAuthService.listUserAuthShop(dto);
     }
 

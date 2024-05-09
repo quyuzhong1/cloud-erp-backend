@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -164,7 +165,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      */
     @Override
     public Boolean startProject(StartProjectDTO dto) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         //项目id
         String projectId = dto.getProjectId();
         ProjectInfoEntity project = this.getById(projectId);
@@ -226,7 +227,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      */
     @Override
     public Boolean batchStartProject(StartProjectDTO.BatchStartProjectDTO dto) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         //项目id
         List<String> projectIdList = dto.getProjectIdList();
         List<ProjectInfoEntity> projectList = this.listByIds(projectIdList);
@@ -379,7 +380,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         IPage pageData = new Page();
         //获取@RequestPermissions的产品id
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userId = loginUser.getUid();
         //根据当前登录人id 获取收藏的列表
         List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
@@ -496,7 +497,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     public List<BasicDTO> listProjectInfo(ProductSearchDTO.PagingParamDTO params) {
         //获取@RequestPermissions的产品id
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userId = loginUser.getUid();
         List<BasicDTO> list = new ArrayList<>();
         //部门处理
@@ -833,7 +834,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         projectInfoList.stream().forEach(p -> p.setProjectStatus(finishState));
         Boolean finishResult = this.updateBatchById(projectInfoList);
         if (finishResult) {
-            String userName = commonService.getUserInfo().getUserName();
+            String userName = UserContext.getDefaultLoginUser().getUserName();
             for (String productId : productIds) {
                 //发送项目完成通知
                 noticeMessageService.finishProjectNotice(userName, productId);
@@ -876,7 +877,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      */
     @Override
     public Boolean batchArchive(List<String> productIdList) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         Integer finishState = ProjectStateEnum.FINISH.getState();
         List<ProjectInfoEntity> projectList = this.getByProductIdList(productIdList);
         if (CollectionUtils.isEmpty(projectList)) {
@@ -1000,7 +1001,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      */
     @Override
     public boolean archive(String productId) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         //检查项目完成情况
         checkProjectFinish(productId);
         //添加归档信息

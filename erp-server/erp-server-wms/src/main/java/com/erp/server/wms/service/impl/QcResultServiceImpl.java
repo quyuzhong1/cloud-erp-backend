@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
@@ -387,7 +388,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         List<String> poIds = list.stream().map(QcResultDTO.QcNoticeDTO::getPurchaseOrderId).collect(Collectors.toList());
         List<PurchaseOrderEntity> poList = scmTaskFeign.listPurchaseOrderByIds(poIds);
 
-        String userName = commonService.getUserInfo().getUserName();
+        String userName = UserContext.getDefaultLoginUser().getUserName();
         for (QcResultDTO.QcNoticeDTO item : list) {
             String qcType = item.getQcType();
             String qcTypeName = QcTypeEnum.getByCode(qcType);

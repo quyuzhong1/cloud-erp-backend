@@ -3,21 +3,22 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.DmpSkuCostCustomDTO;
 import com.erp.model.dmp.entity.DmpSkuCostCustomEntity;
 import com.erp.server.dmp.mapper.DmpSkuCostCustomMapper;
 import com.erp.server.dmp.service.DmpSkuCostCustomService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.dmp.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.dmp.dto.DmpSkuCostCustomDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 /**
  * <p>
  * sku自定义成本表 服务实现类
@@ -29,9 +30,6 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class DmpSkuCostCustomServiceImpl extends SuperServiceImpl<DmpSkuCostCustomMapper, DmpSkuCostCustomEntity> implements DmpSkuCostCustomService {
-
-    @Autowired
-    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)

@@ -14,6 +14,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -659,7 +660,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //操作日志
         List<Pair<String, String>> pairList = poReturnEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购退货单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "审核操作");
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
             String confirmStatus = "";
@@ -1071,7 +1072,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      **/
     @Override
     public List<PurchaseReturnOrderDTO.ReturnOrderCountDTO> listCount(PermissionsDTO dto) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         PoReturnStatusEnum[] values = PoReturnStatusEnum.values();
         List<PurchaseReturnOrderDTO.ReturnOrderCountDTO> list = new ArrayList<>();
         for (PoReturnStatusEnum item : values) {
@@ -2167,7 +2168,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
 
         //查询登录信息
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         if(Objects.isNull(loginUser)){
             throw new ServiceException(ApiError.ERROR_403);
         }
@@ -2212,7 +2213,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         PurchaseReturnOrderDTO.SupplierPagingParamDTO searchParam = new PurchaseReturnOrderDTO.SupplierPagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
 
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //查询供应商信息
         SupplierEntity supplier = supplierFeign.getSupplierByUid(userInfo.getUid());
         if (ObjectUtils.isNotEmpty(supplier)) {
@@ -2247,7 +2248,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             throw new ServiceException(ApiError.NOT_WAIT_CONFIRM_STATUS);
         }
 
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
 
         //更新确认状态
         lambdaUpdate()
@@ -2263,7 +2264,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         srmPoReconciliationFeign.updateBusinessStatusBySourceIdList(statusDTO);
 
         //操作日志
-        String msg = StrUtil.format("用户【{}】操作单号为【{}】的【{}】退货确认状态为已确认", commonService.getUserInfo().getUserName(), entity.getCode(), "退货确认");
+        String msg = StrUtil.format("用户【{}】操作单号为【{}】的【{}】退货确认状态为已确认", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "退货确认");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "退货确认");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "退货确认");
     }

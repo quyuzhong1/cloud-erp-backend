@@ -4,8 +4,8 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -20,12 +20,10 @@ import com.erp.model.plm.vo.LabelLevelTreeVO;
 import com.erp.server.plm.mapper.BasicLabelMapper;
 import com.erp.server.plm.mapper.ProductRefLabelMapper;
 import com.erp.server.plm.service.BasicLabelService;
-import com.erp.server.plm.service.CommonService;
 import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,8 +44,6 @@ import java.util.stream.Collectors;
 @Service
 public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, BasicLabelEntity> implements BasicLabelService {
 
-    @Autowired
-    private CommonService commonService;
     @Resource
     private ProductRefLabelMapper productRefLabelMapper;
 
@@ -63,7 +59,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
         if(Objects.isNull(dto)){
             dto = new BasicLabelDTO.SearchDTO();
         }
-        dto.setCreateUserId(commonService.getUserInfo().getUid());
+        dto.setCreateUserId(UserContext.getDefaultLoginUser().getUid());
         return baseMapper.listByCondition(dto);
     }
 
@@ -105,7 +101,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
             throw new ServiceException(ApiError.ERROR_EMPTY_LIST);
         }
         //当前登录人
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_403);
         }
@@ -166,7 +162,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
     public void removeBasicLabelById(String id) {
         BasicLabelEntity basicLabelEntity = this.getById(id);
         Optional.ofNullable(basicLabelEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "基础标签单"));
-        LoginUser user = commonService.getUserInfo();
+        LoginUser user = UserContext.getDefaultLoginUser();
         Optional.ofNullable(user).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "当前登录用户"));
         if (!StringUtils.equalsIgnoreCase(basicLabelEntity.getCreateUserId(), user.getUid())){
             throw new ServiceException("只能删除自己创建的标签");
@@ -188,7 +184,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
         updateWrapper.set(BasicLabelEntity::getColor, basicLabelEntity.getColor());
         updateWrapper.set(BasicLabelEntity::getLevel, basicLabelEntity.getLevel());
         updateWrapper.set(BasicLabelEntity::getUpdateTime, LocalDateTime.now());
-        LoginUser user = commonService.getUserInfo();
+        LoginUser user = UserContext.getDefaultLoginUser();
         if (Objects.nonNull(user)) {
             updateWrapper.set(BasicLabelEntity::getUpdateUserId, user.getUid());
             updateWrapper.set(BasicLabelEntity::getUpdateUserName, user.getUserName());
@@ -202,7 +198,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
      */
     private void handleData(BasicLabelEntity basicLabelEntity) {
         //当前登录人
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         ValidatorUtil.isNotNull(loginUser, ApiError.ERROR_403);
         ValidatorUtil.isNotBlank(LabelLevelEnum.getName(basicLabelEntity.getLevel()), ApiError.NOT_EXIST_BASIC_LABEL_LEVEL, basicLabelEntity.getLevel());
         int count = countByLabelName(basicLabelEntity.getName(), basicLabelEntity.getId());

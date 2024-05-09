@@ -1,17 +1,11 @@
 package com.erp.server.wms.service.impl;
 
 
-import java.util.List;
-import java.util.Optional;
-
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -23,10 +17,15 @@ import com.erp.server.wms.mapper.WmsDataComparePlanMapper;
 import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WmsDataComparePlanService;
-
-import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
 /**
  * <p>
  * 数据对比映射方案 服务实现类
@@ -64,7 +63,7 @@ public class WmsDataComparePlanServiceImpl extends SuperServiceImpl<WmsDataCompa
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "数据对比映射方案" , wmsDataComparePlanEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "数据对比映射方案" , wmsDataComparePlanEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, wmsDataComparePlanEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -93,7 +92,7 @@ public class WmsDataComparePlanServiceImpl extends SuperServiceImpl<WmsDataCompa
 
         // 记录主单操作日志
             log.info("编辑 开始记录数据对比映射方案日志数据，id：【{}】", wmsDataComparePlanEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), wmsDataComparePlanEntity.getId(), "数据对比映射方案");
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), wmsDataComparePlanEntity.getId(), "数据对比映射方案");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, wmsDataComparePlanEntity, null, wmsDataComparePlanEntity.getId(), msg);
         return Boolean.TRUE;

@@ -1,8 +1,6 @@
 package com.erp.server.sys.service.impl;
 
 
-import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -10,12 +8,9 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.KingdeeOperatorTypeDTO;
 import com.erp.model.sys.entity.KingdeeOperatorTypeEntity;
 import com.erp.server.sys.mapper.KingdeeOperatorTypeMapper;
-import com.erp.server.sys.service.CommonService;
 import com.erp.server.sys.service.KingdeeOperatorTypeService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

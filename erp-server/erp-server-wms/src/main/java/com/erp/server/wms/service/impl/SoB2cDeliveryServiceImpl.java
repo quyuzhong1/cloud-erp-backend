@@ -24,6 +24,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
@@ -38,7 +39,6 @@ import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.oms.dto.PackageDTO;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
@@ -59,10 +59,8 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
-import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
 import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
-import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -121,8 +119,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
-    private CommonService commonService;
-    @Autowired
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
@@ -179,7 +175,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c发货单", soB2cDeliveryEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", soB2cDeliveryEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), soB2cDeliveryEntity.getId(), "新增操作");
         // 新增明细
         soB2cDeliveryDetailService.add(soB2cDeliveryDetailEntities, soB2cDeliveryEntity.getId());
@@ -297,7 +293,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】手动发货单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
+        String msg = StrUtil.format("用户【{}】手动发货单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "手动发货");
 
         //推送到DMP
@@ -344,7 +340,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //修改订单状态待发货
         soB2cFeign.updateSoB2cStatus(Arrays.asList(entity.getSourceId()), SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
         // 操作日志
-        String msg = StrUtil.format("用户【{}】虚假发货单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
+        String msg = StrUtil.format("用户【{}】虚假发货单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "虚假发货");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "虚假发货");
     }
@@ -707,7 +703,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 SoB2cDeliveryEntity entity = deliveryEntityList.stream().filter(req -> !SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(req.getStatus())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(entity)) {
                     // 操作日志
-                    String msg = StrUtil.format("打印了订单编号为【{}】的面单/配货单", commonService.getUserInfo().getUserName(), logisticsWaybillDetailDTO.getSoCode());
+                    String msg = StrUtil.format("打印了订单编号为【{}】的面单/配货单", UserContext.getDefaultLoginUser().getUserName(), logisticsWaybillDetailDTO.getSoCode());
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "打印面单/配货单");
                 }
             }
@@ -882,7 +878,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if(Objects.isNull(deliveryEntity)){
             return false;
         }
-        String msg = StrUtil.format("用户【{}】更新重量为{} ", commonService.getUserInfo().getUserName(),dto.getWeight()+dto.getWeightUnit());
+        String msg = StrUtil.format("用户【{}】更新重量为{} ", UserContext.getDefaultLoginUser().getUserName(),dto.getWeight()+dto.getWeightUnit());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), deliveryEntity.getId(), msg);
         deliveryEntity.setWeight(dto.getWeight());
         deliveryEntity.setWeighingTime(LocalDateTime.now());
@@ -951,7 +947,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public Boolean addDeliveryLog(List<SoB2cDeliveryEntity> deliveryEntities) {
         for (SoB2cDeliveryEntity entity : deliveryEntities) {
-            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", commonService.getUserInfo().getUserName(), "组包预报", entity.getCode());
+            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "组包预报", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "称重出库");
         }
         return Boolean.TRUE;
@@ -1001,7 +997,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         for (SoB2cDeliveryEntity deliveryEntity : deliveryEntities) {
             //出库
             this.generateB2cSoOutstock(deliveryEntity);
-            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", commonService.getUserInfo().getUserName(), "组包称重", deliveryEntity.getCode());
+            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "组包称重", deliveryEntity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), deliveryEntity.getId(), "组包称重");
         }
         return Boolean.TRUE;

@@ -2,14 +2,13 @@ package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.erp.model.bi.entity.BiSubjectDefaultEntity;
 import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.server.bi.mapper.BiSubjectDefaultMapper;
 import com.erp.server.bi.service.BiSubjectDefaultService;
-import com.erp.server.bi.service.CommonService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -21,8 +20,6 @@ import java.util.List;
 @Service
 public class BiSubjectDefaultServiceImpl extends ServiceImpl<BiSubjectDefaultMapper, BiSubjectDefaultEntity> implements BiSubjectDefaultService {
 
-    @Resource
-    private CommonService commonService;
 
     /**
      * 根据用户Id获取用户默认的专题信息
@@ -50,7 +47,7 @@ public class BiSubjectDefaultServiceImpl extends ServiceImpl<BiSubjectDefaultMap
      */
     @Override
     public Boolean setDefault(String subjectId) {
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         //先删除已有的
         deleteByUserId(userId);
         BiSubjectDefaultEntity defaultSubject = new BiSubjectDefaultEntity();

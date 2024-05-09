@@ -17,6 +17,7 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -92,9 +93,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
@@ -845,7 +843,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         }
 
         //创建人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
 
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userInfo.getUid());
         if (ObjectUtils.isEmpty(findUserDTO)) {
@@ -964,7 +962,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
      */
     private void updateApproveStatusForApprove(List<String> ids,String approveStatus) {
         //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
 
         this.lambdaUpdate().in(PurchaseApplicationEntity::getId,ids)
                 .set(PurchaseApplicationEntity::getApproveUserId,userInfo.getUid())

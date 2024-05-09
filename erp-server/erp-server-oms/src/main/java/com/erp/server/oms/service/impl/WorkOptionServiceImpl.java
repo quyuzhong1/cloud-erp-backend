@@ -1,13 +1,13 @@
 package com.erp.server.oms.service.impl;
 
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.mapper.WorkOptionMapper;
-import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.WorkOptionService;
 import org.springframework.stereotype.Service;
 
@@ -22,8 +22,6 @@ public class WorkOptionServiceImpl implements WorkOptionService {
     @Resource
     private WorkflowFeign workflowFeign;
 
-    @Resource
-    private CommonService commonService;
     /**
      * 根据入参查询单据数量
      * @Author Luo_WG
@@ -39,7 +37,7 @@ public class WorkOptionServiceImpl implements WorkOptionService {
                 //获取当前人需要审核的业务ids
                 ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList = new ValidList<>();
                 ProcessManagementDTO.ApproveActivityDTO approveActivityDTO = new ProcessManagementDTO.ApproveActivityDTO();
-                approveActivityDTO.setCurApproveId(commonService.getUserInfo().getUid());
+                approveActivityDTO.setCurApproveId(UserContext.getDefaultLoginUser().getUid());
                 approveActivityDTO.setBusinessKey(myWorkOptionDTO.getModuleCode());
                 dtoList.add(approveActivityDTO);
                 ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.batchCurApproverByApprove(dtoList);
