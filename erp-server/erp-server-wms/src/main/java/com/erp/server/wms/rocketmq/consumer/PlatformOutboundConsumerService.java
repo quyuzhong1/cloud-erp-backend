@@ -112,11 +112,14 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 if(Objects.nonNull(outBoundTime)){
                     generateB2cDTO.setBillDate(outBoundTime.toLocalDate());
                 }
+                //跟踪号
+                generateB2cDTO.setTrackNo(dto.getTrackNo());
+                //运单号
+                generateB2cDTO.setTransportNo(dto.getTrackNo());
                 soOutstockService.generateB2cSoOutstock(generateB2cDTO);
             } catch (Exception e) {
                 log.error("销售订单{} 生成销售出库单失败>>>>>>{}", soB2cCode, e.getMessage());
             }
-
         }
         return ApiResult.success();
     }

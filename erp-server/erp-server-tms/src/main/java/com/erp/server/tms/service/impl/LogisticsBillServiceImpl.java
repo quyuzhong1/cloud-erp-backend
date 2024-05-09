@@ -200,6 +200,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 logisticsBillEntity.setLogisticsSupplierId(channelEntity.getMainId());
             }
         }
+        //平台订单号
+        if (StrUtil.equals(logisticsBillEntity.getSourceType(),SourceTypeEnum.SO_B2C.getCode())) {
+            SoB2cEntity soB2cEntity = soB2cFeign.getById(logisticsBillEntity.getSourceId());
+            if (ObjectUtil.isNotEmpty(soB2cEntity)) {
+                logisticsBillEntity.setPlatformCode(soB2cEntity.getPlatformCode());
+            }
+        }
+
     }
 
     public List<LogisticsBillEntity> listByOutstockIds(List<String> outstockIds) {
@@ -792,7 +800,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             String orderType = item.getOrderType();
             String orderTypeName = OrderTypeEnum.getName(orderType);
             item.setOrderTypeName(orderTypeName);
-
+            //发货类型名称
+            item.setShipmentTypeName(ShipmentTypeEnum.getName(item.getShipmentType()));
         }
     }
 

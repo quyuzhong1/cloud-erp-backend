@@ -106,6 +106,7 @@ public interface GoodCangConverter {
             @Mapping(target = "orderCode",  source = "orderCode"),
             @Mapping(target = "referenceNo",  source = "referenceNo"),
             @Mapping(target = "outBoundTime",  source = "outBoundTime"),
+            @Mapping(target = "trackNo",  source = "trackNo"),
             @Mapping(target = "orderStatus",  expression = "java(com.sdk.wms.goodcang.enums.GoodCangEnums.OrderStatusEnum.getErpOrderStatus(sourceData.getOrderStatus()))"),
             @Mapping(target = "thirdOrderStatus",  expression = "java(com.sdk.wms.goodcang.enums.GoodCangEnums.OrderStatusEnum.getName(sourceData.getOrderStatus()))"),
     })
