@@ -8,6 +8,8 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
 import com.erp.model.oms.entity.CfgRuleOrderHandleEntity;
 
+import java.util.Map;
+
 /**
  * <p>
  * 订单处理规则表 服务类
@@ -60,4 +62,15 @@ public interface CfgRuleOrderHandleService extends SuperService<CfgRuleOrderHand
      * @return Boolean
      */
     Boolean updateStatus(UpdateStateDTO dto);
+
+
+
+  /**
+   * @description: 返回规则匹配结果
+   * @author Will
+   * @date: 2024/5/9 16:23
+   * @param jsonObject
+   * @return RuleMatchDTO
+   */
+  CfgRuleOrderHandleDTO.RuleMatchDTO getRuleOrderHandleMatchResult(Map<String,Object> jsonObject);
 }
