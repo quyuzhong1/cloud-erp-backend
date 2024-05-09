@@ -1092,13 +1092,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             String logisticsChannelId = stringListEntry.getKey();
             List<SoB2cDeliveryEntity> deliveryEntities = stringListEntry.getValue();
             SoB2cDeliveryDTO.PrintLogisticsWaybillDTO waybillDTO = new SoB2cDeliveryDTO.PrintLogisticsWaybillDTO();
+            waybillDTO.setDisabled(Boolean.FALSE);
             //打印类型
             waybillDTO.setPrintType(param.getPrintType());
 
             //查询是否允许打印面单和配货单
             LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthByChannelId(logisticsChannelId);
             if (ObjectUtil.isEmpty(authDTO)) {
-                throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
+                waybillDTO.setErrorMsg(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST.msg);
+                waybillDTO.setDisabled(Boolean.TRUE);
             }
 
             // 配货单需要根据渠道查询是否是自定义配置，自定义配置需要组装数据
@@ -1107,7 +1109,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                             && req.getLogisticsChannelId().equals(deliveryEntities.get(0).getLogisticsChannelId())
                     ).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(logisticsPrintTypeEntity) && !param.getPrintType().equals(SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode())) {
-                throw new ServiceException(ApiError.LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST, deliveryEntities.get(0).getLogisticsChannelName());
+                waybillDTO.setErrorMsg(StrUtil.format(ApiError.LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST.msg, deliveryEntities.get(0).getLogisticsChannelName()));
+                waybillDTO.setDisabled(Boolean.TRUE);
             }
 
             //根据渠道id查询渠道名称
@@ -1123,7 +1126,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             //无运单号数量
             Integer notTransportNoNum = Math.toIntExact(soB2cDeliveryEntityList.stream().filter(req -> StringUtils.isBlank(req.getTransportNo())).count());
             waybillDTO.setNotTransportNoNum(notTransportNoNum);
-            waybillDTO.setDisabled(Boolean.FALSE);
+
 
             //判断打印类型校验
             LogisticsPlatformEnum logisticsPlatformEnum = LogisticsPlatformEnum.getByCode(authDTO.getLogisticsPlatform());
@@ -1138,7 +1141,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     break;
                 case ALLOCATE_CARGO_BILL :
                     //打印配货单预览
-                    if (LogisticsLabelTypeEnum.AUTHORITY.getCode().equals(logisticsPrintTypeEntity.getLabelType())) {
+                    if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity) && LogisticsLabelTypeEnum.AUTHORITY.getCode().equals(logisticsPrintTypeEntity.getLabelType())) {
                         if ("N".equalsIgnoreCase(logisticsPlatformEnum.getPrintDelivery())) {
                             waybillDTO.setErrorMsg(StrUtil.format(ApiError.LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL.msg, logisticsPlatformEnum.getName()));
                             waybillDTO.setDisabled(Boolean.TRUE);
@@ -1168,6 +1171,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 LogisticsChannelDTO.BaseDTO baseDTO = channelInfoList.stream().filter(req -> req.getId().equals(logisticsChannelId)).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(baseDTO)) {
                     waybillDetailDTO.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
+                }
+
+                //匹配订单
+                SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(deliveryEntity.getSourceId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(soB2cEntity)) {
+                    if (soB2cEntity.getIsFrozen()) {
+                        waybillDTO.setErrorMsg(StrUtil.format(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE.msg, soB2cEntity.getCode()));
+                        waybillDTO.setDisabled(Boolean.TRUE);
+                    }
                 }
                 detailList.add(waybillDetailDTO);
             }
