@@ -35,8 +35,9 @@ public interface LogisticsOperateService {
      * @param status
      * @param requestParamJson
      * @param responseParamJson
+     * @param isSendMsg
      */
-    String pushOperateLog(String authId, String sourceId, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson);
+    String pushOperateLog(String authId, String sourceId, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson, Boolean isSendMsg);
 
     /**
      * 拉取数据 增加飞书预警

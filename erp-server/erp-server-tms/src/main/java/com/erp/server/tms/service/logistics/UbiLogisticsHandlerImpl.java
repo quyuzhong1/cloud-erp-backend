@@ -17,7 +17,6 @@ import com.erp.model.tms.vo.response.*;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
-import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
 import com.sdk.tms.ubi.model.catalog.response.Origin;
 import com.sdk.tms.ubi.model.catalog.response.ServiceCataLog;
 import com.sdk.tms.ubi.model.label.LabelRequest;
@@ -77,7 +76,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
             List<OrderResponse> order = ubiShipperService.createOrder(logisticsOrderVO.getAuthMap(), ubiOrder);
             logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
-                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(order));
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(order), false);
             //一票多件包裹信息 会有多层嵌套 暂不考虑
             LogisticsOrderResponseVO responseVO = LogisticsOrderResponseVO.builder()
                     .deliveryNo(order.get(0).getReferenceNo())
@@ -89,7 +88,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
             log.error(e.getMessage());
             logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
-                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e));
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e), true);
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + e.getMessage());
         }
     }
@@ -113,7 +112,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 OrderResponse orderResponse = ubiShipperService.deleteShipperOrder(logisticsCancelOrderVO.getAuthMap(), logisticsQueryVO.getDeliveryNo());
                 logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
                         logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
-                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderResponse));
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderResponse), false);
                 if ("Success".equalsIgnoreCase(orderResponse.getStatus())) {
                     responseVO.success();
                     responseVO.setDeliveryNo(orderResponse.getReferenceNo());
@@ -123,7 +122,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     isSuccess = false;
                     logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
                             logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
-                            RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderResponse));
+                            RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderResponse), false);
                     responseVO.failure(getPlatForm().getName(), logisticsQueryVO.getDeliveryNo(), orderResponse.getErrors());
                     responseVO.setDeliveryNo(orderResponse.getReferenceNo());
                 }
@@ -131,7 +130,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
             } catch (Exception e) {
                 logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
                         logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
-                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(e));
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(e), true);
                 isSuccess = false;
             }
         }
@@ -157,7 +156,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
             List<OrderResponse> orderResponses = ubiShipperService.interceptOrder(logisticsInterceptOrderVO.getAuthMap(), holdRequest);
             logisticsOperateService.pushOperateLog(logisticsInterceptOrderVO.getAuthMap().get("id"),
                     logisticsInterceptOrderVO.getDeliveryNo(), BusinessTypeEnum.INTERCEPT_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
-                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsInterceptOrderVOS), JSONUtil.toJsonStr(orderResponses));
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsInterceptOrderVOS), JSONUtil.toJsonStr(orderResponses), false);
             List<InterceptResponseVO> responseVOS = new ArrayList<>();
             if (CollectionUtils.isNotEmpty(orderResponses)) {
                 orderResponses.stream().forEach(orderResponse -> {
@@ -180,7 +179,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         } catch (Exception e) {
             logisticsOperateService.pushOperateLog(logisticsInterceptOrderVO.getAuthMap().get("id"),
                     logisticsInterceptOrderVO.getDeliveryNo(), BusinessTypeEnum.INTERCEPT_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
-                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsInterceptOrderVOS), JSONUtil.toJsonStr(e));
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsInterceptOrderVOS), JSONUtil.toJsonStr(e), true);
             return failure(getPlatForm().getName() + ":" + e.getMessage());
         }
     }

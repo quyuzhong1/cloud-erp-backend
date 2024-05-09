@@ -16,6 +16,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.PackageDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -101,12 +102,14 @@ public class PackageServiceImpl implements PackageService {
         SoB2cEntity entity = soB2cFeign.getById(scanResult.getSoId());
         //查询平台订单是否取消
         if (entity.getIsCancel()) {
+            //订单拦截
+            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(entity.getId(), "平台取消"));
             throw new ServiceException("平台订单已取消，无法组包");
         } else {
-            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+            if (soB2cFeign.checkPlatformShipOrder(entity.getId())) {
                 //如果订单原始状态非取消，这里需要再次调用平台接口查询，是否已取消
                 PlatformDeliveryInterceptDTO deliveryInterceptDTO = new PlatformDeliveryInterceptDTO();
-                deliveryInterceptDTO.setSoB2cId(entity.getSourceId());
+                deliveryInterceptDTO.setSoB2cId(entity.getId());
                 deliveryInterceptDTO.setDictPlatform(entity.getDictPlatform());
                 deliveryInterceptDTO.setOldIsCancel(entity.getIsCancel());
                 deliveryInterceptDTO.setPlatformCode(entity.getPlatformCode());
