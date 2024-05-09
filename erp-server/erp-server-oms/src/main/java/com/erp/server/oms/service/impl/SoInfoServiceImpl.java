@@ -540,7 +540,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
         }
         // 仓位排序
-        detailList.sort((s1, s2) -> {
+        detailList.stream().sorted((s1, s2) -> {
             if (s1.getWarehouseLocation().isEmpty() && s2.getWarehouseLocation().isEmpty()) {
                 return 0;
             } else if (s1.getWarehouseLocation().isEmpty()) {
