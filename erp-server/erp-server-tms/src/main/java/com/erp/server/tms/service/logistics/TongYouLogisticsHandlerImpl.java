@@ -181,7 +181,7 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     responseList.add(response);
                     logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
                             logisticsQueryBaseVO.getDeliveryNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.TONG_YOU.getCode(),
-                            RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(tongYouOrderInfo), false);
+                            RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(tongYouOrderInfo));
 
                     isSuccess = false;
                     continue;
@@ -190,13 +190,13 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 responseList.add(response);
                 logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
                         logisticsQueryBaseVO.getDeliveryNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.TONG_YOU.getCode(),
-                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(tongYouOrderInfo), false);
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(tongYouOrderInfo));
             } catch (Exception e) {
                 response.failure(getPlatForm().getName(), logisticsQueryBaseVO.getDeliveryNo(), e.getMessage());
                 responseList.add(response);
                 logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
                         logisticsQueryBaseVO.getDeliveryNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.TONG_YOU.getCode(),
-                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(e), true);
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(e));
                 isSuccess = false;
             }
 

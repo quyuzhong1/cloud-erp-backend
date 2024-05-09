@@ -5599,6 +5599,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
+        //待配货和配货中订单允许配货
+        if (!SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(entity.getBillStatus())
+                && !SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_DISTRIBUTION, entity.getCode());
+        }
+        //只有已审核数据支持配货
+        if (!ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_APPROVE_NOT_DISTRIBUTION, entity.getCode());
+        }
         //预报成功不支持更换渠道
         if (TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())) {
             throw new ServiceException("已预报成功不支持更换渠道");
@@ -7276,6 +7285,87 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //更新入库预报单详情的上传状态
         transferDeclareFeign.updateTransferStatusByBatch(updateInstockForcastList);
         return true;
+    }
+
+    @Override
+    public PagingVO<SoB2cAbnormalDTO.ListDTO> abnormalPaging(PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> pagingParamDTO) {
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        //查询店铺设置权限
+        SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
+        if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
+            return new PagingVO(new Page<>());
+        }
+        IPage<SoB2cAbnormalDTO.ListDTO> list =  baseMapper.abnormalPaging(query, pagingParamDTO.getParams(), shopAuthResultDTO);
+        handleAbnormalList(list.getRecords());
+        return new PagingVO(list);
+    }
+
+    @Override
+    public Boolean abnormalExportExcel(SoB2cAbnormalDTO.PagingParamDTO params, HttpServletResponse response) {
+        //查询店铺设置权限
+        SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
+        if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL,"B2C异常销售订单");
+        }
+        List<SoB2cAbnormalDTO.ListDTO> records = null;
+        try {
+            records = this.baseMapper.abnormalExportExcel(params,shopAuthResultDTO);
+        } catch (Exception e) {
+            throw new ServiceException("导出失败");
+        }
+        if (CollectionUtils.isEmpty(records)) {
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL,"B2C异常销售订单");
+        }
+        if (records.size() >= 50000) {
+            throw new ServiceException("导出条数不能超过50000");
+        }
+
+        //数据赋值处理
+        handleAbnormalList(records);
+        String name = "B2C销售订单";
+        StringBuffer sb = new StringBuffer();
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        String excelPath = "excel/soB2cAbnormal.xlsx";
+        try {
+            new ExcelPrintUtils().patchExport(records, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("产品认证列表导出出错 >>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * @description:
+     * @author Will
+     * @date: 2024/4/25 16:10
+     * @param records
+     */
+    private void handleAbnormalList(List<SoB2cAbnormalDTO.ListDTO> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+        //店铺
+        List<String> shopIdList = records.stream().map(SoB2cAbnormalDTO.ListDTO::getShopId).collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = shopInfoService.listByIds(shopIdList);
+
+        for (SoB2cAbnormalDTO.ListDTO listDTO : records) {
+            //审核状态
+            listDTO.setApproveStatusName(ApproveStatusEnum.getName(listDTO.getApproveStatus()));
+            //订单状态
+            listDTO.setBillStatusName(SoB2cBillStatusEnum.getName(listDTO.getBillStatus()));
+            //错误标识名称
+            listDTO.setSignOrderErrorName(SoB2cErrorTypeEnum.getName(listDTO.getSignOrderError()));
+
+            //店铺
+            ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(listDTO.getShopId())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(shopInfoEntity)) {
+                listDTO.setShopName(shopInfoEntity.getName());
+            }
+        }
     }
 
     /**

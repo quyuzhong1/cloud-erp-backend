@@ -496,6 +496,8 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     Boolean updateStatus(TmsDeclareBillDTO.UpdateStatusDTO dto);
 
     List<SoOutstockEntity> listByCodes(List<String> codes);
+
+    Boolean generateB2cSoOutstockByPlatformData(List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO);
     /**
      * @description: 重新生成销售出库单
      * @author Will
@@ -504,6 +506,4 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return Boolean
      */
     Boolean afreshGenerateB2cOutstock(List<String> ids);
-
-    Boolean generateB2cSoOutstockByPlatformData(List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO);
 }

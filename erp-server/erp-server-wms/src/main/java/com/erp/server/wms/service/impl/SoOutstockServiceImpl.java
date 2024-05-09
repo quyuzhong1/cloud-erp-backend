@@ -1024,7 +1024,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.SO_OUT_STOCK.getCode(), rejectPairList, "状态变更");
             if (isPushKingDee) {
                 //B2B 反审核发送金蝶
-                haveSoIdList.stream().filter(l -> !b2cType.equals(l.getOrderType())).forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+                haveSoIdList.stream().forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
             }
 
             //修改中转报关单订单出库状态
@@ -3045,6 +3045,32 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return Boolean.TRUE;
         }
 
+    }
+    @Override
+    public Boolean afreshGenerateB2cOutstock(List<String> ids) {
+        List<SoB2cEntity> soB2cList = soB2cFeign.listWarehouseIsEmpty(ids);
+        Map<String, SoB2cEntity> mainMap = soB2cFeign.listByIds(ids)
+                .stream()
+                .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
+        for (String id : ids) {
+            try {
+                SoB2cEntity currentEntity = mainMap.get(id);
+                if (null == currentEntity){
+                    throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+                }
+                PlatformRetryHandler.retrySoOutStock(currentEntity, soB2cList);
+            } catch (Exception e) {
+                String message = e.getMessage();
+                log.error("重新创建或者修改B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", id, id, message);
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+                addError.setMainId(id);
+                addError.setMessage(message);
+                addError.setParamJson(id);
+                soB2cFeign.addSoB2cError(addError);
+            }
+        }
+        return Boolean.TRUE;
     }
 
 
