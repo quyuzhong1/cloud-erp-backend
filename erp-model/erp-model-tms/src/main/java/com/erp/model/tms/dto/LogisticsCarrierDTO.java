@@ -133,7 +133,9 @@ public class LogisticsCarrierDTO implements Serializable {
         private String searchKeyword;
     }
 
-    public class PagingVO {
+    @Data
+    @AllArgsConstructor
+    public static class PagingVO {
         private String id;
         /**
          * 主键id
