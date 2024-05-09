@@ -16,10 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 @Slf4j
@@ -101,7 +98,7 @@ public class AliExpressDliveryOrderService {
 //        request.setApiName(AliexpressConstants.ALIEXPRESS_ASCP_FFO_QUERY);
 //        Map<String, Object> paramMap = new HashMap<>();
 //        paramMap.put("biz_type", 288000);
-//        paramMap.put("customer_order_number_list", Arrays.asList("1102876023215566"));
+//        paramMap.put("customer_order_number_list", Arrays.asList("8184443286856089"));
 //        System.out.println();
 //        request.addApiParameter("fulfillment_forward_order_query", JSONObject.toJSONString(paramMap));
 //        IopResponse response = client.execute(request, token, Protocol.TOP);
@@ -119,7 +116,7 @@ public class AliExpressDliveryOrderService {
         request.setApiName(AliexpressConstants.ALIEXPRESS_ASCP_FFO_ITEM_QUERY);
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("biz_type", 288000);
-        paramMap.put("fulfillment_order_no", "WH4062610069835019");
+        paramMap.put("fulfillment_order_no", "WH0569510380903244");
         System.out.println();
         request.addApiParameter("fulfillment_forward_order_item_query", JSONObject.toJSONString(paramMap));
         IopResponse response = client.execute(request, token, Protocol.TOP);
