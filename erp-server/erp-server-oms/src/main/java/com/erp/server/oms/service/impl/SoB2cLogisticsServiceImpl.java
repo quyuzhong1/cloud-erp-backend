@@ -145,7 +145,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     public SoB2cLogisticsEntity getByMainId(String mainId) {
-        return lambdaQuery().eq(SoB2cLogisticsEntity::getMainId, mainId).one();
+        return lambdaQuery().eq(SoB2cLogisticsEntity::getMainId, mainId).last(" limit 1 ").one();
     }
 
     private List<SoB2cLogisticsEntity> getListByMainId(String mainId) {
