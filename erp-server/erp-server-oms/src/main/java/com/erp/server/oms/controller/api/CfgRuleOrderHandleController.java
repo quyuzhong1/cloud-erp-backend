@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
@@ -68,6 +69,7 @@ public class CfgRuleOrderHandleController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<CfgRuleOrderHandleDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<CfgRuleOrderHandleDTO.PagingParamDTO> dto) {
         PagingVO<CfgRuleOrderHandleDTO.ListDTO> pagingVO = cfgRuleOrderHandleService.paging(dto);
         return success(pagingVO);
