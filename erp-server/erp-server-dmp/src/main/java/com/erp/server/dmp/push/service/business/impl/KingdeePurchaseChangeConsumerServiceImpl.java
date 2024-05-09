@@ -65,8 +65,8 @@ public class KingdeePurchaseChangeConsumerServiceImpl implements KingdeePurchase
      * 审核
      */
     public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
-        //查询采购订单财务信息
-        handleFinance(map);
+        //查询采购订单信息
+        handlePurchaseOrderData(map);
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
@@ -113,12 +113,12 @@ public class KingdeePurchaseChangeConsumerServiceImpl implements KingdeePurchase
     /**
      * 查询采购订单财务信息
      */
-    private void handleFinance (Map<String, Object> map) {
+    private void handlePurchaseOrderData (Map<String, Object> map) {
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PURCHASEORDER.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", map.get("sourceCode")));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FPOOrderFinance_FEntryID,FExchangeRate,FPayConditionId.FNumber";
+        String fieldKeys = "FPOOrderFinance_FEntryID,FExchangeRate,FPayConditionId.FNumber,FIinstallment_FENTRYID,FRelBillNo,FOrderActualPaySubEntity_FDetailID,FPOORDERID";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 20);
         if (CollectionUtils.isEmpty(queryList)) {
             throw new ServiceException(10000, StrUtil.format("未找到采购订单{}",map.get("sourceCode").toString()));
@@ -129,5 +129,15 @@ public class KingdeePurchaseChangeConsumerServiceImpl implements KingdeePurchase
         map.put("financeId",financeId);
         map.put("exchangeRate",exchangeRate);
         map.put("payConditionId",payConditionId);
+
+        List<JSONObject> fIinstallmentList = new ArrayList<>();
+        for (Map<String , Object> queryMap : queryList) {
+            JSONObject actualPayJson = new JSONObject();
+            //付款计划id
+            Object finstallmentId = queryMap.get("FIinstallment_FENTRYID");
+            actualPayJson.set("finstallmentId",finstallmentId);
+            fIinstallmentList.add(actualPayJson);
+        }
+        map.put("fIinstallmentList",fIinstallmentList);
     }
 }

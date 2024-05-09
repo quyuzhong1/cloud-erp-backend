@@ -198,12 +198,5 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
      **/
     void getOrderByCodeJob();
 
-    /**
-     * 订单维度重试订单预报
-     * @param id
-     * @return
-     */
-    List<BatchResultDTO> retryOrderForecast(String id);
-
     TransferDeclareDTO.ShippingOrderDTO b2cOrderForecast(TransferDeclareDTO.B2cOrderForecastDTO b2cOrderForecastDTO);
 }
