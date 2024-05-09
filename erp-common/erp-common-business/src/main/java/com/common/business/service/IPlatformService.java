@@ -24,4 +24,10 @@ public interface IPlatformService {
      * @return
      */
     Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto);
+
+
+    /**
+     * 查询并更新平台订单状态
+     */
+    Boolean queryAndUpdateOrderStatus(PlatformDeliveryInterceptDTO dto);
 }

@@ -73,4 +73,12 @@ public class WalmartShipOrder implements IPlatformService {
     public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
         return null;
     }
+
+    /**
+     * 查询并更新平台订单状态
+     */
+    @Override
+    public Boolean queryAndUpdateOrderStatus(PlatformDeliveryInterceptDTO dto) {
+        return null;
+    }
 }
