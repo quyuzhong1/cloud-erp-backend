@@ -920,7 +920,6 @@ public class SoB2cController extends BaseController {
 
     }
 
-
     /**
      * 虚假发货
      *
@@ -1057,6 +1056,18 @@ public class SoB2cController extends BaseController {
     public ApiResult exportExcel(@RequestBody SoB2cDTO.ExportParamDTO dto, HttpServletResponse response) {
         Boolean flag = soB2cService.exportExcel(dto, response);
         return flag == true ? success() : failure();
+    }
+
+
+    /**
+     * 不出库发货
+     * @param dto
+     * @return
+     */
+    @PostMapping("/deliveryWithNotOutbound")
+    public ApiResult<List<BatchResultDTO>> deliveryWithNotOutbound(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = soB2cService.deliveryWithNotOutbound(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 }

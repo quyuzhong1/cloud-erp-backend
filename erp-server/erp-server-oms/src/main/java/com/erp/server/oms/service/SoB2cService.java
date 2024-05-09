@@ -898,4 +898,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     PackageDTO.ScanResultDTO packageScan(PackageDTO.ScanDTO scanDTO);
 
     Boolean autoCancelOrderForecast(SoB2cEntity mainEntity);
+
+    List<BatchResultDTO> deliveryWithNotOutbound(List<String> ids);
 }
