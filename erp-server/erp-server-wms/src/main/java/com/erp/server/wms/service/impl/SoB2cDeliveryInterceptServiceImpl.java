@@ -478,6 +478,14 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     }
 
     @Override
+    public List<SoB2cDeliveryInterceptEntity> listByDeliveryIds(List<String> deliveryIds) {
+        if (CollectionUtils.isEmpty(deliveryIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(SoB2cDeliveryInterceptEntity::getDeliveryId, deliveryIds).list();
+    }
+
+    @Override
     public Boolean updateHandleStatus(List<String> sourceIds, String status) {
         if (CollectionUtils.isEmpty(sourceIds)) {
             return Boolean.FALSE;
@@ -491,6 +499,11 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 .set(SoB2cDeliveryInterceptEntity::getHandleUserName, userInfo.getUserName())
                 .set(SoB2cDeliveryInterceptEntity::getHandleTime, LocalDateTime.now())
                 .update();
+    }
+
+    @Override
+    public List<SoB2cDeliveryInterceptEntity> listByStatus(String code) {
+        return lambdaQuery().eq(SoB2cDeliveryInterceptEntity::getHandleStatus,code).list();
     }
 
     /**
@@ -508,7 +521,12 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             soB2cDeliveryInterceptEntity.setSoDeliveryCode(soB2cDeliveryEntities.get(MathUtil.ZERO).getCode());
         }
 
-
+        SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryService.getNotCancelBySoId(soB2cDeliveryInterceptEntity.getSourceId());
+        if(Objects.isNull(soB2cDelivery)){
+            throw new ServiceException("查询不到发货单");
+        }
+        soB2cDeliveryInterceptEntity.setDeliveryId(soB2cDelivery.getId());
+        soB2cDeliveryInterceptEntity.setSoDeliveryCode(soB2cDelivery.getCode());
     }
 
     /**

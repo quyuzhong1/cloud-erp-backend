@@ -4390,7 +4390,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 log.error("ProjectTaskServiceImpl>>>approvalTaskPass>>更新/保存工时记录失败请重试！");
                 throw new RuntimeException("更新/保存工时记录失败请重试");
             }
-            if (MathUtil.ONE.equals(taskEntity.getProperty())) {
+            //取消自动变更为“已立项”状态
+            /*if (MathUtil.ONE.equals(taskEntity.getProperty())) {
                 //审核完成后查询产品下立项任务是否全部完成，完成则自动将产品变更为已立项
                 Boolean approvalTaskFlag = this.projectApprovalTaskFinish(taskEntity.getProductId(), MathUtil.ONE);
                 if (approvalTaskFlag) {
@@ -4402,7 +4403,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         productInfoService.updateProduct(dto);
                     }
                 }
-            }
+            }*/
 
             //审核完成后查询产品下所有任务是否全部完成，完成则自动将SKU列表的产品开发状态变更为已完成
             Boolean allTaskFlag = this.projectApprovalTaskFinish(taskEntity.getProductId(), MathUtil.TWO);

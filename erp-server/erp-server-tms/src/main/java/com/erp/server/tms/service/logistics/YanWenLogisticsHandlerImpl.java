@@ -23,7 +23,6 @@ import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
-import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
 import com.sdk.tms.yanwen.dto.request.YanWenCancelOrderRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenGetLabelRequest;
@@ -85,12 +84,12 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
             if(!yanWenResponse.getSuccess()){
                 logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
-                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(yanWenResponse));
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(yanWenResponse), false);
                 return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yanWenResponse.getMessage());
             }
             logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
-                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(yanWenResponse));
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(yanWenResponse), false);
             return success(LogisticsOrderResponseVO.builder()
                     .transportNo(yanWenResponse.getData().getWaybillNumber())
                     .deliveryNo(yanWenResponse.getData().getOrderNumber())
@@ -99,7 +98,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }catch (Exception e){
             logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
-                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e));
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e), true);
             return failure(getPlatForm().getName() + ":" + e.getMessage());
         }
 
@@ -168,19 +167,19 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     cancelResponseVO.failure(getPlatForm().getName(),cancelOrderVO.getDeliveryNo(),yanWenResponse.getMessage());
                     logisticsOperateService.pushOperateLog(cancelOrderVO.getOrderId(),
                             cancelOrderVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
-                            RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(cancelOrderVO), JSONUtil.toJsonStr(yanWenResponse));
+                            RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(cancelOrderVO), JSONUtil.toJsonStr(yanWenResponse), false);
                 }else{
                     cancelResponseVO.success();
                     logisticsOperateService.pushOperateLog(cancelOrderVO.getOrderId(),
                             cancelOrderVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
-                            RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(cancelOrderVO), JSONUtil.toJsonStr(yanWenResponse));
+                            RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(cancelOrderVO), JSONUtil.toJsonStr(yanWenResponse), false);
                 }
             }catch (Exception e){
                 isSuccess = false;
                 cancelResponseVO.failure(getPlatForm().getName(),cancelOrderVO.getDeliveryNo(),e.getMessage());
                 logisticsOperateService.pushOperateLog(cancelOrderVO.getOrderId(),
                         cancelOrderVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
-                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(cancelOrderVO), JSONUtil.toJsonStr(e));
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(cancelOrderVO), JSONUtil.toJsonStr(e), true);
             }
 
             result.add(cancelResponseVO);

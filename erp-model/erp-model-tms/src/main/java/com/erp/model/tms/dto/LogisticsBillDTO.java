@@ -863,7 +863,7 @@ public class LogisticsBillDTO implements Serializable {
         private SoOutstockEntity soOutstockEntity;
 
         /**
-         * 销售出单单id 集合
+         * 渠道id
          */
         private String logisticsChannelId;
 

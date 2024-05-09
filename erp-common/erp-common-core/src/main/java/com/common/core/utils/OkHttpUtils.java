@@ -21,7 +21,7 @@ public class OkHttpUtils {
 
     private static final OkHttpClient client =
             new OkHttpClient.Builder()
-                    .readTimeout(5, TimeUnit.SECONDS)       // 设置超时时间
+                    .readTimeout(30, TimeUnit.SECONDS)       // 设置超时时间
                     .build();
 
     private static final int RETRY_COUNT = 3;
