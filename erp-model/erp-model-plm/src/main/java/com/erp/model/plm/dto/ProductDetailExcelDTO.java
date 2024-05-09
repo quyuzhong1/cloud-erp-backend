@@ -469,6 +469,18 @@ public class ProductDetailExcelDTO {
     private String boxQty;
 
     /**
+     * 仓位
+     */
+    @FieldValid(fieldName = "推荐仓位(小货区)")
+    private String warehouseLocation;
+
+    /**
+     * 仓位
+     */
+    @FieldValid(fieldName = "推荐仓位(大货区)")
+    private String warehouseLocationLarge;
+
+    /**
      * 错误信息
      */
     private String errorMsg;

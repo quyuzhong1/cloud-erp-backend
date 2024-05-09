@@ -442,6 +442,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         .thenComparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseLocation)
                 ).collect(Collectors.toList());
 
+        Collections.sort(resultList, (s1, s2) -> {
+            if (s1.getWarehouseLocation().isEmpty()) {
+                return 1;
+            } else if (s2.getWarehouseLocation().isEmpty()) {
+                return -1;
+            }
+            return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
+        });
         return resultList;
     }
 
