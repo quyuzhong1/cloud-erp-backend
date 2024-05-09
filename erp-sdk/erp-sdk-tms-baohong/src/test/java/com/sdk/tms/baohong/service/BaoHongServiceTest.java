@@ -118,9 +118,9 @@ public class BaoHongServiceTest {
                                 .build()
                 ))
                 .orderStatus("2")
-                .trackingNumber("314r1312")
+                .trackingNumber("314r131122")
                 .oabName("wj")
-                .referenceNo("wj2022401212221")
+                .referenceNo("wj2022432121")
                 .deliveryAddress("深圳龙岗坂田")
                 .oabStreetAddress1("深圳龙岗坂田")
                 .build();
@@ -131,7 +131,7 @@ public class BaoHongServiceTest {
 
     @Test
     public void cancelOrder(){
-        BaoHongResponse<String> response = baoHongService.cancelOrder("SOE02070223440","平台发货异常");
+        BaoHongResponse<String> response = baoHongService.cancelOrder("SOE02070223645","平台发货异常");
         System.out.println(response);
     }
 
