@@ -445,6 +445,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         return 1;
                     } else if (s2.getWarehouseLocation().isEmpty()) {
                         return -1;
+                    } else if (Objects.equals(s1.getWarehouseLocation(),s2.getWarehouseLocation())){
+                        return 0;
                     }
                     return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
                 }).collect(Collectors.toList());
