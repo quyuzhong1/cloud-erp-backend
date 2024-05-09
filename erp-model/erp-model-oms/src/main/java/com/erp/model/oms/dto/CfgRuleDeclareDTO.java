@@ -1,15 +1,16 @@
 package com.erp.model.oms.dto;
 
-import java.math.BigDecimal;
-
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import javax.validation.constraints.*;
+import java.util.Map;
 
 /**
  * <p>
@@ -21,7 +22,7 @@ import javax.validation.constraints.*;
 */
 @Data
 @NoArgsConstructor
-public class CfgDeclareDTO implements Serializable {
+public class CfgRuleDeclareDTO implements Serializable {
 
 
 
@@ -215,7 +216,8 @@ public class CfgDeclareDTO implements Serializable {
         private String toCurrencySymbol;
 
         /**
-        * 目的国申报类型（dictType=toDeclarePriceType）
+        * 目的国申报类型 （type=toDeclarePriceType）
+         * http://172.16.100.11:3002/project/110/interface/api/13435
         */
 //        @NotBlank(message = "目的国申报类型（dictType=toDeclarePriceType）不能为空")
         @Size(max = 30,message = "目的国申报类型最大长度不能超过30位")
@@ -254,9 +256,14 @@ public class CfgDeclareDTO implements Serializable {
     public static class PagingParamDTO extends SortDTO {
 
         /**
-         * 规则名称
+         * 页面高级查询
          */
-        private String name;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
     }
 
     /**

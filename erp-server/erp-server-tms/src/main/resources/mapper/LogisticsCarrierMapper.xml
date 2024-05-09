@@ -14,8 +14,8 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="logistics_type" property="logisticsType" />
        <result column="carrier_code" property="carrierCode" />
-       <result column="carrier_cn" property="carrierCN" />
-       <result column="carrier_en" property="carrierEN" />
+       <result column="carrier_cn" property="carrierCn" />
+       <result column="carrier_en" property="carrierEn" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -29,8 +29,31 @@
         update_time,
         version,
         is_deleted,
-        logistics_type, carrier_code, carrier_cn as carrierCN, carrier_en as carrierEN
+        logistics_type, carrier_code, carrier_cn as carrierCn, carrier_en as carrierEn
     </sql>
+
+    <select id="dropDown" resultType="com.erp.model.tms.dto.LogisticsCarrierDTO$PagingVO">
+        select id,logisticsType,carrierCode,carrierCn,carrierEn from
+        (
+            select
+            id,
+            logistics_type as logisticsType,
+            carrier_code as carrierCode,
+            carrier_cn as carrierCn,
+            carrier_en as carrierEn
+            from logistics_carrier where is_deleted = false
+            <if test="params != null and params.logisticsType != null and params.logisticsType != ''">
+                logistics_type = #{params.logisticsType}
+            </if>
+            <if test="params != null and params.searchKeyword != null and params.searchKeyword != ''">
+                order by
+                case when carrier_cn ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+                when carrier_cn ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+                when carrier_cn ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+                end , carrier_cn
+            </if>
+        ) ca
+    </select>
 
 
 </mapper>

@@ -1,4 +1,5 @@
 package com.erp.server.tms.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.entity.LogisticsCarrierEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -47,8 +48,9 @@ public interface LogisticsCarrierService extends SuperService<LogisticsCarrierEn
 
     /**
      * 根据类型获取下拉框
-     * @param logisticsType
+     *
+     * @param searchDTO
      * @return
      */
-    List<LogisticsCarrierEntity> dropDown(String logisticsType);
+    PagingVO<LogisticsCarrierDTO.PagingVO> dropDown(PagingDTO<LogisticsCarrierDTO.SearchDTO> searchDTO);
 }

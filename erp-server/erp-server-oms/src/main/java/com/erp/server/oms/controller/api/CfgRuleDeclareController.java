@@ -1,26 +1,24 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.RuleLogisticsDTO;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.oms.service.CfgDeclareService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.oms.dto.CfgDeclareDTO;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.dto.CfgRuleDeclareDTO;
+import com.erp.server.oms.service.CfgRuleDeclareService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
 
 /**
  * 申报规则表
@@ -31,11 +29,11 @@ import com.erp.model.oms.dto.CfgDeclareDTO;
 @Slf4j
 @RestController
 @LogSystemModule("申报规则表")
-@RequestMapping("/cfgDeclare")
-public class CfgDeclareController extends BaseController {
+@RequestMapping("/cfgRuleDeclare")
+public class CfgRuleDeclareController extends BaseController {
 
     @Resource
-    private CfgDeclareService cfgDeclareService;
+    private CfgRuleDeclareService CfgRuleDeclareService;
 
     /**
     * 新增
@@ -46,8 +44,8 @@ public class CfgDeclareController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "申报规则表新增")
-    public ApiResult<String> add(@RequestBody @Validated CfgDeclareDTO.AddDTO dto) {
-        return success(cfgDeclareService.add(dto));
+    public ApiResult<String> add(@RequestBody @Validated CfgRuleDeclareDTO.AddDTO dto) {
+        return success(CfgRuleDeclareService.add(dto));
     }
 
     /**
@@ -61,11 +59,11 @@ public class CfgDeclareController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "申报规则表修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "oms:cfgDeclare:update",
-        serviceClass = CfgDeclareService.class,
+        menuCode = "oms:CfgRuleDeclare:update",
+        serviceClass = CfgRuleDeclareService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated CfgDeclareDTO.UpdateDTO dto) {
-        cfgDeclareService.update(dto);
+    public ApiResult<?> update(@RequestBody @Validated CfgRuleDeclareDTO.UpdateDTO dto) {
+        CfgRuleDeclareService.update(dto);
         return success();
     }
 
@@ -78,8 +76,9 @@ public class CfgDeclareController extends BaseController {
      * @date: 2024-05-08
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<CfgDeclareDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<CfgDeclareDTO.PagingParamDTO> dto) {
-        PagingVO<CfgDeclareDTO.PagingViewDTO> pagingVO = cfgDeclareService.paging(dto);
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<CfgRuleDeclareDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<CfgRuleDeclareDTO.PagingParamDTO> dto) {
+        PagingVO<CfgRuleDeclareDTO.PagingViewDTO> pagingVO = CfgRuleDeclareService.paging(dto);
         return success(pagingVO);
     }
     /**
@@ -91,8 +90,8 @@ public class CfgDeclareController extends BaseController {
      * @date: 2023-08-28
      */
     @GetMapping("/view")
-    public ApiResult<CfgDeclareDTO.ViewDTO> view(@RequestParam("id") String id) {
-        CfgDeclareDTO.ViewDTO viewDTO = cfgDeclareService.view(id);
+    public ApiResult<CfgRuleDeclareDTO.ViewDTO> view(@RequestParam("id") String id) {
+        CfgRuleDeclareDTO.ViewDTO viewDTO = CfgRuleDeclareService.view(id);
         return success(viewDTO);
     }
 
@@ -106,7 +105,7 @@ public class CfgDeclareController extends BaseController {
      */
     @PostMapping("/updateStatus")
     public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
-        Boolean result = cfgDeclareService.updateStatus(dto);
+        Boolean result = CfgRuleDeclareService.updateStatus(dto);
         return result ? success() : failure();
     }
 }

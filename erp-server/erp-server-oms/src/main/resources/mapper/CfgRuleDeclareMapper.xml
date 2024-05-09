@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.oms.mapper.CfgDeclareMapper">
+<mapper namespace="com.erp.server.oms.mapper.CfgRuleDeclareMapper">
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.CfgDeclareEntity">
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.CfgRuleDeclareEntity">
        <result column="id" property="id" />
        <result column="create_user_id" property="createUserId" />
        <result column="create_user_name" property="createUserName" />
@@ -42,7 +42,7 @@
         name, disabled, remark, declare_chinese_name, declare_english_name, to_customs_code, priority, to_declare_price, to_currency, to_currency_symbol, to_declare_price_type, rate, max_declare_price, min_declare_price
     </sql>
 
-    <select id="paging" resultType="com.erp.model.oms.dto.CfgDeclareDTO$PagingViewDTO">
+    <select id="paging" resultType="com.erp.model.oms.dto.CfgRuleDeclareDTO$PagingViewDTO">
         SELECT
         id,
         name,
@@ -53,11 +53,9 @@
         create_time,
         update_user_name,
         update_time
-        FROM cfg_declare cd
-        WHERE cd.is_deleted=FALSE
-        <if test="params.name !=null and params.name!=''">
-            AND name ILIKE concat('%',#{params.name}::text,'%')
-        </if>
+        FROM cfg_rule_declare cd
+        WHERE ${params.sqlMap.default}
+        and cd.is_deleted=FALSE
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}

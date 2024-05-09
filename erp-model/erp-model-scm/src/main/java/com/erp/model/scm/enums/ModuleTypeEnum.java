@@ -81,6 +81,8 @@ public enum ModuleTypeEnum {
     TMS_FIRST_MILE_RECONCILIATION("70", "头程对账单"),
     CFG_FIELD_RECONCILIATION("71", "字段配置"),
     RULE_DECLARE("72", "申报规则"),
+    CFG_RULE_ORDER_HANDLE("73", "订单处理规则"),
+
     ;
 
 

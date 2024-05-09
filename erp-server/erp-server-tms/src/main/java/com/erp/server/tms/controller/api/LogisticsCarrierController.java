@@ -1,6 +1,8 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsCarrierEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,12 +91,12 @@ public class LogisticsCarrierController extends BaseController {
 
     /**
      * 公司下拉值
-     * @param logisticsType  expressDelivery 快递 ocean 海运 aviation  空运
+     * @param searchDTO
      * @return
      */
-    @GetMapping("/drop/down")
-    public ApiResult<List<LogisticsCarrierEntity>> dropDown(@RequestParam(value = "logisticsType") String logisticsType){
-        List<LogisticsCarrierEntity> list = logisticsCarrierService.dropDown(logisticsType);
-        return success(list);
+    @PostMapping("/drop/down")
+    public ApiResult<PagingVO<LogisticsCarrierDTO.PagingVO>> dropDown(@RequestBody @Validated PagingDTO<LogisticsCarrierDTO.SearchDTO> searchDTO){
+        PagingVO<LogisticsCarrierDTO.PagingVO> listPagingVO = logisticsCarrierService.dropDown(searchDTO);
+        return success(listPagingVO);
     }
 }

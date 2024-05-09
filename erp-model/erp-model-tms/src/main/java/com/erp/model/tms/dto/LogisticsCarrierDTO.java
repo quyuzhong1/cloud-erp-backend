@@ -3,6 +3,8 @@ package com.erp.model.tms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import org.springframework.web.bind.annotation.RequestParam;
+
 import java.io.Serializable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -48,12 +50,12 @@ public class LogisticsCarrierDTO implements Serializable {
         /**
         * 物流商中文名称
         */
-        private String carrierCN;
+        private String carrierCn;
 
         /**
         * 物流商英文名称
         */
-        private String carrierEN;
+        private String carrierEn;
 
 
     }
@@ -106,17 +108,48 @@ public class LogisticsCarrierDTO implements Serializable {
         */
         @NotBlank(message = "物流商中文名称不能为空")
         @Size(max = 255,message = "物流商中文名称最大长度不能超过255位")
-        private String carrierCN;
+        private String carrierCn;
 
         /**
         * 物流商英文名称
         */
         @NotBlank(message = "物流商英文名称不能为空")
         @Size(max = 255,message = "物流商英文名称最大长度不能超过255位")
-        private String carrierEN;
+        private String carrierEn;
 
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class SearchDTO {
+        /**
+         * 物流类型 expressDelivery 快递 ocean 海运 aviation  空运
+         */
+        private String logisticsType;
+        /**
+         * 搜素名称
+         */
+        private String searchKeyword;
+    }
 
+    public class PagingVO {
+        private String id;
+        /**
+         * 主键id
+         */
+        private String logisticsType;
+        /**
+         * 物流商编码
+         */
+        private String carrierCode;
+        /**
+         * 物流商中文名称
+         */
+        private String carrierCn;
+        /**
+         * 物流商英文名称
+         */
+        private String carrierEn;
+    }
 }
