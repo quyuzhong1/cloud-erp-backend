@@ -1,15 +1,16 @@
 package com.erp.model.oms.dto;
 
-import java.math.BigDecimal;
-
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import javax.validation.constraints.*;
+import java.util.Map;
 
 /**
  * <p>
@@ -255,9 +256,14 @@ public class CfgRuleDeclareDTO implements Serializable {
     public static class PagingParamDTO extends SortDTO {
 
         /**
-         * 规则名称
+         * 页面高级查询
          */
-        private String name;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
     }
 
     /**

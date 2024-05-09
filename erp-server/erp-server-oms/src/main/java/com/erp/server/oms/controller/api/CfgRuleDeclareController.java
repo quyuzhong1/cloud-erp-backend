@@ -1,24 +1,24 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import lombok.extern.slf4j.Slf4j;
-
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.oms.service.CfgRuleDeclareService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.CfgRuleDeclareDTO;
+import com.erp.server.oms.service.CfgRuleDeclareService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
 
 /**
  * 申报规则表
@@ -76,6 +76,7 @@ public class CfgRuleDeclareController extends BaseController {
      * @date: 2024-05-08
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<CfgRuleDeclareDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<CfgRuleDeclareDTO.PagingParamDTO> dto) {
         PagingVO<CfgRuleDeclareDTO.PagingViewDTO> pagingVO = CfgRuleDeclareService.paging(dto);
         return success(pagingVO);
