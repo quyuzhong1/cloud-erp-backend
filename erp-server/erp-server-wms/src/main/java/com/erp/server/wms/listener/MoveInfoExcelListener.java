@@ -97,20 +97,16 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
 
         //查看sku是否存在
         if (StringUtils.isNotBlank(moveInfoExcelDTO.getSkuNo())) {
-            if (!StrUtils.isLetterDigit(moveInfoExcelDTO.getSkuNo())) {
-                errorMsgList.add("SKU只能包含字母和数字");
+            //根据sku编号查询sku
+            Map<String, String> skuParams = new HashMap<>();
+            skuParams.put("skuNo", moveInfoExcelDTO.getSkuNo());
+            ProductDetailDTO productDetailDTO = plmTaskFeign.getSkuByParam(skuParams);
+            if (ObjectUtils.isEmpty(productDetailDTO)) {
+                errorMsgList.add("系统中不存在此sku编号");
             } else {
-                //根据sku编号查询sku
-                Map<String, String> skuParams = new HashMap<>();
-                skuParams.put("skuNo", moveInfoExcelDTO.getSkuNo());
-                ProductDetailDTO productDetailDTO = plmTaskFeign.getSkuByParam(skuParams);
-                if (ObjectUtils.isEmpty(productDetailDTO)) {
-                    errorMsgList.add("系统中不存在此sku编号");
-                }else {
-                    pcViewDTO.setSkuId(productDetailDTO.getId());
-                    pcViewDTO.setSkuNo(productDetailDTO.getSkuNo());
-                    pcViewDTO.setProductName(productDetailDTO.getName());
-                }
+                pcViewDTO.setSkuId(productDetailDTO.getId());
+                pcViewDTO.setSkuNo(productDetailDTO.getSkuNo());
+                pcViewDTO.setProductName(productDetailDTO.getName());
             }
         }
 

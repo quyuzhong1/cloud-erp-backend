@@ -237,21 +237,43 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
             }
 
             //变更后数量不能小于收货数量
+            String receiveMsg = "";
+            Integer receiveResultQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(receiveDetailList)) {
-                Integer receiveQty = receiveDetailList.stream()
+             Integer receiveQty = receiveDetailList.stream()
                         .filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseChangeDetailEntity.getPurchaseOrderDetailId()))
                         .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                receiveResultQty = receiveQty - returnQty;
                 if (receiveQty - returnQty >  purchaseChangeDetailEntity.getQty()) {
-                    throw new ServiceException(new ApiResult(1,String.format("SKU【%s】数量不能小于(收货数量-质检退货量)【%s】",purchaseChangeDetailEntity.getSkuNo(),receiveQty - returnQty)));
+                    receiveMsg = String.format("SKU【%s】数量不能小于(收货数量-质检退货量)【%s】",purchaseChangeDetailEntity.getSkuNo(),receiveQty - returnQty);
                 }
             }
             //变更后数量不能小于入库数量
+            String stockInMsg = "";
+            Integer stockInQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(purchaseStockInDetailList)) {
-                Integer stockInQty = purchaseStockInDetailList.stream()
+                 stockInQty = purchaseStockInDetailList.stream()
                         .filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseChangeDetailEntity.getPurchaseOrderDetailId()))
                         .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (stockInQty > purchaseChangeDetailEntity.getQty()) {
-                    throw new ServiceException(new ApiResult(1,String.format("SKU【%s】数量不能小于入库数量【%s】",purchaseChangeDetailEntity.getSkuNo(),stockInQty)));
+                    stockInMsg = String.format("SKU【%s】数量不能小于入库数量【%s】",purchaseChangeDetailEntity.getSkuNo(),stockInQty);
+                }
+            }
+            /**
+             * 测试要求根据数量的大小来进行错误提示
+             */
+            if (StrUtil.isNotBlank(receiveMsg) && StrUtil.isNotBlank(stockInMsg))  {
+                if (MathUtil.compareTo(receiveResultQty,stockInQty) > MathUtil.ZERO) {
+                    throw new ServiceException(ApiError.Default.code,receiveMsg);
+                } else {
+                    throw new ServiceException(ApiError.Default.code,stockInMsg);
+                }
+            } else {
+                if (StrUtil.isNotBlank(receiveMsg)) {
+                    throw new ServiceException(ApiError.Default.code,receiveMsg);
+                }
+                if (StrUtil.isNotBlank(stockInMsg)) {
+                    throw new ServiceException(ApiError.Default.code,stockInMsg);
                 }
             }
             //采购变更单主表

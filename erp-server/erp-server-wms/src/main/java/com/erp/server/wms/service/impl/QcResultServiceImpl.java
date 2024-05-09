@@ -370,7 +370,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
      * @date 2023-04-27 19:24
      */
     @Override
-    @Async
+//    @Async
     public void sendQcResultMsg(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return;

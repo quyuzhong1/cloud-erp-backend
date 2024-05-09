@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.TypeReference;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
@@ -27,8 +28,10 @@ import com.erp.oms.aliexpress.enums.Protocol;
 import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.regexp.RE;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -309,6 +312,45 @@ public class AliExpressOrderService {
         return dataList.getErpFulfillmentForwardDto();
     }
 
+    public List<AliExpressDeliveryDetail> listDeliveryDetailQuery(OrderRequest deliveryRequest, String fulfillmentOrderNo) {
+        if(StringUtils.isBlank(fulfillmentOrderNo)){
+            return new ArrayList<>();
+        }
+        String appKey = deliveryRequest.getClientId();
+        String appSecret = deliveryRequest.getClientSecret();
+        String baseUrl = deliveryRequest.getBaseUrl();
+        String apiName = AliexpressConstants.ALIEXPRESS_ASCP_FFO_ITEM_QUERY;
+        IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName(apiName);
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("biz_type", 288000);
+        paramMap.put("fulfillment_order_no", fulfillmentOrderNo);
+        request.addApiParameter("fulfillment_forward_order_item_query", com.alibaba.fastjson.JSONObject.toJSONString(paramMap));
+        String token = deliveryRequest.getToken();
+        IopResponse response = null;
+        try {
+            response = client.execute(request, token, Protocol.TOP);
+        } catch (ApiException e) {
+            log.error("查询速卖通发货单明细请求失败>>>>>>>{}", request.toString());
+        }
+        JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
+        JSONObject resultJsONObject = jsonObject.getJSONObject("aliexpress_ascp_ffo_item_query_response");
+        JSONObject resultJson = JSONUtil.parseObj(resultJsONObject.get("result"));
+        JSONObject dataListJson = JSONUtil.parseObj(resultJson.get("data_list"));
+        Boolean success = resultJson.getBool("success", Boolean.FALSE);
+        //失败
+        if (!success) {
+            log.error("查询速卖通发货单明细失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
+            return Collections.emptyList();
+        }
+        List<AliExpressDeliveryDetail> detailList = dataListJson.getBeanList("data",AliExpressDeliveryDetail.class);
+        if (CollectionUtils.isEmpty(detailList)) {
+            return Collections.emptyList();
+        }
+        return detailList;
+    }
+
     public static void main(String[] args) throws ApiException {
 
 
@@ -332,6 +374,4 @@ public class AliExpressOrderService {
 
 
     }
-
-
 }

@@ -90,6 +90,12 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     private Boolean isPrintPicking;
 
     /**
+     * 是否打印物流单
+     */
+    @TableField("is_print_logistic")
+    private Boolean isPrintLogistic;
+
+    /**
      * 完成打印时间
      */
     @TableField(value = "finish_print_time",updateStrategy = FieldStrategy.IGNORED)

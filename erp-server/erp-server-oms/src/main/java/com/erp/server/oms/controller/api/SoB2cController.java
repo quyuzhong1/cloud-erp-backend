@@ -1048,7 +1048,7 @@ public class SoB2cController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2C销售订单信息")
     @PostMapping(value = "/exportExcel")
     @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody SoB2cDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@RequestBody SoB2cDTO.ExportParamDTO dto, HttpServletResponse response) {
         Boolean flag = soB2cService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }

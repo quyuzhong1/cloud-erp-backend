@@ -41,7 +41,8 @@
         pro.unusual_remark,
         pro.unusual_handle_user_id,
         pro.unusual_handle_user_name,
-        pro.confirm_date
+        pro.confirm_date,
+        prod.is_combination as isCombination
         FROM po_return_detail prod
         INNER JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE ${params.sqlMap.default}
@@ -141,7 +142,8 @@
         pro.unusual_remark,
         pro.unusual_handle_user_id,
         pro.unusual_handle_user_name,
-        pro.confirm_date
+        pro.confirm_date,
+        prod.is_combination as isCombination
         FROM po_return_detail prod
         LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE
