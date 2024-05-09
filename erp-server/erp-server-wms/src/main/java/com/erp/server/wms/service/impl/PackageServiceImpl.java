@@ -106,7 +106,9 @@ public class PackageServiceImpl implements PackageService {
             //订单拦截
             soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(entity.getId(), "平台取消"));
             throw new ServiceException("平台订单已取消，无法组包");
-        } else {
+        }
+        //请求接口过慢，暂时取消 TODO
+        /*else {
             if (soB2cFeign.checkPlatformShipOrder(entity.getId())) {
                 //如果订单原始状态非取消，这里需要再次调用平台接口查询，是否已取消
                 PlatformDeliveryInterceptDTO deliveryInterceptDTO = new PlatformDeliveryInterceptDTO();
@@ -120,7 +122,7 @@ public class PackageServiceImpl implements PackageService {
                     throw new ServiceException("平台订单已取消，无法组包");
                 }
             }
-        }
+        }*/
 
         //扫描判断：扫描判断是否平台取消以及拦截单【异常提示：订单单号被拦截/取消，不可组包操作】
         if (TransferStatusEnum.WAIT.getCode().equals(scanResult.getForcastStatus())
