@@ -1,28 +1,30 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="com.cloud.erp.mapper.FileTaskMapper">
+<mapper namespace="com.erp.server.file.mapper.FileTaskMapper">
 
 
-    <select id="getFileTasks" resultType="com.cloud.erp.vo.FileTaskVO">
+    <select id="getFileTasks" resultType="com.erp.server.file.vo.FileTaskVO">
         select id,
-               create_user_id,
-               create_user_name,
-               create_time,
-               update_user_id,
-               update_user_name,
-               update_time,
-               event,
-               file_name,
-               file_url,
-               status,
-               remarks,
-               start_time,
-               finish_time
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        event,
+        file_name,
+        file_url,
+        status,
+        remarks,
+        start_time,
+        finish_time
         from file_task
         where true
-        <!-- 权限 -->
-        <if test="dto.permissionSql!=null and dto.permissionSql!=''">
-            ${dto.permissionSql}
+        <if test="dto.event != null and dto.event != ''">
+            and event = #{dto.event}
+        </if>
+        <if test="dto.createUserId != null and dto.createUserId != ''">
+            and create_user_id = #{dto.createUserId}
         </if>
     </select>
 </mapper>
