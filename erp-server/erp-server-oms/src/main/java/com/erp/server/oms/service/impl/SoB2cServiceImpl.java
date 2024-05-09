@@ -7009,6 +7009,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"已组包不可操作"));
                 continue;
             }
+            if(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(soB2cEntity.getBillStatus())){
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"已出库不可操作"));
+                continue;
+            }
             TransferDeclareDetailEntity transferDeclareDetailEntity = transferDeclareDetailEntityList.stream().filter(v->v.getSoCode().equals(soB2cEntity.getCode())).findFirst().orElse(null);
             if(Objects.nonNull(transferDeclareDetailEntity)){
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"已生成入库预报不可操作"));
@@ -7166,6 +7170,48 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return baseMapper.listMergePackageBySoIds(ids);
     }
 
+    @Override
+    public Boolean autoCancelOrderForecast(SoB2cEntity mainEntity) {
+        if(!TransferStatusEnum.SUCCESS.getCode().equals(mainEntity.getTransferStatus())){
+            return false;
+        }
+        if(PackageStatusEnum.ALREADY.getCode().equals(mainEntity.getPackageStatus())){
+            return false;
+        }
+        if(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(mainEntity.getBillStatus())){
+            return false;
+        }
+        List<TransferDeclareDetailEntity> transferDeclareDetailEntityList = transferDeclareFeign.listBySoCodeList(Arrays.asList(mainEntity.getCode()));
+        TransferDeclareDetailEntity transferDeclareDetailEntity = transferDeclareDetailEntityList.stream().filter(v->v.getSoCode().equals(mainEntity.getCode())).findFirst().orElse(null);
+        if(Objects.nonNull(transferDeclareDetailEntity)){
+            return false;
+        }
+        List<SoB2cEntity> updateList = new ArrayList<>();
+        List<String> deleteErrorIds = new ArrayList<>();
+        List<TransferDeclareDTO.UpdateForcastStatusDTO> updateInstockForcastList = new ArrayList<>();
+        List<SoB2cErrorEntity> errorList = soB2cErrorService.getByMainIdsAndType(Arrays.asList(mainEntity.getId()), SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode());
+        SoB2cErrorEntity error = errorList.stream().filter(e -> e.getMainId().equals(mainEntity.getId())).findFirst().orElse(new SoB2cErrorEntity());
+        mainEntity.setTransferStatus(TransferStatusEnum.WAIT.getCode());
+        if (SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode().equals(mainEntity.getSignOrderError())) {
+            mainEntity.setSignOrderError("");
+        }
+        TransferDeclareDTO.UpdateForcastStatusDTO updateForcastStatusDTO = new TransferDeclareDTO.UpdateForcastStatusDTO();
+        updateForcastStatusDTO.setSoId(mainEntity.getId());
+        updateForcastStatusDTO.setStatus(TransferStatusEnum.WAIT.getCode());
+        updateInstockForcastList.add(updateForcastStatusDTO);
+        updateList.add(mainEntity);
+        if (StringUtils.isNotBlank(error.getId())) {
+            deleteErrorIds.add(error.getId());
+        }
+
+        operateLogService.addModuleOperateLog("平台订单取消后自动取消订单预报", ModuleTypeEnum.SO_B2C.getCode(), mainEntity.getId(), "取消预报");
+        //更新操作同个事务
+        service.orderForecastUpdateSoAndError(updateList,deleteErrorIds,new ArrayList<>(),new ArrayList<>());
+
+        //更新入库预报单详情的上传状态
+        transferDeclareFeign.updateTransferStatusByBatch(updateInstockForcastList);
+        return true;
+    }
 
     @Override
     public PagingVO<SoB2cAbnormalDTO.ListDTO> abnormalPaging(PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> pagingParamDTO) {
@@ -7246,46 +7292,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 listDTO.setShopName(shopInfoEntity.getName());
             }
         }
-    }
-
-    @Override
-    public Boolean autoCancelOrderForecast(SoB2cEntity mainEntity) {
-        if(!TransferStatusEnum.SUCCESS.getCode().equals(mainEntity.getTransferStatus())){
-            return false;
-        }
-        if(PackageStatusEnum.ALREADY.getCode().equals(mainEntity.getPackageStatus())){
-            return false;
-        }
-        List<TransferDeclareDetailEntity> transferDeclareDetailEntityList = transferDeclareFeign.listBySoCodeList(Arrays.asList(mainEntity.getCode()));
-        TransferDeclareDetailEntity transferDeclareDetailEntity = transferDeclareDetailEntityList.stream().filter(v->v.getSoCode().equals(mainEntity.getCode())).findFirst().orElse(null);
-        if(Objects.nonNull(transferDeclareDetailEntity)){
-            return false;
-        }
-        List<SoB2cEntity> updateList = new ArrayList<>();
-        List<String> deleteErrorIds = new ArrayList<>();
-        List<TransferDeclareDTO.UpdateForcastStatusDTO> updateInstockForcastList = new ArrayList<>();
-        List<SoB2cErrorEntity> errorList = soB2cErrorService.getByMainIdsAndType(Arrays.asList(mainEntity.getId()), SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode());
-        SoB2cErrorEntity error = errorList.stream().filter(e -> e.getMainId().equals(mainEntity.getId())).findFirst().orElse(new SoB2cErrorEntity());
-        mainEntity.setTransferStatus(TransferStatusEnum.WAIT.getCode());
-        if (SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode().equals(mainEntity.getSignOrderError())) {
-            mainEntity.setSignOrderError("");
-        }
-        TransferDeclareDTO.UpdateForcastStatusDTO updateForcastStatusDTO = new TransferDeclareDTO.UpdateForcastStatusDTO();
-        updateForcastStatusDTO.setSoId(mainEntity.getId());
-        updateForcastStatusDTO.setStatus(TransferStatusEnum.WAIT.getCode());
-        updateInstockForcastList.add(updateForcastStatusDTO);
-        updateList.add(mainEntity);
-        if (StringUtils.isNotBlank(error.getId())) {
-            deleteErrorIds.add(error.getId());
-        }
-
-        operateLogService.addModuleOperateLog("平台订单取消后自动取消订单预报", ModuleTypeEnum.SO_B2C.getCode(), mainEntity.getId(), "取消预报");
-        //更新操作同个事务
-        service.orderForecastUpdateSoAndError(updateList,deleteErrorIds,new ArrayList<>(),new ArrayList<>());
-
-        //更新入库预报单详情的上传状态
-        transferDeclareFeign.updateTransferStatusByBatch(updateInstockForcastList);
-        return true;
     }
 
     /**
