@@ -325,6 +325,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
             deliveryDetailDTO.setPlatformSkuNo(v.getPlatformSku());
             deliveryDetailDTO.setQty(Integer.valueOf(v.getDeliveryQty()));
             deliveryDetailDTO.setPlatformWarehouseName(v.getWarehouseName());
+            deliveryDetailDTO.setPlatformSpuNo(v.getItemId());
             result.add(deliveryDetailDTO);
         });
         return result;
