@@ -115,4 +115,9 @@ public class RocketMqTopic {
      */
     public static final String ASYNC_GET_PLATFORM_LABEL_TOPIC = "${spring.cloud.nacos.discovery.namespace}-async_get_platform_label_topic";
 
+    /**
+     * 异步组包发货
+     */
+    public static final String ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC = "${spring.cloud.nacos.discovery.namespace}-async_merge_package_delivery_topic";
+
 }

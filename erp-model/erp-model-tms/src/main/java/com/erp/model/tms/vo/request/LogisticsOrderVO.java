@@ -5,8 +5,10 @@ import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -22,6 +24,8 @@ import java.util.Map;
  */
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class LogisticsOrderVO implements Serializable {
     /**
      * 速卖通 ISV用户唯一标识，一般为userId,最大长度为16个字符

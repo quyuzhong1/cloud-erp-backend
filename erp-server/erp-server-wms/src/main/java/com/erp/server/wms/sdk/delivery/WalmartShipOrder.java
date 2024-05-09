@@ -34,6 +34,10 @@ public class WalmartShipOrder implements IPlatformService {
     @Resource
     private LogisticsMappingFeign logisticsMappingFeign;
 
+    @Resource
+    private LogisticsFeign logisticsFeign;
+
+
     @Override
     public void shipOrder(PlatformShipOrderDTO dto) {
         //映射发货需要的字段，如果合并的订单拆分返回
@@ -42,6 +46,15 @@ public class WalmartShipOrder implements IPlatformService {
         //调用sdk发货
         for (WalmartShipDTO walmartShipDTO : walmartShipOrderParam) {
             WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
+
+            //获取销售渠道信息
+            LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = logisticsFeign.getScaleChannelByChannelById(
+                    walmartShipDTO.getLogisticsChannelId(),
+                    PlatformDictEnum.WALMART.getCode()
+            );
+            if (null == tmsScaleChannelShipDTO){
+                throw new ServiceException("找不到渠道信息");
+            }
 
             if (LogisticsPlatformEnum.YAN_WEN.getCode().equals(walmartShipDTO.getLogisticsPlatformCode())) {
                 walmartShipDTO.setLogisticsPlatformCode("Yanwen");
@@ -58,6 +71,14 @@ public class WalmartShipOrder implements IPlatformService {
 
     @Override
     public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
+        return null;
+    }
+
+    /**
+     * 查询并更新平台订单状态
+     */
+    @Override
+    public Boolean queryAndUpdateOrderStatus(PlatformDeliveryInterceptDTO dto) {
         return null;
     }
 }

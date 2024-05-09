@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -12,6 +13,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
+import com.erp.server.wms.query.AliexpressDeliveryQueryHandler;
 import com.erp.server.wms.service.AliexpressDeliveryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -49,6 +51,7 @@ public class AliexpressDeliveryController extends BaseController {
             menuCode = "wms:aliexpressDelivery:paging",
             tableAlias = "ad"
     )
+    @WebAdvanceQuery(handler = AliexpressDeliveryQueryHandler.class)
     public ApiResult<PagingVO<AliexpressDeliveryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AliexpressDeliveryDTO.SearchParamDTO> dto) {
         PagingVO<AliexpressDeliveryDTO.ListDTO> pagingVO = aliexpressDeliveryService.paging(dto);
         return success(pagingVO);
@@ -62,13 +65,14 @@ public class AliexpressDeliveryController extends BaseController {
      * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出中转报关单")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出速卖通发货单")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:aliexpressDelivery:paging",
             tableAlias = "ad"
     )
+    @WebAdvanceQuery(handler = AliexpressDeliveryQueryHandler.class)
     public ApiResult exportExcel(@RequestBody @Validated AliexpressDeliveryDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = aliexpressDeliveryService.exportExcel(dto, response);
         return flag == true ? success() : failure();

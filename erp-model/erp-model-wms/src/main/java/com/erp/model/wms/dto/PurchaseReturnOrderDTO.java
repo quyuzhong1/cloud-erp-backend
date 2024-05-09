@@ -496,6 +496,16 @@ public class PurchaseReturnOrderDTO {
         private String skuNo;
 
         /**
+         * 是否组合品 true 是
+         */
+        private Boolean isCombination;
+
+        /**
+         * 是否组合品中文名称
+         */
+        private String isCombinationName;
+
+        /**
          * 产品名称
          */
         private String productName;
