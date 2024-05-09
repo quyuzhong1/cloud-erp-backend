@@ -203,6 +203,7 @@ public class PackageServiceImpl implements PackageService {
                 scanResult.setLogisticsChannelName(baseDTO.getName());
                 scanResult.setLogisticsSupplierId(baseDTO.getMainId());
                 scanResult.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
+                scanResult.setLogisticsSupplierShortName(baseDTO.getLogisticsSupplierShortName());
             }
 
             if (TransferStatusEnum.NOT.getCode().equals(entity.getTransferStatus())) {
@@ -276,6 +277,7 @@ public class PackageServiceImpl implements PackageService {
                 item.setLogisticsChannelName(logisticsChannel.getName());
                 item.setLogisticsSupplierId(logisticsChannel.getLogisticsSupplierId());
                 item.setLogisticsSupplierName(logisticsChannel.getLogisticsSupplierName());
+                item.setLogisticsSupplierShortName(logisticsChannel.getLogisticsSupplierShortName());
             }
         }
 

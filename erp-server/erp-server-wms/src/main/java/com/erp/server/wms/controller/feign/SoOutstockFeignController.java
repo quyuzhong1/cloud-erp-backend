@@ -194,6 +194,18 @@ public class SoOutstockFeignController {
     Boolean updateStatus(@RequestBody TmsDeclareBillDTO.UpdateStatusDTO dto) {
         return soOutstockService.updateStatus(dto);
     }
+
+    /**
+     * 重新生成销售出库单
+     * @author Will
+     * @date: 2024/4/28 10:26
+     * @param ids
+     * @return Boolean
+     */
+    @PostMapping("/afreshGenerateB2cOutstock")
+    Boolean afreshGenerateB2cOutstock(@RequestBody List<String> ids) {
+        return soOutstockService.afreshGenerateB2cOutstock(ids);
+    }
 }
 
 

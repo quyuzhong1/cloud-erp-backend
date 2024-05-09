@@ -1,13 +1,10 @@
 package com.erp.server.wms.controller.pda;
 
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.validator.ValidList;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.server.wms.service.InventoryService;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -48,6 +45,17 @@ public class PdaInventoryController extends BaseController {
     public ApiResult<List<InventoryDTO.PdaInventoryDTO>> getInventoryByParam(@RequestBody InventoryDTO.PdaSearchParamDTO dto) {
         List<InventoryDTO.PdaInventoryDTO> inventorys = inventoryService.getInventoryByParam(dto);
         return success(inventorys);
+    }
+
+    /**
+     * 根据条件查询库存信息
+     * @author hyj
+     * @date 2024/4/17 10:57
+     * @param dtos
+     */
+    @PostMapping(value = "/getInventoryQty")
+    public ApiResult<List<InventoryDTO.InventoryViewQtyDTO>> getInventoryByParam(@RequestBody ValidList<InventoryDTO.InventoryBySkuIdAndWarehouseDTO> dtos) {
+        return success(inventoryService.getInventoryQty(dtos.getList()));
     }
 
     /**

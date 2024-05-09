@@ -83,6 +83,7 @@
         pc.actual_tax_cost,
         pc.target_tax_cost,
         pd.warehouse_location,
+        pd.warehouse_location_large,
         pi.iterate_ref_sku_id,
         pi.iterate_ref_sku_no
         FROM product_info pi
@@ -503,16 +504,12 @@
         pl.declare_element,
         pl.english_material,
         pl.english_usage,
-        CASE WHEN split_part(ppk.product_size, 'X',1) = '' THEN '0' ELSE split_part(ppk.product_size, 'X',1) END AS
-        productSizeLength,
-        CASE WHEN split_part(ppk.product_size, 'X',2) = '' THEN '0' ELSE split_part(ppk.product_size, 'X',2) END AS
-        productSizeWide,
-        CASE WHEN split_part(ppk.product_size, 'X',3) = '' THEN '0' ELSE split_part(ppk.product_size, 'X',3) END AS
-        productSizeHigh,
-        CASE WHEN split_part(ppk.box_size, 'X',1) = '' THEN '0' ELSE split_part(ppk.box_size, 'X',1) END AS
-        boxSizeLength,
-        CASE WHEN split_part(ppk.box_size, 'X',2) = '' THEN '0' ELSE split_part(ppk.box_size, 'X',2) END AS boxSizeWide,
-        CASE WHEN split_part(ppk.box_size, 'X',3) = '' THEN '0' ELSE split_part(ppk.box_size, 'X',3) END AS boxSizeHigh,
+        ppk.product_length AS productLength,
+        ppk.product_width AS productWidth,
+        ppk.product_height  AS productHeight,
+        ppk.box_length AS boxLength,
+        ppk.box_width AS boxWidth,
+        ppk.box_height AS boxHeight,
         ppk.gross_weight,
         ppk.net_weight,
         ppk.box_weight,
@@ -520,7 +517,9 @@
         pl.product_property_id,
         pd.charge_id,
         pi.iterate_ref_sku_id,
-        pi.iterate_ref_sku_no
+        pi.iterate_ref_sku_no,
+        pd.warehouse_location,
+        pd.warehouse_location_large
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
@@ -752,7 +751,9 @@
         pc.actual_tax_cost,
         pc.target_tax_cost,
         pc.retail_price,
-        ppk.product_size,
+        ppk.product_length as productLength,
+        ppk.product_width as productWidth,
+        ppk.product_height as productHeight,
         pl.declare_element as declareElement,
         ppk.net_weight
         FROM  product_detail pd
@@ -948,7 +949,8 @@
         pd.variant_property as variantProperty,
         pd.unit_name,
         pd.status,
-        pd.warehouse_location as warehouseLocation
+        pd.warehouse_location as warehouseLocation,
+        pd.warehouse_location_large as warehouseLocationLarge
         FROM  product_detail pd
         WHERE
             pd.is_deleted = FALSE
@@ -1070,8 +1072,12 @@
         pp.ean,
         ppk.gross_weight,
         ppk.net_weight,
-        ppk.product_size,
-        ppk.box_size,
+        ppk.product_length as productLength,
+        ppk.product_width as productWidth,
+        ppk.product_height  as productHeight,
+        ppk.box_length   as boxLength,
+        ppk.box_width  as boxWidth,
+        ppk.box_height  as boxHeight,
         ppk.box_weight,
         ppk.box_qty,
         pi.grade,
@@ -1259,10 +1265,11 @@
              pi.materials,
              pi.usage_desc,
              ps.sale_state AS salesStatus,
-             pp.product_size,
              pp.gross_weight,
              pp.net_weight,
-             pp.product_size,
+             pp.product_length as productLength,
+             pp.product_width as productWidth,
+             pp.product_height as productHeight,
              pc.actual_tax_cost,
              pc.actual_no_tax_cost,
              (SELECT  ean FROM product_purchase WHERE sku_id=pd.id and is_deleted=FALSE LIMIT 1) AS ean
@@ -1317,7 +1324,9 @@
             pl.first_qty AS firstQty,
             pl.second_qty AS secondQty,
             ps.sale_state AS salesStatus,
-            pp.product_size,
+            pp.product_length as productLength,
+            pp.product_width as productWidth,
+            pp.product_height as productHeight,
             pp.gross_weight,
             pp.net_weight,
             pc.customs_code AS destCustomsCode,
@@ -1545,10 +1554,10 @@
              pl.dest_currency,pl.dest_currency_symbol,pl.source_cargo,pl.exemption,pl.source_country,
              pl.combination_declare_type,pd.sku_no as skuNo,
              pp.gross_weight as  grossWeight,
-            CASE WHEN split_part(pp.box_size, 'X',1) = '' THEN null ELSE split_part(pp.box_size, 'X',1) END AS boxSizeLength,
-            CASE WHEN split_part(pp.box_size, 'X',2) = '' THEN null ELSE split_part(pp.box_size, 'X',2) END AS boxSizeWide,
-             CASE WHEN split_part(pp.box_size, 'X',3) = '' THEN null ELSE split_part(pp.box_size, 'X',3) END AS boxSizeHigh,
-            pp.product_length as productLength,pp.product_width as productWidth,pp.product_height as productHeight,
+            pp.box_length / 10 AS boxSizeLength,
+            pp.box_width / 10 AS boxSizeWide,
+            pp.box_height / 10 AS boxSizeHigh,
+        pp.product_length as productLength,pp.product_width as productWidth,pp.product_height as productHeight,
             (select value from basic_dict  where is_deleted=false and id=pl.product_property_id LIMIT 1) AS productProperty,
             (select name from basic_dict  where is_deleted=false and value=pl.declare_unit and type ='declareUnit' LIMIT 1) AS declareUnitName,
             pd.name as cnName,pd.name_en as enName,
@@ -1641,7 +1650,9 @@
             pc.actual_tax_cost,
             pc.target_tax_cost,
             pc.retail_price,
-            ppk.product_size,
+            ppk.product_length as productLength,
+            ppk.product_width as productWidth,
+            ppk.product_height as productHeight,
             ppk.net_weight
         FROM  product_detail pd
                   LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
@@ -1686,7 +1697,9 @@
         pd.images_url AS skuImagesUrl,
         pc.retail_price,
         ppk.gross_weight,
-        ppk.product_size,
+        ppk.product_length as productLength,
+        ppk.product_width as productWidth,
+        ppk.product_height as productHeight,
         pp.main_supplier as supplierId
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE

@@ -6,7 +6,6 @@ import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.common.business.service.SuperService;
 
 import java.time.LocalDate;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -58,4 +57,20 @@ public interface FbaShipmentReceiveService extends SuperService<FbaShipmentRecei
      * 指定详情ID和来源类型查询明细
      */
     List<FbaShipmentReceiveEntity> listByDetailIdsAndSourceType(List<String> detailIds, String sourceType);
+
+    /**
+     * 发送预警
+     */
+    void sendWarnMsg(String tableId, String errorMsg);
+
+
+    /**
+     * 反审核并删除历史调拨单, 遇到关账或异常发送预警
+     */
+    void checkAndSendWarn(FbaShipmentEntity fbaShipmentEntity, LocalDate billDate);
+
+    /**
+     * 根据md5查询历史
+     */
+    List<FbaShipmentReceiveEntity> listByUniqueMd5AndReceivedDate(List<String> md5List, String fbaShipmentId, LocalDate billDate);
 }

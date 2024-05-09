@@ -594,7 +594,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO canGenerateDeliveryDTO = new TmsFirstMileLogisticDTO.CanGenerateDeliveryDTO();
         canGenerateDeliveryDTO.setLogisticsChannelId(dto.getLogisticsChannelId());
         TmsFirstMileLogisticDTO.LogisticsDTO logisticsDTO = this.getLogisticsAndShipping(canGenerateDeliveryDTO);
-        dto.setBillingMethodName(logisticsDTO.getBillingMethodName());
+        dto.setFeeRuleName(logisticsDTO.getFeeRuleName());
         dto.setEstimatedDay(logisticsDTO.getEstimatedDay());
         dto.setEstimatedTimeUnit(logisticsDTO.getEstimatedTimeUnit());
         dto.setEstimatedTimeDesc(logisticsDTO.getEstimatedTimeDesc());
@@ -1496,8 +1496,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
         }
 
-        result.setBillingMethod(logisticsChannelEntity.getFeeRule());
-        result.setBillingMethodName(ShippingFeeRuleEnum.getName(logisticsChannelEntity.getFeeRule()));
+        result.setFeeRule(logisticsChannelEntity.getFeeRule());
+        result.setFeeRuleName(ShippingFeeRuleEnum.getName(logisticsChannelEntity.getFeeRule()));
 
         ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(result.getLogisticsChannelId());
         if(Objects.nonNull(shippingTemplateEntity)){

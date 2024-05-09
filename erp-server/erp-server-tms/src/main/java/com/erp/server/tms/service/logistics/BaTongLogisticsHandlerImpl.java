@@ -103,20 +103,20 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         .deliveryNo(logisticsOrder.getDeliveryNo())
                         .build();
 
-                logisticsOperateService.pushOperateLog(logisticsOrder.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsOrder.getSourceId(),
                         logisticsOrder.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrder), JSONUtil.toJsonStr(""), false);
             }else{
                 success = false;
                 responseVO.failure(LogisticsPlatformEnum.BaTong.getName(), logisticsOrder.getDeliveryNo(), result.getCnMessage());
-                logisticsOperateService.pushOperateLog(logisticsOrder.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsOrder.getSourceId(),
                         logisticsOrder.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrder),result.getCnMessage(), false);
             }
 
         } catch (Exception e) {
             log.error("巴通创建订单异常：{}", e.getMessage());
-            logisticsOperateService.pushOperateLog(logisticsOrder.getAuthMap().get("id"),
+            logisticsOperateService.pushOperateLog(logisticsOrder.getSourceId(),
                     logisticsOrder.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrder), JSONUtil.toJsonStr(e), true);
             success = false;
@@ -184,20 +184,20 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 if (!BaTongConstants.SUCCESS.equals(cancelResult.getSuccess())) {
                     isSuccess = false;
                     responseVO.failure(getPlatForm().getName(),item.getDeliveryNo(),cancelResult.getCnMessage());
-                    logisticsOperateService.pushOperateLog(item.getAuthMap().get("id"),
+                    logisticsOperateService.pushOperateLog(item.getOrderId(),
                             item.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                             RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(item), JSONUtil.toJsonStr(cancelResult), false);
                 }else{
                     //成功
                     responseVO.success();
-                    logisticsOperateService.pushOperateLog(item.getAuthMap().get("id"),
+                    logisticsOperateService.pushOperateLog(item.getOrderId(),
                             item.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                             RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(responseVO), JSONUtil.toJsonStr(cancelResult), false);
                 }
             } catch (Exception e) {
                 isSuccess = false;
                 responseVO.failure(getPlatForm().getName(),item.getDeliveryNo(),e.getMessage());
-                logisticsOperateService.pushOperateLog(item.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(item.getOrderId(),
                         item.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(item), JSONUtil.toJsonStr(e), true);
             }

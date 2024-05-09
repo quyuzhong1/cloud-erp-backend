@@ -1,9 +1,5 @@
 package com.erp.model.tms.dto;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.LocalDate;
-
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationImportEnum;
@@ -14,10 +10,13 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -288,14 +287,14 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private String transportStatusName;
 
         /**
-         * 计费方式
+         * 计费规则
          */
-        private String billingMethod;
+        private String feeRule;
 
         /**
-         * 计费方式名称
+         * 计费规则
          */
-        private String billingMethodName;
+        private String feeRuleName;
 
         /**
          * 渠道商ID
@@ -666,14 +665,14 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private LocalDate receiveDate;
 
         /**
-         * 计费方式
+         * 计费规则
          */
-        private String billingMethod;
+        private String feeRule;
 
         /**
-         * 计费方式名称
+         * 计费规则名称
          */
-        private String billingMethodName;
+        private String feeRuleName;
 
         /**
          * 类型(对账类型)
@@ -836,16 +835,16 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private LocalDate receiveDate;
 
         /**
-         * 计费方式
+         * 计费规则
          */
-        @Size(max = 32, message = "计费方式最大长度不能超过32位")
-        private String billingMethod;
+        @Size(max = 32, message = "计费规则最大长度不能超过32位")
+        private String feeRule;
 
         /**
-         * 计费方式名称
+         * 计费规则名称
          */
-        @Size(max = 64, message = "计费方式名称最大长度不能超过64位")
-        private String billingMethodName;
+        @Size(max = 64, message = "计费规则名称最大长度不能超过64位")
+        private String feeRuleName;
 
         /**
          * 类型(对账类型)

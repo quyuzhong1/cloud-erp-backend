@@ -1,4 +1,4 @@
-package com.erp.model.wms.dto.third.request;
+package com.erp.model.wms.dto.third;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

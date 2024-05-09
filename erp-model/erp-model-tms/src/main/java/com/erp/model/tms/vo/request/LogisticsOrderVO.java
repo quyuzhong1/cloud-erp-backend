@@ -77,6 +77,11 @@ public class LogisticsOrderVO implements Serializable {
      * 没有就订单id
      */
     private String deliveryNo;
+
+    /**
+     * 来源id(订单id)
+     */
+    private String sourceId;
     /**
      * 物流单号
      */

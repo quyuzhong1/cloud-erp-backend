@@ -13,7 +13,6 @@ import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
-import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -499,4 +498,12 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     List<SoOutstockEntity> listByCodes(List<String> codes);
 
     Boolean generateB2cSoOutstockByPlatformData(List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO);
+    /**
+     * @description: 重新生成销售出库单
+     * @author Will
+     * @date: 2024/4/28 10:18
+     * @param ids
+     * @return Boolean
+     */
+    Boolean afreshGenerateB2cOutstock(List<String> ids);
 }

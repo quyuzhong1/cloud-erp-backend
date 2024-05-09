@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -676,8 +677,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             ProductPackDTO productPackDTO = new ProductPackDTO();
             productPackDTO.setSkuId(qcProductEntity.getSkuId());
             productPackDTO.setSkuNo(qcProductEntity.getSkuNo());
-            productPackDTO.setProductSize(StrUtil.format("{}X{}X{}",qcProductEntity.getProductLength().stripTrailingZeros().toPlainString(),qcProductEntity.getProductWidth().stripTrailingZeros().toPlainString(),qcProductEntity.getProductHeight().stripTrailingZeros().toPlainString()));
-            productPackDTO.setBoxSize(StrUtil.format("{}X{}X{}",qcProductEntity.getBoxLength().stripTrailingZeros().toPlainString(),qcProductEntity.getBoxWidth().stripTrailingZeros().toPlainString(),qcProductEntity.getBoxHeight().stripTrailingZeros().toPlainString()));
+            productPackDTO.setProductLength(LengthConverterUtil.cmToMm(qcProductEntity.getProductLength()));
+            productPackDTO.setProductWidth(LengthConverterUtil.cmToMm(qcProductEntity.getProductWidth()));
+            productPackDTO.setProductHeight(LengthConverterUtil.cmToMm(qcProductEntity.getProductHeight()));
             productPackDTO.setBoxQty(new BigDecimal(qcProductEntity.getBoxQty()));
             productPackDTO.setBoxWeight(qcProductEntity.getBoxWeight());
             productPackDTO.setNetWeight(qcProductEntity.getProductNetWeight());
@@ -2506,5 +2508,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             return new ArrayList<>();
         }
         return baseMapper.getQcReceiveResult(purchaseDetailIds);
+    }
+
+    @Override
+    public Integer countTotalNotQc(QcEffectivenessDTO.CountQcParamDTO qcParamDTO) {
+        return baseMapper.countTotalNotQc(qcParamDTO);
     }
 }

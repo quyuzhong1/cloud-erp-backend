@@ -465,6 +465,30 @@
         </if>
         GROUP BY it.warehouse_id, it.org_id, it.sku_id
     </select>
+    <select id="getInventoryInfoByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$InventoryViewQtyDTO">
+        SELECT
+            it.warehouse_id,
+            it.sku_id,
+            sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end)
+            +
+            sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as realQty,
+            sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usableQty,
+            sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozenQty,
+            sum(case when it.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransitQty,
+            sum(case when it.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqcQty
+        FROM "inventory" it
+        WHERE it.is_deleted = FALSE
+        <if test="params.skuId != null and params.skuId != ''">
+            and it.sku_id = #{params.skuId}
+        </if>
+        <if test="params.warehouseLocation != null">
+            and it.warehouse_location = #{params.warehouseLocation}
+        </if>
+        <if test="params.warehouseId != null and params.warehouseId != ''">
+            and it.warehouse_id = #{params.warehouseId}
+        </if>
+        GROUP BY it.warehouse_id, it.sku_id
+    </select>
 
     <select id="listInventoryWarehouseByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseDTO">
         SELECT

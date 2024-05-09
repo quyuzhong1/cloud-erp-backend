@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.oms.dto.PackageDTO;
 import com.erp.model.oms.dto.ReportDTO;
+import com.erp.model.oms.dto.SoB2cAbnormalDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
@@ -174,4 +175,23 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @date: 2024/4/29 17:55
      */
     Integer countExportExcel(@Param("params") SoB2cDTO.ExportParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, @Param("isOutStock") Boolean isOutStock);
+    List<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("params") SoB2cDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
+    /**
+     * @description: 异常订单分页查询
+     * @author Will
+     * @date: 2024/4/22 17:55
+     * @param params
+     * @param shopAuthResultDTO
+     * @return PagingVO<ListDTO>
+     */
+    IPage<SoB2cAbnormalDTO.ListDTO> abnormalPaging(Page query, @Param("params") SoB2cAbnormalDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
+    /**
+     * @description: 异常订单导出
+     * @author Will
+     * @date: 2024/4/22 19:57
+     * @param params
+     * @param shopAuthResultDTO
+     * @return List<ListDTO>
+     */
+    List<SoB2cAbnormalDTO.ListDTO> abnormalExportExcel( @Param("params") SoB2cAbnormalDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
 }

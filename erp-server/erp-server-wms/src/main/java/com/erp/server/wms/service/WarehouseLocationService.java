@@ -27,7 +27,7 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @return
      */
     List<WarehouseLocationDTO.LocationListDTO> select(String warehouseId);
-
+    List<WarehouseLocationDTO.WarehouseLocationListDTO> selectByWarehouseIds(List<String> warehouseIds);
     /**
      * 引用仓位分区
      * @param ids
@@ -49,6 +49,16 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @return
      */
     WarehouseLocationEntity findByWarehouseIdAndCode(String warehouseId, String code);
+
+    /**
+     * 根据id获取
+     *
+     * @param id
+     * @return
+     * @author hyj
+     * @date 2024/4/24 10:37
+     */
+    WarehouseLocationEntity findLocationById(String id);
 
     /**
      * @description: 根据仓库id和库位集合查询

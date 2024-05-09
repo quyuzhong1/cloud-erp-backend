@@ -13,7 +13,6 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
@@ -747,11 +746,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      **/
     Boolean updateShippingOrderNo(List<TransferDeclareDTO.ShippingOrderDTO> list);
 
-    /**
-     * 计算产品尺寸
-     * @param bomChildrenSkuDTO
-     */
-    void buildProductSize(BomChildrenSkuDTO bomChildrenSkuDTO);
 
     /**
      * 计算长度
@@ -836,7 +830,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 计算明细重量
      */
     List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> detailList, List<SkuInfoSimpleVO> skuList);
-    
+
     /**
      * 根据条件获取数据对比系统数据
      * @param params
@@ -869,8 +863,24 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     List<BatchResultDTO> cancelOrderForecast(List<String> ids);
 
-    List<BatchResultDTO> retryOrderForecast(BaseIdsDTO.IdsDTO dto);
-
+    List<BatchResultDTO> retryOrderForecast(List<String> ids);
+    /**
+     * @description: 异常订单分页查询
+     * @author Will
+     * @date: 2024/4/22 17:53
+     * @param pagingParamDTO
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<SoB2cAbnormalDTO.ListDTO> abnormalPaging(PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> pagingParamDTO);
+    /**
+     * @description: 异常订单导出
+     * @author Will
+     * @date: 2024/4/22 19:54
+     * @param dto
+     * @param response
+     * @return Boolean
+     */
+    Boolean abnormalExportExcel(SoB2cAbnormalDTO.PagingParamDTO dto, HttpServletResponse response);
     /**
      * 扫描单号匹配订单
      * @param code
@@ -886,4 +896,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     List<PackageDTO.ScanResultDTO> listMergePackageBySoIds(List<String> ids);
 
     Boolean autoCancelOrderForecast(SoB2cEntity mainEntity);
+
+    PackageDTO.ScanResultDTO packageScan(PackageDTO.ScanDTO scanDTO);
 }

@@ -76,12 +76,12 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         try {
             WeiShiCreateOrder weiShiResponse = weiShiService.createOrder(request,logisticsOrderVO.getAuthMap());
             if(isFailure(weiShiResponse.getAsk())){
-                logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.WEI_SHI.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(weiShiResponse), false);
                 return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,weiShiResponse.getError().getErrMessage());
             }
-            logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.WEI_SHI.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(weiShiResponse), false);
             return success(LogisticsOrderResponseVO.builder()
@@ -90,7 +90,7 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .trackNo(weiShiResponse.getShippingMethodNo())
                     .build());
         }catch (Exception e){
-            logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.WEI_SHI.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e), true);
             return failure(getPlatForm().getName() + ":" + e.getMessage());
@@ -184,19 +184,19 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 ValidatorUtil.validateEntity(weiShiInterceptOrderRequest);
                 WeiShiResponse<String> weiShiresponse = weiShiService.interceptOrder(weiShiInterceptOrderRequest,interceptOrderVO.getAuthMap());
                 if(isFailure(weiShiresponse.getAsk())){
-                    logisticsOperateService.pushOperateLog(interceptOrderVO.getAuthMap().get("id"),
+                    logisticsOperateService.pushOperateLog(interceptOrderVO.getOrderId(),
                             interceptOrderVO.getDeliveryNo(), BusinessTypeEnum.INTERCEPT_ORDER.getCode(), LogisticsPlatformEnum.WEI_SHI.getCode(),
                             RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(interceptOrderVO), JSONUtil.toJsonStr(weiShiresponse), false);
                     isSuccess = false;
                     interceptResponseVO.failure(getPlatForm().getName(),interceptOrderVO.getDeliveryNo(),weiShiresponse.getError().getErrMessage());
                 }else{
-                    logisticsOperateService.pushOperateLog(interceptOrderVO.getAuthMap().get("id"),
+                    logisticsOperateService.pushOperateLog(interceptOrderVO.getOrderId(),
                             interceptOrderVO.getDeliveryNo(), BusinessTypeEnum.INTERCEPT_ORDER.getCode(), LogisticsPlatformEnum.WEI_SHI.getCode(),
                             RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(interceptOrderVO), JSONUtil.toJsonStr(weiShiresponse), false);
                     interceptResponseVO.success();
                 }
             }catch (Exception e){
-                logisticsOperateService.pushOperateLog(interceptOrderVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(interceptOrderVO.getOrderId(),
                         interceptOrderVO.getDeliveryNo(), BusinessTypeEnum.INTERCEPT_ORDER.getCode(), LogisticsPlatformEnum.WEI_SHI.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(interceptOrderVO), JSONUtil.toJsonStr(e), true);
                 isSuccess = false;
@@ -220,19 +220,19 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 ValidatorUtil.validateEntity(request);
                 WeiShiResponse<String> weiShiResponse = weiShiService.cancelOrder(request,cancelOrderVO.getAuthMap());
                 if(isFailure(weiShiResponse.getAsk())){
-                    logisticsOperateService.pushOperateLog(cancelOrderVO.getAuthMap().get("id"),
+                    logisticsOperateService.pushOperateLog(cancelOrderVO.getOrderId(),
                             cancelOrderVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.WEI_SHI.getCode(),
                             RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(cancelOrderVO), JSONUtil.toJsonStr(weiShiResponse), false);
                     isSuccess = false;
                     cancelResponseVO.failure(getPlatForm().getName(),cancelOrderVO.getDeliveryNo(),weiShiResponse.getMessage());
                 }else{
-                    logisticsOperateService.pushOperateLog(cancelOrderVO.getAuthMap().get("id"),
+                    logisticsOperateService.pushOperateLog(cancelOrderVO.getOrderId(),
                             cancelOrderVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.WEI_SHI.getCode(),
                             RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(cancelOrderVO), JSONUtil.toJsonStr(weiShiResponse), false);
                     cancelResponseVO.success();
                 }
             }catch (Exception e){
-                logisticsOperateService.pushOperateLog(cancelOrderVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(cancelOrderVO.getOrderId(),
                         cancelOrderVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.WEI_SHI.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(cancelOrderVO), JSONUtil.toJsonStr(e), true);
                 isSuccess = false;

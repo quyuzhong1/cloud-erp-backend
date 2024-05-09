@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderLogisticsDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -388,10 +389,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         addDTO.setDetailList(buildDetailList(entity));
         addDTO.setSourceId(mainEntity.getId());
         addDTO.setSourceCode(mainEntity.getPlatformCode());
-        addDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
+        addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
         addDTO.setOutstockId("");
         addDTO.setOutstockCode("");
         addDTO.setChannelId(entity.getLogisticsChannelId());
+        addDTO.setOrderType(OrderTypeEnum.B2C.getCode());
         return addDTO;
     }
 

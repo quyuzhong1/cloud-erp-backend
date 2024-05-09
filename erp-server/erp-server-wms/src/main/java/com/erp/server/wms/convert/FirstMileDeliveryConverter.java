@@ -36,8 +36,8 @@ public interface FirstMileDeliveryConverter {
             @Mapping(target = "skuId", source = "skuId"),
             @Mapping(target = "skuNo", source = "skuNo"),
             @Mapping(target = "isCombination", source = "isCombination"),
-            @Mapping(target = "platformSkuNo", source = "stockSku"),
             @Mapping(target = "deliveryQty", source = "deliveryQty"),
+            @Mapping(target = "platformSkuNo", source = "platformSkuNo"),
     })
     OverseasWarehouseInboundDetailDTO.ViewDTO fmdToOverseasWarehouseInboundDetailView(FirstMileDeliveryDetailEntity detailEntityList);
     List<OverseasWarehouseInboundDetailDTO.ViewDTO> fmdToOverseasWarehouseInboundDetailView(List<FirstMileDeliveryDetailEntity> detailEntityList);
