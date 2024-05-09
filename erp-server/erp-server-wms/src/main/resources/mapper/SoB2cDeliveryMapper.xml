@@ -56,9 +56,10 @@
         sbd.status AS tabFlag,
         count(*) AS count
         FROM so_b2c_delivery sbd
+        left join so_b2c_delivery_intercept  sbdi on sbdi.delivery_id = sbd.id  and sbdi.handle_status = 'waitHandle' and sbdi.is_deleted = false
         WHERE
-        is_deleted=FALSE
-
+        sbd.is_deleted=FALSE
+        and sbdi.id is null
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}

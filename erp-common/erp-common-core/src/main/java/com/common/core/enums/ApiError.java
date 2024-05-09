@@ -110,8 +110,8 @@ public enum ApiError implements Serializable {
     ERROR_BILL_APPROVE(1057,"{}单据审核失败"),
     LOGIN_ERROR(1058,"账户密码已输入错误5次，请在1小时后重试"),
     LOGIN_USER_ERROR(1059,"账号密码错误,还可尝试【{}】次,失败后将锁定1小时"),
-    ERROR_EXCEL_EXPORT_SIZE(1060,"导出数据已超过50000条，请进行条件筛选后导出"),
     ERROR_NAME_EXIST(1060,"名称【{}】已存在"),
+    ERROR_EXCEL_EXPORT_SIZE(1060,"导出数据已超过50000条，请进行条件筛选后导出"),
 
     /**
      * 警告信息 从800 开始
