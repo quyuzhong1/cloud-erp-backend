@@ -257,7 +257,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                 }
                 logisticsOperateService.pushOperateLog(UUID.randomUUID().toString(),
                         UUID.randomUUID().toString(), BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
-                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(registerTrackVO), JSONUtil.toJsonStr(registerResult));
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(registerTrackVO), JSONUtil.toJsonStr(registerResult), false);
                 return success(registerResponseVOS);
             }else {
                 logisticsOperateService.pushOperateLog(UUID.randomUUID().toString(),
@@ -313,7 +313,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                 }
                 logisticsOperateService.pushOperateLog(UUID.randomUUID().toString(),
                         UUID.randomUUID().toString(), BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
-                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(registerRequests), JSONUtil.toJsonStr(registerResult));
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(registerRequests), JSONUtil.toJsonStr(registerResult), false);
                 return success(registerResponseVOS);
             }else {
                 logisticsOperateService.pushOperateLog(UUID.randomUUID().toString(),
