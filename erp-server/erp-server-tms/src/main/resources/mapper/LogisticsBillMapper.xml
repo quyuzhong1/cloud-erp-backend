@@ -102,7 +102,9 @@
              lbd.track_no AS trackNo,
              lbd.sign_time AS signTime,
              lbd.track_query_mode AS trackQueryMode,
-             lc.name AS channelName
+             lc.name AS channelName,
+             lb.platform_code as platformCode,
+             lb.shipment_type as shipmentType
         FROM  logistics_bill lb
         LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
         LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
@@ -128,6 +130,17 @@
             <foreach collection="params.orderNoList" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
+        </if>
+        <!--发货类型-->
+        <if test="params.shipmentTypeList !=null and params.shipmentTypeList.size>0">
+            AND lb.shipment_type in
+            <foreach collection="params.shipmentTypeList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <!--平台订单号-->
+        <if test="params.platformCode != '' and params.platformCode != null">
+            and lb.platform_code ILIKE concat('%', #{params.platformCode}::text,'%')
         </if>
           <!--销售平台-->
          <if test="params.salesPlatformList !=null and params.salesPlatformList.size>0">
@@ -219,7 +232,9 @@
             lbd.track_no AS trackNo,
             lbd.sign_time AS signTime,
             lbd.track_query_mode AS trackQueryMode,
-            lc.name AS channelName
+            lc.name AS channelName,
+            lb.platform_code as platformCode,
+            lb.shipment_type as shipmentType
         FROM  logistics_bill lb
         LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
         LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
@@ -246,6 +261,17 @@
                     <foreach collection="params.orderNoList" item="item" open="(" separator="," close=")">
                         #{item}
                     </foreach>
+                </if>
+                <!--发货类型-->
+                <if test="params.shipmentTypeList !=null and params.shipmentTypeList.size>0">
+                    AND lb.shipment_type in
+                    <foreach collection="params.shipmentTypeList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <!--平台订单号-->
+                <if test="params.platformCode != '' and params.platformCode != null">
+                    and lb.platform_code ILIKE concat('%', #{params.platformCode}::text,'%')
                 </if>
                 <!--物流单号-->
                 <if test="params.trackNoList !=null and params.trackNoList.size>0">

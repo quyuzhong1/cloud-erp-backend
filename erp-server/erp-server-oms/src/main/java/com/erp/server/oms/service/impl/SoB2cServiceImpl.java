@@ -5490,6 +5490,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (Objects.nonNull(logisticsBase)) {
                     dto.setCarrierId(logisticsBase.getLogisticsSupplierId());
                 }
+                dto.setLogisticsChannelId(logisticsChannelId);
             }
             String trackNo = soB2cLogistics.getTrackNo();
             if (StringUtils.isBlank(trackNo)) {

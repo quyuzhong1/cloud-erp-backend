@@ -52,9 +52,9 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
-import com.erp.model.tms.enums.DeclareStatusEnum;
-import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
+import com.erp.model.tms.enums.ReconciliationStatusEnum;
+import com.erp.model.tms.enums.ShipmentTypeEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SoOutstockPackingExcelDTO;
@@ -76,6 +76,7 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
@@ -211,6 +212,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
+
+    @Resource
+    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
+
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -851,6 +856,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     addDTO.setCurrency(soInfo.getCurrency());
                     addDTO.setChannelId(entity.getLogisticsChannelId());
                     addDTO.setTransportNo(entity.getTrackNo());
+                    addDTO.setShipmentType(ShipmentTypeEnum.SELF_DELIVER.getCode());
                 }
             } else {
                 //表示是b2c
@@ -874,15 +880,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     addDTO.setToCountry(countryName);
                     addDTO.setChannelId(customer.getLogisticsChannelId());
                     addDTO.setTransportNo(customer.getTransportNo());
-                    String trackNo = customer.getTrackNo();
-                    if(StringUtils.isNotBlank(trackNo)){
-                        entity.setTrackNo(trackNo);
+
+                    String shipmentType = ShipmentTypeEnum.SELF_DELIVER.getCode();
+                    //第三方仓
+                    List<OverseasProviderWarehouseDTO.ViewDTO> warehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Arrays.asList(entity.getWarehouseId()));
+                    if (CollectionUtils.isNotEmpty(warehouseList)) {
+                        shipmentType = ShipmentTypeEnum.THIRD_WAREHOUSE_DELIVER.getCode();
                     }
+                    if (customer.getHasPlatformWarehouseOrder()) {
+                        shipmentType = ShipmentTypeEnum.PLATFORM_DELIVER.getCode();
+                    }
+                    addDTO.setShipmentType(shipmentType);
                 }
-
             }
-
-
             LocalDateTime actualDeliveryDate = entity.getActualDeliveryDate();
             if (Objects.isNull(actualDeliveryDate)) {
                 actualDeliveryDate = entity.getBillDate().atStartOfDay();
@@ -890,18 +900,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //发货时间
             addDTO.setDeliveryTime(actualDeliveryDate);
             //轨迹单号
-            String trackNo = entity.getTrackNo();
-            List<LogisticsBillDetailDTO.AddDTO> detailList = new ArrayList<>(10);
-            if (StringUtils.isNotBlank(trackNo)) {
-                for (String no : trackNo.split(",")) {
-                    if (StringUtils.isNotBlank(no)) {
-                        LogisticsBillDetailDTO.AddDTO addDetail = new LogisticsBillDetailDTO.AddDTO();
-                        addDetail.setTrackNo(no);
-                        detailList.add(addDetail);
-                    }
-                }
-            }
-            addDTO.setDetailList(detailList);
+            LogisticsBillDetailDTO.AddDTO addDetailDTO = new LogisticsBillDetailDTO.AddDTO();
+            addDetailDTO.setTrackNo(entity.getTrackNo());
+            addDTO.setDetailList(Arrays.asList(addDetailDTO));
             logisticsBillFeign.addLogisticsBill(addDTO);
         } catch (Exception e) {
             log.error("物流单添加失败: {}", e.getMessage());
@@ -2428,6 +2429,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             SoOutstockDTO.GenerateB2cDTO currentGenerateB2cDTO = new SoOutstockDTO.GenerateB2cDTO();
             BeanUtils.copyProperties(generateB2cDTO, currentGenerateB2cDTO);
             currentGenerateB2cDTO.setBillDate(entry.getKey());
+            //跟踪单单号
+            currentGenerateB2cDTO.setTrackNo(entry.getValue().get(0).getTrackNo());
+            //运单号
+            currentGenerateB2cDTO.setTransportNo(entry.getValue().get(0).getTrackNo());
 
             LinkedList<SoOutstockDetailDTO.AddDTO> currentAddDTOList = new LinkedList<>();
             for (PlatformSoOutStockDetailDTO detailDTO : entry.getValue()) {

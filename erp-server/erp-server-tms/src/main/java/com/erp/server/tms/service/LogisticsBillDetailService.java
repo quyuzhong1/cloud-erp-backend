@@ -1,14 +1,16 @@
 package com.erp.server.tms.service;
+
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -70,7 +72,7 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @author yl
      * @date 2023-11-17
      */
-    BatchResultDTO updateStatus(String id, String trackStatus);
+    BatchResultDTO updateStatus(String id, String trackStatus, LocalDateTime trackTime,String trackDesc);
 
     /**
      * 分页获取轨迹数据

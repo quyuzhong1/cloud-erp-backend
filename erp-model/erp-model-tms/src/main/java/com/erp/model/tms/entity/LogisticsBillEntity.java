@@ -1,19 +1,16 @@
 package com.erp.model.tms.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-import java.time.temporal.ChronoUnit;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 
 /**
@@ -142,6 +139,18 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
      */
     @TableField("ship_time")
     private LocalDateTime shipTime;
+
+    /**
+     * 平台订单号
+     */
+    @TableField("platform_code")
+    private String platformCode;
+
+    /**
+     * 发货类型(自发货、第三方仓、平台仓发货)
+     */
+    @TableField("shipment_type")
+    private String shipmentType;
 
     public static final String SALES_PLATFORM = "sales_platform";
 

@@ -1890,6 +1890,12 @@ public class SoB2cDTO implements Serializable {
          * 国家名
          */
         private String countryName;
+
+        /**
+         * 是否平台订单
+         */
+        private Boolean hasPlatformWarehouseOrder;
+
     }
 
     /**

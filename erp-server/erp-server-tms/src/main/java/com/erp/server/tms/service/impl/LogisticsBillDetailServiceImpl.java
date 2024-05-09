@@ -59,6 +59,10 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     @Autowired
     private LogisticsBillCostService logisticsBillCostService;
 
+    @Autowired
+    private LogisticsTrackService logisticsTrackService;
+
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(LogisticsBillEntity billEntity, List<LogisticsBillDetailDTO.AddDTO> detailList ,boolean isGenerateCost) {
@@ -140,7 +144,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO updateStatus(String id, String trackStatus) {
+    public BatchResultDTO updateStatus(String id, String trackStatus,LocalDateTime trackTime,String trackDesc) {
         LogisticsBillDetailEntity detailEntity = this.getById(id);
         if (Objects.isNull(detailEntity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "自发货物流单详情");
@@ -161,11 +165,16 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         String oldTrackStatusName = LogisticTrackStatusEnum.getName(oldTrackStatus);
         String newTrackStatusName = LogisticTrackStatusEnum.getName(trackStatus);
         detailEntity.setTrackStatus(trackStatus);
+        detailEntity.setTrackTime(trackTime);
         this.updateById(detailEntity);
+
+        //添加物流轨迹
+        addLogisticsTrack(detailEntity,trackTime,trackDesc);
+
+        //操作日志
         String msg = StrUtil.format("用户【{}】从【{}】变更为【{}】 ", commonService.getUserInfo().getUserName(), oldTrackStatusName, newTrackStatusName);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL.getCode(), id, "状态变更");
         return BatchResultDTO.success(detailEntity.getId(), detailEntity.getTrackNo(), OperationTypeEnum.UPDATE_STATUS);
-
     }
 
     @Override
@@ -229,6 +238,22 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         return this.lambdaQuery().in(LogisticsBillDetailEntity::getTrackNo, trackNoList).list();
     }
 
+    /**
+     * @description: 添加物流轨迹
+     * @author Will
+     * @date: 2024/5/9 8:55
+     * @param detailEntity
+     * @param trackTime
+     * @param trackDesc
+     */
+    private void addLogisticsTrack (LogisticsBillDetailEntity detailEntity,LocalDateTime trackTime,String trackDesc) {
+        LogisticsTrackDTO.AddDTO addDTO = new LogisticsTrackDTO.AddDTO();
+        addDTO.setTrackNo(detailEntity.getTrackNo());
+        addDTO.setContent(trackDesc);
+        addDTO.setTrackTime(trackTime);
+        addDTO.setStatus(detailEntity.getTrackStatus());
+        logisticsTrackService.add(addDTO);
+    }
 
     /**
      * 新增修改处理数据

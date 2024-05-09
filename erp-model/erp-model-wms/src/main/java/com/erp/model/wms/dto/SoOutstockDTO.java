@@ -1421,6 +1421,12 @@ public class SoOutstockDTO implements Serializable {
          */
         private String carrierId;
 
+        /**
+         * 物流渠道
+         */
+        private String logisticsChannelId;
+
+
         private LocalDate billDate;
 
         /**
