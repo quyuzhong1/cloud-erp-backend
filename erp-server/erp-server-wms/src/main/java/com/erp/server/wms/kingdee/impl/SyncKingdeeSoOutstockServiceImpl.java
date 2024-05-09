@@ -495,9 +495,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             String soSyncKingdeeId=Objects.nonNull(soB2cDetailEntity)? soB2cDetailEntity.getKingdeeDetailId():"";
             map.put("soSyncKingdeeId",soSyncKingdeeId);
             map.put("FSrcType", "SAL_SaleOrder");
-            map.put("FSrcBillNo", soB2cEntity.getCode());
+            // 源单编号
+            map.put("FSrcBillNo", soB2cEntity.getPlatformCode());
+            // 订单单号
             map.put("FSoorDerno", soB2cEntity.getCode());
-
             fEntityList.add(map);
         }
         resultMap.put("FEntity", fEntityList);
