@@ -33,10 +33,6 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class AliexpressDeliveryDetailServiceImpl extends SuperServiceImpl<AliexpressDeliveryDetailMapper, AliexpressDeliveryDetailEntity> implements AliexpressDeliveryDetailService {
-    @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override

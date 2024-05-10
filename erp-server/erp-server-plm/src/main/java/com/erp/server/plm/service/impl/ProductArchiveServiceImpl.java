@@ -4,13 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.LoginUser;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.erp.model.plm.dto.CountDTO;
 import com.erp.model.plm.dto.ProductArchiveDTO;
 import com.erp.model.plm.dto.ProductSearchDTO;
-import com.erp.model.plm.dto.CountDTO;
 import com.erp.model.plm.entity.ProductArchiveEntity;
 import com.erp.server.plm.mapper.ProductArchiveMapper;
 import com.erp.server.plm.service.ProductArchiveService;
@@ -126,11 +125,7 @@ public class ProductArchiveServiceImpl extends ServiceImpl<ProductArchiveMapper,
      */
     @Override
     public Boolean saveArchive(String productId) {
-        LoginUser user = CommonInterceptor.threadLocal.get();
-        String operator = "";
-        if (user != null) {
-            operator = user.getUid();
-        }
+        String operator = UserContext.getDefaultLoginUser().getUid();
         ProductArchiveEntity entity = getByProductId(productId);
         if (!Objects.isNull(entity)) {
             entity.setArchiveTime(LocalDateTime.now());
@@ -182,11 +177,7 @@ public class ProductArchiveServiceImpl extends ServiceImpl<ProductArchiveMapper,
      */
     @Override
     public Boolean batchAddArchive(List<String> productIdList) {
-        LoginUser user = CommonInterceptor.threadLocal.get();
-        String operator = "";
-        if (user != null) {
-            operator = user.getUid();
-        }
+        String operator = UserContext.getDefaultLoginUser().getUid();
         List<ProductArchiveEntity> entityList = listByProductIdList(productIdList);
         LocalDateTime now = LocalDateTime.now();
         List<ProductArchiveEntity> saveOrUpdateList = new ArrayList<>(productIdList.size());

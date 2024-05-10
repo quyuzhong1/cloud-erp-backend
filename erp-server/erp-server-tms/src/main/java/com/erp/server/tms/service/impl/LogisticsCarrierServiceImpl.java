@@ -8,33 +8,31 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.tms.dto.LogisticsCarrierDTO;
 import com.erp.model.tms.dto.excel.LogisticsCarrierExcelDTO;
 import com.erp.model.tms.entity.LogisticsCarrierEntity;
 import com.erp.server.tms.listener.LogisticsCarrierExcelListener;
 import com.erp.server.tms.mapper.LogisticsCarrierMapper;
 import com.erp.server.tms.service.LogisticsCarrierService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.LogisticsCarrierDTO;
-
-import java.io.IOException;
-import java.util.*;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * <p>
@@ -49,8 +47,6 @@ import javax.servlet.http.HttpServletResponse;
 public class LogisticsCarrierServiceImpl extends SuperServiceImpl<LogisticsCarrierMapper, LogisticsCarrierEntity> implements LogisticsCarrierService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -69,7 +65,7 @@ public class LogisticsCarrierServiceImpl extends SuperServiceImpl<LogisticsCarri
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物流快递/海运/空运公司列单" , logisticsCarrierEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流快递/海运/空运公司列单" , logisticsCarrierEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, logisticsCarrierEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -98,7 +94,7 @@ public class LogisticsCarrierServiceImpl extends SuperServiceImpl<LogisticsCarri
 
         // 记录主单操作日志
             log.info("编辑 开始记录物流快递/海运/空运公司列单日志数据，id：【{}】", logisticsCarrierEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsCarrierEntity.getId(), "物流快递/海运/空运公司列单");
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsCarrierEntity.getId(), "物流快递/海运/空运公司列单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, logisticsCarrierEntity, null, logisticsCarrierEntity.getId(), msg);
         return Boolean.TRUE;

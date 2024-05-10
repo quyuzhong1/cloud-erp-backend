@@ -2,6 +2,7 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -25,8 +26,6 @@ import java.util.List;
 @Slf4j
 @Service
 public class UserDatePermissionServiceImpl implements UserDatePermissionService {
-    @Resource
-    private CommonService commonService;
     @Resource
     private SysRoleUserService sysRoleUserService;
     @Resource
@@ -59,7 +58,7 @@ public class UserDatePermissionServiceImpl implements UserDatePermissionService 
         if (StringUtil.isBlank(tableField) || StringUtil.isBlank(menuCode)) {
             return "";
         }
-        LoginUser user = commonService.getUserInfo();
+        LoginUser user = UserContext.getDefaultLoginUser();
         List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(user.getUid());
         UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
         List<String> roleIdList = sysUserFeign.getRoleIdList(user.getUid());
@@ -141,7 +140,7 @@ public class UserDatePermissionServiceImpl implements UserDatePermissionService 
      **/
     @Override
     public Boolean getUserDatePermissionByMenuCode(String menuCode) {
-        LoginUser user = commonService.getUserInfo();
+        LoginUser user = UserContext.getDefaultLoginUser();
         List<UserRequestPermissionsDTO> requestPermissionsList = sysUserInfoService.getRequestPermissionsList(user.getUid());
         UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
         List<String> roleIdList = sysRoleUserService.findRoleIdsByUid(user.getUid());

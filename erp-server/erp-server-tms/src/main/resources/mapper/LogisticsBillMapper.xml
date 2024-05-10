@@ -466,7 +466,7 @@
         lbd.track_status as logisticsStatus,
                (select lt.content from logistics_track lt where lt.track_no = lbd.track_no and lt.is_deleted = false order by lt.update_time desc limit 1) as logisticsTrack,
                lb.counter_no as counterNo,
-               lb.carrier as carrier,
+               lb.carrier_id as carrierId,
         lb.source_code as businessCode,
         lb.invoices_status as invoicesStatus,
         lbc.reconciliation_status as reconciliationStatus,

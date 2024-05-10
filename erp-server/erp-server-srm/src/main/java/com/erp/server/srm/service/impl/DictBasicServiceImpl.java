@@ -3,8 +3,8 @@ package com.erp.server.srm.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.common.business.config.DocNoGenHelper;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -12,7 +12,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.srm.dto.DictBasicDTO;
 import com.erp.model.srm.entity.DictBasicEntity;
 import com.erp.server.srm.mapper.DictBasicMapper;
-import com.erp.server.srm.service.CommonService;
 import com.erp.server.srm.service.DictBasicService;
 import com.erp.server.srm.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
@@ -37,10 +36,6 @@ import java.util.Optional;
 public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, DictBasicEntity> implements DictBasicService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
-    @Autowired
-    private DocNoGenHelper docNoGenHelper;
 
 
 
@@ -65,7 +60,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
 
         // 记录主单操作日志
             log.info("编辑 开始记录字典单日志数据，单号：【{}】", dictBasicEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), dictBasicEntity.getCode(), "字典单");
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dictBasicEntity.getCode(), "字典单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, dictBasicEntity, null, dictBasicEntity.getId(), msg);
         return Boolean.TRUE;

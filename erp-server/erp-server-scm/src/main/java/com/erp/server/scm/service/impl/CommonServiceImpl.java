@@ -1,20 +1,15 @@
 package com.erp.server.scm.service.impl;
 
-import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
-import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.service.CommonService;
-import com.erp.server.scm.service.SupplierUserService;
-import groovy.lang.Lazy;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -25,7 +20,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -40,19 +34,6 @@ public class CommonServiceImpl implements CommonService {
 
     @Resource
     private WorkflowFeign workflowFeign;
-    @Override
-    public LoginUser getUserInfo() {
-        String userId = "";
-        String userName = "";
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (Objects.isNull(loginUser)) {
-            loginUser = new LoginUser();
-            loginUser.setUid(userId);
-            loginUser.setUserName(userName);
-            loginUser.setUserAccount("");
-        }
-        return loginUser;
-    }
 
     /**
      * 公共的下载模板
@@ -91,7 +72,7 @@ public class CommonServiceImpl implements CommonService {
         //获取当前人需要审核的业务ids
         ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList = new ValidList<>();
         ProcessManagementDTO.ApproveActivityDTO approveActivityDTO = new ProcessManagementDTO.ApproveActivityDTO();
-        approveActivityDTO.setCurApproveId(this.getUserInfo().getUid());
+        approveActivityDTO.setCurApproveId(UserContext.getDefaultLoginUser().getUid());
         approveActivityDTO.setBusinessKey(businessKey);
         dtoList.add(approveActivityDTO);
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.batchCurApproverByApprove(dtoList);

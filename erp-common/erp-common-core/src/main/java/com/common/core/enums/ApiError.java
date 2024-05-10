@@ -1190,6 +1190,9 @@ public enum ApiError implements Serializable {
 
     SKU_MAPPING_INVENTORY_INSUFFICIENT(92135,"需要扣除的映射关系SKU【{}】可用库存不足"),
     SO_B2C_IS_MATCH_WAREHOUSE_RULE(92136,"仓库匹配规则更新失败"),
+    ERROR_SO_B2C_NOT_DISTRIBUTION_DECLARE(92137,"B2C销售订单【{}】只有待配货或配货中支持申报信息生成"),
+    ERROR_SO_B2C_HAS_DECLARE(92138,"B2C销售订单【{}】已存在申报信息不进行规则匹配"),
+    ERROR_SO_B2C_DECLARE_NOT_EXIST(92139,"申报信息【{}】记录不存在"),
 
     ERROR_SO_B2C_TIKTOK_NOT_SPLIT(92119,"B2C销售订单【{}】在TikTok平台不允许拆分，平台提示【{}】"),
     ERROR_SO_B2C_TIKTOK_SPLIT_SKU(92080,"订单【{}】SKU【{}】在TikTok平台中不允许把一个sku拆分成多个单据分开发货"),
@@ -1290,6 +1293,11 @@ public enum ApiError implements Serializable {
     ERROR_CANNOT_SAME_POSITION(94100,"取货和上架仓位不能是同一个仓位"),
     ERROR_OUT_WAREHOUSELOCATION_NOT_FOUND(94101,"取货仓位不存在"),
     ERROR_IN_WAREHOUSELOCATION_NOT_FOUND(94102,"上架仓位不存在"),
+
+    ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT(94201,"箱规长度必须大于包装长度"),
+    ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"箱规宽度必须大于包装宽度"),
+    ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于包装高度"),
+    ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于净重"),
 
 
 

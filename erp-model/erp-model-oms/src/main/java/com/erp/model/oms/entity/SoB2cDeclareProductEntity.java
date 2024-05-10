@@ -86,6 +86,12 @@ public class SoB2cDeclareProductEntity extends BaseEntity<SoB2cDeclareProductEnt
     @TableField("to_customs_code")
     private String toCustomsCode;
 
+    /**
+     * 申报标签(正常申报normal，高申报high，低申报low)
+     */
+    @TableField("declare_label")
+    private String declareLabel;
+
 
     public static final String SO_DETAIL_ID = "so_detail_id";
 

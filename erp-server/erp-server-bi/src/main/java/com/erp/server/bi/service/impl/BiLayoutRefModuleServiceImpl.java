@@ -3,16 +3,15 @@ package com.erp.server.bi.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.bi.dto.LayoutRefModuleDTO;
 import com.erp.model.bi.entity.BiLayoutRefModuleEntity;
 import com.erp.server.bi.mapper.BiLayoutRefModuleMapper;
 import com.erp.server.bi.service.BiLayoutRefModuleService;
-import com.erp.server.bi.service.CommonService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,9 +26,6 @@ import java.util.List;
 @Service
 public class BiLayoutRefModuleServiceImpl extends ServiceImpl<BiLayoutRefModuleMapper, BiLayoutRefModuleEntity> implements BiLayoutRefModuleService {
 
-
-    @Resource
-    private CommonService commonService;
 
     /**
      * 保存模块
@@ -138,7 +134,7 @@ public class BiLayoutRefModuleServiceImpl extends ServiceImpl<BiLayoutRefModuleM
      */
     @Override
     public void copyLayoutRefModule(String newSubjectId, String newLayoutId, String copyLayoutId) {
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         LocalDateTime date = LocalDateTime.now();
         List<BiLayoutRefModuleEntity> list = getByLayoutIdList(copyLayoutId);
         List<BiLayoutRefModuleEntity> saveList = new ArrayList<>(list.size());
