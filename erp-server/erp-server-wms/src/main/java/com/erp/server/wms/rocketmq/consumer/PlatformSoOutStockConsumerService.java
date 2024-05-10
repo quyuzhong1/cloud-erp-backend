@@ -121,7 +121,14 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
         );
         if (CollectionUtils.isEmpty(soB2cEntityList)){
             log.warn("[销售出库单物消费服务]:B2C销售单不存在：单号={}", dto.getPlatformCode());
-            throw new ServiceException("B2C销售单不存在：单号=" + dto.getPlatformCode());
+            // 恢复待清洗
+            MongoDBUpdateDTO mongoDBUpdateDTO = MongoDBUpdateDTO.builder()
+                    .tableName(getTableName(dto.getDictPlatform()))
+                    .uniqueId(dto.getUniqueId())
+                    .isClean(-10)
+                    .build();
+            dmpMongoDbFeign.updateMongoDbData(mongoDBUpdateDTO);
+            return ApiResult.success();
         }
         SoB2cEntity soB2cEntity  = soB2cEntityList.stream()
                     .filter(e->e.getShopId().equalsIgnoreCase(dto.getShopId()))
@@ -141,7 +148,7 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
             log.warn("[销售出库销售消费服务]:配置的B2C销售单不存在：单号={}", dto.getPlatformCode());
             // 恢复待清洗
             MongoDBUpdateDTO mongoDBUpdateDTO = MongoDBUpdateDTO.builder()
-                    .tableName(getTableName(PlatformDictEnum.AMAZON.getCode()))
+                    .tableName(getTableName(dto.getDictPlatform()))
                     .uniqueId(dto.getUniqueId())
                     .isClean(-10)
                     .build();
