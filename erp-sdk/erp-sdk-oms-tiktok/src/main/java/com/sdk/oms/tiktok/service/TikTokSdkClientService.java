@@ -81,6 +81,21 @@ public class TikTokSdkClientService {
         TikTokSdkClientService.redisUtil = redisUtil;
     }
 
+    public static void main(String[] args) {
+        TikTokSdkClientService sdkClientService = new TikTokSdkClientService();
+        ShopDTO.RefreshTokenDTO refreshTokenDTO = new ShopDTO.RefreshTokenDTO();
+        refreshTokenDTO.setClientId("6buinkjt3hmld");
+        refreshTokenDTO.setClientSecret("8ff628de24faf70c24855de4d967fb6a17a47e3f");
+        refreshTokenDTO.setBaseUrl("https://auth.tiktok-shops.com");
+        refreshTokenDTO.setRefreshToken("ROW_MNQIFAAAAAA5TUxbGIHpDi7CcEx_KnxtFXcuPtjzQUNbw1EbqSkujloYYV2ndVVnHDP2gzI9PBQ");
+        Map<String, String> paramMap = new HashMap<>();
+        paramMap.put("clientId","6buinkjt3hmld");
+        paramMap.put("clientSecret","8ff628de24faf70c24855de4d967fb6a17a47e3f");
+        String acc = "ROW_apJskgAAAACj-JAAAriAWjVtF2MrUIFdT_dQbixt72bmoRRCZdTwf5XIKUm7p_ubq9t9giso2enHQ0Cq8w0_TzdL89IpPrg2P1NNgQivs9gLOcQVC4PmayUR7n2XWhoDiOc3BrQByNmamhHwr1V56CpR-E98wOdEYOQLjyjOjzqpw-oZUvt-FQ";
+        TikTokShopAuthDTO authorizedShops = sdkClientService.getAuthorizedShops(paramMap, acc);
+        System.out.println(authorizedShops);
+
+    }
 
     public TokenDTO sendTikTokPostToken(Map<String, String> paramMap) {
 
@@ -122,9 +137,9 @@ public class TikTokSdkClientService {
         //查询店铺权限
         TikTokShopAuthDTO tikTokShopAuthDTO = getAuthorizedShops(paramMap, tokenDTO.getAccessToken());
         for (ShopsBean shop : tikTokShopAuthDTO.getData().getShops()) {
-            if (tokenDTO.getSellerBaseRegion().equalsIgnoreCase(shop.getRegion())) {
+//            if (tokenDTO.getSellerBaseRegion().equalsIgnoreCase(shop.getRegion())) {
                 tokenDTO.setShopCipher(shop.getCipher());
-            }
+//            }
         }
         //返回token实体
         return tokenDTO;
@@ -178,19 +193,6 @@ public class TikTokSdkClientService {
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询店铺权限返回值 responseMap={}，转换成实体错误", apiResult.getData()));
         }
         return tikTokTokenDTO;
-    }
-
-    public static void main(String[] args) {
-        TikTokSdkClientService sdkClientService = new TikTokSdkClientService();
-        ShopDTO.RefreshTokenDTO refreshTokenDTO = new ShopDTO.RefreshTokenDTO();
-        refreshTokenDTO.setClientId("6buinkjt3hmld");
-        refreshTokenDTO.setClientSecret("8ff628de24faf70c24855de4d967fb6a17a47e3f");
-        refreshTokenDTO.setBaseUrl("https://auth.tiktok-shops.com");
-        refreshTokenDTO.setRefreshToken("ROW_MNQIFAAAAAA5TUxbGIHpDi7CcEx_KnxtFXcuPtjzQUNbw1EbqSkujloYYV2ndVVnHDP2gzI9PBQ");
-
-        TokenDTO tokenDTO = sdkClientService.refreshToken(refreshTokenDTO);
-        System.out.println(tokenDTO);
-
     }
 
 
