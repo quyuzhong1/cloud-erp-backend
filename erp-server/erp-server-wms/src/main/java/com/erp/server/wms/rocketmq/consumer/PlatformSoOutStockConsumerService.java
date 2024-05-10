@@ -120,31 +120,34 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
                 SourceTypeEnum.SO_B2C.getCode()
         );
         if (CollectionUtils.isEmpty(soB2cEntityList)){
-            log.warn("[亚马逊物流销售消费服务]:B2C销售单不存在：单号={}", dto.getPlatformCode());
+            log.warn("[销售出库单物消费服务]:B2C销售单不存在：单号={}", dto.getPlatformCode());
             throw new ServiceException("B2C销售单不存在：单号=" + dto.getPlatformCode());
         }
-        SoB2cEntity soB2cEntity = null;
-        // 校验当前店铺
-        if (1 < soB2cEntityList.size()){
-            soB2cEntity = soB2cEntityList.stream()
+        SoB2cEntity soB2cEntity  = soB2cEntityList.stream()
                     .filter(e->e.getShopId().equalsIgnoreCase(dto.getShopId()))
                     .findFirst()
                     .orElse(null);
-            if (null == soB2cEntity){
-                // 查询相同账号的店铺ID
-                List<ShopInfoEntity> sameAccountShopList = shopInfoFeign.getRelatedByShopId(dto.getShopId());
-                List<String> shopIdList = sameAccountShopList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-                soB2cEntity = soB2cEntityList.stream()
-                        .filter(e-> shopIdList.contains(e.getShopId()))
-                        .findFirst()
-                        .orElse(null);
-            }
-        } else {
-            soB2cEntity = soB2cEntityList.get(0);
-        }
         if (null == soB2cEntity){
-            log.warn("[亚马逊物流销售消费服务]:配置的B2C销售单不存在：单号={}", dto.getPlatformCode());
-            throw new ServiceException("配置的B2C销售单不存在：单号=" + dto.getPlatformCode());
+            // 查询相同账号的店铺ID
+            List<ShopInfoEntity> sameAccountShopList = shopInfoFeign.getRelatedByShopId(dto.getShopId());
+            List<String> shopIdList = sameAccountShopList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+            soB2cEntity = soB2cEntityList.stream()
+                    .filter(e-> shopIdList.contains(e.getShopId()))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        if (null == soB2cEntity){
+            log.warn("[销售出库销售消费服务]:配置的B2C销售单不存在：单号={}", dto.getPlatformCode());
+            // 恢复待清洗
+            MongoDBUpdateDTO mongoDBUpdateDTO = MongoDBUpdateDTO.builder()
+                    .tableName(getTableName(PlatformDictEnum.AMAZON.getCode()))
+                    .uniqueId(dto.getUniqueId())
+                    .isClean(-10)
+                    .build();
+            dmpMongoDbFeign.updateMongoDbData(mongoDBUpdateDTO);
+//            throw new ServiceException("配置的B2C销售单不存在：单号=" + dto.getPlatformCode());
+            return ApiResult.success();
         }
 
         // 记录订单数据（独立事务）
