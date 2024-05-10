@@ -46,4 +46,11 @@ public interface SoB2cDeclareProductService extends SuperService<SoB2cDeclarePro
      * @param id
      */
     void removeBySoId(String id);
+
+    /**
+     * 查询订单申报信息
+     * @param ids
+     * @return
+     */
+    List<SoB2cDeclareProductDTO.ViewDTO> listViewBySoId(List<String> ids);
 }

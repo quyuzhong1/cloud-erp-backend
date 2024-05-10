@@ -14,6 +14,7 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="so_detail_id" property="soDetailId" />
        <result column="so_id" property="soId" />
+       <result column="so_code" property="soCode" />
        <result column="sku_no" property="skuNo" />
        <result column="qty" property="qty" />
        <result column="declare_cn" property="declareCn" />
@@ -24,6 +25,7 @@
        <result column="to_currency_symbol" property="toCurrencySymbol" />
        <result column="weight" property="weight" />
        <result column="to_customs_code" property="toCustomsCode" />
+       <result column="declare_label" property="declareLabel" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -37,7 +39,7 @@
         update_time,
         version,
         is_deleted,
-        so_detail_id, so_id, sku_no, qty, declare_cn, declare_en, to_declare_price, to_currency, sku_id, to_currency_symbol, weight, to_customs_code
+        so_detail_id, so_id, so_code,sku_no, qty, declare_cn, declare_en, to_declare_price, to_currency, sku_id, to_currency_symbol, weight, to_customs_code,declare_label
     </sql>
 
 
