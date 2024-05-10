@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * 任务sku配置关系表(TaskRefSkuConfig)表服务实现类
@@ -234,43 +233,48 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
                         .like(TemplateTaskRefSkuConfigEntity::getFieldJson, "包装尺寸")
                         .or().like(TemplateTaskRefSkuConfigEntity::getFieldJson, "箱规")));
         configEntities.forEach(e -> {
-            String fieldJson = convertSizeParams(deleteOld, e.getFieldJson());
+            String fieldJson = convertSizeParams(e.getFieldJson());
             e.setFieldJson(fieldJson);
         });
         updateBatchById(configEntities);
         templateTaskRefSkuConfigEntities.forEach(e -> {
-            String fieldJson = convertSizeParams(deleteOld, e.getFieldJson());
+            String fieldJson = convertSizeParams(e.getFieldJson());
             e.setFieldJson(fieldJson);
         });
         templateTaskRefSkuConfigService.updateBatchById(templateTaskRefSkuConfigEntities);
     }
 
-    private String convertSizeParams(Boolean deleteOld, String fieldJson) {
+    private String convertSizeParams(String fieldJson) {
         if (ObjectUtils.isEmpty(fieldJson)) {
             return fieldJson;
         }
         Map<String, Object> fieldMap = JSON.parseObject(fieldJson);
         List<Map<String, Object>> fieldInfoList = (List<Map<String, Object>>) fieldMap.get(ProductManyDetailConstant.PRODUCT_PACK_SHOW);
-        if (Boolean.TRUE.equals(deleteOld)) {
-            fieldInfoList = fieldInfoList.stream()
-                    .filter(k -> "产品尺寸".equals(k.get("label")))
-                    .filter(k -> "包装尺寸".equals(k.get("label")))
-                    .filter(k -> "箱规".equals(k.get("label")))
-                    .collect(Collectors.toList());
+        List<Map<String, Object>> newFieldInfoList = new ArrayList<>();
+        for (Map<String, Object> map : fieldInfoList) {
+            String prop = String.valueOf(map.get("prop"));
+            if (!(prop.equals("productLength") || prop.equals("productWidth") || prop.equals("productHeight")
+                    || prop.equals("boxLength") || prop.equals("boxWidth") || prop.equals("boxHeight") || prop.equals("productSize") || prop.equals("boxSize"))) {
+                newFieldInfoList.add(map);
+            }
+            if (prop.equals("productSize")){
+                Map<String, Object> productLengthMap = getParams("productLength", "长");
+                Map<String, Object> productWidthMap = getParams("productWidth", "宽");
+                Map<String, Object> productHeightMap = getParams("productHeight", "高");
+                newFieldInfoList.add(productLengthMap);
+                newFieldInfoList.add(productWidthMap);
+                newFieldInfoList.add(productHeightMap);
+            }
+            if (prop.equals("boxSize")){
+                Map<String, Object> boxLengthMap = getParams("boxLength", "长");
+                Map<String, Object> boxWidthMap = getParams("boxWidth", "宽");
+                Map<String, Object> boxHeightMap = getParams("boxHeight", "高");
+                newFieldInfoList.add(boxLengthMap);
+                newFieldInfoList.add(boxWidthMap);
+                newFieldInfoList.add(boxHeightMap);
+            }
         }
-        Map<String, Object> productLengthMap = getParams("productLength", "长");
-        Map<String, Object> productWidthMap = getParams("productWidth", "宽");
-        Map<String, Object> productHeightMap = getParams("productHeight", "高");
-        Map<String, Object> boxLengthMap = getParams("boxLength", "长");
-        Map<String, Object> boxWidthMap = getParams("boxWidth", "宽");
-        Map<String, Object> boxHeightMap = getParams("boxHeight", "高");
-        fieldInfoList.add(productLengthMap);
-        fieldInfoList.add(productWidthMap);
-        fieldInfoList.add(productHeightMap);
-        fieldInfoList.add(boxLengthMap);
-        fieldInfoList.add(boxWidthMap);
-        fieldInfoList.add(boxHeightMap);
-        fieldMap.put(ProductManyDetailConstant.PRODUCT_PACK_SHOW, fieldInfoList);
+        fieldMap.put(ProductManyDetailConstant.PRODUCT_PACK_SHOW, newFieldInfoList);
         fieldJson = JSON.toJSONString(fieldMap);
         return fieldJson;
     }
@@ -279,7 +283,7 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
         Map<String, Object> map = new HashMap<>();
         map.put("prop", code);
         map.put("label", name);
-        map.put("type", "sizeType");
+        map.put("type", code);
         map.put("idRequired", "1");
         return map;
     }
