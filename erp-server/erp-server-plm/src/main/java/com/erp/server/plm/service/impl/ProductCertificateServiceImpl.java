@@ -400,6 +400,9 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         //其他认证
         List<BasicDictEntity> otherAttestationList = basicDictService.listByType(BasicDictTypeEnum.OTHER_ATTESTATION.getCode());
 
+        //新增的数据
+        List<ProductCertificateExcelDTO> resultList = new ArrayList<>();
+
         for (ProductCertificateExcelDTO excelDTO : successList) {
 
             List<String> errorMsgList = new ArrayList<>();
@@ -434,11 +437,11 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             }
             //校验传进来的参数是否重复
             if (!StrUtil.equals(ProductCertificateTypeEnum.OTHER_ATTESTATION.getName(),excelDTO.getTypeName())) {
-                long count = successList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())
+                long count = resultList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())
                                 && StrUtil.equals(obj.getDictProjectName(), excelDTO.getDictProjectName()))
                         .count();
-                if (count > 1) {
-                    throw new ServiceException(ApiError.ERROR_PRODUCT_CERTIFICATE_EXIST,excelDTO.getSkuNo(), excelDTO.getDictProjectName());
+                if (count > 0) {
+                    errorMsgList.add(StrUtil.format(ApiError.ERROR_PRODUCT_CERTIFICATE_EXIST.msg,excelDTO.getSkuNo(), excelDTO.getDictProjectName()));
                 }
             }
             //配置信息
@@ -479,6 +482,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             }
             //新增数据
             this.saveOrUpdate(entity);
+            resultList.add(excelDTO);
 
             //上传附件
             uploadFile (Arrays.asList(entity));
