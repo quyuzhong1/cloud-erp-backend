@@ -1013,6 +1013,7 @@ public class PullAmzJob {
         Query query = new Query();
         query.addCriteria(Criteria.where("shopId").in(shopIds)
                 .and("handleStatus").is(handleStatus)
+                .and("isClean").is(-10)
         );
 
         if (currentPage > 0 && pageSize > 0) {
