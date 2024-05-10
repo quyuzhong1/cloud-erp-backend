@@ -4582,6 +4582,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         ApproveStatusEnum waitSubmit = ApproveStatusEnum.WAIT_SUBMIT;
         this.updateApproveStatus(id, waitSubmit.getStatus(),Boolean.FALSE);
+        //删除已生成的申报信息
+        soB2cDeclareProductService.removeBySoId(id);
         String msg = "销售订单【{}】反审核流程";
         operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), id, "反审核流程");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "反审核流程");
