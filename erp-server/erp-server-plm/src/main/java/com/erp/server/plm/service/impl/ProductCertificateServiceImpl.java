@@ -432,6 +432,15 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             if (ObjectUtil.isEmpty(productDetailEntity)) {
                 errorMsgList.add("系统中未找到SKU");
             }
+            //校验传进来的参数是否重复
+            if (!StrUtil.equals(ProductCertificateTypeEnum.OTHER_ATTESTATION.getName(),excelDTO.getTypeName())) {
+                long count = successList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())
+                                && StrUtil.equals(obj.getDictProjectName(), excelDTO.getDictProjectName()))
+                        .count();
+                if (count > 1) {
+                    throw new ServiceException(ApiError.ERROR_PRODUCT_CERTIFICATE_EXIST,excelDTO.getSkuNo(), excelDTO.getDictProjectName());
+                }
+            }
             //配置信息
             Map<SettingEnum, String> cfgSettingList = dmpTaskFeign.getCfgSettingList(SettingEnum.URL_CHANGE);
 
