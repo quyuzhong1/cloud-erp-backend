@@ -154,7 +154,7 @@ public class FileTaskContext {
      * <p>
      * 等待超时的任务保留2天 / 成功的任务保留3天 /失败的任务保留5天
      */
-    @Scheduled(cron = "0 0 0 * * ?")
+//    @Scheduled(cron = "0 0 0 * * ?")
     public void removeTasks() {
         // 等待(失效)的任务超过2天 删除
         removeFileTasks(fileTaskRepository.getExpireByStatuses(LocalDateTime.now().minusDays(2), FileTaskStatusEnum.PENDING, FileTaskStatusEnum.EXPIRED));

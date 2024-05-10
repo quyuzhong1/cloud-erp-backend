@@ -1,21 +1,19 @@
 package com.erp.server.file.plm;
 
-import com.erp.server.file.core.FileEventHandler;
-import com.erp.server.file.entity.FileTask;
-import com.erp.server.file.enums.FileTaskEventEnum;
-import com.erp.server.file.exception.BusinessException;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.ProductDetailExcelDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.file.core.FileEventHandler;
+import com.erp.server.file.entity.FileTask;
+import com.erp.server.file.enums.FileTaskEventEnum;
+import com.erp.server.file.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Date;
 import java.util.List;
 
@@ -36,23 +34,13 @@ public class ProductDetailExportHandler implements FileEventHandler {
         sb.append(date);
         sb.append(name);
         sb.append(excelPath.substring(excelPath.lastIndexOf(".")));
-        File file = null;
         try {
-            file = new ExcelPrintUtils().patchExport(list, sb.toString(), excelPath);
-            String s = FastDFSClientUtil.uploadFile(file, sb.toString());
+            byte[] bytes = new ExcelPrintUtils().patchExport(list, excelPath);
+            String s = FastDFSClientUtil.uploadFile(bytes, sb.toString(), null);
             fileTask.setFileUrl(s);
         } catch (IOException e) {
             log.error("上传文件失败{}", e.getMessage(), e);
             throw new BusinessException(e.getMessage());
-        } finally {
-            // 删除文件
-            if (file != null && Files.exists(file.toPath())) {
-                try {
-                    Files.delete(file.toPath());
-                } catch (IOException e) {
-                    log.error("文件删除失败，{}", e.getMessage(), e);
-                }
-            }
         }
     }
 
