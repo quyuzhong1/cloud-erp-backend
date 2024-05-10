@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 @Service
 public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper, InventoryHisEntity> implements InventoryHisService {
 
+
     @Resource
     private TransactionFlowService transactionFlowService;
 

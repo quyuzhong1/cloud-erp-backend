@@ -8,7 +8,6 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.WorkOptionMapper;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.WorkOptionService;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +27,7 @@ public class WorkOptionServiceImpl implements WorkOptionService {
 
     @Resource
     private WorkflowFeign workflowFeign;
+
 
     /**
      * 根据入参查询单据数量

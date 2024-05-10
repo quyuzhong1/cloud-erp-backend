@@ -14,7 +14,6 @@ import com.erp.model.wms.dto.WmsDataComparePlanDTO.GetDTO;
 import com.erp.model.wms.dto.WmsDataComparePlanDTO.ViewDTO;
 import com.erp.model.wms.entity.WmsDataComparePlanEntity;
 import com.erp.server.wms.mapper.WmsDataComparePlanMapper;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WmsDataComparePlanService;
 import io.seata.spring.annotation.GlobalTransactional;

@@ -17,7 +17,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +38,6 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
     private SoB2cDeliveryService soB2cDeliveryService;
     @Resource
     private SoB2cFeign soB2cFeign;
-
     @Resource
     private OperateLogService operateLogService;
 

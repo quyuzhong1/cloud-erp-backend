@@ -11,7 +11,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.WmsDataCompareImportDTO;
 import com.erp.model.wms.entity.WmsDataCompareImportEntity;
 import com.erp.server.wms.mapper.WmsDataCompareImportMapper;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WmsDataCompareImportService;
 import io.seata.spring.annotation.GlobalTransactional;
