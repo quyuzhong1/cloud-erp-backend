@@ -87,10 +87,6 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     @Resource
     private InventoryService inventoryService;
 
-
-    @Autowired
-    private CommonService commonService;
-
     @Resource
     private WorkflowFeign workflowFeign;
 

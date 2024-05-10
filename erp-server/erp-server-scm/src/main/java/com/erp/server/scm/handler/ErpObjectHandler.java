@@ -21,9 +21,6 @@ import java.time.LocalDateTime;
 @Component
 public class ErpObjectHandler implements MetaObjectHandler {
 
-    @Resource
-    private CommonService commonService;
-
     /**
      * 插入时的填充数据
      */

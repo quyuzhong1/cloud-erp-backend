@@ -112,9 +112,6 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     private OtherOutstockDetailService otherOutstockDetailService;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private InventoryTransCoreService inventoryTransCoreService;
 
     @Resource

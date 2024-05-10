@@ -54,9 +54,6 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
     private InventoryTransCoreService inventoryTransCoreService;
 
     @Autowired
-    private CommonService commonService;
-
-    @Autowired
     private InstockForcastMapper instockForcastMapper;
 
     @Autowired

@@ -59,8 +59,6 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
     @Resource
     private OperateLogService operateLogService;
     @Resource
-    private CommonService commonService;
-    @Resource
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private SkuMappingFeign skuMappingFeign;

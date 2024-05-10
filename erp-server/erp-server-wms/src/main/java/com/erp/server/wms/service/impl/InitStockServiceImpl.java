@@ -94,9 +94,6 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     private OperateLogService operateLogService;
 
     @Autowired
-    private CommonService commonService;
-
-    @Autowired
     private InventoryTransCoreService inventoryTransCoreService;
 
     @Autowired

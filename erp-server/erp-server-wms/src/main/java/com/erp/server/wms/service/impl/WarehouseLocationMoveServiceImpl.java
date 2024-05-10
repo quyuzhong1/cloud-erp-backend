@@ -78,8 +78,6 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
-    private CommonService commonService;
-    @Autowired
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private WorkflowFeign workflowFeign;

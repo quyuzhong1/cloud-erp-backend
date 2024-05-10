@@ -37,8 +37,6 @@ import java.util.Optional;
 public class MachineRefSoServiceImpl extends SuperServiceImpl<MachineRefSoMapper, MachineRefSoEntity> implements MachineRefSoService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)

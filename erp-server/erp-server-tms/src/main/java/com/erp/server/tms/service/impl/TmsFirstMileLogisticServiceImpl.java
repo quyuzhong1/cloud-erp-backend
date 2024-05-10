@@ -102,9 +102,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     @Autowired
     private OperateLogService operateLogService;
 
-    @Autowired
-    private CommonService commonService;
-
     @Resource
     private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
 

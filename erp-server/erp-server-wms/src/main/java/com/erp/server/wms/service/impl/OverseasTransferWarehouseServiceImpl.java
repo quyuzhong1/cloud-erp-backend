@@ -46,8 +46,6 @@ import java.util.stream.Collectors;
 public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<OverseasTransferWarehouseMapper, OverseasTransferWarehouseEntity> implements OverseasTransferWarehouseService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
     @Resource

@@ -66,8 +66,6 @@ import java.util.stream.Collectors;
 public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlanMapper, StocktakingPlanEntity> implements StocktakingPlanService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
     @Resource
     private DocNoGenHelper docNoGenHelper;
     @Resource

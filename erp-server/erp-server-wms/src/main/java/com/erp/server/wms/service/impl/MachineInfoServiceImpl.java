@@ -90,9 +90,6 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     private MachineDetailService machineDetailService;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private InventoryService inventoryService;
 
     @Resource

@@ -105,9 +105,6 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     private WarehouseService warehouseService;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private DictBasicService dictBasicService;
 
     @Resource

@@ -46,12 +46,6 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
     private SrmDeliveryOrderFeign srmDeliveryFeign;
 
     @Resource
-    private SupplierFeign supplierFeign;
-
-    @Resource
-    private CommonService commonService;
-
-    @Resource
     private WarehouseReceiveService warehouseReceiveService;
 
     @Resource

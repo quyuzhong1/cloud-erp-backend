@@ -87,9 +87,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     private OperateLogService operateLogService;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private QcInfoService qcInfoService;
 
     @Resource

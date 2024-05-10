@@ -84,8 +84,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
-    private CommonService commonService;
-    @Autowired
     private FbaShipmentDetailService fbaShipmentDetailService;
     @Autowired
     private ShopInfoFeign shopInfoFeign;

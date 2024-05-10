@@ -132,10 +132,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     private PoInstockService purchaseStorageService;
 
     @Resource
-    private CommonService commonService;
-
-
-    @Resource
     private OperateLogService operateLogService;
 
     @Resource

@@ -96,9 +96,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     private WarehouseService warehouseService;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private WorkflowFeign workflowFeign;
 
     @Resource

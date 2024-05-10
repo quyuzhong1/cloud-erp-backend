@@ -63,8 +63,6 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     @Resource
     private OperateLogService operateLogService;
     @Resource
-    private CommonService commonService;
-    @Resource
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private WorkflowFeign workflowFeign;

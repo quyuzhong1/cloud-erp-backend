@@ -68,8 +68,6 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
-    private CommonService commonService;
-    @Autowired
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private WorkflowFeign workflowFeign;

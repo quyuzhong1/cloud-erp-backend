@@ -84,9 +84,6 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     private OperateLogService operateLogService;
 
     @Autowired
-    private CommonService commonService;
-
-    @Autowired
     private DocNoGenHelper docNoGenHelper;
 
     @Autowired
