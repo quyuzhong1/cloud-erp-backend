@@ -90,8 +90,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     @Resource
     private OperateLogService operateLogService;
     @Resource
-    private CommonService commonService;
-    @Resource
     private SysDictFeign sysDictFeign;
     @Resource
     private TmsCfgCostService tmsCfgCostService;

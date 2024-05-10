@@ -92,9 +92,6 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
     @Resource
     private ScmTaskFeign scmTaskFeign;
 
-    @Resource
-    private CommonService commonService;
-
     @Autowired
     private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
 

@@ -106,9 +106,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     private WarehouseService warehouseService;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private WorkflowFeign workflowFeign;
 
     @Resource

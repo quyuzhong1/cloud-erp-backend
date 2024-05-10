@@ -41,8 +41,6 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
     private SoB2cFeign soB2cFeign;
 
     @Resource
-    private CommonService commonService;
-    @Resource
     private OperateLogService operateLogService;
 
     @Override

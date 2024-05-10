@@ -34,8 +34,6 @@ import java.util.Optional;
 public class WmsDataCompareImportServiceImpl extends SuperServiceImpl<WmsDataCompareImportMapper, WmsDataCompareImportEntity> implements WmsDataCompareImportService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)

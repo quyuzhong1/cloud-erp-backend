@@ -52,8 +52,6 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
-    private CommonService commonService;
-    @Autowired
     private PlmTaskFeign plmTaskFeign;
 
     @Override

@@ -109,9 +109,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     private TransferInfoDetailService transferInfoDetailService;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private InventoryService inventoryService;
 
     @Resource

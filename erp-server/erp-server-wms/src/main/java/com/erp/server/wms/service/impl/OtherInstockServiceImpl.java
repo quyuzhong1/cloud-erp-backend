@@ -109,9 +109,6 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     private WarehouseService warehouseService;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private WorkflowFeign workflowFeign;
 
     @Resource

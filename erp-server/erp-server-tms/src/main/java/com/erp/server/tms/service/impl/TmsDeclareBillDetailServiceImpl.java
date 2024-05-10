@@ -37,8 +37,6 @@ import java.util.Optional;
 public class TmsDeclareBillDetailServiceImpl extends SuperServiceImpl<TmsDeclareBillDetailMapper, TmsDeclareBillDetailEntity> implements TmsDeclareBillDetailService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)

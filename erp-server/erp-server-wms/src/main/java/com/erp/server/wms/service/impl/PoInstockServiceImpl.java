@@ -97,9 +97,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     private WorkflowFeign workflowFeign;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private WarehouseService warehouseService;
 
     @Resource

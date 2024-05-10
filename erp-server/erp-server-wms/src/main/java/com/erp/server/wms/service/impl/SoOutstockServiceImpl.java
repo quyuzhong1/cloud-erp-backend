@@ -151,10 +151,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
-
-    @Resource
-    private CommonService commonService;
-
     @Resource
     private SoDeliveryNoticeService soDeliveryNoticeService;
 

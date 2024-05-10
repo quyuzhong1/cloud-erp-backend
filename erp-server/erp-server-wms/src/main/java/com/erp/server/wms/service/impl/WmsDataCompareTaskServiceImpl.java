@@ -81,8 +81,6 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
-    private CommonService commonService;
-    @Autowired
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private WmsDataCompareImportService wmsDataCompareImportService;

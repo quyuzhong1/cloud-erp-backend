@@ -34,8 +34,6 @@ import java.util.Optional;
 public class WmsDataCompareTempServiceImpl extends SuperServiceImpl<WmsDataCompareTempMapper, WmsDataCompareTempEntity> implements WmsDataCompareTempService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)

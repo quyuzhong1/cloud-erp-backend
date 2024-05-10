@@ -118,9 +118,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     private OperateLogService operateLogService;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private QcInfoService qcInfoService;
 
     @Resource

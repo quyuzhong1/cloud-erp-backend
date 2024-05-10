@@ -91,9 +91,6 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     private OperateLogService operateLogService;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private SoReturnReceiveService soReturnReceiveService;
 
     @Resource

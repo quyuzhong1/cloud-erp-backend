@@ -29,9 +29,6 @@ public class WorkOptionServiceImpl implements WorkOptionService {
     @Resource
     private WorkflowFeign workflowFeign;
 
-    @Resource
-    private CommonService commonService;
-
     /**
      * 根据入参查询单据数量
      * @Author Luo_WG
