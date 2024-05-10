@@ -86,7 +86,7 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         //使用 DateTimeFormatter 解析字符串日期
         if (ObjectUtil.isNotEmpty(ordersBean.getPaidTime())) {
             // 使用Instant类将Unix时间戳转换为LocalDateTime对象
-            LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(ordersBean.getPaidTime()), ZoneOffset.UTC);
+            LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(ordersBean.getPaidTime()), ZoneId.systemDefault());
             orderDTO.setPayTime(payTime);
 
             //付款方式
@@ -154,7 +154,7 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         }
 
         //创建时间
-        LocalDateTime createTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(ordersBean.getCreateTime()), ZoneOffset.UTC);
+        LocalDateTime createTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(ordersBean.getCreateTime()), ZoneId.systemDefault());
         orderDTO.setPlatformOrderCreateTime(createTime);
 
         // 订单明细
@@ -315,7 +315,7 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
                 .code(ordersBean.getTrackingNumber())
                 .name(name)
-                .deliveryTime(ordersBean.getRtsTime()>0 ? LocalDateTime.ofInstant(Instant.ofEpochSecond(ordersBean.getRtsTime()), ZoneOffset.UTC) : null)
+                .deliveryTime(ordersBean.getRtsTime()>0 ? LocalDateTime.ofInstant(Instant.ofEpochSecond(ordersBean.getRtsTime()), ZoneId.systemDefault()) : null)
                 .logisticsChannelId(ordersBean.getShippingProviderId())
                 .logisticsChannelName(ordersBean.getShippingProvider())
                 .estimatedShippingCost(cost)
