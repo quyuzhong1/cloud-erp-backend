@@ -20,6 +20,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.PlatformSaveHandler;
+import com.common.business.service.IPlatformService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
@@ -85,6 +86,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sun.misc.BASE64Decoder;
@@ -137,16 +140,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private InventoryTransCoreService inventoryTransCoreService;
     @Autowired
     private LogisticsAuthFeign logisticsAuthFeign;
-
     @Resource
     private DmpMqFeign dmpMqFeign;
-
     @Resource
     private TransferDeclareFeign transferDeclareFeign;
-
-
     @Resource
     private SoOutstockService soOutstockService;
+    @Lazy
+    @Resource
+    private AsyncService asyncService;
+
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -435,19 +438,19 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         // 仓库+仓位排序
         List<SoB2cDeliveryDTO.PrintPickingViewDTO> resultList = printPickingViewList.stream()
-                .sorted(Comparator.comparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseName))
-                .sorted((s1, s2) -> {
-                    if (s1.getWarehouseLocation().isEmpty() && s2.getWarehouseLocation().isEmpty()) {
-                        return 0;
-                    } else if (s1.getWarehouseLocation().isEmpty()) {
-                        return 1;
-                    } else if (s2.getWarehouseLocation().isEmpty()) {
-                        return -1;
-                    } else if (Objects.equals(s1.getWarehouseLocation(),s2.getWarehouseLocation())){
-                        return 0;
-                    }
-                    return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
-                }).collect(Collectors.toList());
+                .sorted(Comparator.comparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseName)
+                        .thenComparing((s1, s2) -> {
+                            if (StringUtils.isBlank(s1.getWarehouseLocation())) {
+                                return 1;
+                            } else if (StringUtils.isBlank(s2.getWarehouseLocation())) {
+                                return -1;
+                            } else if (StringUtils.equals(s1.getWarehouseLocation(), s2.getWarehouseLocation())) {
+                                return -1;
+                            } else {
+                                return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
+                            }
+                        }))
+                .collect(Collectors.toList());
         return resultList;
     }
 
@@ -463,20 +466,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
             }
         }
-        // 异步查询亚马逊状态和更新
-        soB2cEntities.parallelStream().forEach(soB2cEntity ->{
-            try {
-                PlatformDeliveryInterceptDTO deliveryInterceptDTO = new PlatformDeliveryInterceptDTO();
-                deliveryInterceptDTO.setSoB2cId(soB2cEntity.getId());
-                deliveryInterceptDTO.setDictPlatform(soB2cEntity.getDictPlatform());
-                deliveryInterceptDTO.setOldIsCancel(soB2cEntity.getIsCancel());
-                deliveryInterceptDTO.setPlatformCode(soB2cEntity.getPlatformCode());
-                deliveryInterceptDTO.setShopId(soB2cEntity.getShopId());
-                PlatformSaveHandler.queryAndUpdateOrderStatus(deliveryInterceptDTO);
-            } catch (Exception e) {
-                log.error("异常查询并更新平台订单状态失败: platformCode={}, error={}", soB2cEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
-            }
-        });
+        // 批量异步查询亚马逊状态和更新
+        asyncService.asyncBatchQueryAndUpdateOrderStatus(soB2cEntities);
 
         List<Pair<String, String>> addPairList = soB2cDeliveryEntities.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("打印了一张拣货单【%s】", ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), addPairList, "打印拣货单");

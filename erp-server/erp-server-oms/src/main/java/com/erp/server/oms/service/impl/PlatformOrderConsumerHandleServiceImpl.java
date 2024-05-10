@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.exception.ServiceException;
@@ -122,8 +123,18 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
               soB2cDetailService.updateWarehouseIdByMainId(mainEntity.getId(),warehouseId,true);
             }
         }
-        // 规则处理(分平台)
-        SoB2cHandler.handleRule(mainEntity);
+        // 平台仓订单不走任何规则
+        // 已走订单规则不重复走
+        // 取消订单不走规则
+        // 审核不通过的订单不走规则
+        boolean unHandleRule = mainEntity.hasPlatformWarehouseOrder()
+                || mainEntity.getIsCancel()
+                || ApproveStatusEnum.REJECT.equals(mainEntity.getApproveStatus())
+                ;
+        if (! unHandleRule){
+            // 规则处理(分平台)
+            SoB2cHandler.handleRule(mainEntity);
+        }
 
         // 销售出库单处理(分平台)
         SoB2cHandler.handleSoOutStock(dto, resultDTO, mainEntity);
