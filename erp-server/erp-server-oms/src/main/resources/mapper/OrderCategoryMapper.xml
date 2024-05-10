@@ -29,12 +29,8 @@
         remark,
         disabled
         FROM order_category oc
-        WHERE oc.is_deleted=FALSE
-        <if test="params.name !=null and params.name !=''">
-            AND ((oc.group_name ILIKE concat('%',#{params.name}::text,'%'))
-            OR (oc.id in (SELECT main_id FROM order_category_detail WHERE is_deleted=FALSE AND name ILIKE concat('%',
-            #{params.name} ,'%') ) ))
-        </if>
+        WHERE  ${params.sqlMap.default}
+        and oc.is_deleted=FALSE
     </select>
     <select id="listDetail" resultType="com.erp.model.oms.dto.OrderCategoryDTO$ListDTO">
         SELECT

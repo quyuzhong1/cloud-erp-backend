@@ -3,6 +3,7 @@ package com.erp.server.dmp.enums;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressListingDTO;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressOrderDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFbaShipmentDTO;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.sdk.oms.mercado.dto.MercadoListingDTO;
@@ -45,14 +46,13 @@ public enum CleanDataTableEnum {
     AMAZON_ORDER("Amazon", "third_system_Amazon_order","third_system", "order","Amazon订单数据", PlatformAmazonOrderDTO.class),
     AMAZON_PRODUCT("Amazon", "third_system_Amazon_product","third_system", "product","Amazon产品数据", PlatformAmazonListingDTO.class),
     AMAZON_FBA_SHIPMENT("Amazon", "third_system_Amazon_fba_shipment","third_system", "fba_shipment","AmazonFBA货件", PlatformAmazonFbaShipmentDTO.class),
+    AMAZON_SO_OUT_STOCK("Amazon", "third_system_Amazon_so_out_stock","third_system", "so_out_stock","Amazon物流销售出库", PlatformAmazonFulfilledShipmentsDTO.class),
     //美客多
     MERCADO_ORDER("mercadolibre", "third_system_mercadolibre_order","third_system", "order","美客多订单数据", MercadoOrderDTO.class),
     MERCADO_PRODUCT("mercadolibre", "third_system_mercadolibre_product","third_system", "product","美客多产品数据", MercadoListingDTO.class),
-//    AMAZON_SO_OUT_STOCK("Amazon", "third_system_Amazon_so_out_stock","third_system", "so_out_stock","Amazon物流销售出库", PlatformAmazonFulfilledShipmentsDTO.class),
     //TikTok
     TikTok_ORDER("TikTok", "third_system_TikTok_order","third_system", "order","TikTok订单数据", TikTokOrderDTO.class),
     TikTok_PRODUCT("TikTok", "third_system_TikTok_product","third_system", "product","TikTok产品数据", TikTokListingDTO.class),
-//    AMAZON_SO_OUT_STOCK("Amazon", "third_system_Amazon_so_out_stock","third_system", "so_out_stock","Amazon物流销售出库", PlatformAmazonFulfilledShipmentsDTO.class),
 
 
     //track123
