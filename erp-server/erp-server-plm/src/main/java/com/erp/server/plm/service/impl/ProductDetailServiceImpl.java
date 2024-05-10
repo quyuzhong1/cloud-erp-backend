@@ -952,7 +952,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (this.checkSkuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getSkuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95015);
         }
-
+        //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
+        ProductPackDTO productPackDTO = productNoSpecDTO.getProductPackDTO();
+        if (ObjectUtils.isNotEmpty(productPackDTO)) {
+            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
+            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
+            compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.ERROR_HEIGH_BOX_LITTER_THAN_PRODUCT);
+        }
         ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
         productSpuBaseInfoDTO.setSpecType(1);
@@ -1063,7 +1069,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //7.修改/新增 包装信息
-        ProductPackDTO productPackDTO = productNoSpecDTO.getProductPackDTO();
+
         if (ObjectUtils.isNotEmpty(productPackDTO)) {
             productPackDTO.setSkuId(skuId);
             //SKU操作日志
@@ -1119,6 +1125,24 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return true;
     }
 
+    /**
+     * 比较尺寸
+     *
+     * @author hyj
+     * @date 2024/5/10 9:05
+     * @param larger   大尺寸
+     * @param smaller  小尺寸
+     * @param apiError 报错信息
+     */
+    @Override
+    public void compareDimensions(BigDecimal larger, BigDecimal smaller, ApiError apiError) {
+        if (Objects.nonNull(larger) && larger.compareTo(BigDecimal.ZERO) > 0
+                && Objects.nonNull(smaller) && smaller.compareTo(BigDecimal.ZERO) > 0) {
+            if (larger.compareTo(smaller) < 0) {
+                throw new ServiceException(apiError);
+            }
+        }
+    }
 
 
     /**

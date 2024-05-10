@@ -477,11 +477,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
 
         printPickingViewList.sort((s1, s2) -> {
-            if (StringUtils.isBlank(s1.getWarehouseLocation())) {
+            if (StringUtils.isBlank(s1.getWarehouseLocation()) && !StringUtils.isBlank(s2.getWarehouseLocation())) {
                 return 1;
-            } else if (StringUtils.isBlank(s2.getWarehouseLocation())) {
-                return -1;
-            } else if (StringUtils.equals(s1.getWarehouseLocation(), s2.getWarehouseLocation())) {
+            } else if (!StringUtils.isBlank(s1.getWarehouseLocation()) && StringUtils.isBlank(s2.getWarehouseLocation())) {
                 return -1;
             } else {
                 return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
