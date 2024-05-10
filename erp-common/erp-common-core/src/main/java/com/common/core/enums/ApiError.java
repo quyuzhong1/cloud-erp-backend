@@ -110,6 +110,8 @@ public enum ApiError implements Serializable {
     ERROR_BILL_APPROVE(1057,"{}单据审核失败"),
     LOGIN_ERROR(1058,"账户密码已输入错误5次，请在1小时后重试"),
     LOGIN_USER_ERROR(1059,"账号密码错误,还可尝试【{}】次,失败后将锁定1小时"),
+    ERROR_EXCEL_EXPORT_SIZE(1060,"导出数据已超过50000条，请进行条件筛选后导出"),
+
 
     /**
      * 警告信息 从800 开始
@@ -514,6 +516,9 @@ public enum ApiError implements Serializable {
     ERROR_BOX_QTY_NOT_EXIST(95266,"SKU【{}】单箱数量不能为空"),
     ERROR_PRODUCT_ITERATE_REF_SKU_NOT_EXIST(95267,"迭代产品不能为空"),
     ERROR_PRODUCT_CERTIFICATE_EXIST(95268,"SKU【{}】下已存在证书项目【{}】的证书"),
+    ERROR_95269(95269, "启动日期应当晚于立项日期"),
+    ERROR_95270(95270, "结项日期应当晚于启动日期"),
+    ERROR_95271(95271, "SKU为空，不允许进行此操作"),
 
 
     /**
@@ -1230,7 +1235,7 @@ public enum ApiError implements Serializable {
     INVALID_NOT_PACKAGE(94038,"订单已作废，不可组包"),
     TRANSFER_FAILURE_NOT_PACKAGE(94039,"中转报关订单待中转/上传失败不可操作组包发货"),
     ORDER_CANCEL_NOT_PACKAGE(94040,"单据对应的物流商单号被拦截/取消/异常，不可组包操作"),
-    LOGISTICS_INTERCEPT_NOT_PACKAGE(94041,"订单被拦截，不可组包操作"),
+    LOGISTICS_INTERCEPT_NOT_PACKAGE(94041,"订单被拦截，不可操作"),
 
     ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST(94031,"物流渠道未匹配到授权信息"),
     DUPLICATION_DELIVERY_LOGISTICS_SUPPLIER(94032,"发货物流商不可以重复设置，一个发货物流商只能有一个报关设置"),

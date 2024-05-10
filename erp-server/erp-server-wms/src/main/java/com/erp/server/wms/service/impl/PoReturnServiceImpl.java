@@ -223,6 +223,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 deductAmountAmount = MathUtil.multiply(record.getReturnPrice(),record.getReturnQty());
             }
             record.setDeductAmountAmount(deductAmountAmount);
+
+            //是否是组合品
+            record.setIsCombinationName(record.getIsCombination() ? "是" : "否");
         });
 
         List<String> warehouseIds = records.stream().map(req -> req.getReturnWarehouseId()).distinct().collect(Collectors.toList());

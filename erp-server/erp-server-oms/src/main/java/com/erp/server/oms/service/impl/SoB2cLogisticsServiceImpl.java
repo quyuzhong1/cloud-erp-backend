@@ -372,8 +372,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     public Boolean updateWeight(String soId,String id, BigDecimal weightByG) {
-        String msg = StrUtil.format("用户【{}】更新重量为{} ",UserContext.getDefaultLoginUser().getUserName(),weightByG+"g");
-        operateLogService.addModuleOperateLog("【组包称重】", ModuleTypeEnum.SO_B2C.getCode(), soId, msg);
+        String msg = StrUtil.format("用户【{}】更新重量为{} ", UserContext.getDefaultLoginUser().getUserName(),weightByG+"g");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soId, "【组包称重】");
         return lambdaUpdate()
                 .set(SoB2cLogisticsEntity::getWeight, weightByG)
                 .eq(SoB2cLogisticsEntity::getId, id)

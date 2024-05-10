@@ -251,6 +251,10 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                     detailList.forEach(detail -> detail.setCode(v.getSourceCode()));
                     v.setDetailPrintList(detailList);
                 }));
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(entityList.stream().map(DeliveryOrderEntity::getSupplierId).distinct().collect(Collectors.toList()));
+        for (DeliveryOrderDTO.PrintDTO printDTO : printDTOList) {
+            printDTO.setSupplierName(supplierSimpleDTOMap.containsKey(printDTO.getSupplierId())?supplierSimpleDTOMap.get(printDTO.getSupplierId()).getName():"");
+        }
         return printDTOList;
     }
 

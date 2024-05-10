@@ -58,7 +58,6 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
     private SysUserFeign sysUserFeign;
     @Override
     public Boolean export(DeliveryOrderDTO.ParamDTO dto, HttpServletResponse response) {
-        dto.setSupplierIdList(supplierFeign.listByPurchaseUserId(UserContext.getDefaultLoginUser().getUid()).stream().map(BaseEntity::getId).collect(Collectors.toList()));
         List<DeliveryOrderExportExcelDTO> resultList = srmDeliveryFeign.getExportList(dto);
         String fileName = "供应商送货单";
         try {

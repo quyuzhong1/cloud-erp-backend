@@ -465,26 +465,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         String skuId = dto.getProductSkuId();
         String warehouseSkuNo = dto.getWarehouseSkuNo();
         String warehouseId = dto.getWarehouseId();
-        String productSkuId = dto.getProductSkuId();
-        RuleTypeEnum warehouseType = RuleTypeEnum.WAREHOUSE;
-        // 产品SKU在该仓库是否已绑定
-        SkuMappingEntity oldSkuMappingEntity = this.getByAttribute(productSkuId, warehouseId, warehouseType);
-        if (null != oldSkuMappingEntity) {
-            // 产品SKU【{}】已在【{}】仓库绑定
-            throw new ServiceException(ApiError.ERROR_DUPLICATE_MAPPING_SKU_ID, oldSkuMappingEntity.getProductSkuNo(), oldSkuMappingEntity.getWarehouseName());
-        }
         String warehouseProductName = dto.getWarehouseProductName();
-        ListingInfoEntity existEntity = listingInfoService.getByPlatformSkuNo("",warehouseSkuNo);
-        String listingId;
-        if(null == existEntity){
-            listingId = listingInfoService.addWarehouseSku(warehouseSkuNo, warehouseProductName);
-        }else{
-            listingId = existEntity.getId();
-        }
-        if (StringUtils.isBlank(listingId)) {
-            throw new ServiceException(warehouseSkuNo + "未找到");
-        }
-        checkWarehouseSkuExist("", listingId, warehouseId, skuId);
 //        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         // 查询当前仓库的平台类型
         List<WarehouseDTO.ListDTO> warehouseList = wmsWarehouseFeign.listByIds(Collections.singletonList(dto.getWarehouseId()));
@@ -500,7 +481,17 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException("sku不存在");
         }
-
+        ListingInfoEntity existEntity = listingInfoService.getByPlatformSkuNo("",warehouseSkuNo);
+        String listingId;
+        if(null == existEntity){
+            listingId = listingInfoService.addWarehouseSku(warehouseSkuNo, warehouseProductName);
+        }else{
+            listingId = existEntity.getId();
+        }
+        if (StringUtils.isBlank(listingId)) {
+            throw new ServiceException(warehouseSkuNo + "未找到");
+        }
+        checkWarehouseSkuExist("", listingId, warehouseId, skuId);
         SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
         skuMappingEntity.setWarehouseId(warehouseId);
         skuMappingEntity.setWarehouseName(warehouseList.get(0).getName());
@@ -862,7 +853,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         List<String> skuIdList = list.stream().map(SkuMappingDTO.WarehousePagingViewDTO::getProductSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         for (SkuMappingDTO.WarehousePagingViewDTO item : list) {
-            Boolean matchResult = item.getMatchResult();
+            boolean matchResult = item.getMatchResult() != null && item.getMatchResult();
             String skuId = item.getProductSkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().map(SkuVO::getSkuName).orElse("");
@@ -892,16 +883,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         long count = this.count(queryWrapper);
         if (count > 0) {
             throw new ServiceException("同仓库库存SKU只能对应一个产品SKU");
-        }
-
-        List<SkuMappingEntity> list = this.lambdaQuery().
-                ne(StringUtils.isNotBlank(id), SkuMappingEntity::getId, id).
-                eq(SkuMappingEntity::getWarehouseId, warehouseId).
-                eq(SkuMappingEntity::getProductSkuId, skuId).
-                eq(SkuMappingEntity::getType, RuleTypeEnum.WAREHOUSE).list();
-        long skuCount = list.stream().map(SkuMappingEntity::getListingId).distinct().count();
-        if (skuCount > 0) {
-            throw new ServiceException("SKU在该仓库已关联其他库存SKU，请更换其他SKU");
         }
     }
 

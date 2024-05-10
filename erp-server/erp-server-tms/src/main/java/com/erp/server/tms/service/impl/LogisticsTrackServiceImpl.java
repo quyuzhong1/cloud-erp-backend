@@ -17,6 +17,9 @@ import com.erp.server.tms.mapper.LogisticsTrackMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
+import io.seata.common.util.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -117,6 +120,9 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
 
     @Override
     public LogisticsTrackDTO.ViewDTO listByTrackNo(String trackNo) {
+        if(StringUtils.isBlank(trackNo)){
+            return new LogisticsTrackDTO.ViewDTO();
+        }
         LogisticsTrackDTO.ViewDTO viewDTO = new LogisticsTrackDTO.ViewDTO();
         viewDTO.setTrackNo(trackNo);
 
