@@ -36,17 +36,18 @@ public class SoB2cDeclareProductDTO implements Serializable {
         * 主键id
         */
         private String  id;
-
+        /**
+         * 销售订单id
+         */
+        private String soId;
         /**
         * 销售订单明细id
         */
         private String soDetailId;
-
         /**
-        * 销售订单id
-        */
-        private String soId;
-
+         * skuId
+         */
+        private String skuId;
         /**
         * 产品sku编号
         */
@@ -76,11 +77,6 @@ public class SoB2cDeclareProductDTO implements Serializable {
         * 目的国申报币种
         */
         private String toCurrency;
-
-        /**
-        * skuId
-        */
-        private String skuId;
 
         /**
         * 目的国申报币种符号
@@ -183,6 +179,12 @@ public class SoB2cDeclareProductDTO implements Serializable {
         @NotBlank(message = "skuId不能为空")
         @Size(max = 1,message = "skuId最大长度不能超过1位")
         private String skuId;
+        /**
+         * skuNo
+         */
+        @NotBlank(message = "skuNo不能为空")
+        @Size(max = 1,message = "skuNo最大长度不能超过1位")
+        private String skuNo;
 
         /**
         * 目的国申报币种符号
@@ -205,7 +207,7 @@ public class SoB2cDeclareProductDTO implements Serializable {
         @Size(max = 64,message = "目的国海关编码最大长度不能超过64位")
         private String toCustomsCode;
 
-
+        private String declareLabel;
     }
 
 

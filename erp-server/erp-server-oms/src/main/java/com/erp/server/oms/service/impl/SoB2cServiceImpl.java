@@ -5781,6 +5781,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 SoB2cDTO.RuleResultDTO logisticsRuleResult = this.logisticsRule(id, new HashMap<>());
                 if(logisticsRuleResult.getIsRuleMatch()){
                     checkProductRegistrationAndUpdate(id, "");
+                    //申报信息规则
+                    declareRule(id, new HashMap<>(), Boolean.FALSE);
                 }
                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
                 if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
@@ -7680,34 +7682,46 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * 申报信息规则匹配
      * @param id
      * @param map
+     * @param isUpdate 是否更新申报信息
      * @return
      */
     @Override
-    public SoB2cDTO.RuleResultDTO declareRule(String id, HashMap<String, Object> map) {
-        SoB2cDTO.RuleResultDTO resultDTO = new SoB2cDTO.RuleResultDTO();
+    public BatchResultDTO declareRule(String id, HashMap<String, Object> map, Boolean isUpdate) {
+        BatchResultDTO resultDTO = new BatchResultDTO();
         //已存在申报信息 则不进行规则匹配
         List<SoB2cDeclareProductEntity> declareProductList = soB2cDeclareProductService.listBySoId(id);
-        if (CollectionUtils.isNotEmpty(declareProductList)){
-            resultDTO.setIsPass(Boolean.TRUE);
-            return resultDTO;
+        if (Objects.nonNull(isUpdate) && !isUpdate && CollectionUtils.isNotEmpty(declareProductList)){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_HAS_DECLARE);
         }
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(id);
+        if (ObjectUtil.isEmpty(logisticsEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
+        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(id);
+        if (ObjectUtil.isEmpty(receiverEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
+        }
+        String country = Objects.nonNull(receiverEntity)?receiverEntity.getCountry():"";
+        LogisticsChannelDTO.LogisticsChannelConstraintDTO channelConstraintDTO = logisticsFeign.getLogisticsChannelConstraint(logisticsEntity.getLogisticsChannelId(),country);
+        //最高报关金额
+        BigDecimal maxCustomsAmount = channelConstraintDTO.getMaxCustomsAmount();
+        //最低报关金额
+        BigDecimal minCustomsAmount = channelConstraintDTO.getMinCustomsAmount();
         //已审核 配货中才会进行 申报规则执行
         SoB2cEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
         if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())
                 && !ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())
         ) {
-            resultDTO.setIsPass(Boolean.TRUE);
-            return resultDTO;
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_DISTRIBUTION_DECLARE, entity.getCode());
         }
-
         if (map.isEmpty()) {
             List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
             handleDeclareMatchJson(entity, detailList, map);
         }
         //规则结果
-        cfgRuleDeclareService.getRuleDeclareMatchResult(map);
-        resultDTO.setIsPass(Boolean.TRUE);
+        cfgRuleDeclareService.getRuleDeclareMatchResult(map, maxCustomsAmount, minCustomsAmount, isUpdate,declareProductList);
+        resultDTO.setSuccess(Boolean.TRUE);
         return resultDTO;
     }
 
@@ -7876,7 +7890,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return customs;
     }
 
-    private Map<String, Object> handleDeclareMatchJson(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> detailList, HashMap<String, Object> map) {
+    private void handleDeclareMatchJson(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> detailList, HashMap<String, Object> map) {
         if (ObjectUtil.isEmpty(soB2cEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
@@ -7884,25 +7898,32 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtil.isEmpty(receiverEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
         }
-        //来源店铺
-        String shopId = soB2cEntity.getShopId();
-        //订单目的国家
-        String destCountry = receiverEntity.getCountry();
-        //产品sku信息
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(soB2cEntity.getId());
+        if (ObjectUtil.isEmpty(logisticsEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
+        map.put("id", soB2cEntity.getId());
+        map.put("code", soB2cEntity.getCode());
         //根据订单明细进行sku拆分
         List<LogisticsDeclareProductDTO> productDTOS = this.splitLogisticsBySoDetail(detailList, soB2cEntity);
         List<Map<String, Object>> mapList = new ArrayList<>(detailList.size());
         productDTOS.forEach(dto -> {
             Map<String, Object> beanToMap = BeanUtil.beanToMap(dto);
+            //产品sku信息
             beanToMap.put("skuId",dto.getSkuId());
             beanToMap.put("skuNo", dto.getSkuNo());
-            beanToMap.put("shop", shopId);
+            //来源店铺
+            beanToMap.put("shop", soB2cEntity.getShopId());
+            //来源平台
             beanToMap.put("dictPlatform", soB2cEntity.getDictPlatform());
+            //订单目的国家
             beanToMap.put("destCountry", receiverEntity.getCountry());
+            //渠道id
+            beanToMap.put("logisticsChannelId", logisticsEntity.getLogisticsChannelId());
+            //本位币金额
             beanToMap.put("amount", MathUtil.multiply(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
             mapList.add(beanToMap);
         });
         map.put("detailList", mapList);
-        return map;
     }
 }

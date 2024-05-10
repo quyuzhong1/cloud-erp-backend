@@ -4,8 +4,11 @@ import com.erp.model.oms.entity.CfgRuleDeclareEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.CfgRuleDeclareDTO;
+import com.erp.model.oms.entity.SoB2cDeclareProductEntity;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * <p>
@@ -58,8 +61,13 @@ public interface CfgRuleDeclareService extends SuperService<CfgRuleDeclareEntity
 
     /**
      * 获取申报规则匹配结果
+     *
      * @param map
+     * @param maxCustomsAmount
+     * @param minCustomsAmount
+     * @param isUpdate
+     * @param declareProductList
      * @return
      */
-    void getRuleDeclareMatchResult(HashMap<String, Object> map);
+    void getRuleDeclareMatchResult(HashMap<String, Object> map, BigDecimal maxCustomsAmount, BigDecimal minCustomsAmount, Boolean isUpdate, List<SoB2cDeclareProductEntity> declareProductList);
 }

@@ -907,7 +907,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param map
      * @return
      */
-    SoB2cDTO.RuleResultDTO declareRule(String id, HashMap<String, Object> map);
+    BatchResultDTO declareRule(String id, HashMap<String, Object> map, Boolean isUpdate);
 
     /**
      * 根据订单拆分 申报明细
