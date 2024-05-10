@@ -539,6 +539,98 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 viewDTO.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
             }
         }
+        view.setDetailList(detailList);
+        return view;
+    }
+
+    /**
+     * 打印拣货单
+     *
+     * @param id
+     * @return com.erp.model.oms.dto.SoInfoDTO.ViewDTO
+     * @author yl
+     * @date 2023-05-16 15:01
+     */
+    @Override
+    public SoInfoDTO.ViewDTO printPickingView(String id) {
+        SoInfoDTO.ViewDTO view = new SoInfoDTO.ViewDTO();
+        SoInfoEntity soInfo = this.getById(id);
+        if (Objects.isNull(soInfo)) {
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
+
+        BeanMapper.copy(soInfo, view);
+        String customerId = soInfo.getCustomerId();
+        String customerName = "";
+        if (StringUtils.isNotBlank(customerId)) {
+            CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
+            customerName = customerInfo.getName();
+
+            //国家
+            String countryId = customerInfo.getCountryId();
+            view.setCountryId(countryId);
+            // 国家
+            List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+            //国家
+            if (CollectionUtils.isNotEmpty(countryList)) {
+                String countryName = countryList.stream().filter(obj -> obj.getId().equals(view.getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+                view.setCountryName(countryName);
+            }
+        }
+        List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(Arrays.asList(soInfo.getId()));
+
+        List<ProcessTaskManagementEntity> collect = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(soInfo.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE)).collect(Collectors.toList());
+        List<String> curApproveName = collect.stream().map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
+        String userName = StringUtils.join(curApproveName, ",");
+        view.setApproveUserName(userName);
+        if (CollectionUtils.isNotEmpty(collect)) {
+            view.setApproveTime(collect.get(MathUtil.ZERO).getApproveTime());
+        }
+        view.setCustomerName(customerName);
+        String warehouseId = view.getWarehouseId();
+        BillApproveStatusEnum approveStatus = view.getApproveStatus();
+        view.setApproveStatusName(approveStatus.getName());
+
+        List<OmsAttachmentDTO.UpdateDTO> attachmentList = omsAttachmentService.getByBusinessIds(Arrays.asList(id));
+        List<String> attachmentUrlList = attachmentList.stream().map(OmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+        List<String> attachmentNameList = attachmentList.stream().map(OmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+        view.setAttachUrlList(attachmentUrlList);
+        view.setAttachNameList(attachmentNameList);
+
+        // 字典值获取
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+        Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+
+        // 收款方式
+        List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicTypeEnum.RECEIVE_METHOD.getType());
+        if (CollectionUtils.isNotEmpty(receiveMethodList)) {
+            String receiveMethodName = receiveMethodList.stream().filter(obj -> Objects.equals(obj.getValue(), view.getReceiveMethod())).map(DictBasicEntity::getName).findFirst().orElse(null);
+            view.setReceiveMethodName(receiveMethodName);
+        }
+        // 收款条件
+        List<KingdeeReceiptConditionEntity> receiveConditionList = kingdeeReceiptConditionService.list();
+        if (CollectionUtils.isNotEmpty(receiveConditionList)) {
+            String receiveConditionName = receiveConditionList.stream().filter(obj -> Objects.equals(obj.getId(), view.getReceiveCondition())).map(KingdeeReceiptConditionEntity::getName).findFirst().orElse(null);
+            view.setReceiveConditionName(receiveConditionName);
+        }
+        // 收款账号
+        if (StrUtils.isNotEmpty(view.getReceiveAccount())) {
+            List<BankAccountEntity> bankAccountList = bankAccountService.findByOrgIdAndAccountNo(view.getSalesOrgId(), view.getReceiveAccount());
+            if (CollUtil.isNotEmpty(bankAccountList)) {
+                view.setReceiveAccountName(bankAccountList.get(0).getAccountName());
+            }
+        }
+
+        List<SoDetailDTO.ViewDTO> detailList = soDetailService.listByMainId(id, warehouseId);
+        List<String> skuIds = detailList.stream().map(SoDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        for (SoDetailDTO.ViewDTO viewDTO : detailList) {
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(skuVO)) {
+                viewDTO.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
+            }
+        }
         // 仓位排序
         detailList.sort((s1, s2) -> {
             if (StringUtils.isBlank(s1.getWarehouseLocation()) && !StringUtils.isBlank(s2.getWarehouseLocation())) {
