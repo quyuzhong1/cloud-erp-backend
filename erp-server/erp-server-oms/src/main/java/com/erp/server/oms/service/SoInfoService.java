@@ -65,6 +65,15 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @date 2023-05-16 15:01
      */
     SoInfoDTO.ViewDTO view(String id);
+    /**
+     * 打印拣货单
+     *
+     * @param id
+     * @return com.erp.model.oms.dto.SoInfoDTO.ViewDTO
+     * @author yl
+     * @date 2023-05-16 15:01
+     */
+    SoInfoDTO.ViewDTO printPickingView(String id);
 
     PagingVO<SoInfoDTO.PagingViewDTO> paging(PagingDTO<SoInfoDTO.PagingParamDTO> dto);
     /**
