@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -95,7 +96,18 @@ public class ProductCustomsDTO {
          */
         private BigDecimal taxRate;
 
-
+        /**
+         * 目的国申报价
+         */
+        private BigDecimal toDeclarePrice;
+        /**
+         * 目的国申报币种
+         */
+        private String toCurrency;
+        /**
+         * 货币符号
+         */
+        private String toCurrencySymbol;
     }
 
 }
