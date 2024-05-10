@@ -1287,7 +1287,8 @@ public enum ApiError implements Serializable {
 
     ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT(94201,"箱规长度必须大于包装长度"),
     ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"箱规宽度必须大于包装宽度"),
-    ERROR_HEIGH_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于包装高度"),
+    ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于包装高度"),
+    ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于净重"),
 
 
 
