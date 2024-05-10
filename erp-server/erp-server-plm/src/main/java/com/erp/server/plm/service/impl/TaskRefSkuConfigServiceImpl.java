@@ -254,7 +254,7 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
         for (Map<String, Object> map : fieldInfoList) {
             String prop = String.valueOf(map.get("prop"));
             if (!(prop.equals("productLength") || prop.equals("productWidth") || prop.equals("productHeight")
-                    || prop.equals("boxLength") || prop.equals("boxWidth") || prop.equals("boxHeight") || prop.equals("productSize") || prop.equals("boxSize"))) {
+                    || prop.equals("boxLength") || prop.equals("boxWidth") || prop.equals("boxHeight"))) {
                 newFieldInfoList.add(map);
             }
             if (prop.equals("productSize")){
