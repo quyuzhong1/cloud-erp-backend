@@ -225,7 +225,9 @@ public class SoB2cDeclareProductDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListDTO {
-
+        /**
+         * 销售订单id
+         */
         @NotEmpty(message = "请选择需要查询的数据")
         private List<String> ids;
     }
