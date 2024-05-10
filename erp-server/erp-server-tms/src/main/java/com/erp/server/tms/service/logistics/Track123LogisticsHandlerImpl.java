@@ -79,7 +79,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
         try {
             TrackResponse<ResponseData> track = trackShipperService.getTrack(logisticsTrackVO.getAuthMap().get("clientSecret"), trackRequest);
             //成功
-            if ("00000".equalsIgnoreCase(track.getCode())) {
+            if (Objects.nonNull(track) && "00000".equalsIgnoreCase(track.getCode())) {
                 //查询成功的单号
                 List<TrackDetail> accepted = track.getData().getAccepted().getContent();
                 if (CollectionUtils.isNotEmpty(accepted)) {
