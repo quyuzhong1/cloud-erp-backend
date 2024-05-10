@@ -57,11 +57,6 @@ public class CfgRuleDeclareController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "申报规则表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "oms:CfgRuleDeclare:update",
-        serviceClass = CfgRuleDeclareService.class,
-        keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated CfgRuleDeclareDTO.UpdateDTO dto) {
         CfgRuleDeclareService.update(dto);
         return success();
