@@ -463,11 +463,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (Objects.nonNull(logisticsAddressEntity)) {
             receiverInfo = LogisticsBillConverter.INSTANCE.LogisticsAddressEntityToReceiverInfoVO(logisticsAddressEntity);
         }
-
-        List<LogisticsBillDTO.SkuDTO> skuList = dto.getSkuList();
-        List<String> skuIdList = skuList.stream().map(LogisticsBillDTO.SkuDTO::getSkuId).collect(Collectors.toList());
-        List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listBySkuIdList(skuIdList);
-        List<LogisticsProductDTO.ProductDTO> ordersSkuList = buildTransferDeclareProduct(country, dto, skuInfoList, minCustomsAmount, maxCustomsAmount,isAliExpress);
         //包裹信息
         LogisticsBillDTO.PackageDTO packageDTO = dto.getPackageInfo();
 //        List<LogisticsProductVO> logisticsProductList = LogisticsBillConverter.INSTANCE.convertLogisticsProduct(ordersSkuList);
