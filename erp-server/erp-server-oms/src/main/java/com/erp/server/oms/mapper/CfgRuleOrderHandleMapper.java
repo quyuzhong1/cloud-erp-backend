@@ -27,5 +27,5 @@ public interface CfgRuleOrderHandleMapper extends BaseMapper<CfgRuleOrderHandleE
      * @param params
      * @return IPage<ListDTO>
      */
-    IPage<CfgRuleOrderHandleDTO.ListDTO> paging(Page query,@Param("param") CfgRuleOrderHandleDTO.PagingParamDTO params);
+    IPage<CfgRuleOrderHandleDTO.ListDTO> paging(Page query,@Param("params") CfgRuleOrderHandleDTO.PagingParamDTO params);
 }
