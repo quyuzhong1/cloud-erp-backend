@@ -17,7 +17,7 @@ public class FileTaskDTO {
      */
     private String fileName;
     /**
-     * 查询数据的请求参数
+     * 查询数据的请求参数 json
      */
     private Object metaInfo;
 

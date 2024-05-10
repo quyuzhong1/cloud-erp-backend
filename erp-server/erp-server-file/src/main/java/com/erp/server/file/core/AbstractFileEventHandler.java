@@ -94,7 +94,7 @@ public abstract class AbstractFileEventHandler<T> implements FileEventHandler {
      * @return T 对应需下载的数据
      */
     protected List<T> getData(String metaInfo, int offset) {
-        return getData(metaInfo, 0, offset);
+        return getData(metaInfo, 500, offset);
     }
 
     /**

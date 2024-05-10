@@ -17,7 +17,7 @@ public class FileTaskFactory {
      * 根据事件名获取具体处理对象
      * @param event 事件名，
      */
-    public FileEventHandler getFileContext(String event) {
+    public FileEventHandler getFileHandler(String event) {
         for (FileEventHandler handler : handlers) {
             if (handler.isMatch(event)) {
                 return handler;

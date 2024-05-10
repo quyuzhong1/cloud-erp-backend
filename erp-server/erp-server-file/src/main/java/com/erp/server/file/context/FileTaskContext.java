@@ -103,7 +103,7 @@ public class FileTaskContext {
             try {
                 log.info("文件任务[{}]获取成功,状态[PROCESS]", id);
                 // 获取文件任务处理器
-                FileEventHandler eventHandler = fileTaskFactory.getFileContext(fileTask.getEvent());
+                FileEventHandler eventHandler = fileTaskFactory.getFileHandler(fileTask.getEvent());
                 ExceptionUtils.emptyThrow(eventHandler, String.format("事件类型[%s]不存在,请联系IT人员检查配置", fileTask.getEvent()));
                 // 处理文件
                 eventHandler.handle(fileTask);
