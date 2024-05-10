@@ -22,7 +22,6 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.server.oms.query.SoB2cQueryHandler;
-import com.erp.server.oms.service.SoB2cDetailService;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
@@ -52,11 +51,6 @@ public class SoB2cController extends BaseController {
     private SoB2cService soB2cService;
     @Resource
     private SoB2cErrorService soB2cErrorService;
-    @Resource
-    private TikTokSdkClientService tikTokSdkClientService;
-    @Resource
-    private SoB2cDetailService soB2cDetailSerice;
-
 
     /**
      * 获取状态统计

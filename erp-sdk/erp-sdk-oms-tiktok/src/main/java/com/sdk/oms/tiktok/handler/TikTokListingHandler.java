@@ -1,5 +1,7 @@
 package com.sdk.oms.tiktok.handler;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -9,17 +11,26 @@ import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractProductHandler;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sdk.oms.tiktok.constant.TikTokConstant;
 import com.sdk.oms.tiktok.dto.TikTokListingDTO;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
+import com.sdk.oms.tiktok.dto.tiktok.listing.ListingDTO;
 import com.sdk.oms.tiktok.dto.tiktok.listing.view.ListingViewDTO;
+import com.sdk.oms.tiktok.dto.tiktok.listing.view.SkusBean;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
+import com.sdk.oms.tiktok.util.EncryptionUtils;
+import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 /**
  * 沃尔玛商品信息

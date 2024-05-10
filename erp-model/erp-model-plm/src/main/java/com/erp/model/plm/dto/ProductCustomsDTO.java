@@ -54,7 +54,18 @@ public class ProductCustomsDTO {
      */
     private String type;
 
-
+    /**
+     * 目的国申报价
+     */
+    private BigDecimal toDeclarePrice;
+    /**
+     * 目的国申报币种
+     */
+    private String toCurrency;
+    /**
+     * 货币符号
+     */
+    private String toCurrencySymbol;
     /**
      * 详情
      */

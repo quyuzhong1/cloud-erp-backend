@@ -33,12 +33,6 @@ import java.util.stream.Collectors;
 @BusinessType(BusinessTypeEnum.ORDER)
 public class TikTokOrderHandler extends AbstractOrderHandler<TikTokOrderDTO, PlatformOrderDTO> {
     @Resource
-    private DmpTaskFeign dmpTaskFeign;
-    @Resource
-    private RedisUtil redisUtil;
-    @Resource
-    private ShopInfoFeign shopInfoFeign;
-    @Resource
     private TikTokSdkClientService tikTokSdkClientService;
 
     @Override

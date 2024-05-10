@@ -38,6 +38,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.*;
 
@@ -71,11 +72,12 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
 
     public static void main(String[] args) {
         // 给定的时间戳
-        long timestamp = 1660556783L;
+        long timestamp = 1715074867L;
 
         // 将时间戳转换为 LocalDateTime
         LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(timestamp), ZoneOffset.UTC);
-        System.out.println(dateTime);
+        LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(timestamp), ZoneId.systemDefault());
+        System.out.println(localDateTime);
     }
 
     @Override
