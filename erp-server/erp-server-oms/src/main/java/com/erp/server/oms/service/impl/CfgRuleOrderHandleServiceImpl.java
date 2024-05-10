@@ -215,7 +215,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
         }
     }
 

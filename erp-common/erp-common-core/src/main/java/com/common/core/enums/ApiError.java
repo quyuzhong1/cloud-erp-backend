@@ -1117,7 +1117,7 @@ public enum ApiError implements Serializable {
     ERROR_SHOP_EXIST(92094 , "【{}】平台下【{}】账号已存在店铺"),
     ERROR_SHOP_COUNTRY_EXIST(92095 , "【{}】平台下【{}】账号下【{}】已存在店铺"),
     ERROR_B2C_CUSTOMER_NOT_EXIST(92061,"未找到B2C销售客户"),
-    ERROR_RULE_EXPRESSION_ERROR(92096,"条件表达式【{}】有误"),
+    ERROR_RULE_EXPRESSION_ERROR(92096,"执行条件不完整,请检查填写"),
     ERROR_SO_B2C_FINANCE_NOT_EXIST(92097,"财务信息不存在"),
     ERROR_SO_B2C_IS_NOT_NEED_MERGE_EXIST(92098,"销售订单【{}】无需合并"),
     ERROR_SHOP_AUTHORIZE(92099,"授权的平台编码错误"),
