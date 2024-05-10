@@ -6720,7 +6720,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 records = handleExport(exportExcelList,params.getExportType(),Boolean.FALSE);
             }
         } catch (Exception e) {
-           throw new ServiceException("导出失败");
+           throw new ServiceException(e.getMessage());
         }
         if (CollectionUtils.isEmpty(records)) {
             throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL,"B2C销售订单");
