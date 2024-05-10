@@ -9,7 +9,9 @@ import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
 import org.mapstruct.Mapper;
@@ -31,7 +33,7 @@ import java.util.Map;
  */
 
 @Component
-@Mapper(uses = {ObjectMapperWork.class})
+@Mapper(uses = {ObjectMapperWork.class,NumberMapperWork.class})
 public interface B2cOrderConverter {
     B2cOrderConverter INSTANCE = Mappers.getMapper(B2cOrderConverter.class);
 
@@ -174,6 +176,7 @@ public interface B2cOrderConverter {
     SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO skuMappingDTOToGenDTO(ListingInfoWithSkuMappingDTO sourceDTO);
     @Mappings({
             @Mapping(target = "soId", source = "soId", qualifiedByName = "objToString"),
+            @Mapping(target = "soCode", source = "soCode",qualifiedByName = "objToString"),
             @Mapping(target = "soDetailId", source = "soDetailId", qualifiedByName = "objToString"),
             @Mapping(target = "skuId", source = "skuId", qualifiedByName = "objToString"),
             @Mapping(target = "skuNo", source = "skuNo", qualifiedByName = "objToString"),
@@ -214,4 +217,51 @@ public interface B2cOrderConverter {
             @Mapping(target = "version", ignore = true),
     })
     SoB2cDeclareProductEntity convertDeclareProductByDto(SoB2cDeclareProductDTO.UpdateDTO updateDTO);
+
+    /**
+     * 申报信息转换
+     * @param soB2cDeclareProductEntity
+     * @param soB2cDetail
+     * @param productDTO
+     * @return
+     */
+    @Mappings({
+            @Mapping(target = "skuNo", source = "soB2cDeclareProductEntity.skuNo"),
+            @Mapping(target = "skuId", source = "soB2cDeclareProductEntity.skuId"),
+            @Mapping(target = "id", source = "soB2cDeclareProductEntity.skuId"),
+            @Mapping(target = "destCurrency", source = "soB2cDeclareProductEntity.toCurrency"),
+            @Mapping(target = "destCurrencySymbol", source = "soB2cDeclareProductEntity.toCurrencySymbol"),
+            @Mapping(target = "destDeclarePrice", source = "soB2cDeclareProductEntity.toDeclarePrice"),
+            @Mapping(target = "weight", source = "soB2cDeclareProductEntity.weight", qualifiedByName = "bigDecimalToInt"),
+            @Mapping(target = "grossWeight", source = "soB2cDeclareProductEntity.weight"),
+            @Mapping(target = "quantity", source = "soB2cDeclareProductEntity.qty"),
+            @Mapping(target = "customsCode", source = "soB2cDeclareProductEntity.toCustomsCode"),
+            @Mapping(target = "declareChineseName", source = "soB2cDeclareProductEntity.declareCn"),
+            @Mapping(target = "declareEnglishName", source = "soB2cDeclareProductEntity.declareEn"),
+            @Mapping(target = "childOrderId", source = "soB2cDetail.sourceDetailId", qualifiedByName = "stringToLong"),
+            @Mapping(target = "declareCurrency", source = "productDTO.declareCurrency"),
+            @Mapping(target = "declareCurrencySymbol", source = "productDTO.declareCurrencySymbol"),
+            @Mapping(target = "declareElement", source = "productDTO.declareElement"),
+            @Mapping(target = "declareModel", source = "productDTO.declareModel"),
+            @Mapping(target = "declarePrice", source = "productDTO.declarePrice"),
+            @Mapping(target = "declareUnit", source = "productDTO.declareUnit"),
+            @Mapping(target = "distributionInfo", ignore = true),
+            @Mapping(target = "englishMaterial", source = "productDTO.englishMaterial"),
+            @Mapping(target = "englishUsage", source = "productDTO.englishUsage"),
+            @Mapping(target = "exemption", source = "productDTO.exemption"),
+            @Mapping(target = "isElectric", source = "productDTO.isElectric"),
+            @Mapping(target = "productProperty", source = "productDTO.productProperty"),
+            @Mapping(target = "productPropertyId", source = "productDTO.productPropertyId"),
+            @Mapping(target = "remark", ignore = true),
+            @Mapping(target = "scItemCode", ignore = true),
+            @Mapping(target = "scItemId", ignore = true),
+            @Mapping(target = "scItemName", ignore = true),
+            @Mapping(target = "skuName", ignore = true),
+            @Mapping(target = "sourceCargo", source = "productDTO.sourceCargo"),
+            @Mapping(target = "sourceCountry", source = "productDTO.sourceCountry"),
+            @Mapping(target = "combinationDeclareType", source = "productDTO.combinationDeclareType"),
+            @Mapping(target = "url", source = "soB2cDetail.imageUrl")
+    })
+    LogisticsProductVO convertDeclareProductVOByEntity(SoB2cDeclareProductEntity soB2cDeclareProductEntity, SoB2cDetailEntity soB2cDetail, LogisticsProductDTO.ProductDTO productDTO);
+
 }

@@ -20,8 +20,13 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LogisticsDeclareProductDTO implements Serializable {
-
+    /**
+     * 销售订单id
+     */
     private String soId;
+    /**
+     * 销售订单编码
+     */
     private String soCode;
     /**
      * 销售订单明细id

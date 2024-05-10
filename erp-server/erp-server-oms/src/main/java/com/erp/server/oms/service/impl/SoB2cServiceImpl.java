@@ -65,6 +65,7 @@ import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.transfer.TransferCancelOrderReq;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
+import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -1424,6 +1425,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAIL, entity.getCode());
             }
         }
+        //校验是否存在申报信息，不存在则生成
+        List<SoB2cDeclareProductEntity> declareList = soB2cDeclareProductService.listBySoId(id);
+        if (CollectionUtils.isEmpty(declareList)){
+            declareRule(id,new HashMap<>(), Boolean.FALSE);
+        }
         try {
             LogisticsBillDTO.GenerateBillDTO generateBillDTO = makeGenerateBillDTO(entity, soB2cLogisticsEntity);
             paramJson = JSONObject.toJSONString(generateBillDTO);
@@ -1558,11 +1564,33 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         LogisticsBillDTO.PackageDTO packageDTO = B2cOrderConverter.INSTANCE.convertPackage(soB2cLogisticsEntity);
         packageDTO.setCurrency(entity.getCurrency());
         result.setPackageInfo(packageDTO);
-
+        //获取申报信息
+        List<SoB2cDeclareProductEntity> declareList = soB2cDeclareProductService.listBySoId(id);
+        if (CollectionUtils.isEmpty(declareList)){
+            //申报信息不能为空
+            throw new ServiceException(ApiError.ERROR_SO_B2C_ORDER_DECLARE_NOT_EXIST, entity.getCode());
+        }
+        List<LogisticsProductVO> productVOS = new ArrayList<>(declareList.size());
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
+        List<String> skuIdList = declareList.stream().map(SoB2cDeclareProductEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listBySkuIdList(skuIdList);
+        declareList.forEach(soB2cDeclareProductEntity -> {
+            LogisticsProductDTO.ProductDTO productDTO = skuInfoList.stream().filter(e -> e.getSkuId().equals(soB2cDeclareProductEntity.getSkuId())).findFirst().orElse(new LogisticsProductDTO.ProductDTO());
+            SoB2cDetailEntity soB2cDetail = detailList.stream().filter(e -> soB2cDeclareProductEntity.getSoDetailId().equals(e.getId())).findFirst().orElse(new SoB2cDetailEntity());
+            LogisticsProductVO productVO = B2cOrderConverter.INSTANCE.convertDeclareProductVOByEntity(soB2cDeclareProductEntity, soB2cDetail, productDTO);
+            //速卖通重置参数
+            if (isAliExpress){
+                productVO.setSkuId(soB2cDetail.getPlatformSpuNo());
+                productVO.setSkuNo(soB2cDetail.getPlatformSkuNo());
+            }
+            productVOS.add(productVO);
+        });
 
-        List<LogisticsBillDTO.SkuDTO> skuList = B2cOrderConverter.INSTANCE.convertSku(detailList);
-        result.setSkuList(skuList);
+//        //整合sku基础信息
+//        List<LogisticsProductVO> productVOS = B2cOrderConverter.INSTANCE.convertDeclareProductVOByEntity(declareList);
+//        List<LogisticsBillDTO.SkuDTO> skuList = B2cOrderConverter.INSTANCE.convertSku(detailList);
+//        result.setSkuList(skuList);
+        result.setProductVOS(productVOS);
         return result;
     }
 
@@ -2793,6 +2821,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         List<SoB2cDetailDTO.ViewDTO> detailList = BeanMapperUtils.copyList(SoB2cDetailDTO.ViewDTO.class, soB2cDetailList);
         data.setDetailList(detailList);
+        List<SoB2cDeclareProductEntity> declareProductList = soB2cDeclareProductService.listBySoId(id);
+        List<SoB2cDeclareProductDTO.ViewDTO> declareProductViewList = BeanMapperUtils.copyList(SoB2cDeclareProductDTO.ViewDTO.class, declareProductList);
+        data.setDeclareProductList(declareProductViewList);
         // 数据填充处理
         fillOne(data);
         return data;

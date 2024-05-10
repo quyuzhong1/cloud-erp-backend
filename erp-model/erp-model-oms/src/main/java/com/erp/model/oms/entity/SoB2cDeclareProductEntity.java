@@ -10,6 +10,9 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
 
 /**
  * <p>
@@ -35,6 +38,11 @@ public class SoB2cDeclareProductEntity extends BaseEntity<SoB2cDeclareProductEnt
     */
     @TableField("so_id")
     private String soId;
+    /**
+     * 销售订单编号
+     */
+    @TableField("so_code")
+    private String soCode;
     /**
     * 产品sku编号
     */
