@@ -23,6 +23,7 @@ import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.CfgRuleDeclareEntity;
 import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.entity.SoB2cDeclareProductEntity;
+import com.erp.model.oms.enums.DeclareLabelTypeEnum;
 import com.erp.model.oms.enums.DeclareTypeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -31,6 +32,8 @@ import com.erp.server.oms.mapper.CfgRuleDeclareMapper;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -172,11 +175,16 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
 
     /**
      * 获取申报规则匹配结果
+     *
      * @param map
+     * @param maxCustomsAmount
+     * @param minCustomsAmount
+     * @param isUpdate
+     * @param declareProductList
      * @return
      */
     @Override
-    public void getRuleDeclareMatchResult(HashMap<String, Object> map) {
+    public void getRuleDeclareMatchResult(HashMap<String, Object> map, BigDecimal maxCustomsAmount, BigDecimal minCustomsAmount, Boolean isUpdate, List<SoB2cDeclareProductEntity> declareProductList) {
         if (Objects.isNull(map)) {
             return;
         }
@@ -193,10 +201,54 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
             if (Objects.isNull(entity)){
                 entity = B2cOrderConverter.INSTANCE.convertDeclareProductByMap(detailMap);
             }
+            //根据渠道进行重置目的国申报单价 上下限
+            resetToDeclarePrice(entity,detailMap,maxCustomsAmount, minCustomsAmount);
             addList.add(entity);
         }
+        if (Objects.nonNull(isUpdate) && isUpdate){
+            //删除已存在申报信息
+            soB2cDeclareProductService.removeBySoId(String.valueOf(map.get("id")));
+        }
+        //判断是否更新规则 isUpdate
         if (CollectionUtil.isNotEmpty(addList)){
             soB2cDeclareProductService.saveBatch(addList);
+            String msg = StrUtil.format("自动生成报关信息");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), String.valueOf(map.get("id")), "报关信息生成");
+        }
+    }
+
+    /**
+     * 根据渠道进行 目的国申报价上下限设置
+     *
+     * @param entity
+     * @param detailMap
+     * @param maxCustomsAmount
+     * @param minCustomsAmount
+     */
+    private void resetToDeclarePrice(SoB2cDeclareProductEntity entity, Map<String, Object> detailMap, BigDecimal maxCustomsAmount, BigDecimal minCustomsAmount) {
+        //表示最大的报关价还小于 目的过申报价
+        if (Objects.nonNull(entity.getToDeclarePrice()) && Objects.nonNull(maxCustomsAmount)
+                && maxCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && maxCustomsAmount.compareTo(entity.getToDeclarePrice()) < 0) {
+            entity.setToDeclarePrice(maxCustomsAmount);
+        }
+        //表示最小的报关价还小于 目的过申报价
+        if (Objects.nonNull(entity.getToDeclarePrice()) && Objects.nonNull(minCustomsAmount)
+                && minCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && entity.getToDeclarePrice().compareTo(minCustomsAmount) < 0) {
+            entity.setToDeclarePrice(minCustomsAmount);
+        }
+
+        //申报标签
+        Object toDeclarePriceObj = detailMap.get("toDeclarePrice");
+        int compare = MathUtil.compareTo(entity.getToDeclarePrice(), toDeclarePriceObj );
+        if (compare > 0){
+            //高申报
+            entity.setDeclareLabel(DeclareLabelTypeEnum.HIGH.getCode());
+        }else if (compare < 0){
+            //低申报
+            entity.setDeclareLabel(DeclareLabelTypeEnum.LOW.getCode());
+        }else {
+            //正常申报
+            entity.setDeclareLabel(DeclareLabelTypeEnum.NORMAL.getCode());
         }
     }
 
@@ -244,8 +296,6 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
                         entity.setToCurrencySymbol(item.getToCurrencySymbol());
                     }
                 }
-//                String msg = StrUtil.format("申报规则匹配成功，规则名称：{}", item.getName());
-//                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getSoId(), "申报规则匹配");
                 return entity;
             }
         }

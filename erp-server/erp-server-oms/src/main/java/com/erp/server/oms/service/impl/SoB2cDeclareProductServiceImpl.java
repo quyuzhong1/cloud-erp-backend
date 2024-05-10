@@ -9,12 +9,20 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.oms.entity.SoB2cDeclareProductEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.mapper.SoB2cDeclareProductMapper;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoB2cDeclareProductService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.CommonService;
+import com.common.core.exception.ServiceException;
+import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -70,8 +78,7 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
     public Boolean update(SoB2cDeclareProductDTO.UpdateDTO updateDTO) {
         SoB2cDeclareProductEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单申报产品信息单"));
-        SoB2cDeclareProductEntity soB2cDeclareProductEntity =  BeanMapperUtils.map(SoB2cDeclareProductEntity.class, updateDTO);
-
+        SoB2cDeclareProductEntity soB2cDeclareProductEntity = B2cOrderConverter.INSTANCE.convertDeclareProductByDto(updateDTO);
         // 数据处理
         handleData(soB2cDeclareProductEntity);
         log.info("编辑 开始修改B2C销售订单申报产品信息单数据，id：【{}】", old.getId());
@@ -79,13 +86,11 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
         if(!save) {
             throw new ServiceException("B2C销售订单申报产品信息单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
         // 记录主单操作日志
             log.info("编辑 开始记录B2C销售订单申报产品信息单日志数据，id：【{}】", soB2cDeclareProductEntity.getId());
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soB2cDeclareProductEntity.getId(), "B2C销售订单申报产品信息单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, soB2cDeclareProductEntity, null, soB2cDeclareProductEntity.getId(), msg);
+        // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLogByObj(old, soB2cDeclareProductEntity, ModuleTypeEnum.SO_B2C_DECLARE.getCode(), soB2cDeclareProductEntity.getId(), msg);
         return Boolean.TRUE;
     }
     /**
@@ -101,6 +106,16 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
         return lambdaQuery().eq(SoB2cDeclareProductEntity::getSoId,id).list();
     }
 
+    /**
+     * 根据订单id删除申报信息
+     * @param id
+     */
+    @Override
+    public void removeBySoId(String id) {
+        if (StringUtils.isNotEmpty(id)){
+            lambdaUpdate().eq(SoB2cDeclareProductEntity::getSoId, id).remove();
+        }
+    }
 
     /**
     * 新增修改处理数据

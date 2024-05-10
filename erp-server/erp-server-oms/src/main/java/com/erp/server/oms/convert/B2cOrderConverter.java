@@ -6,6 +6,7 @@ import com.common.business.mapper.NumberMapperWork;
 import com.common.business.mapper.ObjectMapperWork;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -195,4 +196,21 @@ public interface B2cOrderConverter {
             @Mapping(target = "version", ignore = true)
     })
     SoB2cDeclareProductEntity convertDeclareProductByMap(Map<String, Object> detailMap);
+
+    /**
+     *
+     * @param updateDTO
+     * @return
+     */
+    @Mappings({
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "version", ignore = true),
+    })
+    SoB2cDeclareProductEntity convertDeclareProductByDto(SoB2cDeclareProductDTO.UpdateDTO updateDTO);
 }

@@ -78,7 +78,7 @@
             search_key,
             remote_label
         FROM cfg_condition
-        WHERE is_deleted=FALSE and condition_field in ('dictPlatform','shop','destCountry','skuNo')
+        WHERE is_deleted=FALSE and condition_field in ('dictPlatform','shop','destCountry','skuNo','logisticsChannelId')
         ORDER BY index ASC
     </select>
 

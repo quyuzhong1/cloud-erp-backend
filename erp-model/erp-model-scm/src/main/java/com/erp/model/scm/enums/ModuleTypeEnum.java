@@ -82,7 +82,7 @@ public enum ModuleTypeEnum {
     CFG_FIELD_RECONCILIATION("71", "字段配置"),
     RULE_DECLARE("72", "申报规则"),
     CFG_RULE_ORDER_HANDLE("73", "订单处理规则"),
-
+    SO_B2C_DECLARE("74", "B2C销售订单申报信息"),
     ;
 
 
