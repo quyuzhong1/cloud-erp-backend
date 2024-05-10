@@ -80,7 +80,10 @@ public class FileTaskContext {
         // 加锁执行删除
         fileTaskRepository.removeById(id);
         // 删除文件
-        fileService.deleteFile(fileTask.getFileUrl());
+        boolean exist = fileService.exist(fileTask.getFileUrl());
+        if (exist) {
+            fileService.deleteFile(fileTask.getFileUrl());
+        }
     }
 
 
