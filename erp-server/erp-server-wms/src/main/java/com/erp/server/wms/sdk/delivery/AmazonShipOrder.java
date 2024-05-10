@@ -7,6 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.PlatformDeliveryInterceptDTO;
+import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -17,16 +18,15 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
-import com.erp.model.oms.entity.SoB2cRefEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsMappingDTO;
 import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.LogisticsMappingFeign;
@@ -37,6 +37,7 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import com.erp.server.wms.service.DictBasicService;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -44,10 +45,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -65,9 +63,8 @@ public class AmazonShipOrder implements IPlatformService {
     private DictBasicService dictBasicService;
     @Resource
     private LogisticsFeign logisticsFeign;
-
     @Resource
-    private LogisticsMappingFeign logisticsMappingFeign;
+    private ShopInfoFeign shopInfoFeign;
 
     @Override
     public void shipOrder(PlatformShipOrderDTO dto) {
@@ -296,5 +293,75 @@ public class AmazonShipOrder implements IPlatformService {
             soB2cFeign.updateCancelAndLog(dto);
         }
         return isCancel;
+    }
+
+    @Override
+    public Boolean asyncBatchQueryAndUpdateOrderStatus(List<PlatformOrderQueryDTO> dtoList){
+        List<String> shopIds = dtoList.stream().map(PlatformOrderQueryDTO::getShopId).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIds);
+        if (CollectionUtils.isEmpty(shopInfoEntityList)){
+            throw new ServiceException("未找到店铺ids=" + shopIds);
+        }
+        // 按亚马逊账号分组
+        Map<String, List<ShopInfoEntity>> platformGroup = shopInfoEntityList
+                .stream().
+                collect(Collectors.groupingBy(ShopInfoEntity::getPlatformShopCode));
+        // 异常按亚马逊账号查询
+        platformGroup.entrySet().parallelStream().peek(e->{
+            // 当前账号的所有
+            List<PlatformOrderQueryDTO> curDtoList = dtoList.stream()
+                    .filter(dto -> shopIds.contains(dto.getShopId()))
+                    .collect(Collectors.toList());
+            List<List<PlatformOrderQueryDTO>> partition = Lists.partition(curDtoList, 50);
+            for (List<PlatformOrderQueryDTO> queryDTOS : partition) {
+                String shopId = queryDTOS.get(0).getShopId();
+                List<String> platformCodeList = queryDTOS.stream().map(PlatformOrderQueryDTO::getPlatformCode).distinct().collect(Collectors.toList());
+                // 请求亚马逊接口获取最新状态
+                // 获取店铺授权信息
+                AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
+                if (null == shopInfoDTO) {
+                    throw new ServiceException("未找到店铺授权:" + shopId);
+                }
+                AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+                OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
+                // 站点信息
+                List<String> marketplaceIds = e.getValue().stream()
+                        .map(ShopInfoEntity::getDictCountryCode)
+                        .map(AmazonMarketplaceEnum::getByCountryCode)
+                        .map(AmazonMarketplaceEnum::getMarketplaceId)
+                        .distinct()
+                        .collect(Collectors.toList());
+                try {
+                    // 批量查询
+                    ApiResponse<GetOrdersResponse> ordersWithHttpInfo = api.getOrdersWithHttpInfo(marketplaceIds,
+                            null, null, null, null, null, null, null, null, null, 100,
+                            null, null, null, platformCodeList, null, null, null, null, null, null, null);
+                    // 过滤获取已取消的订单
+                    List<String> cancelOrderCodeList = ordersWithHttpInfo.getData()
+                            .getPayload()
+                            .getOrders()
+                            .stream()
+                            .filter(Order::convertCancel)
+                            .map(Order::getAmazonOrderId)
+                            .collect(Collectors.toList());
+                    if (CollectionUtils.isEmpty(cancelOrderCodeList)){
+                        continue;
+                    }
+                    List<String> soB2cIdList = queryDTOS.stream()
+                            .filter(cur -> cancelOrderCodeList.contains(cur.getPlatformCode()))
+                            .map(PlatformOrderQueryDTO::getSoB2cId)
+                            .collect(Collectors.toList());
+                    if (CollectionUtils.isEmpty(soB2cIdList)){
+                        continue;
+                    }
+                    soB2cFeign.batchUpdateCancelAndLog(soB2cIdList);
+                } catch (Exception error) {
+                    log.warn("查询亚马逊订单【{}】信息响应结果: error={}", platformCodeList, ExceptionUtil.stacktraceToString(error));
+                    throw new ServiceException("查询亚马逊订单最新信息失败:" + error);
+                }
+
+            }
+        }).collect(Collectors.toList());
+        return true;
     }
 }

@@ -823,7 +823,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     //TODO 物流单
-    @Async("saveLogisticsBill")
+//    @Async("saveLogisticsBill")
     public void saveLogisticsBill(SoOutstockEntity entity) {
         try {
             LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
