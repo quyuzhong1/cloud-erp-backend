@@ -799,10 +799,23 @@ public class PullAmzJob {
 
     @XxlJob("amazonCleanExecute")
     public void amazonCleanExecute() {
-        List<CleanDataTableEnum> platforms = CleanDataTableEnum.getByPlatform(PlatformDictEnum.AMAZON.getCode());
+        String jobParamStr = XxlJobHelper.getJobParam();
+        XxlJobHelper.log("[清洗【亚马逊相关待清洗】(mongo->ERP)] amazonCleanExecute 任务开始,param={}", JSONUtil.toJsonStr(jobParamStr));
+        List<CleanDataTableEnum> platforms = new LinkedList<>();
+        if (StringUtils.isNotBlank(jobParamStr)){
+            CleanDataTableEnum table = CleanDataTableEnum.getByName(jobParamStr);
+            if (null != table){
+                platforms = Collections.singletonList(table);
+            }
+        } else {
+            // 所有类型
+            platforms = CleanDataTableEnum.getByPlatform(PlatformDictEnum.AMAZON.getCode());
+        }
         if (CollectionUtils.isEmpty(platforms)) {
+            XxlJobHelper.log("[清洗【亚马逊相关待清洗】(mongo->ERP)] amazonCleanExecute 任务结束,需要清洗的类型");
             return;
         }
+
         platforms.forEach(cleanDataTableEnum -> {
             JobTaskDTO jobTaskDTO = new JobTaskDTO();
             jobTaskDTO.setPlatformCategory(cleanDataTableEnum.getCategory());
