@@ -5,10 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import java.util.List;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -40,6 +38,10 @@ public class SoB2cDeclareProductDTO implements Serializable {
          * 销售订单id
          */
         private String soId;
+        /**
+         * 销售订单编号
+         */
+        private String soCode;
         /**
         * 销售订单明细id
         */
@@ -92,8 +94,10 @@ public class SoB2cDeclareProductDTO implements Serializable {
         * 目的国海关编码
         */
         private String toCustomsCode;
-
-
+        /**
+         * 申报标签(正常申报normal，高申报high，低申报low)
+         */
+        private String declareLabel;
     }
 
     /**
@@ -138,6 +142,12 @@ public class SoB2cDeclareProductDTO implements Serializable {
         @NotBlank(message = "销售订单id不能为空")
         @Size(max = 19,message = "销售订单id最大长度不能超过19位")
         private String soId;
+        /**
+         * 销售订单编号
+         */
+        @NotBlank(message = "销售订单编号不能为空")
+        @Size(max = 19,message = "销售订单编号最大长度不能超过19位")
+        private String soCode;
 
         /**
         * 申报数量
@@ -206,9 +216,19 @@ public class SoB2cDeclareProductDTO implements Serializable {
         @NotBlank(message = "目的国海关编码不能为空")
         @Size(max = 64,message = "目的国海关编码最大长度不能超过64位")
         private String toCustomsCode;
-
+        /**
+         * 申报标签(正常申报normal，高申报high，低申报low)
+         */
         private String declareLabel;
     }
 
-
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+        /**
+         * 销售订单id
+         */
+        @NotEmpty(message = "请选择需要查询的数据")
+        private List<String> ids;
+    }
 }

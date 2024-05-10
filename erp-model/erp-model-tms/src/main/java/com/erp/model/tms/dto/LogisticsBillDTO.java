@@ -1,6 +1,7 @@
 package com.erp.model.tms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -704,14 +705,19 @@ public class LogisticsBillDTO implements Serializable {
          */
         private PackageDTO packageInfo;
 
+//        /**
+//         * sku Id list
+//         */
+//        @Size(min = 1,message = "sku信息不能为空")
+//        @NotNull(message = "sku信息不能为空L")
+//        private List<SkuDTO> skuList;
+
         /**
-         * sku Id list
+         * 产品信息不能为空
          */
-        @Size(min = 1,message = "sku信息不能为空")
-        @NotNull(message = "sku信息不能为空L")
-        private List<SkuDTO> skuList;
-
-
+        @Size(min = 1,message = "产品信息不能为空")
+        @NotNull(message = "产品信息不能为空L")
+        List<LogisticsProductVO> productVOS;
     }
 
     @Data

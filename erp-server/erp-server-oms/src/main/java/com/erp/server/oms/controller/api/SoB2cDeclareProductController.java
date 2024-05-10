@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.entity.SoB2cDeclareProductEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.server.oms.service.SoB2cService;
@@ -52,13 +53,14 @@ public class SoB2cDeclareProductController extends BaseController {
      * 获取销售订单申报信息
      * @author zdy
      * @date:  2024-05-09
-     * @param id
+     * @param dto
      * @return ApiResult<SoB2cDeclareProductDTO.ViewDTO>
      */
-    @GetMapping("/listBySoId")
-    @LogAction(value = LogActionEnum.INSERT, desc = "B2C销售订单申报产品信息表新增")
-    public ApiResult<List<SoB2cDeclareProductEntity>> listBySoId(@RequestParam(value = "id") String id) {
-        return success(soB2cDeclareProductService.listBySoId(id));
+    @PostMapping("/listBySoIds")
+    @LogAction(value = LogActionEnum.INSERT, desc = "获取B2C销售订单申报信息")
+    public ApiResult<List<SoB2cDeclareProductDTO.ViewDTO>> listBySoId(@RequestBody @Validated SoB2cDeclareProductDTO.ListDTO dto) {
+        List<SoB2cDeclareProductDTO.ViewDTO> list = soB2cDeclareProductService.listViewBySoId(dto.getIds());
+        return success(list);
     }
     /**
     * 新增
