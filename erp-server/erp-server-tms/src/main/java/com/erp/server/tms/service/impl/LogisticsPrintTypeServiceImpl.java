@@ -11,15 +11,11 @@ import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
 import com.erp.server.tms.mapper.LogisticsPrintTypeMapper;
 import com.erp.server.tms.service.LogisticsPrintTypeService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
 

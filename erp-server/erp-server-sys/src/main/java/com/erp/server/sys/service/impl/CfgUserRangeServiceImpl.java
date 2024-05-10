@@ -3,6 +3,8 @@ package com.erp.server.sys.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.StrUtils;
@@ -13,14 +15,10 @@ import com.erp.model.sys.enums.UserRangeTypeEnum;
 import com.erp.server.sys.config.UserRangeProperties;
 import com.erp.server.sys.mapper.CfgUserRangeMapper;
 import com.erp.server.sys.service.CfgUserRangeService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.sys.service.CommonService;
 import com.google.common.collect.Lists;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -38,16 +36,13 @@ import java.util.stream.Collectors;
 @Service
 public class CfgUserRangeServiceImpl extends SuperServiceImpl<CfgUserRangeMapper, CfgUserRangeEntity> implements CfgUserRangeService {
 
-    @Autowired
-    private CommonService commonService;
-
     @Resource
     private UserRangeProperties userRangeProperties;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(CfgUserRangeDTO.SaveDTO userRangeDTO) {
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         if(StrUtils.isEmpty(userId)) {
             return;
         }
@@ -87,7 +82,7 @@ public class CfgUserRangeServiceImpl extends SuperServiceImpl<CfgUserRangeMapper
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void update(CfgUserRangeDTO.SaveDTO userRangeDTO) {
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         if(StrUtils.isEmpty(userId)) {
             return;
         }
@@ -103,7 +98,7 @@ public class CfgUserRangeServiceImpl extends SuperServiceImpl<CfgUserRangeMapper
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void save(CfgUserRangeDTO.SaveDTO userRangeDTO) {
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         if(StrUtils.isEmpty(userId)) {
             return;
         }
@@ -125,7 +120,7 @@ public class CfgUserRangeServiceImpl extends SuperServiceImpl<CfgUserRangeMapper
 
     @Override
     public List<CfgUserRangeDTO.UserRangeDataDTO> detail(String type) {
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         if(StrUtils.isEmpty(userId)) {
             return null;
         }

@@ -1,38 +1,14 @@
 package com.erp.server.wms.service.impl;
 
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.InputStream;
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.zip.ZipOutputStream;
-
-import javax.annotation.Resource;
-
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.ZipUtil;
+import cn.hutool.http.HttpUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
@@ -46,6 +22,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -55,46 +32,41 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WmsDataComparePlanDTO;
 import com.erp.model.wms.dto.WmsDataComparePlanDTO.ImportDataMappingDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
-import com.erp.model.wms.dto.WmsDataCompareTaskDTO.CreateViewDTO;
-import com.erp.model.wms.dto.WmsDataCompareTaskDTO.DataCompareDTO;
-import com.erp.model.wms.dto.WmsDataCompareTaskDTO.PagingParamDTO;
-import com.erp.model.wms.dto.WmsDataCompareTaskDTO.SetNextDTO;
-import com.erp.model.wms.dto.WmsDataCompareTaskDTO.SetNextViewDTO;
-import com.erp.model.wms.dto.WmsDataCompareTaskDTO.ViewDTO;
+import com.erp.model.wms.dto.WmsDataCompareTaskDTO.*;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.WmsDataCompareImportEntity;
 import com.erp.model.wms.entity.WmsDataCompareTaskEntity;
 import com.erp.model.wms.entity.WmsDataCompareTempEntity;
-import com.erp.model.wms.enums.WmsDataCompareImportParseStatusEnum;
-import com.erp.model.wms.enums.WmsDataCompareTaskBillTypeEnum;
-import com.erp.model.wms.enums.WmsDataCompareTaskStatusEnum;
-import com.erp.model.wms.enums.WmsDataCompareTaskSubStatusEnum;
-import com.erp.model.wms.enums.WmsDataCompareTempCompareResultEnum;
-import com.erp.model.wms.enums.WmsDataCompareTempCompareStatusEnum;
-import com.erp.model.wms.enums.WmsDataCompareTempMainDataTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.server.wms.config.WmsDataCompareHandlerFactory;
 import com.erp.server.wms.mapper.WmsDataCompareTaskMapper;
-import com.erp.server.wms.service.CommonService;
-import com.erp.server.wms.service.DictBasicService;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.WmsDataCompareBillService;
-import com.erp.server.wms.service.WmsDataCompareImportService;
-import com.erp.server.wms.service.WmsDataCompareTaskService;
-import com.erp.server.wms.service.WmsDataCompareTempService;
+import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.WmsDataCompareUtils;
 import com.erp.server.wms.utils.WmsDataCompareUtils.MergeStrategy;
 import com.erp.server.wms.utils.WmsDataCompareUtils.WmsDataCompareExcelDto;
 import com.google.common.collect.Lists;
-
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateTime;
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
-import cn.hutool.core.lang.UUID;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.core.util.ZipUtil;
-import cn.hutool.http.HttpUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.zip.ZipOutputStream;
 /**
  * <p>
  * 数据对比任务 服务实现类
@@ -191,7 +163,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "数据对比任务" , wmsDataCompareTaskEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "数据对比任务" , wmsDataCompareTaskEntity.getCode());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DATA_COMPARE.getCode(), wmsDataCompareTaskEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -248,7 +220,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 
         // 记录主单操作日志
             log.info("编辑 开始记录数据对比任务日志数据，单号：【{}】", wmsDataCompareTaskEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), wmsDataCompareTaskEntity.getCode(), "数据对比任务");
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), wmsDataCompareTaskEntity.getCode(), "数据对比任务");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, wmsDataCompareTaskEntity, null, wmsDataCompareTaskEntity.getId(), msg);
         return Boolean.TRUE;

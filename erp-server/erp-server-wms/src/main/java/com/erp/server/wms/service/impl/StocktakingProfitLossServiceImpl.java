@@ -12,6 +12,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -301,7 +302,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
         // 操作日志
         List<Pair<String, String>> pairList = Lists.newArrayList(new Pair<>(entity.getId(), entity.getCode()));
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, "提交审核");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
 
@@ -345,7 +346,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         approveProcess(entity, dto);
         // 操作日志
         List<Pair<String, String>> pairList = Lists.newArrayList(new Pair<>(entity.getId(), entity.getCode()));
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作:【{}】 ", commonService.getUserInfo().getUserName(), entity.getCode(), ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getName(),approveType.getName());
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作:【{}】 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getName(),approveType.getName());
         operateLogService.batchAddModuleOperateLog(String.format(msg, approveType.getName()).concat("【%s】").concat(StringUtils.isNotEmpty(dto.getComment()) ? String.format("，意见：%s", dto.getComment()) : ""),
                 ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
@@ -374,7 +375,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         if (!Objects.equals(ingStatus, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        LoginUser user = commonService.getUserInfo();
+        LoginUser user = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode());
@@ -386,7 +387,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             Boolean result = this.updateById(entity);
             if (result) {
                 List<Pair<String, String>> pairList = Arrays.asList(entity).stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-                String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据 取消流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getName());
+                String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据 取消流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getName());
                 operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, "取消流程操作");
             }
         }
@@ -419,7 +420,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
      * @param dto
      */
     public void approveProcess(StocktakingProfitLossEntity entity, ApproveOneDTO dto) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
         approveDTO.setBusinessKey(SourceTypeEnum.PURCHASE_ORDER.getCode());
@@ -894,7 +895,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         // 删除盘点人
         stocktakingTaskUserService.removeBySourceId(id);
         //删除操作日志
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的盘盈盘亏", commonService.getUserInfo().getUserName(), entity.getCode());
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的盘盈盘亏", UserContext.getDefaultLoginUser().getUserName(), entity.getCode());
         List<StocktakingProfitLossEntity> list = Arrays.asList(entity);
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, "删除操作");
@@ -942,7 +943,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
      */
     public Boolean updateForApprove(String id, ApproveStatusEnum approveStatus) {
         //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         return this.lambdaUpdate().eq(StocktakingProfitLossEntity::getId, id)
                 .set(StocktakingProfitLossEntity::getApproveUserId, userInfo.getUid())
                 .set(StocktakingProfitLossEntity::getApproveUserName, userInfo.getUserName())
@@ -962,7 +963,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         startDTO.setBusinessCode(entity.getCode());
         startDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode());
         startDTO.setBusinessName(entity.getCode());
-        startDTO.setUserId(commonService.getUserInfo().getUid());
+        startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {

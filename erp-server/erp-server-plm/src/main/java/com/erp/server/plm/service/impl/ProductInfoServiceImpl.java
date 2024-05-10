@@ -14,6 +14,7 @@ import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.RedisService;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -267,7 +268,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         } else {
             entity.setCategory("");
         }
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         if (StringUtils.isBlank(dto.getId())) {
             entity.setCreateUserId(loginUser.getUid());
             entity.setCreateUserName(loginUser.getUserName());
@@ -601,7 +602,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         //我的项目
         //部门处理
         Boolean isFlag = handlePagingDept(params);
@@ -636,7 +637,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         //收藏的项目
         //部门处理
         Boolean isFlag = handlePagingDept(params);
@@ -681,7 +682,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public ProductDTO.ProductCountDTO myProjectCount() {
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         //这个是获取到任务负责人是自己的产品id
         //产品的统计
         List<ProductDTO.CountBaseDTO> productCountList = baseMapper.listMyProjectStatusCount(userId);
@@ -703,7 +704,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public ProductDTO.ProductCountDTO collectCount() {
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         //产品的统计
         List<ProductDTO.CountBaseDTO> productCountList = baseMapper.listCollectStatusCount(userId);
         //产品延期的统计
@@ -819,7 +820,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     private List<ProductShowDTO> fillPagingDb(List<ProductShowDTO> list) {
         if (CollectionUtils.isNotEmpty(list)) {
             //如果是我的收藏
-            LoginUser loginUser = commonService.getUserInfo();
+            LoginUser loginUser = UserContext.getDefaultLoginUser();
             String userId = loginUser.getUid();
             //根据当前登录人id 获取收藏的列表
             List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
@@ -948,7 +949,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     public List<BasicDTO> listProductInfo(ProductSearchDTO.PagingParamDTO params) {
         List<BasicDTO> dataList = new ArrayList<>();
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userId = loginUser.getUid();
         //获取到归档的产品id
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
@@ -1199,7 +1200,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateProduct(UpdateProductDTO dto) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String productId = dto.getProductId();
         ProductInfoEntity product = this.getById(productId);
         //是否已立项
@@ -1697,7 +1698,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         ProductInfoEntity productInfoEntity = this.getById(id);
         if (productInfoEntity != null) {
             BeanMapper.copy(dto, productInfoEntity);
-            LoginUser loginUser = commonService.getUserInfo();
+            LoginUser loginUser = UserContext.getDefaultLoginUser();
             if (StringUtils.isBlank(productInfoEntity.getId())) {
                 productInfoEntity.setCreateUserId(loginUser.getUid());
                 productInfoEntity.setCreateUserName(loginUser.getUserName());
@@ -2535,7 +2536,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
 
         /**
          * 导出数据 类型

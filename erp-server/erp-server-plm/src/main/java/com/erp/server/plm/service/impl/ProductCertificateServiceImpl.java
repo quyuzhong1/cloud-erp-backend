@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -69,9 +70,6 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
 
     @Resource
     private PlmAttachmentService plmAttachmentService;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -139,7 +137,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
 
         // 记录产品认证操作日志
         log.info("编辑 开始记录产品认证日志数据，id：【{}】", entity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), entity.getId(), "产品认证");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "产品认证");
         sysLogService.addSysLogByUpdate(old, entity, String.valueOf(ProductCertificateEntity.class),old.getSkuId(),entity.getId(), msg);
         return Boolean.TRUE;
     }

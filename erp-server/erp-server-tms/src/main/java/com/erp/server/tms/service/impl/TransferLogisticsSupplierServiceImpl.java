@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -59,9 +60,6 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
     private OperateLogService operateLogService;
 
     @Autowired
-    private CommonService commonService;
-
-    @Autowired
     private ScmTaskFeign scmTaskFeign;
 
     @Autowired
@@ -94,7 +92,7 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
             throw new ServiceException("物流商保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物理商单", logisticsSupplierEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物理商单", logisticsSupplierEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_LOGISTICS_SUPPLIER.getCode(), logisticsSupplierEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(logisticsSupplierEntity.getId(), logisticsSupplierEntity.getId());
     }
@@ -116,7 +114,7 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
         if (!save) {
             throw new ServiceException("物流商单保存失败");
         }
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsSupplierEntity.getId(), "物理商单");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsSupplierEntity.getId(), "物理商单");
         operateLogService.addModuleOperateLogByObj(old, logisticsSupplierEntity, ModuleTypeEnum.TRANSFER_LOGISTICS_SUPPLIER.getCode(), logisticsSupplierEntity.getId(), msg);
         return Boolean.TRUE;
     }

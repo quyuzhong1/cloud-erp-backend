@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -46,7 +47,7 @@ public class WorkOptionServiceImpl implements WorkOptionService {
                 //获取当前人需要审核的业务ids
                 ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList = new ValidList<>();
                 ProcessManagementDTO.ApproveActivityDTO approveActivityDTO = new ProcessManagementDTO.ApproveActivityDTO();
-                approveActivityDTO.setCurApproveId(commonService.getUserInfo().getUid());
+                approveActivityDTO.setCurApproveId(UserContext.getDefaultLoginUser().getUid());
                 approveActivityDTO.setBusinessKey(myWorkOptionDTO.getModuleCode());
                 dtoList.add(approveActivityDTO);
                 ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.batchCurApproverByApprove(dtoList);

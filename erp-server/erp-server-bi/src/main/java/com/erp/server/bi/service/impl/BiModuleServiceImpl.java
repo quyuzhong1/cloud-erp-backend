@@ -4,19 +4,20 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.core.constant.BaseStateConstants;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.FileUtil;
-import com.common.core.utils.date.LocalDateUtil;
-import com.common.core.utils.FastDFSClientUtil;
 import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.PagingVO;
+import com.common.core.constant.BaseStateConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.vo.PagingVO;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.FileUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.CategoryModuleDTO;
 import com.erp.model.bi.dto.ModuleDTO;
 import com.erp.model.bi.dto.ModulePagingDTO;
@@ -27,7 +28,6 @@ import com.erp.model.bi.entity.BiModulePermissionEntity;
 import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
 import com.erp.model.bi.vo.LayoutVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiModuleMapper;
 import com.erp.server.bi.service.*;
@@ -61,8 +61,6 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
     @Resource
     private BiSysModuleService sysModuleService;
 
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private BiDictService dictService;
@@ -163,7 +161,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
     @Override
     public List<CategoryModuleDTO> categoryList(String searchKeyword) {
         List<CategoryModuleDTO> resultList = new ArrayList<>(10);
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
         //根据用户id 查询到可见的模块id 集合
         List<String> moduleIdList = modulePermissionService.findModuleId(userId, roleIdList);

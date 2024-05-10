@@ -33,10 +33,6 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class SoB2cDeliveryInterceptDetailServiceImpl extends SuperServiceImpl<SoB2cDeliveryInterceptDetailMapper, SoB2cDeliveryInterceptDetailEntity> implements SoB2cDeliveryInterceptDetailService {
-    @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)

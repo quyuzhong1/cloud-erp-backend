@@ -16,8 +16,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -41,7 +41,10 @@ import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.convert.CustomerInfoConverter;
 import com.erp.server.oms.mapper.CustomerB2bSellerChangeMapper;
-import com.erp.server.oms.service.*;
+import com.erp.server.oms.service.CustomerB2bSellerChangeService;
+import com.erp.server.oms.service.CustomerInfoService;
+import com.erp.server.oms.service.CustomerSellerService;
+import com.erp.server.oms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -69,8 +72,6 @@ import java.util.stream.Collectors;
 public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<CustomerB2bSellerChangeMapper, CustomerB2bSellerChangeEntity> implements CustomerB2bSellerChangeService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @Resource
     private CustomerB2bSellerChangeServiceImpl service;
@@ -137,7 +138,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "b2b客户销售员变更单保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "b2b客户销售员变更单" , customerB2bSellerChangeEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2b客户销售员变更单" , customerB2bSellerChangeEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CUSTOMER_B2B_SELLER_CHANGE.getCode(), customerB2bSellerChangeEntity.getId(), "新增操作");
         return BatchResultDTO.success(customerB2bSellerChangeEntity.getId(),addDTO.getCode(),"新增成功");
     }
@@ -377,7 +378,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
                 continue;
             }
             //撤销现有流程
-            LoginUser userInfo = commonService.getUserInfo();
+            LoginUser userInfo = UserContext.getDefaultLoginUser();
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
             revokeDTO.setBusinessId(entity.getMainId());
             revokeDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_B2B_CHANGE_SELLER.getCode());
@@ -442,7 +443,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             return;
         }
 
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getMainId());
         approveDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_B2B_CHANGE_SELLER.getCode());
@@ -494,7 +495,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean approveEnd(BaseApproveParamDTO dto, CustomerB2bSellerChangeEntity entity,BatchResultDTO batchResultDTO,CustomerInfoEntity customerInfoEntity ) {
-        LoginUser user = commonService.getUserInfo();
+        LoginUser user = UserContext.getDefaultLoginUser();
         ApproveStatusEnum approve;
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
@@ -524,10 +525,6 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         String approveContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), approve.getName());
         operateLogService.addModuleOperateLog(approveContent, ModuleTypeEnum.CUSTOMER_B2B_SELLER_CHANGE.getCode(), entity.getId(), "状态变更");
         //记录操作日志
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if(Objects.nonNull(loginUser)){
-            loginUser.setUserName("system");
-        }
         String content = String.format("销售员变更单[%s]审核通过自动修改销售员从[%s]为[%s]",customerInfoEntity.getCode(),entity.getOriginSellerName(),entity.getChangeSellerName());
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), customerInfoEntity.getId(), "编辑操作");
         return true;
@@ -623,7 +620,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             throw new ServiceException("b2b客户销售员变更单保存失败");
         }
         log.info("编辑 开始记录b2b客户销售员变更单日志数据，id：【{}】", customerB2bSellerChangeEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), customerB2bSellerChangeEntity.getId(), "b2b客户销售员变更单");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), customerB2bSellerChangeEntity.getId(), "b2b客户销售员变更单");
         operateLogService.addModuleOperateLogByObj(old, customerB2bSellerChangeEntity, ModuleTypeEnum.CUSTOMER_B2B_SELLER_CHANGE.getCode(), customerB2bSellerChangeEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -657,7 +654,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
      * @description: 提交流程
      */
     private BatchResultDTO startProcess(CustomerB2bSellerChangeEntity entity) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         CustomerInfoEntity customerInfoEntity = customerInfoService.getById(entity.getMainId());
         ProcessManagementDTO.StartDTO dto = new ProcessManagementDTO.StartDTO();
         dto.setBusinessId(entity.getMainId());

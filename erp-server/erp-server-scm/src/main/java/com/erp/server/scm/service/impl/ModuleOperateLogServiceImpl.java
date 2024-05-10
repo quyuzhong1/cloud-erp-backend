@@ -21,7 +21,6 @@ import com.erp.model.scm.entity.ModuleOperateLogEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.ModuleOperateLogMapper;
 import com.erp.server.scm.service.CfgModuleOperateLogFieldService;
-import com.erp.server.scm.service.CommonService;
 import com.erp.server.scm.service.DictBasicService;
 import com.erp.server.scm.service.ModuleOperateLogService;
 import org.apache.commons.lang3.StringUtils;
@@ -46,8 +45,6 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
     @Resource
     private CfgModuleOperateLogFieldService cfgModuleOperateLogFieldService;
 
-    @Resource
-    private CommonService commonService;
     @Resource
     private DictBasicService dictBasicService;
 
