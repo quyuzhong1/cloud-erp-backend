@@ -3045,6 +3045,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     }
 
+    @Override
+    public void updateRemarkBySoId(String id, String remark) {
+        SoOutstockEntity soOutStock = this.getBySoId(id);
+        if(Objects.nonNull(soOutStock)){
+            soOutstockDetailService.updateDetailRemark(soOutStock.getId(),remark,false);
+        }
+    }
+
 
     /**
      * 修改装箱状态
