@@ -311,6 +311,11 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             productCustomsService.removeByIds(deleteIdList);
         }
+        productCustomsList.forEach(productCustomsEntity -> {
+            if (StringUtils.isNotEmpty(productCustomsEntity.getToCurrency())){
+                productCustomsEntity.setToCurrencySymbol(CurrencyEnum.getSymbolByCode(productCustomsEntity.getToCurrency()));
+            }
+        });
         Boolean customsResult = productCustomsService.saveOrUpdateBatch(productCustomsList);
         return logisticsResult && customsResult;
     }
