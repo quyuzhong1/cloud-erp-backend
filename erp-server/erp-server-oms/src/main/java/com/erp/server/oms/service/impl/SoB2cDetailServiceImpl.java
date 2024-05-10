@@ -304,7 +304,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             String skuId = null == oldEntity ? "" : oldEntity.getSkuId();
             String skuNO= null == oldEntity ? "" : oldEntity.getSkuNo();
             String imageUrl= null == oldEntity ? "" : oldEntity.getImageUrl();
-            String platformSpuNo = null == oldEntity ? "" : oldEntity.getPlatformSpuNo();
+            String platformSpuNo = null == oldEntity ? detailDTO.getPlatformSpuNo() : oldEntity.getPlatformSpuNo();
             // 历史不为空不更新
             if(null != mappingDTO && StringUtils.isBlank(skuNO) && StringUtils.isBlank(skuId)){
                 skuId = mappingDTO.checkAndGetProductSkuId();

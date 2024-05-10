@@ -75,12 +75,13 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     private SysDictFeign sysDictFeign;
     @Resource
     private PlmTaskFeign plmTaskFeign;
-
     @Resource
     private DmpMongoDbFeign dmpMongoDbFeign;
-
     @Resource
     private DictBasicService dictBasicService;
+    @Resource
+    private OperateLogService operateLogService;
+
 
 
 
@@ -124,16 +125,17 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             }
         }
         // 平台仓订单不走任何规则
-        // 已走订单规则不重复走
         // 取消订单不走规则
-        // 审核不通过的订单不走规则
-        boolean unHandleRule = mainEntity.hasPlatformWarehouseOrder()
-                || mainEntity.getIsCancel()
-                || ApproveStatusEnum.REJECT.equals(mainEntity.getApproveStatus())
-                ;
-        if (! unHandleRule){
-            // 规则处理(分平台)
-            SoB2cHandler.handleRule(mainEntity);
+        if (!mainEntity.hasPlatformWarehouseOrder() || mainEntity.getIsCancel() ) {
+            // 已审核过的订单不走规则
+            Integer count = operateLogService.lambdaQuery()
+                    .eq(OperateLogEntity::getBusinessId, mainEntity.getId())
+                    .eq(OperateLogEntity::getOperation, "审核操作")
+                    .count();
+            if (0 == count){
+                // 规则处理(分平台)
+                SoB2cHandler.handleRule(mainEntity);
+            }
         }
 
         // 销售出库单处理(分平台)
