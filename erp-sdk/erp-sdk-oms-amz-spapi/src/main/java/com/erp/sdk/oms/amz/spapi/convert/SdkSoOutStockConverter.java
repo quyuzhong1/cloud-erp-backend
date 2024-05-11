@@ -54,7 +54,7 @@ public interface SdkSoOutStockConverter {
 
 
     @Mappings({
-            @Mapping(target = "platformDetailUniqueId", source = "shipmentItemId"),
+            @Mapping(target = "platformDetailId", source = "shipmentItemId"),
             @Mapping(target = "platformCode", source = "amazonOrderId"),
             @Mapping(target = "platformOrderDetailId", source = "amazonOrderItemId"),
             @Mapping(target = "trackNo", source = "trackingNumber"),
