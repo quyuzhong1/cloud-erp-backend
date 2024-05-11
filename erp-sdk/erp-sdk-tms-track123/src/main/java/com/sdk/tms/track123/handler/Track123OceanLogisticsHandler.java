@@ -142,42 +142,45 @@ public class Track123OceanLogisticsHandler extends AbstractLogisticsTrackHandler
             List<OceanTrackInfo> accepted = sourceDto.getAccepted();
             if (Objects.nonNull(accepted)) {
                 for (OceanTrackInfo oceanTrackInfo : accepted) {
-                    OceanContainerInfo carrierInfo = oceanTrackInfo.getCarrierInfo();
-                    PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
-                    acceptedToSaveDto.setTrackNo(oceanTrackInfo.getTrackingNo());
-                    acceptedToSaveDto.setUniqueId(sourceDto.getUniqueId());
-                    acceptedToSaveDto.setPlatform(sourceDto.getPlatform());
-                    if (ObjectUtil.isNotEmpty(carrierInfo)) {
-                        List<OceanTrackingDetail> trackingDetails = carrierInfo.getTrackingDetails();
-                        if (CollectionUtils.isNotEmpty(trackingDetails)) {
-                            List<PlatformTrackDetail> details = new ArrayList<>();
-                            for (OceanTrackingDetail trackingDetail : trackingDetails) {
-                                PlatformTrackDetail detail = new PlatformTrackDetail();
-                                detail.setTrackNo(oceanTrackInfo.getTrackingNo());
-                                //转换类型
-                                detail.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));
-                                LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                                detail.setTrackTime(eventTime);
-                                detail.setContent(trackingDetail.getEventDetails());
-                                details.add(detail);
+                    List<OceanContainerInfo> containerInfoList = oceanTrackInfo.getContainerInfo();
+                    if (CollectionUtils.isNotEmpty(containerInfoList)){
+                        containerInfoList.forEach(containerInfo -> {
+                            PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
+                            acceptedToSaveDto.setTrackNo(oceanTrackInfo.getTrackingNo());
+                            acceptedToSaveDto.setUniqueId(sourceDto.getUniqueId());
+                            acceptedToSaveDto.setPlatform(sourceDto.getPlatform());
+                            if (ObjectUtil.isNotEmpty(containerInfo)) {
+                                List<OceanTrackingDetail> trackingDetails = containerInfo.getTrackingDetails();
+                                if (CollectionUtils.isNotEmpty(trackingDetails)) {
+                                    List<PlatformTrackDetail> details = new ArrayList<>();
+                                    for (OceanTrackingDetail trackingDetail : trackingDetails) {
+                                        PlatformTrackDetail detail = new PlatformTrackDetail();
+                                        detail.setTrackNo(oceanTrackInfo.getTrackingNo());
+                                        //转换类型
+                                        detail.setStatus(convertOceanTrackStatus(trackingDetail.getEventStatus()));
+                                        LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                                        detail.setTrackTime(eventTime);
+                                        detail.setContent(trackingDetail.getEventDetails());
+                                        details.add(detail);
+                                    }
+                                    acceptedToSaveDto.setDetails(details);
+                                    resultList.add(acceptedToSaveDto);
+                                } else {
+                                    List<PlatformTrackDetail> details = new ArrayList<>();
+                                    PlatformTrackDetail detail = new PlatformTrackDetail();
+                                    detail.setTrackNo(oceanTrackInfo.getTrackingNo());
+                                    //转换类型
+                                    detail.setStatus(LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode());
+                                    LocalDateTime eventTime = LocalDateTime.parse(oceanTrackInfo.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                                    detail.setTrackTime(eventTime);
+                                    detail.setContent("暂无信息");
+                                    details.add(detail);
+                                    acceptedToSaveDto.setDetails(details);
+                                    resultList.add(acceptedToSaveDto);
+                                }
                             }
-                            acceptedToSaveDto.setDetails(details);
-                            resultList.add(acceptedToSaveDto);
-                        } else if (StringUtils.isNotEmpty(carrierInfo.getTransitStatus())) {
-                            List<PlatformTrackDetail> details = new ArrayList<>();
-                            PlatformTrackDetail detail = new PlatformTrackDetail();
-                            detail.setTrackNo(oceanTrackInfo.getTrackingNo());
-                            //转换类型
-                            detail.setStatus(convertTrackStatus(carrierInfo.getTransitStatus()));
-                            LocalDateTime eventTime = LocalDateTime.parse(oceanTrackInfo.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                            detail.setTrackTime(eventTime);
-                            detail.setContent("暂无信息");
-                            details.add(detail);
-                            acceptedToSaveDto.setDetails(details);
-                            resultList.add(acceptedToSaveDto);
-                        }
+                        });
                     }
-
                 }
             }
             if (CollectionUtils.isNotEmpty(sourceDto.getRejected())) {
@@ -200,42 +203,19 @@ public class Track123OceanLogisticsHandler extends AbstractLogisticsTrackHandler
 
 
     /**
-     * INIT	待查询	单号正在查询中，请等待
-     * NO_RECORD	暂无信息	包裹无法查询到物流轨迹信息
-     * INFO_RECEIVED	已接收	物流公司已经收到寄运订单，正在准备揽收包裹
-     * IN_TRANSIT	运输中	包裹正在运输途中
-     * WAITING_DELIVERY	派送中	包裹正在派送或已到达代收点等待收件人自提
-     * DELIVERY_FAILED	投递失败	包裹尝试派送，但由于地址问题、收件人联系不上等原因导致派送失败
-     * ABNORMAL	异常	包裹出现破损、退件、海关扣留等异常情况
-     * DELIVERED	已成功	包裹投递成功
-     * EXPIRED	已过期	包裹在最近的30天没有任何物流更新
-     *
-     * @param transitSubStatus
+     * 【与track123轨迹对应关系-到港之前均为运输中，到港后更新「已到港」，查验变更为[查验中]】
+     * @param eventStatus
      * @return
      */
-    private String convertTrackStatus(String transitSubStatus) {
-        if (StringUtils.isBlank(transitSubStatus)) {//待查询
-            return LogisticTrackStatusEnum.NOT_FIND.getCode();
-        } else if (transitSubStatus.contains("INIT")) {//待查询  单号正在查询中，请等待
-            return LogisticTrackStatusEnum.NOT_FIND.getCode();
-        } else if (transitSubStatus.contains("NO_RECORD")) {//暂无信息 包裹无法查询到物流轨迹信息
-            return LogisticTrackStatusEnum.NOT_FIND.getCode();
-        } else if (transitSubStatus.contains("INFO_RECEIVED")) {//已接收 物流公司已经收到寄运订单，正在准备揽收包裹
-            return LogisticTrackStatusEnum.WAIT_COLLECT.getCode();
-        } else if (transitSubStatus.contains("IN_TRANSIT")) {//运输中 包裹正在运输途中
-            return LogisticTrackStatusEnum.TRACK_ING.getCode();
-        } else if (transitSubStatus.contains("WAITING_DELIVERY")) {//派送中 包裹正在派送或已到达代收点等待收件人自提
-            return LogisticTrackStatusEnum.DELIVERY_ING.getCode();
-        } else if (transitSubStatus.contains("DELIVERY_FAILED")) {//投递失败 包裹尝试派送，但由于地址问题、收件人联系不上等原因导致派送失败
-            return LogisticTrackStatusEnum.DELIVERY_FAIL.getCode();
-        } else if (transitSubStatus.contains("ABNORMAL")) {//异常 包裹出现破损、退件、海关扣留等异常情况
-            return LogisticTrackStatusEnum.MAYBE_EXCEPTION.getCode();
-        } else if (transitSubStatus.contains("DELIVERED")) {//已成功 包裹投递成功
-            return LogisticTrackStatusEnum.SIGN.getCode();
-        } else if (transitSubStatus.contains("EXPIRED")) {//已过期 包裹在最近的30天没有任何物流更新
-            return LogisticTrackStatusEnum.TRANSPORT_LONG.getCode();
+    private String convertOceanTrackStatus(String eventStatus) {
+        if (StringUtils.isBlank(eventStatus)) {
+            return LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode();
+        } else if (eventStatus.contains("ARRI")) {
+            return LogisticTrackStatusEnum.OCEAN_ARRIVE.getCode();
+        } else if (eventStatus.contains("HOLD")) {
+            return LogisticTrackStatusEnum.OCEAN_HOLD.getCode();
         }
-        return LogisticTrackStatusEnum.NOT_FIND.getCode();
+        return LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode();
     }
 
     public static void main(String[] args) {
