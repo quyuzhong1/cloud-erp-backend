@@ -76,7 +76,7 @@ public class TrackShipperOceanService {
         long timestamp = System.currentTimeMillis();
         Map<String, String> headers = new LinkedHashMap<>();
         headers.put("Content-Type", "application/json;charset=utf-8");
-        headers.put("Track123-Api-Secret", "579cf53f55694d89aef0887d81886aec");
+        headers.put("Track123-Api-Secret", token);
         headers.put("timestamp", String.valueOf(timestamp));
         String result = OkHttpUtils.doPostJsonObject(PathConstants.BASE_URL + PathConstants.OCEAN_GET_TRACK_URL, oceanTrackRequestList, headers);
         return JSONUtil.toBean(result, TrackOceanResponse.class);
@@ -86,7 +86,7 @@ public class TrackShipperOceanService {
         long timestamp = System.currentTimeMillis();
         Map<String, String> headers = new LinkedHashMap<>();
         headers.put("Content-Type", "application/json;charset=utf-8");
-        headers.put("Track123-Api-Secret", "579cf53f55694d89aef0887d81886aec");
+        headers.put("Track123-Api-Secret", token);
         headers.put("timestamp", String.valueOf(timestamp));
         String result = OkHttpUtils.doPostJsonObject(PathConstants.BASE_URL + PathConstants.OCEAN_REGISTER_LOGISTICS_NUMBER, registerRequests, headers);
         System.out.println("注册结果");
