@@ -80,7 +80,7 @@
         <if test="query.trackQueryMode != null and query.trackQueryMode != ''">
             and lbd.track_query_mode = #{query.trackQueryMode}
         </if>
-        <if test="query.registerStatus != null">+
+        <if test="query.registerStatus != null">
             and lbd.register_status = #{query.registerStatus}
         </if>
         <if test="query.trackEnable != null">
