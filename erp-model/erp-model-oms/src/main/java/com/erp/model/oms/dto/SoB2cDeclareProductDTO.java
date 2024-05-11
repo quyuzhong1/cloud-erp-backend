@@ -98,6 +98,10 @@ public class SoB2cDeclareProductDTO implements Serializable {
          * 申报标签(正常申报normal，高申报high，低申报low)
          */
         private String declareLabel;
+        /**
+         * 申报标签名称
+         */
+        private String declareLabelName;
     }
 
     /**

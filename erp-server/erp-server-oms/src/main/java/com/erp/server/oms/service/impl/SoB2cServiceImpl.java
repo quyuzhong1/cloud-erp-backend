@@ -3085,6 +3085,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(allDetailList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
+        List<SoB2cDeclareProductDTO.ViewDTO> declareProductList = soB2cDeclareProductService.listViewBySoIds(ids);
         //产品信息
         List<String> skuIdList = list.stream().flatMap(obj -> Stream.of(allDetailList.stream().map(SoB2cDetailEntity::getSkuId).toArray(String[]::new))).distinct().collect(Collectors.toList());
         Map<String, SkuVO> skuVOMap = new HashMap<>();
@@ -3273,6 +3274,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         Boolean isOutStock = isOutStock(bomChildrenList, inventoryList, detailDTO,ignoreInventorySkuIds);
                         detailLabelDTO.setIsOutStock(isOutStock);
                     }
+                }
+                //申报信息
+                SoB2cDeclareProductDTO.ViewDTO viewDTO = declareProductList.stream().filter(e -> Objects.nonNull(e)
+                        && e.getSkuId().equals(detailDTO.getSkuId())
+                        && e.getSoDetailId().equals(detailDTO.getId())).findFirst().orElse(null);
+                if (Objects.nonNull(viewDTO)){
+                    detailLabelDTO.setToDeclarePrice(viewDTO.getToDeclarePrice());
+                    detailLabelDTO.setToCurrency(viewDTO.getToCurrency());
+                    detailLabelDTO.setToCurrencySymbol(viewDTO.getToCurrencySymbol());
+                    detailLabelDTO.setDeclareLabel(viewDTO.getDeclareLabel());
+                    detailLabelDTO.setDeclareLabelName(viewDTO.getDeclareLabelName());
                 }
                 detailDTO.setDetailLabelDTO(detailLabelDTO);
             }

@@ -44,6 +44,7 @@ import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.ProductRegistrationDTO;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
@@ -274,6 +275,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             declareInfo.setDestCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
         }
         result.setDeclareInfo(declareInfo);
+        //国家列表
+        List<DictCountryDTO.ListDTO>  countryList = sysUserFeign.countryList();
         List<ProductCustomsEntity> productCustomsList = productCustomsService.listBySkuId(skuId);
         List<ProductCustomsDTO.ViewDTO> customsList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(productCustomsList)) {
@@ -283,8 +286,18 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     viewDTO.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
                     viewDTO.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
                 }
+                if (StringUtils.isNotBlank(viewDTO.getCountry())) {
+                    String[] split = viewDTO.getCountry().split(",");
+                    List<String> countryIdList = Arrays.asList(split);
+                    List<DictCountryDTO.ListDTO> dictCountryList = countryList.stream().filter(c->countryIdList.contains(c.getId())).collect(Collectors.toList());
+                    String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
+                    viewDTO.setCountryName(countryName);
+                }
             });
         }
+        productCustomsList.forEach(req -> {
+
+        });
         result.setCustomsList(customsList);
         return result;
     }
@@ -812,7 +825,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             Boolean logisticsResult = productLogisticsService.saveOrUpdate(logistics);
             productCustomsService.removeBySkuId(Arrays.asList(skuId));
             productCustomsService.saveBatch(customsList);
-
+            productCustomsService.addDefaultCustoms(Collections.singletonList(skuId));
         }
 
 

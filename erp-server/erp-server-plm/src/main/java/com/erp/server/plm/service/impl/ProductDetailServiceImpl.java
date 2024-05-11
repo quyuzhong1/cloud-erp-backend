@@ -480,10 +480,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 List<DictCountryDTO.ListDTO> dictCountryList = countryList.stream().filter(c->countryIdList.contains(c.getId())).collect(Collectors.toList());
                 String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
                 req.setCountryName(countryName);
-                if(StringUtils.isEmpty(req.getToCurrency())){
-                    req.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
-                    req.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
-                }
+            }
+            if(StringUtils.isEmpty(req.getToCurrency())){
+                req.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                req.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
             }
         });
         productNoSpecDetailAllDTO.setProductCustomsList(productCustomsEntityList);
@@ -598,10 +598,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 List<DictCountryDTO.ListDTO> dictCountryList = countryList.stream().filter(c->countryIdList.contains(c.getId())).collect(Collectors.toList());
                 String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
                 req.setCountryName(countryName);
-                if(StringUtils.isEmpty(req.getToCurrency())){
-                    req.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
-                    req.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
-                }
+            }
+            if(StringUtils.isEmpty(req.getToCurrency())){
+                req.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                req.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
             }
         });
         productNoSpecDetailAllDTO.setProductCustomsList(productCustomsEntityList);
@@ -836,10 +836,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 List<DictCountryDTO.ListDTO> dictCountryList = countryList.stream().filter(c -> countryIdList.contains(c.getId())).collect(Collectors.toList());
                 String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
                 req.setCountryName(countryName);
-                if(StringUtils.isEmpty(req.getToCurrency())){
-                    req.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
-                    req.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
-                }
+            }
+            if(StringUtils.isEmpty(req.getToCurrency())){
+                req.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                req.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
             }
         });
 
@@ -2236,6 +2236,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 customs.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
                 customs.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
                 if (Objects.isNull(customs.getId())){
+                    customs.setCountry(CommonConstants.DEFAULT);
                     addList.add(customs);
                 }else {
                     updateList.add(customs);
