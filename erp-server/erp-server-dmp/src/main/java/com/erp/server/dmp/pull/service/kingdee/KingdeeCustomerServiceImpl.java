@@ -205,7 +205,7 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
         //读取配置，初始化SDK
         LinkedList<String> queryFilters = new LinkedList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(5)),sdf.format(nextTime)));
+        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(8)),sdf.format(nextTime)));
         // 客户类型为店铺
 //        queryFilters.add(String.format("FCustTypeId.FNumber = '%s'", "KHLB004_SYS"));
         String filterStr = String.join(" and ", queryFilters);
