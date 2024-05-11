@@ -630,6 +630,10 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String trackStatus;
         /**
+         * 运输状态
+         */
+        private String trackStatusName;
+        /**
          * 跟踪单号
          */
         private String trackNo;

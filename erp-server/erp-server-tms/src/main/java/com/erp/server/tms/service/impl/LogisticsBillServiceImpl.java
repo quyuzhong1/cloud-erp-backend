@@ -275,6 +275,36 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         return baseMapper.listLogisticsBillVoBySourceIds(sourceIdList);
     }
+    @Override
+    public List<LogisticsBillDTO.LogisticsBillVo> getTrackStatusByTransportNo(List<LogisticsBillDTO.LogisticsBillVo> billVoList) {
+        if (CollectionUtils.isEmpty(billVoList)) {
+            return billVoList;
+        }
+        //根据物流运单号获取运输状态
+        List<String> transportNoList = billVoList.stream().map(LogisticsBillDTO.LogisticsBillVo::getTransportNo).collect(Collectors.toList());
+        List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = baseMapper.listLogisticsBillVoByTransportNo(transportNoList);
+        if (CollectionUtils.isEmpty(logisticsBillVos)) {
+            return billVoList;
+        }
+        Map<String, List<LogisticsBillDTO.LogisticsBillVo>> logisticsBillMap = logisticsBillVos.stream()
+                .collect(Collectors.groupingBy(LogisticsBillDTO.LogisticsBillVo::getTransportNo));
+        billVoList.stream().forEach(billVo->{
+            List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList= logisticsBillMap.get(billVo.getTransportNo());
+            if (CollectionUtils.isNotEmpty(logisticsBillVoList)){
+                LogisticsBillDTO.LogisticsBillVo trackBillVo = logisticsBillVoList.stream().findFirst().orElse(null);
+                if (Objects.nonNull(trackBillVo)) {
+                    billVo.setTrackStatusName(StringUtils.isBlank(trackBillVo.getTrackStatus()) ?
+                            LogisticTrackStatusEnum.NOT_FIND.getName() : LogisticTrackStatusEnum.getName(trackBillVo.getTrackStatus()));
+                    billVo.setTrackStatus(StringUtils.isBlank(trackBillVo.getTrackStatus()) ?
+                            LogisticTrackStatusEnum.NOT_FIND.getCode() : LogisticTrackStatusEnum.getName(trackBillVo.getTrackStatus()));
+                } else {
+                    billVo.setTrackStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
+                    billVo.setTrackStatusName(LogisticTrackStatusEnum.NOT_FIND.getName());
+                }
+            }
+        });
+        return billVoList;
+    }
 
     @Override
     public List<LogisticsBillEntity> listByOutstockCodeList(List<String> outstockCodeList) {
