@@ -57,8 +57,7 @@ public class SoB2cDeclareProductController extends BaseController {
      * @return ApiResult<SoB2cDeclareProductDTO.ViewDTO>
      */
     @PostMapping("/listBySoIds")
-    @LogAction(value = LogActionEnum.INSERT, desc = "获取B2C销售订单申报信息")
-    public ApiResult<List<SoB2cDeclareProductDTO.ViewDTO>> listBySoId(@RequestBody @Validated SoB2cDeclareProductDTO.ListDTO dto) {
+    public ApiResult<List<SoB2cDeclareProductDTO.ViewDTO>> listBySoIds(@RequestBody @Validated SoB2cDeclareProductDTO.ListDTO dto) {
         List<SoB2cDeclareProductDTO.ViewDTO> list = soB2cDeclareProductService.listViewBySoId(dto.getIds());
         return success(list);
     }
