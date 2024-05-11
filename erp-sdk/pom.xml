@@ -37,6 +37,7 @@
         <module>erp-sdk-oms-aliexpress</module>
         <module>erp-sdk-tms-batong</module>
         <module>erp-sdk-tms-baohong</module>
+        <module>erp-sdk-third-wangdian</module>
     </modules>
 
     <dependencies>
