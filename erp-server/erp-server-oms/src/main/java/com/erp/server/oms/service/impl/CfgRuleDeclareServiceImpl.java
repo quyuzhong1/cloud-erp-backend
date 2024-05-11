@@ -24,7 +24,9 @@ import com.erp.server.oms.mapper.CfgRuleDeclareMapper;
 import com.erp.server.oms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -211,10 +213,33 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         //判断是否更新规则 isUpdate
         if (CollectionUtil.isNotEmpty(addList)){
             soB2cDeclareProductService.saveBatch(addList);
-            String msg = StrUtil.format("自动生成报关信息");
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), String.valueOf(map.get("id")), "报关信息生成");
+            if (Objects.nonNull(isUpdate) && isUpdate){
+                //批量添加操作日志
+                batchAddDeclareOperateLog(declareProductList, addList, "批量更新报关");
+            }else {
+                String msg = StrUtil.format("自动生成报关信息");
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), String.valueOf(map.get("id")), "报关信息生成");
+            }
         }
     }
+
+    private void batchAddDeclareOperateLog(List<SoB2cDeclareProductEntity> declareProductList, List<SoB2cDeclareProductEntity> addList, String operation) {
+        List<Pair<String, String>> updateLogPairList = new ArrayList<>();
+        for (SoB2cDeclareProductEntity newDeclareProduct : addList) {
+            SoB2cDeclareProductEntity old = declareProductList.stream().filter(e -> Objects.nonNull(e) && e.getSoDetailId().equals(newDeclareProduct.getSoDetailId())
+                    && e.getSkuId().equals(newDeclareProduct.getSkuId())).findFirst().orElse(new SoB2cDeclareProductEntity());
+            List<String> contentList = operateLogService.getContentByObj(old, newDeclareProduct, "");
+            contentList.forEach(content ->{
+                Pair<String, String> pair = new Pair<>(newDeclareProduct.getSoId(), content);
+                updateLogPairList.add(pair);
+            });
+        }
+        if (CollectionUtils.isNotEmpty(updateLogPairList)) {
+            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】编辑销售订单申报信息",commonService.getUserInfo().getUserName())+"，【%s】", ModuleTypeEnum.SO_B2C_DECLARE.getCode(), updateLogPairList,"编辑操作");
+        }
+
+    }
+
 
     /**
      * 根据渠道进行 目的国申报价上下限设置

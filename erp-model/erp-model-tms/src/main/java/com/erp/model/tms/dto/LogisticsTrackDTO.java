@@ -141,6 +141,10 @@ public class LogisticsTrackDTO implements Serializable {
         /**
          * 船司/航司
          */
+        private String carrierId;
+        /**
+         * 船司/航司编码
+         */
         private String carrierCode;
     }
 
