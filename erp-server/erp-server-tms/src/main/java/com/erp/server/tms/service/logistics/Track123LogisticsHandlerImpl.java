@@ -150,26 +150,31 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                 List<OceanTrackInfo> accepted = track.getData().getAccepted();
                 if (CollectionUtils.isNotEmpty(accepted)) {
                     accepted.forEach(trackDetail -> {
-                        List<OceanTrackingDetail> trackingDetails = trackDetail.getCarrierInfo().getTrackingDetails();
-                        if(CollectionUtils.isNotEmpty(trackingDetails)){
-                            //本地物流
-                            trackingDetails.forEach(trackingDetail -> {
-                                LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
-                                logisticsTrackEntity.setTrackNo(trackDetail.getTrackingNo());
-                                logisticsTrackEntity.setStatus(convertOceanTrackStatus(trackingDetail.getEventStatus()));//转换类型
-                                LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                                logisticsTrackEntity.setTrackTime(eventTime);
-                                logisticsTrackEntity.setContent(trackingDetail.getEventDetails());
-                                logisticsTrackList.add(logisticsTrackEntity);
+                        List<OceanContainerInfo> containerInfoList = trackDetail.getContainerInfo();
+                        if (CollectionUtils.isNotEmpty(containerInfoList)){
+                            containerInfoList.forEach(oceanContainerInfo -> {
+                                List<OceanTrackingDetail> trackingDetails = oceanContainerInfo.getTrackingDetails();
+                                if(CollectionUtils.isNotEmpty(trackingDetails)){
+                                    //本地物流
+                                    trackingDetails.forEach(trackingDetail -> {
+                                        LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
+                                        logisticsTrackEntity.setTrackNo(trackDetail.getTrackingNo());
+                                        logisticsTrackEntity.setStatus(convertOceanTrackStatus(trackingDetail.getEventStatus()));//转换类型
+                                        LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                                        logisticsTrackEntity.setTrackTime(eventTime);
+                                        logisticsTrackEntity.setContent(trackingDetail.getEventDetails());
+                                        logisticsTrackList.add(logisticsTrackEntity);
+                                    });
+                                }else if (StringUtils.isNotEmpty(oceanContainerInfo.getTransitStatus())){
+                                    LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
+                                    logisticsTrackEntity.setTrackNo(trackDetail.getTrackingNo());
+                                    logisticsTrackEntity.setStatus(convertTrackStatus(oceanContainerInfo.getTransitStatus()));//转换类型
+                                    LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                                    logisticsTrackEntity.setTrackTime(eventTime);
+                                    logisticsTrackEntity.setContent("暂无信息");
+                                    logisticsTrackList.add(logisticsTrackEntity);
+                                }
                             });
-                        }else if (StringUtils.isNotEmpty(trackDetail.getCarrierInfo().getTransitStatus())){
-                            LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
-                            logisticsTrackEntity.setTrackNo(trackDetail.getTrackingNo());
-                            logisticsTrackEntity.setStatus(convertTrackStatus(trackDetail.getCarrierInfo().getTransitStatus()));//转换类型
-                            LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                            logisticsTrackEntity.setTrackTime(eventTime);
-                            logisticsTrackEntity.setContent("暂无信息");
-                            logisticsTrackList.add(logisticsTrackEntity);
                         }
                     });
                 }
@@ -287,14 +292,14 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<OceanRegisterRequest> registerRequests = handleOceanRegisterRequest(list);
         ValidatorUtil.validateEntity(registerRequests);
         try {
-            RegisterResult registerResult = trackShipperOceanService.registerLogisticsNumber(token, registerRequests);
+            OceanRegisterResult registerResult = trackShipperOceanService.registerLogisticsNumber(token, registerRequests);
             //成功
             if ("00000".equalsIgnoreCase(registerResult.getCode())) {
-                RegisterResponse data = registerResult.getData();
-                List<Accepted> accepted = data.getAccepted();
+                OceanResponseData data = registerResult.getData();
+                List<OceanTrackInfo> accepted = data.getAccepted();
                 if (CollectionUtils.isNotEmpty(accepted)) {
                     accepted.forEach(accepted1 -> {
-                        registerResponseVOS.add(RegisterResponseVO.builder().trackNo(accepted1.getTrackNo()).orderNo(accepted1.getOrderNo()).trackStatus(true).build());
+                        registerResponseVOS.add(RegisterResponseVO.builder().trackNo(accepted1.getTrackingNo()).orderNo(accepted1.getOrderNo()).trackStatus(true).build());
                     });
                 }
                 List<Rejected> rejected = data.getRejected();
@@ -340,7 +345,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<OceanRegisterRequest> registerRequests = new ArrayList<>();
         for (LogisticsTrackBaseDTO.OceanRegisterRequestDTO oceanRegisterRequestDTO : list) {
             OceanRegisterRequest build = OceanRegisterRequest.builder()
-                    .trackNo(oceanRegisterRequestDTO.getTrackNo())
+                    .trackingNo(oceanRegisterRequestDTO.getTrackNo())
                     .carrierCode(oceanRegisterRequestDTO.getCarrierCode())
                     .type(MathUtil.THREE)
                     .build();
