@@ -195,6 +195,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByCostAttribution(DictCostAttributionEnum.LAST_MILE.getCode());
         //表头对应json
         JSONObject headerNameJsonObject = getHeaderNameJsonObject();
+        //错误信息序号
+        Integer errorIndex = getMapKey(headMap, "错误信息");
         //平台订单号序号
         Integer orderIndex = getMapKey(headMap,"*平台订单号");
         //物流跟踪单号序号
@@ -226,7 +228,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 //字段名称
                 String field = headList.get(Integer.valueOf(entry.getKey()));
                 TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> StrUtil.equals(obj.getCostName(), field) && StrUtil.equals(obj.getDictCostAttribution(),DictCostAttributionEnum.LAST_MILE.getCode())).findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(tmsCfgCostEntity)) {
+                if (ObjectUtil.isEmpty(tmsCfgCostEntity) && !getHeaderNameList().contains(field)) {
                     errorMsgList.add(StrUtil.format("费用管理尾程未找到该费用名称【{}】",field));
                     continue;
                 }
@@ -262,7 +264,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 errorMsgList.addAll(msgList);
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
-                jsonObject.set("错误信息",FieldValidUtil.getMsgSort(errorMsgList));
+                jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(jsonObject);
                 continue;
             }
