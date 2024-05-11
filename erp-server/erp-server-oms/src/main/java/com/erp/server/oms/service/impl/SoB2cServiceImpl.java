@@ -3300,18 +3300,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         detailLabelDTO.setIsOutStock(isOutStock);
                     }
                 }
+                detailDTO.setDetailLabelDTO(detailLabelDTO);
                 //申报信息
                 SoB2cDeclareProductDTO.ViewDTO viewDTO = declareProductList.stream().filter(e -> Objects.nonNull(e)
                         && e.getSkuId().equals(detailDTO.getSkuId())
                         && e.getSoDetailId().equals(detailDTO.getId())).findFirst().orElse(null);
                 if (Objects.nonNull(viewDTO)){
-                    detailLabelDTO.setToDeclarePrice(viewDTO.getToDeclarePrice());
-                    detailLabelDTO.setToCurrency(viewDTO.getToCurrency());
-                    detailLabelDTO.setToCurrencySymbol(viewDTO.getToCurrencySymbol());
-                    detailLabelDTO.setDeclareLabel(viewDTO.getDeclareLabel());
-                    detailLabelDTO.setDeclareLabelName(viewDTO.getDeclareLabelName());
+                    detailDTO.setToDeclarePrice(viewDTO.getToDeclarePrice());
+                    detailDTO.setToCurrency(viewDTO.getToCurrency());
+                    detailDTO.setToCurrencySymbol(viewDTO.getToCurrencySymbol());
+                    detailDTO.setDeclareLabel(viewDTO.getDeclareLabel());
+                    detailDTO.setDeclareLabelName(viewDTO.getDeclareLabelName());
                 }
-                detailDTO.setDetailLabelDTO(detailLabelDTO);
             }
 
             SoB2cDTO.FinancialParamDTO dto = new SoB2cDTO.FinancialParamDTO();
