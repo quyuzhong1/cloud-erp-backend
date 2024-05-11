@@ -41,6 +41,15 @@
         is_deleted,
         so_detail_id, so_id, so_code,sku_no, qty, declare_cn, declare_en, to_declare_price, to_currency, sku_id, to_currency_symbol, weight, to_customs_code,declare_label
     </sql>
+    <select id="listViewBySoIds" resultType="com.erp.model.oms.dto.SoB2cDeclareProductDTO$ViewDTO">
+        select
+            <include refid="Base_Column_List"/>
+        from so_b2c_declare_product where is_deleted = false
+        and so_id in
+        <foreach collection="ids" item="soId" open="(" separator="," close=")">
+            #{soId}
+        </foreach>
+    </select>
 
 
 </mapper>

@@ -3,12 +3,14 @@ package com.erp.server.oms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.oms.entity.SoB2cDeclareProductEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.validation.annotation.Validated;
@@ -134,5 +136,17 @@ public class SoB2cDeclareProductController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
-
+    /**
+     *  申报信息导出
+     * @author zdy
+     * @date: 2024/5/11 10 10:45
+     * @param dto
+     * @param response
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "申报信息-导出")
+    @PostMapping(value = "/exportExcel")
+    public ApiResult exportExcel(@RequestBody @Validated SoB2cDeclareProductDTO.ListDTO dto, HttpServletResponse response) {
+        Boolean flag = soB2cDeclareProductService.exportExcel(dto, response);
+        return flag ? success() : failure();
+    }
 }

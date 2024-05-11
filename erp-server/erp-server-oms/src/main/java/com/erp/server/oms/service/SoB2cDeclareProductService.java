@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -53,4 +54,11 @@ public interface SoB2cDeclareProductService extends SuperService<SoB2cDeclarePro
      * @return
      */
     List<SoB2cDeclareProductDTO.ViewDTO> listViewBySoIds(List<String> ids);
+
+    /**
+     * 申报信息导出
+     * @param dto
+     * @param response
+     */
+    Boolean exportExcel(SoB2cDeclareProductDTO.ListDTO dto, HttpServletResponse response);
 }
