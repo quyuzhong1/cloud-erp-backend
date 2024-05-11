@@ -285,7 +285,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     billVo.setTrackStatusName(StringUtils.isBlank(trackBillVo.getTrackStatus()) ?
                             LogisticTrackStatusEnum.NOT_FIND.getName() : LogisticTrackStatusEnum.getName(trackBillVo.getTrackStatus()));
                     billVo.setTrackStatus(StringUtils.isBlank(trackBillVo.getTrackStatus()) ?
-                            LogisticTrackStatusEnum.NOT_FIND.getCode() : LogisticTrackStatusEnum.getName(trackBillVo.getTrackStatus()));
+                            LogisticTrackStatusEnum.NOT_FIND.getCode() : trackBillVo.getTrackStatus());
                 } else {
                     billVo.setTrackStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
                     billVo.setTrackStatusName(LogisticTrackStatusEnum.NOT_FIND.getName());
