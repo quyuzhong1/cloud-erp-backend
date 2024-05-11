@@ -17,8 +17,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
-import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
+import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
 import com.erp.server.tms.service.LogisticsBillCostService;
+import com.erp.server.tms.service.LogisticsLastMileCostService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -30,19 +31,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 自发货费用
+ * 尾程费用
  *
  * @author Will
  * @since 2023-11-06
  */
 @Slf4j
 @RestController
-@LogSystemModule("自发货费用")
-@RequestMapping("/logisticsBillCost")
-public class LogisticsBillCostController extends BaseController {
+@LogSystemModule("尾程费用")
+@RequestMapping("/logisticsLastMileCost")
+public class LogisticsLastMileCostController extends BaseController {
 
     @Autowired
     private LogisticsBillCostService logisticsBillCostService;
+
+    @Autowired
+    private LogisticsLastMileCostService logisticsLastMileCostService;
 
 
     /**
@@ -54,7 +58,7 @@ public class LogisticsBillCostController extends BaseController {
      */
     @PostMapping("/tabList")
     public ApiResult<List<LogisticsBillCostDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-        List<LogisticsBillCostDTO.TabListDTO> tabList = logisticsBillCostService.tabList(dto);
+        List<LogisticsBillCostDTO.TabListDTO> tabList = logisticsLastMileCostService.tabList(dto);
         return success(tabList);
     }
 
@@ -68,12 +72,12 @@ public class LogisticsBillCostController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "tms:logisticsBillCost:paging",
+            menuCode = "tms:logisticsLastMileCost:paging",
             tableAlias = "lbc"
     )
-    @WebAdvanceQuery(handler = LogisticsBillCostQueryHandler.class)
+    @WebAdvanceQuery(handler = LogisticsLastMileCostQueryHandler.class)
     public ApiResult<PagingVO<LogisticsBillCostDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto) {
-        PagingVO<LogisticsBillCostDTO.ListDTO> pagingVO = logisticsBillCostService.paging(dto);
+        PagingVO<LogisticsBillCostDTO.ListDTO> pagingVO = logisticsLastMileCostService.paging(dto);
         return success(pagingVO);
     }
 
@@ -88,11 +92,11 @@ public class LogisticsBillCostController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "自发货费用修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "tms:logisticsBillCost:update",
+        menuCode = "tms:logisticsLastMileCost:update",
         serviceClass = LogisticsBillCostService.class,
         keyIdName = "id")
     public ApiResult update(@RequestBody @Validated LogisticsBillCostDTO.UpdateDTO dto) {
-        logisticsBillCostService.update(dto,Boolean.FALSE);
+        logisticsLastMileCostService.update(dto,Boolean.FALSE);
         return success();
     }
 
@@ -106,7 +110,7 @@ public class LogisticsBillCostController extends BaseController {
     @GetMapping("/view")
     @LogViewService
     public ApiResult<LogisticsBillCostDTO.ViewDTO> view(@RequestParam("id") String id) {
-        return success(logisticsBillCostService.view(id));
+        return success(logisticsLastMileCostService.view(id));
     }
 
     /**
@@ -120,7 +124,7 @@ public class LogisticsBillCostController extends BaseController {
     @PostMapping("/updateReconciliationStatus")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "tms:logisticsBillCost:updateReconciliationStatus",
+            menuCode = "tms:logisticsLastMileCost:updateReconciliationStatus",
             serviceClass = LogisticsBillCostService.class,
             keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> updateReconciliationStatus(@RequestBody @Validated LogisticsBillCostDTO.UpdateStatusDTO dto) {
@@ -128,7 +132,7 @@ public class LogisticsBillCostController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = logisticsBillCostService.updateReconciliationStatus(id,dto.getReconciliationStatus());
+                submit = logisticsLastMileCostService.updateReconciliationStatus(id,dto.getReconciliationStatus());
             }catch (Exception e){
                 log.error("自发货费用 状态变更",e);
                 LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
@@ -154,8 +158,8 @@ public class LogisticsBillCostController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载自发货费用模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
-        logisticsBillCostService.downloadTemplate(response);
-        return success();
+        Boolean result = logisticsLastMileCostService.downloadTemplate(response);
+        return result ? success() : failure();
     }
 
     /**
@@ -168,8 +172,8 @@ public class LogisticsBillCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入自发货费用模板")
     @PostMapping("/import")
-    public ApiResult importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = logisticsBillCostService.importFile(excelFile, response);
+    public ApiResult exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = logisticsLastMileCostService.importFile(excelFile, response);
         return result ? success() : failure();
     }
 
@@ -185,12 +189,12 @@ public class LogisticsBillCostController extends BaseController {
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "tms:logisticsBillCost:paging",
+            menuCode = "tms:logisticsLastMileCost:paging",
             tableAlias = "lbc"
     )
-    @WebAdvanceQuery(handler = LogisticsBillCostQueryHandler.class)
+    @WebAdvanceQuery(handler = LogisticsLastMileCostQueryHandler.class)
     public ApiResult exportExcel(@RequestBody LogisticsBillCostDTO.PagingParamDTO dto, HttpServletResponse response) {
-        Boolean flag = logisticsBillCostService.exportExcel(dto, response);
+        Boolean flag = logisticsLastMileCostService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
 

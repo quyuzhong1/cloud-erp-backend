@@ -1,5 +1,7 @@
 package com.common.core.utils;
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.annotation.ExcelProperty;
@@ -10,7 +12,6 @@ import com.alibaba.excel.write.metadata.WriteTable;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.metadata.style.WriteFont;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.*;
 import com.common.core.exception.ServiceException;
@@ -20,7 +21,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.ResourceLoader;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
@@ -177,6 +177,54 @@ public class ExcelUtil {
                     .doWrite(list2);
         } catch (Exception e) {
           throw new ServiceException(ApiError.Default);
+        }
+    }
+
+    /**
+     * @description: 传jsonObject导出
+     * @author Will
+     * @date: 2024/5/11 16:02
+     * @param heads
+     * @param list
+     * @param fileName
+     * @param response
+     */
+    public static void customExportUtil(List<String> heads, List<JSONObject> list, String fileName, HttpServletResponse response){
+
+        List<List<String>> hs = new ArrayList<>();
+        for (String s : heads) {
+            hs.add(Arrays.asList(s));
+        }
+        List<List<String>> list2 = new ArrayList<>();
+
+        for (int i = 0; i < list.size(); i++) {
+            List<String> objects = new ArrayList<>();
+            JSONObject map = list.get(i);
+            for (int j = 0; j < heads.size();j++) {
+                Object str = map.get(String.valueOf(j));
+                if (ObjectUtil.isEmpty(str)) {
+                    objects.add("");
+                } else {
+                    objects.add(str.toString());
+                }
+            }
+            list2.add(objects);
+        }
+        try {
+            response.setCharacterEncoding("utf-8");
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+            // 这里需要设置不关闭流
+            EasyExcel.write(response.getOutputStream())
+                    .head(hs)
+                    .registerWriteHandler(getStyleStrategy())
+                    // 设置 sheet
+                    .autoCloseStream(Boolean.FALSE).sheet(fileName)
+                    .sheetName(fileName)
+                    //自定义注解
+                    .doWrite(list2);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.Default);
         }
     }
 

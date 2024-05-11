@@ -267,6 +267,14 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         return this.lambdaQuery().in(LogisticsBillDetailEntity::getTrackNo, trackNoList).list();
     }
 
+    @Override
+    public List<LogisticsBillDetailEntity> listByPlatformCodeAndTrackNo(List<String> platformCodeList, List<String> trackNoList) {
+        if (CollectionUtils.isEmpty(platformCodeList) || CollectionUtils.isEmpty(trackNoList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listByPlatformCodeAndTrackNo(platformCodeList,trackNoList);
+    }
+
     /**
      * @description: 添加物流轨迹
      * @author Will
