@@ -58,7 +58,7 @@ public class SoB2cDeclareProductController extends BaseController {
      */
     @PostMapping("/listBySoIds")
     public ApiResult<List<SoB2cDeclareProductDTO.ViewDTO>> listBySoIds(@RequestBody @Validated SoB2cDeclareProductDTO.ListDTO dto) {
-        List<SoB2cDeclareProductDTO.ViewDTO> list = soB2cDeclareProductService.listViewBySoId(dto.getIds());
+        List<SoB2cDeclareProductDTO.ViewDTO> list = soB2cDeclareProductService.listViewBySoIds(dto.getIds());
         return success(list);
     }
     /**

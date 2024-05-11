@@ -52,5 +52,5 @@ public interface SoB2cDeclareProductService extends SuperService<SoB2cDeclarePro
      * @param ids
      * @return
      */
-    List<SoB2cDeclareProductDTO.ViewDTO> listViewBySoId(List<String> ids);
+    List<SoB2cDeclareProductDTO.ViewDTO> listViewBySoIds(List<String> ids);
 }

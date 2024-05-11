@@ -117,7 +117,7 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
     }
 
     @Override
-    public List<SoB2cDeclareProductDTO.ViewDTO> listViewBySoId(List<String> ids) {
+    public List<SoB2cDeclareProductDTO.ViewDTO> listViewBySoIds(List<String> ids) {
         List<SoB2cDeclareProductEntity> list = lambdaQuery().in(SoB2cDeclareProductEntity::getSoId, ids).list();
         List<SoB2cDeclareProductDTO.ViewDTO> viewDTOS = BeanMapperUtils.copyList(SoB2cDeclareProductDTO.ViewDTO.class, list);
         return viewDTOS;
