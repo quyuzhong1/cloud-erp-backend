@@ -82,7 +82,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
             return;
         }
         //默认记录是否存在 不存在则新增
-        List<ProductCustomsEntity> list = lambdaQuery().in(ProductCustomsEntity::getSkuId, skuIds)
+        List<ProductCustomsEntity> list = lambdaQuery().in(ProductCustomsEntity::getSkuId, skuIds).eq(ProductCustomsEntity::getCountry, CommonConstants.DEFAULT)
                 .eq(ProductCustomsEntity::getIsDeleted, Boolean.FALSE).list();
         List<String> existSkuIds = list.stream().map(ProductCustomsEntity::getSkuId).collect(Collectors.toList());
         List<String> noExistSkuIds = skuIds.stream().filter(e -> CollectionUtil.isEmpty(existSkuIds) || !existSkuIds.contains(e)).collect(Collectors.toList());

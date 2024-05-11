@@ -1136,9 +1136,9 @@
             pl.declare_price AS declarePrice,
             pl.declare_currency AS declareCurrency,
             pl.declare_currency_symbol AS declareCurrencySymbol,
-            pl.dest_declare_price AS destDeclarePrice,
-            pl.dest_currency AS destCurrency,
-            pl.dest_currency_symbol AS destCurrencySymbol,
+            pc.to_declare_price AS destDeclarePrice,
+            pc.to_currency AS destCurrency,
+            pc.to_currency_symbol AS destCurrencySymbol,
             pl.declare_element AS declareElement,
             pl.declare_model AS declareModel,
             pl.source_country AS sourceCountry,
@@ -1153,6 +1153,8 @@
         ON pl.sku_id=pd.id AND pl.is_deleted= FALSE
         LEFT JOIN product_sale ps
         ON ps.sku_id=pd.id AND ps.is_deleted= FALSE
+        LEFT JOIN product_customs pc
+        ON pc.sku_id=pd.id AND pc.is_deleted= FALSE and pc.country = 'default'
         WHERE pd.is_deleted=FALSE
         <if test="approveStatus!=null">
             AND pd.status=#{approveStatus}

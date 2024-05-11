@@ -5,9 +5,11 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.SoB2cDeclareProductEntity;
+import com.erp.model.oms.enums.DeclareLabelTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.ShippingTemplateDTO;
 import com.erp.server.oms.convert.B2cOrderConverter;
@@ -130,14 +132,25 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
         if (CollectionUtils.isEmpty(ids)){
             return Collections.emptyList();
         }
-        return baseMapper.listViewBySoIds(ids);
+        List<SoB2cDeclareProductDTO.ViewDTO> viewDTOS = baseMapper.listViewBySoIds(ids);
+        buildDeclareProductInfo(viewDTOS);
+        return viewDTOS;
+    }
+
+    private void buildDeclareProductInfo(List<SoB2cDeclareProductDTO.ViewDTO> viewDTOS) {
+        if (CollectionUtils.isEmpty(viewDTOS)){
+            return;
+        }
+        viewDTOS.forEach(viewDTO ->{
+            viewDTO.setDeclareLabelName(DeclareLabelTypeEnum.getName(viewDTO.getDeclareLabel()));
+        });
     }
 
     @Override
     public Boolean exportExcel(SoB2cDeclareProductDTO.ListDTO dto, HttpServletResponse response) {
         List<SoB2cDeclareProductDTO.ViewDTO> resultList = this.listViewBySoIds(dto.getIds());
         if (CollectionUtils.isEmpty(resultList)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.ERROR_DECLARE_NOT_EXIST);
         }
         String name = "申报信息";
         StringBuffer sb = new StringBuffer();
