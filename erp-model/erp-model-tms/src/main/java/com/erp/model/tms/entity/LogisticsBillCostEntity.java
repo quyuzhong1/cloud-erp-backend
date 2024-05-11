@@ -34,6 +34,12 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     private String reconciliationStatus;
 
     /**
+     * 类型，枚举DictCostAttributionEnum，firstMile头程， selfDeliver自发货，lastMile尾程
+     */
+    @TableField("type")
+    private String type;
+
+    /**
     * 物流渠道id
     */
     @TableField("channel_id")

@@ -230,6 +230,7 @@
         </if>
         lb.create_time DESC
     </select>
+
     <!--导出-->
     <select id="listExport" resultType="com.erp.model.tms.dto.LogisticsBillDTO$PagingVO">
         SELECT

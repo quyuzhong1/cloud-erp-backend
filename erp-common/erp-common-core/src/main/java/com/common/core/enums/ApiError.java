@@ -112,6 +112,7 @@ public enum ApiError implements Serializable {
     LOGIN_USER_ERROR(1059,"账号密码错误,还可尝试【{}】次,失败后将锁定1小时"),
     ERROR_NAME_EXIST(1060,"名称【{}】已存在"),
     ERROR_EXCEL_EXPORT_SIZE(1060,"导出数据已超过50000条，请进行条件筛选后导出"),
+    ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
 
     /**
      * 警告信息 从800 开始
@@ -1268,6 +1269,11 @@ public enum ApiError implements Serializable {
     LOGISTICS_NOT_PRINT_LOGISTICS_BILL(94042,"物流商【{}】不支持打印物流面单"),
     LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL(94043,"物流商【{}】不支持分开单独打印官方配货单"),
     LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST(94044,"渠道【{}】配置的打印配货单的类型设置未找到"),
+    ERROR_CFG_COST_EMPTY(94045,"未发现【{}】费用配置信息"),
+
+
+
+
     /**
      * SRM 错误
      * 从96000 开始

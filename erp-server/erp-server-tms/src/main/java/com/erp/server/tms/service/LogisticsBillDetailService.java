@@ -99,4 +99,13 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
     Boolean updateTrackNo(LogisticsBillDTO.UpdateTrackNoDTO billDTO);
 
     List<LogisticsBillDetailEntity> listByTrackNo(List<String> trackNoList);
+    /**
+     * @description: 根据平台订单号和物流跟踪单号查询
+     * @author Will
+     * @date: 2024/5/11 11:50
+     * @param platformCodeList
+     * @param trackNoList
+     * @return List<LogisticsBillDetailEntity>
+     */
+    List<LogisticsBillDetailEntity> listByPlatformCodeAndTrackNo(List<String> platformCodeList, List<String> trackNoList);
 }

@@ -115,8 +115,12 @@ public enum SourceTypeEnum {
     TRANSFER_DECLARE("transferDeclare", "中转报关","transfer_declare"),
     DICT_BASIC("dictBasic", "字典","dict_basic"),
     TMS_CFG_COST("tmsCfgCost", "费用管理配置","tms_cfg_cost"),
+
     LOGISTICS_BILL_COST("logisticsBillCost", "自发货物流费用","logistics_bill_cost"),
     FIRST_MILE_LOGISTICS_BILL_COST("firstMileLogisticsBillCost", "头程物流费用","logistics_bill_cost"),
+    LAST_MILE_LOGISTICS_BILL_COST("lastMileLogisticsBillCost", "尾程物流费用","logistics_bill_cost"),
+
+
     LOGISTICS_BILL("logisticsBill", "物流单","logistics_bill"),
     TMS_FIRST_MILE_RECONCILIATION("tmsFirstMileReconciliation", "头程对账单","tms_first_mile_reconciliation"),
 
