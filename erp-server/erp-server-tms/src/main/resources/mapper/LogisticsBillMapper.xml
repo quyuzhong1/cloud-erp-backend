@@ -65,6 +65,26 @@
             </foreach>
         </if>
     </select>
+    <select id="listLogisticsBillVoByTransportNo" resultType="com.erp.model.tms.dto.LogisticsBillDTO$LogisticsBillVo">
+        SELECT
+            lb.shop_id,
+            lb.shop_name,
+            lb.source_type,
+            lb.source_id,
+            lb.source_code,
+            lb.transport_no,
+            lbd.track_status,
+            lbd.track_no
+        FROM logistics_bill lb
+        LEFT JOIN logistics_bill_detail lbd ON lb.id = lbd.main_id AND lbd.is_deleted = FALSE
+        WHERE lb.is_deleted = FALSE
+        <if test="transportNoList != null and transportNoList.size > 0">
+            AND lb.transport_no IN
+            <foreach collection="transportNoList" item="transportNo" open="(" close=")" separator=",">
+                #{transportNo}
+            </foreach>
+        </if>
+    </select>
     <!--tab 页统计-->
     <select id="tabList" resultType="com.erp.model.tms.dto.LogisticsBillDTO$TabListDTO">
         SELECT
