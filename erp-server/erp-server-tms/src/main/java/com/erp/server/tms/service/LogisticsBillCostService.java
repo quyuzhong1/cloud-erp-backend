@@ -1,4 +1,5 @@
 package com.erp.server.tms.service;
+
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -6,6 +7,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -89,7 +91,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param response
      * @return Boolean
      */
-    Boolean exportExcel(LogisticsBillCostDTO.ExportExcelParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(LogisticsBillCostDTO.PagingParamDTO dto, HttpServletResponse response);
 
     Boolean invalidByLogisticsBillId(String logisticsBillId);
 
@@ -114,9 +116,34 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     List<LogisticsBillCostEntity> listByLogisticsBillIdList(List<String> mainIdList);
 
     /**
+     * @description: 根据物流单明细id集合查询
+     * @author Will
+     * @date: 2024/5/11 14:13
+     * @param logisticsBillDetailIdList
+     * @return List<LogisticsBillCostEntity>
+     */
+    List<LogisticsBillCostEntity> listByLogisticsBillDetailIdList (List<String> logisticsBillDetailIdList);
+
+    /**
      * 根据销售出库单 获取销售出库单自发货费用列表
      * @param ids
      * @return
      */
     List<LogisticsBillCostDTO.OutStockDTO> listBillCostByOutstockIds(List<String> ids);
+    /**
+     * @description: 尾程费用导出查询
+     * @author Will
+     * @date: 2024/5/9 20:10
+     * @param dto
+     * @return List<ListDTO>
+     */
+    List<LogisticsBillCostDTO.ListDTO> listLogisticsLastMileCostExport(LogisticsBillCostDTO.PagingParamDTO dto);
+    /**
+     * @description: 导入数据处理
+     * @author Will
+     * @date: 2024/5/9 20:16
+     * @param successList
+     * @param errorList
+     */
+    void handleImportSuccessList (List<LogisticsBillCostExcelDTO> successList, List<LogisticsBillCostExcelDTO > errorList,String dictCostAttribution );
 }
