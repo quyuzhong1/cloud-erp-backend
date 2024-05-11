@@ -20,6 +20,7 @@ import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.entity.LogisticsCarrierEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.server.tms.mapper.LogisticsBillDetailMapper;
 import com.erp.server.tms.service.*;
@@ -28,6 +29,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,7 +62,9 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
 
     @Autowired
     private LogisticsTrackService logisticsTrackService;
-
+    @Autowired
+    @Lazy
+    private LogisticsCarrierService logisticsCarrierService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -191,7 +195,32 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         page.setSize(query.getSize());
         page.setCurrent(query.getCurrent());
         IPage<LogisticsTrackDTO.UpdateTrackDTO> result = baseMapper.getTrackDtoPage(page, query);
+        buildTrackData(result.getRecords());
         return new PagingVO<>(result.getRecords(), (int) result.getTotal(), (int) result.getSize(), (int) result.getCurrent());
+    }
+
+    /**
+     * 回填数据
+     * @param records
+     */
+    private void buildTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records) {
+        if (CollectionUtils.isEmpty(records)){
+            return;
+        }
+        List<String> carrierIds = records.stream().filter(e -> StringUtils.isNotEmpty(e.getCarrierId())).map(LogisticsTrackDTO.UpdateTrackDTO::getCarrierId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(carrierIds)){
+            return;
+        }
+        List<LogisticsCarrierEntity> carrierEntityList = logisticsCarrierService.listByIds(carrierIds);
+        records.forEach(updateTrackDTO -> {
+            LogisticsCarrierEntity carrier = carrierEntityList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotEmpty(updateTrackDTO.getCarrierId())
+                    && e.getId().equals(updateTrackDTO.getCarrierId())).findFirst().orElse(null);
+            if (Objects.nonNull(carrier)){
+                updateTrackDTO.setCarrierCode(carrier.getCarrierCode());
+            }else {
+                updateTrackDTO.setCarrierId(updateTrackDTO.getCarrierId());
+            }
+        });
     }
 
     @Override

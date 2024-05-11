@@ -10,6 +10,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.oms.entity.SoB2cDeclareProductEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.convert.B2cOrderConverter;
@@ -24,6 +25,8 @@ import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
+import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +34,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import com.common.core.utils.*;
+import com.common.core.enums.ApiError;
 /**
  * <p>
  * B2C销售订单申报产品信息表 服务实现类
@@ -90,7 +101,7 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
             log.info("编辑 开始记录B2C销售订单申报产品信息单日志数据，id：【{}】", soB2cDeclareProductEntity.getId());
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soB2cDeclareProductEntity.getId(), "B2C销售订单申报产品信息单");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, soB2cDeclareProductEntity, ModuleTypeEnum.SO_B2C_DECLARE.getCode(), soB2cDeclareProductEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, soB2cDeclareProductEntity, ModuleTypeEnum.SO_B2C_DECLARE.getCode(), soB2cDeclareProductEntity.getSoId(), null, msg, "批量修改报关");
         return Boolean.TRUE;
     }
     /**
