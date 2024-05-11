@@ -5,8 +5,11 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.SoB2cDeclareProductEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.ShippingTemplateDTO;
 import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.mapper.SoB2cDeclareProductMapper;
 import com.erp.server.oms.service.SoB2cDeclareProductService;
@@ -15,6 +18,7 @@ import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import lombok.Data;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -23,11 +27,16 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
+
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * <p>
  * B2C销售订单申报产品信息表 服务实现类
@@ -118,9 +127,31 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
 
     @Override
     public List<SoB2cDeclareProductDTO.ViewDTO> listViewBySoIds(List<String> ids) {
-        List<SoB2cDeclareProductEntity> list = lambdaQuery().in(SoB2cDeclareProductEntity::getSoId, ids).list();
-        List<SoB2cDeclareProductDTO.ViewDTO> viewDTOS = BeanMapperUtils.copyList(SoB2cDeclareProductDTO.ViewDTO.class, list);
-        return viewDTOS;
+        if (CollectionUtils.isEmpty(ids)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listViewBySoIds(ids);
+    }
+
+    @Override
+    public Boolean exportExcel(SoB2cDeclareProductDTO.ListDTO dto, HttpServletResponse response) {
+        List<SoB2cDeclareProductDTO.ViewDTO> resultList = this.listViewBySoIds(dto.getIds());
+        if (CollectionUtils.isEmpty(resultList)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        String name = "申报信息";
+        StringBuffer sb = new StringBuffer();
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        String excelPath = "excel/b2cDeclareProductExport.xlsx";
+        try {
+            new ExcelPrintUtils().patchExport(resultList, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("申报信息导出出错 >>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
     }
 
     /**
