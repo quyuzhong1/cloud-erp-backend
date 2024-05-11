@@ -102,6 +102,7 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
     public void invokeHeadMap(Map<Integer,String> map, AnalysisContext analysisContext) {
         List<String> headList = map.values().stream().map(obj -> obj.toString()).collect(Collectors.toList());
         headList.add("错误信息");
+        map.put(map.size(),"错误信息");
         this.headMap = map;
         this.headList = headList;
     }
