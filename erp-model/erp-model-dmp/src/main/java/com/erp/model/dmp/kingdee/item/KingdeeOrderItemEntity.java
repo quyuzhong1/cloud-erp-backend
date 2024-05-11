@@ -1,16 +1,17 @@
 package com.erp.model.dmp.kingdee.item;
 
 import cn.hutool.core.annotation.Alias;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import java.math.BigDecimal;
 
-@Data
+@Getter
+@Setter
 @ToString
 @NoArgsConstructor
 public class KingdeeOrderItemEntity {
+    @Alias("FSaleOrderEntry_FEntryID")
+    private String FEntryID;
     @Alias("FBillNo")
     private String fBillNo;
     @Alias("FReturnType")

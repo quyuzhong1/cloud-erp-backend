@@ -46,12 +46,12 @@ public class KingdeeSoConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
 
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode(),2);
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", "XSD23071300013"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FSettleCurrId.FNumber";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 11);
+        String fieldKeys = "FSettleCurrId.FNumber,FID,FSaleOrderEntry_FEntryID";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 1);
         System.out.println(queryList);
 
 
