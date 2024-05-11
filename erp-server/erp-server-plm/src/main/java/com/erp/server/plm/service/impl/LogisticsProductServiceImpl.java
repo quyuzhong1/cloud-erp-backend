@@ -278,6 +278,12 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         List<ProductCustomsDTO.ViewDTO> customsList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(productCustomsList)) {
             customsList = BeanMapper.copyList(productCustomsList, ProductCustomsDTO.ViewDTO.class);
+            customsList.forEach(viewDTO -> {
+                if (StringUtils.isEmpty(viewDTO.getToCurrency())){
+                    viewDTO.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                    viewDTO.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+                }
+            });
         }
         result.setCustomsList(customsList);
         return result;

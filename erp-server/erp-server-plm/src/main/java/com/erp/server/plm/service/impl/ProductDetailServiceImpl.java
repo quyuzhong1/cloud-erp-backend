@@ -480,6 +480,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 List<DictCountryDTO.ListDTO> dictCountryList = countryList.stream().filter(c->countryIdList.contains(c.getId())).collect(Collectors.toList());
                 String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
                 req.setCountryName(countryName);
+                if(StringUtils.isEmpty(req.getToCurrency())){
+                    req.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                    req.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+                }
             }
         });
         productNoSpecDetailAllDTO.setProductCustomsList(productCustomsEntityList);
@@ -594,6 +598,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 List<DictCountryDTO.ListDTO> dictCountryList = countryList.stream().filter(c->countryIdList.contains(c.getId())).collect(Collectors.toList());
                 String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
                 req.setCountryName(countryName);
+                if(StringUtils.isEmpty(req.getToCurrency())){
+                    req.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                    req.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+                }
             }
         });
         productNoSpecDetailAllDTO.setProductCustomsList(productCustomsEntityList);
@@ -828,6 +836,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 List<DictCountryDTO.ListDTO> dictCountryList = countryList.stream().filter(c -> countryIdList.contains(c.getId())).collect(Collectors.toList());
                 String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
                 req.setCountryName(countryName);
+                if(StringUtils.isEmpty(req.getToCurrency())){
+                    req.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                    req.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+                }
             }
         });
 
@@ -1114,6 +1126,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 customsEntity.setSkuId(skuId);
                 if (StringUtils.isNotEmpty(customsEntity.getToCurrency())){
                     customsEntity.setToCurrencySymbol(CurrencyEnum.getSymbolByCode(customsDTO.getToCurrency()));
+                }else {
+                    customsEntity.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                    customsEntity.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
                 }
                 customsEntityList.add(customsEntity);
             }
@@ -1352,6 +1367,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BeanMapper.copy(customsDTO, customsEntity);
                 if (StringUtils.isNotEmpty(customsEntity.getToCurrency())){
                     customsEntity.setToCurrencySymbol(CurrencyEnum.getSymbolByCode(customsDTO.getToCurrency()));
+                }else {
+                    customsEntity.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                    customsEntity.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
                 }
                 customsEntityList.add(customsEntity);
             }

@@ -11,7 +11,7 @@ public enum DeclareLabelTypeEnum {
 
     HIGH("general", "高申报"),
     LOW("aliPay", "低申报"),
-    NORMAL("douyin", "正常申报"),
+    NORMAL("normal", "正常申报"),
     ;
     /**
      * 类型
