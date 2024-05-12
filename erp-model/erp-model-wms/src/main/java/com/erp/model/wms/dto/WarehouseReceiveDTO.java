@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.entity.BaseEntity;
 import lombok.AllArgsConstructor;
@@ -387,6 +388,15 @@ public class WarehouseReceiveDTO {
         private String invalidStatusName;
 
         /**
+         * 入库状态（0未入库，1部分入库，2已入库）
+         */
+        private String inStockStatus;
+        /**
+         * 入库状态（0未入库，1部分入库，2已入库）
+         */
+        private String inStockStatusName;
+
+        /**
          * sku
          */
         private String skuId;
@@ -435,6 +445,14 @@ public class WarehouseReceiveDTO {
          * 超收数量
          */
         private Integer exceedQty;
+        /**
+         * 入库数量
+         */
+        private Integer instockQty = 0;
+        /**
+         * 退货数量
+         */
+        private Integer returnQty = 0;
 
         /**
          * 审核人

@@ -1893,4 +1893,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         }
         return this.lambdaQuery().eq(WarehouseReceiveEntity::getSourceType,dto.getSourceType()).in(WarehouseReceiveEntity::getSourceId,dto.getSourceIds()).list();
     }
+
+    @Override
+    public void instockStatusCleanJob() {
+        //分页获取所有采购收货单
+//        baseMapper.paging();
+        //收货数量与入库数量对比，入库数量为0则为未入库，大于0且小于收货数量为部分入库，等于收货数量为已入库
+        //变更入库状态
+    }
 }

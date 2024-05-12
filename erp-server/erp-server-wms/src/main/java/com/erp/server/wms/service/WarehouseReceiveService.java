@@ -334,4 +334,6 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
     List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIdsAll(List<String> purchaseOrderIds);
 
     List<WarehouseReceiveEntity> listReceiveBySourceTypeAndIds(WarehouseReceiveDTO.SourceParamDTO dto);
+
+    void instockStatusCleanJob();
 }
