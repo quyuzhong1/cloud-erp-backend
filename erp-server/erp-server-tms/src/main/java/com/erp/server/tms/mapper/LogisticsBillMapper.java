@@ -36,13 +36,13 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
     List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoBySourceIds(@Param("sourceIdList") List<String> sourceIdList);
 
     /**
-     * 根据来源id查询物流信息及跟踪号
+     * 根据来源查询物流信息及跟踪号
      * @Author hyj
      * @Date 2024/05/11 14:58
-     * @param transportNoList
+     * @param trackNoList
      * @return java.util.List<com.erp.model.tms.dto.LogisticsBillDTO.LogisticsBillVo>
      **/
-    List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoByTransportNo(@Param("transportNoList") List<String> transportNoList);
+    List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoByTrackNo(@Param("trackNoList") List<String> trackNoList);
 
     /**
      * 统计tab
