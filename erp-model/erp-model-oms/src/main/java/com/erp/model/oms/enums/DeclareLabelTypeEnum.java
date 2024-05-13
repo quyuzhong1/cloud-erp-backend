@@ -9,8 +9,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum DeclareLabelTypeEnum {
 
-    HIGH("general", "高申报"),
-    LOW("aliPay", "低申报"),
+    HIGH("hight", "高申报"),
+    LOW("low", "低申报"),
     NORMAL("normal", "正常申报"),
     ;
     /**
