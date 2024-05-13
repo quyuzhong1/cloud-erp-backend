@@ -2892,7 +2892,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser userInfo = CommonInterceptor.threadLocal.get();
 
         //如果是固定任务
-        if (IsConstant.YES.equals(IsFixed) && !"admin".equals(userInfo.getUserAccount())) {
+        if (IsConstant.YES.equals(IsFixed)) {
             deleteTaskShow = false;
         }
         //删除任务
