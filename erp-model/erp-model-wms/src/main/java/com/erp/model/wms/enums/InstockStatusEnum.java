@@ -12,9 +12,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum InstockStatusEnum implements EnumMessage {
 
 
-    NOT_IN_STOCK("notInStock", "未入库"),
-    PARTIALLY_IN_STOCK("partiallyInStock", "部分入库"),
-    FULLY_IN_STOCK("fullyInStock", "已入库"),
+    NOT_IN_STOCK("0", "未入库"),
+    PARTIALLY_IN_STOCK("1", "部分入库"),
+    FULLY_IN_STOCK("2", "已入库"),
     ;
 
     /**

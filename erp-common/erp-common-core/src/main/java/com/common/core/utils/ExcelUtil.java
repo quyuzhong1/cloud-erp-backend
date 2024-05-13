@@ -524,7 +524,7 @@ public class ExcelUtil {
                 // 自适应列宽
                 // 计算内容宽度并设置单元格宽度
                 int contentWidth = headerName.get(i).getBytes(StandardCharsets.UTF_8).length * 256; // 中文字符宽度按照字节数计算
-                sheet.setColumnWidth(0, Math.max(sheet.getColumnWidth(0), contentWidth)); // 设置列宽度
+                sheet.setColumnWidth(i, contentWidth); // 设置列宽度
             }
             // 输出Excel文件
             OutputStream output = response.getOutputStream();

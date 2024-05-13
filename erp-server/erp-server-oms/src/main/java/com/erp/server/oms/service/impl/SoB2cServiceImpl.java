@@ -64,7 +64,6 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.transfer.TransferCancelOrderReq;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
@@ -3052,29 +3051,31 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(logisticsEntityList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
-
+        List<LogisticsBillDTO.LogisticsBillVo> billVos = list.stream()
+                .filter(bill -> StringUtils.isNotBlank(bill.getLogisticsCode()))
+                .map(bill -> {
+                    LogisticsBillDTO.LogisticsBillVo logisticsBillVo = new LogisticsBillDTO.LogisticsBillVo();
+                    logisticsBillVo.setSourceId(bill.getId());
+                    logisticsBillVo.setTrackNo(bill.getLogisticsCode());
+                    return logisticsBillVo;
+                }).collect(Collectors.toList());
         //获取运输状态
-        Map<String, List<LogisticsBillDTO.LogisticsBillVo>> logisticsBillMap = logisticsBillFeign.getTrackStatusByTransportNo(list.stream()
-                        .filter(bill->Objects.nonNull(bill.getLogisticsCode()))
-                        .map(bill->{
-                            LogisticsBillDTO.LogisticsBillVo logisticsBillVo = new LogisticsBillDTO.LogisticsBillVo();
-                            logisticsBillVo.setSourceId(bill.getId());
-                            logisticsBillVo.setTransportNo(bill.getLogisticsCode());
-                            return logisticsBillVo;
-                        }).collect(Collectors.toList()))
-                .stream().collect(Collectors.groupingBy(LogisticsBillDTO.LogisticsBillVo::getTransportNo));
-        if (ObjectUtils.isNotEmpty(logisticsBillMap)) {
-            list.forEach(item -> {
-                if (StringUtils.isNotBlank(item.getLogisticsCode())) {
-                    List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillMap.get(item.getLogisticsCode());
-                    if (CollectionUtils.isNotEmpty(logisticsBillVos)) {
-                        LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillVos.get(0);
-                        //运输状态
-                        item.setTrackStatus(logisticsBillVo.getTrackStatus());
-                        item.setTrackStatusName(logisticsBillVo.getTrackStatusName());
+        if (CollectionUtils.isNotEmpty(billVos)) {
+            Map<String, List<LogisticsBillDTO.LogisticsBillVo>> logisticsBillMap = logisticsBillFeign.getTrackStatusByTrackNo(billVos)
+                    .stream().collect(Collectors.groupingBy(LogisticsBillDTO.LogisticsBillVo::getTrackNo));
+            if (ObjectUtils.isNotEmpty(logisticsBillMap)) {
+                list.forEach(item -> {
+                    if (StringUtils.isNotBlank(item.getLogisticsCode())) {
+                        List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillMap.get(item.getLogisticsCode());
+                        if (CollectionUtils.isNotEmpty(logisticsBillVos)) {
+                            LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillVos.get(0);
+                            //运输状态
+                            item.setTrackStatus(logisticsBillVo.getTrackStatus());
+                            item.setTrackStatusName(logisticsBillVo.getTrackStatusName());
+                        }
                     }
-                }
-            });
+                });
+            }
         }
         //财务信息
         List<SoB2cFinanceEntity> soB2cFinanceEntityList = soB2cFinanceService.listByMainIds(ids);
@@ -4239,6 +4240,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         b2cCustomer.setSalesOrgName(soB2cEntity.getOrgName());
         b2cCustomer.setDictPlatform(soB2cEntity.getDictPlatform());
         b2cCustomer.setPayTime(soB2cEntity.getPayTime());
+        b2cCustomer.setHasPlatformWarehouseOrder(soB2cEntity.hasPlatformWarehouseOrder());
         //店铺
         String shopId = soB2cEntity.getShopId();
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);

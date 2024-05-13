@@ -145,15 +145,16 @@ public class UserDatePermissionServiceImpl implements UserDatePermissionService 
         List<UserRequestPermissionsDTO> requestPermissionsList = sysUserInfoService.getRequestPermissionsList(user.getUid());
         UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
         List<String> roleIdList = sysRoleUserService.findRoleIdsByUid(user.getUid());
-        if (!roleIdList.contains("1")) {
-            userRequestPermissions= requestPermissionsList
-                    .stream()
-                    .filter(p -> p.getPermissionsCode().equals(menuCode))
-                    .findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(userRequestPermissions)){
-                return false;
-            }
+        if (roleIdList.contains("1")) {
+            return true;
         }
-        return true;
+        userRequestPermissions = requestPermissionsList
+                .stream()
+                .filter(p -> p.getPermissionsCode().equals(menuCode))
+                .findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(userRequestPermissions)) {
+            return true;
+        }
+        return false;
     }
 }

@@ -94,9 +94,9 @@ public class LogisticsBillFeignController {
      * @author hyj
      * @date 2024/5/11 10:39
      */
-    @PostMapping("/getTrackStatusByTransportNo")
+    @PostMapping("/getTrackStatusByTrackNo")
     public List<LogisticsBillDTO.LogisticsBillVo> getTrackStatusByTransportNo(@RequestBody List<LogisticsBillDTO.LogisticsBillVo> billVoList) {
-        return logisticsBillService.getTrackStatusByTransportNo(billVoList);
+        return logisticsBillService.getTrackStatusByTrackNo(billVoList);
     }
 
     /**

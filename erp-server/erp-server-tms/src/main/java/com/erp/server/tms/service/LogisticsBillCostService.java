@@ -9,6 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
+import com.erp.model.tms.enums.DictCostAttributionEnum;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -49,7 +50,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param dto
      * @return List<TabListDTO>
      */
-    List<LogisticsBillCostDTO.TabListDTO> tabList(PermissionsDTO dto);
+    List<LogisticsBillCostDTO.TabListDTO> tabList(PermissionsDTO dto, DictCostAttributionEnum attribution);
     /**
      * @description: 分页查询
      * @author Will
@@ -92,6 +93,14 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @return Boolean
      */
     Boolean exportExcel(LogisticsBillCostDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    /**
+     * @description: 分页数据处理
+     * @author Will
+     * @date: 2024/5/13 14:54
+     * @param records
+     */
+    void handleDataPaging( List<LogisticsBillCostDTO.ListDTO> records);
 
     Boolean invalidByLogisticsBillId(String logisticsBillId);
 
@@ -146,4 +155,12 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param errorList
      */
     void handleImportSuccessList (List<LogisticsBillCostExcelDTO> successList, List<LogisticsBillCostExcelDTO > errorList,String dictCostAttribution );
+    /**
+     * @description: 更新店铺
+     * @author Will
+     * @date: 2024/5/11 18:38
+     * @param dto
+     * @return Boolean
+     */
+    Boolean updateShopCharge(LogisticsBillCostDTO.UpdateShopChargeDTO dto);
 }

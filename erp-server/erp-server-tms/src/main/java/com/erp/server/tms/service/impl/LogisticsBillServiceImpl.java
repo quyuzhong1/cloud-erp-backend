@@ -28,8 +28,6 @@ import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
-import com.erp.model.plm.dto.LogisticsProductDTO;
-import com.erp.model.plm.dto.ProductCustomsSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
@@ -46,7 +44,6 @@ import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.tms.constant.TmsConstant;
 import com.erp.server.tms.convert.LogisticsBillConverter;
-import com.erp.server.tms.convert.TransferDeclareConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
 import com.erp.server.tms.service.*;
@@ -265,20 +262,23 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         return baseMapper.listLogisticsBillVoBySourceIds(sourceIdList);
     }
     @Override
-    public List<LogisticsBillDTO.LogisticsBillVo> getTrackStatusByTransportNo(List<LogisticsBillDTO.LogisticsBillVo> billVoList) {
+    public List<LogisticsBillDTO.LogisticsBillVo> getTrackStatusByTrackNo(List<LogisticsBillDTO.LogisticsBillVo> billVoList) {
         if (CollectionUtils.isEmpty(billVoList)) {
             return billVoList;
         }
-        //根据物流运单号获取运输状态
-        List<String> transportNoList = billVoList.stream().map(LogisticsBillDTO.LogisticsBillVo::getTransportNo).collect(Collectors.toList());
-        List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = baseMapper.listLogisticsBillVoByTransportNo(transportNoList);
+        //根据物流运单号/跟踪号获取运输状态
+        List<String> trackNoList = billVoList.stream().map(LogisticsBillDTO.LogisticsBillVo::getTrackNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(trackNoList)) {
+            return billVoList;
+        }
+        List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = baseMapper.listLogisticsBillVoByTrackNo(trackNoList);
         if (CollectionUtils.isEmpty(logisticsBillVos)) {
             return billVoList;
         }
         Map<String, List<LogisticsBillDTO.LogisticsBillVo>> logisticsBillMap = logisticsBillVos.stream()
-                .collect(Collectors.groupingBy(LogisticsBillDTO.LogisticsBillVo::getTransportNo));
+                .collect(Collectors.groupingBy(LogisticsBillDTO.LogisticsBillVo::getTrackNo));
         billVoList.stream().forEach(billVo->{
-            List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList= logisticsBillMap.get(billVo.getTransportNo());
+            List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList= logisticsBillMap.get(billVo.getTrackNo());
             if (CollectionUtils.isNotEmpty(logisticsBillVoList)){
                 LogisticsBillDTO.LogisticsBillVo trackBillVo = logisticsBillVoList.stream().findFirst().orElse(null);
                 if (Objects.nonNull(trackBillVo)) {
@@ -290,6 +290,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     billVo.setTrackStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
                     billVo.setTrackStatusName(LogisticTrackStatusEnum.NOT_FIND.getName());
                 }
+            }else{
+                billVo.setTrackStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
+                billVo.setTrackStatusName(LogisticTrackStatusEnum.NOT_FIND.getName());
             }
         });
         return billVoList;
@@ -976,12 +979,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
     }
 
-    public static void main(String[] args) {
-        BigDecimal volume = new BigDecimal(10)
-                .multiply(new BigDecimal(20))
-                .multiply(new BigDecimal(30));
-        BigDecimal divide = MathUtil.divide(volume, new BigDecimal(2000));
-        System.out.println(divide);
+    @Override
+    public List<LogisticsBillEntity> listByShopIdList(List<String> shopIdList) {
+        if (CollectionUtils.isEmpty(shopIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return  lambdaQuery().in(LogisticsBillEntity::getShopId,shopIdList).list();
     }
 
     /**

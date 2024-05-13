@@ -53,8 +53,8 @@ public interface LogisticsBillFeign {
      * @author hyj
      * @date 2024/5/11 10:39
      */
-    @PostMapping("feign/logisticsBill/getTrackStatusByTransportNo")
-    List<LogisticsBillDTO.LogisticsBillVo> getTrackStatusByTransportNo(@RequestBody List<LogisticsBillDTO.LogisticsBillVo> billVoList);
+    @PostMapping("feign/logisticsBill/getTrackStatusByTrackNo")
+    List<LogisticsBillDTO.LogisticsBillVo> getTrackStatusByTrackNo(@RequestBody List<LogisticsBillDTO.LogisticsBillVo> billVoList);
 
     /**
      * 添加物流单

@@ -57,6 +57,11 @@ public class LogisticsLastMileCostController extends BaseController {
      * @return ApiResult<List<TabListDTO>>
      */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "shop_charge_id",
+            menuCode = "tms:logisticsLastMileCost:paging",
+            tableAlias = "lbc"
+    )
     public ApiResult<List<LogisticsBillCostDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<LogisticsBillCostDTO.TabListDTO> tabList = logisticsLastMileCostService.tabList(dto);
         return success(tabList);
@@ -71,7 +76,7 @@ public class LogisticsLastMileCostController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "shop_charge_id",
             menuCode = "tms:logisticsLastMileCost:paging",
             tableAlias = "lbc"
     )
@@ -91,7 +96,7 @@ public class LogisticsLastMileCostController extends BaseController {
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "自发货费用修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
+        tableField = "shop_charge_id",
         menuCode = "tms:logisticsLastMileCost:update",
         serviceClass = LogisticsBillCostService.class,
         keyIdName = "id")
@@ -123,7 +128,7 @@ public class LogisticsLastMileCostController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:idList={idList}")
     @PostMapping("/updateReconciliationStatus")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "shop_charge_id",
             menuCode = "tms:logisticsLastMileCost:updateReconciliationStatus",
             serviceClass = LogisticsBillCostService.class,
             keyIdName = "id")
@@ -188,7 +193,7 @@ public class LogisticsLastMileCostController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出自发货费用模板")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "shop_charge_id",
             menuCode = "tms:logisticsLastMileCost:paging",
             tableAlias = "lbc"
     )

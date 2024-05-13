@@ -177,6 +177,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceIdsAndType(receiveIds,SourceTypeEnum.PO_RECEIVE.getCode());
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
+                //设置入库状态名称
+                obj.setInStockStatusName(InstockStatusEnum.getByCode(obj.getInStockStatus()));
                 List<QcInfoEntity> resultList = qcInfoList.stream().filter(v -> v.getSourceId().equals(obj.getId())).collect(Collectors.toList());
                 if(resultList.stream().allMatch(v->Objects.isNull(v.getQcStatus()) || QcBillStatusEnum.DRAFT.equals(v.getQcStatus())|| QcBillStatusEnum.WAIT_QC.equals(v.getQcStatus())|| QcBillStatusEnum.CANCEL.equals(v.getQcStatus()))){
                     obj.setQcStatus(PdaQclStatusEnum.WAIT_QC.getCode());
@@ -1892,5 +1894,14 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             return new ArrayList<>();
         }
         return this.lambdaQuery().eq(WarehouseReceiveEntity::getSourceType,dto.getSourceType()).in(WarehouseReceiveEntity::getSourceId,dto.getSourceIds()).list();
+    }
+
+    @Override
+    public void instockStatusCleanJob() {
+        //分页获取所有采购收货单
+//        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+//        baseMapper.paging();
+        //收货数量与入库数量对比，入库数量为0则为未入库，大于0且小于收货数量为部分入库，等于收货数量为已入库
+        //变更入库状态
     }
 }

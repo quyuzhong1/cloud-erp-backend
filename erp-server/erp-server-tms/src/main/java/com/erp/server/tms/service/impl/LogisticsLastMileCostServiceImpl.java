@@ -65,7 +65,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
 
     @Override
     public List<LogisticsBillCostDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        List<LogisticsBillCostDTO.TabListDTO> tabList = logisticsBillCostService.tabList(dto);
+        List<LogisticsBillCostDTO.TabListDTO> tabList = logisticsBillCostService.tabList(dto,DictCostAttributionEnum.LAST_MILE);
         return tabList;
     }
 
@@ -202,9 +202,11 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         //物流跟踪单号序号
         Integer trackNoIndex = getMapKey(headMap,"*物流跟踪单号");
         //平台订单号
-        List<String> platformCodeList = successList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.get(orderIndex))).map(obj -> obj.get(orderIndex).toString()).distinct().collect(Collectors.toList());
+        List<String> platformCodeList = ObjectUtil.isEmpty(orderIndex) ? new ArrayList<>() : successList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.get(orderIndex.toString())))
+                .map(obj -> obj.get(orderIndex.toString()).toString()).distinct().collect(Collectors.toList());
         //物流跟踪号
-        List<String> trackNoList = successList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.get(trackNoIndex))).map(obj -> obj.get(trackNoIndex).toString()).distinct().collect(Collectors.toList());
+        List<String> trackNoList = ObjectUtil.isEmpty(trackNoIndex) ? new ArrayList<>() :  successList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.get(trackNoIndex.toString())))
+                .map(obj -> obj.get(trackNoIndex.toString()).toString()).distinct().collect(Collectors.toList());
 
         //物流明细信息
         List<LogisticsBillDetailEntity> logisticsBillDetailList = logisticsBillDetailService.listByPlatformCodeAndTrackNo(platformCodeList,trackNoList);
@@ -224,9 +226,11 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             List<String> errorMsgList = new ArrayList<>();
 
             for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
-
                 //字段名称
                 String field = headList.get(Integer.valueOf(entry.getKey()));
+                if (StrUtil.equals(field,"错误信息")) {
+                    continue;
+                }
                 TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> StrUtil.equals(obj.getCostName(), field) && StrUtil.equals(obj.getDictCostAttribution(),DictCostAttributionEnum.LAST_MILE.getCode())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(tmsCfgCostEntity) && !getHeaderNameList().contains(field)) {
                     errorMsgList.add(StrUtil.format("费用管理尾程未找到该费用名称【{}】",field));
@@ -261,7 +265,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             //数据验证
             List<String> importMsgList = checkImportData(excelDTO,logisticsBillCostList,logisticsBillDetailList,DictCostAttributionEnum.LAST_MILE.getCode());
             if (CollectionUtils.isNotEmpty(importMsgList)) {
-                errorMsgList.addAll(msgList);
+                errorMsgList.addAll(importMsgList);
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(errorMsgList));
@@ -335,6 +339,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
         //数据赋值处理
+        logisticsBillCostService.handleDataPaging(resultList);
         String name = "尾程费用列表";
         StringBuffer sb = new StringBuffer();
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
