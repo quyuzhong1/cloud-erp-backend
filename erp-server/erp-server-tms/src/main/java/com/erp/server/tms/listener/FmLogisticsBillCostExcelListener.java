@@ -11,6 +11,7 @@ import com.erp.model.tms.dto.excel.FmLogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsCostDetailEntity;
+import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import com.erp.server.tms.service.TmsCostDetailService;
 import com.erp.server.tms.service.TmsFirstMileLogisticService;
@@ -80,6 +81,11 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
             LogisticsBillCostEntity costEntity = logisticsBillCostEntitieList.stream().filter(v->v.getLogisticsBillId().equals(entity.getId())).findFirst().orElse(null);
             if(Objects.isNull(costEntity)){
                 excelDTO.setErrorMsg("未找到物流费用");
+                errorList.add(excelDTO);
+                continue;
+            }
+            if(!(costEntity.getReconciliationStatus().equals(ReconciliationStatusEnum.INVALID.getCode()) ||costEntity.getReconciliationStatus().equals(ReconciliationStatusEnum.TO_BE_GENERATED.getCode()))){
+                excelDTO.setErrorMsg("已生成对账单，不能更新信息");
                 errorList.add(excelDTO);
                 continue;
             }

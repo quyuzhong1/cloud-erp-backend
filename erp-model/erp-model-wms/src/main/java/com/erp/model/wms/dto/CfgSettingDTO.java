@@ -2,13 +2,9 @@ package com.erp.model.wms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.util.List;
+
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -75,11 +71,11 @@ public class CfgSettingDTO implements Serializable {
          */
         @Valid
         private CfgSettingValueDTO.PoReconciliationSettingDTO poReconciliationSettingDTO;
+
         /**
-         * 物流产品信息-目的国申报价
+         * 飞书通知配置
          */
-        @Valid
-        private List<CfgSettingValueDTO.LogisticsProductDestDeclarePrice> logisticsProductDestDeclarePrices;
+        private CfgSettingValueDTO.FsQcNoticeDTO fsQcNoticeDTO;
     }
 
 

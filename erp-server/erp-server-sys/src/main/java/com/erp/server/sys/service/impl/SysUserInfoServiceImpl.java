@@ -482,6 +482,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         updateWrapper.in(SysUserInfoEntity::getUid, stateDTO.getIds());
         this.update(updateWrapper);
 
+        //禁用清除redis登录信息
+        if (ObjectUtil.isNotEmpty(stateDTO.getState()) && MathUtil.compareTo(stateDTO.getState(),MathUtil.ZERO) == MathUtil.ZERO) {
+            stateDTO.getIds().forEach(uid -> redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + uid));
+        }
+
         List<SysUserInfoEntity> list = this.listByIds(stateDTO.getIds());
         if (CollectionUtils.isEmpty(list)) {
             return;
@@ -499,6 +504,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         updateWrapper.set(SysUserInfoEntity::getUserState, stateDTO.getState());
         updateWrapper.in(SysUserInfoEntity::getUid, stateDTO.getIds());
         this.update(updateWrapper);
+
+        //禁用清除redis登录信息
+        if (ObjectUtil.isNotEmpty(stateDTO.getState()) && MathUtil.compareTo(stateDTO.getState(),MathUtil.ZERO) == MathUtil.ZERO) {
+            stateDTO.getIds().forEach(uid -> redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + uid));
+        }
     }
 
     @Override
@@ -1245,6 +1255,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 .set(SysUserInfoEntity::getNeedChangePwd, Boolean.TRUE)
                 .eq(SysUserInfoEntity::getUid, uid).update();
         redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + uid);
+        String loginErrorKey = StrUtil.format(RedisCacheConstants.LOGIN_ERROR_KEY, userInfoEntity.getUserType(), userInfoEntity.getUserAccount());
+        redisService.deleteObject(loginErrorKey);
         return flag;
     }
 
@@ -1286,6 +1298,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 .eq(SysUserInfoEntity::getUid, sysUserInfoEntity.getUid()).update();
 
         redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + sysUserInfoEntity.getUid());
+        String loginErrorKey = StrUtil.format(RedisCacheConstants.LOGIN_ERROR_KEY, forgotPasswordDTO.getUserType(), forgotPasswordDTO.getUserAccount());
+        redisService.deleteObject(loginErrorKey);
         return flag;
     }
 

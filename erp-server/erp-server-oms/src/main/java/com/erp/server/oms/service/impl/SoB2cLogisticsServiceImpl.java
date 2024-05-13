@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderLogisticsDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
@@ -37,7 +38,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.swing.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -378,7 +378,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     @Override
     public Boolean updateWeight(String soId,String id, BigDecimal weightByG) {
         String msg = StrUtil.format("用户【{}】更新重量为{} ", commonService.getUserInfo().getUserName(),weightByG+"g");
-        operateLogService.addModuleOperateLog("【组包称重】", ModuleTypeEnum.SO_B2C.getCode(), soId, msg);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soId, "【组包称重】");
         return lambdaUpdate()
                 .set(SoB2cLogisticsEntity::getWeight, weightByG)
                 .eq(SoB2cLogisticsEntity::getId, id)
@@ -396,10 +396,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         addDTO.setDetailList(buildDetailList(entity));
         addDTO.setSourceId(mainEntity.getId());
         addDTO.setSourceCode(mainEntity.getPlatformCode());
-        addDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
+        addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
         addDTO.setOutstockId("");
         addDTO.setOutstockCode("");
         addDTO.setChannelId(entity.getLogisticsChannelId());
+        addDTO.setOrderType(OrderTypeEnum.B2C.getCode());
         return addDTO;
     }
 

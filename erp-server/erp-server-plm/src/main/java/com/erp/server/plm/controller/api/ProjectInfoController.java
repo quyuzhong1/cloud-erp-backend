@@ -9,10 +9,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.plm.dto.BasicDTO;
-import com.erp.model.plm.dto.ProductSearchDTO;
-import com.erp.model.plm.dto.SelectShowDTO;
-import com.erp.model.plm.dto.StartProjectDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.enums.ProjectStateEnum;
 import com.erp.server.plm.service.ProjectInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -190,8 +187,8 @@ public class ProjectInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-项目结项:ids={ids}")
     @PostMapping("/finish")
-    public ApiResult finish(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = projectInfoService.finish(dto.getIds());
+    public ApiResult finish(@RequestBody @Valid ProductInfoDTO.IdsDateDto dto) {
+        Boolean flag = projectInfoService.finish(dto);
         return flag ? success() : failure();
     }
 

@@ -23,6 +23,7 @@ import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
+import org.python.modules.itertools.product;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -240,6 +241,14 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         }
         List<String> productIdList = projectList.stream().map(ProjectInfoEntity::getProductId).collect(Collectors.toList());
         List<ProductInfoEntity> productList = productInfoService.listByIds(productIdList);
+
+        //校验：启动日期应当早于立项日期
+        LocalDate launchDate = dto.getProjectLaunchDate();
+        long count1 = productList.stream().filter(product -> launchDate.isBefore(product.getApprovalTime().toLocalDate())).count();
+        if(count1 > 0){
+            throw new ServiceException(ApiError.ERROR_95269);
+        }
+
         //检查是否有SKU生成
         List<ProductDetailEntity> skuList = productDetailService.listSkuByProductIds(productIdList);
         if (CollectionUtils.isEmpty(skuList)) {
@@ -268,6 +277,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             item.setEndTime(endTime);
             item.setDescribe(describe);
             item.setProjectStatus(start);
+            item.setProjectLaunchDate(launchDate);
         }
         boolean flag = updateBatchById(projectList);
         if (flag) {
@@ -650,6 +660,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         List<ProductDetailEntity> detailEntityList = productDetailService.listSkuByProductIds(productInfoIds);
         List<String> detailIds = detailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
 
+        //实际情况下，detailIds可能为空
+        if(CollectionUtils.isEmpty(detailIds)){
+            throw new ServiceException(ApiError.ERROR_95271);
+        }
+
         switch (ProjectStateEnum.getEnum(projectState)) {
             case YES_START:
                 //如果状态为已启动，更新产品信息{产品开发状态}：开发中
@@ -801,14 +816,17 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     /**
      * 完成项目 ids 是产品ids
      *
-     * @param ids
+     * @param idsDateDto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-06-14 11:58
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean finish(List<String> ids) {
+    public Boolean finish(ProductInfoDTO.IdsDateDto idsDateDto) {
+        List<String> ids = idsDateDto.getIds();
+        LocalDate finishDate = idsDateDto.getLocalDate();
+
         List<ProjectInfoEntity> projectInfoList = this.listByProductIds(ids);
         if (CollectionUtils.isEmpty(projectInfoList)) {
             throw new ServiceException(ApiError.ERROR_95026);
@@ -820,6 +838,13 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         if (stateCount > 0) {
             throw new ServiceException(ApiError.ERROR_95182);
         }
+
+        //校验：结项日期不能早于启动日期
+        final long count = projectInfoList.stream().filter(project -> finishDate.isBefore(project.getProjectLaunchDate())).count();
+        if(count > 0){
+            throw new ServiceException(ApiError.ERROR_95270);
+        }
+
         List<String> productIds = projectInfoList.stream().map(ProjectInfoEntity::getProductId).collect(Collectors.toList());
         List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
         List<String> taskIdList = taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
@@ -830,7 +855,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         //检查子任务完成情况
         projectTaskService.checkSonTaskFinish(taskIdList, taskList);
         Integer finishState = ProjectStateEnum.FINISH.getState();
-        projectInfoList.stream().forEach(p -> p.setProjectStatus(finishState));
+        projectInfoList.forEach(p -> {
+            p.setProjectStatus(finishState);
+            p.setProjectFinishDate(finishDate.atTime(0, 0));
+        });
         Boolean finishResult = this.updateBatchById(projectInfoList);
         if (finishResult) {
             String userName = commonService.getUserInfo().getUserName();

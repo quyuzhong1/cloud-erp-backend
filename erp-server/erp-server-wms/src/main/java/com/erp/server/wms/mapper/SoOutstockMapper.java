@@ -64,6 +64,9 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
     Integer listCount(@Param("params") SoOutstockDTO.PagingParamDTO params);
 
 
+    Integer pdaListCount(@Param("params") SoOutstockDTO.PagingParamDTO params);
+
+
     /**
      * 临时接口批量更新
      * @param soOutstockList
