@@ -65,7 +65,7 @@ public class MercadoShipOrder implements IPlatformService {
     }
 
     @Override
-    public Boolean asyncBatchQueryAndUpdateOrderStatus(List<PlatformOrderQueryDTO> dtoList){
+    public Boolean asyncBatchQueryAndUpdateOrderStatus(List<PlatformOrderQueryDTO> dtoList) {
         return null;
     }
 }

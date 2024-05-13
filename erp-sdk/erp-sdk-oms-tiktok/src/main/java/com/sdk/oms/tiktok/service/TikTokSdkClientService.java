@@ -1,5 +1,6 @@
 package com.sdk.oms.tiktok.service;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -31,6 +32,7 @@ import com.sdk.oms.tiktok.dto.tiktok.channel.provider.ShippingProviderDTO;
 import com.sdk.oms.tiktok.dto.tiktok.channel.warehouses.WarehousesBean;
 import com.sdk.oms.tiktok.dto.tiktok.channel.warehouses.WarehousesDTO;
 import com.sdk.oms.tiktok.dto.tiktok.listing.ListingDTO;
+import com.sdk.oms.tiktok.dto.tiktok.listing.view.DataBean;
 import com.sdk.oms.tiktok.dto.tiktok.listing.view.ListingViewDTO;
 import com.sdk.oms.tiktok.dto.tiktok.listing.view.SkusBean;
 import com.sdk.oms.tiktok.dto.tiktok.order.OrderDTO;
@@ -49,6 +51,7 @@ import com.sdk.oms.tiktok.dto.tiktok.token.TokenDTO;
 import com.sdk.oms.tiktok.util.EncryptionUtils;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -91,12 +94,26 @@ public class TikTokSdkClientService {
         Map<String, String> paramMap = new HashMap<>();
         paramMap.put("clientId","6buinkjt3hmld");
         paramMap.put("clientSecret","8ff628de24faf70c24855de4d967fb6a17a47e3f");
-        String acc = "ROW_apJskgAAAACj-JAAAriAWjVtF2MrUIFdT_dQbixt72bmoRRCZdTwf5XIKUm7p_ubq9t9giso2enHQ0Cq8w0_TzdL89IpPrg2P1NNgQivs9gLOcQVC4PmayUR7n2XWhoDiOc3BrQByNmamhHwr1V56CpR-E98wOdEYOQLjyjOjzqpw-oZUvt-FQ";
-        TikTokShopAuthDTO authorizedShops = sdkClientService.getAuthorizedShops(paramMap, acc);
-        System.out.println(authorizedShops);
+        String acc = "GCP_-0pjTwAAAACj-JAAAriAWjVtF2MrUIFdARIDEdX_pdh3JpPq_FYigBbzB-NHNoy7-guJPuaKJaM25dV1ndfmb55uP_Ri1yCR4KCfrsPLGnkPe1BNMxokWBeZhAUpo1A4HsON0Fr4dDiCJQ1L3H2Ac8qAC108VBFEDdh8edTw0ohtZpyoSF0CXg";
 
+        TikTokShopInfoDTO shopInfoDTO = new TikTokShopInfoDTO();
+        shopInfoDTO.setAccessToken(acc);
+        shopInfoDTO.setShopCipher("GCP_APc1OgAAAACotu-CHizKQDMHvHIiBmIh");
+        shopInfoDTO.setClientSecret("8ff628de24faf70c24855de4d967fb6a17a47e3f");
+        shopInfoDTO.setClientId("6buinkjt3hmld");
+        shopInfoDTO.setBaseUrl("https://auth.tiktok-shops.com");
+
+        List<OrdersBean> ordersBeans = sdkClientService.listOrderView(Arrays.asList("576667270255054616"), shopInfoDTO);
+        for (OrdersBean ordersBean : ordersBeans) {
+            System.out.println(ordersBean);
+        }
     }
 
+    /**
+     * 获取token
+     * @param paramMap
+     * @return
+     */
     public TokenDTO sendTikTokPostToken(Map<String, String> paramMap) {
 
         //组装授权url
@@ -146,6 +163,12 @@ public class TikTokSdkClientService {
     }
 
 
+    /**
+     * 查询店铺权限
+     * @param paramMap
+     * @param accessToken
+     * @return
+     */
     public TikTokShopAuthDTO getAuthorizedShops(Map<String, String> paramMap, String accessToken) {
         String url = TikTokConstant.URL;
         String path = "/authorization/" + TikTokConstant.VERSION + "/shops";
@@ -196,6 +219,11 @@ public class TikTokSdkClientService {
     }
 
 
+    /**
+     * 刷新token
+     * @param refreshTokenDTO
+     * @return
+     */
     public TokenDTO refreshToken(ShopDTO.RefreshTokenDTO refreshTokenDTO) {
 
         //组装授权url
@@ -438,9 +466,23 @@ public class TikTokSdkClientService {
                         url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
-            for (SkusBean skus : listingViewDTO.getData().getSkus()) {
-                listingViewDTO.getData().setSkus(Arrays.asList(skus));
-                resultList.add(listingViewDTO);
+            DataBean dataBean = listingViewDTO.getData();
+
+            List<SkusBean> skusBeanList = dataBean.getSkus();
+
+            for (SkusBean skus : skusBeanList) {
+
+                DataBean beanCopy = new DataBean();
+                BeanUtils.copyProperties(dataBean, beanCopy);
+
+                beanCopy.setSkus(Collections.singletonList(skus));
+
+                ListingViewDTO dto = new ListingViewDTO();
+                dto.setCode(listingViewDTO.getCode());
+                dto.setData(beanCopy);
+                dto.setMessage(listingViewDTO.getMessage());
+                dto.setRequestId(listingViewDTO.getRequestId());
+                resultList.add(dto);
             }
         }
 

@@ -8,6 +8,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.DistrictInfoBean;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.LineItemsBean;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.OrderViewDTO;
@@ -117,6 +118,11 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
         orderDTO.setInvalidStatus(Boolean.FALSE);
+
+        //付款状态
+        if (ordersBean.getPaidTime() > 0 && ObjectUtil.isNotEmpty(ordersBean.getPayment())) {
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+        }
 
         if ("ON_HOLD".equalsIgnoreCase(ordersBean.getStatus())) {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
