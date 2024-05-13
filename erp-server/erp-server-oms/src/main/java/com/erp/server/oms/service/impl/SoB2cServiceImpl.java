@@ -7875,7 +7875,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
                     platformShipOrderDTO.setSoB2cId(soB2cEntity.getId());
                     platformShipOrderDTO.setDictPlatform(soB2cEntity.getDictPlatform());
-                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+                    soB2cDeliveryFeign.shipOrder(platformShipOrderDTO);
                     updateList.add(soB2cEntity);
                 }catch (Exception e){
                     resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),StrUtil.format("平台标发失败:{}",e.getMessage())));

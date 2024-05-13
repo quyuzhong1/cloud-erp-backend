@@ -2,6 +2,7 @@ package com.erp.server.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.constant.CommonConstants;
 import com.common.core.utils.BeanMapperUtils;
@@ -124,7 +125,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         List<SysMenuEntity> allList = sysMenuService
                 .lambdaQuery()
                 .eq(SysMenuEntity::getDisabled, Boolean.FALSE)
-                .eq(SysMenuEntity::getSystem, userType)
+                .eq(StringUtils.isNotBlank(userType), SysMenuEntity::getSystem, userType)
                 .list();
         List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
         List<String> menuIds;
