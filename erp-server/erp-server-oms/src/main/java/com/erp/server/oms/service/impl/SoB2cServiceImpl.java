@@ -7900,7 +7900,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @Override
     public BatchResultDTO declareRule(String id, HashMap<String, Object> map, Boolean isUpdate) {
-        BatchResultDTO resultDTO = new BatchResultDTO();
         //已存在申报信息 则不进行规则匹配
         List<SoB2cDeclareProductEntity> declareProductList = soB2cDeclareProductService.listBySoId(id);
         if (Objects.nonNull(isUpdate) && !isUpdate && CollectionUtils.isNotEmpty(declareProductList)){
@@ -7934,8 +7933,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //规则结果
         cfgRuleDeclareService.getRuleDeclareMatchResult(map, maxCustomsAmount, minCustomsAmount, isUpdate,declareProductList);
-        resultDTO.setSuccess(Boolean.TRUE);
-        return resultDTO;
+        return BatchResultDTO.success(id, entity.getCode(), OperationTypeEnum.DECLARE_RULE);
     }
 
     @Override

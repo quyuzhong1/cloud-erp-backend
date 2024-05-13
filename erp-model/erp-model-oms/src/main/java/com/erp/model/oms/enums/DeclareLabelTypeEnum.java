@@ -1,15 +1,16 @@
 package com.erp.model.oms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
  * 开户银行类型
  */
-public enum DeclareLabelTypeEnum {
+public enum DeclareLabelTypeEnum implements EnumMessage {
 
-    HIGH("hight", "高申报"),
+    HIGH("high", "高申报"),
     LOW("low", "低申报"),
     NORMAL("normal", "正常申报"),
     ;
