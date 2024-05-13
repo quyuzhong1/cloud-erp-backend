@@ -161,7 +161,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         detailEntity.setIsApiUpdate(Boolean.FALSE);
         //表示签收
         if (signCode.equals(trackStatus)) {
-            detailEntity.setSignTime(LocalDateTime.now());
+            detailEntity.setSignTime(trackTime);
         } else {
             detailEntity.setSignTime(null);
         }

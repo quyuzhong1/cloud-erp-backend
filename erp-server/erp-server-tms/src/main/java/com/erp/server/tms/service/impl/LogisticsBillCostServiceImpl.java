@@ -38,6 +38,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.listener.LogisticsBillCostExcelListener;
 import com.erp.server.tms.mapper.LogisticsBillCostMapper;
 import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
+import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -99,6 +100,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Autowired
     private ShopInfoFeign shopInfoFeign;
 
+    @Autowired
+    private LogisticsLastMileCostQueryHandler logisticsLastMileCostQueryHandler;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -186,7 +189,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             String tabSql = logisticsBillCostQueryHandler.getTabSql(statusEnum.getCode());
             //尾程费用
             if (DictCostAttributionEnum.LAST_MILE.equals(attribution)) {
-                tabSql = logisticsBillCostQueryHandler.getTabSql(statusEnum.getCode());
+                tabSql = logisticsLastMileCostQueryHandler.getTabSql(statusEnum.getCode());
             }
             HashMap<String,String> map = new HashMap<>();
             map.put("default",tabSql);
@@ -459,7 +462,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * @date: 2023/11/13 16:04
      * @param records
      */
-    private void handleDataPaging( List<LogisticsBillCostDTO.ListDTO> records)  {
+    @Override
+    public void handleDataPaging( List<LogisticsBillCostDTO.ListDTO> records)  {
         //运输状态
         List<DictBasicDTO.ViewDTO> transportStatusList = dictBasicService.getByKey(DictBasicEnum.LOGISTIC_TRACK_STATUS.getType());
 
