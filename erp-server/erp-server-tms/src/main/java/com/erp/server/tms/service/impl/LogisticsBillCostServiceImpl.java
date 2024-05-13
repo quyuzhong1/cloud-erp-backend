@@ -8,6 +8,7 @@ import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -24,6 +25,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.tms.dto.DictBasicDTO;
@@ -32,6 +34,7 @@ import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.listener.LogisticsBillCostExcelListener;
 import com.erp.server.tms.mapper.LogisticsBillCostMapper;
@@ -90,6 +93,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Autowired
     private LogisticsBillCostQueryHandler logisticsBillCostQueryHandler;
+
+    @Autowired
+    private ShopInfoFeign shopInfoFeign;
+
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -406,10 +413,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
         //物流单号
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(entity.getLogisticsBillId());
-        if (ObjectUtil.isNotEmpty(logisticsBillEntity)) {
-            entity.setTransportNo(logisticsBillEntity.getTransportNo());
+        if (ObjectUtil.isEmpty(logisticsBillEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST,"物流订单");
         }
-
+        entity.setTransportNo(logisticsBillEntity.getTransportNo());
         //计费重
         BigDecimal billingWeight = MathUtil.compareTo(entity.getActualWeight(),entity.getVolumeWeight()) > MathUtil.ZERO
                 ? entity.getActualWeight() : entity.getVolumeWeight();
@@ -417,6 +424,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
         //默认kg
         entity.setWeightUnit(UnitEnum.WeightUnitEnum.KG.getCode());
+
+        //店铺负责人
+        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(logisticsBillEntity.getShopId());
+        if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
+            entity.setShopChargeId(shopInfoEntity.getId());
+            entity.setShopChargeName(shopInfoEntity.getName());
+        }
 
         //判断物流费用类型
         String type;
@@ -586,6 +600,41 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             this.update(updateDataDTO,Boolean.TRUE);
         }
     }
+
+    @Override
+    public Boolean updateShopCharge(LogisticsBillCostDTO.UpdateShopChargeDTO dto) {
+        //根据店铺查询物流单
+        List<LogisticsBillEntity> logisticsBillList = logisticsBillService.listByShopIdList(Arrays.asList(dto.getShopId()));
+        if (CollectionUtils.isEmpty(logisticsBillList)) {
+            return Boolean.TRUE;
+        }
+        List<String> logisticsBillIdList = logisticsBillList.stream().map(LogisticsBillEntity::getId).distinct().collect(Collectors.toList());
+        //更新店铺负责人
+        updateShopChargeId(logisticsBillIdList,dto.getShopChargeId());
+        return Boolean.TRUE;
+    }
+
+    /**
+     * @description: 更新店铺负责人
+     * @author Will
+     * @date: 2024/5/13 9:13
+     * @param logisticsBillIdList
+     * @param shopChargeId
+     */
+    private void updateShopChargeId(List<String> logisticsBillIdList,String shopChargeId) {
+        if (CollectionUtils.isEmpty(logisticsBillIdList)) {
+            return;
+        }
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(shopChargeId);
+        if (ObjectUtil.isEmpty(findUserDTO)) {
+            throw new ServiceException("未找到店铺负责人");
+        }
+        lambdaUpdate().in(LogisticsBillCostEntity::getLogisticsBillId,logisticsBillIdList)
+                .set(LogisticsBillCostEntity::getShopChargeId,shopChargeId)
+                .set(LogisticsBillCostEntity::getShopChargeName,findUserDTO.getUserName())
+                .update();
+    }
+
 
     /**
      * @description: 数据验证
