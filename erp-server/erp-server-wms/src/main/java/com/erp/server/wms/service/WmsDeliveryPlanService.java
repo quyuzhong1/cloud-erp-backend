@@ -1,10 +1,10 @@
 package com.erp.server.wms.service;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.entity.OverseasDeliveryPlanEntity;
+import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
+import com.erp.model.wms.entity.WmsDeliveryPlanEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
 import com.common.business.vo.PagingVO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,7 +19,7 @@ import java.util.List;
  * @author Luo_WG
  * @since 2023-11-16
  */
-public interface OverseasDeliveryPlanService extends SuperService<OverseasDeliveryPlanEntity> {
+public interface WmsDeliveryPlanService extends SuperService<WmsDeliveryPlanEntity> {
 
     /**
     * 新增
@@ -28,7 +28,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(OverseasDeliveryPlanDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(WmsDeliveryPlanDTO.AddDTO dto);
 
     /**
     * 修改
@@ -37,7 +37,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
     * @param dto
     * @return
     */
-    Boolean update(OverseasDeliveryPlanDTO.UpdateDTO dto);
+    Boolean update(WmsDeliveryPlanDTO.UpdateDTO dto);
 
     /**
     * 分页列表查询
@@ -46,7 +46,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
     * @param pagingParamDTO
     * @return PagingVO<OverseasDeliveryPlanDTO.ListDTO>>
     */
-    PagingVO<OverseasDeliveryPlanDTO.ListDTO> paging(PagingDTO<OverseasDeliveryPlanDTO.PagingParamDTO> pagingParamDTO);
+    PagingVO<WmsDeliveryPlanDTO.ListDTO> paging(PagingDTO<WmsDeliveryPlanDTO.PagingParamDTO> pagingParamDTO);
 
     /**
     * 状态统计
@@ -55,7 +55,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
     * @param dto
     * @return List<OverseasDeliveryPlanDTO.TabListDTO>>
     */
-    List<OverseasDeliveryPlanDTO.TabListDTO> tabList(PermissionsDTO dto);
+    List<WmsDeliveryPlanDTO.TabListDTO> tabList(PermissionsDTO dto);
 
     /**
     * 详情
@@ -64,7 +64,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
     * @param id
     * @return
     */
-    OverseasDeliveryPlanDTO.ViewDTO view(String id);
+    WmsDeliveryPlanDTO.ViewDTO view(String id);
 
     /**
     * 新增并提交审核
@@ -73,7 +73,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
     * @param dto
     * @return BaseResultDTO.AddDTO
     */
-    BaseResultDTO.AddDTO addAndSubmit(OverseasDeliveryPlanDTO.AddDTO dto);
+    BaseResultDTO.AddDTO addAndSubmit(WmsDeliveryPlanDTO.AddDTO dto);
 
     /**
     * 修改并提交审核
@@ -82,7 +82,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
     * @param dto
     * @return
     */
-    void updateAndSubmit(OverseasDeliveryPlanDTO.UpdateDTO dto);
+    void updateAndSubmit(WmsDeliveryPlanDTO.UpdateDTO dto);
 
      /**
      * 提交审核
@@ -146,7 +146,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
     * @param response
     * @return
     */
-    void exportList(OverseasDeliveryPlanDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportList(WmsDeliveryPlanDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法
@@ -154,7 +154,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
     * @param entity
     * @return
     */
-    Boolean approveEnd(ApproveOneDTO dto, OverseasDeliveryPlanEntity entity);
+    Boolean approveEnd(ApproveOneDTO dto, WmsDeliveryPlanEntity entity);
 
     /**
      * 查询发货记录
@@ -172,7 +172,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
      * @param ids
      * @return java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>
      **/
-    List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> ids);
+    List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> ids);
 
     /**
      * 下推要货申请保存
@@ -181,7 +181,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
      * @param list
      * @return java.lang.Boolean
      **/
-    Boolean generateRequisitionApplicationSave(List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list);
+    Boolean generateRequisitionApplicationSave(List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list);
 
     /**
      * 发货计划下推要货申请保存并提交
@@ -190,7 +190,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
      * @param list
      * @return java.lang.Boolean
      **/
-    Boolean generateRequisitionApplicationSaveAndSubmit(List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list);
+    Boolean generateRequisitionApplicationSaveAndSubmit(List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list);
 
     /**
      * 下推发货单列表查询
@@ -199,7 +199,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
      * @param ids
      * @return java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.GenerateDeliverViewDTO>
      **/
-    List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> generateDeliverView(List<String> ids);
+    List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> generateDeliverView(List<String> ids);
 
     /**
      * 下推发货单保存
@@ -208,7 +208,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
      * @param list
      * @return java.lang.Boolean
      **/
-    Boolean generateDeliverSave(List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> list);
+    Boolean generateDeliverSave(List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> list);
 
     /**
      * 下推发货单保存并提交
@@ -217,7 +217,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
      * @param list
      * @return java.lang.Boolean
      **/
-    Boolean generateDeliverSaveAndSubmit(List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> list);
+    Boolean generateDeliverSaveAndSubmit(List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> list);
 
     /**
      * 导入详情信息

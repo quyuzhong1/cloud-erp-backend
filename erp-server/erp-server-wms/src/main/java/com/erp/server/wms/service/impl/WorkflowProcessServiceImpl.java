@@ -35,7 +35,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     private FirstMileDeliveryService firstMileDeliveryService;
 
     @Resource
-    private OverseasDeliveryPlanService overseasDeliveryPlanService;
+    private WmsDeliveryPlanService wmsDeliveryPlanService;
 
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
@@ -63,7 +63,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
                 break;
             case OVERSEAS_DELIVERY_PLAN:
                 //海外发货计划
-                overseasDeliveryPlanApproveEnd(dto);
+                deliveryPlanApproveEnd(dto);
                 break;
             default:
                 break;
@@ -155,13 +155,13 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
      * @param dto
      * @return java.lang.Boolean
      **/
-    private Boolean overseasDeliveryPlanApproveEnd(EndProcessDTO dto) {
+    private Boolean deliveryPlanApproveEnd(EndProcessDTO dto) {
         //FBA发货单
-        OverseasDeliveryPlanEntity entity = overseasDeliveryPlanService.getById(dto.getBusinessId());
+        WmsDeliveryPlanEntity entity = wmsDeliveryPlanService.getById(dto.getBusinessId());
         ApproveOneDTO approveOne = new ApproveOneDTO();
         approveOne.setType(dto.getApproveStatus().getStatus());
         approveOne.setId(dto.getBusinessId());
-        return overseasDeliveryPlanService.approveEnd(approveOne,entity);
+        return wmsDeliveryPlanService.approveEnd(approveOne,entity);
     }
 
 }

@@ -13,10 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
 
 /**
  * <p>
@@ -28,7 +25,7 @@ import javax.validation.constraints.NotEmpty;
 */
 @Data
 @NoArgsConstructor
-public class OverseasDeliveryPlanDTO implements Serializable {
+public class WmsDeliveryPlanDTO implements Serializable {
 
 
      /**
@@ -292,7 +289,7 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         /**
         * 详情
         */
-        private List<OverseasDeliveryPlanDetailDTO.ViewDTO> detailList;
+        private List<WmsDeliveryPlanDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -305,7 +302,7 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         /**
          * 详情
          */
-        private List<OverseasDeliveryPlanDetailDTO.AddDTO> detailList;
+        private List<WmsDeliveryPlanDetailDTO.AddDTO> detailList;
     }
 
     /**
@@ -324,7 +321,7 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         /**
          * 详情
          */
-        private List<OverseasDeliveryPlanDetailDTO.UpdateDTO> detailList;
+        private List<WmsDeliveryPlanDetailDTO.UpdateDTO> detailList;
 
     }
 

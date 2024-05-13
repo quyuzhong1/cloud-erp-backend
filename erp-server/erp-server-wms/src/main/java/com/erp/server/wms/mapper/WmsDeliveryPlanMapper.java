@@ -1,5 +1,6 @@
 package com.erp.server.wms.mapper;
-import com.erp.model.wms.entity.OverseasDeliveryPlanEntity;
+import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
+import com.erp.model.wms.entity.WmsDeliveryPlanEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -7,7 +8,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Param;
 
-import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
 
 import java.util.List;
@@ -21,7 +21,7 @@ import java.util.List;
  * @since 2023-11-16
  */
 @Mapper
-public interface OverseasDeliveryPlanMapper extends BaseMapper<OverseasDeliveryPlanEntity> {
+public interface WmsDeliveryPlanMapper extends BaseMapper<WmsDeliveryPlanEntity> {
 
     /**
     * 分页查询
@@ -29,21 +29,21 @@ public interface OverseasDeliveryPlanMapper extends BaseMapper<OverseasDeliveryP
     * @param params
     * @return
     */
-    IPage<OverseasDeliveryPlanDTO.ListDTO> paging(Page query, @Param("params") OverseasDeliveryPlanDTO.PagingParamDTO params);
+    IPage<WmsDeliveryPlanDTO.ListDTO> paging(Page query, @Param("params") WmsDeliveryPlanDTO.PagingParamDTO params);
 
     /**
     * 状态数量
     * @param params
     * @return
     */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") OverseasDeliveryPlanDTO.PagingParamDTO params);
+    List<ApproveStatusQtyDTO> listCount(@Param("params") WmsDeliveryPlanDTO.PagingParamDTO params);
 
     /**
     * 导出Excel查询
     * @param params
     * @return
     */
-    List<OverseasDeliveryPlanDTO.ListDTO> listExport(@Param("params") OverseasDeliveryPlanDTO.PagingParamDTO params);
+    List<WmsDeliveryPlanDTO.ListDTO> listExport(@Param("params") WmsDeliveryPlanDTO.PagingParamDTO params);
 
 
     /**
@@ -51,7 +51,7 @@ public interface OverseasDeliveryPlanMapper extends BaseMapper<OverseasDeliveryP
     * @param searchParam
     * @return
     */
-    List<OverseasDeliveryPlanDTO.TabListDTO> tabList(@Param("params") OverseasDeliveryPlanDTO.PagingParamDTO searchParam);
+    List<WmsDeliveryPlanDTO.TabListDTO> tabList(@Param("params") WmsDeliveryPlanDTO.PagingParamDTO searchParam);
 
     /**
      * 下推要货申请列表查询
@@ -60,7 +60,7 @@ public interface OverseasDeliveryPlanMapper extends BaseMapper<OverseasDeliveryP
      * @param ids
      * @return java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>
      **/
-    List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(@Param("ids") List<String> ids);
+    List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(@Param("ids") List<String> ids);
 
     /**
      * 下推发货单列表查询
@@ -69,5 +69,5 @@ public interface OverseasDeliveryPlanMapper extends BaseMapper<OverseasDeliveryP
      * @param ids
      * @return java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.GenerateDeliverViewDTO>
      **/
-    List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> generateDeliverView(@Param("ids") List<String> ids);
+    List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> generateDeliverView(@Param("ids") List<String> ids);
 }

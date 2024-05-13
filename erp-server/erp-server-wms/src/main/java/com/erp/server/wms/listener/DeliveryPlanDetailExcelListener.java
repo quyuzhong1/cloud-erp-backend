@@ -7,7 +7,6 @@ import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO;
 import com.erp.model.wms.dto.excel.DeliveryPlanDetailExportExcelDTO;
 
 import java.util.ArrayList;

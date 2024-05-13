@@ -15,8 +15,8 @@ import org.springframework.stereotype.Component;
  **/
 @Mapper(uses = TypeConversionWorker.class)
 @Component
-public interface OverseasDeliveryPlanConverter {
-    OverseasDeliveryPlanConverter INSTANCE = Mappers.getMapper(OverseasDeliveryPlanConverter.class);
+public interface deliveryPlanConverter {
+    deliveryPlanConverter INSTANCE = Mappers.getMapper(deliveryPlanConverter.class);
 
     @Mappings({
             @Mapping(target = "toWarehouseId", constant = ""),
@@ -28,7 +28,7 @@ public interface OverseasDeliveryPlanConverter {
             @Mapping(target = "handleUserName", constant = ""),
             @Mapping(target = "requisitionWarehouseName", constant = ""),
     })
-    RequisitionApplicationDTO.AddDTO DeliveryPlanGRA(OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO dto);
+    RequisitionApplicationDTO.AddDTO DeliveryPlanGRA(WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO dto);
 
 
 
@@ -36,17 +36,17 @@ public interface OverseasDeliveryPlanConverter {
             @Mapping(target = "approveQty", ignore = true),
             @Mapping(target = "pickingQty", ignore = true)
     })
-    RequisitionApplicationDetailDTO.AddDTO DeliveryPlanDetailGRA(OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO dto);
+    RequisitionApplicationDetailDTO.AddDTO DeliveryPlanDetailGRA(WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO dto);
 
     @Mappings({
             @Mapping(target = "destWarehouseId", source = "toWarehouseId"),
             @Mapping(target = "destWarehouseName", source = "toWarehouseName"),
             @Mapping(target = "countryId", source = "country")
     })
-    FirstMileDeliveryDTO.AddDTO generateDeliverFDD(OverseasDeliveryPlanDTO.GenerateDeliverViewDTO dto);
+    FirstMileDeliveryDTO.AddDTO generateDeliverFDD(WmsDeliveryPlanDTO.GenerateDeliverViewDTO dto);
 
     @Mappings({
             @Mapping(target = "platformSkuNo", source = "platformSku")
     })
-    FirstMileDeliveryDetailDTO.AddDTO generateDeliverDetailFDD(OverseasDeliveryPlanDTO.GenerateDeliverViewDTO dto);
+    FirstMileDeliveryDetailDTO.AddDTO generateDeliverDetailFDD(WmsDeliveryPlanDTO.GenerateDeliverViewDTO dto);
 }

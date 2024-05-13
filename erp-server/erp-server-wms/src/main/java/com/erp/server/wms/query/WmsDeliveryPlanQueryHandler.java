@@ -1,24 +1,18 @@
 package com.erp.server.wms.query;
 
-import com.common.business.constant.SearchType;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.common.business.threadlocal.AdvanceQueryContext;
 import com.erp.model.oms.dto.ListingAdvanceQueryDTO;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
-import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,7 +21,7 @@ import java.util.stream.Collectors;
  * @date 2024年01月08日 9:54
  */
 @Component
-public class OverseasDeliveryPlanQueryHandler extends AbstractQueryHandler {
+public class WmsDeliveryPlanQueryHandler extends AbstractQueryHandler {
 
     @Resource
     private SkuMappingFeign skuMappingFeign;

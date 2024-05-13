@@ -18,10 +18,10 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
-import com.erp.model.wms.entity.OverseasDeliveryPlanEntity;
-import com.erp.server.wms.query.OverseasDeliveryPlanQueryHandler;
-import com.erp.server.wms.service.OverseasDeliveryPlanService;
+import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
+import com.erp.model.wms.entity.WmsDeliveryPlanEntity;
+import com.erp.server.wms.query.WmsDeliveryPlanQueryHandler;
+import com.erp.server.wms.service.WmsDeliveryPlanService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -47,10 +47,10 @@ import java.util.List;
 @RestController
 @LogSystemModule("发货计划")
 @RequestMapping("/overseasDeliveryPlan")
-public class OverseasDeliveryPlanController extends BaseController {
+public class WmsDeliveryPlanController extends BaseController {
 
     @Resource
-    private OverseasDeliveryPlanService overseasDeliveryPlanService;
+    private WmsDeliveryPlanService wmsDeliveryPlanService;
 
     /**
     * 新增
@@ -61,8 +61,8 @@ public class OverseasDeliveryPlanController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "发货计划新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated OverseasDeliveryPlanDTO.AddDTO dto) {
-        return success(overseasDeliveryPlanService.add(dto));
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated WmsDeliveryPlanDTO.AddDTO dto) {
+        return success(wmsDeliveryPlanService.add(dto));
     }
 
     /**
@@ -77,10 +77,10 @@ public class OverseasDeliveryPlanController extends BaseController {
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
         menuCode = "wms:overseasDeliveryPlan:update",
-        serviceClass = OverseasDeliveryPlanService.class,
+        serviceClass = WmsDeliveryPlanService.class,
         keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated OverseasDeliveryPlanDTO.UpdateDTO dto) {
-        overseasDeliveryPlanService.update(dto);
+    public ApiResult update(@RequestBody @Validated WmsDeliveryPlanDTO.UpdateDTO dto) {
+        wmsDeliveryPlanService.update(dto);
         return success();
     }
 
@@ -94,8 +94,8 @@ public class OverseasDeliveryPlanController extends BaseController {
             menuCode = "wms:overseasDeliveryPlan:paging",
             tableAlias = "odp"
     )
-    public ApiResult<List<OverseasDeliveryPlanDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-       return success(overseasDeliveryPlanService.tabList(dto));
+    public ApiResult<List<WmsDeliveryPlanDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+       return success(wmsDeliveryPlanService.tabList(dto));
     }
 
     /**
@@ -111,9 +111,9 @@ public class OverseasDeliveryPlanController extends BaseController {
             menuCode = "wms:overseasDeliveryPlan:paging",
             tableAlias = "odp"
     )
-    @WebAdvanceQuery(handler = OverseasDeliveryPlanQueryHandler.class)
-    public ApiResult<PagingVO<OverseasDeliveryPlanDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<OverseasDeliveryPlanDTO.PagingParamDTO> dto) {
-        return success(overseasDeliveryPlanService.paging(dto));
+    @WebAdvanceQuery(handler = WmsDeliveryPlanQueryHandler.class)
+    public ApiResult<PagingVO<WmsDeliveryPlanDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<WmsDeliveryPlanDTO.PagingParamDTO> dto) {
+        return success(wmsDeliveryPlanService.paging(dto));
     }
 
     /**
@@ -128,10 +128,10 @@ public class OverseasDeliveryPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:overseasDeliveryPlan:add",
-            serviceClass = OverseasDeliveryPlanService.class,
+            serviceClass = WmsDeliveryPlanService.class,
             keyIdName = "id")
-    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated OverseasDeliveryPlanDTO.AddDTO dto) {
-        BaseResultDTO.AddDTO result = overseasDeliveryPlanService.addAndSubmit(dto);
+    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated WmsDeliveryPlanDTO.AddDTO dto) {
+        BaseResultDTO.AddDTO result = wmsDeliveryPlanService.addAndSubmit(dto);
         return success(result);
     }
 
@@ -147,10 +147,10 @@ public class OverseasDeliveryPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:overseasDeliveryPlan:updateAndSubmit",
-            serviceClass = OverseasDeliveryPlanService.class,
+            serviceClass = WmsDeliveryPlanService.class,
             keyIdName = "id")
-    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated OverseasDeliveryPlanDTO.UpdateDTO dto) {
-        overseasDeliveryPlanService.updateAndSubmit(dto);
+    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated WmsDeliveryPlanDTO.UpdateDTO dto) {
+        wmsDeliveryPlanService.updateAndSubmit(dto);
         return success();
     }
 
@@ -165,7 +165,7 @@ public class OverseasDeliveryPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:overseasDeliveryPlan:submit",
-            serviceClass = OverseasDeliveryPlanService.class,
+            serviceClass = WmsDeliveryPlanService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.SUBMIT, desc = "发货计划提交审核")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -173,10 +173,10 @@ public class OverseasDeliveryPlanController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = overseasDeliveryPlanService.submit(id);
+                submit = wmsDeliveryPlanService.submit(id);
             }catch (Exception e){
                 log.error("发货计划 提交审核失败",e);
-                OverseasDeliveryPlanEntity entity = overseasDeliveryPlanService.getById(id);
+                WmsDeliveryPlanEntity entity = wmsDeliveryPlanService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, id, "发货计划不存在, 提交失败");
                     resultDTOS.add(submit);
@@ -200,7 +200,7 @@ public class OverseasDeliveryPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:overseasDeliveryPlan:approve",
-            serviceClass = OverseasDeliveryPlanService.class,
+            serviceClass = WmsDeliveryPlanService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.APPROVE, desc = "发货计划审核")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
@@ -209,10 +209,10 @@ public class OverseasDeliveryPlanController extends BaseController {
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = overseasDeliveryPlanService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                approveResult = wmsDeliveryPlanService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
             }catch (Exception e){
                 log.error("发货计划审核失败",e);
-                OverseasDeliveryPlanEntity entity = overseasDeliveryPlanService.getById(id);
+                WmsDeliveryPlanEntity entity = wmsDeliveryPlanService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     approveResult = BatchResultDTO.fail(id, id, "发货计划不存在, 审核失败");
                     resultDTOS.add(approveResult);
@@ -236,7 +236,7 @@ public class OverseasDeliveryPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:overseasDeliveryPlan:disApprove",
-            serviceClass = OverseasDeliveryPlanService.class,
+            serviceClass = WmsDeliveryPlanService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "发货计划反审核")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -244,10 +244,10 @@ public class OverseasDeliveryPlanController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO disApproveResult;
             try {
-                disApproveResult = overseasDeliveryPlanService.disApprove(id);
+                disApproveResult = wmsDeliveryPlanService.disApprove(id);
             }catch (Exception e){
                 log.error("发货计划反审核失败",e);
-                OverseasDeliveryPlanEntity entity = overseasDeliveryPlanService.getById(id);
+                WmsDeliveryPlanEntity entity = wmsDeliveryPlanService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     disApproveResult = BatchResultDTO.fail(id, id, "发货计划不存在, 反审核失败");
                     resultDTOS.add(disApproveResult);
@@ -271,7 +271,7 @@ public class OverseasDeliveryPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:overseasDeliveryPlan:delete",
-            serviceClass = OverseasDeliveryPlanService.class,
+            serviceClass = WmsDeliveryPlanService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "发货计划删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -279,10 +279,10 @@ public class OverseasDeliveryPlanController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = overseasDeliveryPlanService.delete(id);
+                deleteResult = wmsDeliveryPlanService.delete(id);
             }catch (Exception e){
                 log.error("发货计划删除失败",e);
-                OverseasDeliveryPlanEntity entity = overseasDeliveryPlanService.getById(id);
+                WmsDeliveryPlanEntity entity = wmsDeliveryPlanService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     deleteResult = BatchResultDTO.fail(id, id, "发货计划不存在, 删除失败");
                     resultDTOS.add(deleteResult);
@@ -306,7 +306,7 @@ public class OverseasDeliveryPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:overseasDeliveryPlan:invalid",
-            serviceClass = OverseasDeliveryPlanService.class,
+            serviceClass = WmsDeliveryPlanService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.INVALID, desc = "发货计划作废")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
@@ -314,10 +314,10 @@ public class OverseasDeliveryPlanController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO invalidResult;
             try {
-                invalidResult = overseasDeliveryPlanService.invalid(id,dto.getRemark());
+                invalidResult = wmsDeliveryPlanService.invalid(id,dto.getRemark());
             }catch (Exception e){
                 log.error("发货计划作废失败",e);
-                OverseasDeliveryPlanEntity entity = overseasDeliveryPlanService.getById(id);
+                WmsDeliveryPlanEntity entity = wmsDeliveryPlanService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     invalidResult = BatchResultDTO.fail(id, id, "发货计划不存在, 作废失败");
                     resultDTOS.add(invalidResult);
@@ -341,7 +341,7 @@ public class OverseasDeliveryPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:overseasDeliveryPlan:cancelProcess",
-            serviceClass = OverseasDeliveryPlanService.class,
+            serviceClass = WmsDeliveryPlanService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CANCEL, desc = "发货计划撤销")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -349,10 +349,10 @@ public class OverseasDeliveryPlanController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = overseasDeliveryPlanService.cancelProcess(id);
+                cancelResult = wmsDeliveryPlanService.cancelProcess(id);
             }catch (Exception e){
                 log.error("发货计划撤回流程失败",e);
-                OverseasDeliveryPlanEntity entity = overseasDeliveryPlanService.getById(id);
+                WmsDeliveryPlanEntity entity = wmsDeliveryPlanService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     cancelResult = BatchResultDTO.fail(id, id, "发货计划不存在, 撤回流程失败");
                     resultDTOS.add(cancelResult);
@@ -376,10 +376,10 @@ public class OverseasDeliveryPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:overseasDeliveryPlan:view",
-            serviceClass = OverseasDeliveryPlanService.class,
+            serviceClass = WmsDeliveryPlanService.class,
             keyIdName = "id")
-    public ApiResult<OverseasDeliveryPlanDTO.ViewDTO> view(@RequestParam("id") String id) {
-        return success(overseasDeliveryPlanService.view(id));
+    public ApiResult<WmsDeliveryPlanDTO.ViewDTO> view(@RequestParam("id") String id) {
+        return success(wmsDeliveryPlanService.view(id));
     }
 
     /**
@@ -397,9 +397,9 @@ public class OverseasDeliveryPlanController extends BaseController {
             tableAlias = "odp"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "发货计划导出Excel数据")
-    @WebAdvanceQuery(handler = OverseasDeliveryPlanQueryHandler.class)
-    public void exportList(@RequestBody @Validated OverseasDeliveryPlanDTO.PagingParamDTO dto, HttpServletResponse response) {
-        overseasDeliveryPlanService.exportList(dto, response);
+    @WebAdvanceQuery(handler = WmsDeliveryPlanQueryHandler.class)
+    public void exportList(@RequestBody @Validated WmsDeliveryPlanDTO.PagingParamDTO dto, HttpServletResponse response) {
+        wmsDeliveryPlanService.exportList(dto, response);
     }
 
     /**
@@ -411,7 +411,7 @@ public class OverseasDeliveryPlanController extends BaseController {
      **/
     @GetMapping("/listDeliverRecord")
     public ApiResult<List<FirstMileDeliveryDTO.DeliverRecordView>> listDeliverRecord(@RequestParam("id") String id) {
-        List<FirstMileDeliveryDTO.DeliverRecordView> result = overseasDeliveryPlanService.listDeliverRecord(id);
+        List<FirstMileDeliveryDTO.DeliverRecordView> result = wmsDeliveryPlanService.listDeliverRecord(id);
         return success(result);
     }
 
@@ -423,8 +423,8 @@ public class OverseasDeliveryPlanController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>>
      **/
     @PostMapping("/generateRequisitionApplicationView")
-    public ApiResult<List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>> generateRequisitionApplicationView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> result = overseasDeliveryPlanService.generateRequisitionApplicationView(dto.getIds());
+    public ApiResult<List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>> generateRequisitionApplicationView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> result = wmsDeliveryPlanService.generateRequisitionApplicationView(dto.getIds());
         return success(result);
     }
 
@@ -437,8 +437,8 @@ public class OverseasDeliveryPlanController extends BaseController {
      **/
     @PostMapping("/generateRequisitionApplicationSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "发货计划下推要货申请保存")
-    public ApiResult generateRequisitionApplicationSave(@RequestBody @Validated ValidList<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> dto) {
-        Boolean flag = overseasDeliveryPlanService.generateRequisitionApplicationSave(dto.getList());
+    public ApiResult generateRequisitionApplicationSave(@RequestBody @Validated ValidList<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> dto) {
+        Boolean flag = wmsDeliveryPlanService.generateRequisitionApplicationSave(dto.getList());
         return flag ? success() : failure();
     }
 
@@ -451,8 +451,8 @@ public class OverseasDeliveryPlanController extends BaseController {
      **/
     @PostMapping("/generateRequisitionApplicationSaveAndSubmit")
     @LogAction(value = LogActionEnum.INSERT, desc = "发货计划下推要货申请保存并提交")
-    public ApiResult generateRequisitionApplicationSaveAndSubmit(@RequestBody @Validated ValidList<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> dto) {
-        Boolean flag = overseasDeliveryPlanService.generateRequisitionApplicationSaveAndSubmit(dto.getList());
+    public ApiResult generateRequisitionApplicationSaveAndSubmit(@RequestBody @Validated ValidList<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> dto) {
+        Boolean flag = wmsDeliveryPlanService.generateRequisitionApplicationSaveAndSubmit(dto.getList());
         return flag ? success() : failure();
     }
 
@@ -464,8 +464,8 @@ public class OverseasDeliveryPlanController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.GenerateDeliverViewDTO>>
      **/
     @PostMapping("/generateDeliverView")
-    public ApiResult<List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO>> generateDeliverView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> result = overseasDeliveryPlanService.generateDeliverView(dto.getIds());
+    public ApiResult<List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO>> generateDeliverView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> result = wmsDeliveryPlanService.generateDeliverView(dto.getIds());
         return success(result);
     }
 
@@ -478,8 +478,8 @@ public class OverseasDeliveryPlanController extends BaseController {
      **/
     @PostMapping("/generateDeliverSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "下推发货单保存")
-    public ApiResult generateDeliverSave(@RequestBody @Validated ValidList<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> dto) {
-        Boolean flag = overseasDeliveryPlanService.generateDeliverSave(dto.getList());
+    public ApiResult generateDeliverSave(@RequestBody @Validated ValidList<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> dto) {
+        Boolean flag = wmsDeliveryPlanService.generateDeliverSave(dto.getList());
         return flag ? success() : failure();
     }
 
@@ -492,8 +492,8 @@ public class OverseasDeliveryPlanController extends BaseController {
      **/
     @PostMapping("/generateDeliverSaveAndSubmit")
     @LogAction(value = LogActionEnum.INSERT, desc = "下推发货单保存并提交")
-    public ApiResult generateDeliverSaveAndSubmit(@RequestBody @Validated ValidList<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> dto) {
-        Boolean flag = overseasDeliveryPlanService.generateDeliverSaveAndSubmit(dto.getList());
+    public ApiResult generateDeliverSaveAndSubmit(@RequestBody @Validated ValidList<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> dto) {
+        Boolean flag = wmsDeliveryPlanService.generateDeliverSaveAndSubmit(dto.getList());
         return flag ? success() : failure();
     }
 
@@ -507,7 +507,7 @@ public class OverseasDeliveryPlanController extends BaseController {
      **/
     @PostMapping("/importDetailFile")
     public ApiResult<ListingInfoDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.CommonDTO excelImportDTO, HttpServletResponse response) {
-        ListingInfoDTO.ImportDTO list = overseasDeliveryPlanService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getThirdSkuNoList(),excelImportDTO.getWarehouseId(),response);
+        ListingInfoDTO.ImportDTO list = wmsDeliveryPlanService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getThirdSkuNoList(),excelImportDTO.getWarehouseId(),response);
         return success(list);
     }
 

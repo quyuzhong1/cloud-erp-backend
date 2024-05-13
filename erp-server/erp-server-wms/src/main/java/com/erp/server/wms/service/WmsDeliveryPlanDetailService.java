@@ -1,9 +1,7 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
-import com.erp.model.wms.entity.OverseasDeliveryPlanDetailEntity;
+import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
+import com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO;
 
 import java.util.List;
 
@@ -15,7 +13,7 @@ import java.util.List;
  * @author Luo_WG
  * @since 2023-11-16
  */
-public interface OverseasDeliveryPlanDetailService extends SuperService<OverseasDeliveryPlanDetailEntity> {
+public interface WmsDeliveryPlanDetailService extends SuperService<WmsDeliveryPlanDetailEntity> {
 
     /**
      * 新增
@@ -25,7 +23,7 @@ public interface OverseasDeliveryPlanDetailService extends SuperService<Overseas
      * @param mainId
      * @return com.common.business.dto.base.BaseResultDTO.AddDTO
      **/
-    void add(OverseasDeliveryPlanDTO.AddDTO addDTO, String mainId);
+    void add(WmsDeliveryPlanDTO.AddDTO addDTO, String mainId);
 
     /**
     * 修改
@@ -34,7 +32,7 @@ public interface OverseasDeliveryPlanDetailService extends SuperService<Overseas
     * @param dto
     * @return
     */
-    void update(OverseasDeliveryPlanDTO.UpdateDTO dto, String mainId);
+    void update(WmsDeliveryPlanDTO.UpdateDTO dto, String mainId);
 
 
     /**
@@ -44,7 +42,7 @@ public interface OverseasDeliveryPlanDetailService extends SuperService<Overseas
      * @param mainIds
      * @return java.util.List<com.erp.model.wms.entity.OverseasDeliveryPlanDetailEntity>
      **/
-    List<OverseasDeliveryPlanDetailEntity> listByMainIds(List<String> mainIds);
+    List<WmsDeliveryPlanDetailEntity> listByMainIds(List<String> mainIds);
 
     /**
      * 根据主表id删除明细

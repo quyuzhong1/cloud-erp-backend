@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.wms.mapper.OverseasDeliveryPlanMapper">
+<mapper namespace="com.erp.server.wms.mapper.WmsDeliveryPlanMapper">
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.OverseasDeliveryPlanEntity">
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.WmsDeliveryPlanEntity">
        <result column="id" property="id" />
        <result column="create_time" property="createTime" />
        <result column="update_time" property="updateTime" />
@@ -43,7 +43,7 @@
         code, approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, delivery_status, to_warehouse_id, to_warehouse_name, country, country_name, plan_delivery_date, remark
     </sql>
 
-    <select id="paging" resultType="com.erp.model.wms.dto.OverseasDeliveryPlanDTO$ListDTO">
+    <select id="paging" resultType="com.erp.model.wms.dto.WmsDeliveryPlanDTO$ListDTO">
         SELECT
             odp.id,
             odpd.id AS detailId,
@@ -91,7 +91,7 @@
         select approve_status, count(id) from overseas_delivery_plan where is_deleted = false group by approve_status
     </select>
 
-    <select id="listExport" resultType="com.erp.model.wms.dto.OverseasDeliveryPlanDTO$ListDTO">
+    <select id="listExport" resultType="com.erp.model.wms.dto.WmsDeliveryPlanDTO$ListDTO">
         SELECT
         odp.id,
         odp.code,
@@ -132,7 +132,7 @@
         </if>
         odp.create_time desc
     </select>
-    <select id="tabList" resultType="com.erp.model.wms.dto.OverseasDeliveryPlanDTO$TabListDTO">
+    <select id="tabList" resultType="com.erp.model.wms.dto.WmsDeliveryPlanDTO$TabListDTO">
         SELECT
         approve_status AS tabFlag,
         count(*)  AS count
@@ -142,7 +142,7 @@
     </select>
 
     <!--下推要货申请列表查询-->
-    <select id="generateRequisitionApplicationView" resultType="com.erp.model.wms.dto.OverseasDeliveryPlanDTO$GenerateRequisitionApplicationViewDTO">
+    <select id="generateRequisitionApplicationView" resultType="com.erp.model.wms.dto.WmsDeliveryPlanDTO$GenerateRequisitionApplicationViewDTO">
         SELECT
             odp.id AS sourceId,
             odpd.id AS sourceDetailId,
@@ -169,7 +169,7 @@
     </select>
 
     <!--下推发货单列表查询-->
-    <select id="generateDeliverView" resultType="com.erp.model.wms.dto.OverseasDeliveryPlanDTO$GenerateDeliverViewDTO">
+    <select id="generateDeliverView" resultType="com.erp.model.wms.dto.WmsDeliveryPlanDTO$GenerateDeliverViewDTO">
         SELECT
         odp.id AS sourceId,
         odpd.id AS sourceDetailId,
