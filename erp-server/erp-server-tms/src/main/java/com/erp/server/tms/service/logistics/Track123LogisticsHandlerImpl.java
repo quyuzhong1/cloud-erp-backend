@@ -3,6 +3,7 @@ package com.erp.server.tms.service.logistics;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.LogisticsTransportTypeEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.MathUtil;
@@ -94,6 +95,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                                 LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                                 logisticsTrackEntity.setTrackTime(eventTime);
                                 logisticsTrackEntity.setContent(trackingDetail.getEventDetail());
+                                logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode());
                                 logisticsTrackEntities.add(logisticsTrackEntity);
                             });
                         }else if (StringUtils.isNotEmpty(trackDetail.getTransitStatus())){
@@ -103,6 +105,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                             LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                             logisticsTrackEntity.setTrackTime(eventTime);
                             logisticsTrackEntity.setContent("暂无信息");
+                            logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode());
                             logisticsTrackEntities.add(logisticsTrackEntity);
                         }
 
@@ -117,6 +120,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                         logisticsTrackEntity.setStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
                         logisticsTrackEntity.setContent(rejected.getError().getCode() + ":" + rejected.getError().getMsg());
                         logisticsTrackEntity.setTrackTime(LocalDateTime.now());
+                        logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode());
                         logisticsTrackEntities.add(logisticsTrackEntity);
                     });
                 }
@@ -163,15 +167,17 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                                         LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                                         logisticsTrackEntity.setTrackTime(eventTime);
                                         logisticsTrackEntity.setContent(trackingDetail.getEventDetails());
+                                        logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.OCEAN.getCode());
                                         logisticsTrackList.add(logisticsTrackEntity);
                                     });
-                                }else if (StringUtils.isNotEmpty(oceanContainerInfo.getTransitStatus())){
+                                }else{
                                     LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
                                     logisticsTrackEntity.setTrackNo(trackDetail.getTrackingNo());
-                                    logisticsTrackEntity.setStatus(convertTrackStatus(oceanContainerInfo.getTransitStatus()));//转换类型
+                                    logisticsTrackEntity.setStatus(LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode());//转换类型
                                     LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                                     logisticsTrackEntity.setTrackTime(eventTime);
                                     logisticsTrackEntity.setContent("暂无信息");
+                                    logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.OCEAN.getCode());
                                     logisticsTrackList.add(logisticsTrackEntity);
                                 }
                             });
@@ -183,10 +189,11 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                 if (CollectionUtils.isNotEmpty(rejecteds)) {
                     rejecteds.forEach(rejected -> {
                         LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
-                        logisticsTrackEntity.setTrackNo(rejected.getTrackNo());
+                        logisticsTrackEntity.setTrackNo(rejected.getTrackingNo());
                         logisticsTrackEntity.setStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
                         logisticsTrackEntity.setContent(rejected.getError().getCode() + ":" + rejected.getError().getMsg());
                         logisticsTrackEntity.setTrackTime(LocalDateTime.now());
+                        logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.OCEAN.getCode());
                         logisticsTrackList.add(logisticsTrackEntity);
                     });
                 }
@@ -308,9 +315,9 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                         if (Objects.nonNull(rejected1.getError()) && StringUtils.isNotEmpty(rejected1.getError().getMsg())
                                 && rejected1.getError().getMsg().equals(HAS_BEEN_IMPORTED)){
                             //已导入的运单号，返回成功
-                            registerResponseVOS.add(RegisterResponseVO.builder().trackNo(rejected1.getTrackNo()).orderNo(rejected1.getOrderNo()).trackStatus(true).build());
+                            registerResponseVOS.add(RegisterResponseVO.builder().trackNo(rejected1.getTrackingNo()).orderNo(rejected1.getOrderNo()).trackStatus(true).build());
                         }else {
-                            registerResponseVOS.add(RegisterResponseVO.builder().trackNo(rejected1.getTrackNo()).trackStatus(false)
+                            registerResponseVOS.add(RegisterResponseVO.builder().trackNo(rejected1.getTrackingNo()).trackStatus(false)
                                     .code(rejected1.getError().getCode())
                                     .msg(rejected1.getError().getMsg()).build());
                         }
