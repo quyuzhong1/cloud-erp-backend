@@ -3051,29 +3051,31 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(logisticsEntityList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
-
+        List<LogisticsBillDTO.LogisticsBillVo> billVos = list.stream()
+                .filter(bill -> StringUtils.isNotBlank(bill.getLogisticsCode()))
+                .map(bill -> {
+                    LogisticsBillDTO.LogisticsBillVo logisticsBillVo = new LogisticsBillDTO.LogisticsBillVo();
+                    logisticsBillVo.setSourceId(bill.getId());
+                    logisticsBillVo.setTrackNo(bill.getLogisticsCode());
+                    return logisticsBillVo;
+                }).collect(Collectors.toList());
         //获取运输状态
-        Map<String, List<LogisticsBillDTO.LogisticsBillVo>> logisticsBillMap = logisticsBillFeign.getTrackStatusByTrackNo(list.stream()
-                        .filter(bill->Objects.nonNull(bill.getLogisticsCode()))
-                        .map(bill->{
-                            LogisticsBillDTO.LogisticsBillVo logisticsBillVo = new LogisticsBillDTO.LogisticsBillVo();
-                            logisticsBillVo.setSourceId(bill.getId());
-                            logisticsBillVo.setTrackNo(bill.getLogisticsCode());
-                            return logisticsBillVo;
-                        }).collect(Collectors.toList()))
-                .stream().collect(Collectors.groupingBy(LogisticsBillDTO.LogisticsBillVo::getTrackNo));
-        if (ObjectUtils.isNotEmpty(logisticsBillMap)) {
-            list.forEach(item -> {
-                if (StringUtils.isNotBlank(item.getLogisticsCode())) {
-                    List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillMap.get(item.getLogisticsCode());
-                    if (CollectionUtils.isNotEmpty(logisticsBillVos)) {
-                        LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillVos.get(0);
-                        //运输状态
-                        item.setTrackStatus(logisticsBillVo.getTrackStatus());
-                        item.setTrackStatusName(logisticsBillVo.getTrackStatusName());
+        if (CollectionUtils.isNotEmpty(billVos)) {
+            Map<String, List<LogisticsBillDTO.LogisticsBillVo>> logisticsBillMap = logisticsBillFeign.getTrackStatusByTrackNo(billVos)
+                    .stream().collect(Collectors.groupingBy(LogisticsBillDTO.LogisticsBillVo::getTrackNo));
+            if (ObjectUtils.isNotEmpty(logisticsBillMap)) {
+                list.forEach(item -> {
+                    if (StringUtils.isNotBlank(item.getLogisticsCode())) {
+                        List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillMap.get(item.getLogisticsCode());
+                        if (CollectionUtils.isNotEmpty(logisticsBillVos)) {
+                            LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillVos.get(0);
+                            //运输状态
+                            item.setTrackStatus(logisticsBillVo.getTrackStatus());
+                            item.setTrackStatusName(logisticsBillVo.getTrackStatusName());
+                        }
                     }
-                }
-            });
+                });
+            }
         }
         //财务信息
         List<SoB2cFinanceEntity> soB2cFinanceEntityList = soB2cFinanceService.listByMainIds(ids);
