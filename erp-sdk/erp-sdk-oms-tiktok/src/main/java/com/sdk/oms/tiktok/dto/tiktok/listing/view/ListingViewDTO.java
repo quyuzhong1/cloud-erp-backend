@@ -24,4 +24,5 @@ public class ListingViewDTO {
     private String message;
     @JsonProperty("request_id")
     private String requestId;
+
 }
