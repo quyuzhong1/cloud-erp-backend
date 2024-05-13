@@ -175,6 +175,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceIdsAndType(receiveIds,SourceTypeEnum.PO_RECEIVE.getCode());
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
+                //设置入库状态名称
+                obj.setInStockStatusName(InstockStatusEnum.getByCode(obj.getInStockStatus()));
                 List<QcInfoEntity> resultList = qcInfoList.stream().filter(v -> v.getSourceId().equals(obj.getId())).collect(Collectors.toList());
                 if(resultList.stream().allMatch(v->Objects.isNull(v.getQcStatus()) || QcBillStatusEnum.DRAFT.equals(v.getQcStatus())|| QcBillStatusEnum.WAIT_QC.equals(v.getQcStatus())|| QcBillStatusEnum.CANCEL.equals(v.getQcStatus()))){
                     obj.setQcStatus(PdaQclStatusEnum.WAIT_QC.getCode());
