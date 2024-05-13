@@ -41,6 +41,14 @@ public interface SpElServer {
      */
     Boolean matchExpression(String expression,Object obj);
 
+    /**
+     * 根据参数进行匹配表达式
+     * @param spElDTO
+     * @param obj
+     * @return
+     */
+    Boolean matchExpressionWithVariable(SpElExpressionDTO spElDTO,Object obj);
+
 
     /**
      * 匹配表达式结果
