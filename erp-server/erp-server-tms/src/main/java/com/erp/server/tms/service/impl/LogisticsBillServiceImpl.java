@@ -268,6 +268,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         //根据物流运单号/跟踪号获取运输状态
         List<String> trackNoList = billVoList.stream().map(LogisticsBillDTO.LogisticsBillVo::getTrackNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(trackNoList)) {
+            return billVoList;
+        }
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = baseMapper.listLogisticsBillVoByTrackNo(trackNoList);
         if (CollectionUtils.isEmpty(logisticsBillVos)) {
             return billVoList;
