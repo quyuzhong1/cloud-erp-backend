@@ -171,7 +171,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
      * @return
      */
     private List<GyyOrderEntity> pullDate(RequestDTO dto){
-        LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
+        LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime().minusMinutes(10);
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         return GyyApiUtils.querySalesList(dto.getPlatformApiEnum().getTaskName(), lastTime, nextTime, Boolean.FALSE);
     }
