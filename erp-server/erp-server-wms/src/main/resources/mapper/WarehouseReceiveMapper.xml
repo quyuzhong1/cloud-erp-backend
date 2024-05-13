@@ -11,6 +11,7 @@
             wr.purchase_order_code AS purchaseOrderCode,
             wr.supplier_name AS supplierName,
             wr.approve_status AS approveStatus,
+            wr.in_stock_status AS inStockStatus,
             wr.invalid_status AS invalidStatus,
             wrd.sku_id AS skuId,
             wrd.sku_no AS skuNo,
@@ -27,9 +28,26 @@
             wrd.purchase_order_detail_id AS purchaseOrderDetailId,
             wrd.remark,
             wr.subcontract_type as subcontractType,
-            wr.create_time AS createTime
+            wr.create_time AS createTime,
+            instock.instockQty as instockQty,
+            returnInfo.returnQty as returnQty
         FROM po_receive_detail wrd
         INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        LEFT JOIN (SELECT pi.source_id,pid.source_detail_id,SUM(pid.stock_in_qty) AS instockQty
+        FROM po_instock_detail pid
+        LEFT JOIN po_instock pi ON pi.id = pid.main_id AND pi.is_deleted = FALSE
+        AND pi.approve_status = 'approve' WHERE pid.is_deleted = FALSE
+        GROUP BY pi.source_id,pid.source_detail_id) instock
+        ON wr.ID = instock.source_id AND wrd.ID = instock.source_detail_id
+        left join (select qi.id qcId,qr.id qcResultId,qi.source_id qcSourceId
+        from qc_info qi
+        left join qc_result qr on qr.is_deleted=FALSE and qi.id=qr.main_id
+        where qi.is_deleted=FALSE and qi.qc_status='finishQc') qcInfo  on qcInfo.qcSourceId=wr.id
+        left join (select pr.source_id, prd.source_detail_id,sum(prd.return_qty) returnQty
+        from po_return_detail prd
+        left join po_return pr on prd.main_id=pr.id where pr.is_deleted=FALSE and pr.approve_status='approve'
+        group by pr.source_id, prd.source_detail_id) returnInfo
+        on qcInfo.qcId=returnInfo.source_id
         WHERE wr.is_deleted = FALSE
         <if test="params.code != null and params.code != ''">
             and wr.code = #{params.code}
