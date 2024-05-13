@@ -61,7 +61,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
                 //头程发货单
                 fbaDeliveryApproveEnd(dto);
                 break;
-            case OVERSEAS_DELIVERY_PLAN:
+            case DELIVERY_PLAN:
                 //海外发货计划
                 deliveryPlanApproveEnd(dto);
                 break;
