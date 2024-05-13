@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -145,11 +144,6 @@ public class ProductDetailEntity extends BaseEntity<ProductDetailEntity> impleme
     @TableField("warehouse_location")
     private String warehouseLocation;
 
-    /**
-     * 目的国申报价
-     */
-    @TableField(exist = false)
-    private BigDecimal destDeclarePrice;
     /**
      * 推荐仓位(大货区)
      */
