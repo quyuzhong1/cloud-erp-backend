@@ -86,6 +86,35 @@ public class SpElServerImpl implements SpElServer {
         return Boolean.FALSE;
     }
 
+    /**
+     * 匹配表达式结果
+     *
+     * @param spElDTO
+     * @param obj
+     * @return
+     */
+    @Override
+    public Boolean matchExpressionWithVariable(SpElExpressionDTO spElDTO, Object obj) {
+        String expressionStr = spElDTO.getExpression();
+        Map<String, Object> variables = spElDTO.getVariables();
+        try {
+            ExpressionParser parser = new SpelExpressionParser();
+            Expression expression = parser.parseExpression(expressionStr);
+            EvaluationContext context = new StandardEvaluationContext(obj);
+            if (!variables.isEmpty()){
+                for (String key : variables.keySet()){
+                    Object value = variables.get(key);
+                    context.setVariable(key, value);
+                }
+            }
+            Boolean result = expression.getValue(context, Boolean.class);
+            return result;
+        } catch (Exception e) {
+            log.error("匹配spEl 表达式有误{}", e);
+        }
+        return Boolean.FALSE;
+    }
+
 
     /**
      * 匹配表达式结果
@@ -112,7 +141,7 @@ public class SpElServerImpl implements SpElServer {
 
     @Override
     public Boolean matchDetailExpressionByConditionList(List<ConditionElement> conditionList, Map<String, Object> detailMap) {
-        SpElExpressionDTO spElDTO = getConditionExpression(conditionList, detailMap);
+        SpElExpressionDTO spElDTO = conditionExpressionByMap(conditionList, detailMap);
         List<SpElAddFieldDTO> addFieldList = spElDTO.getSpElAddFieldList();
         for (SpElAddFieldDTO item : addFieldList) {
             //原始字段
@@ -121,7 +150,7 @@ public class SpElServerImpl implements SpElServer {
             String addField = item.getNeedAddField();
             detailMap.put(addField, value);
         }
-        return matchExpression(spElDTO.getExpression(), detailMap);
+        return matchExpressionWithVariable(spElDTO, detailMap);
 
     }
 
@@ -215,6 +244,29 @@ public class SpElServerImpl implements SpElServer {
         spElDTO.setExpression(expression.toString());
         spElDTO.setSpElAddFieldList(addFieldList);
         return spElDTO;
+    }
+
+    /**
+     * 列表规则支持  增加表达式传递
+     * @param field
+     * @param addField
+     * @param compare
+     * @param targetValue
+     * @param spElDTO
+     * @param detailMap
+     * @return
+     */
+    private String getContentList(String field, String addField, String compare, Object targetValue, SpElExpressionDTO spElDTO, Map<String, Object> detailMap) {
+        String[] split = targetValue.toString().split(",");
+        StringBuilder sb=new StringBuilder();
+        sb.append("#").append(addField);
+        sb.append(".").append(compare);
+        sb.append("(#").append(field).append(")");
+        Map<String, Object> variables = spElDTO.getVariables();
+        variables.put(addField, Arrays.asList(split));
+        variables.put(field, detailMap.get(field));
+        spElDTO.setVariables(variables);
+        return sb.toString();
     }
 
     /**
@@ -438,7 +490,80 @@ public class SpElServerImpl implements SpElServer {
         return expression.toString();
     }
 
+    /**
+     * 获取到 传值为map 的 表达式
+     *
+     * @param conditionElementList
+     * @param detailMap
+     * @return
+     */
+    private SpElExpressionDTO conditionExpressionByMap(List<ConditionElement> conditionElementList, Map<String, Object> detailMap) {
+        SpElExpressionDTO spElDTO = new SpElExpressionDTO();
+        //需要加的字段
+        List<SpElAddFieldDTO> addFieldList = new ArrayList<>(5);
 
+        StringBuilder expression = new StringBuilder();
+        for (ConditionElement element : conditionElementList) {
+
+            //左括号
+            String leftBracket = element.getLeftBracket();
+            if (StringUtils.isNotBlank(leftBracket)) {
+                expression.append(leftBracket).append(" ");
+            }
+            //字段
+            String field = element.getField();
+
+            //关系 大于 等于之类
+            String compare = element.getCompare();
+
+            //对应的值
+            String value = element.getValue();
+            //值的类型
+            String valueType = element.getValueType();
+            Object conversionValue = conversionValue(value, valueType);
+            Boolean isStr="String".equals(valueType);
+
+            if (StringUtils.isNotBlank(field) && StringUtils.isNotBlank(compare)) {
+                String content = getContent(field,compare,conversionValue,isStr);
+                RuleCompareEnum contentsEnum = RuleCompareEnum.getByCode(compare);
+                if (Objects.nonNull(contentsEnum)) {
+                    switch (contentsEnum) {
+                        case CONTAINS:
+                            String addField = getAddField(field, addFieldList);
+                            content = getContentList(field,addField,compare,conversionValue,spElDTO, detailMap);
+                            break;
+                        case NOT_CONTAINS:
+                            String addField1 = getAddField(field, addFieldList);
+                            content = getContentList(field, addField1,compare,conversionValue,spElDTO, detailMap);
+                            break;
+                        case IS_NULL:
+                            content = convertToIsNullMapExpression(field);
+                            break;
+                        case NOT_NULL:
+                            content = convertToNotNullMapExpression(field);
+                            break;
+                        case STARTS_WITH:
+                            content = convertToStartsWithObjExpression(field,value);
+                            break;
+                    }
+                }
+                expression.append(content).append(" ");
+            }
+            //右括号
+            String rightBracket = element.getRightBracket();
+            if (StringUtils.isNotBlank(rightBracket)) {
+                expression.append(rightBracket).append(" ");
+            }
+            //逻辑关系
+            String logic = element.getLogic();
+            if (StringUtils.isNotBlank(logic)) {
+                expression.append(logic).append(" ");
+            }
+        }
+        spElDTO.setExpression(expression.toString());
+        spElDTO.setSpElAddFieldList(addFieldList);
+        return spElDTO;
+    }
 
     public static void main(String[] args) {
         SpElServerImpl spElServer=new SpElServerImpl();
