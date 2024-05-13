@@ -339,6 +339,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
         //数据赋值处理
+        logisticsBillCostService.handleDataPaging(resultList);
         String name = "尾程费用列表";
         StringBuffer sb = new StringBuffer();
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
