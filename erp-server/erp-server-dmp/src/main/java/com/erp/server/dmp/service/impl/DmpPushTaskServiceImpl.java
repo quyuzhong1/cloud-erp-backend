@@ -34,6 +34,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.dto.excel.DmpPushTaskExportExcelDTO;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskHistoryEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -312,7 +313,6 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean batchNoNeedSync(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
@@ -322,12 +322,13 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DATA);
         }
-        //判断数据状态-只有同步失败的才可以变更为无需同步
-        List<String> noNeedSyncIds = list.stream().filter(obj -> SyncStatusEnum.FAILED_SYNC.getCode().equals(obj.getStatus())).map(DmpPushTaskEntity::getId).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(noNeedSyncIds)) {
-            throw new ServiceException(ApiError.ERROR_STATUS_NO_NEED_SYNC);
+        List<DmpPushTaskEntity> noNeedSyncIds = list.stream().filter(obj ->
+                        (!SyncStatusEnum.IN_SYNC.getCode().equals(obj.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(obj.getStatus())))
+                .collect(Collectors.toList());
+        noNeedSyncIds.forEach(dmpPushTaskEntity -> dmpPushTaskEntity.setStatus(SyncStatusEnum.NO_NEED_SYNC.getCode()));
+        if (CollectionUtils.isNotEmpty(noNeedSyncIds)) {
+            updateBatchById(noNeedSyncIds, 500);
         }
-        this.baseMapper.updateStatus(noNeedSyncIds);
         return Boolean.TRUE;
     }
 
