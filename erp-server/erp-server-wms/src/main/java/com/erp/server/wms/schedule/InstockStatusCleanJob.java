@@ -20,12 +20,12 @@ public class InstockStatusCleanJob {
 
     @XxlJob("instockStatusCleanJob")
     public ReturnT<String> instockStatusCleanJob(){
-        XxlJobHelper.log("=====采购退货单自动确认 开始任务=====");
+        XxlJobHelper.log("=====采购收货单清洗入库状态 开始任务=====");
         long start = System.currentTimeMillis();
         warehouseReceiveService.instockStatusCleanJob();
         long end = System.currentTimeMillis();
         XxlJobHelper.log("主线程花费时间：{}", (end - start));
-        XxlJobHelper.log("=====采购退货单自动确认 结束任务=====");
+        XxlJobHelper.log("=====采购收货单清洗入库状态 结束任务=====");
         return ReturnT.SUCCESS;
     }
 }

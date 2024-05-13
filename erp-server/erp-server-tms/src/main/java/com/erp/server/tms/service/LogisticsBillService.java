@@ -91,7 +91,7 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @author hyj
      * @date 2024/5/11 10:39
      */
-    List<LogisticsBillDTO.LogisticsBillVo> getTrackStatusByTransportNo(List<LogisticsBillDTO.LogisticsBillVo> billVoList);
+    List<LogisticsBillDTO.LogisticsBillVo> getTrackStatusByTrackNo(List<LogisticsBillDTO.LogisticsBillVo> billVoList);
 
     /**
      * @description: 根据出库单号查询
