@@ -554,6 +554,10 @@ public class WarehouseReceiveDTO {
          * 单据状态
          */
         private List<String> approveStatusList;
+        /**
+         * 入库状态
+         */
+        private List<String> inStockStatusList;
 
         /**
          * 作废状态（false未作废，true已作废）

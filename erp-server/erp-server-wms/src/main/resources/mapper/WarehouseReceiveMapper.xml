@@ -29,12 +29,12 @@
             wrd.remark,
             wr.subcontract_type as subcontractType,
             wr.create_time AS createTime,
-            instock.instockQty as stockInQty,
+            instock.stockInQty as stockInQty,
             returnInfo.returnQty as returnQty
         FROM po_receive_detail wrd
         INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         LEFT JOIN (SELECT pi.source_id,pid.source_detail_id,
-        (case when SUM(pid.stock_in_qty) is null then 0 else SUM(pid.stock_in_qty)) AS stockInQty
+        (case when SUM(pid.stock_in_qty) is null then 0 else SUM(pid.stock_in_qty) END) AS stockInQty
         FROM po_instock_detail pid
         LEFT JOIN po_instock pi ON pi.id = pid.main_id AND pi.is_deleted = FALSE
         AND pi.approve_status = 'approve' WHERE pid.is_deleted = FALSE
@@ -45,7 +45,7 @@
         left join qc_result qr on qr.is_deleted=FALSE and qi.id=qr.main_id
         where qi.is_deleted=FALSE and qi.qc_status='finishQc') qcInfo  on qcInfo.qcSourceId=wr.id
         left join (select pr.source_id, prd.source_detail_id,
-        (case when SUM(prd.return_qty) is null then 0 else SUM(prd.return_qty)) returnQty
+        (case when SUM(prd.return_qty) is null then 0 else SUM(prd.return_qty) END) returnQty
         from po_return_detail prd
         left join po_return pr on prd.main_id=pr.id where pr.is_deleted=FALSE and pr.approve_status='approve'
         group by pr.source_id, prd.source_detail_id) returnInfo
@@ -97,7 +97,12 @@
                 #{item}
             </foreach>
         </if>
-
+        <if test="params.inStockStatusList != null and params.inStockStatusList.size > 0">
+            and wr.in_stock_status in
+            <foreach collection="params.inStockStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
         <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
             and wr.create_user_id in
             <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
@@ -108,7 +113,6 @@
         <if test="params.billDate != null and params.billDate.size > 0">
             and wr.bill_date >= #{params.billDate[0]} and  (#{params.billDate[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.bill_date
         </if>
-
         <if test="params.createTime != null and params.createTime.size > 0">
             and wr.create_time >= #{params.createTime[0]} and  (#{params.createTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.create_time
         </if>
