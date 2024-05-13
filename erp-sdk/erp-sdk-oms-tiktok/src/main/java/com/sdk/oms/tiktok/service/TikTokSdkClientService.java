@@ -103,9 +103,9 @@ public class TikTokSdkClientService {
         shopInfoDTO.setClientId("6buinkjt3hmld");
         shopInfoDTO.setBaseUrl("https://auth.tiktok-shops.com");
 
-        List<ListingViewDTO> listingViewDTOS = sdkClientService.sendMercadoGetListing(shopInfoDTO);
-        for (ListingViewDTO listingViewDTO : listingViewDTOS) {
-            System.out.println(listingViewDTO);
+        List<OrdersBean> ordersBeans = sdkClientService.listOrderView(Arrays.asList("576667270255054616"), shopInfoDTO);
+        for (OrdersBean ordersBean : ordersBeans) {
+            System.out.println(ordersBean);
         }
     }
 
