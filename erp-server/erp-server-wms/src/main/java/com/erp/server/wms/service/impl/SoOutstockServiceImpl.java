@@ -1021,9 +1021,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.SO_OUT_STOCK.getCode(), rejectPairList, "状态变更");
             if (isPushKingDee) {
                 //B2B 反审核发送金蝶
-               // haveSoIdList.stream().forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
-            }
-
+                haveSoIdList.stream().forEach(obj -> {
+                    if (StrUtil.equals(OrderTypeEnum.B2C.getCode(),obj.getOrderType())) {
+                        syncKingdeeSoOutstockService.syncB2cDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+                    } else {
+                        syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+                    }
+                });
+            };
             //修改中转报关单订单出库状态
             TransferDeclareDTO.UpdateOutstockStatusDTO statusDTO = new TransferDeclareDTO.UpdateOutstockStatusDTO();
             statusDTO.setSoIds(soIds);
@@ -1093,10 +1098,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soOutstockDetailService.removeByMainIdList(ids);
             List<SoOutstockEntity> haveSoIdList = list.stream().filter(h -> StringUtils.isNotBlank(h.getSoId())).collect(Collectors.toList());
             //B2B 删除发送金蝶
-            haveSoIdList.stream().filter(l -> !b2cType.equals(l.getOrderType())).forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
-            //B2C 删除发送金蝶
-            // haveSoIdList.stream().filter(l->b2cType.equals(l.getOrderType())).forEach(obj -> syncKingdeeSoOutstockService.syncB2cDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
-
+            haveSoIdList.stream().forEach(obj -> {
+                if (StrUtil.equals(OrderTypeEnum.B2C.getCode(),obj.getOrderType())) {
+                    syncKingdeeSoOutstockService.syncB2cDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode());
+                } else {
+                    syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode());
+                }
+            });
         }
         return result;
     }
