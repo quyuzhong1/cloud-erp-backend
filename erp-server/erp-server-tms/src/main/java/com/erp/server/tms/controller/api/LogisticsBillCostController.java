@@ -17,6 +17,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
+import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +60,7 @@ public class LogisticsBillCostController extends BaseController {
             tableAlias = "lbc"
     )
     public ApiResult<List<LogisticsBillCostDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-        List<LogisticsBillCostDTO.TabListDTO> tabList = logisticsBillCostService.tabList(dto);
+        List<LogisticsBillCostDTO.TabListDTO> tabList = logisticsBillCostService.tabList(dto, DictCostAttributionEnum.SELF_DELIVER);
         return success(tabList);
     }
 
