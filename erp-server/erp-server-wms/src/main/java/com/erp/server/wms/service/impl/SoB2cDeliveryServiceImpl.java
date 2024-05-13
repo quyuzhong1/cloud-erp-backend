@@ -1242,6 +1242,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .last(" LIMIT 1").one();
     }
 
+    @Override
+    public Boolean shipOrder(PlatformShipOrderDTO platformShipOrderDTO) {
+        //调用第三方平台SDK发货
+        PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+        return true;
+    }
+
     /**
      * @description: 根据id集合更新修改状态
      * @author Will
