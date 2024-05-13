@@ -123,7 +123,23 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         CfgRuleDeclareEntity entity = BeanMapperUtils.map(CfgRuleDeclareEntity.class, updateDTO);
         // 数据处理
         handleData(entity);
-        boolean save = super.updateById(entity);
+//        boolean save = super.updateById(entity);
+        boolean save = lambdaUpdate().eq(CfgRuleDeclareEntity::getId,entity.getId())
+                .set(CfgRuleDeclareEntity::getName,entity.getName())
+                .set(CfgRuleDeclareEntity::getPriority,entity.getPriority())
+                .set(CfgRuleDeclareEntity::getDisabled,entity.getDisabled())
+                .set(CfgRuleDeclareEntity::getRemark,entity.getRemark())
+                .set(CfgRuleDeclareEntity::getDeclareCn,entity.getDeclareCn())
+                .set(CfgRuleDeclareEntity::getDeclareEn,entity.getDeclareEn())
+                .set(CfgRuleDeclareEntity::getToCustomsCode,entity.getToCustomsCode())
+                .set(CfgRuleDeclareEntity::getToDeclarePrice,entity.getToDeclarePrice())
+                .set(CfgRuleDeclareEntity::getToCurrency,entity.getToCurrency())
+                .set(CfgRuleDeclareEntity::getToCurrencySymbol,entity.getToCurrencySymbol())
+                .set(CfgRuleDeclareEntity::getRate,entity.getRate())
+                .set(CfgRuleDeclareEntity::getToDeclarePriceType,entity.getToDeclarePriceType())
+                .set(CfgRuleDeclareEntity::getMinDeclarePrice,entity.getMinDeclarePrice())
+                .set(CfgRuleDeclareEntity::getMaxDeclarePrice,entity.getMaxDeclarePrice())
+                .update();
         if (!save) {
             throw new ServiceException("申报规则单保存失败");
         }
