@@ -3,6 +3,7 @@ package com.erp.server.dmp.enums;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressListingDTO;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressOrderDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFbaShipmentDTO;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.sdk.oms.mercado.dto.MercadoListingDTO;
