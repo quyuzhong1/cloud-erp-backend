@@ -28,6 +28,7 @@ import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.mapper.LogisticsChannelMapper;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -409,6 +410,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(mainId);
         if (Objects.nonNull(supplierEntity)) {
             baseDTO.setLogisticsSupplierName(supplierEntity.getSupplierName());
+            baseDTO.setLogisticsSupplierShortName(supplierEntity.getShortName());
             baseDTO.setLogisticsSupplierId(supplierEntity.getSupplierId());
         }
         return baseDTO;
@@ -431,6 +433,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntities.stream().filter(req -> req.getId().equals(baseDTO.getMainId())).findFirst().orElse(null);
             if (Objects.nonNull(logisticsSupplierEntity)) {
                 baseDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+                baseDTO.setLogisticsSupplierShortName(logisticsSupplierEntity.getShortName());
                 baseDTO.setSupplierId(logisticsSupplierEntity.getSupplierId());
 
             }

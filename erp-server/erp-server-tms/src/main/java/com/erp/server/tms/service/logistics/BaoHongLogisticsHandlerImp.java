@@ -23,7 +23,6 @@ import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import com.sdk.tms.baohong.service.BaoHongService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -73,9 +72,9 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
             if(isFailure(result)){
                 //下单失败
                 responseVO.failure(LogisticsPlatformEnum.BAO_HONG.getName(), logisticsOrderVO.getDeliveryNo(), result.getMessage());
-                logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
-                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO),result.getMessage() );
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO),result.getMessage(), false);
 
                 return failure(responseVO);
             }else{
@@ -86,18 +85,18 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
                         .deliveryNo(logisticsOrderVO.getDeliveryNo())
                         .build();
 
-                logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
-                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(""));
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(""), false);
                 return success(responseVO);
             }
 
         } catch (Exception e) {
             //下单异常
             log.error("保宏创建订单异常：{}", e.getMessage());
-            logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
-                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e));
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e), true);
 
             return failure(responseVO);
         }

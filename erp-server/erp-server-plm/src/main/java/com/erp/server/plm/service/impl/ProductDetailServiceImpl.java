@@ -36,8 +36,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RedisKeyConstant;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.*;
@@ -72,7 +70,6 @@ import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
 import com.erp.server.plm.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -2057,11 +2054,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
-        if (isCheck) {
-            //校验字段是否必填
-            checkApproveField(Arrays.asList(entity));
-        }
-
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
@@ -2429,6 +2421,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return;
         }
         List<ProductDetailEntity> detailEntityList = this.listByIds(ids);
+
+        //校验字段是否必填
+        checkApproveField(detailEntityList);
+
         for (ProductDetailEntity entity : detailEntityList) {
             ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
             /*if (StringUtils.isBlank(productInfoEntity.getSpuNo())) {
@@ -2803,7 +2799,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     ProductPackEntity packEntity = productPackMap.get(skuVO.getSkuId()).get(0);
                     skuVO.setUnitQty(Objects.nonNull(packEntity.getBoxQty()) ? packEntity.getBoxQty().intValue() : null);
                     skuVO.setGrossWeight(packEntity.getGrossWeight());
-                    skuVO.setProductSize(packEntity.getProductSize());
+                    skuVO.setProductLength(packEntity.getProductLength());
+                    skuVO.setProductWidth(packEntity.getProductWidth());
+                    skuVO.setProductHeight(packEntity.getProductHeight());
                     skuVO.setNetWeight(packEntity.getNetWeight());
                 }
                 PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(skuVO.getSupplierId()) && req.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
@@ -3561,15 +3559,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(entityList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-/*        for (String id : ids) {
-            ProductCostEntity costEntity = productCostService.getBySkuId(id);
-            if (costEntity.getActualTaxCost() == null) {
-                throw new ServiceException(ApiError.ERROR_95237);
-            }
-            if (costEntity.getActualNoTaxCost() == null) {
-                throw new ServiceException(ApiError.ERROR_95238);
-            }
-        }*/
+
 
         //待提交、审核不通过才可以提交
         long count = entityList.stream().filter(entity ->
@@ -3638,8 +3628,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (count != entityList.size()) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
-        //校验字段是否必填
-        checkApproveField(entityList);
 
         LoginUser userInfo = commonService.getUserInfo();
         //TODO 待加审核流程
@@ -4103,10 +4091,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public Boolean updateWarehouseLocationById(String id, String warehouseLocation) {
+    public Boolean updateWarehouseLocationById(String id, String warehouseLocation, String warehouseLocationLarge) {
         boolean flag = lambdaUpdate()
                 .eq(ProductDetailEntity::getId, id)
                 .set(ProductDetailEntity::getWarehouseLocation, warehouseLocation)
+                .set(ProductDetailEntity::getWarehouseLocationLarge, warehouseLocationLarge)
                 .update();
 
         List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getId, id).list();
@@ -4144,7 +4133,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isEmpty(productInfo)) {
                 throw new ServiceException(ApiError.ERROR_95084);
             }
-            if (ObjectUtil.isEmpty(productInfo.getSaleMethod()) || !productInfo.getSaleMethod().contains(SaleMethodEnum.GOODS.getName())) {
+            if (ObjectUtil.isEmpty(productInfo.getSaleMethod() )|| (!productInfo.getSaleMethod().contains(SaleMethodEnum.GOODS.getName()) && !productInfo.getSaleMethod().contains(SaleMethodEnum.GIFT.getName()))) {
                 continue;
             }
             /**
@@ -4152,27 +4141,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
              */
             ProductPackEntity productPackEntity = productPackList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), detailEntity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(productPackEntity)) {
-                errMsg.append(StrUtil.format(ApiError.ERROR_PRODUCT_PACK_NOT_EXIST.msg, detailEntity.getSkuNo())).append("</br>");
+                errMsg.append(StrUtil.format(ApiError.ERROR_PRODUCT_PACK_NOT_EXIST.msg,detailEntity.getSkuNo())).append("</br>");
+                continue;
             }
             //包装尺寸
-            if (StrUtil.isBlank(productPackEntity.getProductSize())) {
+            if (MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getProductLength()) >= 0  || MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getProductWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getProductHeight()) >= 0) {
                 errMsg.append(StrUtil.format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append("</br>");
             }
-            if (StrUtil.isNotBlank(productPackEntity.getProductSize())) {
-                List<String> productSizeList = Arrays.stream(productPackEntity.getProductSize().split("X")).filter(obj -> StrUtil.isNotBlank(obj)).collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(productSizeList) || productSizeList.size() != 3) {
-                    errMsg.append(StrUtil.format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append("</br>");
-                }
-            }
-            if (StrUtil.isBlank(productPackEntity.getBoxSize())) {
-                errMsg.append(StrUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append("</br>");
-            }
             //箱规
-            if (StrUtil.isNotBlank(productPackEntity.getBoxSize())) {
-                List<String> boxSizeList = Arrays.stream(productPackEntity.getBoxSize().split("X")).filter(obj -> StrUtil.isNotBlank(obj)).collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(boxSizeList) || boxSizeList.size() != 3) {
-                    errMsg.append(StrUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append("</br>");
-                }
+            if (MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getBoxLength()) >= 0 ||MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getBoxWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getBoxHeight()) >= 0) {
+                errMsg.append(StrUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append("</br>");
             }
             //毛重
             if (MathUtil.compareTo(productPackEntity.getGrossWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
@@ -4299,7 +4277,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
                 productSkuBaseInfoDTO.setId(productBy.getId());
                 productInfoDTO.setId(productBy.getProductId());
-
+                //设置推荐仓位（大货区/小货区）
+                if (StringUtils.isEmpty(dto.getWarehouseLocationLarge())) {
+                    dto.setWarehouseLocationLarge(productBy.getWarehouseLocationLarge());
+                }
+                if (StringUtils.isEmpty(dto.getWarehouseLocation())) {
+                    dto.setWarehouseLocation(productBy.getWarehouseLocation());
+                }
             } else {
                 //sku重复
                 if (ObjectUtil.isNotEmpty(productBy)) {
@@ -4806,52 +4790,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //产品包装信息
             ProductPackDTO productPackDTO = new ProductPackDTO();
             BeanMapper.copy(dto, productPackDTO);
-            String productSize = "";
-            String boxSize = "";
-            String productSizeLength = dto.getProductSizeLength();
-            String productSizeWide = dto.getProductSizeWide();
-            String productSizeHigh = dto.getProductSizeHigh();
-            String boxSizeLength = dto.getBoxSizeLength();
-            String boxSizeWide = dto.getBoxSizeWide();
-            String boxSizeHigh = dto.getBoxSizeHigh();
-            /**
-             * 产品尺寸(长)
-             */
-            if (StringUtils.isNotBlank(productSizeLength)) {
-                productSize = productSizeLength;
-            }
-            /**
-             * 产品尺寸(宽)
-             */
-            if (StringUtils.isNotBlank(productSizeWide)) {
-                productSize = productSize.concat("X").concat(productSizeWide);
-            }
-            /**
-             * 产品尺寸(高)
-             */
-            if (StringUtils.isNotBlank(productSizeHigh)) {
-                productSize = productSize.concat("X").concat(productSizeHigh);
-            }
-            productPackDTO.setProductSize(productSize);
-            /**
-             * 箱规(长)
-             */
-            if (StringUtils.isNotBlank(boxSizeLength)) {
-                boxSize = boxSizeLength;
-            }
-            /**
-             * 箱规(宽)
-             */
-            if (StringUtils.isNotBlank(boxSizeWide)) {
-                boxSize = boxSize.concat("X").concat(boxSizeWide);
-            }
-            /**
-             * 箱规(高)
-             */
-            if (StringUtils.isNotBlank(boxSizeHigh)) {
-                boxSize = boxSize.concat("X").concat(boxSizeHigh);
-            }
-            productPackDTO.setBoxSize(boxSize);
+            productPackDTO.setProductLength(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductLength())));
+            productPackDTO.setProductWidth(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductWidth())));
+            productPackDTO.setProductHeight(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductHeight())));
+            productPackDTO.setBoxLength(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxLength())));
+            productPackDTO.setBoxWidth(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxWidth())));
+            productPackDTO.setBoxHeight(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxHeight())));
             /**
              * 毛重
              */
@@ -4923,6 +4867,45 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
         return skuList;
+    }
+
+    @Override
+    public void initProductSizeAndBoxSize() {
+        // 查询出所有需要进行初始化的产品尺寸或箱规
+        List<ProductPackEntity> productPacks = productPackService.list();
+        List<List<ProductPackEntity>> partition = Lists.partition(productPacks, 500);
+        partition.parallelStream()
+                .forEach(packs ->{
+                    try {
+                        packs.forEach(this::convertSize);
+                    } catch (Exception e) {
+                        log.error("数据异常{}", e.getMessage(), e);
+                    }
+                    productPackService.updateBatchById(packs);
+                });
+    }
+
+    private void convertSize(ProductPackEntity pack) {
+        List<BigDecimal> productSizeList = Arrays.stream(Optional.ofNullable(pack.getProductSize()).orElse("").split("X"))
+                .filter(StrUtil::isNotBlank)
+                .map(BigDecimal::new)
+                .collect(Collectors.toList());
+        //产品尺寸-长
+        pack.setProductLength(LengthConverterUtil.cmToMm(productSizeList.stream().findFirst().orElse(BigDecimal.ZERO)));
+        //产品尺寸-宽
+        pack.setProductWidth(LengthConverterUtil.cmToMm(productSizeList.stream().skip(1).findFirst().orElse(BigDecimal.ZERO)));
+        //产品尺寸-高
+        pack.setProductHeight(LengthConverterUtil.cmToMm(productSizeList.stream().skip(2).findFirst().orElse(BigDecimal.ZERO)));
+        List<BigDecimal> boxSizeList = Arrays.stream(Optional.ofNullable(pack.getBoxSize()).orElse("").split("X"))
+                .filter(StrUtil::isNotBlank)
+                .map(BigDecimal::new)
+                .collect(Collectors.toList());
+        //箱规-长
+        pack.setBoxLength(LengthConverterUtil.cmToMm(boxSizeList.stream().findFirst().orElse(BigDecimal.ZERO)));
+        //箱规-宽
+        pack.setBoxWidth(LengthConverterUtil.cmToMm(boxSizeList.stream().skip(1).findFirst().orElse(BigDecimal.ZERO)));
+        //箱规-高
+        pack.setBoxHeight(LengthConverterUtil.cmToMm(boxSizeList.stream().skip(2).findFirst().orElse(BigDecimal.ZERO)));
     }
 
     @Override

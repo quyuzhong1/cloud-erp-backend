@@ -1,13 +1,12 @@
 package com.erp.model.plm.dto;
 
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -188,4 +187,44 @@ public class BomCombinationDTO implements Serializable {
          */
         private List<BomCombinationDetailDTO.ViewDTO> detailList;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class CheckBomParentSkuDTO {
+
+        /**
+         * 父级SKU编码
+         */
+        @NotBlank(message = "父级SKU不能重复")
+        private String skuNo;
+
+        /**
+         * 子件SkuId集合
+         */
+        @NotEmpty(message = "子件SKU不能为空")
+        @Valid
+        private List<CheckBomChildSkuDTO> childSkuList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CheckBomChildSkuDTO {
+
+        /**
+         * 子级SKU
+         */
+        @NotBlank(message = "子级SKU不能为空")
+        private String skuId;
+
+        /**
+         * 用量
+         */
+        @NotNull(message = "数量不能为空")
+        @Min(value = 1, message = "数量最小值为1")
+        @Max(value = 999999999, message = "数量最大值为999999999")
+        private Integer qty;
+    }
+
 }

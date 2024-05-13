@@ -4,38 +4,34 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.model.wms.dto.CfgSettingDTO;
 import com.erp.model.wms.dto.CfgSettingValueDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.entity.CfgSettingEntity;
 import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.ReconciliationTypeEnum;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.mapper.CfgSettingMapper;
 import com.erp.server.wms.service.CfgSettingService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.DictBasicService;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import com.xxl.job.core.biz.model.ReturnT;
-import com.xxl.job.core.context.XxlJobHelper;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.ibatis.annotations.Case;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.CfgSettingDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 /**
  * <p>
  * 系统配置管理 服务实现类
@@ -154,6 +150,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 handlePoReconciliationSetting(addDTO.getPoReconciliationSettingDTO());
                 jsonObject = JSONUtil.parseObj(addDTO.getPoReconciliationSettingDTO());
                 break;
+            case FS_QC_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFsQcNoticeDTO());
+                break;
             default:
                 break;
         }
@@ -202,6 +201,10 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case PO_RECONCILIATION:
                 CfgSettingValueDTO.PoReconciliationSettingDTO poReconciliationSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.PoReconciliationSettingDTO.class);
                 viewDTO.setPoReconciliationSettingDTO(poReconciliationSettingDTO);
+                break;
+            case FS_QC_NOTICE:
+                CfgSettingValueDTO.FsQcNoticeDTO fsQcNoticeDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsQcNoticeDTO.class);
+                viewDTO.setFsQcNoticeDTO(fsQcNoticeDTO);
                 break;
             default:
                 break;

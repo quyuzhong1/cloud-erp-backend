@@ -3,6 +3,7 @@ package com.common.business.handler;
 import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.config.AbstractSparrowAnnotationBeanMap;
 import com.common.business.dto.PlatformDeliveryInterceptDTO;
+import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.IPlatformService;
@@ -10,6 +11,7 @@ import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -30,5 +32,21 @@ public class PlatformSaveHandler extends AbstractSparrowAnnotationBeanMap<Platfo
     public static void shipOrder(PlatformShipOrderDTO dto) {
         IPlatformService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getDictPlatform()));
         service.shipOrder(dto);
+    }
+
+    public static Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
+        IPlatformService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getDictPlatform()));
+        return service.deliveryIntercept(dto);
+    }
+
+    public static Boolean queryAndUpdateOrderStatus(PlatformDeliveryInterceptDTO dto) {
+        IPlatformService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getDictPlatform()));
+        return service.queryAndUpdateOrderStatus(dto);
+    }
+
+
+    public static Boolean batchQueryAndUpdateOrderStatus(String dictPlatform, List<PlatformOrderQueryDTO> dtoList) {
+        IPlatformService service = PAY_MAP.get(PlatformDictEnum.getByCode(dictPlatform));
+        return service.asyncBatchQueryAndUpdateOrderStatus(dtoList);
     }
 }

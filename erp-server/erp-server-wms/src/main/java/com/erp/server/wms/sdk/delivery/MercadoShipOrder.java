@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.dto.PlatformDeliveryInterceptDTO;
+import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.IPlatformService;
@@ -54,6 +55,16 @@ public class MercadoShipOrder implements IPlatformService {
 
     @Override
     public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean queryAndUpdateOrderStatus(PlatformDeliveryInterceptDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean asyncBatchQueryAndUpdateOrderStatus(List<PlatformOrderQueryDTO> dtoList) {
         return null;
     }
 }

@@ -8,13 +8,13 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
@@ -37,7 +37,6 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.QcInsideTypeEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
@@ -54,6 +53,7 @@ import com.erp.rpc.sys.feign.aspect.DataPermissionAspect;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcInfoMapper;
+import com.erp.server.wms.query.QcInfoQueryHandler;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.QcUtils;
 import com.google.common.collect.Lists;
@@ -189,6 +189,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private QcInfoQueryHandler qcInfoQueryHandler;
+
 
     /**
      * 保存 质检单
@@ -352,11 +356,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     public PagingVO<QcInfoDTO.PagingViewDTO> paging(PagingDTO<QcInfoDTO.PagingParamDTO> dto) {
         QcInfoDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        String searchType = params.getSearchType();
-        //如果等于所有
-        if (searchType.equals(SearchType.ALL)) {
-            params.setSearchType("");
-        }
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
         List<QcInfoDTO.PagingViewDTO> list = pageData.getRecords();
@@ -440,12 +439,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     public void exportQcBill(QcInfoDTO.ExportDTO dto, HttpServletResponse response) {
-
-        String searchType = dto.getSearchType();
-        //如果等于所有
-        if (searchType.equals(SearchType.ALL)) {
-            dto.setSearchType("");
-        }
         List<QcInfoDTO.PagingViewDTO> viewList = baseMapper.getExport(dto);
         List<QcBillExportExcelDTO> resultList = new ArrayList<>(viewList.size());
         if (CollectionUtils.isNotEmpty(viewList)) {
@@ -684,8 +677,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             ProductPackDTO productPackDTO = new ProductPackDTO();
             productPackDTO.setSkuId(qcProductEntity.getSkuId());
             productPackDTO.setSkuNo(qcProductEntity.getSkuNo());
-            productPackDTO.setProductSize(StrUtil.format("{}X{}X{}",qcProductEntity.getProductLength().stripTrailingZeros().toPlainString(),qcProductEntity.getProductWidth().stripTrailingZeros().toPlainString(),qcProductEntity.getProductHeight().stripTrailingZeros().toPlainString()));
-            productPackDTO.setBoxSize(StrUtil.format("{}X{}X{}",qcProductEntity.getBoxLength().stripTrailingZeros().toPlainString(),qcProductEntity.getBoxWidth().stripTrailingZeros().toPlainString(),qcProductEntity.getBoxHeight().stripTrailingZeros().toPlainString()));
+            productPackDTO.setProductLength(LengthConverterUtil.cmToMm(qcProductEntity.getProductLength()));
+            productPackDTO.setProductWidth(LengthConverterUtil.cmToMm(qcProductEntity.getProductWidth()));
+            productPackDTO.setProductHeight(LengthConverterUtil.cmToMm(qcProductEntity.getProductHeight()));
             productPackDTO.setBoxQty(new BigDecimal(qcProductEntity.getBoxQty()));
             productPackDTO.setBoxWeight(qcProductEntity.getBoxWeight());
             productPackDTO.setNetWeight(qcProductEntity.getProductNetWeight());
@@ -1359,44 +1353,27 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @date 2023-04-21 16:48
      */
     @Override
-    public List<QcInfoDTO.TabListDTO> tabList() {
-        List<QcInfoEntity> list = this.list();
-        List<QcInfoDTO.TabListDTO> resultList = new ArrayList<>(4);
-        QcInfoDTO.TabListDTO all = new QcInfoDTO.TabListDTO();
-        all.setCount(list.size());
-        all.setSearchType(SearchType.ALL);
-        all.setTypeName("全部");
-        resultList.add(all);
-        QcInfoDTO.TabListDTO waitQc = new QcInfoDTO.TabListDTO();
-        String draft = QcBillStatusEnum.DRAFT.getCode();
-        String waitQcType = QcBillStatusEnum.WAIT_QC.getCode();
-        waitQc.setCount((int) list.stream().filter(l -> draft.equals(l.getQcStatus().getCode()) || waitQcType.equals(l.getQcStatus().getCode())).count());
-        waitQc.setSearchType(waitQcType);
-        waitQc.setTypeName(QcBillStatusEnum.WAIT_QC.getName());
-        resultList.add(waitQc);
-
-        // 待复检
-        QcInfoDTO.TabListDTO waitReQc = new QcInfoDTO.TabListDTO();
-        String waitReQcType = QcBillStatusEnum.WAIT_RE_QC.getCode();
-        waitReQc.setCount(qcResultService.getReQcCount());
-        waitReQc.setSearchType(waitReQcType);
-        waitReQc.setTypeName(QcBillStatusEnum.WAIT_RE_QC.getName());
-        resultList.add(waitReQc);
-
-        QcInfoDTO.TabListDTO finishQc = new QcInfoDTO.TabListDTO();
-        String finishQcType = QcBillStatusEnum.FINISH_QC.getCode();
-        finishQc.setCount((int) list.stream().filter(l -> finishQcType.equals(l.getQcStatus().getCode())).count());
-        finishQc.setSearchType(finishQcType);
-        finishQc.setTypeName(QcBillStatusEnum.FINISH_QC.getName());
-        resultList.add(finishQc);
-
-        QcInfoDTO.TabListDTO cancelQc = new QcInfoDTO.TabListDTO();
-        String cancelQcType = QcBillStatusEnum.CANCEL.getCode();
-        cancelQc.setCount((int) list.stream().filter(l -> cancelQcType.equals(l.getQcStatus().getCode())).count());
-        cancelQc.setSearchType(cancelQcType);
-        cancelQc.setTypeName(QcBillStatusEnum.CANCEL.getName());
-        resultList.add(cancelQc);
-        return resultList;
+    public List<QcInfoDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        QcBillStatusEnum[] values = QcBillStatusEnum.values();
+        List<QcInfoDTO.TabListDTO> list = new ArrayList<>();
+        for (QcBillStatusEnum item : values) {
+            if (QcBillStatusEnum.DRAFT.equals(item) || QcBillStatusEnum.EXEMPTION.equals(item)) {
+                continue;
+            }
+            PurchaseOrderDTO.SearchParamDTO searchParamDTO = new PurchaseOrderDTO.SearchParamDTO();
+            searchParamDTO.setPermissionSql(dto.getPermissionSql());
+            QcInfoDTO.TabListDTO resultDTO = new QcInfoDTO.TabListDTO();
+            String tabSql = qcInfoQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            searchParamDTO.setSqlMap(map);
+            Integer count = this.baseMapper.listCount(searchParamDTO);
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
+            list.add(resultDTO);
+        }
+        return list;
     }
 
 
@@ -2102,11 +2079,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Override
     public void exportDailyExcel(QcInfoDTO.ExportDTO dto, HttpServletResponse response) {
-        String searchType = dto.getSearchType();
-        //如果等于所有
-        if (searchType.equals(SearchType.ALL)) {
-            dto.setSearchType("");
-        }
         // 查询数据
         List<QcInfoDTO.DailyListDTO> dataList = baseMapper.getDailyExport(dto);
         // 填充数据
@@ -2536,5 +2508,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             return new ArrayList<>();
         }
         return baseMapper.getQcReceiveResult(purchaseDetailIds);
+    }
+
+    @Override
+    public Integer countTotalNotQc(QcEffectivenessDTO.CountQcParamDTO qcParamDTO) {
+        return baseMapper.countTotalNotQc(qcParamDTO);
     }
 }

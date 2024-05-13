@@ -19,10 +19,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.MathUtil;
+import com.common.core.utils.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -635,13 +632,13 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             item.setProductGrade(sku.getProductGrade());
             item.setSaleMethod(productDetailEntity.getSaleMethod());
             item.setVariantProperty(sku.getVariantProperty());
-            item.setBoxHeight(sku.getBoxHeight());
-            item.setBoxLength(sku.getBoxHeight());
-            item.setBoxWeight(sku.getBoxWeight());
-            item.setBoxWidth(sku.getBoxWidth());
-            item.setProductHeight(sku.getProductHeight());
-            item.setProductLength(sku.getProductLength());
-            item.setProductWidth(sku.getProductWidth());
+            item.setBoxHeight(LengthConverterUtil.mmToCm(sku.getBoxHeight()));
+            item.setBoxLength(LengthConverterUtil.mmToCm(sku.getBoxLength()));
+            item.setBoxWeight(LengthConverterUtil.mmToCm(sku.getBoxWeight()));
+            item.setBoxWidth(LengthConverterUtil.mmToCm(sku.getBoxWidth()));
+            item.setProductHeight(LengthConverterUtil.mmToCm(sku.getProductHeight()));
+            item.setProductLength(LengthConverterUtil.mmToCm(sku.getProductLength()));
+            item.setProductWidth(LengthConverterUtil.mmToCm(sku.getProductWidth()));
             item.setProductNetWeight(sku.getProductNetWeight());
             Boolean isFirstMassProduct = purchaseOrderList.stream().filter(p -> p.getId().equals(purchaseOrderId)).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getIsFirstMassProduct())).orElse(false);
@@ -1358,11 +1355,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             Integer count = MathUtil.ZERO;
             if (PdaTabFlagEnum.WAIT_SUBMIT_AND_REJECT.getCode().equals(item.getCode())) {
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.REJECT.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE_ING.getCode().equals(item.getCode())) {
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE.getCode().equals(item.getCode())) {
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
@@ -1370,7 +1367,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 dateList.add(startDate);
                 dateList.add(endDate);
                 pagingParamDTO.setBillDate(dateList);
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(item.getCode());

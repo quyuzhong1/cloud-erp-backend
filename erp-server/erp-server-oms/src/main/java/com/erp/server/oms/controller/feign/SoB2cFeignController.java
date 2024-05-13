@@ -678,4 +678,13 @@ public class SoB2cFeignController extends BaseController {
         return soB2cService.listMergePackageBySoIds(ids);
     }
 
+
+    /**
+     * 更新平台订单取消状态
+     */
+    @PostMapping("/batchUpdateCancelAndLog")
+    public Boolean batchUpdateCancelAndLog(@RequestBody List<String> soB2cIdList){
+        return b2cStatusService.batchUpdateCancelAndLog(soB2cIdList);
+    }
+
 }

@@ -535,4 +535,12 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/listMergePackageBySoIds")
     List<PackageDTO.ScanResultDTO> listMergePackageBySoIds(@RequestBody List<String> ids);
+
+
+    /**
+     * 批量更新平台订单取消状态
+     */
+    @PostMapping("/feign/soB2c/batchUpdateCancelAndLog")
+    Boolean batchUpdateCancelAndLog(@RequestBody List<String> soB2cIdList);
+
 }

@@ -21,7 +21,7 @@ public class PlatformSoOutStockDetailDTO {
      * 平台配送明细唯一ID
      * 亚马逊=shipmentItemId
      */
-    private String platformDetailUniqueId;
+    private String platformDetailId;
 
     /**
      * 平台订单号

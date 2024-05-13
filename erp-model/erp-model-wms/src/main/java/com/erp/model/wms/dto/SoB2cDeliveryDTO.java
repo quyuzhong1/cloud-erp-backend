@@ -276,9 +276,8 @@ public class SoB2cDeliveryDTO implements Serializable {
     public static class TabListDTO {
         /**
          * 标识：wms/common/enumDropDown?type=SoB2cDeliveryStatus
-         * 描述：waitHandle:待处理, picking:拣货中, falseShipment:虚假发货, shipped:已发货, cancelDelivery:取消发货
+         * 描述：waitHandle:待处理, picking:拣货中, falseShipment:虚假发货, shipped:已发货, cancelDelivery:取消发货,intercepting ：拦截中
          */
-        @StateEnumValue(clazz = SoB2cDeliveryStatusEnum.class, message = "tab类型有误")
         @NotBlank(message = "tab不能为空")
         private String tabFlag;
 
@@ -379,9 +378,17 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private Boolean isPrintPicking;
         /**
+         * 是否打印物流单【可排序】
+         */
+        private Boolean isPrintLogistic;
+        /**
          * 拣货单状态 中文
          */
         private String printPickingName;
+        /**
+         * 打印物流单状态 中文
+         */
+        private String printLogisticName;
         /**
          * 是否验货【可排序】
          */

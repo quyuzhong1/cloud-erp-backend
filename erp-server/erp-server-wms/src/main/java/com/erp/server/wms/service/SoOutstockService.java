@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
@@ -12,7 +13,6 @@ import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
-import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -413,8 +413,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
 
     List<SoOutstockEntity> listByAdvanceQuery(AdvanceQueryContainer container);
 
+
     /**
      * 检查和生成销售出库单
+     *
+     * @param generateB2cDTO 根据销售订单生成的销售出库单DTO != 平台的销售出库单
+     * @param dto 平台销售出库单信息
+     * @param soB2cEntity B2C 销售订单
      *
      * @author Jim
      * @date 2024-03-07
@@ -496,4 +501,14 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     Boolean updateStatus(TmsDeclareBillDTO.UpdateStatusDTO dto);
 
     List<SoOutstockEntity> listByCodes(List<String> codes);
+
+    Boolean generateB2cSoOutstockByPlatformData(List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO);
+    /**
+     * @description: 重新生成销售出库单
+     * @author Will
+     * @date: 2024/4/28 10:18
+     * @param ids
+     * @return Boolean
+     */
+    Boolean afreshGenerateB2cOutstock(List<String> ids);
 }

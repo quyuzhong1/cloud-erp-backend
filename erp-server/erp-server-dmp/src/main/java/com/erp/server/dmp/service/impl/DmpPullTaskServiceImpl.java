@@ -276,6 +276,13 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         syncIng.setCount(syncIngCount);
         result.add(syncIng);
+        //无需同步
+        DmpPullTaskDTO.TabListDTO noNeedSync = new DmpPullTaskDTO.TabListDTO();
+        noNeedSync.setTabFlag(SyncStatusEnum.NO_NEED_SYNC.getCode());
+        int noNeedSyncCount = countList.stream().filter(a -> a.getTabFlag().equals(noNeedSync.getTabFlag())).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        noNeedSync.setCount(noNeedSyncCount);
+        result.add(noNeedSync);
         //已归档
         DmpPullTaskDTO.TabListDTO archived = dmpPullTaskHistoryMapper.getStatusCount(dto.getPermissionSql());
         result.add(archived);
@@ -329,7 +336,25 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         }
         return Boolean.TRUE;
     }
-
+    @Override
+    public Boolean batchNoNeedSync(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //获取数据
+        List<DmpPullTaskEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DATA);
+        }
+        List<DmpPullTaskEntity> noNeedSyncIds = list.stream().filter(obj ->
+                (!SyncStatusEnum.IN_SYNC.getCode().equals(obj.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(obj.getStatus())))
+                .collect(Collectors.toList());
+        noNeedSyncIds.forEach(dmpPushTaskEntity -> dmpPushTaskEntity.setStatus(SyncStatusEnum.NO_NEED_SYNC.getCode()));
+        if (CollectionUtils.isNotEmpty(noNeedSyncIds)) {
+            updateBatchById(noNeedSyncIds, 500);
+        }
+        return Boolean.TRUE;
+    }
     /**
      * @param list
      * @description: 列表查询数据格式话
@@ -998,7 +1023,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         warnMsgInfo.setTitle(StrUtil.format("单据【{}】从{}推送至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
         warnMsgInfo.setTableId(entity.getSourceId());
-        warnMsgInfo.setKeyInfo("");
+        warnMsgInfo.setKeyInfo(entity.getReturnMsg());
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         mqProducerService.sendWarnMsg(warnMsgInfo);
     }

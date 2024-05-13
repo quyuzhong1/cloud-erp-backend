@@ -3,12 +3,10 @@ package com.erp.server.oms.controller.api;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -974,7 +972,7 @@ public class SoB2cController extends BaseController {
     @LogViewService
     @PostMapping(value = "/retryOrderForecast")
     public ApiResult<List<BatchResultDTO>> retryOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = soB2cService.retryOrderForecast(dto);
+        List<BatchResultDTO> resultDTOS = soB2cService.retryOrderForecast(dto.getIds());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
@@ -1050,7 +1048,7 @@ public class SoB2cController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2C销售订单信息")
     @PostMapping(value = "/exportExcel")
     @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody SoB2cDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@RequestBody SoB2cDTO.ExportParamDTO dto, HttpServletResponse response) {
         Boolean flag = soB2cService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }

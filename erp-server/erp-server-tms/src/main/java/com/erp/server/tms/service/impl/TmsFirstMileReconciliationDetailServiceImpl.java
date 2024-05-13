@@ -278,11 +278,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             // 计费方式
             LogisticsChannelEntity logisticsChannelEntity = channelMap.get(data.getLogisticsChannelId());
             if (null != logisticsChannelEntity) {
-                data.setBillingMethod(logisticsChannelEntity.getFeeRule());
-                data.setBillingMethodName(ShippingFeeRuleEnum.getName(logisticsChannelEntity.getFeeRule()));
+                data.setFeeRule(logisticsChannelEntity.getFeeRule());
+                data.setFeeRuleName(ShippingFeeRuleEnum.getName(logisticsChannelEntity.getFeeRule()));
             } else {
-                data.setBillingMethod("");
-                data.setBillingMethodName("");
+                data.setFeeRule("");
+                data.setFeeRuleName("");
             }
 
             // 待对账类型
@@ -454,11 +454,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             // 计费方式
             LogisticsChannelEntity logisticsChannelEntity = channelMap.get(viewDTO.getLogisticsChannelId());
             if (null != logisticsChannelEntity) {
-                viewDTO.setBillingMethod(logisticsChannelEntity.getFeeRule());
-                viewDTO.setBillingMethodName(ShippingFeeRuleEnum.getName(logisticsChannelEntity.getFeeRule()));
+                viewDTO.setFeeRule(logisticsChannelEntity.getFeeRule());
+                viewDTO.setFeeRuleName(ShippingFeeRuleEnum.getName(logisticsChannelEntity.getFeeRule()));
             } else {
-                viewDTO.setBillingMethod("");
-                viewDTO.setBillingMethodName("");
+                viewDTO.setFeeRule("");
+                viewDTO.setFeeRuleName("");
             }
             if (StringUtils.isBlank(viewDTO.getSourceType())) {
                 viewDTO.setSourceType(SourceTypeEnum.LOGISTICS_BILL.getCode());
@@ -773,11 +773,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             // 计费方式
             LogisticsChannelEntity logisticsChannelEntity = channelMap.get(record.getLogisticsChannelId());
             if (null != logisticsChannelEntity) {
-                record.setBillingMethod(logisticsChannelEntity.getFeeRule());
-                record.setBillingMethodName(ShippingFeeRuleEnum.getName(logisticsChannelEntity.getFeeRule()));
+                record.setFeeRule(logisticsChannelEntity.getFeeRule());
+                record.setFeeRuleName(ShippingFeeRuleEnum.getName(logisticsChannelEntity.getFeeRule()));
             } else {
-                record.setBillingMethod("");
-                record.setBillingMethodName("");
+                record.setFeeRule("");
+                record.setFeeRuleName("");
             }
             List<DictCountryDTO.ListDTO> listDTOS = deliveryCountryMap.getOrDefault(record.getDeliveryId(), this.defaultCountry(record.getToCountry(), conuntryList));
             DictCountryDTO.ListDTO toCountry = !listDTOS.isEmpty() ? listDTOS.get(0) : null;
@@ -966,17 +966,24 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             List<TmsFirstMileReconciliationDetailDTO.ListDTO> currentTrackNoList = resultMap.get(excelDTO.getTransportNo());
             if (null == currentTrackNoList) {
                 currentTrackNoList = oldDbGroupMap.get(excelDTO.getTransportNo());
-                if (sourceDetailDTO.stream().anyMatch(e -> !ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equalsIgnoreCase(e.getStatus()))) {
-                    excelDTO.setErrorMsg(StrUtil.format("物流运单号【{}】已确认", excelDTO.getTransportNo()));
-                    errorList.add(excelDTO);
-                    continue;
-                }
                 if (CollectionUtils.isEmpty(currentTrackNoList)) {
                     // 生成当前物流单的所有明细
                     currentTrackNoList = sourceDetailDTO.stream()
                             .map(this::generateAllTypeDTO)
                             .flatMap(List::stream)
                             .collect(Collectors.toList());
+                } else {
+                    // 历史记录校验状态
+                    if (currentTrackNoList.stream()
+                            .anyMatch(e ->ReconciliationStatusEnum.CONFIRMED.getCode().equalsIgnoreCase(e.getStatus()) ||
+                                    ReconciliationStatusEnum.DIFF_CONFIRM.getCode().equalsIgnoreCase(e.getStatus()) ||
+                                    ReconciliationStatusEnum.RECONCILED.getCode().equalsIgnoreCase(e.getStatus())
+                            )
+                    ) {
+                        excelDTO.setErrorMsg(StrUtil.format("仅{待确认}可更新,当前物流运单号【{}】", excelDTO.getTransportNo()));
+                        errorList.add(excelDTO);
+                        continue;
+                    }
                 }
             }
 
@@ -1389,6 +1396,18 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                             .map(this::generateAllTypeDTO)
                             .flatMap(List::stream)
                             .collect(Collectors.toList());
+                } else {
+                    // 历史记录校验状态
+                    if (currentTrackNoList.stream()
+                            .anyMatch(e -> ReconciliationStatusEnum.CONFIRMED.getCode().equalsIgnoreCase(e.getStatus()) ||
+                                    ReconciliationStatusEnum.DIFF_CONFIRM.getCode().equalsIgnoreCase(e.getStatus()) ||
+                                    ReconciliationStatusEnum.RECONCILED.getCode().equalsIgnoreCase(e.getStatus()))
+                    ) {
+                        errorMsgList.add(StrUtil.format("仅{待确认}可更新,当前物流运单号【{}】", transportNo));
+                        jsonObject.set("错误信息", FieldValidUtil.getMsgSort(errorMsgList));
+                        errorList.add(jsonObject);
+                        continue;
+                    }
                 }
             }
             // 检查来源单号是否一致

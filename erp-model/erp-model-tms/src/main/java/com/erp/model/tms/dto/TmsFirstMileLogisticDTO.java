@@ -1,27 +1,24 @@
 package com.erp.model.tms.dto;
 
-import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
-import lombok.*;
-import net.sf.cglib.core.Local;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
 
 /**
  * <p>
@@ -73,9 +70,9 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String logisticsChannelName;
 
         /**
-         * 计费方式
+         * 计费规则
          */
-        private String billingMethod;
+        private String feeRule;
 
         /**
          * 币种
@@ -88,9 +85,9 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String currencyName;
 
         /**
-         * 计费方式名称
+         * 计费规则名称
          */
-        private String billingMethodName;
+        private String feeRuleName;
 
         /**
          * 预计时效(天)
@@ -1027,9 +1024,9 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String chargeName;
 
         /**
-         * 计费方式名称
+         * 计费规则名称
          */
-        private String billingMethodName;
+        private String feeRuleName;
 
         /**
          * 物流状态名称

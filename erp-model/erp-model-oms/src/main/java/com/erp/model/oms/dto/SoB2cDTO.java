@@ -133,6 +133,19 @@ public class SoB2cDTO implements Serializable {
         private Map<String, String> sqlMap;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ExportParamDTO extends  PagingParamDTO{
+
+        /**
+         * 导出类型,parentExport(销售套装BOM按父件SKU导出),childExport(销售套装BOM按子件SKU导出)
+         * 字典，/wms/dict/drop/down?type=soB2cExportType
+         */
+        @NotBlank(message = "导出类型不能为空")
+        private String exportType;
+
+    }
+
     /**
      * 分页列表
      */
@@ -2093,6 +2106,12 @@ public class SoB2cDTO implements Serializable {
          */
         private Integer qty;
 
+
+        /**
+         * SKU数量
+         */
+        private Integer skuQty;
+
         /**
          * 产品skuId
          */
@@ -2168,6 +2187,15 @@ public class SoB2cDTO implements Serializable {
          */
         private String countryName;
 
+        /**
+         * 可用数量
+         */
+        private Integer useableQty;
+
+        /**
+         * 是否缺货
+         */
+        private Boolean isOutStock;
 
         /**
          * 订单分类名称
