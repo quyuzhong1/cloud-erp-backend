@@ -755,6 +755,7 @@
         ppk.product_width as productWidth,
         ppk.product_height as productHeight,
         pl.declare_element as declareElement,
+        ppk.box_qty as boxQty,
         ppk.net_weight
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
