@@ -1,6 +1,7 @@
 package com.erp.server.plm.rocketmq.sync.kingdee.impl;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
@@ -16,6 +17,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
 import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -230,6 +232,12 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
             }
             //一级供应商
             resultMap.put("mainSupplier", productPurchaseEntity.getMainSupplier());
+        }
+        //服务和费用类型不允许库存
+        if (StrUtil.equals(productInfoEntity.getProperty(), ProductConstant.PRODUCT_PROPERTY_COST)
+                || StrUtil.equals(productInfoEntity.getProperty(), ProductConstant.PRODUCT_PROPERTY_SERVICE))  {
+            //不允许库存
+            resultMap.put("isStock", Boolean.FALSE);
         }
 
         //生成任务

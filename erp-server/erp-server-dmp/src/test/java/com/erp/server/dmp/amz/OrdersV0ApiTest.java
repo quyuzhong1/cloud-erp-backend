@@ -28,6 +28,7 @@ import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import com.erp.server.dmp.service.CfgAppClientService;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.taskdefs.Sleep;
@@ -117,7 +118,7 @@ public class OrdersV0ApiTest {
 
     @Test
     public void getOrderAllListTest() throws Exception {
-        String shopId = "1735479610549735425";
+        String shopId = "1736965724917731330";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -145,8 +146,8 @@ public class OrdersV0ApiTest {
         String createdAfter = null;
 //        String createdAfter = "2020-10-01T00:00:00";
         String createdBefore = null;
-        String lastUpdatedAfter = "2024-02-22T00:00:00.000Z";
-        String lastUpdatedBefore = "2024-02-22T03:48:00.000Z";
+        String lastUpdatedAfter = null;
+        String lastUpdatedBefore = null;
 //        String lastUpdatedAfter = "2023-10-15T16:30:19";
 //        String lastUpdatedAfter = "2023-10-15T08:46:35.707Z";
 //        orderStatuses.add("Unshipped");
@@ -155,7 +156,8 @@ public class OrdersV0ApiTest {
             // 发起请求
             ApiResponse<GetOrdersResponse> ordersWithHttpInfo = api.getOrdersWithHttpInfo(marketplaceIds,
                     null, null, lastUpdatedAfter, lastUpdatedBefore, null, null, null, null, null, 100,
-                    null, null, null, null, null, null, null, null, null, null, null);
+                    null, null,
+                    null, null, null, null, null, null, null, null, null);
             List<String> limitArray = ordersWithHttpInfo.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
             rateLimitStr = limitArray.get(0);
             GetOrdersResponse orders = ordersWithHttpInfo.getData();
@@ -199,7 +201,354 @@ public class OrdersV0ApiTest {
 
     @Test
     public void getOrderAllListByOrderIdsTest() throws Exception {
-        String shopId = "1735553314990329858";
+        // 根据国家确定
+        // 最多50个
+        List<String> orderIds = Arrays.asList(
+                "702-3976579-7946657",
+                "702-3902777-8417840",
+                "702-5752678-2514668",
+                "702-4484221-8188261",
+                "702-8927346-7661005",
+                "702-2892409-4646665",
+                "701-5696496-1421840",
+                "701-7427465-3358644",
+                "701-6288205-0933052",
+                "701-3059804-0793028",
+                "702-1797834-7229826",
+                "702-1224008-8516254",
+                "702-1452714-8778665",
+                "701-7766871-1808234",
+                "701-0719886-9283416",
+                "701-4218970-8780266",
+                "701-1498410-3634640",
+                "701-1149568-3083459",
+                "702-2174308-2977063",
+                "701-5933279-4585029",
+                "701-2448316-3682602",
+                "702-8973728-4161003",
+                "702-8728403-0750600",
+                "702-7383610-9793058",
+                "702-3014900-8804245",
+                "701-1696463-6282643",
+                "701-9435701-7964236",
+                "702-7198549-7559414",
+                "701-0203458-2537067",
+                "701-0275843-8131428",
+                "702-1921320-2574644",
+                "701-7598136-4715412",
+                "702-6617654-5333850",
+                "702-1906644-2367410",
+                "701-3244496-9785866",
+                "702-9486329-9365052",
+                "701-6163935-4619415",
+                "702-5883179-0280264",
+                "702-3682075-9845840",
+                "702-8928084-5678669",
+                "701-5401928-3964209",
+                "702-4409416-8416228",
+                "701-9072654-7466630",
+                "702-0098130-9606673",
+                "701-2660696-0197013",
+                "701-3620484-3452200",
+                "702-2244736-2187403",
+                "701-0049721-0728214",
+                "701-5189164-8673023",
+                "702-9158607-5477019",
+                "701-1099165-6500208",
+                "701-8268286-3482608",
+                "702-8762635-8039433",
+                "702-2350444-5137817",
+                "701-4691827-4645066",
+                "701-5584996-2355407",
+                "702-0577590-7454662",
+                "701-7582451-9841005",
+                "701-3743826-0629019",
+                "701-9488510-7962624",
+                "701-0014926-0822610",
+                "702-1032848-8909813",
+                "702-6178184-7065845",
+                "702-3623517-3131450",
+                "701-7848218-5043467",
+                "702-6129806-5664257",
+                "701-7002942-4839409",
+                "702-7282888-2777850",
+                "702-5969703-1837808",
+                "702-6471388-5789034",
+                "701-4304863-6153034",
+                "701-4291410-5509859",
+                "702-1869486-3183417",
+                "702-8611429-5258608",
+                "702-5217176-1909014",
+                "701-2260784-2358608",
+                "702-6006389-7666618",
+                "702-1106397-7848262",
+                "702-8471729-3100262",
+                "702-6656691-3764233",
+                "702-1227983-1725858",
+                "702-6960333-7164250",
+                "701-4570488-4201041",
+                "701-7910934-3405866",
+                "702-4561504-7573045",
+                "701-6794395-5042623",
+                "701-0799477-2971434",
+                "701-4979644-2815459",
+                "702-2486616-0728209",
+                "701-6350646-7385019",
+                "702-8962216-3227424",
+                "701-8737710-2828260",
+                "702-0903251-6861048",
+                "701-0680848-8788253",
+                "701-6045772-6434663",
+                "702-2537496-6906606",
+                "701-7429671-2543418",
+                "702-3390585-5674629",
+                "701-8181798-7761032",
+                "701-2081264-3397819",
+                "702-2049473-9264247",
+                "702-3537074-1579421",
+                "701-3248080-9110649",
+                "702-2501605-8681016",
+                "702-3355550-8707406",
+                "701-0601663-0980247",
+                "702-9469710-1373003",
+                "701-0294057-8677805",
+                "701-5311437-3727400",
+                "701-7830022-5715465",
+                "702-1399314-1470613",
+                "701-6911977-9848222",
+                "701-5893469-8316231",
+                "702-1703898-8607423",
+                "702-1734834-3523422",
+                "701-6834854-4437009",
+                "701-4229671-5858634",
+                "702-5955721-3944252",
+                "702-7889288-6338639",
+                "702-7982274-2549051",
+                "701-8620374-1511404",
+                "702-9284083-9009058",
+                "701-1093209-2554625",
+                "701-0628762-6274665",
+                "701-0823323-3921818",
+                "702-5219316-3586647",
+                "702-2229726-7028242",
+                "701-7777709-5641011",
+                "701-9135954-6277006",
+                "702-3209338-7755433",
+                "702-7145620-0733825",
+                "702-7326607-2176250",
+                "702-7546751-8529045",
+                "702-5732991-2692219",
+                "702-1033160-2374620",
+                "701-4541773-2369849",
+                "702-8230543-1373864",
+                "702-9963968-9750662",
+                "702-8321722-0520243",
+                "702-3762034-0976230",
+                "702-1425993-2323468",
+                "702-3648448-1612228",
+                "701-4232242-8758633",
+                "701-0322911-1173877",
+                "701-6674644-0966624",
+                "701-2413981-4186635",
+                "702-8219949-3546626",
+                "702-8524650-1556232",
+                "702-4334033-3159424",
+                "702-2423253-5668251",
+                "702-9721617-7569842",
+                "702-8626902-6413038",
+                "701-4141352-6765066",
+                "701-7006477-2665042",
+                "702-5504414-9880206",
+                "702-5796453-4297068",
+                "702-3826816-9357062",
+                "702-8029549-0115450",
+                "702-7568231-2873812",
+                "702-9321295-5929849",
+                "701-0597503-0353036",
+                "702-8040076-5450617",
+                "701-9876940-0436243",
+                "702-8026069-9269839",
+                "702-0438212-9701800",
+                "701-0174763-8865046",
+                "702-3894763-3965834",
+                "701-9078518-9734665",
+                "701-0295458-8151445",
+                "701-0651313-3201019",
+                "702-3201779-2396252",
+                "702-4795435-6685050",
+                "701-4838138-5968213",
+                "702-3907962-4453845",
+                "702-6064252-8361021",
+                "702-6179321-9100231",
+                "701-7106124-8872235",
+                "702-7700300-8536249",
+                "702-9437651-8051410",
+                "701-8749660-3054644",
+                "702-3727711-4664259",
+                "702-4172422-5777823",
+                "702-8259162-4178645",
+                "701-3152258-2814639",
+                "702-4838842-8013020",
+                "701-4404701-0215440",
+                "701-2149089-3740229",
+                "702-8259095-0625004",
+                "701-8520366-3654617",
+                "702-1211605-3910610",
+                "701-8582647-0193861",
+                "702-7442673-2585056",
+                "702-5745292-9962612",
+                "702-5331975-3685869",
+                "702-5112840-3393061",
+                "701-0294149-7401856",
+                "702-9133134-5481831",
+                "702-3004850-9175438",
+                "701-5508313-4879440",
+                "701-6340824-2376232",
+                "702-5925321-5324218",
+                "701-6027770-0516256",
+                "702-2871975-7866610",
+                "701-0857230-1240215",
+                "702-6299104-0123407",
+                "701-9239049-7973838",
+                "702-9108981-3058665",
+                "701-5150400-8041836",
+                "702-9797631-0697844",
+                "702-4261823-9632230",
+                "701-6480300-3155407",
+                "701-3957333-1141849",
+                "702-2319909-7684243",
+                "701-5132814-7549852",
+                "702-3840473-6530629",
+                "702-6179565-0775460",
+                "701-5893066-9693009",
+                "701-3857892-8597810",
+                "701-3692165-6839455",
+                "702-1267497-2961043",
+                "702-5262377-0941012",
+                "702-6292532-2592240",
+                "701-8969863-5468211",
+                "702-3302935-1157838",
+                "702-0403507-5528238",
+                "701-5159336-5623441",
+                "701-7870853-0551403",
+                "702-6391281-3694625",
+                "701-3945640-5745845",
+                "702-6245173-5385043",
+                "702-6618447-7645803",
+                "701-6737322-3958645",
+                "702-4220832-4349038",
+                "701-3379401-9540257",
+                "701-5994483-0473027",
+                "702-1215492-4544258",
+                "702-1518816-4145842",
+                "701-1383624-1309065",
+                "701-4598417-2685001",
+                "702-6446740-0085824",
+                "702-4029424-7851465",
+                "702-0295630-6952207",
+                "702-4944614-6025816",
+                "701-8497742-0395443",
+                "702-5337740-2397848",
+                "702-4182744-7535406",
+                "701-4019047-6529863",
+                "702-9156991-7202614",
+                "702-5769248-0534622",
+                "701-0358585-7071402",
+                "702-7799444-8948216",
+                "702-6544077-9267411",
+                "702-2987979-7056225",
+                "702-5885505-9289815",
+                "702-0975791-8088244",
+                "702-1130327-6589848",
+                "701-9491481-9574615",
+                "701-4201841-5688224",
+                "702-2700722-4813024",
+                "701-7569262-4734643",
+                "702-4444656-0565037",
+                "702-6355411-8494642",
+                "702-9483155-3083459",
+                "702-4741411-8215410",
+                "702-4079756-1069834",
+                "702-3429271-5253062",
+                "702-6351869-9873009",
+                "702-2008272-1241053",
+                "701-4955761-2045820",
+                "701-7204836-0511400",
+                "701-4935909-7786627",
+                "702-3184740-1757853",
+                "701-5503685-3370643",
+                "702-2229437-2977854",
+                "702-2091914-6296231",
+                "702-0231155-0360256",
+                "702-5773672-6857038",
+                "702-6787847-3188200",
+                "702-1936794-1100253",
+                "702-0288405-1407403",
+                "702-2851612-7797847",
+                "701-8869997-2219438",
+                "701-0099684-7353068",
+                "701-7980130-6306658",
+                "702-2046230-7243455",
+                "702-8098589-2406648",
+                "701-0530344-9498638",
+                "702-3905493-3927453",
+                "702-8115783-4094603",
+                "701-1311990-4349030",
+                "701-8310118-4475432",
+                "701-3006940-6649053",
+                "701-7007145-0757843",
+                "701-1389588-1772220",
+                "701-5996931-4544258",
+                "701-4199522-6181814",
+                "701-4597173-0458651",
+                "701-3640699-3352253",
+                "702-0791064-3920206",
+                "701-8496851-1467459",
+                "702-0368380-3346652",
+                "701-9866754-3239463",
+                "702-7116464-6208205",
+                "701-9700120-5338653",
+                "702-8428371-7453035",
+                "701-5236894-7662631",
+                "701-5293297-9449065",
+                "701-1936251-9877845",
+                "702-8796135-5742617",
+                "701-9161271-1204231",
+                "701-7919008-5929821",
+                "702-7261605-4660224",
+                "701-7757827-7225869",
+                "701-5043998-2557017",
+                "701-2555029-7249027",
+                "702-8350575-8632236",
+                "702-3230412-6661026",
+                "701-8232655-0614625",
+                "701-7144395-3333068",
+                "702-7826107-1410624",
+                "702-5577992-6689835",
+                "702-5515980-1203432",
+                "701-8500636-1433843",
+                "702-7999076-5172217",
+                "701-7049328-6069859",
+                "702-1237931-3793027",
+                "701-8550457-2615431",
+                "701-4015890-0059425",
+                "702-8630075-1091403",
+                "701-3273986-1718639",
+                "702-4986476-7798648",
+                "702-9980902-1277837",
+                "702-1387771-0949809",
+                "701-1923565-0526652",
+                "701-7522067-7706625",
+                "701-8514415-8947405",
+                "702-6120584-0169850",
+                "701-6599823-5729803",
+                "702-2715901-6774668",
+                "701-5293833-0781057"
+        );
+        List<List<String>> partition = Lists.partition(orderIds, 50);
+
+
+        String shopId = "1736965724917731330";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -215,81 +564,34 @@ public class OrdersV0ApiTest {
             throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
         }
 
-        List<String> marketplaceIds = new ArrayList<>();
-        marketplaceIds.add(marketplaceEnum.getMarketplaceId());//根据国家确定
-
-        List<String> orderIds = Arrays.asList(
-                "249-9294177-0591806",
-                "250-3170271-1433410",
-                "249-5511838-0983843",
-                "250-8448011-3138262",
-                "249-1287991-4515830",
-                "250-4218365-2050208",
-                "249-8613467-7945418",
-                "249-1398119-1823818",
-                "503-2216545-4564612",
-                "503-5101551-7443865",
-                "249-8284646-7679837",
-                "249-5993820-7525403",
-                "250-0993781-2259834",
-                "503-5025643-6284669",
-                "503-2859437-5037427",
-                "503-8956037-4483002",
-                "249-7464155-7975063",
-                "249-0527663-2128617",
-                "250-9388969-1043837",
-                "249-4192159-3612653",
-                "249-8373985-7085450",
-                "503-4989746-3253455",
-                "249-7632940-4167034",
-                "249-9761543-6676635",
-                "503-7625027-4907866",
-                "503-9740355-5837428"
-        );
-        String rateLimitStr;
-        try {
-            // 发起请求
-            ApiResponse<GetOrdersResponse> ordersWithHttpInfo = api.getOrdersWithHttpInfo(marketplaceIds,
-                    null, null, null, null, null, null, null, null, null, 100,
-                    null, null, null, orderIds, null, null, null, null, null, null, null);
-            List<String> limitArray = ordersWithHttpInfo.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
-            rateLimitStr = limitArray.get(0);
-            GetOrdersResponse orders = ordersWithHttpInfo.getData();
-            System.out.println("amz spi根据订单ID查询订单首次");
-            System.out.println(JSONUtil.toJsonStr(orders));
-
-            List<Order> orderList = new LinkedList<>(orders.getPayload().getOrders());
-            String currentNextToken = orders.getPayload().getNextToken();
-            int currentSize = orders.getPayload().getOrders().size();
-            while (StringUtils.isNotBlank(currentNextToken) && currentSize == 100) {
-                // 上一次请求的响应频率设置
-                if (StringUtils.isNotBlank(rateLimitStr)) {
-                    RateLimitConfigurationOnRequests rateLimitConfigurationRequests = (RateLimitConfigurationOnRequests) rateLimitConfig;
-                    rateLimitConfigurationRequests.setRateLimitPermit(Double.parseDouble(rateLimitStr));
-                    api.getApiClient().setRateLimiter(rateLimitConfigurationRequests);
+        List<String> marketplaceIds = Arrays.stream(AmazonMarketplaceEnum.values()).map(AmazonMarketplaceEnum::getMarketplaceId).collect(Collectors.toList());
+//        marketplaceIds.add(marketplaceEnum.getMarketplaceId());
+        for (List<String> curOrderIds : partition) {
+            try {
+                // 发起请求
+                ApiResponse<GetOrdersResponse> ordersWithHttpInfo = api.getOrdersWithHttpInfo(marketplaceIds,
+                        null, null, null, null, null, null, null, null, null, 100,
+                        null, null, null, curOrderIds, null, null, null, null, null, null, null);
+                GetOrdersResponse orders = ordersWithHttpInfo.getData();
+                System.out.println("amz spi根据订单ID查询订单首次");
+                System.out.println(JSONUtil.toJsonStr(orders));
+                //
+                List<Order> orderList = new LinkedList<>(orders.getPayload().getOrders());
+                // 设置根据亚马逊的响应时间记录下次执行开始时间
+                System.out.println(orderList);
+                System.out.println("amz sp-查询订单");
+                System.out.println(JSONUtil.toJsonStr(orderList));
+                Map<String, List<Order>> collect = orderList.stream().collect(Collectors.groupingBy(Order::getAmazonOrderId));
+                for (Map.Entry<String, List<Order>> stringListEntry : collect.entrySet()) {
+                    if (stringListEntry.getValue().size() > 1) {
+                        System.out.println("存在重复,value={}" + JSONUtil.toJsonStr(stringListEntry.getValue()));
+                    }
                 }
-                GetOrdersResponse currentResp = api.getOrders(marketplaceIds, null, null, null, null, null, null, null, null, null, 100, null, null, currentNextToken, null, null, null, null, null, null, null, null);
-                System.out.println("amz spi循环查询订单token=" + currentNextToken);
-                System.out.println(JSONUtil.toJsonStr(currentResp));
-                orderList.addAll(currentResp.getPayload().getOrders());
-                currentNextToken = currentResp.getPayload().getNextToken();
-                currentSize = currentResp.getPayload().getOrders().size();
-                List<String> currentLimitArray = ordersWithHttpInfo.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
-                rateLimitStr = currentLimitArray.get(0);
+            } catch (Exception e) {
+                throw new RuntimeException("请求亚马逊SP-APi订单失败,body=" + JSONUtil.toJsonStr(e));
             }
-            // 设置根据亚马逊的响应时间记录下次执行开始时间
-            System.out.println(orderList);
-            System.out.println("amz sp-查询订单");
-            System.out.println(JSONUtil.toJsonStr(orderList));
-            Map<String, List<Order>> collect = orderList.stream().collect(Collectors.groupingBy(Order::getAmazonOrderId));
-            for (Map.Entry<String, List<Order>> stringListEntry : collect.entrySet()) {
-                if (stringListEntry.getValue().size() > 1) {
-                    System.out.println("存在重复,value={}" + JSONUtil.toJsonStr(stringListEntry.getValue()));
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("请求亚马逊SP-APi订单失败,body=" + JSONUtil.toJsonStr(e));
         }
+
 
     }
 

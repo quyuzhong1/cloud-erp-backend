@@ -847,7 +847,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param response
      * @return Boolean
      */
-    Boolean exportExcel(SoB2cDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(SoB2cDTO.ExportParamDTO dto, HttpServletResponse response);
     /**
      * @description: 更新主表仓库匹配规则
      * @author Will
@@ -894,6 +894,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     List<PackageDTO.ScanResultDTO> listMergePackageBySoIds(List<String> ids);
+
+    Boolean autoCancelOrderForecast(SoB2cEntity mainEntity);
 
     PackageDTO.ScanResultDTO packageScan(PackageDTO.ScanDTO scanDTO);
 }

@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.validator.AddGroup;
@@ -24,6 +25,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -424,10 +426,19 @@ public class QcInfoDTO implements Serializable {
     @NoArgsConstructor
     public static class TabListDTO {
 
-        private String searchType;
+        /**
+         * 类型
+         */
+        private String tabFlag;
 
-        private String typeName;
+        /**
+         * 类型名称
+         */
+        private String tabFlagName;
 
+        /**
+         * 数量
+         */
         private Integer count;
 
 
@@ -574,103 +585,14 @@ public class QcInfoDTO implements Serializable {
     public static class PagingParamDTO extends SortDTO {
 
         /**
-         * all 全部
-         * waitQc 待质检
-         * finishQc 完成质检
-         * cancel 已取消
+         * 页面高级查询
          */
-        @StateEnumValue(strValues = {"all", "waitQc", "finishQc", "cancel", "waitReQc"}, message = "搜索类型有误")
-        @NotBlank(message = "搜索类型不能为空")
-        private String searchType;
-
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 质检单号
+         * sqlMap 默认key default
          */
-        private String code;
-
-        /**
-         * 采购单号
-         */
-        private String purchaseOrderCode;
-
-        /**
-         * 来源单号
-         */
-        private String sourceCode;
-
-        /**
-         * SKU no
-         */
-        private List<String> skuNoList;
-
-
-        /**
-         * 质检状态
-         * 来源 http://172.16.100.11:3002/project/92/interface/api/9673
-         */
-        private List<String> qcStatusList;
-
-
-        /**
-         * 质检类型
-         * 来源 http://172.16.100.11:3002/project/92/interface/api/8890
-         */
-        private String qcType;
-
-
-        /**
-         * 是否内检
-         * true 内部检验
-         */
-        private Boolean isInside;
-
-
-        /**
-         * 供应商id集合
-         */
-        private List<String> supplierIdList;
-
-
-        /**
-         * 质检结果集合
-         * 来源 http://172.16.100.11:3002/project/92/interface/api/10024
-         */
-        private List<String> qcResultList;
-
-
-        /**
-         * 处理措施
-         */
-        private List<String> handleModeDictList;
-
-
-        /**
-         * 仓库id 集合
-         */
-        private List<String> warehouseIdList;
-
-
-        /**
-         * 质检员集合
-         */
-        private List<String> qcUserIdList;
-
-        /**
-         * 创建人 id 集合
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-
-        /**
-         * 是否库内抽检
-         * true 内部抽检
-         */
-        private Boolean isInsideQc;
+        private Map<String,String> sqlMap;
 
     }
 

@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.exception.ServiceException;
@@ -74,12 +75,13 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     private SysDictFeign sysDictFeign;
     @Resource
     private PlmTaskFeign plmTaskFeign;
-
     @Resource
     private DmpMongoDbFeign dmpMongoDbFeign;
-
     @Resource
     private DictBasicService dictBasicService;
+    @Resource
+    private OperateLogService operateLogService;
+
 
 
 
@@ -122,11 +124,27 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
               soB2cDetailService.updateWarehouseIdByMainId(mainEntity.getId(),warehouseId,true);
             }
         }
-        // 规则处理(分平台)
-        SoB2cHandler.handleRule(mainEntity);
+        // 平台仓订单不走任何规则
+        // 取消订单不走规则
+        if (!mainEntity.hasPlatformWarehouseOrder() || mainEntity.getIsCancel() ) {
+            // 已审核过的订单不走规则
+            Integer count = operateLogService.lambdaQuery()
+                    .eq(OperateLogEntity::getBusinessId, mainEntity.getId())
+                    .eq(OperateLogEntity::getOperation, "审核操作")
+                    .count();
+            if (0 == count){
+                // 规则处理(分平台)
+                SoB2cHandler.handleRule(mainEntity);
+            }
+        }
 
         // 销售出库单处理(分平台)
         SoB2cHandler.handleSoOutStock(dto, resultDTO, mainEntity);
+
+        //平台取消订单后自动取消预报
+        if(Objects.nonNull(mainEntity.getIsCancel()) && mainEntity.getIsCancel()){
+            soB2cService.autoCancelOrderForecast(mainEntity);
+        }
     }
 
 

@@ -119,8 +119,13 @@ public class SoB2cDetailDTO implements Serializable {
          * 是否匹配仓库规则
          */
         private Boolean isMatchWarehouseRule;
-        
-       /**
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+
+        /**
         * 明细标签对象
         */
        private DetailLabelDTO detailLabelDTO;

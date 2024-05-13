@@ -188,7 +188,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
 //        queryFilters.add(String.format("FOrderNo <> '%s'", ""));
         queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'C'"));
         queryFilters.add(StrUtil.format(" FISGENFORIOS = {}", "0"));
-        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(5)),sdf.format(nextTime)));
+        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(8)),sdf.format(nextTime)));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FID," +
                 "FBillTypeID," +

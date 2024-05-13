@@ -83,6 +83,7 @@
         pc.actual_tax_cost,
         pc.target_tax_cost,
         pd.warehouse_location,
+        pd.warehouse_location_large,
         pi.iterate_ref_sku_id,
         pi.iterate_ref_sku_no
         FROM product_info pi
@@ -516,7 +517,9 @@
         pl.product_property_id,
         pd.charge_id,
         pi.iterate_ref_sku_id,
-        pi.iterate_ref_sku_no
+        pi.iterate_ref_sku_no,
+        pd.warehouse_location,
+        pd.warehouse_location_large
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
@@ -946,7 +949,8 @@
         pd.variant_property as variantProperty,
         pd.unit_name,
         pd.status,
-        pd.warehouse_location as warehouseLocation
+        pd.warehouse_location as warehouseLocation,
+        pd.warehouse_location_large as warehouseLocationLarge
         FROM  product_detail pd
         WHERE
             pd.is_deleted = FALSE
@@ -1553,6 +1557,7 @@
             pp.box_length / 10 AS boxSizeLength,
             pp.box_width / 10 AS boxSizeWide,
             pp.box_height / 10 AS boxSizeHigh,
+        pp.product_length as productLength,pp.product_width as productWidth,pp.product_height as productHeight,
             (select value from basic_dict  where is_deleted=false and id=pl.product_property_id LIMIT 1) AS productProperty,
             (select name from basic_dict  where is_deleted=false and value=pl.declare_unit and type ='declareUnit' LIMIT 1) AS declareUnitName,
             pd.name as cnName,pd.name_en as enName,

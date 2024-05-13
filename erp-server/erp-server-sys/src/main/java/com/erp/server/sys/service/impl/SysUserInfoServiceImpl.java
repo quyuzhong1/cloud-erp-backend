@@ -1259,6 +1259,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 .set(SysUserInfoEntity::getNeedChangePwd, Boolean.TRUE)
                 .eq(SysUserInfoEntity::getUid, uid).update();
         redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + uid);
+        String loginErrorKey = StrUtil.format(RedisCacheConstants.LOGIN_ERROR_KEY, userInfoEntity.getUserType(), userInfoEntity.getUserAccount());
+        redisService.deleteObject(loginErrorKey);
         return flag;
     }
 
@@ -1300,6 +1302,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 .eq(SysUserInfoEntity::getUid, sysUserInfoEntity.getUid()).update();
 
         redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + sysUserInfoEntity.getUid());
+        String loginErrorKey = StrUtil.format(RedisCacheConstants.LOGIN_ERROR_KEY, forgotPasswordDTO.getUserType(), forgotPasswordDTO.getUserAccount());
+        redisService.deleteObject(loginErrorKey);
         return flag;
     }
 
