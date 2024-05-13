@@ -351,6 +351,11 @@ public class SoOutstockDetailDTO implements Serializable {
          */
         private String platformCode;
 
+        /**
+         * 平台销售出库单明细ID
+         */
+        private String platformDetailId;
+
         public AddDTO(ListingInfoWithSkuMappingGenDTO currentSkuMappingDTO, AddDTO addDTO, Integer currentQty) {
             this.skuId = currentSkuMappingDTO.getProductSkuId();
             this.skuNo = currentSkuMappingDTO.getPlatformSkuNo();
@@ -364,6 +369,7 @@ public class SoOutstockDetailDTO implements Serializable {
             this.soDetailId = addDTO.getSoDetailId();
             this.historySkuMappingList = addDTO.getHistorySkuMappingList();
             this.platformCode = addDTO.getPlatformCode();
+            this.platformDetailId = addDTO.getPlatformDetailId();
         }
     }
 

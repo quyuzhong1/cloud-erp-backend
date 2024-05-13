@@ -210,6 +210,24 @@ public class SoInfoController extends BaseController {
         SoInfoDTO.ViewDTO view = soInfoService.view(dto.getId());
         return success(view);
     }
+    /**
+     * 打印拣货单
+     *
+     * @param dto
+     * @return
+     */
+    @LogViewService
+    @PostMapping("/printPickingView")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:so:printPickingView",
+            serviceClass = SoInfoService.class,
+            keyIdName = "id"
+    )
+    public ApiResult<SoInfoDTO.ViewDTO> printPickingView(@RequestBody @Validated BaseIdDTO dto) {
+        SoInfoDTO.ViewDTO view = soInfoService.printPickingView(dto.getId());
+        return success(view);
+    }
 
     /**
      * 修改
