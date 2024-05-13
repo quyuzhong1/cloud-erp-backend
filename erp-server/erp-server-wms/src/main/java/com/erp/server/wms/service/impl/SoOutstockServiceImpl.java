@@ -703,6 +703,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @author Lambda
      * @create 2024-01-01 10:50
      */
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public void handleSoB2cData(SoOutstockEntity entity) {
         if (Objects.isNull(entity)) {
@@ -824,7 +825,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     //TODO 物流单
 //    @Async("saveLogisticsBill")
     public void saveLogisticsBill(SoOutstockEntity entity) {
-        try {
             LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
             addDTO.setOutstockId(entity.getId());
             addDTO.setOutstockCode(entity.getCode());
@@ -903,9 +903,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             addDetailDTO.setTrackNo(entity.getTrackNo());
             addDTO.setDetailList(Arrays.asList(addDetailDTO));
             logisticsBillFeign.addLogisticsBill(addDTO);
-        } catch (Exception e) {
-            log.error("物流单添加失败: {}", e.getMessage());
-        }
+
 
     }
 
@@ -1023,7 +1021,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.SO_OUT_STOCK.getCode(), rejectPairList, "状态变更");
             if (isPushKingDee) {
                 //B2B 反审核发送金蝶
-                haveSoIdList.stream().forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+               // haveSoIdList.stream().forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
             }
 
             //修改中转报关单订单出库状态
