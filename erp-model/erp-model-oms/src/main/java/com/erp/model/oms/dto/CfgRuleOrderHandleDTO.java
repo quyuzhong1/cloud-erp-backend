@@ -43,6 +43,11 @@ public class CfgRuleOrderHandleDTO implements Serializable {
         private String name;
 
         /**
+         * 描述【可排序】
+         */
+        private String remark;
+
+        /**
          * 优先级【可排序】
          */
         private Integer priority;
