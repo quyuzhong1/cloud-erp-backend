@@ -547,7 +547,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         //如果是发货计划来源，反审核修改发货状态
-        if (SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode().equals(entity.getSourceType())) {
+        if (SourceTypeEnum.DELIVERY_PLAN.getCode().equals(entity.getSourceType())) {
             WmsDeliveryPlanEntity planEntity = wmsDeliveryPlanService.getById(entity.getSourceId());
             if (ObjectUtil.isNotEmpty(planEntity)) {
                 //如果存在有一个审核通过的发货单，状态都是已发货
@@ -716,7 +716,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 }
             }
             //如果是发货计划来源
-            if (SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode().equals(entity.getSourceType())) {
+            if (SourceTypeEnum.DELIVERY_PLAN.getCode().equals(entity.getSourceType())) {
                 //审核通过修改发货状态为已发货
                 WmsDeliveryPlanEntity planEntity = wmsDeliveryPlanService.getById(entity.getSourceId());
                 if (ObjectUtil.isNotEmpty(planEntity)) {

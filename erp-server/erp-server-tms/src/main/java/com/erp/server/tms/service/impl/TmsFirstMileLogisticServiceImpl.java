@@ -1588,7 +1588,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(logisticDTO.getSourceType().equals(SourceTypeEnum.FBA_SHIPMENT.getCode()) && !ShippingTemplateTypeEnum.ENUM_WAREHOUSE.getCode().equals(shippingTemplateEntity.getType())){
             throw new ServiceException("FBA发货单不支持非仓库类型模板计算");
         }
-        if(logisticDTO.getSourceType().equals(SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode()) && !ShippingTemplateTypeEnum.ENUM_COUNTRY.getCode().equals(shippingTemplateEntity.getType())){
+        if(logisticDTO.getSourceType().equals(SourceTypeEnum.DELIVERY_PLAN.getCode()) && !ShippingTemplateTypeEnum.ENUM_COUNTRY.getCode().equals(shippingTemplateEntity.getType())){
             throw new ServiceException("海外仓发货单不支持非国家类型模板计算");
         }
 
@@ -1603,7 +1603,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
         viewParamDTO.setMainId(shippingTemplateEntity.getId());
         viewParamDTO.setFromCountry("CN");
-        if(logisticDTO.getSourceType().equals(SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode())){
+        if(logisticDTO.getSourceType().equals(SourceTypeEnum.DELIVERY_PLAN.getCode())){
             viewParamDTO.setToCountry(logisticDTO.getToCountry());
         }
         if(logisticDTO.getSourceType().equals(SourceTypeEnum.FBA_SHIPMENT.getCode())){
