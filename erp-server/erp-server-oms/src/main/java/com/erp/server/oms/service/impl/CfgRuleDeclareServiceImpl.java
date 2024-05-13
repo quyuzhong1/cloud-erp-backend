@@ -10,6 +10,7 @@ import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.server.rule.SpElServer;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.CfgRuleDeclareEntity;
@@ -335,7 +336,12 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
     /**
     * 新增修改处理数据
     */
-    private void handleData(CfgRuleDeclareEntity CfgRuleDeclareEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(CfgRuleDeclareEntity entity) {
+        if (StringUtils.isEmpty(entity.getToCurrency())){
+            entity.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+        }
+        if (StringUtils.isEmpty(entity.getToCurrencySymbol())){
+            entity.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+        }
     }
 }
