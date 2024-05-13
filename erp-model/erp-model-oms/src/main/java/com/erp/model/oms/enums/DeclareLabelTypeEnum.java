@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum DeclareLabelTypeEnum implements EnumMessage {
 
-    HIGH("hight", "高申报"),
+    HIGH("high", "高申报"),
     LOW("low", "低申报"),
     NORMAL("normal", "正常申报"),
     ;
