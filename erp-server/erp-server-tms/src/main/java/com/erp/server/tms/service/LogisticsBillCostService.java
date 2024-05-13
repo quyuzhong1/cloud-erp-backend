@@ -146,4 +146,12 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param errorList
      */
     void handleImportSuccessList (List<LogisticsBillCostExcelDTO> successList, List<LogisticsBillCostExcelDTO > errorList,String dictCostAttribution );
+    /**
+     * @description: 更新店铺
+     * @author Will
+     * @date: 2024/5/11 18:38
+     * @param dto
+     * @return Boolean
+     */
+    Boolean updateShopCharge(LogisticsBillCostDTO.UpdateShopChargeDTO dto);
 }

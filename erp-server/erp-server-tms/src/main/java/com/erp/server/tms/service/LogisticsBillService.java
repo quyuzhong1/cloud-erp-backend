@@ -212,4 +212,12 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @param logisticsBillEntity
      */
     void addLogisticsBillCost(LogisticsBillEntity logisticsBillEntity,List<LogisticsBillDetailEntity> list);
+    /**
+     * @description: 根据
+     * @author Will
+     * @date: 2024/5/13 9:05
+     * @param shopIdList
+     * @return List<LogisticsBillEntity>
+     */
+    List<LogisticsBillEntity> listByShopIdList(List<String> shopIdList);
 }

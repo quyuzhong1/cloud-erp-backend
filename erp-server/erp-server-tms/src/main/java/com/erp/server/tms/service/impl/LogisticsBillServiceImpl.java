@@ -28,8 +28,6 @@ import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
-import com.erp.model.plm.dto.LogisticsProductDTO;
-import com.erp.model.plm.dto.ProductCustomsSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
@@ -46,7 +44,6 @@ import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.tms.constant.TmsConstant;
 import com.erp.server.tms.convert.LogisticsBillConverter;
-import com.erp.server.tms.convert.TransferDeclareConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
 import com.erp.server.tms.service.*;
@@ -976,12 +973,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
     }
 
-    public static void main(String[] args) {
-        BigDecimal volume = new BigDecimal(10)
-                .multiply(new BigDecimal(20))
-                .multiply(new BigDecimal(30));
-        BigDecimal divide = MathUtil.divide(volume, new BigDecimal(2000));
-        System.out.println(divide);
+    @Override
+    public List<LogisticsBillEntity> listByShopIdList(List<String> shopIdList) {
+        if (CollectionUtils.isEmpty(shopIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return  lambdaQuery().in(LogisticsBillEntity::getShopId,shopIdList).list();
     }
 
     /**
