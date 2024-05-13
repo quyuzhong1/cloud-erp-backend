@@ -710,7 +710,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 dateList.add(endDate);
                 pagingParamDTO.setBillDateList(dateList);
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(item.getCode());
