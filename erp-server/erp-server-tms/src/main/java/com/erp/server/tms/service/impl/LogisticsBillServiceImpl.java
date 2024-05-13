@@ -976,12 +976,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
     }
 
-    public static void main(String[] args) {
-        BigDecimal volume = new BigDecimal(10)
-                .multiply(new BigDecimal(20))
-                .multiply(new BigDecimal(30));
-        BigDecimal divide = MathUtil.divide(volume, new BigDecimal(2000));
-        System.out.println(divide);
+    @Override
+    public List<LogisticsBillEntity> listByShopIdList(List<String> shopIdList) {
+        if (CollectionUtils.isEmpty(shopIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return  lambdaQuery().in(LogisticsBillEntity::getShopId,shopIdList).list();
     }
 
     /**

@@ -2,6 +2,7 @@ package com.erp.model.tms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -231,9 +232,9 @@ public class LogisticsBillCostDTO implements Serializable {
         private String platformCode;
 
         /**
-         * 店铺负责人
+         * 店铺负责人【可排序】
          */
-        private String chargeName;
+        private String shopChargeName;
 
     }
 
@@ -569,4 +570,26 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private String trackNo;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateShopChargeDTO {
+
+        /**
+         * 店铺Id
+         */
+        @NotBlank(message = "店铺Id不能为空")
+        private String shopId;
+
+
+        /**
+         * 店铺负责人id
+         */
+        @NotBlank(message = "店铺负责人Id不能为空")
+        private String shopChargeId;
+
+    }
+
 }

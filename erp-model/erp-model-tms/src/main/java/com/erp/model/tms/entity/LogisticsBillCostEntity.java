@@ -124,6 +124,18 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     private BigDecimal weightLogistics;
 
     /**
+     * 店铺负责人id
+     */
+    @TableField(value = "shop_charge_id")
+    private String shopChargeId;
+
+    /**
+     * 店铺负责人名称
+     */
+    @TableField(value = "shop_charge_name")
+    private String shopChargeName;
+
+    /**
      * 费用编辑（导入数据返回）
      */
     @TableField(exist = false)
