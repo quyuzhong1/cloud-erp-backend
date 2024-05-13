@@ -519,18 +519,20 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
             }
         } else {
-            SoB2cDTO.CustomerDTO customer = soB2cFeign.getB2cCustomerById(soId);
-            result.setCustomerName(customer.getCustomerName());
-            result.setReceiveAddress(customer.getReceiverAddress());
-            result.setReceiverName(customer.getReceiverName());
-            result.setTelNumber(customer.getTelNumber());
-            result.setSellerName(customer.getSellerName());
-            result.setSalesOrgName(customer.getSalesOrgName());
-            result.setDeliveryModeName(customer.getDeliveryModeName());
+            if (StringUtils.isNotBlank(soId)) {
+                SoB2cDTO.CustomerDTO customer = soB2cFeign.getB2cCustomerById(soId);
+                result.setCustomerName(customer.getCustomerName());
+                result.setReceiveAddress(customer.getReceiverAddress());
+                result.setReceiverName(customer.getReceiverName());
+                result.setTelNumber(customer.getTelNumber());
+                result.setSellerName(customer.getSellerName());
+                result.setSalesOrgName(customer.getSalesOrgName());
+                result.setDeliveryModeName(customer.getDeliveryModeName());
+                result.setCountryId(customer.getCountry());
+                result.setCountryName(customer.getCountryName());
+            }
             //要货日期通销售订单创建日期
             result.setRequireDate(soOutstock.getPlanDeliveryDate());
-            result.setCountryId(customer.getCountry());
-            result.setCountryName(customer.getCountryName());
             String salesDeptId = soOutstock.getSalesDeptId();
             if (StringUtils.isNotBlank(salesDeptId)) {
                 SysDepartmentDTO department = sysUserFeign.getUserDeptById(salesDeptId);
