@@ -676,7 +676,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             case FIRST_MILE_DELIVERY:
                 wmsTaskFeign.fbaDeliveryApprove(baseApproveParamDTO);
                 break;
-            case OVERSEAS_DELIVERY_PLAN:
+            case DELIVERY_PLAN:
                 wmsTaskFeign.deliveryPlanApprove(baseApproveParamDTO);
                 break;
             default:
