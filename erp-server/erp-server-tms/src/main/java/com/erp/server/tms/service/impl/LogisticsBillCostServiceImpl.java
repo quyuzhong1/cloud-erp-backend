@@ -171,7 +171,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     @Override
-    public List<LogisticsBillCostDTO.TabListDTO> tabList(PermissionsDTO dto) {
+    public List<LogisticsBillCostDTO.TabListDTO> tabList(PermissionsDTO dto, DictCostAttributionEnum attribution) {
         List<LogisticsBillCostDTO.TabListDTO> resultList = new ArrayList<>();
         ReconciliationStatusEnum[] values = ReconciliationStatusEnum.values();
         for (ReconciliationStatusEnum statusEnum : values) {
@@ -182,7 +182,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             LogisticsBillCostDTO.PagingParamDTO pagingParamDTO = new LogisticsBillCostDTO.PagingParamDTO();
             pagingParamDTO.setPermissionSql(dto.getPermissionSql());
             LogisticsBillCostDTO.TabListDTO resultDTO = new LogisticsBillCostDTO.TabListDTO();
+            //自发货费用
             String tabSql = logisticsBillCostQueryHandler.getTabSql(statusEnum.getCode());
+            //尾程费用
+            if (DictCostAttributionEnum.LAST_MILE.equals(attribution)) {
+                tabSql = logisticsBillCostQueryHandler.getTabSql(statusEnum.getCode());
+            }
             HashMap<String,String> map = new HashMap<>();
             map.put("default",tabSql);
             pagingParamDTO.setSqlMap(map);
