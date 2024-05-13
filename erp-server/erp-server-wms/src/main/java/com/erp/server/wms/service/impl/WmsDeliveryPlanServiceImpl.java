@@ -14,6 +14,7 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -23,6 +24,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -32,11 +34,10 @@ import com.erp.model.wms.dto.excel.DeliveryPlanDetailExportExcelDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseProductReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseSkuResp;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
-import com.erp.model.wms.enums.FbaDemandTypeEnum;
-import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -91,8 +92,6 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     @Autowired
     private PlmTaskFeign plmTaskFeign;
     @Autowired
-    private SysUserFeign sysUserFeign;
-    @Autowired
     private FirstMileDeliveryService firstMileDeliveryService;
     @Autowired
     private RequisitionApplicationService requisitionApplicationService;
@@ -103,6 +102,9 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
     @Resource
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
+
+    @Autowired
+    private ShopInfoFeign shopInfoFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -510,15 +512,10 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 viewDTO.setStockSku(listSkuDTO.getWarehouseSkuNo());
                 viewDTO.setStockSkuName(listSkuDTO.getWarehouseProductName());
             }
-//            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
-//                    v->v.getDictPlatform().equals(provideCode) && v.getProductSkuId().equals(viewDTO.getSkuId()) && (v.getHasMappingAll() || v.getWarehouseId().equals(data.getToWarehouseId()))
-//                    )
-//                    .findFirst().orElse(null);
-//            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
-//                viewDTO.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
-//                viewDTO.setThirdWarehouseProductName(listingInfoWithSkuMappingDTO.getPlatformSkuName());
-//            }
-
+            WmsDeliveryPlanDetailEntity wmsDeliveryPlanDetailEntity = detailEntityList.stream().filter(v->v.getId().equals(viewDTO.getId())).findFirst().orElse(new WmsDeliveryPlanDetailEntity());
+            viewDTO.setMSKU(wmsDeliveryPlanDetailEntity.getPlatformSku());
+            viewDTO.setFnSku(wmsDeliveryPlanDetailEntity.getPlatformFnSku());
+            viewDTO.setAsin(wmsDeliveryPlanDetailEntity.getPlatformSpu());
         }
         data.setDetailList(viewDTOS);
     }
@@ -898,6 +895,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(data.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
             String waitApproveUserName = StringUtils.join(curApproveName, ",");
             data.setWaitApproveUserName(waitApproveUserName);
+            data.setTypeName(EnumMessage.getNameByCode(DeliveryPlanTypeEnum.class, data.getType()));
 
 //            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
 //                    v->v.getDictPlatform().equals(data.getProvideCode()) && v.getProductSkuId().equals(data.getSkuId()) &&(v.getHasMappingAll() || v.getWarehouseId().equals(data.getToWarehouseId()))
@@ -923,12 +921,6 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
      * 新增修改处理数据
      */
     private void handleData(WmsDeliveryPlanEntity wmsDeliveryPlanEntity, List<? extends WmsDeliveryPlanDetailDTO.CommonDTO> detailList) {
-        //根据仓库id查询和第三方仓绑定关系，并设置国家字段值
-        OverseasProviderWarehouseEntity warehouseEntity = overseasProviderWarehouseService.getByWarehouseId(wmsDeliveryPlanEntity.getToWarehouseId());
-        if (ObjectUtil.isNotEmpty(warehouseEntity)) {
-            wmsDeliveryPlanEntity.setCountry(warehouseEntity.getCountry());
-            wmsDeliveryPlanEntity.setCountryName(warehouseEntity.getCountryName());
-        }
 
         //设置仓库中文名
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(wmsDeliveryPlanEntity.getToWarehouseId()));
@@ -937,33 +929,53 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             wmsDeliveryPlanEntity.setToWarehouseName(updateDTO.getName());
         }
 
-        //如果是谷仓，校验商品能不能发该仓库
-        OverseasProviderEntity overseasProviderEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(wmsDeliveryPlanEntity.getToWarehouseId());
-        if(Objects.nonNull(overseasProviderEntity) && overseasProviderEntity.getCode().equals(OmsPlatformEnum.OMS_GOOD_CANG.getCode())){
-            List<String> platformSkuList = detailList.stream().map(WmsDeliveryPlanDetailDTO.CommonDTO::getPlatformSku).distinct().collect(Collectors.toList());
-            if(CollectionUtils.isEmpty(platformSkuList)){
-                return;
+        if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType())){
+            if(StringUtils.isBlank(wmsDeliveryPlanEntity.getShopId())){
+                throw new ServiceException("店铺不能为空");
             }
-            ThirdWarehouseService handlerService = thirdWarehouseRegistry.getHandlerByAuthId(overseasProviderEntity.getId());
-            ApiResult<List<ThirdWarehouseSkuResp>> skuResult = handlerService.getSkuList(ThirdWarehouseProductReq.builder().skuNoList(platformSkuList).build(),overseasProviderEntity.getId());
-            if(!skuResult.isSuccess()){
-                throw new ServiceException("查询谷仓商品失败:"+skuResult.getMsg());
+            ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(wmsDeliveryPlanEntity.getShopId());
+            wmsDeliveryPlanEntity.setShopName(shopInfoEntity.getName());
+            wmsDeliveryPlanEntity.setCountry(shopInfoEntity.getDictCountryCode());
+            wmsDeliveryPlanEntity.setCountryName(shopInfoEntity.getCountryName());
+        }else if (DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(wmsDeliveryPlanEntity.getType())){
+            //根据仓库id查询和第三方仓绑定关系，并设置国家字段值
+            OverseasProviderWarehouseEntity warehouseEntity = overseasProviderWarehouseService.getByWarehouseId(wmsDeliveryPlanEntity.getToWarehouseId());
+            if (ObjectUtil.isNotEmpty(warehouseEntity)) {
+                wmsDeliveryPlanEntity.setCountry(warehouseEntity.getCountry());
+                wmsDeliveryPlanEntity.setCountryName(warehouseEntity.getCountryName());
             }
-            String country = warehouseEntity.getCountry();
-            List<ThirdWarehouseSkuResp> thirdWarehouseSkuList = skuResult.getData();
-            List<String> errorSkuList = new ArrayList<>();
-            for(String platformSku : platformSkuList){
-                ThirdWarehouseSkuResp thirdWarehouseSku = thirdWarehouseSkuList.stream().filter(v->v.getProductSku().equals(platformSku)).findFirst().orElse(null);
-                if(Objects.nonNull(thirdWarehouseSku)){
-                    if(thirdWarehouseSku.getImportCountryList().stream().noneMatch(v->v.getCountryCode().equals(country))){
-                        errorSkuList.add(platformSku);
+            //如果是谷仓，校验商品能不能发该仓库
+            OverseasProviderEntity overseasProviderEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(wmsDeliveryPlanEntity.getToWarehouseId());
+            if(Objects.nonNull(overseasProviderEntity) && overseasProviderEntity.getCode().equals(OmsPlatformEnum.OMS_GOOD_CANG.getCode())){
+                List<String> platformSkuList = detailList.stream().map(WmsDeliveryPlanDetailDTO.CommonDTO::getPlatformSku).distinct().collect(Collectors.toList());
+                if(CollectionUtils.isEmpty(platformSkuList)){
+                    return;
+                }
+                ThirdWarehouseService handlerService = thirdWarehouseRegistry.getHandlerByAuthId(overseasProviderEntity.getId());
+                ApiResult<List<ThirdWarehouseSkuResp>> skuResult = handlerService.getSkuList(ThirdWarehouseProductReq.builder().skuNoList(platformSkuList).build(),overseasProviderEntity.getId());
+                if(!skuResult.isSuccess()){
+                    throw new ServiceException("查询谷仓商品失败:"+skuResult.getMsg());
+                }
+                String country = warehouseEntity.getCountry();
+                List<ThirdWarehouseSkuResp> thirdWarehouseSkuList = skuResult.getData();
+                List<String> errorSkuList = new ArrayList<>();
+                for(String platformSku : platformSkuList){
+                    ThirdWarehouseSkuResp thirdWarehouseSku = thirdWarehouseSkuList.stream().filter(v->v.getProductSku().equals(platformSku)).findFirst().orElse(null);
+                    if(Objects.nonNull(thirdWarehouseSku)){
+                        if(thirdWarehouseSku.getImportCountryList().stream().noneMatch(v->v.getCountryCode().equals(country))){
+                            errorSkuList.add(platformSku);
+                        }
                     }
                 }
+                if(CollectionUtils.isNotEmpty(errorSkuList)){
+                    throw new ServiceException(StrUtil.format("{}不可出口到{}所在的国家,请先在第三方系统维护商品进口国清关信息",errorSkuList,Objects.isNull(updateDTO)?"":updateDTO.getName()));
+                }
             }
-            if(CollectionUtils.isNotEmpty(errorSkuList)){
-                throw new ServiceException(StrUtil.format("{}不可出口到{}所在的国家,请先在第三方系统维护商品进口国清关信息",errorSkuList,Objects.isNull(updateDTO)?"":updateDTO.getName()));
-            }
+        }else{
+            throw new ServiceException("非法发货计划类型");
         }
+
+
     }
     private void fillData(List<ListingInfoDTO.PageDTO> records) {
         List<String> skuNo = records.stream().map(ListingInfoDTO.PageDTO::getSkuNo).collect(Collectors.toList());

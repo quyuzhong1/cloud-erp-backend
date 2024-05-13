@@ -146,7 +146,20 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 第三方仓SKU
          */
         private String thirdWarehouseSku;
+        /**
+         * 平台产品id
+         */
+        private String platformProductId;
 
+        /**
+         * 平台sku
+         */
+        private String platformSku;
+
+        /**
+         * FNSKU
+         */
+        private String platformFnSku;
         /**
          * 产品id
          */
@@ -216,6 +229,26 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 来源平台
          */
         private String provideCode;
+
+        /**
+         * 单据类型
+         */
+        private String type;
+
+        /**
+         * 单据类型名称
+         */
+        private String typeName;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
     }
 
     /**
@@ -240,6 +273,21 @@ public class WmsDeliveryPlanDTO implements Serializable {
         * 主键id
         */
         private String id;
+
+        /**
+         * 类型
+         */
+        private String type;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
 
         /**
         * 单据编号
@@ -330,10 +378,20 @@ public class WmsDeliveryPlanDTO implements Serializable {
     public static class CommonDTO {
 
         /**
+         * 类型 /wms/dict/drop/down?type=deliveryPlanType
+         */
+        @NotBlank(message = "类型不能为空")
+        private String type;
+
+        /**
         * 目的仓id
         */
-        @NotBlank(message = "目的仓不能为空")
         private String toWarehouseId;
+
+        /**
+         * 店铺Id
+         */
+        private String shopId;
 
         /**
         * 计划发货时间
