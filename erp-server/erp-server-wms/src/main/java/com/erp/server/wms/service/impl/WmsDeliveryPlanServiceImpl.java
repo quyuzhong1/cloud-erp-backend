@@ -41,10 +41,10 @@ import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.server.wms.convert.OverseasDeliveryPlanConverter;
+import com.erp.server.wms.convert.deliveryPlanConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.listener.DeliveryPlanDetailExcelListener;
-import com.erp.server.wms.mapper.OverseasDeliveryPlanMapper;
+import com.erp.server.wms.mapper.WmsDeliveryPlanMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -73,7 +73,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDeliveryPlanMapper, OverseasDeliveryPlanEntity> implements OverseasDeliveryPlanService {
+public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlanMapper, WmsDeliveryPlanEntity> implements WmsDeliveryPlanService {
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
@@ -83,7 +83,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     @Autowired
     private WorkflowFeign workflowFeign;
     @Autowired
-    private OverseasDeliveryPlanDetailService overseasDeliveryPlanDetailService;
+    private WmsDeliveryPlanDetailService wmsDeliveryPlanDetailService;
     @Autowired
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
     @Autowired
@@ -108,28 +108,28 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(OverseasDeliveryPlanDTO.AddDTO addDTO) {
-        OverseasDeliveryPlanEntity overseasDeliveryPlanEntity = new OverseasDeliveryPlanEntity();
-        BeanMapperUtils.copy(addDTO, overseasDeliveryPlanEntity);
+    public BaseResultDTO.AddDTO add(WmsDeliveryPlanDTO.AddDTO addDTO) {
+        WmsDeliveryPlanEntity wmsDeliveryPlanEntity = new WmsDeliveryPlanEntity();
+        BeanMapperUtils.copy(addDTO, wmsDeliveryPlanEntity);
 
         // 数据处理
-        handleData(overseasDeliveryPlanEntity,addDTO.getDetailList());
+        handleData(wmsDeliveryPlanEntity,addDTO.getDetailList());
 
         log.info("开始新增发货计划");
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FHJH);
-        overseasDeliveryPlanEntity.setCode(code);
-        boolean save = super.save(overseasDeliveryPlanEntity);
+        wmsDeliveryPlanEntity.setCode(code);
+        boolean save = super.save(wmsDeliveryPlanEntity);
         if(!save) {
             throw new ServiceException("发货计划保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "发货计划" , overseasDeliveryPlanEntity.getCode());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), overseasDeliveryPlanEntity.getId(), "新增操作");
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "发货计划" , wmsDeliveryPlanEntity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), wmsDeliveryPlanEntity.getId(), "新增操作");
         // 新增明细
-        overseasDeliveryPlanDetailService.add(addDTO, overseasDeliveryPlanEntity.getId());
-        return new BaseResultDTO.AddDTO(overseasDeliveryPlanEntity.getId(), code);
+        wmsDeliveryPlanDetailService.add(addDTO, wmsDeliveryPlanEntity.getId());
+        return new BaseResultDTO.AddDTO(wmsDeliveryPlanEntity.getId(), code);
     }
 
     /**
@@ -137,37 +137,37 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(OverseasDeliveryPlanDTO.UpdateDTO updateDTO) {
-        OverseasDeliveryPlanEntity old = super.getById(updateDTO.getId());
+    public Boolean update(WmsDeliveryPlanDTO.UpdateDTO updateDTO) {
+        WmsDeliveryPlanEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "发货计划"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
-        OverseasDeliveryPlanEntity overseasDeliveryPlanEntity =  BeanMapperUtils.map(OverseasDeliveryPlanEntity.class, updateDTO);
+        WmsDeliveryPlanEntity wmsDeliveryPlanEntity =  BeanMapperUtils.map(WmsDeliveryPlanEntity.class, updateDTO);
 
         // 数据处理
-        handleData(overseasDeliveryPlanEntity,updateDTO.getDetailList());
+        handleData(wmsDeliveryPlanEntity,updateDTO.getDetailList());
         log.info("编辑 开始修改发货计划数据，单号：【{}】", old.getCode());
-        boolean save = super.updateById(overseasDeliveryPlanEntity);
+        boolean save = super.updateById(wmsDeliveryPlanEntity);
         if(!save) {
             throw new ServiceException("发货计划保存失败");
         }
         // 修改明细数据
-        overseasDeliveryPlanDetailService.update(updateDTO, overseasDeliveryPlanEntity.getId());
+        wmsDeliveryPlanDetailService.update(updateDTO, wmsDeliveryPlanEntity.getId());
         // 记录主单操作日志
-        log.info("编辑 开始记录发货计划日志数据，单号：【{}】", overseasDeliveryPlanEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), overseasDeliveryPlanEntity.getCode(), "发货计划");
-        operateLogService.addModuleOperateLogByObj(old, overseasDeliveryPlanEntity, ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), overseasDeliveryPlanEntity.getId(), msg);
+        log.info("编辑 开始记录发货计划日志数据，单号：【{}】", wmsDeliveryPlanEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), wmsDeliveryPlanEntity.getCode(), "发货计划");
+        operateLogService.addModuleOperateLogByObj(old, wmsDeliveryPlanEntity, ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), wmsDeliveryPlanEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
 
     @Override
-    public PagingVO<OverseasDeliveryPlanDTO.ListDTO> paging(PagingDTO<OverseasDeliveryPlanDTO.PagingParamDTO> pagingParamDTO) {
+    public PagingVO<WmsDeliveryPlanDTO.ListDTO> paging(PagingDTO<WmsDeliveryPlanDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<OverseasDeliveryPlanDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        IPage<WmsDeliveryPlanDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
            return new PagingVO(pageData);
         }
@@ -177,27 +177,27 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     }
 
     @Override
-    public List<OverseasDeliveryPlanDTO.TabListDTO> tabList(PermissionsDTO param) {
-        OverseasDeliveryPlanDTO.PagingParamDTO searchParam = new OverseasDeliveryPlanDTO.PagingParamDTO();
+    public List<WmsDeliveryPlanDTO.TabListDTO> tabList(PermissionsDTO param) {
+        WmsDeliveryPlanDTO.PagingParamDTO searchParam = new WmsDeliveryPlanDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
-        List<OverseasDeliveryPlanDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        List<WmsDeliveryPlanDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
         // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(OverseasDeliveryPlanDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
+        List<String> existStatusList = list.stream().map(WmsDeliveryPlanDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
             if (!existStatusList.contains(status)) {
-                list.add(new OverseasDeliveryPlanDTO.TabListDTO(status, 0));
+                list.add(new WmsDeliveryPlanDTO.TabListDTO(status, 0));
             }
         });
-        list.add(new OverseasDeliveryPlanDTO.TabListDTO("all", list.stream().mapToInt(OverseasDeliveryPlanDTO.TabListDTO::getCount).sum()));
+        list.add(new WmsDeliveryPlanDTO.TabListDTO("all", list.stream().mapToInt(WmsDeliveryPlanDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;
     }
 
     @Override
-    public void exportList(OverseasDeliveryPlanDTO.PagingParamDTO param, HttpServletResponse response) {
-        List<OverseasDeliveryPlanDTO.ListDTO> list = this.baseMapper.listExport(param);
+    public void exportList(WmsDeliveryPlanDTO.PagingParamDTO param, HttpServletResponse response) {
+        List<WmsDeliveryPlanDTO.ListDTO> list = this.baseMapper.listExport(param);
         if(CollUtil.isEmpty(list)) {
            return;
         }
@@ -220,7 +220,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO submit(String id) {
-        OverseasDeliveryPlanEntity entity = getById(id);
+        WmsDeliveryPlanEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到发货计划数据");
         }
@@ -241,7 +241,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO addAndSubmit(OverseasDeliveryPlanDTO.AddDTO dto) {
+    public BaseResultDTO.AddDTO addAndSubmit(WmsDeliveryPlanDTO.AddDTO dto) {
         // 新增
         BaseResultDTO.AddDTO result = this.add(dto);
         // 提交
@@ -252,7 +252,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void updateAndSubmit(OverseasDeliveryPlanDTO.UpdateDTO dto) {
+    public void updateAndSubmit(WmsDeliveryPlanDTO.UpdateDTO dto) {
         // 修改
         this.update(dto);
         // 提交
@@ -267,7 +267,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
             throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
         }
-        OverseasDeliveryPlanEntity entity = getById(dto.getId());
+        WmsDeliveryPlanEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
@@ -286,7 +286,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     * @param entity
     * @param dto
     */
-    private void approveProcess(OverseasDeliveryPlanEntity entity, ApproveOneDTO dto) {
+    private void approveProcess(WmsDeliveryPlanEntity entity, ApproveOneDTO dto) {
         LoginUser userInfo = commonService.getUserInfo();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
@@ -311,7 +311,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(String id) {
-        OverseasDeliveryPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货计划单数据"));
+        WmsDeliveryPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货计划单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
 
@@ -334,7 +334,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
-    private Boolean validateDisApprove(OverseasDeliveryPlanEntity entity) {
+    private Boolean validateDisApprove(WmsDeliveryPlanEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
@@ -346,13 +346,13 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO delete(String id) {
-        OverseasDeliveryPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货计划数据"));
+        WmsDeliveryPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货计划数据"));
         // 只有待提交和审核不通过数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.SUBMIT_IS_DELETE);
         }
         // 删除明细数据
-        overseasDeliveryPlanDetailService.removeByMainIds(Arrays.asList(id));
+        wmsDeliveryPlanDetailService.removeByMainIds(Arrays.asList(id));
         // 删除主单数据
         log.info("删除 开始删除发货计划主单数据，id：【{}】", id);
         super.removeById(id);
@@ -368,15 +368,15 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO invalid(String id, String remark) {
-        OverseasDeliveryPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货计划数据"));
+        WmsDeliveryPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货计划数据"));
         // 待提交或审核不通过并且未作废允许作废
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
            throw new ServiceException(ApiError.ERROR_98005);
         }
         log.info("作废 开始修改发货计划状态数据，id：【{}】", id);
-        lambdaUpdate().eq(OverseasDeliveryPlanEntity::getId, id)
-            .set(OverseasDeliveryPlanEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
-            .set(OverseasDeliveryPlanEntity::getInvalidRemark, remark)
+        lambdaUpdate().eq(WmsDeliveryPlanEntity::getId, id)
+            .set(WmsDeliveryPlanEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+            .set(WmsDeliveryPlanEntity::getInvalidRemark, remark)
             .update();
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
@@ -392,7 +392,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO cancelProcess(String id) {
-        OverseasDeliveryPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货计划数据"));
+        WmsDeliveryPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货计划数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
@@ -417,7 +417,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(ApproveOneDTO dto, OverseasDeliveryPlanEntity entity) {
+    public Boolean approveEnd(ApproveOneDTO dto, WmsDeliveryPlanEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
@@ -427,12 +427,12 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     }
 
     @Override
-    public OverseasDeliveryPlanDTO.ViewDTO view(String id) {
-        OverseasDeliveryPlanEntity overseasDeliveryPlanEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到发货计划数据"));
-        OverseasDeliveryPlanDTO.ViewDTO data = BeanMapperUtils.map(OverseasDeliveryPlanDTO.ViewDTO.class, overseasDeliveryPlanEntity);
+    public WmsDeliveryPlanDTO.ViewDTO view(String id) {
+        WmsDeliveryPlanEntity wmsDeliveryPlanEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到发货计划数据"));
+        WmsDeliveryPlanDTO.ViewDTO data = BeanMapperUtils.map(WmsDeliveryPlanDTO.ViewDTO.class, wmsDeliveryPlanEntity);
 
         //发货计划详情
-        List<OverseasDeliveryPlanDetailEntity> detailEntityList = overseasDeliveryPlanDetailService.listByMainIds(Arrays.asList(id));
+        List<WmsDeliveryPlanDetailEntity> detailEntityList = wmsDeliveryPlanDetailService.listByMainIds(Arrays.asList(id));
 
         // 数据填充处理
         fillOne(data, detailEntityList);
@@ -446,7 +446,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     * @Date 2023/7/4 10:07
     **/
 
-    public void startProcess(OverseasDeliveryPlanEntity entity) {
+    public void startProcess(WmsDeliveryPlanEntity entity) {
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
@@ -459,12 +459,12 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
             throw new ServiceException(result.getMsg());
         }
     }
-    private void fillOne(OverseasDeliveryPlanDTO.ViewDTO data, List<OverseasDeliveryPlanDetailEntity> detailEntityList) {
+    private void fillOne(WmsDeliveryPlanDTO.ViewDTO data, List<WmsDeliveryPlanDetailEntity> detailEntityList) {
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
         //获取sku信息
-        List<String> skuIdList = detailEntityList.stream().map(OverseasDeliveryPlanDetailEntity::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = detailEntityList.stream().map(WmsDeliveryPlanDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         //查询第三方仓SKU信息
@@ -480,9 +480,9 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         data.setApproveStatusName(data.getApproveStatus().getName());
 
         //明细信息
-        List<OverseasDeliveryPlanDetailDTO.ViewDTO> viewDTOS = BeanMapper.copyList(detailEntityList, OverseasDeliveryPlanDetailDTO.ViewDTO.class);
+        List<WmsDeliveryPlanDetailDTO.ViewDTO> viewDTOS = BeanMapper.copyList(detailEntityList, WmsDeliveryPlanDetailDTO.ViewDTO.class);
         List<SkuMappingDTO.ListSkuParamDTO> skuParamDTOList = new ArrayList<>();
-        for (OverseasDeliveryPlanDetailDTO.ViewDTO viewDTO : viewDTOS) {
+        for (WmsDeliveryPlanDetailDTO.ViewDTO viewDTO : viewDTOS) {
             SkuMappingDTO.ListSkuParamDTO paramDTO = new SkuMappingDTO.ListSkuParamDTO();
             paramDTO.setSkuNo(viewDTO.getSkuNo());
             paramDTO.setWarehouseId(data.getToWarehouseId());
@@ -490,7 +490,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         }
         List<SkuMappingDTO.ListSkuDTO> listSkuDTOS = skuMappingFeign.listBySkuNoList(skuParamDTOList);
 
-        for (OverseasDeliveryPlanDetailDTO.ViewDTO viewDTO : viewDTOS) {
+        for (WmsDeliveryPlanDetailDTO.ViewDTO viewDTO : viewDTOS) {
 
             //设置产品编号
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
@@ -531,12 +531,12 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     public void updateForApprove(String id, String approveStatus) {
         //当前登录人
         LoginUser userInfo = commonService.getUserInfo();
-        this.lambdaUpdate().eq(OverseasDeliveryPlanEntity::getId, id)
-            .set(OverseasDeliveryPlanEntity::getApproveUserId, userInfo.getUid())
-            .set(OverseasDeliveryPlanEntity::getApproveUserName, userInfo.getUserName())
-            .set(OverseasDeliveryPlanEntity::getApproveStatus, approveStatus)
-            .set(OverseasDeliveryPlanEntity::getApproveTime, LocalDateTime.now())
-            .update(new OverseasDeliveryPlanEntity());
+        this.lambdaUpdate().eq(WmsDeliveryPlanEntity::getId, id)
+            .set(WmsDeliveryPlanEntity::getApproveUserId, userInfo.getUid())
+            .set(WmsDeliveryPlanEntity::getApproveUserName, userInfo.getUserName())
+            .set(WmsDeliveryPlanEntity::getApproveStatus, approveStatus)
+            .set(WmsDeliveryPlanEntity::getApproveTime, LocalDateTime.now())
+            .update(new WmsDeliveryPlanEntity());
      }
 
     /**
@@ -546,12 +546,12 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     */
     @Transactional(rollbackFor = Exception.class)
     public void updateForDisApprove(String id, String approveStatus) {
-        this.lambdaUpdate().eq(OverseasDeliveryPlanEntity::getId, id)
-            .set(OverseasDeliveryPlanEntity::getApproveUserId, "")
-            .set(OverseasDeliveryPlanEntity::getApproveUserName, "")
-            .set(OverseasDeliveryPlanEntity::getApproveStatus, approveStatus)
-            .set(OverseasDeliveryPlanEntity::getApproveTime, null)
-            .update(new OverseasDeliveryPlanEntity());
+        this.lambdaUpdate().eq(WmsDeliveryPlanEntity::getId, id)
+            .set(WmsDeliveryPlanEntity::getApproveUserId, "")
+            .set(WmsDeliveryPlanEntity::getApproveUserName, "")
+            .set(WmsDeliveryPlanEntity::getApproveStatus, approveStatus)
+            .set(WmsDeliveryPlanEntity::getApproveTime, null)
+            .update(new WmsDeliveryPlanEntity());
         }
 
     /**
@@ -559,9 +559,9 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     */
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
-        lambdaUpdate().eq(OverseasDeliveryPlanEntity::getId, id)
-        .set(OverseasDeliveryPlanEntity::getApproveStatus, approveStatus)
-        .update(new OverseasDeliveryPlanEntity());
+        lambdaUpdate().eq(WmsDeliveryPlanEntity::getId, id)
+        .set(WmsDeliveryPlanEntity::getApproveStatus, approveStatus)
+        .update(new WmsDeliveryPlanEntity());
     }
 
     @Override
@@ -571,8 +571,8 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     }
 
     @Override
-    public List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> ids) {
-        List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list = baseMapper.generateRequisitionApplicationView(ids);
+    public List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> ids) {
+        List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list = baseMapper.generateRequisitionApplicationView(ids);
 
         //审核通过才能下推
         long count = list.stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
@@ -587,7 +587,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         //查询skuId产品信息
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
-        for (OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO viewDTO : list) {
+        for (WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO viewDTO : list) {
             //海外发货计划下推要货单要货类型默认是：海外仓
             viewDTO.setType(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode());
             viewDTO.setTypeName(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getName());
@@ -615,36 +615,36 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     }
 
     @Override
-    public Boolean generateRequisitionApplicationSave(List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list) {
+    public Boolean generateRequisitionApplicationSave(List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list) {
         return generateRequisitionApplication(list, Boolean.FALSE);
     }
 
     @Override
-    public Boolean generateRequisitionApplicationSaveAndSubmit(List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list) {
+    public Boolean generateRequisitionApplicationSaveAndSubmit(List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list) {
         return generateRequisitionApplication(list, Boolean.TRUE);
     }
 
-    private Boolean generateRequisitionApplication(List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list, Boolean isSubmit) {
+    private Boolean generateRequisitionApplication(List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list, Boolean isSubmit) {
         //一个发货计划单，生成一个要货申请单
-        Map<String, List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>> map = list.stream().collect(Collectors.groupingBy(OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO::getSourceId));
+        Map<String, List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>> map = list.stream().collect(Collectors.groupingBy(WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO::getSourceId));
 
         //根据仓库id查询仓库信息
         List<String> requisitionWarehouseIds = list.stream().map(req -> req.getRequisitionWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(requisitionWarehouseIds);
 
-        for (Map.Entry<String, List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>> entry : map.entrySet()) {
-            List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> value = entry.getValue();
+        for (Map.Entry<String, List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>> entry : map.entrySet()) {
+            List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> value = entry.getValue();
             //映射主表信息
-            RequisitionApplicationDTO.AddDTO addDTO = OverseasDeliveryPlanConverter.INSTANCE.DeliveryPlanGRA(value.get(MathUtil.ZERO));
+            RequisitionApplicationDTO.AddDTO addDTO = deliveryPlanConverter.INSTANCE.DeliveryPlanGRA(value.get(MathUtil.ZERO));
             //要货仓库中文
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(value.get(MathUtil.ZERO).getRequisitionWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
             addDTO.setRequisitionWarehouseName(updateDTO.getName());
 
             //映射详情信息
             List<RequisitionApplicationDetailDTO.AddDTO> detailAddList = new ArrayList<>();
-            for (OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO viewDTO : value) {
+            for (WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO viewDTO : value) {
 
-                RequisitionApplicationDetailDTO.AddDTO detailAddDto = OverseasDeliveryPlanConverter.INSTANCE.DeliveryPlanDetailGRA(viewDTO);
+                RequisitionApplicationDetailDTO.AddDTO detailAddDto = deliveryPlanConverter.INSTANCE.DeliveryPlanDetailGRA(viewDTO);
 
                 detailAddList.add(detailAddDto);
             }
@@ -659,8 +659,8 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     }
 
     @Override
-    public List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> generateDeliverView(List<String> ids) {
-        List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> list = baseMapper.generateDeliverView(ids);
+    public List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> generateDeliverView(List<String> ids) {
+        List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> list = baseMapper.generateDeliverView(ids);
 
         //审核通过才能下推
         long count = list.stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
@@ -675,7 +675,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         //查询skuId产品信息
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
-        for (OverseasDeliveryPlanDTO.GenerateDeliverViewDTO viewDTO : list) {
+        for (WmsDeliveryPlanDTO.GenerateDeliverViewDTO viewDTO : list) {
 
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
@@ -696,12 +696,12 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     }
 
     @Override
-    public Boolean generateDeliverSave(List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> list) {
+    public Boolean generateDeliverSave(List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> list) {
         return generateDeliver(list, Boolean.FALSE);
     }
 
     @Override
-    public Boolean generateDeliverSaveAndSubmit(List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> list) {
+    public Boolean generateDeliverSaveAndSubmit(List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> list) {
         return generateDeliver(list, Boolean.TRUE);
     }
 
@@ -757,8 +757,8 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
 
     @Override
     public Boolean updateDeliveryStatus(List<String> ids, String deliveryStatus) {
-        return lambdaUpdate().set(OverseasDeliveryPlanEntity::getDeliveryStatus, deliveryStatus)
-                .in(OverseasDeliveryPlanEntity::getId, ids)
+        return lambdaUpdate().set(WmsDeliveryPlanEntity::getDeliveryStatus, deliveryStatus)
+                .in(WmsDeliveryPlanEntity::getId, ids)
                 .update();
     }
 
@@ -770,9 +770,9 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
      * @param isSubmit 是否提交
      * @return java.lang.Boolean
      **/
-    private Boolean generateDeliver(List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> list, Boolean isSubmit) {
+    private Boolean generateDeliver(List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> list, Boolean isSubmit) {
         //一个发货计划单，生成一个要发货单
-        Map<String, List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO>> map = list.stream().collect(Collectors.groupingBy(OverseasDeliveryPlanDTO.GenerateDeliverViewDTO::getSourceId));
+        Map<String, List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO>> map = list.stream().collect(Collectors.groupingBy(WmsDeliveryPlanDTO.GenerateDeliverViewDTO::getSourceId));
         List<String> ids = new ArrayList<>();
 
         //查询仓库信息
@@ -786,10 +786,10 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         //获取sku信息
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
-        for (Map.Entry<String, List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO>> entry : map.entrySet()) {
-            List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> value = entry.getValue();
+        for (Map.Entry<String, List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO>> entry : map.entrySet()) {
+            List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> value = entry.getValue();
             //映射主表信息
-            FirstMileDeliveryDTO.AddDTO addDTO = OverseasDeliveryPlanConverter.INSTANCE.generateDeliverFDD(value.get(MathUtil.ZERO));
+            FirstMileDeliveryDTO.AddDTO addDTO = deliveryPlanConverter.INSTANCE.generateDeliverFDD(value.get(MathUtil.ZERO));
 
             //备货类型
             addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode());
@@ -798,13 +798,13 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
 
             //映射详情信息
             List<FirstMileDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
-            for (OverseasDeliveryPlanDTO.GenerateDeliverViewDTO viewDTO : value) {
+            for (WmsDeliveryPlanDTO.GenerateDeliverViewDTO viewDTO : value) {
                 //发货仓库中文
                 WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(viewDTO.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
                 addDTO.setDeliveryWarehouseName(updateDTO.getName());
                 addDTO.setInventoryOrgId(updateDTO.getOrgId());
 
-                FirstMileDeliveryDetailDTO.AddDTO detailAddDto = OverseasDeliveryPlanConverter.INSTANCE.generateDeliverDetailFDD(viewDTO);
+                FirstMileDeliveryDetailDTO.AddDTO detailAddDto = deliveryPlanConverter.INSTANCE.generateDeliverDetailFDD(viewDTO);
 
                 //查询sku是否存在子SKU
                 List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
@@ -840,7 +840,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     /**
      * 分页查询、导出 数据处理
      */
-    private void fillList(List<OverseasDeliveryPlanDTO.ListDTO> list) {
+    private void fillList(List<WmsDeliveryPlanDTO.ListDTO> list) {
         if(CollUtil.isEmpty(list)) {
             return;
         }
@@ -866,7 +866,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
 
 
         // 属性赋值
-        for(OverseasDeliveryPlanDTO.ListDTO data : list) {
+        for(WmsDeliveryPlanDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setDeliveryStatusName(FbaDeliveryStatusEnum.getName(data.getDeliveryStatus()));
@@ -911,7 +911,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     /**
      * 分页查询、导出 数据处理
      */
-    private void validateSubmit(OverseasDeliveryPlanEntity entity) {
+    private void validateSubmit(WmsDeliveryPlanEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
@@ -922,25 +922,25 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     /**
      * 新增修改处理数据
      */
-    private void handleData(OverseasDeliveryPlanEntity overseasDeliveryPlanEntity, List<? extends OverseasDeliveryPlanDetailDTO.CommonDTO> detailList) {
+    private void handleData(WmsDeliveryPlanEntity wmsDeliveryPlanEntity, List<? extends WmsDeliveryPlanDetailDTO.CommonDTO> detailList) {
         //根据仓库id查询和第三方仓绑定关系，并设置国家字段值
-        OverseasProviderWarehouseEntity warehouseEntity = overseasProviderWarehouseService.getByWarehouseId(overseasDeliveryPlanEntity.getToWarehouseId());
+        OverseasProviderWarehouseEntity warehouseEntity = overseasProviderWarehouseService.getByWarehouseId(wmsDeliveryPlanEntity.getToWarehouseId());
         if (ObjectUtil.isNotEmpty(warehouseEntity)) {
-            overseasDeliveryPlanEntity.setCountry(warehouseEntity.getCountry());
-            overseasDeliveryPlanEntity.setCountryName(warehouseEntity.getCountryName());
+            wmsDeliveryPlanEntity.setCountry(warehouseEntity.getCountry());
+            wmsDeliveryPlanEntity.setCountryName(warehouseEntity.getCountryName());
         }
 
         //设置仓库中文名
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(overseasDeliveryPlanEntity.getToWarehouseId()));
-        WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(overseasDeliveryPlanEntity.getToWarehouseId())).findFirst().orElse(null);
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(wmsDeliveryPlanEntity.getToWarehouseId()));
+        WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(wmsDeliveryPlanEntity.getToWarehouseId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(updateDTO)) {
-            overseasDeliveryPlanEntity.setToWarehouseName(updateDTO.getName());
+            wmsDeliveryPlanEntity.setToWarehouseName(updateDTO.getName());
         }
 
         //如果是谷仓，校验商品能不能发该仓库
-        OverseasProviderEntity overseasProviderEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(overseasDeliveryPlanEntity.getToWarehouseId());
+        OverseasProviderEntity overseasProviderEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(wmsDeliveryPlanEntity.getToWarehouseId());
         if(Objects.nonNull(overseasProviderEntity) && overseasProviderEntity.getCode().equals(OmsPlatformEnum.OMS_GOOD_CANG.getCode())){
-            List<String> platformSkuList = detailList.stream().map(OverseasDeliveryPlanDetailDTO.CommonDTO::getPlatformSku).distinct().collect(Collectors.toList());
+            List<String> platformSkuList = detailList.stream().map(WmsDeliveryPlanDetailDTO.CommonDTO::getPlatformSku).distinct().collect(Collectors.toList());
             if(CollectionUtils.isEmpty(platformSkuList)){
                 return;
             }

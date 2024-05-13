@@ -1,5 +1,5 @@
 package com.erp.server.wms.mapper;
-import com.erp.model.wms.entity.OverseasDeliveryPlanDetailEntity;
+import com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -14,6 +14,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2023-11-16
  */
 @Mapper
-public interface OverseasDeliveryPlanDetailMapper extends BaseMapper<OverseasDeliveryPlanDetailEntity> {
+public interface WmsDeliveryPlanDetailMapper extends BaseMapper<WmsDeliveryPlanDetailEntity> {
 
 }

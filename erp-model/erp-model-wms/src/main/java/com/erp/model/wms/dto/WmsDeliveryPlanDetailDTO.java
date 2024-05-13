@@ -1,14 +1,11 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
 import java.util.List;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -20,7 +17,7 @@ import javax.validation.constraints.Size;
 */
 @Data
 @NoArgsConstructor
-public class OverseasDeliveryPlanDetailDTO implements Serializable {
+public class WmsDeliveryPlanDetailDTO implements Serializable {
 
     /**
     * 详情
@@ -159,7 +156,7 @@ public class OverseasDeliveryPlanDetailDTO implements Serializable {
         /**
          * 成功返回数据
          */
-        private List<OverseasDeliveryPlanDetailDTO.ViewDTO> successList;
+        private List<WmsDeliveryPlanDetailDTO.ViewDTO> successList;
 
         /**
          * 错误url

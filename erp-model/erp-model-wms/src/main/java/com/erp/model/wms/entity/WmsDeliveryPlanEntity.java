@@ -24,8 +24,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("overseas_delivery_plan")
-public class OverseasDeliveryPlanEntity extends BaseEntity<OverseasDeliveryPlanEntity> {
+@TableName("wms_delivery_plan")
+public class WmsDeliveryPlanEntity extends BaseEntity<WmsDeliveryPlanEntity> {
 
     /**
     * code
