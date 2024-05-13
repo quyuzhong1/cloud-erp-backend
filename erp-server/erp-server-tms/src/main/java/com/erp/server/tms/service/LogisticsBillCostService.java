@@ -9,6 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
+import com.erp.model.tms.enums.DictCostAttributionEnum;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -49,7 +50,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param dto
      * @return List<TabListDTO>
      */
-    List<LogisticsBillCostDTO.TabListDTO> tabList(PermissionsDTO dto);
+    List<LogisticsBillCostDTO.TabListDTO> tabList(PermissionsDTO dto, DictCostAttributionEnum attribution);
     /**
      * @description: 分页查询
      * @author Will
