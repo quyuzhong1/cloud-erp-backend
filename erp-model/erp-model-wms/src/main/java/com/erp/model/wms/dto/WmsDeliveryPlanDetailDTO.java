@@ -84,6 +84,20 @@ public class WmsDeliveryPlanDetailDTO implements Serializable {
         * 库存sku名称
         */
         private String stockSkuName;
+        /**
+         * mSKU
+         */
+        private String mSKU;
+
+        /**
+         * FNSKU
+         */
+        private String fnSku;
+
+        /**
+         * ASIN
+         */
+        private String asin;
     }
 
     /**
@@ -145,9 +159,25 @@ public class WmsDeliveryPlanDetailDTO implements Serializable {
         private String platformSku;
 
         /**
-         * 平台sku
+         * 平台sku名称
          */
         private String platformSkuName;
+
+        /**
+         * mSKU
+         */
+        private String mSKU;
+
+        /**
+         * FNSKU
+         */
+        private String fnSku;
+
+        /**
+         * ASIN
+         */
+        private String asin;
+
     }
 
     @Data

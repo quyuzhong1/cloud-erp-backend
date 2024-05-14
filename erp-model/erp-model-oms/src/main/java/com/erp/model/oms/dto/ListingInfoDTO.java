@@ -116,6 +116,11 @@ public class ListingInfoDTO implements Serializable {
         private Integer qty;
 
         /**
+         * 单箱数量
+         */
+        private Integer boxQty;
+
+        /**
          * 对照关系是否映射到服务商平台所有仓库: f=否, t=是
          */
         private Boolean hasMappingAll;

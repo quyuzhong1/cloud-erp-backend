@@ -66,7 +66,13 @@
             odp.create_time AS createTime,
             odp.approve_time AS  approveTime,
             op.code AS sourcePlatformCode,
-            odpd.platform_sku as thirdWarehouseSku
+            odpd.platform_sku as thirdWarehouseSku,
+            odpd.platform_sku as  platformSku,
+            odpd.platform_spu as platformProductId,
+            odpd.platform_fn_sku as platformFnSku,
+            odp.type,
+            odp.shop_id as shopId,
+            odp.shop_name as shopName
         FROM wms_delivery_plan_detail odpd
         INNER JOIN wms_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
         LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = odp.to_warehouse_id and opw.is_deleted = false
@@ -113,7 +119,13 @@
         odp.create_time,
         odp.approve_time,
         op.code AS sourcePlatformCode,
-        odpd.platform_sku as thirdWarehouseSku
+        odpd.platform_sku as thirdWarehouseSku,
+        odpd.platform_sku as  platformSku,
+        odpd.platform_spu as platformProductId,
+        odpd.platform_fn_sku as platformFnSku,
+        odp.type,
+        odp.shop_id as shopId,
+        odp.shop_name as shopName
         FROM wms_delivery_plan_detail odpd
         INNER JOIN wms_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
         LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = odp.to_warehouse_id and opw.is_deleted = false
@@ -156,7 +168,13 @@
             odpd.qty AS planQty,
             odpd.qty AS requisitionQty,
             odpd.platform_sku as platformSku,
-            odpd.platform_sku_name as platformSkuName
+            odpd.platform_sku_name as platformSkuName,
+            odpd.platform_spu as asin,
+            odpd.platform_fn_sku as fnSku,
+            odpd.box_qty as boxQty,
+            odp.type as deliveryPlanType,
+            odp.shop_id as shopId,
+            odp.shop_name as shopName
         FROM wms_delivery_plan_detail odpd
         INNER JOIN wms_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
         WHERE odp.is_deleted = FALSE

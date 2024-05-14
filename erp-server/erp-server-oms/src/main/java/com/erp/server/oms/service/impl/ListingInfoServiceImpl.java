@@ -350,6 +350,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             if(Objects.nonNull(skuVO)){
                 v.setImagesUrl(skuVO.getSkuImagesUrl());
                 v.setProductName(skuVO.getSkuName());
+                v.setBoxQty(skuVO.getBoxQty());
             }
             if (CollectionUtils.isNotEmpty(bomChildrenList)) {
                 long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(v.getSkuId())).count();

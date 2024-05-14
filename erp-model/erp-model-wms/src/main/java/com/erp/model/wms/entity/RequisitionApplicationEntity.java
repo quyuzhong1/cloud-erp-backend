@@ -111,6 +111,11 @@ public class RequisitionApplicationEntity extends BaseEntity<RequisitionApplicat
     @TableField("remark")
     private String remark;
 
+    /**
+     * fba货件号
+     */
+    @TableField("fba_shipment_code")
+    private String fbaShipmentCode;
 
     public static final String CODE = "code";
 
