@@ -9,47 +9,29 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.SoB2cDeclareProductEntity;
 import com.erp.model.oms.enums.DeclareLabelTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.ShippingTemplateDTO;
 import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.mapper.SoB2cDeclareProductMapper;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoB2cDeclareProductService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import lombok.Data;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.servlet.http.HttpServletResponse;
 

@@ -33,14 +33,11 @@ import com.erp.server.oms.mapper.CfgRuleDeclareMapper;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -141,8 +138,8 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
                 .set(CfgRuleDeclareEntity::getMinDeclarePrice,entity.getMinDeclarePrice())
                 .set(CfgRuleDeclareEntity::getMaxDeclarePrice,entity.getMaxDeclarePrice())
                 .set(CfgRuleDeclareEntity::getUpdateTime, LocalDate.now())
-                .set(CfgRuleDeclareEntity::getUpdateUserId,commonService.getUserInfo().getUid())
-                .set(CfgRuleDeclareEntity::getUpdateUserName,commonService.getUserInfo().getUserName())
+                .set(CfgRuleDeclareEntity::getUpdateUserId,UserContext.getDefaultLoginUser().getUid())
+                .set(CfgRuleDeclareEntity::getUpdateUserName,UserContext.getDefaultLoginUser().getUserName())
                 .update();
         if (!save) {
             throw new ServiceException("申报规则单保存失败");
