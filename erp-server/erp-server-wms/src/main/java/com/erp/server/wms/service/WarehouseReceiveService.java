@@ -9,6 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.SupplierCountDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.wms.entity.PoInstockEntity;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -334,6 +335,18 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
     List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIdsAll(List<String> purchaseOrderIds);
 
     List<WarehouseReceiveEntity> listReceiveBySourceTypeAndIds(WarehouseReceiveDTO.SourceParamDTO dto);
-
+    /**
+     * 清洗入库状态
+     * @author hyj
+     * @date 2024/5/14 14:30
+     */
     void instockStatusCleanJob();
+
+    /**
+     * 修改入库状态
+     * @author hyj
+     * @date 2024/5/14 14:30
+     * @param list
+     */
+     void updateReceiveInStockStatus(List<PoInstockEntity> list);
 }

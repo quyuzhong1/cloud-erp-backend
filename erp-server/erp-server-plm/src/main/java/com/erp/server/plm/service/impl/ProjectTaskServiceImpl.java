@@ -717,14 +717,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 //            }
 //        }
         //如果是删除固定任务，需要数据权限
-        Integer IsFixed = entity.getIsFixed();
-        if (IsConstant.YES.equals(IsFixed)) {
-            //获取固定任务按钮权限
-            Boolean userDatePermissionByMenuCode = sysUserFeign.getUserDatePermissionByMenuCode(PLM_TASK_REMOVETASK_FIXED);
-            if (!userDatePermissionByMenuCode) {
-                throw new ServiceException(ApiError.NO_PERMISSION);
-            }
-        }
+        getFixedUpdateOrRemovePermission(entity.getIsFixed(),PLM_TASK_REMOVETASK_FIXED);
         //检查是否是子任务
         checkTaskIfExistPid(taskId);
         Boolean flag = this.removeById(entity);
@@ -1055,15 +1048,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
-        //如果是删除固定任务，需要数据权限
-        Integer IsFixed = taskEntity.getIsFixed();
-        if (IsConstant.YES.equals(IsFixed)) {
-            //获取固定任务按钮权限
-            Boolean userDatePermissionByMenuCode = sysUserFeign.getUserDatePermissionByMenuCode(PLM_TASK_UPDATE_FIXED);
-            if (!userDatePermissionByMenuCode) {
-                throw new ServiceException(ApiError.NO_PERMISSION);
-            }
-        }
+        //如果是修改固定任务，需要数据权限
+        getFixedUpdateOrRemovePermission(taskEntity.getIsFixed(),PLM_TASK_UPDATE_FIXED);
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
         //sku不关联
         String notRelated = RelatedSkuTypeEnum.NOT_RELATED.getCode();
@@ -1207,6 +1193,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             noticeMessageService.editTaskNotice(loginUser.getUserName(), taskEntity, taskEntity.getProductId());
         }
         return flag;
+    }
+
+    private void getFixedUpdateOrRemovePermission(Integer IsFixed,String menuPermission) {
+        if (IsConstant.YES.equals(IsFixed)) {
+            //获取固定任务按钮权限
+            Boolean userDatePermissionByMenuCode = sysUserFeign.getUserDatePermissionByMenuCode(menuPermission);
+            if (!userDatePermissionByMenuCode) {
+                throw new ServiceException(ApiError.NO_PERMISSION);
+            }
+        }
     }
 
 
@@ -5068,7 +5064,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = UserContext.getDefaultLoginUser();
 
         for (ProjectTaskEntity req : entity) {
-
+            //如果是删除固定任务，需要数据权限
+            getFixedUpdateOrRemovePermission(req.getIsFixed(),PLM_TASK_REMOVETASK_FIXED);
 //            if (BaseStatusEnum.AUDIT_PASS.getStatus().equals(req.getScheduleStatus())) {
 //                if (!"admin".equals(loginUser.getUserAccount())) {
 //                    throw new ServiceException(ApiError.ERROR_95137);
