@@ -203,7 +203,8 @@
         odpd.qty AS planQty,
         odpd.qty AS deliveryQty,
         odpd.platform_sku as platformSku,
-        odpd.platform_sku_name as platformSkuName
+        odpd.platform_sku_name as platformSkuName,
+        odp.type
         FROM wms_delivery_plan_detail odpd
         INNER JOIN wms_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
         WHERE odp.is_deleted = FALSE
