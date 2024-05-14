@@ -125,7 +125,7 @@ public class SpElServerImpl implements SpElServer {
      */
     @Override
     public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, Map<String, Object> obj) {
-        SpElExpressionDTO spElDTO = getConditionExpression(conditionList, obj);
+        SpElExpressionDTO spElDTO = conditionExpressionByMap(conditionList, obj);
         List<SpElAddFieldDTO> addFieldList = spElDTO.getSpElAddFieldList();
         List<Map<String, Object>> mapList = (List<Map<String, Object>>) obj.get("detailList");
         for (SpElAddFieldDTO item : addFieldList) {
@@ -135,7 +135,7 @@ public class SpElServerImpl implements SpElServer {
             String addField = item.getNeedAddField();
             obj.put(addField, valueList);
         }
-        return matchExpression(spElDTO.getExpression(), obj);
+        return matchExpressionWithVariable(spElDTO, obj);
 
     }
 

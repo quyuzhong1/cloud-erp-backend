@@ -33,6 +33,7 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
@@ -51,6 +52,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -97,6 +99,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Resource
     private ShopInfoFeign shopInfoFeign;
+
+    @Resource
+    private FbaShipmentService fbaShipmentService;
+
+    @Resource
+    @Lazy
+    private RequisitionApplicationServiceImpl service;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -593,6 +602,48 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             list.add(childViewDTO);
         }
         return list;
+    }
+
+    @Override
+    public List<BatchResultDTO> bindShipment(List<RequisitionApplicationDTO.BindShipment> dto) {
+        List<String> ids = dto.stream().map(RequisitionApplicationDTO.BindShipment::getId).distinct().collect(Collectors.toList());
+        List<String> shipmentIds = dto.stream().map(RequisitionApplicationDTO.BindShipment::getShipmentId).collect(Collectors.toList());
+        List<RequisitionApplicationEntity> requisitionApplicationEntities = this.listByIds(ids);
+        List<FbaShipmentEntity> fbaShipmentEntities = fbaShipmentService.listByIds(shipmentIds);
+        List<String> shipmentCode = fbaShipmentEntities.stream().map(FbaShipmentEntity::getCode).collect(Collectors.toList());
+        List<RequisitionApplicationEntity> existBinds = lambdaQuery().in(RequisitionApplicationEntity::getFbaShipmentCode, shipmentCode).list();
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        List<RequisitionApplicationEntity> updateList = new ArrayList<>();
+        for (RequisitionApplicationDTO.BindShipment bindShipment : dto) {
+            RequisitionApplicationEntity requisitionApplicationEntity = requisitionApplicationEntities.stream().filter(req -> req.getId().equals(bindShipment.getId())).findFirst().orElse(null);
+            if(Objects.isNull(requisitionApplicationEntity)){
+                resultDTOList.add(BatchResultDTO.fail(bindShipment.getId(),bindShipment.getId(), "单据不存在"));
+                continue;
+            }
+            if(!requisitionApplicationEntity.getStatus().equals(RequisitionApplicationStatusEnum.HANDLE.getCode())){
+                resultDTOList.add(BatchResultDTO.fail(requisitionApplicationEntity.getId(),requisitionApplicationEntity.getCode(), "要货申请必须已处理才能绑定货件单号"));
+                continue;
+            }
+            FbaShipmentEntity fbaShipmentEntity = fbaShipmentEntities.stream().filter(req -> req.getId().equals(bindShipment.getShipmentId())).findFirst().orElse(null);
+            if(Objects.isNull(fbaShipmentEntity)){
+                resultDTOList.add(BatchResultDTO.fail(requisitionApplicationEntity.getId(),requisitionApplicationEntity.getCode(), "货件在系统不存在"));
+                continue;
+            }
+            RequisitionApplicationEntity existBind = existBinds.stream().filter(req -> req.getFbaShipmentCode().equals(fbaShipmentEntity.getCode())).findFirst().orElse(null);
+            if(Objects.nonNull(existBind)) {
+                resultDTOList.add(BatchResultDTO.fail(requisitionApplicationEntity.getId(), requisitionApplicationEntity.getCode(), "货件单号已绑定"));
+                continue;
+            }
+            requisitionApplicationEntity.setFbaShipmentCode(fbaShipmentEntity.getCode());
+            updateList.add(requisitionApplicationEntity);
+
+            String msg = StrUtil.format("用户【{}】绑定单号为【{}】货件号为【{}】 ", commonService.getUserInfo().getUserName(), requisitionApplicationEntity.getCode(), fbaShipmentEntity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId(), "绑定货件");
+        }
+        if(CollectionUtils.isNotEmpty(updateList)){
+            service.saveBatch(updateList);
+        }
+        return resultDTOList;
     }
 
     /**

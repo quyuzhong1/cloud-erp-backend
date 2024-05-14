@@ -342,4 +342,13 @@ public class RequisitionApplicationController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 绑定货件
+     * @Author Luo_WG
+     **/
+    @PostMapping("/bindShipment")
+    public ApiResult<List<BatchResultDTO>> bindShipment(@RequestBody @Validated List<RequisitionApplicationDTO.BindShipment> dto) {
+        List<BatchResultDTO> resultDTOS = requisitionApplicationService.bindShipment(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

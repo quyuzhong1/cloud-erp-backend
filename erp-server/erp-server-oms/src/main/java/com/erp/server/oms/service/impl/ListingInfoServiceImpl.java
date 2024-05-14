@@ -16,6 +16,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -29,9 +30,11 @@ import com.erp.server.oms.mapper.ListingInfoMapper;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SkuMappingService;
+import com.erp.server.oms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,6 +70,11 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     private ListingInfoServiceImpl service;
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private CommonService commonService;
+    @Autowired
+    private ShopInfoService shopInfoService;
+
     /**
      * 添加库存sku
      *
@@ -169,6 +177,19 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             skuMapping.setIsExpire(Boolean.TRUE);
             if (!skuMappingService.updateById(skuMapping)) {
                 throw new ServiceException("[SkuMapping] 历史映射修改失败");
+            }
+
+            if(StringUtils.isBlank(dto.getShopId())){
+                throw new ServiceException("店铺ID不能为空");
+            }
+
+            //平台如果为空 通过设置平台信息
+            if(StringUtils.isBlank(dto.getPlatform())){
+                ShopInfoEntity shopInfoEntity = shopInfoService.getById(dto.getId());
+                if(Objects.isNull(shopInfoEntity)){
+                    throw new ServiceException("店铺为空");
+                }
+                dto.setPlatform(shopInfoEntity.getDictPlatform());
             }
             SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
             skuMappingEntity.setWarehouseId("");

@@ -56,6 +56,14 @@ public class FbaShipmentController extends BaseController {
         PagingVO<FbaShipmentDTO.ListDTO> list = fbaShipmentService.paging(dto);
         return success(list);
     }
+    /**
+     * 单号搜索
+     **/
+    @PostMapping("/searchByCode")
+    public ApiResult<PagingVO<FbaShipmentDTO.SearchResultDTO>> searchByCode(@RequestBody @Validated PagingDTO<FbaShipmentDTO.SearchDTO> dto) {
+        PagingVO<FbaShipmentDTO.SearchResultDTO> pagingVO = fbaShipmentService.search(dto);
+        return success(pagingVO);
+    }
 
     /**
      * 导出
@@ -314,6 +322,8 @@ public class FbaShipmentController extends BaseController {
         Boolean flag = fbaShipmentService.generateRequisitionApplicationSaveAndSubmit(dto.getList());
         return flag ? success() : failure();
     }
+
+
 
     /**
      * 重新生成调拨单

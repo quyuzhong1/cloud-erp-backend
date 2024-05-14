@@ -147,7 +147,13 @@
 			left join fba_shipment_receive h on g.id = h.detail_id 
 		<include refid="FbaDataCompareByCondition"/>
     </select>
-    
+    <select id="search" resultType="com.erp.model.wms.dto.FbaShipmentDTO$SearchResultDTO">
+        select fs.id,fs.code from fba_shipment fs where fs.is_deleted = false
+        <if test="params.code!=null and params.code!=''">
+            and fs.code ILIKE concat('%',#{params.code}::text,'%')
+        </if>
+    </select>
+
     <sql id="FbaDataCompareByCondition">
     	WHERE
 			T.is_deleted = 'f' 
