@@ -440,11 +440,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<SoB2cDeliveryDTO.PrintPickingViewDTO> resultList = printPickingViewList.stream()
                 .sorted(Comparator.comparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseName)
                         .thenComparing((s1, s2) -> {
-                            if (StringUtils.isBlank(s1.getWarehouseLocation())) {
+                            if (StringUtils.isBlank(s1.getWarehouseLocation()) && !StringUtils.isBlank(s2.getWarehouseLocation())) {
                                 return 1;
-                            } else if (StringUtils.isBlank(s2.getWarehouseLocation())) {
-                                return -1;
-                            } else if (StringUtils.equals(s1.getWarehouseLocation(), s2.getWarehouseLocation())) {
+                            } else if (!StringUtils.isBlank(s1.getWarehouseLocation()) && StringUtils.isBlank(s2.getWarehouseLocation())) {
                                 return -1;
                             } else {
                                 return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
@@ -1242,6 +1240,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return lambdaQuery().eq(SoB2cDeliveryEntity ::getSourceId,soId)
                 .ne(SoB2cDeliveryEntity::getStatus,SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
                 .last(" LIMIT 1").one();
+    }
+
+    @Override
+    public Boolean shipOrder(PlatformShipOrderDTO platformShipOrderDTO) {
+        //调用第三方平台SDK发货
+        PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+        return true;
     }
 
     /**

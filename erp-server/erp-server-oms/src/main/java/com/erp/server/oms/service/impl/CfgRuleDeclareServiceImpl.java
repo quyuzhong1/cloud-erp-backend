@@ -10,6 +10,7 @@ import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.server.rule.SpElServer;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.CfgRuleDeclareEntity;
@@ -120,7 +121,23 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         CfgRuleDeclareEntity entity = BeanMapperUtils.map(CfgRuleDeclareEntity.class, updateDTO);
         // 数据处理
         handleData(entity);
-        boolean save = super.updateById(entity);
+//        boolean save = super.updateById(entity);
+        boolean save = lambdaUpdate().eq(CfgRuleDeclareEntity::getId,entity.getId())
+                .set(CfgRuleDeclareEntity::getName,entity.getName())
+                .set(CfgRuleDeclareEntity::getPriority,entity.getPriority())
+                .set(CfgRuleDeclareEntity::getDisabled,entity.getDisabled())
+                .set(CfgRuleDeclareEntity::getRemark,entity.getRemark())
+                .set(CfgRuleDeclareEntity::getDeclareCn,entity.getDeclareCn())
+                .set(CfgRuleDeclareEntity::getDeclareEn,entity.getDeclareEn())
+                .set(CfgRuleDeclareEntity::getToCustomsCode,entity.getToCustomsCode())
+                .set(CfgRuleDeclareEntity::getToDeclarePrice,entity.getToDeclarePrice())
+                .set(CfgRuleDeclareEntity::getToCurrency,entity.getToCurrency())
+                .set(CfgRuleDeclareEntity::getToCurrencySymbol,entity.getToCurrencySymbol())
+                .set(CfgRuleDeclareEntity::getRate,entity.getRate())
+                .set(CfgRuleDeclareEntity::getToDeclarePriceType,entity.getToDeclarePriceType())
+                .set(CfgRuleDeclareEntity::getMinDeclarePrice,entity.getMinDeclarePrice())
+                .set(CfgRuleDeclareEntity::getMaxDeclarePrice,entity.getMaxDeclarePrice())
+                .update();
         if (!save) {
             throw new ServiceException("申报规则单保存失败");
         }
@@ -167,7 +184,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         if (disabled.equals(dto.getState())) {
             throw new ServiceException(ApiError.ERROR_98027);
         }
-        String content = String.format("启用状态[%s]变更为[%s]", disabled ? "启用" : "停用", disabled ? "停用" : "启用");
+        String content = String.format("启用状态[%s]变更为[%s]", disabled ? "停用" : "启用", disabled ? "启用" : "停用");
         entity.setDisabled(dto.getState());
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.RULE_DECLARE.getCode(), dto.getId(), "状态变更");
         return this.updateById(entity);
@@ -308,7 +325,8 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
                     }else if (DeclareTypeEnum.PRICE_PERCENTAGE.getCode().equals(item.getToDeclarePriceType())){
                         BigDecimal toDeclarePrice = entity.getToDeclarePrice();
                         BigDecimal rate = item.getRate();
-                        BigDecimal toDeclarePrice1 = MathUtil.multiply(toDeclarePrice, rate);
+                        BigDecimal ratePercent = MathUtil.divide(rate, MathUtil.BigDecimal_100);
+                        BigDecimal toDeclarePrice1 = MathUtil.multiply(toDeclarePrice, ratePercent);
                         //重置目的国申报价
                         if (Objects.nonNull(item.getMaxDeclarePrice()) && toDeclarePrice1.compareTo(item.getMaxDeclarePrice()) > 0){
                             toDeclarePrice1 = item.getMaxDeclarePrice();
@@ -327,14 +345,19 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
     }
 
     private List<CfgRuleDeclareEntity> listOrderByPriority() {
-        return this.lambdaQuery().orderByAsc(CfgRuleDeclareEntity::getPriority).orderByDesc(CfgRuleDeclareEntity::getUpdateTime).list();
+        return this.lambdaQuery().eq(CfgRuleDeclareEntity::getDisabled,Boolean.FALSE).orderByAsc(CfgRuleDeclareEntity::getPriority).orderByDesc(CfgRuleDeclareEntity::getUpdateTime).list();
     }
 
 
     /**
     * 新增修改处理数据
     */
-    private void handleData(CfgRuleDeclareEntity CfgRuleDeclareEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(CfgRuleDeclareEntity entity) {
+        if (StringUtils.isEmpty(entity.getToCurrency())){
+            entity.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+        }
+        if (StringUtils.isEmpty(entity.getToCurrencySymbol())){
+            entity.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+        }
     }
 }
