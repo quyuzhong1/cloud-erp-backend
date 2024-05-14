@@ -52,6 +52,7 @@ import com.erp.server.wms.convert.FbaShipmentConverter;
 import com.erp.server.wms.mapper.FbaShipmentMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.experimental.Helper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -1734,7 +1735,18 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         return null;
     }
 
-	@Override
+    @Override
+    public PagingVO<FbaShipmentDTO.SearchResultDTO> search(PagingDTO<FbaShipmentDTO.SearchDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<FbaShipmentDTO.SearchResultDTO> searchData = this.baseMapper.search(query, dto.getParams());
+        if (CollUtil.isEmpty(searchData.getRecords())) {
+            return new PagingVO(searchData);
+        }
+        return new PagingVO(searchData);
+    }
+
+
+    @Override
 	public List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO> getDataCompareByCondition(
 			com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO params , Integer pageSize) {
 		if("0".equals(params.getId())) {

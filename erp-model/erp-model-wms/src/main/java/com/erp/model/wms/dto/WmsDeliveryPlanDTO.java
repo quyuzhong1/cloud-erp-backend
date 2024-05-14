@@ -123,6 +123,11 @@ public class WmsDeliveryPlanDTO implements Serializable {
         private String deliveryCode;
 
         /**
+         * 货件/入库单号
+         */
+        private String refCode;
+
+        /**
          * 目的仓库
          */
         private String toWarehouseId;

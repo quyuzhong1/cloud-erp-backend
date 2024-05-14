@@ -585,7 +585,11 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 服务商code
          */
-        private String provideCode;;
+        private String provideCode;
+        /**
+         * 货件号
+         */
+        private String fbaShipmentCode;
     }
 
     /**
@@ -847,7 +851,23 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private String bomVersion;
     }
-
+    /**
+     * 绑定货件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BindShipment {
+        /**
+         * id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+        /**
+         * 货件id
+         */
+        @NotBlank(message = "货件id 不能为空")
+        private String shipmentId;
+    }
     /**
      * 子件信息
      */
