@@ -168,7 +168,13 @@
             odpd.qty AS planQty,
             odpd.qty AS requisitionQty,
             odpd.platform_sku as platformSku,
-            odpd.platform_sku_name as platformSkuName
+            odpd.platform_sku_name as platformSkuName,
+            odpd.platform_spu as asin,
+            odpd.platform_fn_sku as fnSku,
+            odpd.box_qty as boxQty,
+            odp.type as deliveryPlanType,
+            odp.shop_id as shopId,
+            odp.shop_name as shopName
         FROM wms_delivery_plan_detail odpd
         INNER JOIN wms_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
         WHERE odp.is_deleted = FALSE

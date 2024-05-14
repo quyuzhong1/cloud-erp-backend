@@ -541,12 +541,12 @@ public class WmsDeliveryPlanDTO implements Serializable {
         private Boolean isCombination;
 
         /**
-         * 平台sku
+         * 平台(第三方仓)sku（msku）
          */
         private String platformSku;
 
         /**
-         * 平台spu（asin）
+         * 平台产品id（asin）
          */
         private String asin;
 
@@ -560,6 +560,25 @@ public class WmsDeliveryPlanDTO implements Serializable {
          */
         private String platformSkuName;
 
+        /**
+         * 单箱数量
+         */
+        private Integer boxQty;
+
+        /**
+         * 发货计划类型
+         */
+        private String deliveryPlanType;
+
+        /**
+         * 店铺Id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
     }
 
     /**

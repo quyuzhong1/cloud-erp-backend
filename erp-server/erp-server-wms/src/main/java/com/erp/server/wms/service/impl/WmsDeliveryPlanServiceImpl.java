@@ -585,9 +585,15 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         for (WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO viewDTO : list) {
-            //海外发货计划下推要货单要货类型默认是：海外仓
-            viewDTO.setType(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode());
-            viewDTO.setTypeName(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getName());
+            if(DeliveryPlanTypeEnum.FBA.getCode().equals(viewDTO.getDeliveryPlanType())){
+                viewDTO.setType(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode());
+                viewDTO.setTypeName(RequisitionApplicationTypeEnum.SALES_PLATFORM.getName());
+                viewDTO.setChannelId(viewDTO.getShopId());
+                viewDTO.setChannelName(viewDTO.getShopName());
+            }else{
+                viewDTO.setType(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode());
+                viewDTO.setTypeName(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getName());
+            }
 
             //来源类型
             viewDTO.setSourceType(SourceTypeEnum.DELIVERY_PLAN.getCode());
