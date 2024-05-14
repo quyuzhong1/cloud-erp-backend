@@ -2891,10 +2891,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer IsFixed = taskEntity.getIsFixed();
         LoginUser userInfo = UserContext.getLoginUser();
 
-        //如果是固定任务
-        if (IsConstant.YES.equals(IsFixed)) {
-            deleteTaskShow = false;
-        }
+//        //如果是固定任务
+//        if (IsConstant.YES.equals(IsFixed)) {
+//            deleteTaskShow = false;
+//        }
         //删除任务
         Map<String, Object> deleteTaskMap = new HashMap<>();
         deleteTaskMap.put("name", "删除任务");
