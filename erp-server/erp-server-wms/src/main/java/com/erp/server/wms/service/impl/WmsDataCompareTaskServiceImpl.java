@@ -884,7 +884,10 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 			for(Map.Entry<String, List<WmsDataCompareTempEntity>> waitPkTemp : waitPkTempList.entrySet()) {
 				List<WmsDataCompareTempEntity> value = waitPkTemp.getValue();
 				if(isGroupCompare) {
-					this.dealGroupCountValue(value.stream().map(v -> JSON.parseObject(v.getImportDataJson() , Map.class)).collect(Collectors.toList()), systemField);
+					this.dealGroupCountValue(value.stream().map(v -> {
+						Map<String , String> parseObject = JSON.parseObject(v.getImportDataJson() , Map.class);
+						return parseObject;
+					}).collect(Collectors.toList()), systemField);
 				}
 				waitTempList.addAll(value);
 			}
