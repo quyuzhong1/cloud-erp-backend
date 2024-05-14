@@ -80,6 +80,9 @@ public enum ModuleTypeEnum {
     TMS_B2C_DECLARE_RECONCILIATION("69", "B2C报关账单"),
     TMS_FIRST_MILE_RECONCILIATION("70", "头程对账单"),
     CFG_FIELD_RECONCILIATION("71", "字段配置"),
+    RULE_DECLARE("72", "申报规则"),
+    CFG_RULE_ORDER_HANDLE("73", "订单处理规则"),
+    SO_B2C_DECLARE("74", "B2C销售订单申报信息"),
     ;
 
 

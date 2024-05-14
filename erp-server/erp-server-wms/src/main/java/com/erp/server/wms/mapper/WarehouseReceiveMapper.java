@@ -25,6 +25,8 @@ import java.util.List;
 public interface WarehouseReceiveMapper extends BaseMapper<WarehouseReceiveEntity> {
 
     IPage<WarehouseReceiveDTO.PagingViewDTO> paging(Page query, @Param("params") WarehouseReceiveDTO.PagingParamDTO params);
+    Integer getQry(@Param("sourceId") String sourceId);
+    Integer getReceiveQtyById(@Param("id") String id);
 
     Integer listCount(@Param("params") WarehouseReceiveDTO.PagingParamDTO params);
 

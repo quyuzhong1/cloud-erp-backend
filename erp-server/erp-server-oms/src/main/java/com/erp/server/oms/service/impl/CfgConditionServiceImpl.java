@@ -1,31 +1,28 @@
 package com.erp.server.oms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.RuleCompareEnum;
-
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.CfgConditionDTO;
 import com.erp.model.oms.entity.CfgConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.server.oms.mapper.CfgConditionMapper;
 import com.erp.server.oms.service.CfgConditionService;
-import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.DictRuleConditionService;
 import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.CfgConditionDTO;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 /**
  * <p>
@@ -115,6 +112,18 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
     @Override
     public List<CfgConditionDTO.ListDTO> listAllCondition() {
         return baseMapper.listAllCondition();
+    }
+
+    @Override
+    public List<CfgConditionDTO.ListDTO> listDeclareCondition() {
+        //后面需要根据类型进行配置条件列表
+        return baseMapper.listDeclareCondition();
+    }
+
+    @Override
+    public List<CfgConditionDTO.ListDTO> listOrderHandleCondition() {
+        //后面需要根据类型进行配置条件列表
+        return baseMapper.listOrderHandleCondition();
     }
 
 

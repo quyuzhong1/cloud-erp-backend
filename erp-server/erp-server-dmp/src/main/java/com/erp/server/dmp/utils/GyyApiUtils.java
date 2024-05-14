@@ -60,7 +60,9 @@ public class GyyApiUtils {
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         while (true) {
             HashMap<String, Object> params = new HashMap<>(6);
+            //默认0，0:创建时间 1:拍单时间 2:付款时间 3:修改时间
             params.put("date_type", 3);
+            //默认0，0:全部 1:未审核 2:已审核
             params.put("order_state", 0);
             params.put("start_date", sdf.format(startDate));
             params.put("end_date", sdf.format(endDate));

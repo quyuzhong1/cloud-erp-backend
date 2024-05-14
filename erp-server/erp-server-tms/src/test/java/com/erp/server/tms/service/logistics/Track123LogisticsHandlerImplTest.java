@@ -2,6 +2,9 @@ package com.erp.server.tms.service.logistics;
 
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.MathUtil;
+import com.erp.model.tms.dto.LogisticsTrackBaseDTO;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
@@ -71,6 +74,24 @@ public class Track123LogisticsHandlerImplTest {
         System.out.println(listApiResult);
     }
 
+    /**
+     * 航运注册
+     */
+    @Test
+    public void oceanRegisterLogisticsNumber(){
+        List<LogisticsTrackBaseDTO.OceanRegisterRequestDTO> requestList = new ArrayList<>();
+        LogisticsTrackBaseDTO.OceanRegisterRequestDTO oceanRegisterRequestDTO = LogisticsTrackBaseDTO.OceanRegisterRequestDTO.builder()
+                .trackNo("FSCU8892622")
+                .carrierCode("cosco")
+                .id("1789113371434422274")
+                .type(MathUtil.THREE)
+                .authMap(authMap)
+                .build();
+        requestList.add(oceanRegisterRequestDTO);
+        ApiResult<List<RegisterResponseVO>> listApiResult = track123LogisticsHandler.oceanRegisterLogisticsNumber(requestList);
+        System.out.println(listApiResult);
+    }
+
     @Test
     public void getTrack(){
         LogisticsTrackVO logisticsQueryVO = new LogisticsTrackVO();
@@ -80,6 +101,20 @@ public class Track123LogisticsHandlerImplTest {
         logisticsQueryVO.setTrackNos(trackNos);
         logisticsQueryVO.setAuthMap(authMap);
         ApiResult<List<LogisticsTrackEntity>> track = track123LogisticsHandler.getTrack(logisticsQueryVO);
+        System.out.println(track);
+    }
+
+    @Test
+    public void getOceanTrack(){
+        List<LogisticsTrackBaseDTO.OceanTrackRequestDTO> list = new ArrayList<>();
+        LogisticsTrackBaseDTO.OceanTrackRequestDTO oceanTrackRequestDTO = LogisticsTrackBaseDTO.OceanTrackRequestDTO.builder()
+                .trackingNo("FSCU8892622")
+                .orderNo("577170392674754560")
+                .type(MathUtil.THREE)
+                .authMap(authMap)
+                .build();
+        list.add(oceanTrackRequestDTO);
+        ApiResult<List<LogisticsTrackEntity>> track = track123LogisticsHandler.getOceanTrack(list);
         System.out.println(track);
     }
 

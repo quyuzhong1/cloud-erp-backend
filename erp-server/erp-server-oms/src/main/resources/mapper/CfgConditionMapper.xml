@@ -65,6 +65,40 @@
         WHERE is_deleted=FALSE
         ORDER BY index ASC
     </select>
+    <select id="listDeclareCondition" resultType="com.erp.model.oms.dto.CfgConditionDTO$ListDTO">
+        SELECT
+            condition_field ,
+            condition_field_name,
+            request_method,
+            controls,
+            api_url,
+            param,
+            label,
+            value,
+            search_key,
+            remote_label
+        FROM cfg_condition
+        WHERE is_deleted=FALSE and condition_field in ('dictPlatform','shop','destCountry','skuNo','logisticsChannelId')
+        ORDER BY index ASC
+    </select>
+
+    <!-- 订单处理条件下拉 -->
+    <select id="listOrderHandleCondition" resultType="com.erp.model.oms.dto.CfgConditionDTO$ListDTO">
+        SELECT
+            condition_field ,
+            condition_field_name,
+            request_method,
+            controls,
+            api_url,
+            param,
+            label,
+            value,
+            search_key,
+            remote_label
+        FROM cfg_condition
+        WHERE is_deleted=FALSE and condition_field in ('dictPlatform','shop','destCountry','logisticsChannelId')
+        ORDER BY index ASC
+    </select>
 
 
 </mapper>

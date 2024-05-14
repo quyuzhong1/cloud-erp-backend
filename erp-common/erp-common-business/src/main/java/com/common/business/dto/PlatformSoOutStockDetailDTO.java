@@ -52,4 +52,9 @@ public class PlatformSoOutStockDetailDTO {
      * 配送数量
      */
     private Integer qtyShipped;
+
+    /**
+     * 跟踪号
+     */
+    private String trackNo;
 }

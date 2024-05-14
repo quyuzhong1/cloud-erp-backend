@@ -511,4 +511,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return Boolean
      */
     Boolean afreshGenerateB2cOutstock(List<String> ids);
+
+    void updateRemarkBySoId(String id,String remark);
 }

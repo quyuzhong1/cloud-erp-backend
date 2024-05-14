@@ -20,6 +20,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -177,6 +178,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceIdsAndType(receiveIds,SourceTypeEnum.PO_RECEIVE.getCode());
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
+                //设置入库状态名称
+                obj.setInStockStatusName(InstockStatusEnum.getByCode(obj.getInStockStatus()));
                 List<QcInfoEntity> resultList = qcInfoList.stream().filter(v -> v.getSourceId().equals(obj.getId())).collect(Collectors.toList());
                 if(resultList.stream().allMatch(v->Objects.isNull(v.getQcStatus()) || QcBillStatusEnum.DRAFT.equals(v.getQcStatus())|| QcBillStatusEnum.WAIT_QC.equals(v.getQcStatus())|| QcBillStatusEnum.CANCEL.equals(v.getQcStatus()))){
                     obj.setQcStatus(PdaQclStatusEnum.WAIT_QC.getCode());
@@ -1355,11 +1358,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             Integer count = MathUtil.ZERO;
             if (PdaTabFlagEnum.WAIT_SUBMIT_AND_REJECT.getCode().equals(item.getCode())) {
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.REJECT.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE_ING.getCode().equals(item.getCode())) {
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE.getCode().equals(item.getCode())) {
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
@@ -1367,7 +1370,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 dateList.add(startDate);
                 dateList.add(endDate);
                 pagingParamDTO.setBillDate(dateList);
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(item.getCode());
@@ -1892,5 +1895,63 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             return new ArrayList<>();
         }
         return this.lambdaQuery().eq(WarehouseReceiveEntity::getSourceType,dto.getSourceType()).in(WarehouseReceiveEntity::getSourceId,dto.getSourceIds()).list();
+    }
+
+    @Override
+    public void instockStatusCleanJob() {
+        //获取所有采购收货单入库状态为0的单据
+        Integer count = lambdaQuery().eq(WarehouseReceiveEntity::getInStockStatus, InstockStatusEnum.NOT_IN_STOCK.getCode())
+                .eq(WarehouseReceiveEntity::getInStockStatus, false).count();
+        Integer size = 500;
+        Integer page = count / size;
+        List<List<WarehouseReceiveEntity>> objects = new ArrayList<>();
+        for (int i=0;i<=page;i++){
+//            PagingDTO<WarehouseReceiveDTO.PagingParamDTO> pagingParamDTO = new PagingDTO<>();
+//            pagingParamDTO.setCurrPage(i);
+//            pagingParamDTO.setPageSize(size);
+//            Page query = new Page(i, size);
+//            IPage<WarehouseReceiveDTO.PagingViewDTO> pageData = this.baseMapper.pagingQry(query, new WarehouseReceiveDTO.PagingParamDTO());
+//            if (Objects.nonNull(pageData)&&CollectionUtils.isNotEmpty(pageData.getRecords())){
+//                page
+//            }
+          //获取采购收货单
+            List<WarehouseReceiveEntity> viewDTOS = new ArrayList<>();
+            List<WarehouseReceiveEntity> list = this.list(lambdaQuery().eq(WarehouseReceiveEntity::getInStockStatus, InstockStatusEnum.NOT_IN_STOCK.getCode())
+                    .eq(WarehouseReceiveEntity::getInStockStatus, false)
+                    .eq(WarehouseReceiveEntity::getApproveStatus, "approve")
+                    .eq(WarehouseReceiveEntity::getInStockStatus, "0")
+                    .orderByAsc(WarehouseReceiveEntity::getCreateTime)
+                    .last(String.format("LIMIT %s OFFSET %s", size, i * size)));
+            if (CollectionUtils.isNotEmpty(list)) {
+                list.forEach(item -> {
+                    WarehouseReceiveEntity viewDTO = null;
+                    //获取收货数量
+                    Integer receiveQty = baseMapper.getReceiveQtyById(item.getId());
+                    if (Objects.nonNull(receiveQty) && receiveQty > 0) {
+                        //查询收货单关联的SKU明细的下推的入库单的入库数量【单据已审核】
+                        Integer instockQty = baseMapper.getQry(item.getId());
+                        viewDTO= new WarehouseReceiveEntity();
+                        if (Objects.isNull(instockQty)||instockQty==0) {
+                            viewDTO.setInStockStatus(InstockStatusEnum.NOT_IN_STOCK.getCode());
+                        }else{
+                            if (instockQty<receiveQty){
+                                viewDTO.setInStockStatus(InstockStatusEnum.PARTIALLY_IN_STOCK.getCode());
+                            }
+                            if (instockQty.equals(receiveQty)){
+                                viewDTO.setInStockStatus(InstockStatusEnum.FULLY_IN_STOCK.getCode());
+                            }
+                        }
+                        viewDTO.setId(item.getId());
+                        viewDTOS.add(viewDTO);
+                    }
+                });
+                if (CollectionUtils.isNotEmpty(viewDTOS)){
+                    objects.add(viewDTOS);
+                }
+            }
+        }
+        if (CollectionUtils.isNotEmpty(objects)){
+            objects.forEach(this::updateBatchById);
+        }
     }
 }
