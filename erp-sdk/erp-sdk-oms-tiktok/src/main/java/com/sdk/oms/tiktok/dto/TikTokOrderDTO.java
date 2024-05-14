@@ -130,11 +130,11 @@ public class TikTokOrderDTO extends CleanBaseDTO {
             orderDTO.setRemark("ON_HOLD");
         } else if ("AWAITING_SHIPMENT".equalsIgnoreCase(ordersBean.getStatus())) {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             orderDTO.setRemark("");
         } else if ("AWAITING_COLLECTION".equalsIgnoreCase(ordersBean.getStatus())) {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             orderDTO.setRemark("");
         } else if ("PARTIALLY_SHIPPING".equalsIgnoreCase(ordersBean.getStatus())) {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
@@ -158,6 +158,8 @@ public class TikTokOrderDTO extends CleanBaseDTO {
             orderDTO.setInvalidStatus(Boolean.TRUE);
             orderDTO.setRemark("平台取消");
         }
+        // 平台订单原始状态
+        orderDTO.setPlatformOrderStatus(ordersBean.getStatus());
 
         //创建时间
         LocalDateTime createTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(ordersBean.getCreateTime()), ZoneId.systemDefault());
