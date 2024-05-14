@@ -149,19 +149,26 @@ public class WmsDataComparePlanDTO implements Serializable {
     	 * 系统数据字段
     	 */
     	private String systemField;
+    	
+    	/**
+    	 * 系统数据字段名称，前端可不传，以后台配置为主
+    	 */
+    	private String systemFieldName;
+    	
     	 /**
     	 * 导入数据字段
     	 */
     	private String importField;
+    	
     	 /**
-    	 * 唯一键标识，true或false
+    	 * 唯一键或汇总标识，true或false
     	 */
     	private Boolean status;
     	
     	/**
-    	 * 导入数据表头索引
+    	 * 数据类型
     	 */
-    	private Integer headIndex;
+    	private String classType;
      }
 
 }
