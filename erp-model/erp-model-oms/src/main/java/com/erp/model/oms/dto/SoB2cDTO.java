@@ -426,6 +426,10 @@ public class SoB2cDTO implements Serializable {
          * WFS（沃尔玛订单shipNodeType=WFSFulfilled或3PLFulfilled）
          */
         private String shipNodeType;
+        /**
+         * TikTok状态
+         */
+        private String tikTokStatus;
     }
 
     @Data
@@ -484,6 +488,11 @@ public class SoB2cDTO implements Serializable {
          * 是否平台仓订单 true 是 fasle 不是
          */
         private Boolean isAliexpressPlatformWarehouseOrder;
+
+        /**
+         * TikTok状态
+         */
+        private String tikTokStatus;
     }
 
 
