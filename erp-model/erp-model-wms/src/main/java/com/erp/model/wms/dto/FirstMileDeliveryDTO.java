@@ -879,6 +879,11 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 发货时间
          */
         private LocalDateTime deliveryTime;
+
+        /**
+         * 货件/入库单号
+         */
+        private String refCode;
     }
 
     /**

@@ -40,7 +40,6 @@ import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.convert.deliveryPlanConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
@@ -564,6 +563,13 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     @Override
     public List<FirstMileDeliveryDTO.DeliverRecordView> listDeliverRecord(String id) {
         List<FirstMileDeliveryDTO.DeliverRecordView> deliverRecordViews = firstMileDeliveryService.listDeliveryRecordBySourceIds(Arrays.asList(id));
+        WmsDeliveryPlanEntity entity = this.getById(id);
+        if(entity.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())){
+            RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.listBySourceIds(Arrays.asList(id)).stream().findFirst().orElse(null);
+            if(Objects.nonNull(requisitionApplication)){
+                deliverRecordViews.forEach(view -> view.setRefCode(requisitionApplication.getFbaShipmentCode()));
+            }
+        }
         return deliverRecordViews;
     }
 
@@ -902,14 +908,6 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             String waitApproveUserName = StringUtils.join(curApproveName, ",");
             data.setWaitApproveUserName(waitApproveUserName);
             data.setTypeName(EnumMessage.getNameByCode(DeliveryPlanTypeEnum.class, data.getType()));
-
-//            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
-//                    v->v.getDictPlatform().equals(data.getProvideCode()) && v.getProductSkuId().equals(data.getSkuId()) &&(v.getHasMappingAll() || v.getWarehouseId().equals(data.getToWarehouseId()))
-//                    )
-//                    .findFirst().orElse(null);
-//            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
-//                data.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
-//            }
         }
     }
     /**
