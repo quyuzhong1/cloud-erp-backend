@@ -4,11 +4,13 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.utils.CollectionUtils;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.DistrictInfoBean;
@@ -125,6 +127,10 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         if (ordersBean.getPaidTime() > 0 && ObjectUtil.isNotEmpty(ordersBean.getPayment())) {
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
         }
+
+        Map<String, String> lableMap = new HashMap<>();
+        lableMap.put("tikTokStatus", ordersBean.getStatus());
+        orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
 
         if ("ON_HOLD".equalsIgnoreCase(ordersBean.getStatus())) {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
