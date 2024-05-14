@@ -2,6 +2,7 @@ package com.sdk.oms.tiktok.service;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
@@ -57,6 +58,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -94,7 +96,7 @@ public class TikTokSdkClientService {
         Map<String, String> paramMap = new HashMap<>();
         paramMap.put("clientId","6buinkjt3hmld");
         paramMap.put("clientSecret","8ff628de24faf70c24855de4d967fb6a17a47e3f");
-        String acc = "GCP_-0pjTwAAAACj-JAAAriAWjVtF2MrUIFdARIDEdX_pdh3JpPq_FYigBbzB-NHNoy7-guJPuaKJaM25dV1ndfmb55uP_Ri1yCR4KCfrsPLGnkPe1BNMxokWBeZhAUpo1A4HsON0Fr4dDiCJQ1L3H2Ac8qAC108VBFEDdh8edTw0ohtZpyoSF0CXg";
+        String acc = "GCP_aUEiSgAAAACj-JAAAriAWjVtF2MrUIFdARIDEdX_pdh3JpPq_FYigBbzB-NHNoy7-guJPuaKJaM25dV1ndfmb55uP_Ri1yCR4KCfrsPLGnkPe1BNMxokWAMMaWu4buzS96MGwueLfEhnLPlNqui6k9QUmB8SohiZir8Z5qv58oCWfE3rbp3bbw";
 
         TikTokShopInfoDTO shopInfoDTO = new TikTokShopInfoDTO();
         shopInfoDTO.setAccessToken(acc);
@@ -103,7 +105,7 @@ public class TikTokSdkClientService {
         shopInfoDTO.setClientId("6buinkjt3hmld");
         shopInfoDTO.setBaseUrl("https://auth.tiktok-shops.com");
 
-        List<OrdersBean> ordersBeans = sdkClientService.listOrderView(Arrays.asList("576667270255054616"), shopInfoDTO);
+        List<OrdersBean> ordersBeans = sdkClientService.listOrderView(Arrays.asList("576667692127325976"), shopInfoDTO);
         for (OrdersBean ordersBean : ordersBeans) {
             System.out.println(ordersBean);
         }
@@ -534,8 +536,8 @@ public class TikTokSdkClientService {
 
             //请求body，平台用于计算签名
             Map<String, Object> bodyMap = new HashMap<>();
-            bodyMap.put("update_time_ge", task.getLastTime().toEpochSecond(ZoneOffset.UTC));
-            bodyMap.put("update_time_lt", task.getNextTime().toEpochSecond(ZoneOffset.UTC));
+            bodyMap.put("update_time_ge", task.getLastTime().toInstant(ZoneOffset.ofHours(8)).toEpochMilli() / 1000);
+            bodyMap.put("update_time_lt", task.getNextTime().toInstant(ZoneOffset.ofHours(8)).toEpochMilli() / 1000);
 
             String input = EncryptionUtils.urlParamsSort(params, path, headerMap, secret, JSONUtil.toJsonStr(bodyMap));
             // 追加请求路径获取签名
@@ -576,6 +578,9 @@ public class TikTokSdkClientService {
             }
 
             pageToken = orderDTO.getData().getNextPageToken();
+            if (CollectionUtil.isEmpty(orderDTO.getData().getOrders())) {
+                continue;
+            }
             //获取到所有客户的产品id
             List<String> orderIds = orderDTO.getData().getOrders().stream().map(req -> req.getFid()).distinct().collect(Collectors.toList());
 

@@ -1,5 +1,6 @@
 package com.sdk.oms.tiktok.dto;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -7,6 +8,7 @@ import com.common.business.dto.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.utils.CollectionUtils;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.DistrictInfoBean;
@@ -271,20 +273,23 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         String city = "";
         String district = "";
         String Community = "";
-        for (DistrictInfoBean districtInfoBean : ordersBean.getRecipientAddress().getDistrictInfo()) {
-            if ("state".equalsIgnoreCase(districtInfoBean.getAddressLevelName())) {
-                state = districtInfoBean.getAddressName();
-            }
-            if ("city".equalsIgnoreCase(districtInfoBean.getAddressLevelName())) {
-                city = districtInfoBean.getAddressName();
-            }
-            if ("Sub-district".equalsIgnoreCase(districtInfoBean.getAddressLevelName())) {
-                district = districtInfoBean.getAddressName();
-            }
-            if ("Urban Community".equalsIgnoreCase(districtInfoBean.getAddressLevelName())) {
-                Community = districtInfoBean.getAddressName();
-            }
 
+        if (ObjectUtil.isNotEmpty(ordersBean.getRecipientAddress()) && CollectionUtil.isNotEmpty(ordersBean.getRecipientAddress().getDistrictInfo())) {
+            for (DistrictInfoBean districtInfoBean : ordersBean.getRecipientAddress().getDistrictInfo()) {
+                if ("state".equalsIgnoreCase(districtInfoBean.getAddressLevelName())) {
+                    state = districtInfoBean.getAddressName();
+                }
+                if ("city".equalsIgnoreCase(districtInfoBean.getAddressLevelName())) {
+                    city = districtInfoBean.getAddressName();
+                }
+                if ("Sub-district".equalsIgnoreCase(districtInfoBean.getAddressLevelName())) {
+                    district = districtInfoBean.getAddressName();
+                }
+                if ("Urban Community".equalsIgnoreCase(districtInfoBean.getAddressLevelName())) {
+                    Community = districtInfoBean.getAddressName();
+                }
+
+            }
         }
         return PlatformOrderReceiverDTO.builder()
                 .loginId(String.valueOf(ordersBean.getUserId()))
