@@ -3188,7 +3188,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //查询目的国海关编码
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
-        productCustomsEntityList.forEach(req -> {
+        List<ProductCustomsEntity> productCUstomsList = productCustomsEntityList.stream().filter(e -> e.getSkuId().equals(skuId))
+                .collect(Collectors.toList());
+        productCUstomsList.forEach(req -> {
             if (StringUtils.isNotBlank(req.getCountry())) {
                 String[] split = req.getCountry().split(",");
                 List<String> countryIdList = Arrays.asList(split);
@@ -3197,7 +3199,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 req.setCountryName(countryName);
             }
         });
-        result.setProductCustomsList(productCustomsEntityList);
+        result.setProductCustomsList(productCUstomsList);
 
         //产品包装辅料
         List<ProductAccessoriesDTO> accessoriesList = productAccessoriesService.getByProductId(productId);
