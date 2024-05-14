@@ -448,7 +448,7 @@ public class WarehouseReceiveDTO {
         /**
          * 入库数量
          */
-        private Integer instockQty = 0;
+        private Integer stockInQty = 0;
         /**
          * 退货数量
          */

@@ -20,6 +20,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -1898,10 +1899,59 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     @Override
     public void instockStatusCleanJob() {
-        //分页获取所有采购收货单
-//        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-//        baseMapper.paging();
-        //收货数量与入库数量对比，入库数量为0则为未入库，大于0且小于收货数量为部分入库，等于收货数量为已入库
-        //变更入库状态
+        //获取所有采购收货单入库状态为0的单据
+        Integer count = lambdaQuery().eq(WarehouseReceiveEntity::getInStockStatus, InstockStatusEnum.NOT_IN_STOCK.getCode())
+                .eq(WarehouseReceiveEntity::getInStockStatus, false).count();
+        Integer size = 500;
+        Integer page = count / size;
+        List<List<WarehouseReceiveEntity>> objects = new ArrayList<>();
+        for (int i=0;i<=page;i++){
+//            PagingDTO<WarehouseReceiveDTO.PagingParamDTO> pagingParamDTO = new PagingDTO<>();
+//            pagingParamDTO.setCurrPage(i);
+//            pagingParamDTO.setPageSize(size);
+//            Page query = new Page(i, size);
+//            IPage<WarehouseReceiveDTO.PagingViewDTO> pageData = this.baseMapper.pagingQry(query, new WarehouseReceiveDTO.PagingParamDTO());
+//            if (Objects.nonNull(pageData)&&CollectionUtils.isNotEmpty(pageData.getRecords())){
+//                page
+//            }
+          //获取采购收货单
+            List<WarehouseReceiveEntity> viewDTOS = new ArrayList<>();
+            List<WarehouseReceiveEntity> list = this.list(lambdaQuery().eq(WarehouseReceiveEntity::getInStockStatus, InstockStatusEnum.NOT_IN_STOCK.getCode())
+                    .eq(WarehouseReceiveEntity::getInStockStatus, false)
+                    .eq(WarehouseReceiveEntity::getApproveStatus, "approve")
+                    .eq(WarehouseReceiveEntity::getInStockStatus, "0")
+                    .orderByAsc(WarehouseReceiveEntity::getCreateTime)
+                    .last(String.format("LIMIT %s OFFSET %s", size, i * size)));
+            if (CollectionUtils.isNotEmpty(list)) {
+                list.forEach(item -> {
+                    WarehouseReceiveEntity viewDTO = null;
+                    //获取收货数量
+                    Integer receiveQty = baseMapper.getReceiveQtyById(item.getId());
+                    if (Objects.nonNull(receiveQty) && receiveQty > 0) {
+                        //查询收货单关联的SKU明细的下推的入库单的入库数量【单据已审核】
+                        Integer instockQty = baseMapper.getQry(item.getId());
+                        viewDTO= new WarehouseReceiveEntity();
+                        if (Objects.isNull(instockQty)||instockQty==0) {
+                            viewDTO.setInStockStatus(InstockStatusEnum.NOT_IN_STOCK.getCode());
+                        }else{
+                            if (instockQty<receiveQty){
+                                viewDTO.setInStockStatus(InstockStatusEnum.PARTIALLY_IN_STOCK.getCode());
+                            }
+                            if (instockQty.equals(receiveQty)){
+                                viewDTO.setInStockStatus(InstockStatusEnum.FULLY_IN_STOCK.getCode());
+                            }
+                        }
+                        viewDTO.setId(item.getId());
+                        viewDTOS.add(viewDTO);
+                    }
+                });
+                if (CollectionUtils.isNotEmpty(viewDTOS)){
+                    objects.add(viewDTOS);
+                }
+            }
+        }
+        if (CollectionUtils.isNotEmpty(objects)){
+            objects.forEach(this::updateBatchById);
+        }
     }
 }
