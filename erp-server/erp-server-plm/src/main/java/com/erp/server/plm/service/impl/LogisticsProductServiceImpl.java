@@ -3,7 +3,6 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -46,11 +45,9 @@ import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.ProductRegistrationDTO;
-import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
-import com.erp.model.tms.enums.CfgSettingEnum;
+import com.erp.model.tms.enums.ProductRegistrationEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -74,7 +71,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -581,7 +577,11 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         //校验下推是否备案
         List<ProductRegistrationEntity> productRegistrationList = forecastFeign.listBySkuId(entity.getSkuId());
         if (CollectionUtils.isNotEmpty(productRegistrationList)) {
-            throw new ServiceException(StrUtil.format("已下推备案信息不支持反审核",entity.getSkuNo()));
+            long count = productRegistrationList.stream().filter(obj -> !StrUtil.equals(obj.getStatus(), ProductRegistrationEnum.StatusEnum.DRAFT.getCode())
+                    && !StrUtil.equals(obj.getStatus(), ProductRegistrationEnum.StatusEnum.CANCEL.getCode())).count();
+            if (count > 0) {
+                throw new ServiceException(StrUtil.format("已下推备案信息(非备案不通过、已取消)不支持反审核",entity.getSkuNo()));
+            }
         }
         // 更新审核信息
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
