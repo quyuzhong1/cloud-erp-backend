@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
+import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -28,6 +29,7 @@ public class CommonServiceImpl  implements CommonService {
     @Resource
     private WorkflowFeign workflowFeign;
 
+    
     @Override
     public List<String> listProcessCurBusinessIds (String businessKey) {
         //获取当前人需要审核的业务ids
@@ -43,4 +45,11 @@ public class CommonServiceImpl  implements CommonService {
         List<String> businessIds = listApiResult.getData().stream().filter(obj -> StringUtils.isNotBlank(obj.getBusinessId())).map(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId).collect(Collectors.toList());
         return  businessIds;
     }
+
+
+	@Override
+	public LoginUser getUserInfo() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
