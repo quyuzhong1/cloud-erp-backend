@@ -537,19 +537,31 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 viewDTO.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
             }
         }
-        // 仓位排序
-//        detailList.sort((s1, s2) -> {
-//            if (StringUtils.isBlank(s1.getWarehouseLocation())) {
-//                return 1;
-//            } else if (StringUtils.isBlank(s2.getWarehouseLocation())) {
-//                return -1;
-//            } else if (StringUtils.equals(s1.getWarehouseLocation(), s2.getWarehouseLocation())) {
-//                return -1;
-//            } else {
-//                return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
-//            }
-//        });
         view.setDetailList(detailList);
+        return view;
+    }
+
+    /**
+     * 打印拣货单
+     *
+     * @param id
+     * @return com.erp.model.oms.dto.SoInfoDTO.ViewDTO
+     * @author yl
+     * @date 2023-05-16 15:01
+     */
+    @Override
+    public SoInfoDTO.ViewDTO printPickingView(String id) {
+        SoInfoDTO.ViewDTO view = view(id);
+        // 仓位排序
+        view.getDetailList().sort((s1, s2) -> {
+            if (StringUtils.isBlank(s1.getWarehouseLocation()) && !StringUtils.isBlank(s2.getWarehouseLocation())) {
+                return 1;
+            } else if (!StringUtils.isBlank(s1.getWarehouseLocation()) && StringUtils.isBlank(s2.getWarehouseLocation())) {
+                return -1;
+            } else {
+                return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
+            }
+        });
         return view;
     }
 

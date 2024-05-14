@@ -53,6 +53,7 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
+import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
@@ -92,7 +93,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -513,18 +513,20 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
             }
         } else {
-            SoB2cDTO.CustomerDTO customer = soB2cFeign.getB2cCustomerById(soId);
-            result.setCustomerName(customer.getCustomerName());
-            result.setReceiveAddress(customer.getReceiverAddress());
-            result.setReceiverName(customer.getReceiverName());
-            result.setTelNumber(customer.getTelNumber());
-            result.setSellerName(customer.getSellerName());
-            result.setSalesOrgName(customer.getSalesOrgName());
-            result.setDeliveryModeName(customer.getDeliveryModeName());
+            if (StringUtils.isNotBlank(soId)) {
+                SoB2cDTO.CustomerDTO customer = soB2cFeign.getB2cCustomerById(soId);
+                result.setCustomerName(customer.getCustomerName());
+                result.setReceiveAddress(customer.getReceiverAddress());
+                result.setReceiverName(customer.getReceiverName());
+                result.setTelNumber(customer.getTelNumber());
+                result.setSellerName(customer.getSellerName());
+                result.setSalesOrgName(customer.getSalesOrgName());
+                result.setDeliveryModeName(customer.getDeliveryModeName());
+                result.setCountryId(customer.getCountry());
+                result.setCountryName(customer.getCountryName());
+            }
             //要货日期通销售订单创建日期
             result.setRequireDate(soOutstock.getPlanDeliveryDate());
-            result.setCountryId(customer.getCountry());
-            result.setCountryName(customer.getCountryName());
             String salesDeptId = soOutstock.getSalesDeptId();
             if (StringUtils.isNotBlank(salesDeptId)) {
                 SysDepartmentDTO department = sysUserFeign.getUserDeptById(salesDeptId);
@@ -1952,11 +1954,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             Integer count = MathUtil.ZERO;
             if (PdaTabFlagEnum.WAIT_SUBMIT_AND_REJECT.getCode().equals(item.getCode())) {
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.REJECT.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE_ING.getCode().equals(item.getCode())) {
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE.getCode().equals(item.getCode())) {
                 List<LocalDate> dateList = new ArrayList<>();
@@ -1964,7 +1966,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 dateList.add(endDate);
                 pagingParamDTO.setBillDateList(dateList);
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(item.getCode());
@@ -2374,6 +2376,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean checkAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity) {
         // 补充来源
+        // 根据销售订单生成的销售出库单DTO != 平台的销售出库单
         generateB2cDTO.setSourceCode(soB2cEntity.getPlatformCode());
         generateB2cDTO.setSourceId(soB2cEntity.getId());
         generateB2cDTO.setSourceType(SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode());
@@ -2387,24 +2390,24 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             List<String> mainIds = entityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
             List<SoOutstockDetailEntity> detailEntityList = soOutstockDetailService.listByMainIds(mainIds);
             // 已存在的明细ID
-            List<String> existSourceDetailIds = detailEntityList.stream()
-                    .map(SoOutstockDetailEntity::getSourceDetailId)
+            List<String> existPlatformDetailIds = detailEntityList.stream()
+                    .map(SoOutstockDetailEntity::getPlatformDetailId)
                     .filter(StringUtils::isNotBlank)
                     .collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(existSourceDetailIds)){
+            if (CollectionUtils.isNotEmpty(existPlatformDetailIds)){
                 generateSourceDetailList = generateSourceDetailList.stream()
-                        .filter(e -> !existSourceDetailIds.contains(e.getPlatformOrderDetailId()))
+                        .filter(e -> !existPlatformDetailIds.contains(e.getPlatformDetailId()))
                         .collect(Collectors.toList());
             }
             if (CollectionUtils.isEmpty(generateSourceDetailList)){
-                log.warn("所有明细已生成销售出库单忽略处理, B2C销售订单={}, 来源明细IDS={}", dto.getPlatformCode(), existSourceDetailIds);
+                log.warn("所有明细已生成销售出库单忽略处理, B2C销售订单={}, 来源明细IDS={}", dto.getPlatformCode(), existPlatformDetailIds);
                 String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
                 SoB2cErrorDTO.DeleteDetailDTO deleteDTO = new SoB2cErrorDTO.DeleteDetailDTO();
                 deleteDTO.setMainId(soB2cEntity.getId());
                 deleteDTO.setType(type);
                 List<String> detailIds = detailEntityList
                         .stream()
-                        .filter(e -> existSourceDetailIds.contains(e.getSourceDetailId()))
+                        .filter(e -> existPlatformDetailIds.contains(e.getPlatformDetailId()))
                         .map(BaseEntity::getId)
                         .collect(Collectors.toList());
                 deleteDTO.setDetailIdList(detailIds);
@@ -2438,9 +2441,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
                 SoOutstockDetailDTO.AddDTO currentAddDTO = new SoOutstockDetailDTO.AddDTO();
                 BeanUtils.copyProperties(activeAddDTO, currentAddDTO);
-                currentAddDTO.setSourceDetailId(detailDTO.getPlatformDetailUniqueId());
+                // 平台销售订单明细ID
+                currentAddDTO.setSourceDetailId(detailDTO.getPlatformOrderDetailId());
+                // 平台销售出库单明细ID
+                currentAddDTO.setPlatformDetailId(detailDTO.getPlatformDetailId());
                 currentAddDTO.setActualQty(detailDTO.getQtyShipped());
-                currentAddDTOList.add(activeAddDTO);
+                currentAddDTOList.add(currentAddDTO);
             }
             currentGenerateB2cDTO.setDetailList(currentAddDTOList);
             generateB2cList.add(currentGenerateB2cDTO);

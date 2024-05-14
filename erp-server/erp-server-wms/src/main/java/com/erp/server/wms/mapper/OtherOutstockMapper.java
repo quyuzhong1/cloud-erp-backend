@@ -37,6 +37,8 @@ public interface OtherOutstockMapper extends BaseMapper<OtherOutstockEntity> {
      * @return Integer
      */
     Integer listCount(@Param("params") OtherOutstockDTO.SearchParamDTO params);
+
+    Integer pdaListCount(@Param("params") OtherOutstockDTO.SearchParamDTO params);
     /**
      * @description: 导出列表查询
      * @author Will
