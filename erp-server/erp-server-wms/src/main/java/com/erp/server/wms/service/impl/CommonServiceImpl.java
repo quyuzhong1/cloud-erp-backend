@@ -30,6 +30,7 @@ public class CommonServiceImpl  implements CommonService {
     @Resource
     private WorkflowFeign workflowFeign;
 
+    
     @Override
     public LoginUser getUserInfo() {
         String userId = "";

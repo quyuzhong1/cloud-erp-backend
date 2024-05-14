@@ -14,6 +14,7 @@ import java.util.List;
 public interface CommonService {
 
     
+	
     /**
      * 获取用户信息
      * @author yl
