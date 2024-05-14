@@ -171,7 +171,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
          /**
           * 单据类型： 枚举获取文档地址：http://172.16.100.11:3002/project/92/interface/api/9259 type=WmsDataCompareTaskBillType
           */
-          @NotBlank(message = "单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收不能为空")
+//          @NotBlank(message = "单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收不能为空")
           @Size(max = 50,message = "单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收最大长度不能超过50位")
           private String billType;
           

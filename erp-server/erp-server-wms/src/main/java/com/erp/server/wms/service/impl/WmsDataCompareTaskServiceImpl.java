@@ -357,7 +357,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
     		throw new ServiceException("对比任务名称不能为空");
     	}
     	if(StringUtils.isBlank(wmsDataCompareTaskEntity.getBillType())) {
-    		throw new ServiceException("系统单据不能为空");
+//    		throw new ServiceException("系统单据不能为空");
     	}
     	if(StringUtils.isBlank(wmsDataCompareTaskEntity.getSystemDataCondition())) {
     		throw new ServiceException("系统数据范围不能为空");
