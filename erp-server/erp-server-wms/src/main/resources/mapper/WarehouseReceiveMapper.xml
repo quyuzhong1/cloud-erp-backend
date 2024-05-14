@@ -30,7 +30,7 @@
             wr.subcontract_type as subcontractType,
             wr.create_time AS createTime,
             (case when instock.stockInQty is null then 0 else instock.stockInQty END) stockInQty,
-            (case when returnInfo.returnQty is null then 0 else returnInfo.returnQty END) returnQty ,
+            (case when returnInfo.returnQty is null then 0 else returnInfo.returnQty END) returnQty
         FROM po_receive_detail wrd
         INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         LEFT JOIN (SELECT pi.source_id,pid.source_detail_id,
