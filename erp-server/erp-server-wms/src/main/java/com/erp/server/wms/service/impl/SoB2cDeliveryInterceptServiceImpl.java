@@ -420,16 +420,23 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                     platformShipOrderDTO.setDictPlatform(soB2cEntity.getDictPlatform());
                     PlatformSaveHandler.shipOrder(platformShipOrderDTO);
                 }
+                //在这里修改拦截状态，冻结状态，因为下面生成销售出库单依赖这个状态
+                interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
+                interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
+                interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
+                interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
+                soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
                 soOutstockService.generateB2cSoOutstock(soB2cEntity.getId());
                 //更新备注
                 soOutstockService.updateRemarkBySoId(soB2cEntity.getId(),"发货拦截失败");
+            }else{
+                //修改拦截状态，冻结状态
+                interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
+                interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
+                interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
+                interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
+                soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
             }
-            //修改拦截状态，冻结状态
-            interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
-            interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
-            interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
-            interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
-            soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
 
         }
 
