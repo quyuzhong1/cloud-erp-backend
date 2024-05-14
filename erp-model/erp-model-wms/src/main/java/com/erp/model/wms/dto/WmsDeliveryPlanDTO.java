@@ -687,6 +687,10 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 平台产品名称
          */
         private String platformSkuName;
+        /**
+         * 类型
+         */
+        private String type;
     }
 
 
