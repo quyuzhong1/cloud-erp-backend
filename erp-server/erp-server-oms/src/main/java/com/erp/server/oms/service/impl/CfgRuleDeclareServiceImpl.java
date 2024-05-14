@@ -36,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.CfgRuleDeclareDTO;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -137,6 +138,9 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
                 .set(CfgRuleDeclareEntity::getToDeclarePriceType,entity.getToDeclarePriceType())
                 .set(CfgRuleDeclareEntity::getMinDeclarePrice,entity.getMinDeclarePrice())
                 .set(CfgRuleDeclareEntity::getMaxDeclarePrice,entity.getMaxDeclarePrice())
+                .set(CfgRuleDeclareEntity::getUpdateTime, LocalDate.now())
+                .set(CfgRuleDeclareEntity::getUpdateUserId,commonService.getUserInfo().getUid())
+                .set(CfgRuleDeclareEntity::getUpdateUserName,commonService.getUserInfo().getUserName())
                 .update();
         if (!save) {
             throw new ServiceException("申报规则单保存失败");
