@@ -1109,8 +1109,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<String> skuIds = viewList.stream().map(SoReturnInstockDetailEntity::getSkuId).collect(Collectors.toList());
         //bom信息
         List<BomChildrenSkuDTO> bomList = plmTaskFeign.listBomChildBySkuIds(skuIds);
-        String combinationType= BomTypeEnum.COMBINATION.getType();
-        bomList = bomList.stream().filter(obj -> combinationType.equals(obj.getType())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(bomList)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }

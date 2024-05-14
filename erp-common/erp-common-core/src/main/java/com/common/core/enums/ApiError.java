@@ -407,7 +407,7 @@ public enum ApiError implements Serializable {
     ERROR_MSG_ID_OR_UNION_ID_IS_NULL(95161, "消息ID或者用户绑定ID为空，发送加急信息失败"),
 
     ERROR_BUSINESS_NOT_EXIT(95162, "业务类型不存在，请检查"),
-    ERROR_95163(95163, "未找到选择的销售套装BOM信息"),
+    ERROR_95163(95163, "未找到选择的BOM信息"),
     ERROR_95164(95164, "不可新增相同EAN码"),
     ERROR_DOCS_NO(95165,"文档不存在"),
 	ERROR_95166(95166, "未找到BOM子件"),
