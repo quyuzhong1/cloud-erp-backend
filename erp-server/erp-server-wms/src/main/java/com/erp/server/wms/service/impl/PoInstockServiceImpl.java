@@ -652,6 +652,10 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+
+//            //修改采购收货单入库状态
+//            warehouseReceiveService.updateReceiveInStockStatus(list);
+
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             //中止当前审核流程
 
@@ -727,6 +731,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //审核通过发送金蝶
         list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
 
+//        //修改采购收货单入库状态
+//        warehouseReceiveService.updateReceiveInStockStatus(list);
         return Boolean.TRUE;
     }
 

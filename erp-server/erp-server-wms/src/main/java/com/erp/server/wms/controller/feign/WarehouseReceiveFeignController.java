@@ -87,4 +87,12 @@ public class WarehouseReceiveFeignController {
     public List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIdsAll(@RequestBody List<String> purchaseOrderIds){
         return warehouseReceiveService.getReceiveListByPurchaseOrderIdsAll(purchaseOrderIds);
     }
+    /***
+     * 清洗入库状态
+     * @return
+     */
+    @PostMapping("/instockStatusCleanJob")
+    public void instockStatusCleanJob(){
+        warehouseReceiveService.instockStatusCleanJob();;
+    }
 }
