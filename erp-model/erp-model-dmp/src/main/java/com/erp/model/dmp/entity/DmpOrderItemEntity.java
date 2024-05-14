@@ -211,6 +211,12 @@ public class DmpOrderItemEntity {
     private BigDecimal costPrice;
 
     /**
+     * 原始sku
+     */
+    @TableField(value = "original_sku_no")
+    private String originalSkuNo;
+
+    /**
      * 清洗前成本价
      */
     @TableField(value = "original_cost_price")

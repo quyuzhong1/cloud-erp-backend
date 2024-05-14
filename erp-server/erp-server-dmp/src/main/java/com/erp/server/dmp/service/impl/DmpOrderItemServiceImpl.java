@@ -18,6 +18,7 @@ import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -49,6 +50,8 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         List<List<DmpOrderItemGroup>> partition = Lists.partition(dmpOrderItemGroups, 500);
         for (List<DmpOrderItemGroup> orderItemGroups : partition) {
             CompletableFuture.runAsync(() -> {
+                List<DmpOrderItemEntity> itemEntities = new ArrayList<>();
+                List<DmpOrderItemSplitEntity> splitEntities = new ArrayList<>();
                 for (DmpOrderItemGroup group : orderItemGroups) {
                     List<DmpOrderItemSplitEntity> entities = dmpOrderItemSplitService.list(Wrappers.<DmpOrderItemSplitEntity>lambdaQuery()
                             .eq(DmpOrderItemSplitEntity::getIsSplitSku, MathUtil.ONE)
@@ -67,12 +70,12 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                         item.setOriginalQuantity(item.getPlatformQuantity());
                         item.setOriginalAmountAfter(item.getAmountAfter());
                         item.setOriginalCostPrice(costPrice);
-                        boolean update = saveOrUpdate(item);
-                        if (update) {
+                        itemEntities.add(item);
                             entities.forEach(e -> e.setOriginalItemId(item.getId()));
-                            dmpOrderItemSplitService.updateBatchById(entities);
-                        }
+                            splitEntities.addAll(entities);
                     }
+                    saveOrUpdateBatch(itemEntities);
+                    dmpOrderItemSplitService.updateBatchById(splitEntities);
                 }
             }, threadPoolTaskExecutor);
         }
