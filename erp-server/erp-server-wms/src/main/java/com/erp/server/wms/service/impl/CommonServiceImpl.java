@@ -30,21 +30,6 @@ public class CommonServiceImpl  implements CommonService {
     @Resource
     private WorkflowFeign workflowFeign;
 
-    
-    @Override
-    public LoginUser getUserInfo() {
-        String userId = "";
-        String userName = "";
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (Objects.isNull(loginUser)) {
-            loginUser = new LoginUser();
-            loginUser.setUid(userId);
-            loginUser.setUserName(userName);
-            loginUser.setUserAccount("");
-        }
-        return loginUser;
-    }
-
     @Override
     public List<String> listProcessCurBusinessIds (String businessKey) {
         //获取当前人需要审核的业务ids
@@ -59,5 +44,19 @@ public class CommonServiceImpl  implements CommonService {
         }
         List<String> businessIds = listApiResult.getData().stream().filter(obj -> StringUtils.isNotBlank(obj.getBusinessId())).map(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId).collect(Collectors.toList());
         return  businessIds;
+    }
+    
+    @Override
+    public LoginUser getUserInfo() {
+        String userId = "";
+        String userName = "";
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        if (Objects.isNull(loginUser)) {
+            loginUser = new LoginUser();
+            loginUser.setUid(userId);
+            loginUser.setUserName(userName);
+            loginUser.setUserAccount("");
+        }
+        return loginUser;
     }
 }
