@@ -1957,11 +1957,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //修改采购收货单入库状态
         List<WarehouseReceiveEntity> viewDTOS = new ArrayList<>();
         list.forEach(item->{
-            Integer receiveQty = baseMapper.getReceiveQtyById(item.getId());
+            Integer receiveQty = baseMapper.getReceiveQtyById(item.getSourceId());
             if (Objects.nonNull(receiveQty) && receiveQty > 0) {
                 //查询收货单关联的SKU明细的下推的入库单的入库数量【单据已审核】
                 WarehouseReceiveEntity viewDTO = null;
-                Integer instockQty = baseMapper.getQry(item.getId());
+                Integer instockQty = baseMapper.getQry(item.getSourceId());
                 viewDTO= new WarehouseReceiveEntity();
                 if (Objects.isNull(instockQty)||instockQty==0) {
                     viewDTO.setInStockStatus(InstockStatusEnum.NOT_IN_STOCK.getCode());
@@ -1973,7 +1973,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                         viewDTO.setInStockStatus(InstockStatusEnum.FULLY_IN_STOCK.getCode());
                     }
                 }
-                viewDTO.setId(item.getId());
+                viewDTO.setId(item.getSourceId());
                 viewDTOS.add(viewDTO);
             }
         });
