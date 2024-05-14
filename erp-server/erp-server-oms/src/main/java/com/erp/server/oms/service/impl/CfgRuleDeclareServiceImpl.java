@@ -95,7 +95,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         //保存规则条件
         ruleConditionService.saveRuleCondition(id, conditionList);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "申报规则单", id);
+        String msg = StrUtil.format("用户【{}】新增【{}】单据名称为【{}】", UserContext.getDefaultLoginUser().getUserName(), "申报规则单", entity.getName());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.RULE_DECLARE.getCode(), id, "新增操作");
         return entity.getId();
     }
@@ -145,8 +145,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         }
         ruleConditionService.updateRuleCondition(id, conditionList);
         // 记录主单操作日志
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "申报规则单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        String msg = StrUtil.format("用户【{}】编辑名称为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getName(), "申报规则单");
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.RULE_DECLARE.getCode(), entity.getId(), msg);
         return Boolean.TRUE;
     }
