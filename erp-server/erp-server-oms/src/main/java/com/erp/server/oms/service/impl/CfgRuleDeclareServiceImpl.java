@@ -9,11 +9,14 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
@@ -36,13 +39,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -137,10 +139,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
                 .set(CfgRuleDeclareEntity::getToDeclarePriceType,entity.getToDeclarePriceType())
                 .set(CfgRuleDeclareEntity::getMinDeclarePrice,entity.getMinDeclarePrice())
                 .set(CfgRuleDeclareEntity::getMaxDeclarePrice,entity.getMaxDeclarePrice())
-                .set(CfgRuleDeclareEntity::getUpdateTime, LocalDate.now())
-                .set(CfgRuleDeclareEntity::getUpdateUserId,UserContext.getDefaultLoginUser().getUid())
-                .set(CfgRuleDeclareEntity::getUpdateUserName,UserContext.getDefaultLoginUser().getUserName())
-                .update();
+                .update(new CfgRuleDeclareEntity());
         if (!save) {
             throw new ServiceException("申报规则单保存失败");
         }
