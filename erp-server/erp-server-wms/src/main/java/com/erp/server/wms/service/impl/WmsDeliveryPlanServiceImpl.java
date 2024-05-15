@@ -592,13 +592,13 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
         for (WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO viewDTO : list) {
             if(DeliveryPlanTypeEnum.FBA.getCode().equals(viewDTO.getDeliveryPlanType())){
-                viewDTO.setType(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode());
-                viewDTO.setTypeName(RequisitionApplicationTypeEnum.SALES_PLATFORM.getName());
+                viewDTO.setType(RequisitionApplicationTypeEnum.FBA.getCode());
+                viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBA.getName());
                 viewDTO.setChannelId(viewDTO.getShopId());
                 viewDTO.setChannelName(viewDTO.getShopName());
             }else{
-                viewDTO.setType(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode());
-                viewDTO.setTypeName(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getName());
+                viewDTO.setType(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode());
+                viewDTO.setTypeName(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getName());
             }
 
             //来源类型
