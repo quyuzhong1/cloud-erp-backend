@@ -335,12 +335,6 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
     List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIdsAll(List<String> purchaseOrderIds);
 
     List<WarehouseReceiveEntity> listReceiveBySourceTypeAndIds(WarehouseReceiveDTO.SourceParamDTO dto);
-    /**
-     * 清洗入库状态
-     * @author hyj
-     * @date 2024/5/14 14:30
-     */
-    void instockStatusCleanJob();
 
     /**
      * 修改入库状态
@@ -349,4 +343,11 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @param list
      */
      void updateReceiveInStockStatus(List<PoInstockEntity> list);
+
+    /**
+     * 清洗入库状态
+     * @author hyj
+     * @date 2024/5/14 14:30
+     */
+    void instockStatusCleanJob();
 }

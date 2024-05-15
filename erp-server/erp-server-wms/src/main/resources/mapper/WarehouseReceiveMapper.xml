@@ -11,7 +11,7 @@
             wr.purchase_order_code AS purchaseOrderCode,
             wr.supplier_name AS supplierName,
             wr.approve_status AS approveStatus,
-            wr.in_stock_status AS inStockStatus,
+            wrd.in_stock_status AS inStockStatus,
             wr.invalid_status AS invalidStatus,
             wrd.sku_id AS skuId,
             wrd.sku_no AS skuNo,
@@ -97,7 +97,7 @@
             </foreach>
         </if>
         <if test="params.inStockStatusList != null and params.inStockStatusList.size > 0">
-            and wr.in_stock_status in
+            and wrd.in_stock_status in
             <foreach collection="params.inStockStatusList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
@@ -129,107 +129,107 @@
 
 
 
-    <select id="pagingOld" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PagingViewDTO">
-        SELECT
-        wr.id,
-        wrd.id AS detailId,
-        wr.code,
-        wr.purchase_order_id AS purchaseOrderId,
-        wr.purchase_order_code AS purchaseOrderCode,
-        wr.supplier_name AS supplierName,
-        wr.approve_status AS approveStatus,
-        wr.invalid_status AS invalidStatus,
-        wrd.sku_id AS skuId,
-        wrd.sku_no AS skuNo,
-        wr.bill_date AS billDate,
-        wrd.receive_qty AS receiveQty,
-        wr.delivery_warehouse_name AS deliveryWarehouseName,
-        wr.receive_user_name AS receiveUserName,
-        wr.purchase_user_name AS purchaseUserName,
-        wrd.purchase_qty AS purchaseQty,
-        wrd.exceed_qty AS exceedQty,
-        wr.approve_user_name AS approveUserName,
-        wr.approve_time AS approveTime,
-        wr.create_user_name AS createUserName,
-        wrd.purchase_order_detail_id AS purchaseOrderDetailId,
-        wrd.remark,
-        wr.subcontract_type as subcontractType,
-        wr.create_time AS createTime
-        FROM po_receive_detail wrd
-        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
-        WHERE wr.is_deleted = FALSE
-        <if test="params.code != null and params.code != ''">
-            and wr.code = #{params.code}
-        </if>
+<!--    <select id="pagingOld" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PagingViewDTO">-->
+<!--        SELECT-->
+<!--        wr.id,-->
+<!--        wrd.id AS detailId,-->
+<!--        wr.code,-->
+<!--        wr.purchase_order_id AS purchaseOrderId,-->
+<!--        wr.purchase_order_code AS purchaseOrderCode,-->
+<!--        wr.supplier_name AS supplierName,-->
+<!--        wr.approve_status AS approveStatus,-->
+<!--        wr.invalid_status AS invalidStatus,-->
+<!--        wrd.sku_id AS skuId,-->
+<!--        wrd.sku_no AS skuNo,-->
+<!--        wr.bill_date AS billDate,-->
+<!--        wrd.receive_qty AS receiveQty,-->
+<!--        wr.delivery_warehouse_name AS deliveryWarehouseName,-->
+<!--        wr.receive_user_name AS receiveUserName,-->
+<!--        wr.purchase_user_name AS purchaseUserName,-->
+<!--        wrd.purchase_qty AS purchaseQty,-->
+<!--        wrd.exceed_qty AS exceedQty,-->
+<!--        wr.approve_user_name AS approveUserName,-->
+<!--        wr.approve_time AS approveTime,-->
+<!--        wr.create_user_name AS createUserName,-->
+<!--        wrd.purchase_order_detail_id AS purchaseOrderDetailId,-->
+<!--        wrd.remark,-->
+<!--        wr.subcontract_type as subcontractType,-->
+<!--        wr.create_time AS createTime-->
+<!--        FROM po_receive_detail wrd-->
+<!--        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE-->
+<!--        WHERE wr.is_deleted = FALSE-->
+<!--        <if test="params.code != null and params.code != ''">-->
+<!--            and wr.code = #{params.code}-->
+<!--        </if>-->
 
-        <if test="params.skuNoList != null and params.skuNoList.size != ''">
-            and wrd.sku_no in
-            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
+<!--        <if test="params.skuNoList != null and params.skuNoList.size != ''">-->
+<!--            and wrd.sku_no in-->
+<!--            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">-->
+<!--                #{item}-->
+<!--            </foreach>-->
+<!--        </if>-->
 
-        <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
-            and wr.supplier_id in
-            <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
+<!--        <if test="params.supplierIdList != null and params.supplierIdList.size > 0">-->
+<!--            and wr.supplier_id in-->
+<!--            <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">-->
+<!--                #{item}-->
+<!--            </foreach>-->
+<!--        </if>-->
 
-        <if test="params.purchaseOrderCode != null and params.purchaseOrderCode != ''">
-            and wr.purchase_order_code = #{params.purchaseOrderCode}
-        </if>
+<!--        <if test="params.purchaseOrderCode != null and params.purchaseOrderCode != ''">-->
+<!--            and wr.purchase_order_code = #{params.purchaseOrderCode}-->
+<!--        </if>-->
 
-        <if test="params.invalidStatus != null">
-            and wr.invalid_status = #{params.invalidStatus}
-        </if>
+<!--        <if test="params.invalidStatus != null">-->
+<!--            and wr.invalid_status = #{params.invalidStatus}-->
+<!--        </if>-->
 
-        <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
-            and wr.delivery_warehouse_id in
-            <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
+<!--        <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">-->
+<!--            and wr.delivery_warehouse_id in-->
+<!--            <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">-->
+<!--                #{item}-->
+<!--            </foreach>-->
+<!--        </if>-->
 
-        <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
-            and wr.purchase_user_id in
-            <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
+<!--        <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">-->
+<!--            and wr.purchase_user_id in-->
+<!--            <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">-->
+<!--                #{item}-->
+<!--            </foreach>-->
+<!--        </if>-->
 
-        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-            and wr.approve_status in
-            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
+<!--        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">-->
+<!--            and wr.approve_status in-->
+<!--            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">-->
+<!--                #{item}-->
+<!--            </foreach>-->
+<!--        </if>-->
 
-        <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-            and wr.create_user_id in
-            <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
+<!--        <if test="params.createUserIdList != null and params.createUserIdList.size > 0">-->
+<!--            and wr.create_user_id in-->
+<!--            <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">-->
+<!--                #{item}-->
+<!--            </foreach>-->
+<!--        </if>-->
 
-        <if test="params.billDate != null and params.billDate.size > 0">
-            and wr.bill_date >= #{params.billDate[0]} and  (#{params.billDate[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.bill_date
-        </if>
+<!--        <if test="params.billDate != null and params.billDate.size > 0">-->
+<!--            and wr.bill_date >= #{params.billDate[0]} and  (#{params.billDate[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.bill_date-->
+<!--        </if>-->
 
-        <if test="params.createTime != null and params.createTime.size > 0">
-            and wr.create_time >= #{params.createTime[0]} and  (#{params.createTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.create_time
-        </if>
-        <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        wr.create_time desc, wrd.id ASC
-    </select>
+<!--        <if test="params.createTime != null and params.createTime.size > 0">-->
+<!--            and wr.create_time >= #{params.createTime[0]} and  (#{params.createTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.create_time-->
+<!--        </if>-->
+<!--        <if test="params.permissionSql != null and params.permissionSql != ''">-->
+<!--            ${params.permissionSql}-->
+<!--        </if>-->
+<!--        ORDER BY-->
+<!--        <if test="params.sortList != null and params.sortList.size > 0">-->
+<!--            <foreach collection="params.sortList" item="item" separator="," close=",">-->
+<!--                ${item.field} ${item.sort}-->
+<!--            </foreach>-->
+<!--        </if>-->
+<!--        wr.create_time desc, wrd.id ASC-->
+<!--    </select>-->
 
 
 
@@ -797,25 +797,51 @@
         </if>
     </select>
 
-    <select id="getQry" resultType="java.lang.Integer">
+    <select id="getQty" resultType="java.lang.Integer">
         SELECT
         SUM(pid.stock_in_qty)  AS stockInQty
         FROM po_instock_detail pid
         LEFT JOIN po_instock pi ON pi.id = pid.main_id AND pi.is_deleted = FALSE
         AND pi.approve_status = 'approve'
         WHERE pid.is_deleted = FALSE
-        and pi.source_id=#{sourceId}
+        and pi.source_id=#{sourceId} and pid.source_detail_id=#{sourceDetailId}
         GROUP BY pi.source_id
     </select>
 
     <select id="getReceiveQtyById" resultType="java.lang.Integer">
         SELECT
-            sum(wrd.receive_qty) AS receiveQty
+            wrd.receive_qty AS receiveQty
         FROM po_receive_detail wrd
                  INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
         and wr.id=#{id}
-        group by wr.id
+        group by wrd.id
+    </select>
+
+    <select id="pageDetail" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PagingViewDTO">
+        SELECT
+        wr.id,
+        wrd.id AS detailId,
+        wr.approve_status AS approveStatus,
+        wrd.receive_qty AS receiveQty
+        FROM po_receive_detail wrd
+        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        WHERE wr.is_deleted = FALSE
+        and wr.approve_status ='approve'
+        and wrd.stock_in_qty ='0'
+        ORDER BY
+        wr.create_time desc, wrd.id ASC
+    </select>
+    <select id="getCount" resultType="java.lang.Integer">
+        SELECT
+        cunt(*)
+        FROM po_receive_detail wrd
+        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        WHERE wr.is_deleted = FALSE
+        and wr.approve_status ='approve'
+        and wrd.stock_in_qty ='0'
+        ORDER BY
+        wr.create_time desc, wrd.id ASC
     </select>
 
 </mapper>
