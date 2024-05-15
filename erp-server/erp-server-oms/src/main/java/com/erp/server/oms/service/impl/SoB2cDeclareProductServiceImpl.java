@@ -3,41 +3,39 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.core.enums.CurrencyEnum;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
 import com.erp.model.oms.entity.SoB2cDeclareProductEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.DeclareLabelTypeEnum;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.ShippingTemplateDTO;
 import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.mapper.SoB2cDeclareProductMapper;
-import com.erp.server.oms.service.SoB2cDeclareProductService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import lombok.Data;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.SoB2cDeclareProductService;
+import com.erp.server.oms.service.SoB2cService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * <p>
@@ -54,6 +52,10 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+
+    @Autowired
+    private SoB2cService soB2cService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -89,6 +91,13 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
         SoB2cDeclareProductEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单申报产品信息单"));
         SoB2cDeclareProductEntity soB2cDeclareProductEntity = B2cOrderConverter.INSTANCE.convertDeclareProductByDto(updateDTO);
+        //销售订单
+        SoB2cEntity soB2cEntity = soB2cService.getById(old.getSoId());
+        if (!StrUtil.equals(soB2cEntity.getApproveStatus().getCode(), ApproveStatusEnum.APPROVE.getCode())
+            || !StrUtil.equals(soB2cEntity.getBillStatus(), SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode())) {
+            throw new ServiceException("仅支持已审核-配货中的订单可操作");
+        }
+
         // 数据处理
         handleData(soB2cDeclareProductEntity);
         log.info("编辑 开始修改B2C销售订单申报产品信息单数据，id：【{}】", old.getId());
