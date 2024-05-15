@@ -828,20 +828,18 @@
         INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
         and wr.approve_status ='approve'
-        and wrd.stock_in_qty ='0'
+        and wrd.in_stock_status ='0'
         ORDER BY
         wr.create_time desc, wrd.id ASC
     </select>
     <select id="getCount" resultType="java.lang.Integer">
         SELECT
-        cunt(*)
+            count(*)
         FROM po_receive_detail wrd
-        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+                 INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
-        and wr.approve_status ='approve'
-        and wrd.stock_in_qty ='0'
-        ORDER BY
-        wr.create_time desc, wrd.id ASC
+          and wr.approve_status ='approve'
+          and wrd.in_stock_status ='0'
     </select>
 
 </mapper>

@@ -1961,35 +1961,22 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Override
     public void instockStatusCleanJob() {
         //获取所有采购收货单入库状态为0的单据
-//        Integer count = lambdaQuery().eq(WarehouseReceiveDetailEntity::getInStockStatus, InstockStatusEnum.NOT_IN_STOCK.getCode())
-//                .eq(WarehouseReceiveDetailEntity::getIsDeleted, false)
-//                .eq(WarehouseReceiveDetailEntity::getApproveStatus, "approve")
-//                .eq(WarehouseReceiveDetailEntity::getInStockStatus, "0")
-////                .eq(WarehouseReceiveDetailEntity::getCode,"CGSH24041600007")
-//                .count();
         Integer count = baseMapper.getCount();
         Integer size = 500;
         Integer page = count / size;
         List<List<WarehouseReceiveDetailEntity>> objects = new ArrayList<>();
         for (int i=0;i<=page;i++){
             List<WarehouseReceiveDetailEntity> viewDTOS = new ArrayList<>();
-            IPage<WarehouseReceiveDTO.PagingViewDTO> viewDTOIPage = baseMapper.pageDetail(new Page(page, size), new WarehouseReceiveDTO.PagingParamDTO());
+            IPage<WarehouseReceiveDTO.PagingViewDTO> viewDTOIPage = baseMapper.pageDetail(new Page(i*size, size), new WarehouseReceiveDTO.PagingParamDTO());
             List<WarehouseReceiveDTO.PagingViewDTO> list = viewDTOIPage.getRecords();
             if (CollectionUtils.isEmpty(list)){
                 continue;
             }
-//            List<WarehouseReceiveEntity> list = this.list(lambdaQuery().eq(WarehouseReceiveEntity::getInStockStatus, InstockStatusEnum.NOT_IN_STOCK.getCode())
-//                    .eq(WarehouseReceiveEntity::getIsDeleted, false)
-//                    .eq(WarehouseReceiveEntity::getApproveStatus, "approve")
-//                    .eq(WarehouseReceiveEntity::getInStockStatus, "0")
-////                    .eq(WarehouseReceiveEntity::getCode,"CGSH24041600007")
-//                    .orderByAsc(WarehouseReceiveEntity::getCreateTime)
-//                    .last(String.format("LIMIT %s OFFSET %s", size, i * size)));
             if (CollectionUtils.isNotEmpty(list)) {
                 list.forEach(item -> {
                     WarehouseReceiveDetailEntity viewDTO = null;
                     //获取收货数量
-                    Integer receiveQty = baseMapper.getReceiveQtyById(item.getId());
+                    Integer receiveQty = item.getReceiveQty();
                     if (Objects.nonNull(receiveQty) && receiveQty > 0) {
                         //查询收货单关联的SKU明细的下推的入库单的入库数量【单据已审核】
                         Integer instockQty = baseMapper.getQty(item.getId(),item.getDetailId());
