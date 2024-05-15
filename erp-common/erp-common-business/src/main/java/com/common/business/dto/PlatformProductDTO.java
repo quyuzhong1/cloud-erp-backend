@@ -1,5 +1,6 @@
 package com.common.business.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -105,4 +106,9 @@ public class PlatformProductDTO extends UniqueDto {
      * 平台的Listing状态
      */
     private String platformStatus;
+
+    /**
+     * 平台的SKU id
+     */
+    private String platformSkuId;
 }

@@ -106,21 +106,21 @@ public class AliExpressDliveryOrderService {
 //
 //    }
 
-    public static void main(String[] args) throws ApiException {
-        String appKey = "502978";
-        String appSecret = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
-        String baseUrl = "https://api-sg.aliexpress.com";
-        String token = "50000200216zwXSmacvxdR9mlN3Q173edb18whDaGtElRAyxCAEBR9sxVko62BrXG7tj";
-        IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
-        IopRequest request = new IopRequest();
-        request.setApiName(AliexpressConstants.ALIEXPRESS_ASCP_FFO_ITEM_QUERY);
-        Map<String, Object> paramMap = new HashMap<>();
-        paramMap.put("biz_type", 288000);
-        paramMap.put("fulfillment_order_no", "WH0569510380903244");
-        System.out.println();
-        request.addApiParameter("fulfillment_forward_order_item_query", JSONObject.toJSONString(paramMap));
-        IopResponse response = client.execute(request, token, Protocol.TOP);
-        System.out.println(response.getBody());
-
-    }
+//    public static void main(String[] args) throws ApiException {
+//        String appKey = "502978";
+//        String appSecret = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
+//        String baseUrl = "https://api-sg.aliexpress.com";
+//        String token = "50000200216zwXSmacvxdR9mlN3Q173edb18whDaGtElRAyxCAEBR9sxVko62BrXG7tj";
+//        IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
+//        IopRequest request = new IopRequest();
+//        request.setApiName(AliexpressConstants.ALIEXPRESS_ASCP_FFO_ITEM_QUERY);
+//        Map<String, Object> paramMap = new HashMap<>();
+//        paramMap.put("biz_type", 288000);
+//        paramMap.put("fulfillment_order_no", "WH0569510380903244");
+//        System.out.println();
+//        request.addApiParameter("fulfillment_forward_order_item_query", JSONObject.toJSONString(paramMap));
+//        IopResponse response = client.execute(request, token, Protocol.TOP);
+//        System.out.println(response.getBody());
+//
+//    }
 }

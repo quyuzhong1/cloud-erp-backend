@@ -105,19 +105,20 @@ public class AliExpressProductService {
         String appKey = productRequest.getClientId();
         String appSecret = productRequest.getClientSecret();
         String baseUrl = productRequest.getBaseUrl();
-        String apiName = AliexpressConstants.PRODUCT_INFO;
+        String apiName = AliexpressConstants.ALIEXPRESS_OFFER_PRODUCT_QUERY;
         String token = productRequest.getToken();
         IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
         IopRequest request = new IopRequest();
         request.setApiName(apiName);
-        request.addApiParameter("simplify", "true");
+//        request.addApiParameter("simplify", "true");
         request.addApiParameter("product_id", productId.toString());
         IopResponse response = client.execute(request, token, Protocol.TOP);
         JSONObject jsonObject = JSONObject.parseObject(response.getBody());
         //表示成功
         if (Objects.nonNull(jsonObject)) {
-            JSONObject json = jsonObject.getJSONObject("result");
-            AliExpressProduct product = JSONObject.parseObject(json.toJSONString(), AliExpressProduct.class);
+            JSONObject json = jsonObject.getJSONObject("aliexpress_offer_product_query_response");
+            JSONObject json2 = json.getJSONObject("result");
+            AliExpressProduct product = JSONObject.parseObject(json2.toJSONString(), AliExpressProduct.class);
             return product;
         }
         return null;
@@ -161,4 +162,22 @@ public static void main(String[] args) {
     }
 
 }
+//public static void main(String[] args) throws ApiException {
+//    String appKey = "502978";
+//    String appSecret = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
+//    String baseUrl = "https://api-sg.aliexpress.com";
+//    String token = "50000200216zwXSmacvxdR9mlN3Q173edb18whDaGtElRAyxCAEBR9sxVko62BrXG7tj";
+//    IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
+//    IopRequest request = new IopRequest();
+//    request.setApiName(AliexpressConstants.ALIEXPRESS_OFFER_PRODUCT_QUERY);
+//    Map<String, Object> paramMap = new HashMap<>();
+////        paramMap.put("biz_type", 288000);
+////        paramMap.put("fulfillment_order_no", "WH0569510380903244");
+//    System.out.println();
+////        request.addApiParameter("fulfillment_forward_order_item_query", JSONObject.toJSONString(paramMap));
+//    request.addApiParameter("product_id", "1005004996572648");
+//    IopResponse response = client.execute(request, token, Protocol.TOP);
+//    System.out.println(response.getBody());
+//
+//}
 }

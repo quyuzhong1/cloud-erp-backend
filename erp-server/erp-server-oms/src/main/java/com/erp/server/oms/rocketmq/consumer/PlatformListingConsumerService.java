@@ -111,6 +111,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
                 if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())){
                     paramDTO.setPlatformSpuNoList(Collections.singletonList(dto.getPlatformProductNo()));
+                    paramDTO.setPlatformSkuIdList(Collections.singletonList(dto.getPlatformSkuId()));
                 }
                 paramDTO.setIsExpire(false);
                 List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
