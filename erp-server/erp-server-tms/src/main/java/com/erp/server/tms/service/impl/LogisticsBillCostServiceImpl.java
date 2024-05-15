@@ -438,8 +438,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         //店铺负责人
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(logisticsBillEntity.getShopId());
         if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
-            entity.setShopChargeId(shopInfoEntity.getId());
-            entity.setShopChargeName(shopInfoEntity.getName());
+            entity.setShopChargeId(shopInfoEntity.getChargeId());
+            entity.setShopChargeName(shopInfoEntity.getChargeName());
         }
 
         //判断物流费用类型
