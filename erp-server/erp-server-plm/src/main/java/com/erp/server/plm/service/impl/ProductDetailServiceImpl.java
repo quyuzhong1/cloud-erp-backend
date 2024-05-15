@@ -1146,15 +1146,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
             compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
             //毛重大于等于净重
-            BigDecimal netWeight = productPackDTO.getNetWeight();
-            if (Objects.nonNull(netWeight) && netWeight.compareTo(BigDecimal.ZERO) > 0) {
-                if (Objects.isNull(productPackDTO.getGrossWeight())) {
-                    productPackDTO.setGrossWeight(BigDecimal.ZERO);
-                }
-                if (productPackDTO.getGrossWeight().compareTo(netWeight) < 0) {
-                    throw new ServiceException(ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET);
-                }
-            }
+            compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET);
         }
     }
 
