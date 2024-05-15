@@ -227,7 +227,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         queryFilters.add(StrUtil.format(" FDocumentStatus in ({})", "'C'"));
         // 过滤组织内订单
         queryFilters.add(StrUtil.format(" FISGENFORIOS = {}", "0"));
-        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(5)),sdf.format(nextTime)));
+        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(8)),sdf.format(nextTime)));
         String filterStr = String.join(" and ", queryFilters);
         log.info("拉取金蝶条件为>>>>>>>>>>{}", filterStr);
 

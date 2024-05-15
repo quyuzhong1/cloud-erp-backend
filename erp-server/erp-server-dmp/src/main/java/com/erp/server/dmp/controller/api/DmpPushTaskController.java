@@ -5,8 +5,11 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +30,7 @@ import java.util.List;
  * @since 2023-09-06
  */
 @Slf4j
+@LogSystemModule("系统监控->单据同步推送查询")
 @RestController
 @RequestMapping("/dmpPushTask")
 public class DmpPushTaskController extends BaseController {
@@ -99,6 +103,21 @@ public class DmpPushTaskController extends BaseController {
     @PostMapping(value = "/batchFindDataSync")
     public ApiResult batchFindDataSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
         Boolean flag = dmpPushTaskService.batchFindDataSync(dto.getIds());
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 批量修改无需同步
+     *
+     * @param dto
+     * @return ApiResult
+     * @author hyj
+     * @date 2024/4/11 16:51
+     */
+    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "批量修改为无需同步")
+    @PostMapping(value = "/batchNoNeedSync")
+    public ApiResult batchNoNeedSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = dmpPushTaskService.batchNoNeedSync(dto.getIds());
         return flag == true ? success() : failure();
     }
 

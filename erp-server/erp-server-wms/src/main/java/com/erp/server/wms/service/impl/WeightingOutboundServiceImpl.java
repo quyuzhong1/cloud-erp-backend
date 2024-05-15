@@ -3,9 +3,11 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.UnitEnum;
 import com.common.business.handler.PlatformSaveHandler;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -22,7 +24,9 @@ import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
-import com.erp.server.wms.service.*;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.SoB2cDeliveryService;
+import com.erp.server.wms.service.WeightingOutboundService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,16 +50,11 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
     private SoB2cDeliveryService soB2cDeliveryService;
 
     @Resource
-    private SoOutstockService soOutstockService;
-
-    @Resource
     private SoB2cFeign soB2cFeign;
 
     @Resource
     private OperateLogService operateLogService;
 
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private TransferDeclareFeign transferDeclareFeign;
@@ -67,6 +66,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
         if (Objects.isNull(entity)) {
             throw new ServiceException("单号在系统不存在");
         }
+
         //是否自动发货
         Boolean isAutoDelivery = dto.getIsAutoDelivery();
         String sourceId = entity.getSourceId();
@@ -85,6 +85,30 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             //订单拦截
             soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消"));
             return null;
+        }
+        //请求接口过慢，暂时取消 TODO
+/*        else {
+            if (soB2cFeign.checkPlatformShipOrder(soB2cEntity.getId())) {
+                //如果订单原始状态非取消，这里需要再次调用平台接口查询，是否已取消
+                PlatformDeliveryInterceptDTO deliveryInterceptDTO = new PlatformDeliveryInterceptDTO();
+                deliveryInterceptDTO.setSoB2cId(soB2cEntity.getId());
+                deliveryInterceptDTO.setDictPlatform(soB2cEntity.getDictPlatform());
+                deliveryInterceptDTO.setOldIsCancel(soB2cEntity.getIsCancel());
+                deliveryInterceptDTO.setPlatformCode(soB2cEntity.getPlatformCode());
+                deliveryInterceptDTO.setShopId(soB2cEntity.getShopId());
+                Boolean flag = PlatformSaveHandler.deliveryIntercept(deliveryInterceptDTO);
+                if (flag) {
+                    soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消"));
+                    return null;
+                }
+            }
+        }*/
+
+        if (soB2cEntity.getIsIntercept()) {
+            throw new ServiceException(ApiError.LOGISTICS_INTERCEPT_NOT_PACKAGE);
+        }
+        if (soB2cEntity.getInvalidStatus()) {
+            throw new ServiceException(ApiError.INVALID_NOT_PACKAGE);
         }
 
         //查询订单物流信息获取跟踪号
@@ -107,7 +131,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             if (!soB2cDeliveryService.updateById(entity)) {
                 throw new ServiceException("发货单更新失败");
             }
-            String msg = StrUtil.format("用户【{}】更新【{}】单据单号为【{}】称重出库完成", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
+            String msg = StrUtil.format("用户【{}】更新【{}】单据单号为【{}】称重出库完成", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "称重出库");
 
             //转成g
@@ -163,7 +187,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
 
             soB2cDeliveryService.generateB2cSoOutstock(entity);
 
-            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", commonService.getUserInfo().getUserName(), "称重出库", entity.getCode());
+            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "称重出库", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "称重出库");
 
         }

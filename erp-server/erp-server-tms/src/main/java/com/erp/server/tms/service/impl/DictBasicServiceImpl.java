@@ -3,26 +3,26 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.server.tms.mapper.DictBasicMapper;
 import com.erp.server.tms.service.DictBasicService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.DictBasicDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 /**
  * <p>
  * 字典表 服务实现类
@@ -36,10 +36,6 @@ import com.common.core.enums.ApiError;
 public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, DictBasicEntity> implements DictBasicService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
-    @Autowired
-    private DocNoGenHelper docNoGenHelper;
 
 
 
@@ -64,7 +60,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
 
         // 记录主单操作日志
             log.info("编辑 开始记录字典单日志数据，单号：【{}】", dictBasicEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), dictBasicEntity.getCode(), "字典单");
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dictBasicEntity.getCode(), "字典单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, dictBasicEntity, null, dictBasicEntity.getId(), msg);
         return Boolean.TRUE;

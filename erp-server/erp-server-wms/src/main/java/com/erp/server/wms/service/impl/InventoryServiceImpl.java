@@ -17,7 +17,10 @@ import com.common.core.constant.FieldConstant;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
+import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpSyncKingdeeDTO;
 import com.erp.model.plm.enums.SaleStateEnum;
@@ -341,7 +344,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean updateQtyById(String id, Integer qty) {
-//        LoginUser loginUser = commonService.getUserInfo();
+//        LoginUser loginUser = UserContext.getDefaultLoginUser();
         boolean flag = lambdaUpdate()
                 .setSql(StrUtil.format("{}={}+{}", "qty", "qty", qty))
 //                .setSql(StrUtil.format("{}={}+{}", "version","version", 1))
@@ -686,6 +689,10 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 data.setProductName(skuVO.getSkuName());
                 // 产品图片
                 data.setProductImgUrl(skuVO.getSkuImagesUrl());
+                //产品id
+                data.setProductId(skuVO.getProductId());
+                //规格类型
+                data.setSpecType(skuVO.getSpecType());
             }
             // 销售状态名称
             data.setSaleStateName(SaleStateEnum.getNameByCode(data.getSaleState()));
@@ -873,6 +880,32 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Override
     public List<InventoryDTO.PdaInventoryDTO> getInventoryByParam(InventoryDTO.PdaSearchParamDTO dto) {
         return baseMapper.getInventoryByParam(dto);
+    }
+
+    @Override
+    public List<InventoryDTO.InventoryViewQtyDTO> getInventoryQty(List<InventoryDTO.InventoryBySkuIdAndWarehouseDTO> dtos) {
+        if (CollectionUtils.isEmpty(dtos)) {
+            return new ArrayList<>();
+        }
+        List<InventoryDTO.InventoryViewQtyDTO> list = new ArrayList<>();
+        dtos.forEach(dto -> {
+            InventoryDTO.InventoryViewQtyDTO inventoryQtyDTO = new InventoryDTO.InventoryViewQtyDTO();
+            if (StringUtils.isNotBlank(dto.getWarehouseId()) && StringUtils.isNotBlank(dto.getSkuId())) {
+                inventoryQtyDTO = baseMapper.getInventoryInfoByParam(dto);
+                if (Objects.isNull(inventoryQtyDTO)) {
+                    inventoryQtyDTO = new InventoryDTO.InventoryViewQtyDTO();
+                }
+            }
+            setExtData(dto, inventoryQtyDTO);
+            list.add(inventoryQtyDTO);
+        });
+        return list;
+    }
+
+    private static void setExtData(InventoryDTO.InventoryBySkuIdAndWarehouseDTO dto, InventoryDTO.InventoryViewQtyDTO inventoryQtyDTO) {
+        inventoryQtyDTO.setSkuId(dto.getSkuId());
+        inventoryQtyDTO.setWarehouseId(dto.getWarehouseId());
+        inventoryQtyDTO.setWarehouseLocation(dto.getWarehouseLocation());
     }
 
     @Override

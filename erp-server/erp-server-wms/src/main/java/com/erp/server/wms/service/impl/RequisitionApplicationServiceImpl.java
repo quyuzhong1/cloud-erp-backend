@@ -7,11 +7,24 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.*;
-import com.common.business.enums.*;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -20,8 +33,13 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.*;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
+import com.erp.model.wms.entity.RequisitionApplicationEntity;
+import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
+import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
+import com.erp.model.wms.enums.TransferDirectionEnum;
+import com.erp.model.wms.enums.TransferTypeEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -29,26 +47,19 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
 import com.erp.server.wms.mapper.RequisitionApplicationMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -63,8 +74,6 @@ import javax.servlet.http.HttpServletResponse;
 public class RequisitionApplicationServiceImpl extends SuperServiceImpl<RequisitionApplicationMapper, RequisitionApplicationEntity> implements RequisitionApplicationService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
     @Autowired
@@ -192,7 +201,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         // 记录操作日志
         log.info("提交 开始记录要货申请日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "要货申请");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
@@ -279,7 +288,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //新增日志
         List<RequisitionApplicationEntity> requisitionApplicationEntities = this.listByIds(raIds);
         for (RequisitionApplicationEntity entity : requisitionApplicationEntities) {
-            String msg = StrUtil.format("用户【{}】处理了一个单号为【{}】的【{}】单", commonService.getUserInfo().getUserName(), entity.getCode(), "要货申请");
+            String msg = StrUtil.format("用户【{}】处理了一个单号为【{}】的【{}】单", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请");
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), entity.getId(), "处理保存");
         }
         return flag;
@@ -369,7 +378,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //新增日志
         List<RequisitionApplicationEntity> requisitionApplicationEntities = this.listByIds(raIds);
         for (RequisitionApplicationEntity entity : requisitionApplicationEntities) {
-            String msg = StrUtil.format("用户【{}】完成了一个单号为【{}】的【{}】单", commonService.getUserInfo().getUserName(), entity.getCode(), "要货申请");
+            String msg = StrUtil.format("用户【{}】完成了一个单号为【{}】的【{}】单", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请");
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), entity.getId(), "完成保存");
         }
         return flag;
@@ -446,7 +455,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     //匹配sku信息
                     SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(bomChildrenSkuDTO.getParentSkuId())).distinct().findFirst().orElse(new SkuVO());
                     viewDTO.setProductName(skuVO.getSkuName());
-                    viewDTO.setWarehouseLocation(StringUtils.isBlank(skuVO.getWarehouseLocation()) ? "" : skuVO.getWarehouseLocation());
+                    //修改仓位设置为 推荐仓位(大货区)
+                    viewDTO.setWarehouseLocation(StringUtils.isBlank(skuVO.getWarehouseLocationLarge()) ? "" : skuVO.getWarehouseLocationLarge());
                     viewDTO.setThirdWarehouseSku(thirdSku);
                     printPickingViewList.add(viewDTO);
                 }
@@ -456,7 +466,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 //匹配sku信息
                 SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(requisitionApplicationDetailEntity.getSkuId())).distinct().findFirst().orElse(new SkuVO());
                 viewDTO.setProductName(skuVO.getSkuName());
-                viewDTO.setWarehouseLocation(StringUtils.isBlank(skuVO.getWarehouseLocation()) ? "" : skuVO.getWarehouseLocation());
+                //修改仓位设置为 推荐仓位(大货区)
+                viewDTO.setWarehouseLocation(StringUtils.isBlank(skuVO.getWarehouseLocationLarge()) ? "" : skuVO.getWarehouseLocationLarge());
                 if (viewDTO.getPickingQty() == null || viewDTO.getPickingQty() == 0) {
                     viewDTO.setPickingQty(requisitionApplicationDetailEntity.getApproveQty());
                 }
@@ -465,12 +476,16 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             }
         }
 
-        List<RequisitionApplicationDTO.printPickingViewDTO> resultList = printPickingViewList.stream()
-                .sorted(Comparator.comparing(RequisitionApplicationDTO.printPickingViewDTO::getSkuNo).reversed()
-                    .thenComparing(RequisitionApplicationDTO.printPickingViewDTO::getFromWarehouseName).reversed()
-                    .thenComparing(RequisitionApplicationDTO.printPickingViewDTO::getWarehouseLocation).reversed()
-                ).collect(Collectors.toList());
-        return resultList;
+        printPickingViewList.sort((s1, s2) -> {
+            if (StringUtils.isBlank(s1.getWarehouseLocation()) && !StringUtils.isBlank(s2.getWarehouseLocation())) {
+                return 1;
+            } else if (!StringUtils.isBlank(s1.getWarehouseLocation()) && StringUtils.isBlank(s2.getWarehouseLocation())) {
+                return -1;
+            } else {
+                return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
+            }
+        });
+        return printPickingViewList;
     }
 
     @Override
@@ -499,12 +514,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "头程发货单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程发货单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), entity.getId(), "取消流程操作");
 /*        ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.FBA_DELIVERY.getCode());
-        revokeDTO.setUserId(commonService.getUserInfo().getUid());
+        revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);*/
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
@@ -546,7 +561,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         super.removeById(id);
         // 删除日志数据
         log.info("删除 开始删除要货申请单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "要货申请单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), entity.getId(), "删除要货申请单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
@@ -773,7 +788,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
      **/
 
     private Boolean updateHandleDate(List<String> raIds, String status) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         return lambdaUpdate().set(RequisitionApplicationEntity::getHandleUserId, userInfo.getUid())
                 .set(RequisitionApplicationEntity::getHandleUserName, userInfo.getUserName())
                 .set(RequisitionApplicationEntity::getHandleTime, LocalDateTime.now())

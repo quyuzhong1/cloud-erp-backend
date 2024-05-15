@@ -1,19 +1,28 @@
 package com.erp.server.plm.service.impl;
 
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
+import com.erp.model.plm.entity.TemplateTaskRefSkuConfigEntity;
 import com.erp.model.plm.enums.TaskStateEnum;
+import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.mapper.TaskRefSkuConfigMapper;
 import com.erp.server.plm.service.TaskRefSkuConfigService;
+import com.erp.server.plm.service.TemplateTaskRefSkuConfigService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 任务sku配置关系表(TaskRefSkuConfig)表服务实现类
@@ -25,6 +34,8 @@ import java.util.List;
 public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMapper, TaskRefSkuConfigEntity> implements TaskRefSkuConfigService {
     @Resource
     private TaskRefSkuConfigMapper taskRefSkuConfigMapper;
+    @Resource
+    private TemplateTaskRefSkuConfigService templateTaskRefSkuConfigService;
 
 
     /**
@@ -208,6 +219,74 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
         this.remove(queryWrapper);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void initTaskRefSkuConfig(Boolean deleteOld) {
+        List<TaskRefSkuConfigEntity> configEntities = list(Wrappers.<TaskRefSkuConfigEntity>lambdaQuery()
+                .and(wrapper -> wrapper.like(TaskRefSkuConfigEntity::getFieldJson, "产品尺寸")
+                        .or()
+                        .like(TaskRefSkuConfigEntity::getFieldJson, "包装尺寸")
+                        .or().like(TaskRefSkuConfigEntity::getFieldJson, "箱规")));
+        List<TemplateTaskRefSkuConfigEntity> templateTaskRefSkuConfigEntities = templateTaskRefSkuConfigService.list(Wrappers.<TemplateTaskRefSkuConfigEntity>lambdaQuery()
+                .and(wrapper -> wrapper.like(TemplateTaskRefSkuConfigEntity::getFieldJson, "产品尺寸")
+                        .or()
+                        .like(TemplateTaskRefSkuConfigEntity::getFieldJson, "包装尺寸")
+                        .or().like(TemplateTaskRefSkuConfigEntity::getFieldJson, "箱规")));
+        configEntities.forEach(e -> {
+            String fieldJson = convertSizeParams(e.getFieldJson());
+            e.setFieldJson(fieldJson);
+        });
+        updateBatchById(configEntities);
+        templateTaskRefSkuConfigEntities.forEach(e -> {
+            String fieldJson = convertSizeParams(e.getFieldJson());
+            e.setFieldJson(fieldJson);
+        });
+        templateTaskRefSkuConfigService.updateBatchById(templateTaskRefSkuConfigEntities);
+    }
+
+    private String convertSizeParams(String fieldJson) {
+        if (ObjectUtils.isEmpty(fieldJson)) {
+            return fieldJson;
+        }
+        Map<String, Object> fieldMap = JSON.parseObject(fieldJson);
+        List<Map<String, Object>> fieldInfoList = (List<Map<String, Object>>) fieldMap.get(ProductManyDetailConstant.PRODUCT_PACK_SHOW);
+        List<Map<String, Object>> newFieldInfoList = new ArrayList<>();
+        for (Map<String, Object> map : fieldInfoList) {
+            String prop = String.valueOf(map.get("prop"));
+            if (!(prop.equals("productLength") || prop.equals("productWidth") || prop.equals("productHeight")
+                    || prop.equals("boxLength") || prop.equals("boxWidth") || prop.equals("boxHeight"))) {
+                newFieldInfoList.add(map);
+            }
+            if (prop.equals("productSize")){
+                Map<String, Object> productLengthMap = getParams("productLength", "长");
+                Map<String, Object> productWidthMap = getParams("productWidth", "宽");
+                Map<String, Object> productHeightMap = getParams("productHeight", "高");
+                newFieldInfoList.add(productLengthMap);
+                newFieldInfoList.add(productWidthMap);
+                newFieldInfoList.add(productHeightMap);
+            }
+            if (prop.equals("boxSize")){
+                Map<String, Object> boxLengthMap = getParams("boxLength", "长");
+                Map<String, Object> boxWidthMap = getParams("boxWidth", "宽");
+                Map<String, Object> boxHeightMap = getParams("boxHeight", "高");
+                newFieldInfoList.add(boxLengthMap);
+                newFieldInfoList.add(boxWidthMap);
+                newFieldInfoList.add(boxHeightMap);
+            }
+        }
+        fieldMap.put(ProductManyDetailConstant.PRODUCT_PACK_SHOW, newFieldInfoList);
+        fieldJson = JSON.toJSONString(fieldMap);
+        return fieldJson;
+    }
+
+    private Map<String, Object> getParams(String code, String name) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("prop", code);
+        map.put("label", name);
+        map.put("type", code);
+        map.put("idRequired", "1");
+        return map;
+    }
 
     /**
      * 根据任务id 和 产品ｉｄ 获取关系表

@@ -39,10 +39,6 @@ import java.util.stream.Collectors;
 @Service
 public class WarehouseMappingServiceImpl extends SuperServiceImpl<WarehouseMappingMapper, WarehouseMappingEntity> implements WarehouseMappingService {
     @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
-    @Autowired
     private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)

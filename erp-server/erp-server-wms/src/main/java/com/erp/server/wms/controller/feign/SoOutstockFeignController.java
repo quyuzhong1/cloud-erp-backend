@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.feign;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
@@ -144,6 +145,14 @@ public class SoOutstockFeignController {
     }
 
     /**
+     * 平台自动拉取数据-生成B2C销售出库单
+     * @return
+     */
+    @PostMapping("/generateB2cSoOutstockByPlatformData")
+    Boolean generateB2cSoOutstockByPlatformData(@RequestBody List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO) {
+        return soOutstockService.generateB2cSoOutstockByPlatformData(platformDeliveryDetailDTO);
+    }
+    /**
      * 生成B2C销售出库单
      * @param generateB2cDTO
      * @return
@@ -184,6 +193,18 @@ public class SoOutstockFeignController {
     @PostMapping("/updateStatus")
     Boolean updateStatus(@RequestBody TmsDeclareBillDTO.UpdateStatusDTO dto) {
         return soOutstockService.updateStatus(dto);
+    }
+
+    /**
+     * 重新生成销售出库单
+     * @author Will
+     * @date: 2024/4/28 10:26
+     * @param ids
+     * @return Boolean
+     */
+    @PostMapping("/afreshGenerateB2cOutstock")
+    Boolean afreshGenerateB2cOutstock(@RequestBody List<String> ids) {
+        return soOutstockService.afreshGenerateB2cOutstock(ids);
     }
 }
 

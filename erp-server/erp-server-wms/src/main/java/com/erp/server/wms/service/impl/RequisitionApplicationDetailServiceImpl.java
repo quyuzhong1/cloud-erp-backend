@@ -45,8 +45,6 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
-    private CommonService commonService;
-    @Autowired
     private PlmTaskFeign plmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)

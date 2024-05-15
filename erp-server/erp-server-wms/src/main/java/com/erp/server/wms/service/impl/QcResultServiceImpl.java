@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONObject;
@@ -7,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
@@ -89,9 +91,6 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
 
     @Resource
     private ScmTaskFeign scmTaskFeign;
-
-    @Resource
-    private CommonService commonService;
 
     @Autowired
     private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
@@ -369,7 +368,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
      * @date 2023-04-27 19:24
      */
     @Override
-    @Async
+//    @Async
     public void sendQcResultMsg(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return;
@@ -386,7 +385,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         List<String> poIds = list.stream().map(QcResultDTO.QcNoticeDTO::getPurchaseOrderId).collect(Collectors.toList());
         List<PurchaseOrderEntity> poList = scmTaskFeign.listPurchaseOrderByIds(poIds);
 
-        String userName = commonService.getUserInfo().getUserName();
+        String userName = UserContext.getDefaultLoginUser().getUserName();
         for (QcResultDTO.QcNoticeDTO item : list) {
             String qcType = item.getQcType();
             String qcTypeName = QcTypeEnum.getByCode(qcType);
@@ -455,8 +454,10 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
             noticeMsgInfoDTO.setReceiverUserIds(userIdList);
             noticeMsgInfoDTO.setTitle(NoticeMsgConstant.QC_BACK_FILL_PACK_HEAD);
-            String msgContent = StrUtil.format(NoticeMsgConstant.QC_BACK_FILL_PACK_CONTENT,productPackDTO.getSkuNo(),productPackDTO.getProductSize(),
-                    productPackDTO.getBoxSize(),productPackDTO.getNetWeight(),productPackDTO.getBoxQty(), LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            String productSize = CharSequenceUtil.format("{}X{}X{}", productPackDTO.getProductLength(), productPackDTO.getProductWidth(), productPackDTO.getProductHeight());
+            String boxSize = CharSequenceUtil.format("{}X{}X{}", productPackDTO.getBoxLength(), productPackDTO.getBoxWeight(), productPackDTO.getBoxHeight());
+            String msgContent = StrUtil.format(NoticeMsgConstant.QC_BACK_FILL_PACK_CONTENT, productPackDTO.getSkuNo(), productSize,
+                    boxSize, productPackDTO.getNetWeight(), productPackDTO.getBoxQty(), LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             noticeMsgInfoDTO.setContent(msgContent);
             noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.WMS_TASK);
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,

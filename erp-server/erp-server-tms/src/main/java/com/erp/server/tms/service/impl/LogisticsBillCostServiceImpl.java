@@ -13,6 +13,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
@@ -68,9 +69,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private OperateLogService operateLogService;
 
     @Autowired
-    private CommonService commonService;
-
-    @Autowired
     private DictBasicService dictBasicService;
 
     @Autowired
@@ -110,7 +108,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         tmsCostDetailService.batchAdd(addDTO.getCostDetailList(),logisticsBillCostEntity.getId(), DictCostAttributionEnum.SELF_DELIVER);
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "自发货费用" , logisticsBillCostEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "自发货费用" , logisticsBillCostEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), logisticsBillCostEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(logisticsBillCostEntity.getId(), logisticsBillCostEntity.getId());
     }
@@ -153,7 +151,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
         // 记录主单操作日志
         log.info("编辑 开始记录自发货费用日志数据，id：【{}】", logisticsBillCostEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsBillCostEntity.getId(), "自发货费用");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsBillCostEntity.getId(), "自发货费用");
         operateLogService.addModuleOperateLogByObj(old, logisticsBillCostEntity, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), logisticsBillCostEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -207,7 +205,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
         // 状态变更日志
         log.info("状态变更日志数据，id集合：【{}】", id);
-        String msg = StrUtil.format("用户【{}】自发货费用【{}】的【{}】单据{}操作 ", commonService.getUserInfo().getUserName(), entity.getTransportNo(), "自发货费用", ReconciliationStatusEnum.getName(reconciliationStatus));
+        String msg = StrUtil.format("用户【{}】自发货费用【{}】的【{}】单据{}操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getTransportNo(), "自发货费用", ReconciliationStatusEnum.getName(reconciliationStatus));
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), entity.getTransportNo(), "启用/停用");
         return BatchResultDTO.success(entity.getId(), entity.getTransportNo(), OperationTypeEnum.UPDATE_STATUS);
     }

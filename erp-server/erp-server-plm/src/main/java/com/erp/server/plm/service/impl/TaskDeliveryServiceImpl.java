@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
@@ -569,7 +569,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      * 设置查看权限
      */
     private List<String> setTaskDeliveryAuth(BaseSearchDTO params) {
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         String userAccount = "";
         String userId = "";
         if (loginUser != null) {
@@ -639,7 +639,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      */
     private DocsDTO.DeliveryDocsPowerDTO listDeliveryDocs(String productId) {
         DocsDTO.DeliveryDocsPowerDTO result = new DocsDTO.DeliveryDocsPowerDTO();
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         String userAccount = "";
         String userId = "";
         if (loginUser != null) {

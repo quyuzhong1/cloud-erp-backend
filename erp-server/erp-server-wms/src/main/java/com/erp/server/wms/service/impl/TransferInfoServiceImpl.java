@@ -17,9 +17,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -105,9 +107,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Resource
     private TransferInfoDetailService transferInfoDetailService;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private InventoryService inventoryService;
@@ -421,7 +420,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //删除明细数据
         transferInfoDetailService.removeByMainIds(ids);
         //删除操作日志
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的直接调拨单", commonService.getUserInfo().getUserName(), list.stream().map(TransferInfoEntity::getCode).collect(Collectors.joining(",")));
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的直接调拨单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(TransferInfoEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "删除操作");
         //发送金蝶
@@ -870,7 +869,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
      */
     private void updateApproveStatusForApprove(List<String> ids, String approveStatus) {
         //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
 
         this.lambdaUpdate().in(TransferInfoEntity::getId, ids)
                 .set(TransferInfoEntity::getApproveUserId, userInfo.getUid())
@@ -1080,12 +1079,47 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //删除明细数据
         transferInfoDetailService.removeByMainIds(ids);
         //删除操作日志
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的直接调拨单", commonService.getUserInfo().getUserName(), list.stream().map(TransferInfoEntity::getCode).collect(Collectors.joining(",")));
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的直接调拨单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(TransferInfoEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "删除操作");
         //发送金蝶
         list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         //删除主表数据
         return this.removeByIds(ids);
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean checkHistoryAndDel(String sourceCode, String sourceType, LocalDate billDate) {
+        List<TransferInfoEntity> list = this.lambdaQuery()
+                .eq(TransferInfoEntity::getSourceCode, sourceCode)
+                .eq(TransferInfoEntity::getSourceType, sourceType)
+                .eq(TransferInfoEntity::getBillDate, billDate)
+                .eq(TransferInfoEntity::getInvalidStatus, false)
+                .list();
+        if (CollectionUtils.isEmpty(list)){
+            return true;
+        }
+        List<TransferInfoEntity> approveList = list.stream()
+                .filter(e -> ApproveStatusEnum.APPROVE.getStatus().equalsIgnoreCase(e.getApproveStatus()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(approveList)){
+            List<String> approveIds = approveList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+            // 反审核
+            disApprove(approveIds, true);
+        }
+
+        List<TransferInfoEntity> unSubmitList = list.stream()
+                .filter(e -> ApproveStatusEnum.APPROVE_ING.getStatus().equalsIgnoreCase(e.getApproveStatus()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(unSubmitList)){
+            List<String> unSubmitIds = unSubmitList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+            cancelProcess(unSubmitIds);
+        }
+        List<String> delIds = list.stream().map(BaseEntity::getId).distinct().collect(Collectors.toList());
+        // 删除
+        delete(delIds);
+        return true;
     }
 }

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -44,9 +45,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper, TaskDocsFinishEntity> implements TaskDocsFinishService {
 
-
-    @Autowired
-    private CommonService commonService;
 
     @Autowired
     private ProjectTaskService projectTaskService;
@@ -113,7 +111,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         //文件名
         String fileName = "";
         List<String> fileNames = new ArrayList<>();
@@ -314,7 +312,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                 && !approvalNoPassCode.equals(taskState)) {
             throw new ServiceException(ApiError.ERROR_95039);
         }
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         //完成的文档
         String finishDocsId = dto.getFinishDocsId();
         //这个是已完成交付文档
@@ -419,7 +417,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 //                && !approvalNoPassCode.equals(taskState)) {
 //            throw new ServiceException(ApiError.ERROR_95039);
 //        }
-//        LoginUser loginUser = commonService.getUserInfo();
+//        LoginUser loginUser = UserContext.getDefaultLoginUser();
 //
 //        //文件名
 //        String fileName = "";
@@ -590,7 +588,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             taskEntity.setStatus(TaskStateEnum.WAIT_CONFIRM.getCode());
             taskEntity.setBusinessProcessId(businessProcess.getId());
             taskEntity.setIsChangeDocs(Boolean.TRUE);
-            return projectTaskService.updateById(taskEntity);
+            projectTaskService.updateById(taskEntity);
         }
         return Boolean.TRUE;
     }
@@ -659,7 +657,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     public Boolean startChangeDocsProcess(BaseIdDTO dto) {
         //任务id
         String taskId = dto.getId();
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         ProjectTaskEntity taskEntity = projectTaskService.getById(taskId);
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);

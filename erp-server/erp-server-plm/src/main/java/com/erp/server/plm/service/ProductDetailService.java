@@ -619,7 +619,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param warehouseLocation 仓位信息
      * @return void
      **/
-    Boolean updateWarehouseLocationById(String id, String warehouseLocation);
+    Boolean updateWarehouseLocationById(String id, String warehouseLocation, String warehouseLocationLarge);
 
     /**
      * 根据skuNo查询
@@ -687,4 +687,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param details
      */
     void recalDestDeclarePrice(List<ProductDetailEntity> details);
+
+    void initProductSizeAndBoxSize();
 }

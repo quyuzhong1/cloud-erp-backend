@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -143,6 +144,28 @@ public class ProductSearchDTO extends PermissionsDTO {
          */
         private List<String> createChargeDeptUserIdList;
 
+        /**
+         * 立项日期: ["立项日期1", "立项日期2"]
+         */
+        @Size(min = 2, max = 2, message = "请确定立项日期的范围")
+        private List<LocalDate> initDateList;
+
+        /**
+         * 启动日期: ["启动日期1", "启动日期2"]
+         */
+        @Size(min = 2, max = 2, message = "请确定启动日期的范围")
+        private List<LocalDate> launchDateList;
+
+        /**
+         * 结项日期：["结项日期1", "结项日期2"]
+         */
+        @Size(min = 2, max = 2, message = "请确定结项日期的范围")
+        private List<LocalDate> finishDateList;
+
+        /**
+         * 项目状态：0未启动，1已启动，2进行中，3已完成，4已暂停，5已终止
+         */
+        private List<Integer> projectStatusList;
     }
 
 

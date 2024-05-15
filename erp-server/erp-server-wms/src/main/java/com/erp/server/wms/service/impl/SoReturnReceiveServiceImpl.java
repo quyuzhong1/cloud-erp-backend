@@ -5,11 +5,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -17,6 +17,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.*;
@@ -27,7 +28,6 @@ import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.*;
@@ -85,9 +85,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Resource
     private OperateLogService operateLogService;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private QcInfoService qcInfoService;
@@ -480,7 +477,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         }
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
-            LoginUser userInfo = commonService.getUserInfo();
+            LoginUser userInfo = UserContext.getDefaultLoginUser();
             //审核通过
             lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                     .set(SoReturnReceiveEntity::getApproveUserId, userInfo.getUid())
@@ -527,13 +524,13 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             item.setProductGrade(sku.getProductGrade());
             item.setSaleMethod(productDetailEntity.getSaleMethod());
             item.setVariantProperty(sku.getVariantProperty());
-            item.setBoxHeight(sku.getBoxHeight());
-            item.setBoxLength(sku.getBoxHeight());
-            item.setBoxWeight(sku.getBoxWeight());
-            item.setBoxWidth(sku.getBoxWidth());
-            item.setProductHeight(sku.getProductHeight());
-            item.setProductLength(sku.getProductLength());
-            item.setProductWidth(sku.getProductWidth());
+            item.setBoxHeight(LengthConverterUtil.mmToCm(sku.getBoxHeight()));
+            item.setBoxLength(LengthConverterUtil.mmToCm(sku.getBoxLength()));
+            item.setBoxWeight(LengthConverterUtil.mmToCm(sku.getBoxWeight()));
+            item.setBoxWidth(LengthConverterUtil.mmToCm(sku.getBoxWidth()));
+            item.setProductHeight(LengthConverterUtil.mmToCm(sku.getProductHeight()));
+            item.setProductLength(LengthConverterUtil.mmToCm(sku.getProductLength()));
+            item.setProductWidth(LengthConverterUtil.mmToCm(sku.getProductWidth()));
             item.setProductNetWeight(sku.getProductNetWeight());
 
         }

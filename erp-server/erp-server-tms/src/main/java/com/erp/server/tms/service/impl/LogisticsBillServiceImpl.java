@@ -12,6 +12,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.CommonConstants;
 import com.common.core.controller.vo.ApiResult;
@@ -76,8 +77,6 @@ import java.util.stream.Stream;
 public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapper, LogisticsBillEntity> implements LogisticsBillService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
     @Autowired
     private LogisticsBillDetailService logisticsBillDetailService;
 
@@ -167,7 +166,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         logisticsBillDetailService.update(updateDTO, logisticsBillEntity.getId());
         // 记录主单操作日志
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsBillEntity.getId(), "物流单");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsBillEntity.getId(), "物流单");
         operateLogService.addModuleOperateLogByObj(old, logisticsBillEntity, null, logisticsBillEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -312,13 +311,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             statusList = trackStatusList.stream().filter(s -> s.getRemark().equals(group)).
                     map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
         }
-
-        dto.getParams().setExcludeOrderTypeList(Arrays.asList(OrderTypeEnum.FIRST_MILE.getCode()));
         IPage pageData = baseMapper.paging(query, params, statusList);
         List<LogisticsBillDTO.PagingVO> list = pageData.getRecords();
         fillPagingDb(list);
         return new PagingVO<>(pageData);
     }
+
 
 
     @Override
@@ -453,6 +451,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 orderSource(sourceType).
                 trackNo(dto.getTrackNo()).
                 topUserKey(dto.getTopUserKey()).
+                sourceId(dto.getOrderId()).
                 oaid(dto.getOaid()).
                 deliveryNo(dto.getOrderCode()).
                 iossCode(dto.getIossTaxNo()).
@@ -649,6 +648,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         cancelOrderVO.setDeliveryNo(dto.getReferenceNumber());
         cancelOrderVO.setTransportNo(dto.getTransportNo());
         cancelOrderVO.setReason(dto.getReason());
+        cancelOrderVO.setOrderId(dto.getOrderId());
         cancelOrderList.add(cancelOrderVO);
         if (StringUtils.isBlank(dto.getTransportNo())) {
             LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(dto.getTrackNo());
@@ -695,6 +695,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         interceptOrderVO.setDeliveryNo(dto.getReferenceNumber());
         interceptOrderVO.setTransportNo(dto.getTransportNo());
         interceptOrderVO.setInterceptReason(dto.getReason());
+        interceptOrderVO.setOrderId(dto.getOrderId());
         interceptOrderVOList.add(interceptOrderVO);
         if (StringUtils.isBlank(dto.getTransportNo())) {
             LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(dto.getTrackNo());
@@ -1046,6 +1047,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 //                }
 //            }
             if(StringUtils.isNotBlank(batchUpdateTrackNoDTO.getLogisticsChannelId())){
+                LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(batchUpdateTrackNoDTO.getLogisticsChannelId());
+                if(Objects.isNull(logisticsChannelEntity)){
+                    throw new ServiceException("查询不到渠道");
+                }
+                logisticsBillEntity.setLogisticsSupplierId(logisticsChannelEntity.getMainId());
                 logisticsBillEntity.setChannelId(batchUpdateTrackNoDTO.getLogisticsChannelId());
                 if (CollectionUtils.isNotEmpty(batchUpdateTrackNoDTO.getTrackNoList())){
                     logisticsBillEntity.setTransportNo(String.join(",", batchUpdateTrackNoDTO.getTrackNoList()));

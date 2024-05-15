@@ -259,6 +259,11 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
     private String collectCountryCode;
 
     /**
+     * 报关类型
+     */
+    @TableField("declare_type")
+    private String declareType;
+    /**
      * 数量
      */
     @TableField(exist = false)

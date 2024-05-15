@@ -246,6 +246,11 @@ public class OverseasWarehouseInboundDetailDTO implements Serializable {
          */
         private String imagesUrl;
 
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
     }
 
     /**

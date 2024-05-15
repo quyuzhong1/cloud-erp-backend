@@ -4,16 +4,15 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.entity.ProductPlanSaleInfoEntity;
 import com.erp.server.plm.mapper.ProductPlanSaleInfoMapper;
-import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.ProductPlanSaleInfoService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -26,13 +25,10 @@ import java.util.List;
 public class ProductPlanSaleInfoServiceImpl extends ServiceImpl<ProductPlanSaleInfoMapper, ProductPlanSaleInfoEntity>
         implements ProductPlanSaleInfoService {
 
-    @Resource
-    private CommonService commonService;
-
     @Override
     public Boolean removeByProductPlanId(String productPlanId) {
         //获取当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (ObjectUtils.isEmpty(userInfo)) {
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }

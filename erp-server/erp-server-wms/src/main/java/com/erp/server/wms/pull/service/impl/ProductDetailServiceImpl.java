@@ -2,6 +2,7 @@ package com.erp.server.wms.pull.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.wrapper.FeignQuery;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.server.wms.pull.mapper.ProductDetailMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
@@ -61,7 +62,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(ids)) {
             return new ArrayList<>();
         }
-        return baseMapper.listProductDetailByIds(ids);
+        return FeignQuery.getByIds(ProductDetailEntity.class, ids);
     }
 
     /**

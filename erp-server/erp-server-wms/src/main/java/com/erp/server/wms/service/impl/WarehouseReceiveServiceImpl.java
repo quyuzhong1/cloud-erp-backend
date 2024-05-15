@@ -15,14 +15,12 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.MathUtil;
+import com.common.core.utils.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -96,9 +94,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     @Resource
     private WarehouseService warehouseService;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private WorkflowFeign workflowFeign;
@@ -559,7 +554,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         if (count != warehouseReceiveList.size()) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
             //审核通过
@@ -635,13 +630,13 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             item.setProductGrade(sku.getProductGrade());
             item.setSaleMethod(productDetailEntity.getSaleMethod());
             item.setVariantProperty(sku.getVariantProperty());
-            item.setBoxHeight(sku.getBoxHeight());
-            item.setBoxLength(sku.getBoxHeight());
-            item.setBoxWeight(sku.getBoxWeight());
-            item.setBoxWidth(sku.getBoxWidth());
-            item.setProductHeight(sku.getProductHeight());
-            item.setProductLength(sku.getProductLength());
-            item.setProductWidth(sku.getProductWidth());
+            item.setBoxHeight(LengthConverterUtil.mmToCm(sku.getBoxHeight()));
+            item.setBoxLength(LengthConverterUtil.mmToCm(sku.getBoxLength()));
+            item.setBoxWeight(LengthConverterUtil.mmToCm(sku.getBoxWeight()));
+            item.setBoxWidth(LengthConverterUtil.mmToCm(sku.getBoxWidth()));
+            item.setProductHeight(LengthConverterUtil.mmToCm(sku.getProductHeight()));
+            item.setProductLength(LengthConverterUtil.mmToCm(sku.getProductLength()));
+            item.setProductWidth(LengthConverterUtil.mmToCm(sku.getProductWidth()));
             item.setProductNetWeight(sku.getProductNetWeight());
             Boolean isFirstMassProduct = purchaseOrderList.stream().filter(p -> p.getId().equals(purchaseOrderId)).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getIsFirstMassProduct())).orElse(false);
@@ -1014,7 +1009,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Override
     public List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInView(List<String> ids) {
         List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInViewDTOS = baseMapper.generateStockInView(ids);
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
 
         //获取sku的id集合
         List<String> skuIdList = generateStockInViewDTOS.stream().map(WarehouseReceiveDTO.GenerateStockInViewDTO::getSkuId).collect(Collectors.toList());
@@ -1080,7 +1075,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean generateStockIn(List<WarehouseReceiveDTO.GenerateStockInDTO> dtos) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         List<String> collect = dtos.stream().map(WarehouseReceiveDTO.GenerateStockInDTO::getMainId).distinct().collect(Collectors.toList());
         //获取用户信息
         FindUserDTO userDTO = sysUserFeign.getUserByUserId(userInfo.getUid());
@@ -1195,7 +1190,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean generateReceive(PurchaseOrderDTO.ListGenerateReceiveDTO dto) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //生成下推签收单
         List<PurchaseOrderDTO.GenerateReceiveDTO> list = dto.getList();
         //采购订单明细Ids
@@ -1358,11 +1353,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             Integer count = MathUtil.ZERO;
             if (PdaTabFlagEnum.WAIT_SUBMIT_AND_REJECT.getCode().equals(item.getCode())) {
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.REJECT.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE_ING.getCode().equals(item.getCode())) {
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE.getCode().equals(item.getCode())) {
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
@@ -1370,7 +1365,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 dateList.add(startDate);
                 dateList.add(endDate);
                 pagingParamDTO.setBillDate(dateList);
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(item.getCode());

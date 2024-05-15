@@ -8,6 +8,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -19,13 +20,11 @@ import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
 import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
 import com.erp.server.wms.mapper.AliexpressDeliveryMapper;
+import com.erp.server.wms.service.AliexpressDeliveryDetailService;
 import com.erp.server.wms.service.AliexpressDeliveryService;
-import com.erp.server.wms.service.CommonService;
-import com.erp.server.wms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,14 +45,12 @@ import java.util.List;
 @Slf4j
 @Service
 public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDeliveryMapper, AliexpressDeliveryEntity> implements AliexpressDeliveryService {
-    @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
     @Resource
     private ShopSysUserAuthFeign shopSysUserAuthFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Resource
+    private AliexpressDeliveryDetailService detailService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(AliexpressDeliveryDTO.AddDTO addDTO) {
@@ -64,7 +61,6 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
         if (ObjectUtil.isNotEmpty(entity)) {
             aliexpressDeliveryEntity.setId(entity.getId());
         }
-
         // 数据处理
         handleData(aliexpressDeliveryEntity);
 
@@ -73,6 +69,8 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
         if(!save) {
             throw new ServiceException("速卖通发货单保存失败");
         }
+        addDTO.getDetailList().forEach(v->v.setMainId(aliexpressDeliveryEntity.getId()));
+        detailService.add(addDTO.getDetailList());
         return new BaseResultDTO.AddDTO(aliexpressDeliveryEntity.getId(), aliexpressDeliveryEntity.getPlatformCode());
     }
 
@@ -95,7 +93,7 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
         }
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/aliexpressDeliveryExport.xlsx";
-        String name = "中转报关单导出";
+        String name = "速卖通发货单";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
         sb.append(name);
@@ -110,7 +108,7 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
     @Override
     public List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop() {
         ShopSysUserAuthDTO.UserAuthShopParamDTO dto = new ShopSysUserAuthDTO.UserAuthShopParamDTO();
-        dto.setUserId(commonService.getUserInfo().getUid());
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
         dto.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
         List<ShopSysUserAuthDTO.ViewShopDTO> viewShopDTOList = shopSysUserAuthFeign.listUserAuthShop(dto);
         return viewShopDTOList;

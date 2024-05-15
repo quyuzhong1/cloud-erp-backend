@@ -68,13 +68,16 @@
     <!--tab 页统计-->
     <select id="tabList" resultType="com.erp.model.tms.dto.LogisticsBillDTO$TabListDTO">
         SELECT
-        COUNT(id) AS count,
-        track_status AS tabFlag
-        FROM logistics_bill_detail
+        COUNT(1) AS count,
+        lbd.track_status AS tabFlag
+        FROM  logistics_bill lb
+        LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
+        LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
+        WHERE  lb.is_deleted=false
+        and lb.order_type in ('B2B','B2C')
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
-        WHERE is_deleted=false
         GROUP BY track_status
     </select>
     <!--分页列表-->
@@ -100,12 +103,11 @@
              lbd.sign_time AS signTime,
              lbd.track_query_mode AS trackQueryMode,
              lc.name AS channelName
-         FROM  logistics_bill_detail lbd
-         RIGHT JOIN  logistics_bill lb
-         ON lbd.main_id=lb.id
-         LEFT JOIN  logistics_channel lc
-         ON lc.id=lb.channel_id and lc.is_deleted=false
-        WHERE  lb.is_deleted=false and (lbd.is_deleted=false or lbd.is_deleted is null)
+        FROM  logistics_bill lb
+        LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
+        LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
+        WHERE  lb.is_deleted=false
+        and lb.order_type in ('B2B','B2C')
         <!--状态-->
         <if test="statusList !=null and statusList.size>0">
             AND lbd.track_status in
@@ -195,7 +197,6 @@
         </if>
         lb.create_time DESC
     </select>
-
     <!--导出-->
     <select id="listExport" resultType="com.erp.model.tms.dto.LogisticsBillDTO$PagingVO">
         SELECT
@@ -219,12 +220,11 @@
             lbd.sign_time AS signTime,
             lbd.track_query_mode AS trackQueryMode,
             lc.name AS channelName
-        FROM  logistics_bill_detail lbd
-        RIGHT JOIN  logistics_bill lb
-        ON lbd.main_id=lb.id
-        LEFT JOIN  logistics_channel lc
-        ON lc.id=lb.channel_id and (lbd.is_deleted=false or lbd.is_deleted is null)
-        WHERE  lb.is_deleted=false and lbd.is_deleted=false
+        FROM  logistics_bill lb
+        LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
+        LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
+        WHERE  lb.is_deleted=false
+        and lb.order_type in ('B2B','B2C')
         <choose>
             <when test="params.ids!=null and params.ids.size>0">
                 AND lbd.id IN
@@ -392,7 +392,8 @@
                lb.source_code as businessCode,
                lb.outstock_code as outstockCode,
                lbd.track_status as logisticsStatus,
-               (select lt.content from logistics_track lt where lt.track_no = lbd.track_no and lt.is_deleted = false order by lt.update_time desc limit 1) as logisticsTrack,
+        CASE WHEN lbd.track_no !=''    then
+        (select lt.content from logistics_track lt where lt.track_no = lbd.track_no and lt.is_deleted = false and lt.content !='' order by lt.update_time desc limit 1) else '' end  as logisticsTrack ,
                lb.invoices_status as invoicesStatus,
                lbc.reconciliation_status as reconciliationStatus,
                lb.shipping_method as shippingMethod,

@@ -2,12 +2,12 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
-import com.erp.model.scm.dto.excel.PurchasePriceChangeExportExcelDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
@@ -31,7 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -47,19 +46,12 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
     private SrmDeliveryOrderFeign srmDeliveryFeign;
 
     @Resource
-    private SupplierFeign supplierFeign;
-
-    @Resource
-    private CommonService commonService;
-
-    @Resource
     private WarehouseReceiveService warehouseReceiveService;
 
     @Resource
     private SysUserFeign sysUserFeign;
     @Override
     public Boolean export(DeliveryOrderDTO.ParamDTO dto, HttpServletResponse response) {
-        dto.setSupplierIdList(supplierFeign.listByPurchaseUserId(commonService.getUserInfo().getUid()).stream().map(BaseEntity::getId).collect(Collectors.toList()));
         List<DeliveryOrderExportExcelDTO> resultList = srmDeliveryFeign.getExportList(dto);
         String fileName = "供应商送货单";
         try {
@@ -110,7 +102,7 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
                     return;
                 }
             }
-            LoginUser loginUser = commonService.getUserInfo();
+            LoginUser loginUser = UserContext.getDefaultLoginUser();
             deliveryOrderEntity.setReceiveUserId(loginUser.getUid());
             deliveryOrderEntity.setReceiveUserName(loginUser.getUserName());
             deliveryOrderEntity.setReceiptStatus(DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode());

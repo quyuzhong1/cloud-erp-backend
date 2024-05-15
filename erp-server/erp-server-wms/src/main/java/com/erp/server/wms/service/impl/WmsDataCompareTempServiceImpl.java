@@ -3,22 +3,23 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.wms.dto.WmsDataCompareTempDTO;
 import com.erp.model.wms.entity.WmsDataCompareTempEntity;
 import com.erp.server.wms.mapper.WmsDataCompareTempMapper;
-import com.erp.server.wms.service.WmsDataCompareTempService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.erp.server.wms.service.WmsDataCompareTempService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.WmsDataCompareTempDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 /**
  * <p>
  * 数据对比对比加工临时表 服务实现类
@@ -32,8 +33,6 @@ import com.common.core.enums.ApiError;
 public class WmsDataCompareTempServiceImpl extends SuperServiceImpl<WmsDataCompareTempMapper, WmsDataCompareTempEntity> implements WmsDataCompareTempService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -52,7 +51,7 @@ public class WmsDataCompareTempServiceImpl extends SuperServiceImpl<WmsDataCompa
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "数据对比对比加工临时单" , wmsDataCompareTempEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "数据对比对比加工临时单" , wmsDataCompareTempEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, wmsDataCompareTempEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -81,7 +80,7 @@ public class WmsDataCompareTempServiceImpl extends SuperServiceImpl<WmsDataCompa
 
         // 记录主单操作日志
             log.info("编辑 开始记录数据对比对比加工临时单日志数据，id：【{}】", wmsDataCompareTempEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), wmsDataCompareTempEntity.getId(), "数据对比对比加工临时单");
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), wmsDataCompareTempEntity.getId(), "数据对比对比加工临时单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, wmsDataCompareTempEntity, null, wmsDataCompareTempEntity.getId(), msg);
         return Boolean.TRUE;
