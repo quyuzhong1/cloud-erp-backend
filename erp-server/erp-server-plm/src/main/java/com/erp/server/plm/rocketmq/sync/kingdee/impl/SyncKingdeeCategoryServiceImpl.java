@@ -48,7 +48,7 @@ public class SyncKingdeeCategoryServiceImpl implements SyncKingdeeCategoryServic
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(BasicCategoryEntity entity,String operate) {
+    public String syncDataToKingdee(BasicCategoryEntity entity,String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
         //是否存在上级
@@ -72,8 +72,7 @@ public class SyncKingdeeCategoryServiceImpl implements SyncKingdeeCategoryServic
 
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
+            return saveTask(entity,operate,resultMap);
         }
 
         //二级分类
@@ -95,7 +94,7 @@ public class SyncKingdeeCategoryServiceImpl implements SyncKingdeeCategoryServic
         resultMap.put("fNumber", fNumber);
 
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+        return saveTask(entity,operate,resultMap);
     }
 
 
@@ -107,7 +106,7 @@ public class SyncKingdeeCategoryServiceImpl implements SyncKingdeeCategoryServic
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (BasicCategoryEntity entity, String operate, Map<String, Object> resultMap) {
+    private String saveTask (BasicCategoryEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());
@@ -119,6 +118,6 @@ public class SyncKingdeeCategoryServiceImpl implements SyncKingdeeCategoryServic
         taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         taskFeignDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+        return dmpMqFeign.saveTask(taskFeignDTO);
     }
 }

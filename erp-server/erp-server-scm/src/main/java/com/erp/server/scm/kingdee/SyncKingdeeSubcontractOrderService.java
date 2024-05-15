@@ -10,5 +10,5 @@ import com.erp.model.scm.entity.SubcontractOrderEntity;
  */
 public interface SyncKingdeeSubcontractOrderService {
 
-    void syncDataToKingdee(SubcontractOrderEntity entity, String syncOperate);
+    String syncDataToKingdee(SubcontractOrderEntity entity, String syncOperate);
 }

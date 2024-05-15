@@ -11,5 +11,5 @@ public interface SyncKingdeePoReceiveService {
      * @param operate
      * @return void
      **/
-    void syncDataToKingdee(WarehouseReceiveEntity entity, String operate);
+    String syncDataToKingdee(WarehouseReceiveEntity entity, String operate);
 }

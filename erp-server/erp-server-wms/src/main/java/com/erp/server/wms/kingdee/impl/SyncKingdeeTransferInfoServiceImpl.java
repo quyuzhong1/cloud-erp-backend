@@ -65,10 +65,10 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(TransferInfoEntity entity, String operate) {
+    public String syncDataToKingdee(TransferInfoEntity entity, String operate) {
         //第三方马帮拉取数据无推送
         if (ThirdPartySystemEnum.ENUM_MB.getCode().equals(entity.getThirdPartySystem())) {
-            return;
+            return null;
         }
 
         Map<String, Object> resultMap = new HashMap<>();
@@ -82,8 +82,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         resultMap.put("operate", operate);
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
+            return saveTask(entity,operate,resultMap);
         }
 
         //调拨类型
@@ -122,7 +121,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
 
         List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
-            return;
+            throw new ServiceException(ApiError.ERROR_99048);
         }
 
         //获取sku的id集合
@@ -130,7 +129,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         if (CollectionUtils.isEmpty(detailEntityList)) {
-            return;
+            throw new ServiceException(ApiError.ERROR_95084);
         }
 
         List<String> warehouseIds = detailList.stream().flatMap(obj -> Stream.of(obj.getInWarehouseId(), obj.getOutWarehouseId())).collect(Collectors.toList());
@@ -180,7 +179,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         resultMap.put("list", list);
 
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+        return saveTask(entity,operate,resultMap);
     }
 
     /**
@@ -191,7 +190,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (TransferInfoEntity entity, String operate, Map<String, Object> resultMap) {
+    private String saveTask (TransferInfoEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());
@@ -203,6 +202,6 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
+        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
     }
 }

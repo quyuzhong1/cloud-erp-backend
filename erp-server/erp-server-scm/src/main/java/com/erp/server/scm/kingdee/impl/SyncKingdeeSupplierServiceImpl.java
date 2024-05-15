@@ -1,6 +1,5 @@
 package com.erp.server.scm.kingdee.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -18,10 +17,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.sys.dto.DictBasicDTO;
-import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
 import com.erp.server.scm.service.*;
@@ -65,9 +61,6 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
     private KingdeePaymentConditionService kingdeePaymentConditionService;
 
     @Autowired
-    private SysDictFeign sysDictFeign;
-
-    @Autowired
     private DmpMqFeign dmpMqFeign;
 
     /**
@@ -76,7 +69,7 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(SupplierEntity entity, String operate) {
+    public String syncDataToKingdee(SupplierEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
         //业务id
@@ -89,8 +82,7 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
         resultMap.put("operate", operate);
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
+            return saveTask(entity,operate,resultMap);
         }
         //名称
         resultMap.put("name",entity.getName());
@@ -102,8 +94,9 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
         resultMap.put("disabled",entity.getDisabled());
 
         //审核未通过、非反审核不推送
-        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()) && !SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            return;
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())
+                && !SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+            return null;
         }
 
         if (StringUtils.isNotBlank(entity.getPurchaseUserId())) {
@@ -188,7 +181,7 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
         }
 
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+        return saveTask(entity,operate,resultMap);
     }
 
     /**
@@ -199,7 +192,7 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (SupplierEntity entity, String operate, Map<String, Object> resultMap) {
+    private String saveTask (SupplierEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());
@@ -211,6 +204,6 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
         dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
+        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
     }
 }

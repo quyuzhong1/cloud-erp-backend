@@ -20,7 +20,7 @@ public interface SyncKingdeePurchasePriceService {
      * @param entity
      * @param operate
      */
-    void syncDataToKingdee(PurchasePriceEntity entity, String operate);
+    String syncDataToKingdee(PurchasePriceEntity entity, String operate);
     /**
      * @description: 金蝶更新分录禁用
      * @author Will
@@ -28,5 +28,5 @@ public interface SyncKingdeePurchasePriceService {
      * @param detailList
      * @param disabled
      */
-    void syncDataDetailToKingdee(List<PurchasePriceDetailEntity> detailList, Boolean disabled);
+    String syncDataDetailToKingdee(List<PurchasePriceDetailEntity> detailList, Boolean disabled);
 }

@@ -13,5 +13,5 @@ public interface SyncKingdeeOtherOutstockService {
     /**
      * 直接调拨单推送金蝶
      */
-    void syncDataToKingdee(OtherOutstockEntity entity, String operate);
+    String syncDataToKingdee(OtherOutstockEntity entity, String operate);
 }

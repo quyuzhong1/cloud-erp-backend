@@ -6,6 +6,7 @@ import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -62,10 +63,10 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(StocktakingProfitLossEntity entity, String operate) {
+    public String syncDataToKingdee(StocktakingProfitLossEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         if (Objects.isNull(entity)) {
-            return;
+            throw new ServiceException("未找到盘盈单");
         }
 
         //金蝶id
@@ -78,8 +79,7 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
         resultMap.put("operate", operate);
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
+            return saveTask(entity,operate,resultMap);
         }
 
         resultMap.put("sourceCode", entity.getSourceCode());
@@ -96,7 +96,7 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
 
         List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(Arrays.asList(entity.getId()));
         if (CollectionUtils.isEmpty(detailDbList)) {
-            return;
+            throw new ServiceException("盘盈盘亏单明细不能为空");
         }
 
         String warehouseOrgCode = "";
@@ -136,7 +136,7 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
         resultMap.put("operate", operate);
 
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+        return saveTask(entity,operate,resultMap);
     }
 
     /**
@@ -147,7 +147,7 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (StocktakingProfitLossEntity entity, String operate, Map<String, Object> resultMap) {
+    private String saveTask (StocktakingProfitLossEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());
@@ -159,6 +159,6 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
         dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
+        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
     }
 }

@@ -17,5 +17,5 @@ public interface SyncKingdeeSysUserInfoService {
      * @param entity
      * @param operate
      */
-    void syncDataToKingdee(SysUserInfoEntity entity,String operate);
+    String syncDataToKingdee(SysUserInfoEntity entity,String operate);
 }

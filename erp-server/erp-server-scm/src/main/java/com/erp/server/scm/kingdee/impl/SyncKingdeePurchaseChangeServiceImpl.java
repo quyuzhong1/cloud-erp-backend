@@ -8,19 +8,15 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SubcontractTypeEnum;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.scm.entity.*;
@@ -30,7 +26,10 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchaseChangeService;
-import com.erp.server.scm.service.*;
+import com.erp.server.scm.service.PurchaseChangeDetailService;
+import com.erp.server.scm.service.PurchaseOrderDetailService;
+import com.erp.server.scm.service.PurchaseOrderService;
+import com.erp.server.scm.service.SupplierService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -52,9 +51,6 @@ import java.util.stream.Collectors;
 public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchaseChangeService {
 
     @Resource
-    private PurchaseChangeService purchaseChangeService;
-
-    @Resource
     private PurchaseChangeDetailService purchaseChangeDetailService;
 
     @Resource
@@ -65,9 +61,6 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
 
     @Resource
     private SupplierService supplierService;
-
-    @Resource
-    private MQProducerService mQProducerService;
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
@@ -82,7 +75,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(PurchaseChangeEntity entity, String operate) {
+    public String syncDataToKingdee(PurchaseChangeEntity entity, String operate) {
 
         //采购订单未同步成功则无需推送采购变更
         PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(entity.getPurchaseOrderId());
@@ -232,7 +225,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         resultMap.put("detailList",list);
 
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+        return saveTask(entity,operate,resultMap);
     }
 
     /**
@@ -243,7 +236,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (PurchaseChangeEntity entity, String operate, Map<String, Object> resultMap) {
+    private String saveTask (PurchaseChangeEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());
@@ -256,6 +249,6 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         taskFeignDTO.setSyncOperate(operate);
         taskFeignDTO.setParentId(entity.getPurchaseOrderId());
-        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+        return dmpMqFeign.saveTask(taskFeignDTO);
     }
 }

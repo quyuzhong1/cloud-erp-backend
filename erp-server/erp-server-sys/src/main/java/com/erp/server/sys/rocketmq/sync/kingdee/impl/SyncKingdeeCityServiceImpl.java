@@ -12,12 +12,10 @@ import com.common.message.enums.AssistantDataEnum;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeCityService;
 import com.erp.server.sys.service.DictCityService;
-import com.erp.server.sys.service.DictCountryService;
 import com.erp.server.sys.service.ThirdpartyRefBusinessService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -47,7 +45,7 @@ public class SyncKingdeeCityServiceImpl implements SyncKingdeeCityService {
     private DmpMqFeign dmpMqFeign;
 
     @Override
-    public void syncDataToKingdee(DictCityEntity entity, String operate) {
+    public String syncDataToKingdee(DictCityEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         Boolean isExistParent = true;
         resultMap.put("isExistParent", isExistParent);
@@ -71,8 +69,7 @@ public class SyncKingdeeCityServiceImpl implements SyncKingdeeCityService {
         String fNumber = AssistantDataEnum.CITY.getCode();
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
+            return saveTask(entity,operate,resultMap);
         }
         if(isExistParent){
             DictCityEntity cityEntity = dictCityService.getById(entity.getParentId());
@@ -90,11 +87,10 @@ public class SyncKingdeeCityServiceImpl implements SyncKingdeeCityService {
         }
         resultMap.put("moduleType",moduleType);
         resultMap.put("fNumber", fNumber);
-        sendMqAndSaveTask(entity,operate,resultMap);
-
+        return saveTask(entity,operate,resultMap);
     }
 
-    private void sendMqAndSaveTask(DictCityEntity entity, String operate, Map<String, Object> resultMap) {
+    private String saveTask(DictCityEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());
@@ -106,7 +102,7 @@ public class SyncKingdeeCityServiceImpl implements SyncKingdeeCityService {
         taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         taskFeignDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+        return dmpMqFeign.saveTask(taskFeignDTO);
 
     }
 

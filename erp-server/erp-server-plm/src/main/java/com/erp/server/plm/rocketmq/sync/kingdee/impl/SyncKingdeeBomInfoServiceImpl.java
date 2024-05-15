@@ -7,6 +7,7 @@ import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -55,21 +56,23 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(BomInfoEntity entity,String operate) {
+    public List<String> syncDataToKingdee(BomInfoEntity entity,String operate) {
 
         //bom历史数据
         List<ProductBomHistoryEntity> bomHistoryList = productBomHistoryService.listByBomId(entity.getId());
         if (CollectionUtils.isEmpty(bomHistoryList)) {
-            return;
+            throw new ServiceException("bom历史数据不能为空");
         }
         //bom历史明细数据
         List<String> bomHistoryIdList = bomHistoryList.stream().map(ProductBomHistoryEntity::getId).collect(Collectors.toList());
         List<ProductBomSkuHistoryEntity> skuHistoryList = productBomSkuHistoryService.getSkuByHistoryIds(bomHistoryIdList);
-        if (CollectionUtils.isEmpty(bomHistoryIdList)) {
-            return;
+        if (CollectionUtils.isEmpty(skuHistoryList)) {
+            throw new ServiceException("bom历史明细数据不能为空");
         }
 
         List<Map<String, Object>> listMap = new ArrayList<>();
+
+        List<String> pushTaskIdList = new ArrayList<>();
 
         for (ProductBomHistoryEntity productBomHistoryEntity : bomHistoryList) {
             Map<String, Object> resultMap = new HashMap<>();
@@ -82,7 +85,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
 
             List<ProductBomSkuHistoryEntity> childrenList = skuHistoryList.stream().filter(obj -> obj.getBomHistoryId().equals(productBomHistoryEntity.getId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(childrenList)) {
-                continue;
+               throw new ServiceException("bom历史子级明细数据不能为空");
             }
             //父级物料
             ProductBomSkuHistoryEntity parent = childrenList.get(0);
@@ -95,8 +98,9 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
 
             //删除操作
             if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-                sendMqAndSaveTask(operate,resultMap);
-                return;
+                String id = saveTask(operate, resultMap);
+                pushTaskIdList.add(id);
+                continue;
             }
             if (!entity.getBomVersion().equals(productBomHistoryEntity.getBomVersion())) {
                 DmpPushTaskEntity productBomHistoryTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PRODUCT_BOM_INFO.getCode(), productBomHistoryEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
@@ -117,12 +121,14 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
             listMap.add(resultMap);
         }
         if (CollectionUtils.isEmpty(listMap)) {
-            return;
+            return null;
         }
         listMap.forEach(obj -> {
             //生成任务
-            sendMqAndSaveTask(operate, obj);
+            String id = saveTask(operate, obj);
+            pushTaskIdList.add(id);
         });
+        return pushTaskIdList;
     }
 
     /**
@@ -132,7 +138,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (String operate,Map<String, Object> resultMap) {
+    private String saveTask (String operate,Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId((String)resultMap.get("id"));
@@ -144,6 +150,6 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         taskFeignDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+        return dmpMqFeign.saveTask(taskFeignDTO);
     }
 }

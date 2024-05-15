@@ -9,5 +9,5 @@ import com.erp.model.scm.entity.SubcontractChangeEntity;
  */
 public interface SyncKingdeeSubcontractChangeService {
 
-    void syncDataToKingdee(SubcontractChangeEntity entity, String syncOperate);
+    String syncDataToKingdee(SubcontractChangeEntity entity, String syncOperate);
 }

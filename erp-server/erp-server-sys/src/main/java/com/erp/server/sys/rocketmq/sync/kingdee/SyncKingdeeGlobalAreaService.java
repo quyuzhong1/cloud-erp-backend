@@ -16,5 +16,5 @@ public interface SyncKingdeeGlobalAreaService {
      * @param entity
      * @param
      */
-    void syncDataToKingdee(DictGlobalAreaEntity entity, String operate);
+    String syncDataToKingdee(DictGlobalAreaEntity entity, String operate);
 }

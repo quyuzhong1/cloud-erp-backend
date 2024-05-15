@@ -14,5 +14,5 @@ public interface SyncKingdeeSoChangeService {
     /**
      * 推送金蝶
      */
-    void syncDataToKingdee(SoChangeEntity entity, String operate);
+    String syncDataToKingdee(SoChangeEntity entity, String operate);
 }

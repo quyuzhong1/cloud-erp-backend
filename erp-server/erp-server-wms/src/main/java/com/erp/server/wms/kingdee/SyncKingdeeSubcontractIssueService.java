@@ -1,6 +1,5 @@
 package com.erp.server.wms.kingdee;
 
-import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
 
 /**
@@ -13,5 +12,5 @@ public interface SyncKingdeeSubcontractIssueService {
     /**
      * 直接调拨单推送金蝶
      */
-    void syncDataToKingdee(SubcontractIssueEntity entity, String operate);
+    String syncDataToKingdee(SubcontractIssueEntity entity, String operate);
 }

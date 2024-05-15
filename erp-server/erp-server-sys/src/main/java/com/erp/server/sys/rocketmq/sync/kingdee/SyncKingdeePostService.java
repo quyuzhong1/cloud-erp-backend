@@ -18,5 +18,5 @@ public interface SyncKingdeePostService {
      * @date 2024-03-13 15:49
      * @author Lambda
      */
-    void syncDataToKingdee(KingdeePostEntity kingdeePostEntity, String code);
+    String syncDataToKingdee(KingdeePostEntity kingdeePostEntity, String code);
 }

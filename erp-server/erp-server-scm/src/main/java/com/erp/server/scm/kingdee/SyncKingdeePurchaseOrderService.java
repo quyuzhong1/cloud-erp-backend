@@ -17,5 +17,5 @@ public interface SyncKingdeePurchaseOrderService {
      * @param entity
      * @param operate
      */
-    void syncDataToKingdee(PurchaseOrderEntity entity, String operate);
+    String syncDataToKingdee(PurchaseOrderEntity entity, String operate);
 }

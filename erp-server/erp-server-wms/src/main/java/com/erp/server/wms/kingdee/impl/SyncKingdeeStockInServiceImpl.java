@@ -10,6 +10,8 @@ import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -35,7 +37,6 @@ import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeStockInService;
 import com.erp.server.wms.service.PoInstockDetailService;
 import com.erp.server.wms.service.WarehouseReceiveDetailService;
-import com.erp.server.wms.service.WarehouseReceiveService;
 import com.erp.server.wms.service.WarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -93,7 +94,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(PoInstockEntity entity, String operate) {
+    public String syncDataToKingdee(PoInstockEntity entity, String operate) {
 
         //如果上游单据未发送成功则无需发送
         if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
@@ -116,8 +117,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         resultMap.put("operate", operate);
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
+            return saveTask(entity,operate,resultMap);
         }
 
         PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
@@ -195,7 +195,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         //入库单明细
         List<PoInstockDetailEntity> detailList = poInstockDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
-            return;
+            throw new ServiceException(ApiError.ERROR_98051);
         }
 
         //获取sku的id集合
@@ -282,7 +282,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         resultMap.put("list", list);
 
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+        return saveTask(entity,operate,resultMap);
     }
 
     /**
@@ -293,7 +293,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (PoInstockEntity entity, String operate, Map<String, Object> resultMap) {
+    private String saveTask (PoInstockEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());
@@ -306,6 +306,6 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
         dmpSyncTaskDTO.setParentId(entity.getPurchaseOrderId());
-        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
+        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
     }
 }

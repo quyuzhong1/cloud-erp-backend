@@ -13,5 +13,5 @@ public interface SyncKingdeeTransferInfoService {
     /**
      * 直接调拨单推送金蝶
      */
-    void syncDataToKingdee(TransferInfoEntity entity, String operate);
+    String syncDataToKingdee(TransferInfoEntity entity, String operate);
 }

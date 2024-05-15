@@ -17,5 +17,5 @@ public interface SyncKingdeePurchaseChangeService {
      * @param entity
      * @parChangerate
      */
-    void syncDataToKingdee(PurchaseChangeEntity entity, String operate);
+    String syncDataToKingdee(PurchaseChangeEntity entity, String operate);
 }

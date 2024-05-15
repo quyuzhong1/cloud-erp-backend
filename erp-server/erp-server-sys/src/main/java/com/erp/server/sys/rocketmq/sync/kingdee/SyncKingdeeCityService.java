@@ -16,5 +16,5 @@ public interface SyncKingdeeCityService {
      * @param
      * @param
      */
-    void syncDataToKingdee(DictCityEntity addEntity, String operate);
+    String syncDataToKingdee(DictCityEntity addEntity, String operate);
 }

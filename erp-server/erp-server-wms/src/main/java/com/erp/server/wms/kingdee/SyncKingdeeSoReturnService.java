@@ -6,5 +6,5 @@ public interface SyncKingdeeSoReturnService {
     /**
      * 推送金蝶
      */
-    void syncDataToKingdee(SoReturnInstockEntity entity, String operate);
+    String syncDataToKingdee(SoReturnInstockEntity entity, String operate);
 }

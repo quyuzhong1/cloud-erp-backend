@@ -66,7 +66,7 @@ public interface CustomerContactService extends SuperService<CustomerContactEnti
      * @param contactList
      * @return void
      */
-    void updateBatchContact(String mainId, List<CustomerContactDTO.ViewDTO> contactList);
+    List<String> updateBatchContact(String mainId, List<CustomerContactDTO.ViewDTO> contactList);
     /**
      * 修改金蝶同步信息
      * @Author Luo_WG

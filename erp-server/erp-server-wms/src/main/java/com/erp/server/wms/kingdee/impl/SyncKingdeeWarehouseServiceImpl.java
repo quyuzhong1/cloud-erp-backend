@@ -10,6 +10,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -63,7 +64,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(WarehouseEntity entity, String operate) {
+    public String syncDataToKingdee(WarehouseEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
         //金蝶id
@@ -78,8 +79,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         resultMap.put("operate", operate);
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
+            return saveTask(entity,operate,resultMap);
         }
 
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getOrgId()));
@@ -106,7 +106,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
 
         //审核未通过、非反审核不推送
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()) && !SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            return;
+            return null;
         }
 
         //仓库类型
@@ -126,13 +126,13 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
             List<WarehouseLocationEntity> areaList = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(obj.getWarehouseId()) && WarehouseLocationTypeEnum.AREA.getCode().equals(obj.getType())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(areaList)) {
                 log.error("仓库对应区域未找到，code = {},name = {}",entity.getKingdeeWarehouseCode(),entity.getName());
-                return;
+                throw new ServiceException("仓库对应区域未找到");
             }
             //仓位
             List<WarehouseLocationEntity> locationList = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(obj.getWarehouseId()) && WarehouseLocationTypeEnum.LOCATION.getCode().equals(obj.getType())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(locationList)) {
                 log.error("仓库对应仓位未找到，code = {},name = {}",entity.getKingdeeWarehouseCode(),entity.getName());
-                return;
+                throw new ServiceException("仓库对应仓位未找到");
             }
             List<JSONObject> areaJsonList = new ArrayList<>();
             for (WarehouseLocationEntity area : areaList) {
@@ -143,7 +143,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
                 List<WarehouseLocationEntity> childLocationList = locationList.stream().filter(obj -> area.getId().equals(obj.getParentId())).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(locationList)) {
                     log.error("仓库对应区域下仓位未找到，code = {},name = {},area = {}",entity.getKingdeeWarehouseCode(),entity.getName(),area.getCode());
-                    return;
+                    throw new ServiceException("仓库对应区域下仓位未找到");
                 }
                 List<JSONObject> locationJsonList = new ArrayList<>();
                 for (WarehouseLocationEntity childLocation : childLocationList) {
@@ -158,7 +158,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         }
 
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+        return saveTask(entity,operate,resultMap);
     }
 
     /**
@@ -169,7 +169,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (WarehouseEntity entity, String operate, Map<String, Object> resultMap) {
+    private String saveTask (WarehouseEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());
@@ -181,6 +181,6 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
+        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
     }
 }

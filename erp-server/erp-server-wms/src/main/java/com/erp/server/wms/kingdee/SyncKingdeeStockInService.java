@@ -12,5 +12,5 @@ public interface SyncKingdeeStockInService {
      * @param operate
      * @return void
      **/
-    void syncDataToKingdee(PoInstockEntity entity, String operate);
+    String syncDataToKingdee(PoInstockEntity entity, String operate);
 }

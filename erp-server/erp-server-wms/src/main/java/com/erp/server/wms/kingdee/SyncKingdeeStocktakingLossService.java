@@ -10,5 +10,5 @@ import com.erp.model.wms.entity.StocktakingProfitLossEntity;
  * @Created by yl
  */
 public interface SyncKingdeeStocktakingLossService {
-    void syncDataToKingdee(StocktakingProfitLossEntity entity, String code);
+    String syncDataToKingdee(StocktakingProfitLossEntity entity, String code);
 }

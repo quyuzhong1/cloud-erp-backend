@@ -6,6 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -15,7 +16,6 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
-import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -93,7 +93,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(SoChangeEntity entity, String operate) {
+    public String syncDataToKingdee(SoChangeEntity entity, String operate) {
         String id = entity.getId();
 
         Map<String, Object> resultMap = new HashMap<>();
@@ -106,13 +106,13 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
 
         List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailByMainId(id);
         if (CollectionUtils.isEmpty(detailList)) {
-            return;
+           throw new ServiceException("未找到变更明细数据");
         }
         String soId = entity.getSoId();
         SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soId);
         SoInfoEntity soInfoEntity = soInfoService.getById(soId);
         if (Objects.isNull(soInfo) || Objects.isNull(soInfoEntity)) {
-            return;
+           throw new ServiceException("未找到销售订单数据");
         }
 
         //填充数据
@@ -240,7 +240,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         resultMap.put("detailList", list);
 
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+       return saveTask(entity,operate,resultMap);
     }
 
 
@@ -313,7 +313,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (SoChangeEntity entity, String operate, Map<String, Object> resultMap) {
+    private String saveTask (SoChangeEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());
@@ -325,7 +325,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         taskFeignDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+       return dmpMqFeign.saveTask(taskFeignDTO);
     }
 
 }

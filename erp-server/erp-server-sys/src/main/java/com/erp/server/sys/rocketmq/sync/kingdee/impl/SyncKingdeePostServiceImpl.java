@@ -4,6 +4,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -39,9 +40,9 @@ public class SyncKingdeePostServiceImpl implements SyncKingdeePostService {
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     @Override
-    public void syncDataToKingdee(KingdeePostEntity entity, String operate) {
+    public String syncDataToKingdee(KingdeePostEntity entity, String operate) {
         if (ObjectUtils.isEmpty(entity)) {
-            return;
+            throw new ServiceException("金蝶岗位表不存在");
         }
         Map<String, Object> resultMap = new HashMap<>();
         //业务id
@@ -56,7 +57,7 @@ public class SyncKingdeePostServiceImpl implements SyncKingdeePostService {
         resultMap.put("useOrgCode",useOrgCode);
         resultMap.put("deptCode", entity.getKingdeeDeptCode());
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+        return saveTask(entity,operate,resultMap);
 
     }
 
@@ -67,7 +68,7 @@ public class SyncKingdeePostServiceImpl implements SyncKingdeePostService {
      * @date 2024-03-13 15:53
      * @author Lambda
      */
-    private void sendMqAndSaveTask(KingdeePostEntity entity, String operate, Map<String, Object> resultMap) {
+    private String saveTask(KingdeePostEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());
@@ -79,6 +80,6 @@ public class SyncKingdeePostServiceImpl implements SyncKingdeePostService {
         dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
+        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
     }
 }

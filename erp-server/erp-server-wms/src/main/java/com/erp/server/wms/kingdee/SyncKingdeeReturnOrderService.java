@@ -17,5 +17,5 @@ public interface SyncKingdeeReturnOrderService {
      * @param operate
      * @return void
      **/
-    void syncDataToKingdee(PoReturnEntity entity, String operate);
+    String syncDataToKingdee(PoReturnEntity entity, String operate);
 }

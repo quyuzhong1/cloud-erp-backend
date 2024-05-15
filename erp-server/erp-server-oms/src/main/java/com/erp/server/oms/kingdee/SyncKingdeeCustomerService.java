@@ -1,11 +1,13 @@
 package com.erp.server.oms.kingdee;
 
+import cn.hutool.core.lang.Pair;
 import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.wms.entity.OtherInstockEntity;
+
+import java.util.List;
 
 public interface SyncKingdeeCustomerService {
     /**
      * 推送金蝶
      */
-    void syncDataToKingdee(CustomerInfoEntity entity, String operate);
+    Pair<String, List<String>> syncDataToKingdee(CustomerInfoEntity entity, String operate);
 }

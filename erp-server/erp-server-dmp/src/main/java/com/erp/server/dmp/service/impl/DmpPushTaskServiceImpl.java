@@ -34,7 +34,6 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.dto.excel.DmpPushTaskExportExcelDTO;
-import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskHistoryEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -98,24 +97,37 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void sendMqAndSaveTask(DmpPushTaskFeignDTO dto) {
+    public String saveTask(DmpPushTaskFeignDTO dto) {
         // 保存任务表
         DmpPushTaskEntity entity = new DmpPushTaskEntity(dto);
-
-        //查询来源上级单据
-        Boolean isSend = isSendParentBillTask(entity);
         String entityId = saveOrUpdateDmpSyncTask(entity);
-        //判断是否存在上级单据，并且推送成功
-        if (Boolean.FALSE.equals(isSend)) {
+        return entityId;
+    }
+
+    @Override
+    public void sendTask(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
             return;
         }
-        // 发送MQ消息
-        String mqData = dto.getMqData();
-        JSONObject jsonObject = JSONUtil.parseObj(mqData);
-        jsonObject.set("dmpSyncTaskId",entityId);
-        SendResult result = mqProducerService.syncClassMsg(dto.getMqTopic(), dto.getMqTag(), JSONUtil.toJsonStr(jsonObject), entity.getSourceId());
-        if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+        List<DmpPushTaskEntity> dmpPushTaskEntityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(dmpPushTaskEntityList)) {
+            return;
+        }
+        for (DmpPushTaskEntity entity :dmpPushTaskEntityList) {
+            //查询来源上级单据
+            Boolean isSend = isSendParentBillTask(entity);
+            //判断是否存在上级单据，并且推送成功
+            if (Boolean.FALSE.equals(isSend)) {
+                return;
+            }
+            // 发送MQ消息
+            String mqData = entity.getMqData();
+            JSONObject jsonObject = JSONUtil.parseObj(mqData);
+            jsonObject.set("dmpSyncTaskId",entity.getId());
+            SendResult result = mqProducerService.syncClassMsg(entity.getMqTopic(), entity.getMqTag(), JSONUtil.toJsonStr(jsonObject), entity.getSourceId());
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            }
         }
     }
 

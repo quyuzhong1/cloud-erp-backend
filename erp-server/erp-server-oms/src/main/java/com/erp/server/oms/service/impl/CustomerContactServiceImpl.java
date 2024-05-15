@@ -1,7 +1,6 @@
 package com.erp.server.oms.service.impl;
 
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -11,12 +10,12 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.CustomerContactDTO;
 import com.erp.model.oms.entity.CustomerContactEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerContactService;
 import com.erp.server.oms.mapper.CustomerContactMapper;
 import com.erp.server.oms.service.CustomerContactService;
 import com.erp.server.oms.service.OperateLogService;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -135,7 +134,10 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateBatchContact(String mainId, List<CustomerContactDTO.ViewDTO> contactList) {
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public List<String> updateBatchContact(String mainId, List<CustomerContactDTO.ViewDTO> contactList) {
+        List<String> pushTaskIdList = new ArrayList<>();
+
         List<CustomerContactEntity> saveOrUpdateList = new ArrayList<>(contactList.size());
         //这是修改的
         List<CustomerContactDTO.ViewDTO> updateList = contactList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
@@ -147,7 +149,6 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
         List<CustomerContactEntity> addEntityList = BeanMapper.copyList(addList, CustomerContactEntity.class);
         addEntityList.forEach(req -> {
             //生成单号
-//            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.KHLXR, BusinessNoTypeEnum.CODE_KHLXR.getCode()));
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHLXR);
             req.setCode(code);
         });
@@ -159,7 +160,10 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
         List<CustomerContactEntity> removeList = dbList.stream().filter(r -> deleteIdList.contains(r.getId())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             //删除联系人发送金蝶
-            removeList.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+            removeList.forEach(obj -> {
+                String pushTaskId = syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode());
+                pushTaskIdList.add(pushTaskId);
+            });
             this.removeByIds(deleteIdList);
         }
         saveOrUpdateList.forEach(s -> s.setMainId(mainId));
@@ -181,6 +185,7 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
         if(CollectionUtils.isNotEmpty(saveOrUpdateList)){
             this.saveOrUpdateBatch(saveOrUpdateList);
         }
+        return pushTaskIdList;
     }
 
     
