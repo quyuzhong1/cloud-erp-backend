@@ -100,10 +100,9 @@ public class  OrderMongoDTO {
         this.id = id;
     }
 
-    public static OrderMongoDTO getByFIdAndBillNo(String fBillNo, String fId) {
+    public static OrderMongoDTO getByFIdAndBillNo(String fBillNo) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
         orderMongoDTO.setBillNo(fBillNo);
-        orderMongoDTO.setFId(fId);
         return orderMongoDTO;
     }
 

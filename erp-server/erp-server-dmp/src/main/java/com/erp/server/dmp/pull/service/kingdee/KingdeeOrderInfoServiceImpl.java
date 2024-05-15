@@ -110,7 +110,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         List<KingdeeOrderEntity> insertList = new ArrayList<>();
         List<KingdeeOrderEntity> pushToMqList = new ArrayList<>();
         for (KingdeeOrderEntity entity : entityList) {
-            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByFIdAndBillNo(entity.getFBillNo(), entity.getFId());
+            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByFIdAndBillNo(entity.getFBillNo());
             List<KingdeeOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeOrderEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
             entity.setDownloadTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
