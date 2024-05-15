@@ -235,7 +235,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         log.info("状态变更日志数据，id集合：【{}】", id);
         String msg = StrUtil.format("用户【{}】自发货费用【{}】的【{}】单据{}操作 ", commonService.getUserInfo().getUserName(), entity.getTransportNo(), "自发货费用", ReconciliationStatusEnum.getName(reconciliationStatus));
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), entity.getTransportNo(), "启用/停用");
-        return BatchResultDTO.success(entity.getId(), entity.getTransportNo(), OperationTypeEnum.UPDATE_STATUS);
+        return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.UPDATE_STATUS);
     }
 
     @Override
