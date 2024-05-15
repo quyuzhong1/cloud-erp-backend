@@ -224,18 +224,21 @@ public class DmpOrderItemSplitEntity implements Serializable {
      * 清洗前成本价
      */
     @TableField(value = "original_cost_price")
+    @Deprecated
     private BigDecimal originalCostPrice;
 
     /**
      * 清洗前销售额
      */
     @TableField(value = "original_amount_after")
+    @Deprecated
     private BigDecimal originalAmountAfter;
 
     /**
      * 清洗前数量
      */
     @TableField(value = "original_quantity")
+    @Deprecated
     private Integer originalQuantity;
 
     /**

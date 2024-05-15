@@ -15,7 +15,6 @@ import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.dto.DmpOrderItemGroup;
 import com.erp.model.dmp.dto.SplitSkuDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -457,10 +456,6 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
         return itemListAll;
     }
 
-    @Override
-    public List<DmpOrderItemGroup> listByGroup() {
-        return baseMapper.listByGroup();
-    }
 
     /**
      * 查询bom子级的成本信息
