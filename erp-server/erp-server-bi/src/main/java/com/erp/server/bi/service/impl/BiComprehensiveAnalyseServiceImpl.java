@@ -15,7 +15,6 @@ import com.erp.model.bi.entity.BiProductDetailEntity;
 import com.erp.model.bi.entity.BiProductInfoEntity;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.SkuDTO;
@@ -54,7 +53,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     private DmpOrderInfoService dmpOrderInfoService;
 
     @Resource
-    private DmpOrderItemService dmpOrderItemService;
+    private DmpOrderItemSplitService dmpOrderItemSplitService;
 
     @Resource
     private BiProductDetailService biProductDetailService;

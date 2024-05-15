@@ -258,7 +258,7 @@
         INNER JOIN
         (
         SELECT o.platform_order_id FROM
-        dmp_order_info o INNER JOIN dmp_order_item i
+        dmp_order_info o INNER JOIN dmp_order_item_split i
         ON i.order_id = o.ID
         <where>
             <if test="params.timeType!=null and params.timeType==0">
