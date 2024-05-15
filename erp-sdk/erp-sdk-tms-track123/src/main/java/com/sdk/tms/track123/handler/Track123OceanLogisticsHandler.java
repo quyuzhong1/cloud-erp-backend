@@ -15,6 +15,7 @@ import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackBaseDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
@@ -209,13 +210,13 @@ public class Track123OceanLogisticsHandler extends AbstractLogisticsTrackHandler
      */
     private String convertOceanTrackStatus(String eventStatus) {
         if (StringUtils.isBlank(eventStatus)) {
-            return LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode();
+            return FmLogisticTrackStatusEnum.TRACK_ING.getCode();
         } else if (eventStatus.contains("ARRI")) {
-            return LogisticTrackStatusEnum.OCEAN_ARRIVE.getCode();
+            return FmLogisticTrackStatusEnum.ARRIVED.getCode();
         } else if (eventStatus.contains("HOLD")) {
-            return LogisticTrackStatusEnum.OCEAN_HOLD.getCode();
+            return FmLogisticTrackStatusEnum.INSPECTING.getCode();
         }
-        return LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode();
+        return FmLogisticTrackStatusEnum.TRACK_ING.getCode();
     }
 
     public static void main(String[] args) {
