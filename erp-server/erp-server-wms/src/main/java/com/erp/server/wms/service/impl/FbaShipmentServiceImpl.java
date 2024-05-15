@@ -54,7 +54,6 @@ import com.erp.server.wms.convert.FbaShipmentConverter;
 import com.erp.server.wms.mapper.FbaShipmentMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
-import lombok.experimental.Helper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -1319,8 +1318,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         for (FbaShipmentDTO.GenerateRequisitionApplicationViewDTO viewDTO : list) {
             //FBA下推要货单要货类型默认是：销售平台
-            viewDTO.setType(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode());
-            viewDTO.setTypeName(RequisitionApplicationTypeEnum.SALES_PLATFORM.getName());
+            viewDTO.setType(RequisitionApplicationTypeEnum.FBA.getCode());
+            viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBA.getName());
             //来源类型
             viewDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
             //来源类型中文

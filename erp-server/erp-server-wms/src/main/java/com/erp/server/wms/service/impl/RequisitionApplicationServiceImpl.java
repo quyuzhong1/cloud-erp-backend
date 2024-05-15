@@ -436,7 +436,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             //根据类型设置第三方SKU信息
             RequisitionApplicationEntity mainEntity = list.stream().filter(v->v.getId().equals(requisitionApplicationDetailEntity.getMainId())).findFirst().get();
             ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = null;
-            if(mainEntity.getType().equals(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode())){
+            if(mainEntity.getType().equals(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode())){
                 List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(mainEntity.getChannelId()));
                 if(CollectionUtils.isNotEmpty(viewDTOList)){
                     String provideCode = viewDTOList.get(0).getProviderCode();
@@ -620,6 +620,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 resultDTOList.add(BatchResultDTO.fail(bindShipment.getId(),bindShipment.getId(), "单据不存在"));
                 continue;
             }
+            if(!RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())){
+                resultDTOList.add(BatchResultDTO.fail(requisitionApplicationEntity.getId(),requisitionApplicationEntity.getCode(), "不是FBA要货单，无法绑定货件"));
+                continue;
+            }
             if(!requisitionApplicationEntity.getStatus().equals(RequisitionApplicationStatusEnum.HANDLE.getCode())){
                 resultDTOList.add(BatchResultDTO.fail(requisitionApplicationEntity.getId(),requisitionApplicationEntity.getCode(), "要货申请必须已处理才能绑定货件单号"));
                 continue;
@@ -627,6 +631,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             FbaShipmentEntity fbaShipmentEntity = fbaShipmentEntities.stream().filter(req -> req.getId().equals(bindShipment.getShipmentId())).findFirst().orElse(null);
             if(Objects.isNull(fbaShipmentEntity)){
                 resultDTOList.add(BatchResultDTO.fail(requisitionApplicationEntity.getId(),requisitionApplicationEntity.getCode(), "货件在系统不存在"));
+                continue;
+            }
+            if(fbaShipmentEntity.getCode().equals(requisitionApplicationEntity.getFbaShipmentCode())){
                 continue;
             }
             RequisitionApplicationEntity existBind = existBinds.stream().filter(req -> req.getFbaShipmentCode().equals(fbaShipmentEntity.getCode())).findFirst().orElse(null);
@@ -641,7 +648,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId(), "绑定货件");
         }
         if(CollectionUtils.isNotEmpty(updateList)){
-            service.saveBatch(updateList);
+            service.updateBatchById(updateList);
         }
         return resultDTOList;
     }
@@ -658,13 +665,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 return;
             }
             String channelName = "";
-            if(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode().equals(requisitionApplicationEntity.getType())){
+            if(RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())){
                 ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(requisitionApplicationEntity.getChannelId());
                 if(Objects.nonNull(shopInfoEntity)){
                     channelName = shopInfoEntity.getName();
                 }
             }
-            if(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode().equals(requisitionApplicationEntity.getType())){
+            if(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(requisitionApplicationEntity.getType())){
                 OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(requisitionApplicationEntity.getChannelId());
                 if(Objects.nonNull(overseasProviderWarehouseEntity)){
                     channelName =  overseasProviderWarehouseEntity.getWarehouseName();
