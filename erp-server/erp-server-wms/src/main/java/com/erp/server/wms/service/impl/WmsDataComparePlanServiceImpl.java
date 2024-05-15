@@ -110,9 +110,6 @@ public class WmsDataComparePlanServiceImpl extends SuperServiceImpl<WmsDataCompa
 	@Override
 	public List<ViewDTO> get(GetDTO dto) {
 		String billType = dto.getBillType();
-		if(StringUtils.isBlank(billType)) {
-			throw new ServiceException("单据类型不能为空");
-		}
 		List<WmsDataComparePlanEntity> list = this.list(Wrappers.<WmsDataComparePlanEntity>lambdaQuery().eq(WmsDataComparePlanEntity::getBillType, billType));
 		return BeanMapperUtils.copyList(ViewDTO.class, list);
 	}
