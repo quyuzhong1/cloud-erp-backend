@@ -58,7 +58,6 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -172,9 +171,6 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //处理数据id
         doOpHandleDataId(dto.getWarehouseId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(), entity);
         log.info("加工单新增");
-        List<String> checkSkuIdList=dto.getDetailList().stream().
-                map(MachineDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-        checkSkuIsCombination(checkSkuIdList);
         //生成单号
         String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZZCX);
         entity.setCode(code);
@@ -190,27 +186,6 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     }
 
 
-    /**
-     * @description
-     * @param checkSkuIdList 检查 的sku
-     * @return
-     * @date 2024-02-28 11:58
-     * @author Lambda
-     */
-    private void checkSkuIsCombination(List<String> checkSkuIdList) {
-        List<BomChildrenSkuDTO> bomSkuList = plmTaskFeign.listBomChildBySkuIds(checkSkuIdList);
-        //套装
-        String combinationType = BomTypeEnum.COMBINATION.getType();
-        //套装bom的父级sku
-        List<String> parentSkuIdList = bomSkuList.stream().filter(b-> combinationType.equals(b.getType())).
-                map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
-
-        List<String> notExistSkuIdList = checkSkuIdList.stream().filter(c -> !parentSkuIdList.contains(c)).collect(Collectors.toList());
-        if(CollectionUtils.isNotEmpty(notExistSkuIdList)){
-            throw new ServiceException("存在非销售套装的sku");
-        }
-
-    }
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -237,9 +212,6 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
-        List<String> checkSkuIdList=dto.getDetailList().stream().
-                map(MachineDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
-        checkSkuIsCombination(checkSkuIdList);
 
         MachineInfoEntity entity = new MachineInfoEntity();
         BeanMapperUtils.copy(dto, entity);
