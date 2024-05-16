@@ -260,10 +260,10 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
         		dataCompareSettingDTO.setSysFieldName(sysHeadField);
         		dataCompareSettingDTO.setSysField(sysHeadField);
         		dataCompareSettingDTO.setSysFieldIndex(index + 1);
-        		dataCompareSettingDTO.setDefultImportFiled(importFileds.stream().filter(i -> i.getImportField().equals(dataCompareSettingDTO.getSysFieldName()))
+        		dataCompareSettingDTO.setImportFiled(importFileds.stream().filter(i -> i.getImportField().equals(dataCompareSettingDTO.getSysFieldName()))
         				.findAny().orElse(new DataCompareSettingImprotDTO()).getImportField());
         		dataCompareSettingDTO.setImportFileds(importFileds);
-        		dataCompareSettingDTO.setDefultDatatype(WmsDataCompareTaskClassTypeEnum.STRING.getCode());
+        		dataCompareSettingDTO.setClassType(WmsDataCompareTaskClassTypeEnum.STRING.getCode());
             	dataCompareSettingDTO.setDataTypes(dataTypes);
         		dataCompareSettingDTO.setStatus(Boolean.FALSE);
         		index = index + 1;
@@ -277,14 +277,14 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
         		dataCompareSettingDTO.setSysFieldName(dictBasicEntity.getName());
         		dataCompareSettingDTO.setSysField(dictBasicEntity.getValue());
         		dataCompareSettingDTO.setSysFieldIndex(dictBasicEntity.getSort());
-        		dataCompareSettingDTO.setDefultImportFiled(importFileds.stream().filter(i -> i.getImportField().equals(dataCompareSettingDTO.getSysFieldName()))
+        		dataCompareSettingDTO.setImportFiled(importFileds.stream().filter(i -> i.getImportField().equals(dataCompareSettingDTO.getSysFieldName()))
         				.findAny().orElse(new DataCompareSettingImprotDTO()).getImportField());
         		dataCompareSettingDTO.setImportFileds(importFileds);
         		String remark = dictBasicEntity.getRemark();
         		if(StringUtils.isBlank(remark)) {
         			remark = WmsDataCompareTaskClassTypeEnum.STRING.getCode();
         		}
-        		dataCompareSettingDTO.setDefultDatatype(remark);
+        		dataCompareSettingDTO.setClassType(remark);
         		dataCompareSettingDTO.setDataTypes(dataTypes);
         		dataCompareSettingDTO.setStatus(dictBasicEntity.getStatus());
         		settingList.add(dataCompareSettingDTO);
