@@ -146,7 +146,7 @@ public class LogisticsLastMileCostController extends BaseController {
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                submit = BatchResultDTO.fail(entity.getId(), entity.getTrackNo(), e.getMessage());
             }
             resultDTOS.add(submit);
         }
