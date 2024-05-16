@@ -238,7 +238,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * true=无已发货的发货单
      * false=有已发货的发货单
      */
-    boolean hasNotShippedDeliveryAndLog(SoB2cEntity currentEntity);
+    boolean hasNotGenB2cSoOutStockAndLog(SoB2cEntity currentEntity);
 
     List<BatchResultDTO> logisticsIntercept(List<String> ids);
 

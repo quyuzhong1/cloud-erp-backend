@@ -2536,9 +2536,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         Boolean result = false;
         if (!currentEntity.hasPlatformWarehouseOrder()){
-            // 检查非平台仓订单的必须存在已发货状态的B2C发货单, 记录日志
-            boolean hasNotShippedDelivery = soB2cDeliveryService.hasNotShippedDeliveryAndLog(currentEntity);
-            if (hasNotShippedDelivery){
+            // 检查非平台仓订单(不包含海外仓)的必须存在已发货状态的B2C发货单, 记录日志
+            boolean hasNotGenB2cSoOutStock = soB2cDeliveryService.hasNotGenB2cSoOutStockAndLog(currentEntity);
+            if (hasNotGenB2cSoOutStock){
                 // 无已发货的发货单只清理历史异常信息
                 result = true;
             } else {
