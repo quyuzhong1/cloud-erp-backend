@@ -107,4 +107,6 @@ public interface WarehouseReceiveDetailService extends SuperService<WarehouseRec
      * @return void
      **/
     void updateKingdeeDetailId(JSONArray list);
+
+    void updateInfo(WarehouseReceiveDetailEntity wrd);
 }

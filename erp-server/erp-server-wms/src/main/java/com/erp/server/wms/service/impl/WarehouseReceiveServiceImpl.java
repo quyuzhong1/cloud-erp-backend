@@ -1943,10 +1943,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         Integer count = baseMapper.getCount();
         Integer size = 500;
         Integer page = count / size;
-        List<List<WarehouseReceiveDetailEntity>> objects = new ArrayList<>();
+        List<List<WarehouseReceiveDetailEntity>> wrdLists = new ArrayList<>();
         for (int i=0;i<=page;i++){
             List<WarehouseReceiveDetailEntity> viewDTOS = new ArrayList<>();
-            IPage<WarehouseReceiveDTO.PagingViewDTO> viewDTOIPage = baseMapper.pageDetail(new Page(i*size, size), new WarehouseReceiveDTO.PagingParamDTO());
+            IPage<WarehouseReceiveDTO.PagingViewDTO> viewDTOIPage = baseMapper.pageDetail(new Page(i+1, size), new WarehouseReceiveDTO.PagingParamDTO());
             List<WarehouseReceiveDTO.PagingViewDTO> list = viewDTOIPage.getRecords();
             if (CollectionUtils.isEmpty(list)){
                 continue;
@@ -1975,13 +1975,15 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     }
                 });
                 if (CollectionUtils.isNotEmpty(viewDTOS)){
-                    objects.add(viewDTOS);
+                    wrdLists.add(viewDTOS);
                 }
             }
         }
-        if (CollectionUtils.isNotEmpty(objects)){
-            objects.forEach(item->{
-                warehouseReceiveDetailService.updateBatchById(item,size);
+        if (CollectionUtils.isNotEmpty(wrdLists)){
+            wrdLists.forEach(wrdList->{
+                wrdList.forEach(wrd->{
+                    warehouseReceiveDetailService.updateInfo(wrd);
+                });
             });
         }
     }
