@@ -179,7 +179,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
         	wmsDataCompareImportEntity.setFileUrl(excelFile);
         	wmsDataCompareImportEntity.setParseStatus(WmsDataCompareImportParseStatusEnum.WAIT.getCode());
         	wmsDataCompareImportEntity.setCurrParseOffset(0);
-        	wmsDataCompareImportEntity.setSysFlag(Boolean.FALSE);
+        	wmsDataCompareImportEntity.setMainFlag(Boolean.FALSE);
         	wmsDataCompareImportEntityList.add(wmsDataCompareImportEntity);
         }
         
@@ -192,7 +192,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 	        	wmsDataCompareImportEntity = new WmsDataCompareImportEntity();
 	        	wmsDataCompareImportEntity.setFileUrl(excelFile);
 	        	wmsDataCompareImportEntity.setParseStatus(WmsDataCompareImportParseStatusEnum.FINISH.getCode());
-	        	wmsDataCompareImportEntity.setSysFlag(Boolean.TRUE);
+	        	wmsDataCompareImportEntity.setMainFlag(Boolean.TRUE);
 	        	wmsDataCompareImportEntityList.add(wmsDataCompareImportEntity);
 	        }
 			WmsDataCompareExcelDto sysWmsDataCompareExcelDto = validataImportFile(mainExcelFiles);
@@ -437,7 +437,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 			
 			List<WmsDataCompareImportEntity> allWmsDataCompareImportEntityList = wmsDataCompareImportService.list(Wrappers.<WmsDataCompareImportEntity>lambdaQuery()
 					.eq(WmsDataCompareImportEntity::getTaskId, id));
-			List<WmsDataCompareImportEntity> wmsDataCompareImportEntityList = allWmsDataCompareImportEntityList.stream().filter(w -> w.getSysFlag() == null || !w.getSysFlag()).collect(Collectors.toList());
+			List<WmsDataCompareImportEntity> wmsDataCompareImportEntityList = allWmsDataCompareImportEntityList.stream().filter(w -> w.getMainFlag() == null || !w.getMainFlag()).collect(Collectors.toList());
 			if(CollUtil.isNotEmpty(wmsDataCompareImportEntityList)) {
 				Map<String, List<Map<String, String>>> importAllDatasMap = new HashMap<>();
 				List<String> importHeadFields = null;
@@ -457,7 +457,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					importHeadFields = headFieldLists.get(0);
 				}
 				
-				List<WmsDataCompareImportEntity> sysWmsDataCompareImportEntityList = allWmsDataCompareImportEntityList.stream().filter(w -> w.getSysFlag() != null && w.getSysFlag()).collect(Collectors.toList());
+				List<WmsDataCompareImportEntity> sysWmsDataCompareImportEntityList = allWmsDataCompareImportEntityList.stream().filter(w -> w.getMainFlag() != null && w.getMainFlag()).collect(Collectors.toList());
 				Map<String, List<Map<String, String>>> systemAllDatasMap = new HashMap<>();
 				List<String> systemHeadFields = null;
 				for(WmsDataCompareImportEntity wmsDataCompareImportEntity : sysWmsDataCompareImportEntityList) {
@@ -686,7 +686,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 			Map<String, List<Map<String, String>>> allDatasMap = new HashMap<>();
 			List<WmsDataCompareImportEntity> wmsDataCompareImportEntityList = wmsDataCompareImportService
 					.lambdaQuery().eq(WmsDataCompareImportEntity::getTaskId, id)
-					.eq(WmsDataCompareImportEntity::getSysFlag, Boolean.FALSE)
+					.eq(WmsDataCompareImportEntity::getMainFlag, Boolean.FALSE)
 					.eq(WmsDataCompareImportEntity::getParseStatus, WmsDataCompareImportParseStatusEnum.WAIT.getCode()).list();
 			for(WmsDataCompareImportEntity wmsDataCompareImportEntity : wmsDataCompareImportEntityList) {
 				WmsDataCompareExcelDto wmsDataCompareExcelDto = WmsDataCompareUtils.getWmsDataCompareExcelDto(Arrays.asList(wmsDataCompareImportEntity.getFileUrl()));
@@ -758,7 +758,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 			}
 			if(wmsDataCompareImportService.count(Wrappers.<WmsDataCompareImportEntity>lambdaQuery()
 					.eq(WmsDataCompareImportEntity::getTaskId, id)
-					.eq(WmsDataCompareImportEntity::getSysFlag, Boolean.FALSE)
+					.eq(WmsDataCompareImportEntity::getMainFlag, Boolean.FALSE)
 					.eq(WmsDataCompareImportEntity::getParseStatus, WmsDataCompareImportParseStatusEnum.WAIT.getCode())) == 0) {
 				update(Wrappers.<WmsDataCompareTaskEntity>lambdaUpdate().set(WmsDataCompareTaskEntity::getSubStatus, WmsDataCompareTaskSubStatusEnum.WAIT_COMPARE)
 						.set(WmsDataCompareTaskEntity::getUpdateTime, LocalDateTime.now())
