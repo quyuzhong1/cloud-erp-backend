@@ -525,6 +525,11 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntityList.stream().filter(v->v.getId().equals(pagingVO.getLogisticsSupplierId())).findFirst().orElse(new LogisticsSupplierEntity());
             pagingVO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
 
+            if (StringUtils.isNotEmpty(pagingVO.getCarrierId())){
+                LogisticsCarrierEntity carrier = carrierList.stream().filter(e -> e.getId().equals(pagingVO.getCarrierId())).findFirst().orElse(null);
+                pagingVO.setCarrierName(Objects.nonNull(carrier)? carrier.getCarrierCn() : pagingVO.getCarrierId());
+            }
+
             //处理发货单相关信息
             FirstMileDeliveryDTO.GenerateLogisticDTO deliveryDto = generateLogisticDTOList.stream().filter(v->v.getOutstockId().equals(pagingVO.getOutstockId())).findFirst().orElse(null);
             if(Objects.nonNull(deliveryDto)){
@@ -576,10 +581,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 }else{
                     pagingVO.setWarnMsg(StrUtil.format("已超期[]小时",pagingVO.getWarnHour()));
                 }
-            }
-            if (StringUtils.isNotEmpty(pagingVO.getCarrierId())){
-                LogisticsCarrierEntity carrier = carrierList.stream().filter(e -> e.getId().equals(pagingVO.getCarrierId())).findFirst().orElse(null);
-                pagingVO.setCarrierName(Objects.nonNull(carrier)? carrier.getCarrierCn() : pagingVO.getCarrierId());
             }
         }
     }

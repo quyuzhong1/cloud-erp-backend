@@ -104,6 +104,12 @@ public class WmsDataCompareTaskEntity extends BaseEntity<WmsDataCompareTaskEntit
     */
     @TableField("result_report_url")
     private String resultReportUrl;
+    
+    /**
+     * 对比类型 WmsDataCompareTypeEnum
+     */
+    @TableField("compare_type")
+    private String compareType;
 
 
     public static final String CODE = "code";

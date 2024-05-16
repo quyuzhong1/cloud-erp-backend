@@ -33,6 +33,7 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
@@ -51,6 +52,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -97,6 +99,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Resource
     private ShopInfoFeign shopInfoFeign;
+
+    @Resource
+    private FbaShipmentService fbaShipmentService;
+
+    @Resource
+    @Lazy
+    private RequisitionApplicationServiceImpl service;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -427,7 +436,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             //根据类型设置第三方SKU信息
             RequisitionApplicationEntity mainEntity = list.stream().filter(v->v.getId().equals(requisitionApplicationDetailEntity.getMainId())).findFirst().get();
             ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = null;
-            if(mainEntity.getType().equals(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode())){
+            if(mainEntity.getType().equals(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode())){
                 List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(mainEntity.getChannelId()));
                 if(CollectionUtils.isNotEmpty(viewDTOList)){
                     String provideCode = viewDTOList.get(0).getProviderCode();
@@ -595,6 +604,55 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         return list;
     }
 
+    @Override
+    public List<BatchResultDTO> bindShipment(List<RequisitionApplicationDTO.BindShipment> dto) {
+        List<String> ids = dto.stream().map(RequisitionApplicationDTO.BindShipment::getId).distinct().collect(Collectors.toList());
+        List<String> shipmentIds = dto.stream().map(RequisitionApplicationDTO.BindShipment::getShipmentId).collect(Collectors.toList());
+        List<RequisitionApplicationEntity> requisitionApplicationEntities = this.listByIds(ids);
+        List<FbaShipmentEntity> fbaShipmentEntities = fbaShipmentService.listByIds(shipmentIds);
+        List<String> shipmentCode = fbaShipmentEntities.stream().map(FbaShipmentEntity::getCode).collect(Collectors.toList());
+        List<RequisitionApplicationEntity> existBinds = lambdaQuery().in(RequisitionApplicationEntity::getFbaShipmentCode, shipmentCode).list();
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        List<RequisitionApplicationEntity> updateList = new ArrayList<>();
+        for (RequisitionApplicationDTO.BindShipment bindShipment : dto) {
+            RequisitionApplicationEntity requisitionApplicationEntity = requisitionApplicationEntities.stream().filter(req -> req.getId().equals(bindShipment.getId())).findFirst().orElse(null);
+            if(Objects.isNull(requisitionApplicationEntity)){
+                resultDTOList.add(BatchResultDTO.fail(bindShipment.getId(),bindShipment.getId(), "单据不存在"));
+                continue;
+            }
+            if(!RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())){
+                resultDTOList.add(BatchResultDTO.fail(requisitionApplicationEntity.getId(),requisitionApplicationEntity.getCode(), "不是FBA要货单，无法绑定货件"));
+                continue;
+            }
+            if(!requisitionApplicationEntity.getStatus().equals(RequisitionApplicationStatusEnum.HANDLE.getCode())){
+                resultDTOList.add(BatchResultDTO.fail(requisitionApplicationEntity.getId(),requisitionApplicationEntity.getCode(), "要货申请必须已处理才能绑定货件单号"));
+                continue;
+            }
+            FbaShipmentEntity fbaShipmentEntity = fbaShipmentEntities.stream().filter(req -> req.getId().equals(bindShipment.getShipmentId())).findFirst().orElse(null);
+            if(Objects.isNull(fbaShipmentEntity)){
+                resultDTOList.add(BatchResultDTO.fail(requisitionApplicationEntity.getId(),requisitionApplicationEntity.getCode(), "货件在系统不存在"));
+                continue;
+            }
+            if(fbaShipmentEntity.getCode().equals(requisitionApplicationEntity.getFbaShipmentCode())){
+                continue;
+            }
+            RequisitionApplicationEntity existBind = existBinds.stream().filter(req -> req.getFbaShipmentCode().equals(fbaShipmentEntity.getCode())).findFirst().orElse(null);
+            if(Objects.nonNull(existBind)) {
+                resultDTOList.add(BatchResultDTO.fail(requisitionApplicationEntity.getId(), requisitionApplicationEntity.getCode(), "货件单号已绑定"));
+                continue;
+            }
+            requisitionApplicationEntity.setFbaShipmentCode(fbaShipmentEntity.getCode());
+            updateList.add(requisitionApplicationEntity);
+
+            String msg = StrUtil.format("用户【{}】绑定单号为【{}】货件号为【{}】 ", UserContext.getDefaultLoginUser().getUserName(), requisitionApplicationEntity.getCode(), fbaShipmentEntity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId(), "绑定货件");
+        }
+        if(CollectionUtils.isNotEmpty(updateList)){
+            service.updateBatchById(updateList);
+        }
+        return resultDTOList;
+    }
+
     /**
     * 新增修改处理数据
     */
@@ -607,13 +665,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 return;
             }
             String channelName = "";
-            if(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode().equals(requisitionApplicationEntity.getType())){
+            if(RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())){
                 ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(requisitionApplicationEntity.getChannelId());
                 if(Objects.nonNull(shopInfoEntity)){
                     channelName = shopInfoEntity.getName();
                 }
             }
-            if(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode().equals(requisitionApplicationEntity.getType())){
+            if(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(requisitionApplicationEntity.getType())){
                 OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(requisitionApplicationEntity.getChannelId());
                 if(Objects.nonNull(overseasProviderWarehouseEntity)){
                     channelName =  overseasProviderWarehouseEntity.getWarehouseName();

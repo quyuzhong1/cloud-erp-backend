@@ -41,7 +41,6 @@ import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.convert.deliveryPlanConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
@@ -563,6 +562,13 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     @Override
     public List<FirstMileDeliveryDTO.DeliverRecordView> listDeliverRecord(String id) {
         List<FirstMileDeliveryDTO.DeliverRecordView> deliverRecordViews = firstMileDeliveryService.listDeliveryRecordBySourceIds(Arrays.asList(id));
+        WmsDeliveryPlanEntity entity = this.getById(id);
+        if(entity.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())){
+            RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.listBySourceIds(Arrays.asList(id)).stream().findFirst().orElse(null);
+            if(Objects.nonNull(requisitionApplication)){
+                deliverRecordViews.forEach(view -> view.setRefCode(requisitionApplication.getFbaShipmentCode()));
+            }
+        }
         return deliverRecordViews;
     }
 
@@ -585,13 +591,13 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
         for (WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO viewDTO : list) {
             if(DeliveryPlanTypeEnum.FBA.getCode().equals(viewDTO.getDeliveryPlanType())){
-                viewDTO.setType(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode());
-                viewDTO.setTypeName(RequisitionApplicationTypeEnum.SALES_PLATFORM.getName());
+                viewDTO.setType(RequisitionApplicationTypeEnum.FBA.getCode());
+                viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBA.getName());
                 viewDTO.setChannelId(viewDTO.getShopId());
                 viewDTO.setChannelName(viewDTO.getShopName());
             }else{
-                viewDTO.setType(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode());
-                viewDTO.setTypeName(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getName());
+                viewDTO.setType(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode());
+                viewDTO.setTypeName(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getName());
             }
 
             //来源类型
@@ -663,6 +669,11 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     @Override
     public List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> generateDeliverView(List<String> ids) {
         List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> list = baseMapper.generateDeliverView(ids);
+
+        List<String> fbaTypeCodes = list.stream().filter(v->v.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())).map(WmsDeliveryPlanDTO.GenerateDeliverViewDTO::getSourceCode).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(fbaTypeCodes)){
+            throw new ServiceException(StrUtil.format("【{}】为FBA发货计划，发货单需要从FBA货件下推",fbaTypeCodes));
+        }
 
         //审核通过才能下推
         long count = list.stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
@@ -801,6 +812,9 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             //映射详情信息
             List<FirstMileDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             for (WmsDeliveryPlanDTO.GenerateDeliverViewDTO viewDTO : value) {
+                if(DeliveryPlanTypeEnum.FBA.getCode().equals(viewDTO.getType())){
+                    throw new ServiceException(StrUtil.format("【{}】为FBA发货计划，发货单需要从FBA货件下推",viewDTO.getSourceCode()));
+                }
                 //发货仓库中文
                 WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(viewDTO.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
                 addDTO.setDeliveryWarehouseName(updateDTO.getName());
@@ -901,14 +915,6 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             String waitApproveUserName = StringUtils.join(curApproveName, ",");
             data.setWaitApproveUserName(waitApproveUserName);
             data.setTypeName(EnumMessage.getNameByCode(DeliveryPlanTypeEnum.class, data.getType()));
-
-//            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
-//                    v->v.getDictPlatform().equals(data.getProvideCode()) && v.getProductSkuId().equals(data.getSkuId()) &&(v.getHasMappingAll() || v.getWarehouseId().equals(data.getToWarehouseId()))
-//                    )
-//                    .findFirst().orElse(null);
-//            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
-//                data.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
-//            }
         }
     }
     /**

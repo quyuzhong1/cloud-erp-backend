@@ -64,7 +64,7 @@ public class PlatformAliExpressListingDTO extends CleanBaseDTO {
             return Collections.emptyList();
         }
         AliExpressProduct sourceProduct = dto.getAliExpressProduct();
-        List<AliExpressProductDetail> detailList = sourceProduct.getProductDetailList();
+        List<AliExpressProductDetail> detailList = sourceProduct.getProductSku().getProductDetailList();
         List<PlatformProductDTO> resultList = new ArrayList<>(detailList.size());
         for (AliExpressProductDetail item : detailList) {
             PlatformProductDTO product = new PlatformProductDTO();
@@ -87,6 +87,7 @@ public class PlatformAliExpressListingDTO extends CleanBaseDTO {
             product.setProductPacking(packing);
             String gmtModified = sourceProduct.getGmtModified();
             product.setPlatformUpdateTime(LocalDateUtil.parseStrToLocalTime(gmtModified));
+            product.setPlatformSkuId(item.getSkuId());
             resultList.add(product);
         }
 

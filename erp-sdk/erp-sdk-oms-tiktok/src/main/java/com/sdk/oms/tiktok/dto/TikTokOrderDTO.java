@@ -1,12 +1,16 @@
 package com.sdk.oms.tiktok.dto;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.utils.CollectionUtils;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.DistrictInfoBean;
@@ -56,13 +60,13 @@ public class TikTokOrderDTO extends CleanBaseDTO {
      */
     public static PlatformOrderDTO convertDTO(TikTokOrderDTO dto) {
         // 原商品信息
-        return initPlatformProductDTO(dto);
+        return initPlatformOrderDTO(dto);
     }
 
     /**
      * 根据PlatformMercadoListingDTO 转换 DTO
      */
-    private static PlatformOrderDTO initPlatformProductDTO(TikTokOrderDTO dto) {
+    private static PlatformOrderDTO initPlatformOrderDTO(TikTokOrderDTO dto) {
         OrdersBean ordersBean = dto.getOrderViewDTO();
 
         //设置对应关系
@@ -124,17 +128,21 @@ public class TikTokOrderDTO extends CleanBaseDTO {
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
         }
 
+        Map<String, String> lableMap = new HashMap<>();
+        lableMap.put("tikTokStatus", ordersBean.getStatus());
+        orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
+
         if ("ON_HOLD".equalsIgnoreCase(ordersBean.getStatus())) {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
             orderDTO.setRemark("ON_HOLD");
         } else if ("AWAITING_SHIPMENT".equalsIgnoreCase(ordersBean.getStatus())) {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             orderDTO.setRemark("");
         } else if ("AWAITING_COLLECTION".equalsIgnoreCase(ordersBean.getStatus())) {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             orderDTO.setRemark("");
         } else if ("PARTIALLY_SHIPPING".equalsIgnoreCase(ordersBean.getStatus())) {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
@@ -158,6 +166,8 @@ public class TikTokOrderDTO extends CleanBaseDTO {
             orderDTO.setInvalidStatus(Boolean.TRUE);
             orderDTO.setRemark("平台取消");
         }
+        // 平台订单原始状态
+        orderDTO.setPlatformOrderStatus(ordersBean.getStatus());
 
         //创建时间
         LocalDateTime createTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(ordersBean.getCreateTime()), ZoneId.systemDefault());
@@ -186,8 +196,11 @@ public class TikTokOrderDTO extends CleanBaseDTO {
      * 批量转换明细
      */
     public static List<PlatformOrderDetailDTO> parseDetailDto(OrdersBean ordersBean) {
-        return ordersBean.getLineItems().stream()
-                .map(e -> intPlatformOrderDetailDTO(e, ordersBean))
+        //相同的sku和packageId合并去重
+        Map<String, List<LineItemsBean>> collect = ordersBean.getLineItems().stream().collect(Collectors.groupingBy(req -> req.getSellerSku()+req.getPackageId()));
+
+        return collect.entrySet().stream()
+                .map(e -> intPlatformOrderDetailDTO(e.getValue()))
                 .collect(Collectors.toList());
     }
 
@@ -195,9 +208,9 @@ public class TikTokOrderDTO extends CleanBaseDTO {
     /**
      * 转换明细
      */
-    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(LineItemsBean itemsBean, OrdersBean ordersBean) {
+    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(List<LineItemsBean> itemsBeans) {
         PlatformOrderDetailDTO detailDTO = new PlatformOrderDetailDTO();
-
+        LineItemsBean itemsBean = itemsBeans.get(0);
         // 图片URL
         detailDTO.setImageUrl("");
         // skuId
@@ -220,10 +233,11 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         // 库存是否扣除
         detailDTO.setWarehouseId("");
         // 数量
-        detailDTO.setQty(1);
+        detailDTO.setQty(itemsBeans.size());
 
         // 金额
-        detailDTO.setAmount(NumberUtil.toBigDecimal(itemsBean.getSalePrice()));
+        BigDecimal salePrice = itemsBeans.stream().map(req -> req.getSalePrice()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        detailDTO.setAmount(salePrice);
         // 单价
         detailDTO.setPrice(NumberUtil.toBigDecimal(itemsBean.getOriginalPrice()));
         // 币别（原币）
@@ -265,20 +279,23 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         String city = "";
         String district = "";
         String Community = "";
-        for (DistrictInfoBean districtInfoBean : ordersBean.getRecipientAddress().getDistrictInfo()) {
-            if ("state".equalsIgnoreCase(districtInfoBean.getAddressLevelName())) {
-                state = districtInfoBean.getAddressName();
-            }
-            if ("city".equalsIgnoreCase(districtInfoBean.getAddressLevelName())) {
-                city = districtInfoBean.getAddressName();
-            }
-            if ("Sub-district".equalsIgnoreCase(districtInfoBean.getAddressLevelName())) {
-                district = districtInfoBean.getAddressName();
-            }
-            if ("Urban Community".equalsIgnoreCase(districtInfoBean.getAddressLevelName())) {
-                Community = districtInfoBean.getAddressName();
-            }
 
+        if (ObjectUtil.isNotEmpty(ordersBean.getRecipientAddress()) && CollectionUtil.isNotEmpty(ordersBean.getRecipientAddress().getDistrictInfo())) {
+            for (DistrictInfoBean districtInfoBean : ordersBean.getRecipientAddress().getDistrictInfo()) {
+                if ("state".equalsIgnoreCase(districtInfoBean.getAddressLevelName())) {
+                    state = districtInfoBean.getAddressName();
+                }
+                if ("city".equalsIgnoreCase(districtInfoBean.getAddressLevelName())) {
+                    city = districtInfoBean.getAddressName();
+                }
+                if ("Sub-district".equalsIgnoreCase(districtInfoBean.getAddressLevelName())) {
+                    district = districtInfoBean.getAddressName();
+                }
+                if ("Urban Community".equalsIgnoreCase(districtInfoBean.getAddressLevelName())) {
+                    Community = districtInfoBean.getAddressName();
+                }
+
+            }
         }
         return PlatformOrderReceiverDTO.builder()
                 .loginId(String.valueOf(ordersBean.getUserId()))
@@ -293,7 +310,7 @@ public class TikTokOrderDTO extends CleanBaseDTO {
                 .cityName(city)
                 .districtName(district+" "+Community)
                 .postCode(ordersBean.getRecipientAddress().getPostalCode())
-                .firstAddress(ordersBean.getRecipientAddress().getAddressLine1())
+                .firstAddress(ordersBean.getRecipientAddress().getFullAddress() + " " + ordersBean.getRecipientAddress().getAddressDetail())
                 .secondAddress(ordersBean.getRecipientAddress().getAddressLine2()+ordersBean.getRecipientAddress().getAddressLine3()+ordersBean.getRecipientAddress().getAddressLine4())
                 .fullAddress(ordersBean.getRecipientAddress().getAddressDetail())
                 .receiverTaxNo(ordersBean.getCpf())

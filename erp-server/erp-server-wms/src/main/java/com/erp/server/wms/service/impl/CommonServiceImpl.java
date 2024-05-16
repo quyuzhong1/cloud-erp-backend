@@ -1,7 +1,9 @@
 package com.erp.server.wms.service.impl;
 
+import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
+import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -33,7 +36,7 @@ public class CommonServiceImpl  implements CommonService {
         //获取当前人需要审核的业务ids
         ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList = new ValidList<>();
         ProcessManagementDTO.ApproveActivityDTO approveActivityDTO = new ProcessManagementDTO.ApproveActivityDTO();
-        approveActivityDTO.setCurApproveId(UserContext.getDefaultLoginUser().getUid());
+        approveActivityDTO.setCurApproveId(this.getUserInfo().getUid());
         approveActivityDTO.setBusinessKey(businessKey);
         dtoList.add(approveActivityDTO);
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.batchCurApproverByApprove(dtoList);
@@ -42,5 +45,10 @@ public class CommonServiceImpl  implements CommonService {
         }
         List<String> businessIds = listApiResult.getData().stream().filter(obj -> StringUtils.isNotBlank(obj.getBusinessId())).map(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId).collect(Collectors.toList());
         return  businessIds;
+    }
+    
+    @Override
+    public LoginUser getUserInfo() {
+        return UserContext.getDefaultLoginUser();
     }
 }

@@ -5,6 +5,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -74,7 +76,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<OverseasWarehouseInboundMapper, OverseasWarehouseInboundEntity> implements OverseasWarehouseInboundService,WmsDataCompareDbService<OverseasInboundDTO> {
+public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<OverseasWarehouseInboundMapper, OverseasWarehouseInboundEntity> implements OverseasWarehouseInboundService {
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -1196,32 +1198,5 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             }
         }
     }
-
-    @Override
-	public List<OverseasInboundDTO> getDataCompareByCondition(OverseasInboundDTO params , Integer pageSize) {
-    	if("0".equals(params.getId())) {
-			this.getParams(params);
-		}
-		return baseMapper.getDataCompareByCondition(params , pageSize);
-	}
-
-	@Override
-	public Integer getDataCompareByConditionCount(OverseasInboundDTO params) {
-		this.getParams(params);
-		return baseMapper.getDataCompareByConditionCount(params);
-	}
-	
-	private void getParams(OverseasInboundDTO params) {
-		if(CollUtil.isEmpty(params.getReceiveDateList())) {
-			throw new ServiceException("第三方仓货件签收的系统数据范围【签收日期】不能为空");
-		}
-		String toWarehouseId = params.getToWarehouseId();
-		if(StringUtils.isNotBlank(toWarehouseId)) {
-			WarehouseEntity warehouseEntity = warehouseService.getById(toWarehouseId);
-			if(warehouseEntity != null) {
-				params.setToWarehouseName(warehouseEntity.getName());
-			}
-		}
-	}
 
 }

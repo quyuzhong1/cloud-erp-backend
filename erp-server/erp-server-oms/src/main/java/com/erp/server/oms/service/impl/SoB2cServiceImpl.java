@@ -19,13 +19,13 @@ import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.*;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
-import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.CommonConstants;
+import com.common.core.constant.EnumMessage;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -111,7 +111,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.math3.util.Pair;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -3195,6 +3194,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cDTO.LabelDTO labelDTO = new SoB2cDTO.LabelDTO();
             labelDTO.setIsIntercept(data.getIsIntercept());
             labelDTO.setIsManual(data.getSourceType().equals(SourceTypeEnum.SELF_ADD.getCode()));
+
             if (CollectionUtils.isNotEmpty(soB2cRefList)) {
                 //合并
                 long mergeCount = soB2cRefList.stream().filter(obj -> (obj.getTargetId().equals(data.getId()))
@@ -3222,6 +3222,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 labelDTO.setAmazonStatus(labelJsonDTO.getAmazonStatus());
                 labelDTO.setFulfillmentChannel(labelJsonDTO.getFulfillmentChannel());
                 labelDTO.setShipNodeType(labelJsonDTO.getShipNodeType());
+                labelDTO.setTikTokStatus(labelJsonDTO.getTikTokStatus());
             }
             //明细信息
             List<SoB2cDetailEntity> detailList = allDetailList.stream().filter(obj -> obj.getMainId().equals(data.getId())).collect(Collectors.toList());
@@ -4948,11 +4949,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //商品金额
         BigDecimal totalAmount = soB2cDetailList.stream().map(SoB2cDetailEntity::getAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        //运费收入
+        financialInfoDTO.setShippingCost(ObjectUtil.isEmpty(financialInfoDTO.getShippingCost()) ?
+                BigDecimal.ZERO : financialInfoDTO.getShippingCost());
+        //物流成本
+        financialInfoDTO.setLogisticsCost(ObjectUtil.isEmpty(financialInfoDTO.getLogisticsCost()) ?
+                BigDecimal.ZERO : financialInfoDTO.getLogisticsCost());
+
         //判断是否是人民币
         if (ObjectUtils.isNotEmpty(dto.getIsCny()) && dto.getIsCny()) {
             financialInfoDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             financialInfoDTO.setAmount(MathUtil.multiply(totalAmount, soB2cEntity.getExchangeRate()));
             financialInfoDTO.setItemCost(itemCost);
+            //运费收入
+            financialInfoDTO.setShippingCost(MathUtil.multiply(financialInfoDTO.getShippingCost(),soB2cEntity.getExchangeRate()));
+            //物流成本
+            financialInfoDTO.setLogisticsCost(MathUtil.multiply(financialInfoDTO.getLogisticsCost(),soB2cEntity.getExchangeRate()));
         } else {
             financialInfoDTO.setCurrency(soB2cEntity.getCurrency());
             financialInfoDTO.setAmount(totalAmount);
@@ -5025,10 +5037,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 accessoriesCost = MathUtil.multiply(list.get(0).getTargetTaxCost(), soB2cLogisticsEntity.getAccessoriesQty());
             }
         }
-        //运费收入
-        financialInfoDTO.setShippingCost(ObjectUtil.isEmpty(financialInfoDTO.getShippingCost()) ? BigDecimal.ZERO : financialInfoDTO.getShippingCost());
-        //物流成本
-        financialInfoDTO.setLogisticsCost(ObjectUtil.isEmpty(financialInfoDTO.getLogisticsCost()) ? BigDecimal.ZERO : financialInfoDTO.getLogisticsCost());
 
         financialInfoDTO.setAccessoriesCost(accessoriesCost);
         //VAT税费,店铺计算
@@ -6011,6 +6019,26 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      **/
     @Override
     public Boolean updateIntercept(SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO) {
+        StringBuilder msgSb = new StringBuilder();
+        msgSb.append(StrUtil.format("用户【{}】更新",UserContext.getDefaultLoginUser().getUserName()));
+        if(interceptUpdateOrderDTO.getIsFrozen()!=null){
+            msgSb.append(StrUtil.format(" 冻结状态为{}，",interceptUpdateOrderDTO.getIsFrozen()?"已冻结":"未冻结"));
+        }
+        if(interceptUpdateOrderDTO.getIsIntercept()!=null){
+            msgSb.append(StrUtil.format(" 拦截状态为{}，",interceptUpdateOrderDTO.getIsIntercept()?"拦截成功":"取消拦截（拦截失败）"));
+        }
+        if(StringUtils.isNotBlank(interceptUpdateOrderDTO.getApproveStatus())){
+            msgSb.append(StrUtil.format(" 审核状态为{}，", EnumMessage.getNameByCode(ApproveStatusEnum.class,interceptUpdateOrderDTO.getApproveStatus())));
+        }
+        if(StringUtils.isNotBlank(interceptUpdateOrderDTO.getBillStatus())){
+            msgSb.append(StrUtil.format(" 单据状态为{}，", EnumMessage.getNameByCode(SoB2cBillStatusEnum.class,interceptUpdateOrderDTO.getBillStatus())));
+        }
+        List<Pair<String, String>> pairList = new ArrayList<>();
+        interceptUpdateOrderDTO.getIds().forEach(v->{
+            Pair<String, String> pair = new Pair<>(v,"");
+            pairList.add(pair);
+        });
+        operateLogService.batchAddModuleOperateLog(msgSb.toString(), ModuleTypeEnum.SO_B2C.getCode(), pairList, "状态变更");
         return lambdaUpdate().set(SoB2cEntity::getIsIntercept, interceptUpdateOrderDTO.getIsIntercept())
                 .set(SoB2cEntity::getIsFrozen, interceptUpdateOrderDTO.getIsFrozen())
                 .set(StringUtils.isNotBlank(interceptUpdateOrderDTO.getApproveStatus()), SoB2cEntity::getApproveStatus, interceptUpdateOrderDTO.getApproveStatus())
@@ -6926,8 +6954,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> orderForecast(SoB2cDTO.TransferDeclareDTO dto) {
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         List<SoB2cEntity> soB2cEntityList = listByIds(dto.getIds());
@@ -7009,11 +7035,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             updateList.add(soB2cEntity);
             updateInstockForcastList.add(updateForcastStatusDTO);
         }
-        //更新操作同个事务
-        service.orderForecastUpdateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors,updateLogisticList);
 
         //更新入库预报单详情的上传状态
         transferDeclareFeign.updateTransferStatusByBatch(updateInstockForcastList);
+
+        //更新操作同个事务
+        service.orderForecastUpdateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors,updateLogisticList);
+
         return resultDTOList;
     }
 
@@ -7923,7 +7951,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
         if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())
-                && !ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())
+                || !ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())
         ) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_DISTRIBUTION_DECLARE, entity.getCode());
         }

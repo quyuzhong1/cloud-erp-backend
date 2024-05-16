@@ -21,6 +21,7 @@ import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.dto.WmsDataComparePlanDTO.ImportDataMappingDTO;
 
 /**
  * <p>
@@ -170,7 +171,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
          /**
           * 单据类型： 枚举获取文档地址：http://172.16.100.11:3002/project/92/interface/api/9259 type=WmsDataCompareTaskBillType
           */
-          @NotBlank(message = "单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收不能为空")
+//          @NotBlank(message = "单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收不能为空")
           @Size(max = 50,message = "单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收最大长度不能超过50位")
           private String billType;
           
@@ -188,6 +189,17 @@ public class WmsDataCompareTaskDTO implements Serializable {
          */
     	@NotNull(message = "导入文件不能为空")
         private List<@NotBlank(message = "对比数据导入文件为空")String> excelFiles;
+    	
+    	/**
+    	 *对比类型：pk=主键对比，group=分组对比  枚举获取文档地址：http://172.16.100.11:3002/project/92/interface/api/9259 type=WmsDataCompareType
+    	 */
+    	@NotBlank(message = "对比类型不能为空")
+    	private String compareType;
+    	
+    	/**
+    	 * 主数据excel文件
+    	 */
+    	private List<String> mainExcelFiles;
     }
 
     /**
@@ -218,14 +230,14 @@ public class WmsDataCompareTaskDTO implements Serializable {
           private List<String> importFileUrls;
           
           /**
-           * 导入数据字段
-           */
-          private List<String> importDataFields;
-          
-          /**
            * 单据类型：保存映射模板使用
            */
            private String billType;
+           
+           /**
+            * 对比设置字段映射属性
+            */
+           private List<DataCompareSettingDTO> settingList;
 
      }
     
@@ -258,7 +270,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
           
           /**
            * 导入数据字段映射json串
-           * 系统数据字段=systemField，导入数据字段=importField，唯一键标识=pkFlag（布尔数据类型true或false），示例：[{'systemField' : 'soCode' , 'importField' : '销售单号', 'systemField' : true} , {'systemField' : 'dictPlatform' , 'importField' : '销售平台', 'systemField' : false} ]
+           * 系统数据字段=systemField，导入数据字段=importField，唯一键标识=status（布尔数据类型true或false），数据类型=classType，示例：[{'systemField' : 'soCode' , 'importField' : '销售单号', 'status' : true , 'classType' : 'string'} , {'systemField' : 'dictPlatform' , 'importField' : '销售平台', 'status' : false , 'classType' : 'int'} ]
            * 系统数据字段名称显示及systemField提交值获取方式取dict配置，code是systemField提交值，name名称显示。 http://172.16.100.11:3002/project/92/interface/api/13147 入参type:销售出库单=datacompare_soOutstock,FBA货件签收=datacompare_fbaShipment,第三方仓货件签收=datacompare_overseasInbound
            */
            @NotBlank(message = "导入数据字段映射json串不能为空")
@@ -410,6 +422,99 @@ public class WmsDataCompareTaskDTO implements Serializable {
         private String resultReportUrl;
 
 
+    }
+    
+    @Data
+    @NoArgsConstructor
+    public static class DataCompareSettingDTO{
+    	/**
+         * 系统数据字段名称
+         */
+    	private String sysField;
+    	
+    	/**
+    	 * 系统数据字段字段属性代码
+    	 */
+    	private String sysFieldName;
+    	
+    	/**
+         * 系统数据字段排序
+         */
+    	private Integer sysFieldIndex;
+    	
+    	/**
+    	 * 导入数据字段下拉
+    	 */
+    	private List<DataCompareSettingImprotDTO> importFileds;
+    	
+    	/**
+    	 * 数据类型下拉
+    	 */
+    	private List<DataCompareSettingTypeDTO> dataTypes;
+    	
+    	/**
+    	 * 是否主键或汇总字段
+    	 */
+    	private Boolean status = false;
+    }
+    
+    @Data
+    @NoArgsConstructor
+    public static class DataCompareSettingMapDTO{
+    	/**
+         * 系统数据字段
+         */
+    	private String sysFieldName;
+    	
+    	/**
+         * 系统数据字段排序
+         */
+    	private Integer sysFieldIndex;
+    	
+    	/**
+    	 * 导入数据字段map
+    	 */
+    	private Map<String , DataCompareSettingImprotDTO> importFiledMap;
+    	
+    }
+    
+    @Data
+    @NoArgsConstructor
+    public static class DataCompareSettingImprotDTO{
+    	/**
+         * 导入数据字段
+         */
+    	private String importField;
+    	
+    	/**
+         * 导入数据字段排序
+         */
+    	private Integer importFieldIndex;
+    	
+    	/**
+    	 * 是否默认值
+    	 */
+    	private Boolean defaultStatus = false;
+    }
+    
+    @Data
+    @NoArgsConstructor
+    public static class DataCompareSettingTypeDTO{
+    	/**
+         * 导入数据数据类型代码
+         */
+    	private String typeCode;
+    	
+    	/**
+         * 导入数据数据类型名称
+         */
+    	private String typeName;
+    	
+    	/**
+    	 * 是否默认值
+    	 */
+    	private Boolean defaultStatus = false;
+    	
     }
 
     @Data

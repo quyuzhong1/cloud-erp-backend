@@ -7,6 +7,8 @@ import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -80,7 +82,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, FbaShipmentEntity> implements FbaShipmentService,WmsDataCompareDbService<com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO> {
+public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, FbaShipmentEntity> implements FbaShipmentService {
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
@@ -1316,8 +1318,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         for (FbaShipmentDTO.GenerateRequisitionApplicationViewDTO viewDTO : list) {
             //FBA下推要货单要货类型默认是：销售平台
-            viewDTO.setType(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode());
-            viewDTO.setTypeName(RequisitionApplicationTypeEnum.SALES_PLATFORM.getName());
+            viewDTO.setType(RequisitionApplicationTypeEnum.FBA.getCode());
+            viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBA.getName());
             //来源类型
             viewDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
             //来源类型中文
@@ -1732,31 +1734,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         return null;
     }
 
-	@Override
-	public List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO> getDataCompareByCondition(
-			com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO params , Integer pageSize) {
-		if("0".equals(params.getId())) {
-			this.getParams(params);
-		}
-		return baseMapper.getDataCompareByCondition(params , pageSize);
-	}
-
-	@Override
-	public Integer getDataCompareByConditionCount(com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO params) {
-		this.getParams(params);
-		return baseMapper.getDataCompareByConditionCount(params);
-	}
-	
-	private void getParams(com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO params) {
-		if(CollUtil.isEmpty(params.getReceiveDateList())) {
-			throw new ServiceException("FBA货件签收的系统数据范围【签收日期】不能为空");
-		}
-		String shopId = params.getShopId();
-		if(StringUtils.isNotBlank(shopId)) {
-			ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
-			if(shopInfo != null) {
-				params.setShopName(shopInfo.getName());
-			}
-		}
-	}
+    @Override
+    public PagingVO<FbaShipmentDTO.SearchResultDTO> search(PagingDTO<FbaShipmentDTO.SearchDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<FbaShipmentDTO.SearchResultDTO> searchData = this.baseMapper.search(query, dto.getParams());
+        if (CollUtil.isEmpty(searchData.getRecords())) {
+            return new PagingVO(searchData);
+        }
+        return new PagingVO(searchData);
+    }
 }
