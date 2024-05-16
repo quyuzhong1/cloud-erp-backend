@@ -84,6 +84,16 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
     List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoBySourceIds(List<String> sourceIdList);
 
     /**
+     * 根据来源信息获取最大的运输状态
+     *
+     * @param billVoList 来源
+     * @return List<LogisticsBillDTO.LogisticsBillVo>
+     * @author hyj
+     * @date 2024/5/11 10:39
+     */
+    List<LogisticsBillDTO.LogisticsBillVo> getTrackStatusByTrackNo(List<LogisticsBillDTO.LogisticsBillVo> billVoList);
+
+    /**
      * @description: 根据出库单号查询
      * @author Will
      * @date: 2023/11/14 19:32
@@ -202,4 +212,12 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @param logisticsBillEntity
      */
     void addLogisticsBillCost(LogisticsBillEntity logisticsBillEntity,List<LogisticsBillDetailEntity> list);
+    /**
+     * @description: 根据
+     * @author Will
+     * @date: 2024/5/13 9:05
+     * @param shopIdList
+     * @return List<LogisticsBillEntity>
+     */
+    List<LogisticsBillEntity> listByShopIdList(List<String> shopIdList);
 }

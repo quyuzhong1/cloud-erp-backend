@@ -27,8 +27,13 @@ public interface SysRoleMenuService extends IService<SysRoleMenuEntity> {
 
     boolean batchSaveRoleMenu(SysRoleMenuBatchDTO batchDTO);
 
-
-    List<SysMenuVO> findMenuByRoleIds(List<String> ids);
+    /**
+     * 根据角色id 和系统类型 获取菜单列表
+     * @param ids
+     * @param userType
+     * @return
+     */
+    List<SysMenuVO> findMenuByRoleIds(List<String> ids, String userType);
 
     /**
      * 获取所有的菜单code
@@ -54,9 +59,15 @@ public interface SysRoleMenuService extends IService<SysRoleMenuEntity> {
 
     RoleMenuDTO findRoleMenuTreeByRoleId(String roleId);
 
-    List<SysMenuVO> findLeftMenuByRoleIds(List<String> roleIds);
+    /**
+     * 根据角色ids 和 用户类型获取左侧菜单列表
+     * @param roleIds
+     * @param userType
+     * @return
+     */
+    List<SysMenuVO> findLeftMenuByRoleIds(List<String> roleIds, String userType);
 
-    List<SysMenuVO> findLeftMenuByRoleIds(List<String> roleIds,Integer type);
+    List<SysMenuVO> findLeftMenuByRoleIds(List<String> roleIds,Integer type,String userType);
     /**
      * 获取左侧菜单所有列表
      * @Author Luo_WG

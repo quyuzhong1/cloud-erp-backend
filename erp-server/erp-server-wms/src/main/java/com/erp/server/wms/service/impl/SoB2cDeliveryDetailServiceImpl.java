@@ -39,10 +39,6 @@ import com.common.core.enums.ApiError;
 @Service
 public class SoB2cDeliveryDetailServiceImpl extends SuperServiceImpl<SoB2cDeliveryDetailMapper, SoB2cDeliveryDetailEntity> implements SoB2cDeliveryDetailService {
     @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
-    @Autowired
     private SoB2cFeign soB2cFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)

@@ -1,11 +1,13 @@
 package com.common.business.mapper;
 
 import com.common.core.utils.MathUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.mapstruct.Named;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.ParseException;
+import java.util.Objects;
 
 /**
  * @author liuruipeng
@@ -45,6 +47,24 @@ public class NumberMapperWork {
         return String.valueOf(weightKg);
     }
 
-
-
+    @Named("bigDecimalToInt")
+    public Integer bigDecimalToInt(BigDecimal val) {
+        if (Objects.isNull(val)){
+            return 0;
+        }
+        return val.intValue();
+    }
+    @Named("stringToLong")
+    public Long stringToLong(String val) {
+        if (StringUtils.isEmpty(val)){
+            return 0L;
+        }
+        try {
+            Long value = Long.valueOf(val);
+            return value;
+        }catch (Exception e){
+           //转换异常 暂不抛出异常
+        }
+        return 0L;
+    }
 }

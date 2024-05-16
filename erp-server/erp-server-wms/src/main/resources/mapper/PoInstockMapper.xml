@@ -80,6 +80,31 @@
         </where>
     </select>
 
+    <select id="pdaListCount" resultType="java.lang.Integer">
+        select
+        count(distinct psi.id)
+        from po_instock psi
+        left join po_instock_detail psid on psi.id = psid.main_id and psid.is_deleted = false
+        <where>
+            psi.is_deleted = false
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and psi.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.stockInDateList != null and params.stockInDateList.size > 0">
+                and psi.stock_in_date >= #{params.stockInDateList[0]} AND (#{params.stockInDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > psi.stock_in_date
+            </if>
+            <if test="params.invalidStatus != null">
+                and psi.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
     <select id="listExportExcel" resultType="com.erp.model.wms.dto.PoInstockDTO$ListDTO">
         select
             psi.id,

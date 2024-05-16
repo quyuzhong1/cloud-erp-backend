@@ -103,27 +103,27 @@ public class BaoHongServiceTest {
 
     @Test
     public void getCreateOrder(){
-        String json = "{\"buyInsurance\":0,\"channel\":1,\"deliveryAddress\":\"Rua Humberto I 928\",\"grossWeight\":\"152\",\"iossNo\":\"\",\"oabCity\":\"São Paulo\",\"oabCountry\":\"BR\",\"oabName\":\"Rafaela Caixeta\",\"oabPhone\":\"+5534996757065\",\"oabPostcode\":\"04018032\",\"oabState\":\"SP\",\"oabStreetAddress1\":\"Rua Humberto I 928\",\"orderMode\":1,\"orderProduct\":[{\"opQuantity\":1,\"" +
-                "productSku\":\"240308-5\",\"productTitleEn\":\"microphone\",\"purposeDeclaredValue\":\"8.14\"}],\"orderStatus\":\"2\",\"referenceNo\":\"XSDD2404292476\",\"serialNo\":\"\",\"smCode\":\"ZY-KJWS\",\"trackingNumber\":\"WSHBR120451665YQ\",\"warehouseCode\":\"sz01\"}";
-        CreateOrderInfo createOrderInfo = JSONObject.parseObject(json,new TypeReference<CreateOrderInfo>() {}.getType());
+//        String json = "{\"buyInsurance\":0,\"channel\":1,\"deliveryAddress\":\"Rua Humberto I 928\",\"grossWeight\":\"152\",\"iossNo\":\"\",\"oabCity\":\"São Paulo\",\"oabCountry\":\"BR\",\"oabName\":\"Rafaela Caixeta\",\"oabPhone\":\"+5534996757065\",\"oabPostcode\":\"04018032\",\"oabState\":\"SP\",\"oabStreetAddress1\":\"Rua Humberto I 928\",\"orderMode\":1,\"orderProduct\":[{\"opQuantity\":1,\"" +
+//                "productSku\":\"240308-5\",\"productTitleEn\":\"microphone\",\"purposeDeclaredValue\":\"8.14\"}],\"orderStatus\":\"2\",\"referenceNo\":\"XSDD2404292476\",\"serialNo\":\"\",\"smCode\":\"ZY-KJWS\",\"trackingNumber\":\"WSHBR120451665YQ\",\"warehouseCode\":\"sz01\"}";
+//        CreateOrderInfo createOrderInfo = JSONObject.parseObject(json,new TypeReference<CreateOrderInfo>() {}.getType());
 
-//        CreateOrderInfo createOrderInfo = CreateOrderInfo.builder()
-//                .oabCountry("CN")
-//                .smCode("TY-DHL")
-//                .orderProduct(Arrays.asList(
-//                        ProductDeatil.builder()
-//                                .productSku("484654-6")
-//                                .opQuantity(1)
-//                                .purposeDeclaredValue("8.14")
-//                                .build()
-//                ))
-//                .orderStatus("2")
-//                .trackingNumber("314r132212")
-//                .oabName("wj")
-//                .referenceNo("wj202240121231221")
-//                .deliveryAddress("深圳龙岗坂田")
-//                .oabStreetAddress1("深圳龙岗坂田")
-//                .build();
+        CreateOrderInfo createOrderInfo = CreateOrderInfo.builder()
+                .oabCountry("CN")
+                .smCode("TY-DHL")
+                .orderProduct(Arrays.asList(
+                        ProductDeatil.builder()
+                                .productSku("484654-6")
+                                .opQuantity(1)
+                                .purposeDeclaredValue("8.14")
+                                .build()
+                ))
+                .orderStatus("2")
+                .trackingNumber("314r131122")
+                .oabName("wj")
+                .referenceNo("wj2022432121")
+                .deliveryAddress("深圳龙岗坂田")
+                .oabStreetAddress1("深圳龙岗坂田")
+                .build();
         BaoHongResponse<String> response = baoHongService.createOrder(createOrderInfo);
         System.out.println(response);
         System.out.println(response.getData());
@@ -131,7 +131,7 @@ public class BaoHongServiceTest {
 
     @Test
     public void cancelOrder(){
-        BaoHongResponse<String> response = baoHongService.cancelOrder("SOE02070223440","平台发货异常");
+        BaoHongResponse<String> response = baoHongService.cancelOrder("SOE02070223645","平台发货异常");
         System.out.println(response);
     }
 

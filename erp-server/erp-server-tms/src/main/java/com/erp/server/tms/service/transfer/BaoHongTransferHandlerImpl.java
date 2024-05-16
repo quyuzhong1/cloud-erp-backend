@@ -51,6 +51,18 @@ public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
     }
 
     @Override
+    protected ApiResult<String> cancelOrder(TransferCancelOrderReq cancelOrderReq) {
+        BaoHongResponse<String> baoHongResponse = baoHongService.cancelOrder(cancelOrderReq.getThirdPlatformCode(),cancelOrderReq.getReason());
+        if(isFailure(baoHongResponse)){
+            if(baoHongResponse.getMessage().contains("该订单已拦截,不能再次拦截")){
+                return success();
+            }
+            return failure(baoHongResponse.getMessage());
+        }
+        return success();
+    }
+
+    @Override
     protected ApiResult<List<TransferLogisticsChannelEntity>> getShippingMethodList() {
         BaoHongResponse<List<SmRow>> baoHongResponse = baoHongService.getShippingMethodList();
         if(isFailure(baoHongResponse)){

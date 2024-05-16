@@ -86,6 +86,18 @@ public class LogisticsBillFeignController {
         List<LogisticsBillDTO.LogisticsBillVo> flag = logisticsBillService.listLogisticsBillVoBySourceIds(sourceIdList);
         return flag;
     }
+    /**
+     * 根据来源信息获取最大的运输状态
+     *
+     * @param billVoList 来源信息
+     * @return List<LogisticsBillDTO.LogisticsBillVo>
+     * @author hyj
+     * @date 2024/5/11 10:39
+     */
+    @PostMapping("/getTrackStatusByTrackNo")
+    public List<LogisticsBillDTO.LogisticsBillVo> getTrackStatusByTransportNo(@RequestBody List<LogisticsBillDTO.LogisticsBillVo> billVoList) {
+        return logisticsBillService.getTrackStatusByTrackNo(billVoList);
+    }
 
     /**
      * 生成物流单 像物流商下單

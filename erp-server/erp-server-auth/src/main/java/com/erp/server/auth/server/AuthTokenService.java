@@ -2,11 +2,11 @@ package com.erp.server.auth.server;
 
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
-import com.erp.model.sys.utils.JwtUtils;
 import com.common.business.service.impl.RedisService;
-import com.common.business.interceptor.CommonInterceptor;
-import com.erp.model.sys.dto.SysUserDTO;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
+import com.erp.model.sys.dto.SysUserDTO;
+import com.erp.model.sys.utils.JwtUtils;
 import com.erp.server.auth.config.AuthJwtProperties;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -108,7 +108,7 @@ public class AuthTokenService {
                 redisService.deleteObject(userKey);
             }
             //暂时
-            CommonInterceptor.threadLocal.remove();
+            UserContext.clear();
 
         }
     }

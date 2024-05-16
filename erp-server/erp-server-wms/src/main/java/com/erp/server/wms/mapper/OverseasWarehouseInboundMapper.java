@@ -11,6 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -53,7 +54,7 @@ public interface OverseasWarehouseInboundMapper extends BaseMapper<OverseasWareh
      * @param params
      * @return
      */
-    List<WmsDataCompareTaskDTO.OverseasInboundDTO> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.OverseasInboundDTO params , @Param("pageSize") Integer pageSize);
+    List<Map<String, String>> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.OverseasInboundDTO params);
     
     Integer getDataCompareByConditionCount(@Param("params") WmsDataCompareTaskDTO.OverseasInboundDTO params);
 }

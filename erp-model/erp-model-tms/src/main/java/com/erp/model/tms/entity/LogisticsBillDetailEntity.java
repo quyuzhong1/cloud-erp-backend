@@ -95,6 +95,11 @@ public class LogisticsBillDetailEntity extends BaseEntity<LogisticsBillDetailEnt
     @TableField("is_api_update")
     private Boolean isApiUpdate;
 
+    /**
+     * 平台订单号
+     */
+    @TableField(exist = false)
+    private String platformCode;
 
     public static final String MAIN_ID = "main_id";
 

@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.OperationLogUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -23,7 +24,6 @@ import com.erp.model.plm.entity.SysLogFieldEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.mapper.SysLogMapper;
 import com.erp.server.plm.service.BasicDictService;
-import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.SysLogFieldService;
 import com.erp.server.plm.service.SysLogService;
 import org.apache.commons.lang3.StringUtils;
@@ -47,9 +47,6 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
     private SysLogFieldService sysLogFieldService;
 
     @Autowired
-    private CommonService commonService;
-
-    @Autowired
     private BasicDictService basicDictService;
 
     @Autowired
@@ -70,7 +67,7 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
         if (CollectionUtils.isEmpty(sysLogFieldList)) {
             return true;
         }
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
         List<SysLogEntity> list = new LinkedList<>();
@@ -196,7 +193,7 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
     @Override
     public Boolean addSysLogBySave(String content, String classPath, String businessId, String pid) {
         SysLogEntity entity = new SysLogEntity();
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
         entity.setClassPath(classPath)
@@ -212,7 +209,7 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
     @Override
     public Boolean addSysLogByBatchSave(List<SysLogEntity> list) {
 
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
         for (SysLogEntity entity : list) {
@@ -223,7 +220,7 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
 
     @Override
     public Boolean addSysLogByOther(SysLogEntity entity) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
         String content = entity.getContent();

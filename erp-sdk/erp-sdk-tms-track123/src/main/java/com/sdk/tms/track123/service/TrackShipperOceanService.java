@@ -5,6 +5,7 @@ import com.common.core.utils.OkHttpUtils;
 import com.erp.model.tms.dto.LogisticsTrackBaseDTO;
 import com.sdk.tms.track123.constant.PathConstants;
 import com.sdk.tms.track123.model.request.OceanRegisterRequest;
+import com.sdk.tms.track123.model.response.OceanRegisterResult;
 import com.sdk.tms.track123.model.response.RegisterResult;
 import com.sdk.tms.track123.model.response.TrackOceanResponse;
 import com.sdk.tms.track123.model.response.TrackResponse;
@@ -81,14 +82,15 @@ public class TrackShipperOceanService {
         return JSONUtil.toBean(result, TrackOceanResponse.class);
     }
 
-    public RegisterResult registerLogisticsNumber(String token, List<OceanRegisterRequest> registerRequests){
+    public OceanRegisterResult registerLogisticsNumber(String token, List<OceanRegisterRequest> registerRequests){
         long timestamp = System.currentTimeMillis();
         Map<String, String> headers = new LinkedHashMap<>();
         headers.put("Content-Type", "application/json;charset=utf-8");
         headers.put("Track123-Api-Secret", token);
         headers.put("timestamp", String.valueOf(timestamp));
         String result = OkHttpUtils.doPostJsonObject(PathConstants.BASE_URL + PathConstants.OCEAN_REGISTER_LOGISTICS_NUMBER, registerRequests, headers);
+        System.out.println("注册结果");
         System.out.println(result);
-        return JSONUtil.toBean(result, RegisterResult.class);
+        return JSONUtil.toBean(result, OceanRegisterResult.class);
     }
 }

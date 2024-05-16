@@ -18,6 +18,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -110,9 +111,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     @Resource
     private SysUserFeign sysUserFeign;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private SyncKingdeeCustomerService syncKingdeeCustomerService;
@@ -662,7 +660,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
         }
-        LoginUser user = commonService.getUserInfo();
+        LoginUser user = UserContext.getDefaultLoginUser();
         ApproveStatusEnum approveStatus;
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
@@ -919,7 +917,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
 
         //撤销现有流程
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
             revokeDTO.setBusinessId(obj);
@@ -1739,7 +1737,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      * @date: 2023/7/3 14:39
      */
     private void startProcess(List<CustomerInfoEntity> list) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
         list.forEach(obj -> {
             ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
@@ -1777,7 +1775,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
 
         ValidList<ProcessManagementDTO.ApproveDTO> resultList = new ValidList<>();
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         list.forEach(obj -> {
             ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
             approveDTO.setBusinessId(obj.getId());

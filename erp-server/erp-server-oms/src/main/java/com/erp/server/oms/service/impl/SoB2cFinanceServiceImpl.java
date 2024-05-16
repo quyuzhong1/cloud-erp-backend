@@ -18,7 +18,6 @@ import com.erp.model.oms.entity.SoB2cFinanceEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cFinanceMapper;
-import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoB2cFinanceService;
 import com.erp.server.oms.service.SoB2cService;
@@ -31,7 +30,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * <p>
@@ -46,8 +48,6 @@ import java.util.*;
 public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper, SoB2cFinanceEntity> implements SoB2cFinanceService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
     @Resource
     private SoB2cService soB2cService;
 
