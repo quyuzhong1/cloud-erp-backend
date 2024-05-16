@@ -63,6 +63,9 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Resource
     private CustomerFeign customerFeign;
 
+    @Resource
+    private DmpOrderItemService dmpOrderItemService;
+
     private static Integer pageNumber = 1;
 
     /**
@@ -194,13 +197,13 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         if (StrUtil.isBlank(orderInfoId)) {
             throw new RuntimeException("DmpOrderInfoServiceImpl>>>checkOrder>>>销售订单保存失败");
         }
-        List<DmpOrderItemSplitEntity> itemList = orderInfoEntity.getItemList();
+        List<DmpOrderItemEntity> itemList = orderInfoEntity.getItemList();
         if (CollectionUtil.isEmpty(itemList)) {
             return orderInfoId;
         }
         String orderId = orderInfoId;
         itemList.stream().peek(entity -> entity.setOrderId(orderId)).collect(Collectors.toList());
-        dmpOrderItemSplitService.checkOrderItem(itemList, orderInfoEntity.getPlatformCreateTime().toLocalDate(), orderInfoEntity.getPlatformSign());
+        dmpOrderItemService.checkOrderItem(itemList, orderInfoEntity.getPlatformCreateTime().toLocalDate(), orderInfoEntity.getPlatformSign());
         return orderInfoId;
     }
 

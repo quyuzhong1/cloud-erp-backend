@@ -21,13 +21,11 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.wms.dto.excel.ExportQcReportExcelDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.mapper.DmpOrderItemMapper;
 import com.erp.server.dmp.pull.mapper.DmpOrderItemSplitMapper;
-import com.erp.server.dmp.service.DmpBomService;
-import com.erp.server.dmp.service.DmpOrderItemSplitService;
-import com.erp.server.dmp.service.DmpSkuCostService;
-import com.erp.server.dmp.service.DmpSplitErrorLogService;
+import com.erp.server.dmp.service.*;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -70,6 +68,9 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
     @Resource
     private DmpSkuCostService dmpSkuCostService;
 
+    @Resource
+    private DmpOrderItemService dmpOrderItemService;
+
     /**
      * 添加订单商品详细信息
      *
@@ -97,7 +98,7 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
     public Boolean batchAdd(List<DmpOrderItemSplitEntity> dmpOrderInfoEntityList, String platformSign) {
         //拆单
         List<DmpOrderItemSplitEntity> itemEntityList = splitOrderItem(dmpOrderInfoEntityList, platformSign);
-        return this.saveBatch(itemEntityList, 500);
+        return this.saveBatch(itemEntityList);
     }
 
     /**
@@ -159,59 +160,6 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
         LambdaQueryWrapper<DmpOrderItemSplitEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(DmpOrderItemSplitEntity::getErpOrderItemId, dmpOrderItemSplitEntity.getErpOrderItemId());
         return this.update(dmpOrderItemSplitEntity, lambdaQueryWrapper);
-    }
-
-    /**
-     * 校验订单商品信息在中台是否存在，存在就修改不存在则新增
-     *
-     * @return void
-     * @Author Luo_WG
-     * @Date 2022/11/14 21:25
-     **/
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void checkOrderItem(List<DmpOrderItemSplitEntity> orderItem, LocalDate platformCreateTime, String platformSign) {
-        List<DmpOrderItemSplitEntity> insertList = new ArrayList<>();
-        List<DmpOrderItemSplitEntity> updateList = new ArrayList<>();
-        for (DmpOrderItemSplitEntity orderItemBean : orderItem) {
-            if(StrUtil.isBlank(orderItemBean.getSkuNo())){
-                continue;
-            }
-            Object skuListing = redisUtil.hget(RedisKeyConstant.SKU_LISTING_TIME, orderItemBean.getSkuNo());
-            if (ObjectUtil.isEmpty(skuListing)) {
-                Map<String, Object> resultMap = new HashMap<>();
-                resultMap.put("skuNo", orderItemBean.getSkuNo());
-                resultMap.put("listingTime", platformCreateTime);
-                mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.PRODUCT_LISTING_UPDATE_TAG.getName(), resultMap, orderItemBean.getId());
-            } else {
-                DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                LocalDate parse = LocalDate.parse(skuListing.toString(), dateTimeFormatter);
-                // 新品标识 1为新品 0 为非新品
-                if (platformCreateTime.getYear() == parse.getYear()) {
-                    orderItemBean.setNewSign(1);
-                } else {
-                    orderItemBean.setNewSign(0);
-                }
-            }
-            DmpOrderItemSplitEntity dmpOrderItemSplitEntity = this.getByErpOrderItemId(orderItemBean.getErpOrderItemId());
-            if (null != dmpOrderItemSplitEntity) {
-                //如果数据有变动需要更新数据库订单商品信息
-                if (!dmpOrderItemSplitEntity.toString().equals(orderItemBean.toString())) {
-                    orderItemBean.setId(dmpOrderItemSplitEntity.getId());
-//                    updateById(orderItemBean);
-                    baseMapper.deleteById(dmpOrderItemSplitEntity.getId());
-                    updateList.add(orderItemBean);
-                }
-            } else {
-                insertList.add(orderItemBean);
-            }
-        }
-        if (CollectionUtil.isNotEmpty(insertList)) {
-            this.batchAdd(insertList, platformSign);
-        }
-        if(CollectionUtil.isNotEmpty(updateList)){
-            this.batchUpdate(updateList, platformSign);
-        }
     }
 
     /**
@@ -456,6 +404,13 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
         return itemListAll;
     }
 
+    @Override
+    public Boolean deleteByOrderIds(List<String> orderIds) {
+        if (CollectionUtils.isEmpty(orderIds)) {
+            return Boolean.FALSE;
+        }
+        return lambdaUpdate().in(DmpOrderItemSplitEntity::getOrderId, orderIds).remove();
+    }
 
     /**
      * 查询bom子级的成本信息
