@@ -83,8 +83,8 @@ public class AliExpressOrderService {
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("current_page", orderRequest.getCurrentPage());
         paramMap.put("page_size", pageSize);
-        paramMap.put("create_date_start", orderRequest.getStartTime());
-        paramMap.put("create_date_end", orderRequest.getEndTime());
+        paramMap.put("modified_date_start", orderRequest.getStartTime());
+        paramMap.put("modified_date_end", orderRequest.getEndTime());
         request.addApiParameter("simplify", "true");
         request.addApiParameter("param_aeop_order_query", JSONUtil.toJsonStr(paramMap));
         String token = orderRequest.getToken();

@@ -144,6 +144,10 @@ public class ListingInfoWithSkuMappingDTO {
      */
     private String platformFnSku;
     /**
+     * 平台SKUID
+     */
+    private String platformSkuId;
+    /**
      * 平台最后修改时间
      */
     private LocalDateTime platformUpdateTime;

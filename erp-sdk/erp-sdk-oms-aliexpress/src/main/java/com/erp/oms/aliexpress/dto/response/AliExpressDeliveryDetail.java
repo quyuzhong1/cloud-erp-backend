@@ -62,12 +62,15 @@ public class AliExpressDeliveryDetail implements Serializable {
     @Alias("sc_item_id")
     private String scItemId;
 
-    /**
-     *  货品条码 barcode (速卖通barcode 相当于sku code)
-     */
+
     @Alias("barcode")
     private String platformSku;
 
+    /**
+     *  skuID
+     */
+    @Alias("sku_id")
+    private String platformSkuId;
 
     /**
      * 商品名称
