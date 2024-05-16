@@ -443,9 +443,19 @@ public class WmsDataCompareTaskDTO implements Serializable {
     	private Integer sysFieldIndex;
     	
     	/**
+    	 * 默认导入字段
+    	 */
+    	private String defultImportFiled;
+    	
+    	/**
     	 * 导入数据字段下拉
     	 */
     	private List<DataCompareSettingImprotDTO> importFileds;
+    	
+    	/**
+    	 * 默认数据类型
+    	 */
+    	private String defultDatatype;
     	
     	/**
     	 * 数据类型下拉
@@ -491,10 +501,6 @@ public class WmsDataCompareTaskDTO implements Serializable {
          */
     	private Integer importFieldIndex;
     	
-    	/**
-    	 * 是否默认值
-    	 */
-    	private Boolean defaultStatus = false;
     }
     
     @Data
@@ -509,11 +515,6 @@ public class WmsDataCompareTaskDTO implements Serializable {
          * 导入数据数据类型名称
          */
     	private String typeName;
-    	
-    	/**
-    	 * 是否默认值
-    	 */
-    	private Boolean defaultStatus = false;
     	
     }
 
