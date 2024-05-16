@@ -1616,6 +1616,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!ApproveStatusEnum.APPROVE.equals(approveStatusEnum)) {
             throw new ServiceException(ApiError.B2C_APPROVE_DELIVERY, entity.getCode());
         }
+        if (entity.getIsCancel()){
+            throw new ServiceException(StrUtil.format("销售订单【{}】平台已取消，不支持发货", entity.getCode()));
+        }
 
         //校验是冻结
         if (entity.getIsFrozen()) {
