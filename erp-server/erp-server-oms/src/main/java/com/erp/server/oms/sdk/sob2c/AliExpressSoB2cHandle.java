@@ -108,6 +108,13 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
             return true;
         } catch (Exception e) {
             log.error("[速卖处理销售出库失败]:order={},msg={}", dto.getPlatformCode(), e.getMessage());
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+            addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+            addError.setParamJson("");
+            addError.setReturnJson("");
+            addError.setMainId(mainEntity.getId());
+            addError.setMessage(e.getMessage());
+            soB2cErrorService.add(addError);
         }
         return false;
     }
@@ -140,7 +147,7 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
             List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS =  warehouseMappingFeign.listMappingViewByDictPlatform(mainEntity.getDictPlatform());
             //设置销售订单id，在后面新增销售出库单时用到
             platformDeliveryDetailDTOList.forEach(v->v.setMainId(mainEntity.getId()));
-            Map<String,List<PlatformDeliveryDetailDTO>> map = platformDeliveryDetailDTOList.stream().collect(Collectors.groupingBy(PlatformDeliveryDetailDTO::getWarehouseName));
+            Map<String,List<PlatformDeliveryDetailDTO>> map = platformDeliveryDetailDTOList.stream().collect(Collectors.groupingBy(PlatformDeliveryDetailDTO::getPlatformWarehouseName));
             map.forEach((key,val)->{
                 //校验仓库是否匹配到
                 WarehouseMappingDTO.MappingViewDTO mappingViewDTO = mappingViewDTOS.stream().filter(req -> key.equals(req.getThirdWarehouseName())).findFirst().orElse(null);
@@ -166,7 +173,7 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
                         addError.setParamJson("");
                         addError.setReturnJson("");
                         addError.setMainId(mainEntity.getId());
-                        addError.setMessage(StrUtil.format("自动生成销售出库单失败：订单未匹配Sku映射关系,sku:【{}】", deliveryDetailDTO.getPlatformSkuNo()));
+                        addError.setMessage(StrUtil.format("自动生成销售出库单失败：订单未匹配Sku映射关系，平台产品ID:【{}】", deliveryDetailDTO.getPlatformSpuNo()));
                         soB2cErrorService.add(addError);
                         return;
                     }
@@ -189,6 +196,8 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
                     soB2cDetailService.updateWarehouseByMapping(mappingViewDTO,mainEntity.getId(),skuIdList);
                     //生成速卖通发货单
                     addAliExpressDelivery(dto, mainEntity, logisticsDTOS, key,val);
+                    soB2cErrorService.deleteByCodeAndType(mainEntity.getCode(),SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+                    soB2cService.removeSignError(mainEntity.getId(),SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
                 }
             });
         } else {
