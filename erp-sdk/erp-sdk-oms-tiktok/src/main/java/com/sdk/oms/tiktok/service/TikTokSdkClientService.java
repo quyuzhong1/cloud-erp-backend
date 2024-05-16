@@ -58,6 +58,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -96,16 +97,20 @@ public class TikTokSdkClientService {
         Map<String, String> paramMap = new HashMap<>();
         paramMap.put("clientId","6buinkjt3hmld");
         paramMap.put("clientSecret","8ff628de24faf70c24855de4d967fb6a17a47e3f");
-        String acc = "GCP_aUEiSgAAAACj-JAAAriAWjVtF2MrUIFdARIDEdX_pdh3JpPq_FYigBbzB-NHNoy7-guJPuaKJaM25dV1ndfmb55uP_Ri1yCR4KCfrsPLGnkPe1BNMxokWAMMaWu4buzS96MGwueLfEhnLPlNqui6k9QUmB8SohiZir8Z5qv58oCWfE3rbp3bbw";
+        String acc = "TTP_pAD5jwAAAACj-JAAAriAWjVtF2MrUIFdk8eGtXx77ajhNOJYLDh5UbBiSKG5DLyX4MBnDY02F1jd4N6Chr50hqdSeVteoIh1ejRFL3UMUdItrn4CILhh7ggQaoGfdQSNG0JMB2S3R4fZKDm6RsJCztXsbExPE4-bqn-VR5LZjkgAdNwU6UuK3A";
 
         TikTokShopInfoDTO shopInfoDTO = new TikTokShopInfoDTO();
         shopInfoDTO.setAccessToken(acc);
-        shopInfoDTO.setShopCipher("GCP_APc1OgAAAACotu-CHizKQDMHvHIiBmIh");
+        shopInfoDTO.setShopCipher("TTP_gBJmlwAAAAC67DSXGtKhZV4epbjJVKXF");
         shopInfoDTO.setClientSecret("8ff628de24faf70c24855de4d967fb6a17a47e3f");
         shopInfoDTO.setClientId("6buinkjt3hmld");
         shopInfoDTO.setBaseUrl("https://auth.tiktok-shops.com");
 
-        List<OrdersBean> ordersBeans = sdkClientService.listOrderView(Arrays.asList("576667692127325976"), shopInfoDTO);
+        JobTaskDTO task = new JobTaskDTO();
+        task.setLastTime(LocalDateTime.now().minusMonths(3));
+        task.setNextTime(LocalDateTime.now());
+
+        List<OrdersBean> ordersBeans = sdkClientService.sendTikTokGetOrder(shopInfoDTO, task);
         for (OrdersBean ordersBean : ordersBeans) {
             System.out.println(ordersBean);
         }
@@ -582,7 +587,10 @@ public class TikTokSdkClientService {
                 continue;
             }
             //获取到所有客户的产品id
-            List<String> orderIds = orderDTO.getData().getOrders().stream().map(req -> req.getFid()).distinct().collect(Collectors.toList());
+            List<String> orderIds = orderDTO.getData().getOrders().stream()
+                    .filter(req -> !"UNPAID".equalsIgnoreCase(req.getStatus())
+                            && !"ON_HOLD".equalsIgnoreCase(req.getStatus())
+                    ).map(req -> req.getFid()).distinct().collect(Collectors.toList());
 
             //根据订单id查询订单详情信息
             List<OrdersBean> orderViewDTOS = this.listOrderView(orderIds, shopInfoDTO);
