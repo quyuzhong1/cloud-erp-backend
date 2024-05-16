@@ -336,4 +336,9 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
                     .update();
         }
     }
+
+    @Override
+    public void updateInfo(WarehouseReceiveDetailEntity wrd) {
+        baseMapper.updateInfo(wrd.getId(),wrd.getInStockStatus());
+    }
 }

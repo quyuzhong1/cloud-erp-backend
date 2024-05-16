@@ -1754,7 +1754,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 addDTO.setPurchaseDeptId(deptId);
             }
             //采购组织
-            addDTO.setPurchaseOrgId(companyCodeList.get(0).getId());
+            addDTO.setPurchaseOrgId(entity.getPurchaseOrgId());
             addDTO.setDeliveryWarehouseId("");
             //采购供应商信息
             PurchaseOrderSupplierDTO.AddDTO supplierDTO = new PurchaseOrderSupplierDTO.AddDTO();

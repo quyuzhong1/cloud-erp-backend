@@ -147,7 +147,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     public SoB2cLogisticsEntity getByMainId(String mainId) {
-        return lambdaQuery().eq(SoB2cLogisticsEntity::getMainId, mainId).one();
+        return lambdaQuery().eq(SoB2cLogisticsEntity::getMainId, mainId).last(" limit 1 ").one();
     }
 
     private List<SoB2cLogisticsEntity> getListByMainId(String mainId) {
@@ -372,6 +372,9 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     public Boolean updateWeight(String soId,String id, BigDecimal weightByG) {
+        if(!MathUtil.isValidNumber(weightByG,12)){
+            throw new ServiceException("重量过大，整数最大值不能超过12位");
+        }
         String msg = StrUtil.format("用户【{}】更新重量为{} ", UserContext.getDefaultLoginUser().getUserName(),weightByG+"g");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soId, "【组包称重】");
         return lambdaUpdate()

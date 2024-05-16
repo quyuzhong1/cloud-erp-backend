@@ -45,6 +45,16 @@ public interface LogisticsBillFeign {
     @PostMapping("feign/logisticsBill/listLogisticsBillVoBySourceIds")
     List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoBySourceIds(@RequestBody List<String> sourceIdList);
 
+    /**
+     * 根据来源获取运输状态
+     *
+     * @param billVoList 来源
+     * @return LogisticsBillDTO.LogisticsBillVo
+     * @author hyj
+     * @date 2024/5/11 10:39
+     */
+    @PostMapping("feign/logisticsBill/getTrackStatusByTrackNo")
+    List<LogisticsBillDTO.LogisticsBillVo> getTrackStatusByTrackNo(@RequestBody List<LogisticsBillDTO.LogisticsBillVo> billVoList);
 
     /**
      * 添加物流单

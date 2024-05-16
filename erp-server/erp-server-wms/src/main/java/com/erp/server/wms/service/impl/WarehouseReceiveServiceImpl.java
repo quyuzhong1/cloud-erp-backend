@@ -52,6 +52,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
+import com.rtfparserkit.rtf.Command;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -70,6 +71,8 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.rtfparserkit.rtf.Command.list;
 
 /**
  * <p>
@@ -175,6 +178,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceIdsAndType(receiveIds,SourceTypeEnum.PO_RECEIVE.getCode());
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
+                //设置入库状态名称
+                obj.setInStockStatusName(InstockStatusEnum.getByCode(obj.getInStockStatus()));
                 List<QcInfoEntity> resultList = qcInfoList.stream().filter(v -> v.getSourceId().equals(obj.getId())).collect(Collectors.toList());
                 if(resultList.stream().allMatch(v->Objects.isNull(v.getQcStatus()) || QcBillStatusEnum.DRAFT.equals(v.getQcStatus())|| QcBillStatusEnum.WAIT_QC.equals(v.getQcStatus())|| QcBillStatusEnum.CANCEL.equals(v.getQcStatus()))){
                     obj.setQcStatus(PdaQclStatusEnum.WAIT_QC.getCode());
@@ -1891,4 +1896,94 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         }
         return this.lambdaQuery().eq(WarehouseReceiveEntity::getSourceType,dto.getSourceType()).in(WarehouseReceiveEntity::getSourceId,dto.getSourceIds()).list();
     }
+
+
+    @Override
+    public void updateReceiveInStockStatus(List<PoInstockEntity> list) {
+        //修改采购收货单入库状态
+        List<WarehouseReceiveDetailEntity> detailEntities = new ArrayList<>();
+
+        list.forEach(poInstockEntity->{
+            //获取明细
+            List<WarehouseReceiveDetailEntity> receiveDetailEntities = warehouseReceiveDetailService.listDetailByMainIds(Collections.singletonList(poInstockEntity.getSourceId()));
+            receiveDetailEntities.forEach(item->{
+                //获取收货数量
+                Integer receiveQty = item.getReceiveQty();
+                if (Objects.nonNull(receiveQty) && receiveQty > 0) {
+                    //查询收货单关联的SKU明细的下推的入库单的入库数量【单据已审核】
+                    WarehouseReceiveDetailEntity detailEntity = null;
+                    Integer instockQty = baseMapper.getQty(poInstockEntity.getSourceId(),item.getId());
+                    detailEntity= new WarehouseReceiveDetailEntity();
+                    if (Objects.isNull(instockQty)||instockQty==0) {
+                        detailEntity.setInStockStatus(InstockStatusEnum.NOT_IN_STOCK.getCode());
+                    }else{
+                        if (instockQty<receiveQty){
+                            detailEntity.setInStockStatus(InstockStatusEnum.PARTIALLY_IN_STOCK.getCode());
+                        }
+                        if (instockQty.equals(receiveQty)){
+                            detailEntity.setInStockStatus(InstockStatusEnum.FULLY_IN_STOCK.getCode());
+                        }
+                    }
+                    detailEntity.setId(item.getId());
+                    detailEntities.add(detailEntity);
+                }
+            });
+
+        });
+        if (CollectionUtils.isNotEmpty(detailEntities)) {
+            warehouseReceiveDetailService.updateBatchById(detailEntities);
+        }
+    }
+
+    @Override
+    public void instockStatusCleanJob() {
+        //获取所有采购收货单入库状态为0的单据
+        Integer count = baseMapper.getCount();
+        Integer size = 500;
+        Integer page = count / size;
+        List<List<WarehouseReceiveDetailEntity>> wrdLists = new ArrayList<>();
+        for (int i=0;i<=page;i++){
+            List<WarehouseReceiveDetailEntity> viewDTOS = new ArrayList<>();
+            IPage<WarehouseReceiveDTO.PagingViewDTO> viewDTOIPage = baseMapper.pageDetail(new Page(i+1, size), new WarehouseReceiveDTO.PagingParamDTO());
+            List<WarehouseReceiveDTO.PagingViewDTO> list = viewDTOIPage.getRecords();
+            if (CollectionUtils.isEmpty(list)){
+                continue;
+            }
+            if (CollectionUtils.isNotEmpty(list)) {
+                list.forEach(item -> {
+                    WarehouseReceiveDetailEntity viewDTO = null;
+                    //获取收货数量
+                    Integer receiveQty = item.getReceiveQty();
+                    if (Objects.nonNull(receiveQty) && receiveQty > 0) {
+                        //查询收货单关联的SKU明细的下推的入库单的入库数量【单据已审核】
+                        Integer instockQty = baseMapper.getQty(item.getId(),item.getDetailId());
+                        viewDTO= new WarehouseReceiveDetailEntity();
+                        if (Objects.isNull(instockQty)||instockQty==0) {
+                            viewDTO.setInStockStatus(InstockStatusEnum.NOT_IN_STOCK.getCode());
+                        }else{
+                            if (instockQty<receiveQty){
+                                viewDTO.setInStockStatus(InstockStatusEnum.PARTIALLY_IN_STOCK.getCode());
+                            }
+                            if (instockQty.equals(receiveQty)){
+                                viewDTO.setInStockStatus(InstockStatusEnum.FULLY_IN_STOCK.getCode());
+                            }
+                        }
+                        viewDTO.setId(item.getDetailId());
+                        viewDTOS.add(viewDTO);
+                    }
+                });
+                if (CollectionUtils.isNotEmpty(viewDTOS)){
+                    wrdLists.add(viewDTOS);
+                }
+            }
+        }
+        if (CollectionUtils.isNotEmpty(wrdLists)){
+            wrdLists.forEach(wrdList->{
+                wrdList.forEach(wrd->{
+                    warehouseReceiveDetailService.updateInfo(wrd);
+                });
+            });
+        }
+    }
+
 }

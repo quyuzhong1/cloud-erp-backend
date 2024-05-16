@@ -394,6 +394,11 @@ public class LogisticsChannelDTO implements Serializable {
         private Boolean isApiInsurance;
 
         /**
+         * 保宏单号（报关单号类型）
+         */
+        private String declareCodeType;
+
+        /**
          * 物流映射列表
          */
         private List<LogisticsMappingDTO.ViewDTO> mappingList;
@@ -629,7 +634,10 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private Boolean isApiInsurance;
 
-
+        /**
+         * 保宏单号（报关单号类型） /tms/drop/down/dict/list?key=declareCodeType
+         */
+        private String declareCodeType;
     }
 
     @Data

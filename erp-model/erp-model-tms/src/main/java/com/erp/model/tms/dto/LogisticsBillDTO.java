@@ -1,6 +1,7 @@
 package com.erp.model.tms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -131,6 +132,15 @@ public class LogisticsBillDTO implements Serializable {
          */
         private List<String> excludeOrderTypeList;
 
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
+
+        /**
+         * 发货类型 http://172.16.100.11:3002/project/128/interface/api/25522 key=shipmentType
+         */
+        private String shipmentTypeList;
     }
 
     /**
@@ -167,7 +177,20 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String shopName;
 
+        /**
+         * 平台订单号[可排序]
+         */
+        private String platformCode;
 
+        /**
+         * 发货类型(自发货、第三方仓、平台仓发货)[可排序]
+         */
+        private String shipmentType;
+
+        /**
+         * 发货类型名称(自发货、第三方仓、平台仓发货)
+         */
+        private String shipmentTypeName;
 
         /**
          * 订单类型[可排序]
@@ -470,8 +493,11 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String orderType;
 
-
-
+        /**
+         * 发货类型(自发货、第三方仓、平台仓发货)
+         */
+        @NotBlank(message = "发货类型不能为空")
+        private String shipmentType;
     }
 
     /**
@@ -604,6 +630,10 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String trackStatus;
         /**
+         * 运输状态
+         */
+        private String trackStatusName;
+        /**
          * 跟踪单号
          */
         private String trackNo;
@@ -679,14 +709,19 @@ public class LogisticsBillDTO implements Serializable {
          */
         private PackageDTO packageInfo;
 
+//        /**
+//         * sku Id list
+//         */
+//        @Size(min = 1,message = "sku信息不能为空")
+//        @NotNull(message = "sku信息不能为空L")
+//        private List<SkuDTO> skuList;
+
         /**
-         * sku Id list
+         * 产品信息不能为空
          */
-        @Size(min = 1,message = "sku信息不能为空")
-        @NotNull(message = "sku信息不能为空L")
-        private List<SkuDTO> skuList;
-
-
+        @Size(min = 1,message = "产品信息不能为空")
+        @NotNull(message = "产品信息不能为空L")
+        List<LogisticsProductVO> productVOS;
     }
 
     @Data
@@ -950,6 +985,17 @@ public class LogisticsBillDTO implements Serializable {
          * 来源 http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticTrackStatus
          */
         private String trackStatus;
+
+        /**
+         * 状态时间
+         */
+        @NotNull(message = "状态时间不能为空")
+        private LocalDateTime trackTime;
+
+        /**
+         * 轨迹描述
+         */
+        private String trackDesc;
 
     }
 

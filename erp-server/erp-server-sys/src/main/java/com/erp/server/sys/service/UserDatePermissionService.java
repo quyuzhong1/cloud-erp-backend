@@ -10,4 +10,12 @@ public interface UserDatePermissionService {
      * @return java.lang.String
      **/
     String getUserDatePermissionSql(String tableField, String menuCode);
+    /**
+     * 根据菜单cdoe查询用户数据权限
+     * @author hyj
+     * @date 2024/5/9 10:43
+     * @param menuCode 菜单编号
+     * @return java.lang.String
+     **/
+    Boolean getUserDatePermissionByMenuCode(String menuCode);
 }

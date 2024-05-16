@@ -44,9 +44,11 @@ import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.ProductRegistrationDTO;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
+import com.erp.model.tms.enums.ProductRegistrationEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -274,11 +276,29 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             declareInfo.setDestCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
         }
         result.setDeclareInfo(declareInfo);
+        //国家列表
+        List<DictCountryDTO.ListDTO>  countryList = sysUserFeign.countryList();
         List<ProductCustomsEntity> productCustomsList = productCustomsService.listBySkuId(skuId);
         List<ProductCustomsDTO.ViewDTO> customsList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(productCustomsList)) {
             customsList = BeanMapper.copyList(productCustomsList, ProductCustomsDTO.ViewDTO.class);
+            customsList.forEach(viewDTO -> {
+                if (StringUtils.isEmpty(viewDTO.getToCurrency())){
+                    viewDTO.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                    viewDTO.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+                }
+                if (StringUtils.isNotBlank(viewDTO.getCountry())) {
+                    String[] split = viewDTO.getCountry().split(",");
+                    List<String> countryIdList = Arrays.asList(split);
+                    List<DictCountryDTO.ListDTO> dictCountryList = countryList.stream().filter(c->countryIdList.contains(c.getId())).collect(Collectors.toList());
+                    String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
+                    viewDTO.setCountryName(countryName);
+                }
+            });
         }
+        productCustomsList.forEach(req -> {
+
+        });
         result.setCustomsList(customsList);
         return result;
     }
@@ -307,6 +327,11 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             productCustomsService.removeByIds(deleteIdList);
         }
+        productCustomsList.forEach(productCustomsEntity -> {
+            if (StringUtils.isNotEmpty(productCustomsEntity.getToCurrency())){
+                productCustomsEntity.setToCurrencySymbol(CurrencyEnum.getSymbolByCode(productCustomsEntity.getToCurrency()));
+            }
+        });
         Boolean customsResult = productCustomsService.saveOrUpdateBatch(productCustomsList);
         return logisticsResult && customsResult;
     }
@@ -553,7 +578,11 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         //校验下推是否备案
         List<ProductRegistrationEntity> productRegistrationList = forecastFeign.listBySkuId(entity.getSkuId());
         if (CollectionUtils.isNotEmpty(productRegistrationList)) {
-            throw new ServiceException(StrUtil.format("已下推备案信息不支持反审核",entity.getSkuNo()));
+            long count = productRegistrationList.stream().filter(obj -> !StrUtil.equals(obj.getStatus(), ProductRegistrationEnum.StatusEnum.DRAFT.getCode())
+                    && !StrUtil.equals(obj.getStatus(), ProductRegistrationEnum.StatusEnum.CANCEL.getCode())).count();
+            if (count > 0) {
+                throw new ServiceException(StrUtil.format("已下推备案信息(非备案不通过、已取消)不支持反审核",entity.getSkuNo()));
+            }
         }
         // 更新审核信息
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -801,7 +830,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             Boolean logisticsResult = productLogisticsService.saveOrUpdate(logistics);
             productCustomsService.removeBySkuId(Arrays.asList(skuId));
             productCustomsService.saveBatch(customsList);
-
+            productCustomsService.addDefaultCustoms(Collections.singletonList(skuId));
         }
 
 

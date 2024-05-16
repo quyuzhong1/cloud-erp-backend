@@ -73,6 +73,21 @@ public class ProductCustomsEntity extends BaseEntity<ProductCustomsEntity> {
     @TableField("type")
     private String type;
 
+    /**
+     * 目的国申报价
+     */
+    @TableField("to_declare_price")
+    private BigDecimal toDeclarePrice;
+    /**
+     * 目的国申报币种
+     */
+    @TableField("to_currency")
+    private String toCurrency;
+    /**
+     * 货币符号
+     */
+    @TableField("to_currency_symbol")
+    private String toCurrencySymbol;
 
     public static final String SKU_ID = "sku_id";
 

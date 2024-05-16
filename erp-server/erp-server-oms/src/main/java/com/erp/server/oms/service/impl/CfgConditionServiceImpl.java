@@ -12,6 +12,7 @@ import com.erp.model.oms.entity.CfgConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.server.oms.mapper.CfgConditionMapper;
 import com.erp.server.oms.service.CfgConditionService;
+import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.DictRuleConditionService;
 import com.erp.server.oms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -109,6 +110,18 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
     @Override
     public List<CfgConditionDTO.ListDTO> listAllCondition() {
         return baseMapper.listAllCondition();
+    }
+
+    @Override
+    public List<CfgConditionDTO.ListDTO> listDeclareCondition() {
+        //后面需要根据类型进行配置条件列表
+        return baseMapper.listDeclareCondition();
+    }
+
+    @Override
+    public List<CfgConditionDTO.ListDTO> listOrderHandleCondition() {
+        //后面需要根据类型进行配置条件列表
+        return baseMapper.listOrderHandleCondition();
     }
 
 
