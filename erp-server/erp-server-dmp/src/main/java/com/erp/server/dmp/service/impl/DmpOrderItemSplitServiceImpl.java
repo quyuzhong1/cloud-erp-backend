@@ -15,7 +15,6 @@ import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.dto.DmpOrderItemGroup;
 import com.erp.model.dmp.dto.SplitSkuDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -23,12 +22,8 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.dmp.mapper.DmpOrderItemMapper;
 import com.erp.server.dmp.pull.mapper.DmpOrderItemSplitMapper;
-import com.erp.server.dmp.service.DmpBomService;
-import com.erp.server.dmp.service.DmpOrderItemSplitService;
-import com.erp.server.dmp.service.DmpSkuCostService;
-import com.erp.server.dmp.service.DmpSplitErrorLogService;
+import com.erp.server.dmp.service.*;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -66,7 +61,7 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
-    private DmpOrderItemMapper dmpOrderItemMapper;
+    private DmpOrderItemService dmpOrderItemService;
 
     @Resource
     private DmpSkuCostService dmpSkuCostService;
@@ -368,7 +363,7 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
             originalItem.setOriginalQuantity(splitSku.getOriginalQuantity());
             originalItem.setOriginalCostPrice(splitSku.getOriginalCostPrice());
             originalItem.setOriginalAmountAfter(splitSku.getOriginalAmountAfter());
-            dmpOrderItemMapper.insert(originalItem);
+            dmpOrderItemService.saveOrUpdate(originalItem);
             for (SplitSkuDTO skuDTO : splitSkuDTOS) {
                 DmpOrderItemSplitEntity entity = new DmpOrderItemSplitEntity();
                 BeanMapper.copy(dmpOrderItemSplitEntity, entity);
@@ -457,10 +452,6 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
         return itemListAll;
     }
 
-    @Override
-    public List<DmpOrderItemGroup> listByGroup() {
-        return baseMapper.listByGroup();
-    }
 
     /**
      * 查询bom子级的成本信息

@@ -1,7 +1,6 @@
 package com.erp.server.dmp.pull.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.dmp.dto.DmpOrderItemGroup;
 import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -26,8 +25,6 @@ public interface DmpOrderItemSplitMapper extends BaseMapper<DmpOrderItemSplitEnt
     List<Map<String,String>> getOrderListingTime(@Param("skuNoList") List<String> skuNoList);
 
     List<DmpSkuCostEntity> listDmpSkuCostEntity();
-
-    List<DmpOrderItemGroup> listByGroup();
 
 }
 
