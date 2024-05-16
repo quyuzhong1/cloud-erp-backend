@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
+import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -57,11 +58,16 @@ public interface StocktakingProfitLossMapper extends BaseMapper<StocktakingProfi
     List<InOutStockDTO> listInventoryInOut(@Param("idList") List<String> idList);
 
     /**
-     * 库存组织ID和SKuId最新单据时间
+     * 库存IDS
+     * 库存组织IDS
+     * SKUIdS
      * @author Jim
      * @date 2023-03-05
      */
-    List<StocktakingProfitLossDTO.LastDTO> listByOrgIdAndSkuIds(@Param("orgIdList")List<String> orgIdList, @Param("skuIdList") List<String> skuIdList);
+    List<StocktakingProfitLossDetailDTO.LastDTO> maxDateByParams(@Param("warehouseIdList")List<String> warehouseIdList,
+                                                                 @Param("orgIdList") List<String> orgIdList,
+                                                                 @Param("skuIdList") List<String> skuIdList
+    );
 
 
     /**

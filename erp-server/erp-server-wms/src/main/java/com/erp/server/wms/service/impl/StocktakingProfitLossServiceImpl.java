@@ -900,14 +900,17 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     }
 
     @Override
-    public List<StocktakingProfitLossDTO.LastDTO> listByOrgIdAndSkuIds(List<String> orgIds, List<String> skuIds) {
+    public List<StocktakingProfitLossDetailDTO.LastDTO> maxDateByParams(List<String> warehouseIds, List<String> orgIds, List<String> skuIds) {
+        if (CollectionUtils.isEmpty(warehouseIds)){
+            throw new ServiceException("仓库IDS 不能为空");
+        }
         if (CollectionUtils.isEmpty(orgIds)){
-            throw new ServiceException("组织IDS不能为空");
+            throw new ServiceException("组织IDS 不能为空");
         }
         if (CollectionUtils.isEmpty(skuIds)){
             throw new ServiceException("SKU IDS不能为空");
         }
-        return baseMapper.listByOrgIdAndSkuIds(orgIds, skuIds);
+        return baseMapper.maxDateByParams(warehouseIds, orgIds, skuIds);
     }
 
     @Override
@@ -917,16 +920,15 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     }
 
     @Override
-    public boolean checkClosed(List<String> orgIds, List<String> skuIds, LocalDate billDate) {
+    public boolean checkClosed(List<String> warehouseIds, List<String> warehourseLocationList, List<String> orgIds, List<String> skuIds, LocalDate billDate) {
         // 最新盘盈盘亏单有效单据日期列表
-        List<StocktakingProfitLossDTO.LastDTO> lastStocktakingProfitLossList = this.listByOrgIdAndSkuIds(orgIds, skuIds);
+        List<StocktakingProfitLossDetailDTO.LastDTO> lastStocktakingProfitLossList = this.maxDateByParams(warehouseIds, orgIds, skuIds);
         if (CollectionUtils.isNotEmpty(lastStocktakingProfitLossList)){
-            for (StocktakingProfitLossDTO.LastDTO lastDTO : lastStocktakingProfitLossList) {
-                if (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate())){
-                    // 已有日期之前已审核的盘盈盘亏单
-                    return true;
-                }
-            }
+            // 已有日期之前对应仓位已审核的盘盈盘亏单
+            return lastStocktakingProfitLossList.stream()
+                    .anyMatch(e-> warehourseLocationList.contains(e.getWarehouseLocation()) &&
+                            (billDate.isBefore(e.getBillDate()) || billDate.equals(e.getBillDate()))
+                    );
         }
         return false;
     }

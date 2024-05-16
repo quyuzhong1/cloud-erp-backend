@@ -2230,8 +2230,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstockDetailService.updateDetailRemark(soOutStockId, "因库存关账时间停止提交", false);
                 return true;
             }
+            // 仓位信息
+            List<String> warehourseLocationList = dto.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getWarehouseLocation).distinct().collect(Collectors.toList());
+            // SKU信息
             List<String> skuIds = dto.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
-            boolean closed = stocktakingProfitLossService.checkClosed(Collections.singletonList(dto.getWarehouseOrgId()), skuIds, dto.getBillDate());
+            boolean closed = stocktakingProfitLossService.checkClosed(
+                    Collections.singletonList(dto.getWarehouseId()),
+                    warehourseLocationList,
+                    Collections.singletonList(dto.getWarehouseOrgId()),
+                    skuIds,
+                    dto.getBillDate());
             if (closed){
                 // 已有盘盈盘亏单不提交
                 // 记录明细(事务分开)

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -227,5 +228,52 @@ public class StocktakingProfitLossDetailDTO implements Serializable {
 
 
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LastDTO {
+        /**
+         * 单据号
+         */
+        private String code;
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+        /**
+         * 库存组织
+         */
+        private String warehouseOrgId;
+        /**
+         * 仓库
+         */
+        private String warehouseId;
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+        /**
+         * skuId
+         */
+        private String skuId;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ParamsDTO {
+        /**
+         * 仓库
+         */
+        private List<String> warehouseId;
+        /**
+         * 库存组织
+         */
+        private List<String> warehouseOrgId;
+        /**
+         * skuId
+         */
+        private List<String> skuId;
     }
 }
