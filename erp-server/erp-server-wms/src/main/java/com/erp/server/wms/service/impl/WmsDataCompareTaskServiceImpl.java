@@ -914,19 +914,21 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		for(ImportDataMappingDTO importDataMappingDTO : notPkImportDataMappingDTOList) {
 			String systemValue = systemData.get(importDataMappingDTO.getSystemField());
 			String importValue = importData.get(importDataMappingDTO.getImportField());
-			if(systemValue == null && importValue != null) {
-				diff.add(importDataMappingDTO);
-			}else if(systemValue != null && importValue == null) {
-				diff.add(importDataMappingDTO);
-			}else if(systemValue != null && importValue != null){
+			if(systemValue == null) {
+				systemValue = "";
+			}
+			if(importValue == null) {
+				importValue = "";
+			}
+			if(!systemValue.equals(importValue)) {
 				if(WmsDataCompareTaskClassTypeEnum.INT.getCode().equals(importDataMappingDTO.getClassType())) {
-					if(new BigDecimal(systemValue).compareTo(new BigDecimal(importValue)) != 0) {
-						diff.add(importDataMappingDTO);
+					if(StringUtils.isNotBlank(systemValue) && StringUtils.isNotBlank(importValue)) {
+						if(new BigDecimal(systemValue).compareTo(new BigDecimal(importValue)) != 0) {
+							diff.add(importDataMappingDTO);
+						}
 					}
 				}else {
-					if(!systemValue.equals(importValue)) {
-						diff.add(importDataMappingDTO);
-					}
+					diff.add(importDataMappingDTO);
 				}
 			}
 		}
@@ -934,7 +936,23 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 	}
 	
 	private boolean groupCompare(Map<String, String> systemData , String systemField , Map<String, String> importData , String importField) {
-		return new BigDecimal(systemData.get(systemField)).compareTo(new BigDecimal(importData.get(importField))) == 0;
+		String systemValue = systemData.get(systemField);
+		String importValue = importData.get(importField);
+		if(systemValue == null) {
+			systemValue = "";
+		}
+		if(importValue == null) {
+			importValue = "";
+		}
+		if(!systemValue.equals(importValue)) {
+			if(StringUtils.isNotBlank(systemValue) && StringUtils.isNotBlank(importValue)) {
+				return new BigDecimal(systemValue).compareTo(new BigDecimal(importValue)) == 0;
+			}else {
+				return false;
+			}
+		}else {
+			return true;
+		}
 	}
 	
 	public void dealUploadResultExcel(String id) {
