@@ -5883,7 +5883,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public Boolean updateIntercept(SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO) {
         StringBuilder msgSb = new StringBuilder();
-        msgSb.append(StrUtil.format("用户【{}】更新",commonService.getUserInfo().getUserName()));
+        msgSb.append(StrUtil.format("用户【{}】更新",UserContext.getDefaultLoginUser().getUserName()));
         if(interceptUpdateOrderDTO.getIsFrozen()!=null){
             msgSb.append(StrUtil.format(" 冻结状态为{}，",interceptUpdateOrderDTO.getIsFrozen()?"已冻结":"未冻结"));
         }

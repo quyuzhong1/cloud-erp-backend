@@ -142,7 +142,7 @@ public class UserDatePermissionServiceImpl implements UserDatePermissionService 
      **/
     @Override
     public Boolean getUserDatePermissionByMenuCode(String menuCode) {
-        LoginUser user = commonService.getUserInfo();
+        LoginUser user = UserContext.getDefaultLoginUser();
         List<UserRequestPermissionsDTO> requestPermissionsList = sysUserInfoService.getRequestPermissionsList(user.getUid());
         UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
         List<String> roleIdList = sysRoleUserService.findRoleIdsByUid(user.getUid());

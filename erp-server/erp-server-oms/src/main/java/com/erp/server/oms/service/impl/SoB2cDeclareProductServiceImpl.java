@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -74,7 +75,7 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "B2C销售订单申报产品信息单" , soB2cDeclareProductEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "B2C销售订单申报产品信息单" , soB2cDeclareProductEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, soB2cDeclareProductEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -107,7 +108,7 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
         }
         // 记录主单操作日志
             log.info("编辑 开始记录B2C销售订单申报产品信息单日志数据，id：【{}】", soB2cDeclareProductEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), soB2cDeclareProductEntity.getId(), "B2C销售订单申报产品信息单");
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soB2cDeclareProductEntity.getId(), "B2C销售订单申报产品信息单");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, soB2cDeclareProductEntity, ModuleTypeEnum.SO_B2C_DECLARE.getCode(), soB2cDeclareProductEntity.getSoId(), null, msg, "批量修改报关");
         return Boolean.TRUE;
