@@ -707,6 +707,9 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 							StringBuffer sb = new StringBuffer();
 							for(ImportDataMappingDTO importDataMappingDTO : importDataMappingDTOList) {
 								String excelValue = p.get(importDataMappingDTO.getImportField());
+								if(excelValue == null) {
+									excelValue = "";
+								}
 								if(StringUtils.isNotBlank(excelValue)) {
 									if(WmsDataCompareTaskClassTypeEnum.DATE.getCode().equals(importDataMappingDTO.getClassType())) {
 										excelValue = getDateValue(excelValue);
@@ -763,7 +766,10 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				systemDataMapList.forEach(d -> {
 					StringBuffer sb = new StringBuffer();
 					for(ImportDataMappingDTO importDataMappingDTO : isGroupCompare ? notPkImportDataMappingDTOList : pkImportDataMappingDTOList) {
-						String excelValue = d.get(importDataMappingDTO.getImportField());
+						String excelValue = d.get(importDataMappingDTO.getSystemField());
+						if(excelValue == null) {
+							excelValue = "";
+						}
 						if(StringUtils.isNotBlank(excelValue)) {
 							if(WmsDataCompareTaskClassTypeEnum.DATE.getCode().equals(importDataMappingDTO.getClassType())) {
 								excelValue = getDateValue(excelValue);
