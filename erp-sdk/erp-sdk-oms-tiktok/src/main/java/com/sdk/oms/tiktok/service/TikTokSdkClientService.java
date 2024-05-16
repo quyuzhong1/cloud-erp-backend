@@ -18,6 +18,7 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.OrderSplitPramDTO;
 import com.erp.model.oms.dto.ShopDTO;
+import com.erp.model.oms.dto.SplittableGroupsBean;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -758,7 +759,16 @@ public class TikTokSdkClientService {
         headerMap.put("content-type", "application/json");
 
         //请求body，平台用于计算签名
-        String body = JSONUtil.toJsonStr(pramDTO);
+        Map<String, Object> bodyMap = new HashMap<>();
+        List<Object> objectList = new ArrayList<>();
+        for (SplittableGroupsBean splittableGroup : pramDTO.getSplittableGroups()) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", splittableGroup.getId());
+            map.put("order_line_item_ids", splittableGroup.getOrderLineItemIds());
+            objectList.add(map);
+        }
+        bodyMap.put("splittable_groups", objectList);
+        String body = JSONUtil.toJsonStr(bodyMap);
 
         //组装入参排序计算签名字符串
         String input = EncryptionUtils.urlParamsSort(params, path, headerMap, clientSecret, body);
@@ -781,7 +791,7 @@ public class TikTokSdkClientService {
         sb.append("&version=" + TikTokConstant.VERSION + "");
 
         //拉取数据
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(pramDTO), null, headerMap, RequestMethod.POST);
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), body, null, headerMap, RequestMethod.POST);
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
             log.error("调用url={},入参params={}, TikTok订单拆分失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok订单拆分失败，返回值 responseMap={}",

@@ -2503,6 +2503,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public SoB2cDTO.SplitSaveResultDTO splitSave(SoB2cDTO.SplitSaveDTO dto) {
         //订单拆分字段处理
         SoB2cDTO.SplitSaveResultDTO resultDTO = splitSaveHandle(dto);
@@ -2517,7 +2518,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class)
     public void tikTokSplit(SoB2cDTO.SplitSaveResultDTO resultDTO) {
         OrderSplitPramDTO tikTokPramDTO = resultDTO.getTikTokPramDTO();
-        PlatformSplitViewDTO platformSplitViewDTO = tikTokSdkClientService.sendTikTokOrdersSplit(resultDTO.getOldEntity().getShopId(), resultDTO.getOldEntity().getDictPlatform(), tikTokPramDTO);
+        PlatformSplitViewDTO platformSplitViewDTO = tikTokSdkClientService.sendTikTokOrdersSplit(resultDTO.getOldEntity().getShopId(), resultDTO.getOldEntity().getPlatformCode(), tikTokPramDTO);
         if (0 != platformSplitViewDTO.getCode()) {
             throw new ServiceException(ApiError.ERROR_TIKTOK_SPLIT, resultDTO.getOldEntity().getCode());
         }
@@ -2705,7 +2706,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             groupWeight = MathUtil.add(logisticsAddDTO.getWeight(), groupWeight);
             flag++;
         }
-
+        tikTokPramDTO.setSplittableGroups(splittableGroups);
         this.invalid(entity.getId(), StrUtil.format("【{}】被拆分作废", entity.getCode()), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
 
         //操作日志
