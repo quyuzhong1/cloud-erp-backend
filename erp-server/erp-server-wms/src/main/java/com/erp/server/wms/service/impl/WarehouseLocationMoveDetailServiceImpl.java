@@ -129,11 +129,9 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
             paramDTO.setOrgId(warehouseEntity.getOrgId());
             paramDTO.setWarehouseId(warehouseId);
             paramDTO.setSkuIds(Arrays.asList(detailEntity.getSkuId()));
-            if (pcShow) {
-                if ((ObjectUtil.isEmpty(detailEntity.getInWarehouseLocation()) && ObjectUtil.isEmpty(detailEntity.getOutWarehouseLocation()))
-                        || detailEntity.getInWarehouseLocation().equals(detailEntity.getOutWarehouseLocation())) {
-                    throw new ServiceException(ApiError.ERROR_CANNOT_SAME_POSITION);
-                }
+            if ((ObjectUtil.isEmpty(detailEntity.getInWarehouseLocation()) && ObjectUtil.isEmpty(detailEntity.getOutWarehouseLocation()))
+                    || detailEntity.getInWarehouseLocation().equals(detailEntity.getOutWarehouseLocation())) {
+                throw new ServiceException(ApiError.ERROR_CANNOT_SAME_POSITION);
             }
             paramDTO.setWarehouseLocations(Arrays.asList(detailEntity.getOutWarehouseLocation()));
             List<InventoryDTO.PdaInventoryDTO> inventoryByParams = inventoryService.getInventoryByParam(paramDTO);
