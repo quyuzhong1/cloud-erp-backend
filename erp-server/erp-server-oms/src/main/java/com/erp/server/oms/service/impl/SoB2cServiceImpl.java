@@ -5239,11 +5239,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
             }
 
-            //TikTok订单状态是ON_HOLD时状态变更后需要修改ERP订单的状态和备注
-            if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getDictPlatform()) && "ON_HOLD".equalsIgnoreCase(oldEntity.getRemark())) {
-                entity.setBillStatus(dto.getBillStatus());
-                entity.setRemark(dto.getRemark());
-            }
             resultDTO.setSoB2cEntity(entity);
             return resultDTO;
         }
