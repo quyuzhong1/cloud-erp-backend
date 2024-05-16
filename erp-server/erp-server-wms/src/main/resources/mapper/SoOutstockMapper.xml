@@ -438,7 +438,7 @@
         order by  EXTRACT(year FROM approve_time), EXTRACT(month FROM approve_time)
     </select>
 
-    <select id="getDataCompareByCondition" resultType="com.erp.model.wms.dto.WmsDataCompareTaskDTO$SoOutstockDTO">
+    <select id="getDataCompareByCondition" resultType="java.util.Map">
 		        SELECT g.id,g.platform_code so_code,t.customer_name shop_name,
 			T.warehouse_name,
 			G.sku_no,
