@@ -1,7 +1,5 @@
 package com.erp.server.dmp.push.consumer.erp;
 
-import cn.hutool.json.JSONUtil;
-
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SyncStatusEnum;
@@ -10,7 +8,7 @@ import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.dmp.convert.DmpOrderConverter;
@@ -79,7 +77,7 @@ public class B2cOrderPushDmpOrderConsumer extends AbstractPlatformConsumerHandle
             dmpOrderInfoEntity.setOrderStatus(1);
         }
 
-        List<DmpOrderItemEntity> itemEntityList = DmpOrderConverter.INSTANCE.soB2cToDmpOrderItem(viewDTO.getDetailList());
+        List<DmpOrderItemSplitEntity> itemEntityList = DmpOrderConverter.INSTANCE.soB2cToDmpOrderItem(viewDTO.getDetailList());
         itemEntityList.forEach(i -> i.setAmountAfter(i.getSellPrice()));
         dmpOrderInfoEntity.setItemList(itemEntityList);
         dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);

@@ -3,6 +3,7 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -36,9 +37,6 @@ import java.util.Set;
 @Service
 public class ProductRefLabelServiceImpl extends SuperServiceImpl<ProductRefLabelMapper, ProductRefLabelEntity> implements ProductRefLabelService {
 
-    @Autowired
-    private CommonService commonService;
-
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -65,7 +63,7 @@ public class ProductRefLabelServiceImpl extends SuperServiceImpl<ProductRefLabel
     @Override
     public List<ProductRefLabelVO> getLabelList(String productId, String labelId, String skuId) {
         String userId = null;
-        LoginUser user = commonService.getUserInfo();
+        LoginUser user = UserContext.getDefaultLoginUser();
         if(Objects.nonNull(user)){
             userId = user.getUid();
         }
@@ -75,7 +73,7 @@ public class ProductRefLabelServiceImpl extends SuperServiceImpl<ProductRefLabel
     @Override
     public List<ProductRefLabelVO> getLabelListByIds(Set<String> productIds, Set<String> labelIds, Set<String> skuIds) {
         String userId = null;
-        LoginUser user = commonService.getUserInfo();
+        LoginUser user = UserContext.getDefaultLoginUser();
         if(Objects.nonNull(user)){
             userId = user.getUid();
         }

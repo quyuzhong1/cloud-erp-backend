@@ -56,7 +56,7 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
     @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean updateQtyById(String id, Integer qty) {
-//        LoginUser loginUser = commonService.getUserInfo();
+//        LoginUser loginUser = UserContext.getDefaultLoginUser();
         boolean flag = lambdaUpdate()
                 .setSql(StrUtil.format("{}={}+{}", "qty","qty", qty))
 //                .setSql(StrUtil.format("{}={}+{}", "version","version", 1))

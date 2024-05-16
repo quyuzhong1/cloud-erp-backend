@@ -9,15 +9,14 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.PlatformInboundDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -25,7 +24,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -79,10 +77,6 @@ import java.util.stream.Collectors;
 public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<OverseasWarehouseInboundMapper, OverseasWarehouseInboundEntity> implements OverseasWarehouseInboundService,WmsDataCompareDbService<OverseasInboundDTO> {
     @Resource
     private OperateLogService operateLogService;
-    @Resource
-    private CommonService commonService;
-    @Resource
-    private DocNoGenHelper docNoGenHelper;
     @Resource
     private OverseasWarehouseInboundDetailService overseasWarehouseInboundDetailService;
     @Resource
@@ -158,7 +152,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         log.info("开始新增海外仓入库单");
         mainEntity.setIsDeleted(false);
         mainEntity.setVersion(0);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         mainEntity.setCreateUserId(loginUser.getUid());
         mainEntity.setCreateUserName(loginUser.getUserName());
         mainEntity.setCreateTime(LocalDateTime.now());
@@ -183,7 +177,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .collect(Collectors.toList());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】来源单号为【{}】", commonService.getUserInfo().getUserName(), "海外仓入库单", mainEntity.getSourceCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】来源单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "海外仓入库单", mainEntity.getSourceCode());
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_WAREHOUSE_INBOUND.getCode(), mainEntity.getId(), "新增操作");
         // 新增明细（如果有明细的话）
@@ -371,7 +365,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         // 记录主单操作日志
         log.info("编辑 开始记录海外仓入库单日志数据，单号：【{}】", mainEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), mainEntity.getCode(), "海外仓入库单");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getCode(), "海外仓入库单");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, mainEntity, null, mainEntity.getId(), msg);
 
@@ -783,7 +777,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单明细");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】取消了单据编号为【{}】的海外入库单", commonService.getUserInfo().getUserName(), mainEntity.getCode());
+        String msg = StrUtil.format("用户【{}】取消了单据编号为【{}】的海外入库单", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_WAREHOUSE_INBOUND.getCode(), mainEntity.getId(), "取消操作");
 
         if (null != providerEntity){
@@ -820,7 +814,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             throw new ServiceException("【海外入库单】更新状态失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的海外入库单", commonService.getUserInfo().getUserName(), entity.getCode());
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的海外入库单", UserContext.getDefaultLoginUser().getUserName(), entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_WAREHOUSE_INBOUND.getCode(), entity.getId(), "删除操作");
 
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
