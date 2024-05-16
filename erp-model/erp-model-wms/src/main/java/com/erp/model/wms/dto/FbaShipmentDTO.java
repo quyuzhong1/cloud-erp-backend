@@ -467,6 +467,7 @@ public class FbaShipmentDTO implements Serializable {
     @NoArgsConstructor
     public static class SearchDTO {
         private String code;
+        private String id;
     }
 
     /**
