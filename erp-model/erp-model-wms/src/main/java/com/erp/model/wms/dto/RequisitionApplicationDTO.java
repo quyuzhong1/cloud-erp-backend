@@ -590,6 +590,10 @@ public class RequisitionApplicationDTO implements Serializable {
          * 货件号
          */
         private String fbaShipmentCode;
+        /**
+         * 货件id
+         */
+        private String shipmentId;
     }
 
     /**

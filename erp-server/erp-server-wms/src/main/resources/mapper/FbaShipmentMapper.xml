@@ -152,6 +152,9 @@
         <if test="params.code!=null and params.code!=''">
             and fs.code ILIKE concat('%',#{params.code}::text,'%')
         </if>
+        <if test="params.id!=null and params.id!=''">
+            and fs.id = #{params.id}
+        </if>
     </select>
 
     <sql id="FbaDataCompareByCondition">
