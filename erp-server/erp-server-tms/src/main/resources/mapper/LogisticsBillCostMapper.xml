@@ -100,8 +100,8 @@
         <where>
             ${params.sqlMap.default}
             and lbc.is_deleted = false
-            <if test="permissionSql!=null and permissionSql!=''">
-                ${permissionSql}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         ORDER BY
@@ -155,8 +155,8 @@
         <where>
             ${params.sqlMap.default}
             and lbc.is_deleted = false
-            <if test="permissionSql!=null and permissionSql!=''">
-                ${permissionSql}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         ORDER BY
