@@ -42,14 +42,4 @@ public interface DmpOrderItemService extends IService<DmpOrderItemEntity> {
      * @return
      */
     Boolean deleteByOrderIds(List<String> orderIds);
-
-    /**
-     * 校验订单商品信息在中台是否存在，存在就修改不存在则新增
-     *
-     * @return void
-     * @Author Luo_WG
-     * @Date 2022/11/14 21:25
-     **/
-    void checkOrderItem(List<DmpOrderItemEntity> orderItem, LocalDate platformCreateTime, String platformSign);
-
 }

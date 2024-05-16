@@ -213,16 +213,19 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
 
         //删除原数据
         List<String> orderIds = orderItem.stream().map(req -> req.getOrderId()).distinct().collect(Collectors.toList());
-        this.deleteByOrderIds(orderIds);
+        dmpOrderItemService.deleteByOrderIds(orderIds);
 
         //新增新数据
         if (CollectionUtil.isNotEmpty(insertList)) {
-            //拆分sku并保存
-            this.batchAdd(insertList, platformSign);
-
             //保存未拆分数据
             List<DmpOrderItemEntity> itemEntityList = BeanMapper.copyList(insertList, DmpOrderItemEntity.class);
             dmpOrderItemService.batchAdd(itemEntityList, platformSign);
+
+            //删除拆分后的数据
+            this.deleteByOrderIds(orderIds);
+
+            //拆分sku并保存
+            this.batchAdd(insertList, platformSign);
         }
     }
 

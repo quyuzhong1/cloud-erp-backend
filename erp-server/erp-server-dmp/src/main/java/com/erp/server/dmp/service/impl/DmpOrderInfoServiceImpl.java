@@ -206,8 +206,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         itemList.stream().peek(entity -> entity.setOrderId(orderId)).collect(Collectors.toList());
 
         //保存未拆分数据
-        List<DmpOrderItemEntity> itemEntityList = BeanMapper.copyList(itemList, DmpOrderItemEntity.class);
-        dmpOrderItemService.checkOrderItem(itemEntityList, orderInfoEntity.getPlatformCreateTime().toLocalDate(), orderInfoEntity.getPlatformSign());
+        dmpOrderItemSplitService.checkOrderItem(itemList, orderInfoEntity.getPlatformCreateTime().toLocalDate(), orderInfoEntity.getPlatformSign());
         return orderInfoId;
     }
 
