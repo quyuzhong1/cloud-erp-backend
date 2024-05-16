@@ -260,9 +260,9 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
         		dataCompareSettingDTO.setSysFieldName(sysHeadField);
         		dataCompareSettingDTO.setSysField(sysHeadField);
         		dataCompareSettingDTO.setSysFieldIndex(index + 1);
-        		dataCompareSettingDTO.setImportFiled(importFileds.stream().filter(i -> i.getImportField().equals(dataCompareSettingDTO.getSysFieldName()))
+        		dataCompareSettingDTO.setImportField(importFileds.stream().filter(i -> i.getImportField().equals(dataCompareSettingDTO.getSysFieldName()))
         				.findAny().orElse(new DataCompareSettingImprotDTO()).getImportField());
-        		dataCompareSettingDTO.setImportFileds(importFileds);
+        		dataCompareSettingDTO.setImportFields(importFileds);
         		dataCompareSettingDTO.setClassType(WmsDataCompareTaskClassTypeEnum.STRING.getCode());
             	dataCompareSettingDTO.setDataTypes(dataTypes);
         		dataCompareSettingDTO.setStatus(Boolean.FALSE);
@@ -277,9 +277,9 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
         		dataCompareSettingDTO.setSysFieldName(dictBasicEntity.getName());
         		dataCompareSettingDTO.setSysField(dictBasicEntity.getValue());
         		dataCompareSettingDTO.setSysFieldIndex(dictBasicEntity.getSort());
-        		dataCompareSettingDTO.setImportFiled(importFileds.stream().filter(i -> i.getImportField().equals(dataCompareSettingDTO.getSysFieldName()))
+        		dataCompareSettingDTO.setImportField(importFileds.stream().filter(i -> i.getImportField().equals(dataCompareSettingDTO.getSysFieldName()))
         				.findAny().orElse(new DataCompareSettingImprotDTO()).getImportField());
-        		dataCompareSettingDTO.setImportFileds(importFileds);
+        		dataCompareSettingDTO.setImportFields(importFileds);
         		String remark = dictBasicEntity.getRemark();
         		if(StringUtils.isBlank(remark)) {
         			remark = WmsDataCompareTaskClassTypeEnum.STRING.getCode();
@@ -299,7 +299,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
     	for(DataCompareSettingDTO setting : settingList) {
     		DataCompareSettingMapDTO dataCompareSettingMapDTO = new DataCompareSettingMapDTO();
     		BeanUtil.copyProperties(setting, dataCompareSettingMapDTO);
-    		dataCompareSettingMapDTO.setImportFiledMap(setting.getImportFileds().stream().collect(Collectors.toMap(DataCompareSettingImprotDTO::getImportField, d -> d)));
+    		dataCompareSettingMapDTO.setImportFieldMap(setting.getImportFields().stream().collect(Collectors.toMap(DataCompareSettingImprotDTO::getImportField, d -> d)));
     		map.put(setting.getSysField(), dataCompareSettingMapDTO);
     	}
     	return map;
@@ -479,7 +479,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				}
 				
 				emptyHeadIndex = importDataMappingDTOList.stream()
-						.filter(i -> settingMap.get(i.getSystemField()).getImportFiledMap().get(i.getImportField()) == null)
+						.filter(i -> settingMap.get(i.getSystemField()).getImportFieldMap().get(i.getImportField()) == null)
 						.map(ImportDataMappingDTO::getImportField).collect(Collectors.joining("、"));
 				if(StringUtils.isNotBlank(emptyHeadIndex)) {
 					setNextViewDTO.setErrMessageList(Collections.singletonList("导入数据字段中第【"+ emptyHeadIndex +"】行在导入文件表头不存在"));

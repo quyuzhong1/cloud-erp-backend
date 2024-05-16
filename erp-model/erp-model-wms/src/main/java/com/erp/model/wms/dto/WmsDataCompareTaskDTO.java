@@ -445,12 +445,12 @@ public class WmsDataCompareTaskDTO implements Serializable {
     	/**
     	 * 默认导入字段
     	 */
-    	private String importFiled;
+    	private String importField;
     	
     	/**
     	 * 导入数据字段下拉
     	 */
-    	private List<DataCompareSettingImprotDTO> importFileds;
+    	private List<DataCompareSettingImprotDTO> importFields;
     	
     	/**
     	 * 默认数据类型
@@ -484,7 +484,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
     	/**
     	 * 导入数据字段map
     	 */
-    	private Map<String , DataCompareSettingImprotDTO> importFiledMap;
+    	private Map<String , DataCompareSettingImprotDTO> importFieldMap;
     	
     }
     
