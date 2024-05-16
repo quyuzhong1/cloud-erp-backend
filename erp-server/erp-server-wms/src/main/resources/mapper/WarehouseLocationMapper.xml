@@ -98,4 +98,34 @@
         ORDER BY warehouseName,warehouseArea,warehouseLocation desc
 
     </select>
+
+    <!-- 分页远程下拉 -->
+    <select id="pagingSelect" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$LocationListDTO">
+        select id,code,name,status,disabled from
+        (
+        select
+            wl.id,
+            wl.code,
+            wl.name,
+            wl.status,
+            wl.disabled
+        from warehouse_location wl
+        where
+            wl.is_deleted = false and wl.type = 'location'
+            <if test="params.warehouseId != null and params.warehouseId != ''">
+                and wl.warehouse_id = #{params.warehouseId}
+            </if>
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                and ((wl.code = #{params.searchKeyword}) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+            </if>
+            order by
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                case when wl.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+                when wl.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+                when wl.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+                end , wl.name,
+            </if>
+            wl.code asc
+        ) wls
+    </select>
 </mapper>
