@@ -805,7 +805,7 @@
         AND pi.approve_status = 'approve'
         WHERE pid.is_deleted = FALSE
         and pi.source_id=#{sourceId} and pid.source_detail_id=#{sourceDetailId}
-        GROUP BY pi.source_id
+        GROUP BY pi.source_id,pid.source_detail_id
     </select>
 
     <select id="getReceiveQtyById" resultType="java.lang.Integer">
