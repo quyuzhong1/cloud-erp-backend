@@ -25,4 +25,6 @@ public interface WarehouseReceiveDetailMapper extends BaseMapper<WarehouseReceiv
      * @return List<WarehouseReceiveDetailEntity>
      */
     List<WarehouseReceiveDetailEntity> listWarehouseReceiveByPodIds(@Param("purchaseDetailIds") List<String> purchaseDetailIds);
+
+    void updateInfo(@Param("id")String id, @Param("inStockStatus")String inStockStatus);
 }
