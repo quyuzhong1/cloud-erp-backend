@@ -310,9 +310,9 @@ public class TikTokOrderDTO extends CleanBaseDTO {
                 .cityName(city)
                 .districtName(district+" "+Community)
                 .postCode(ordersBean.getRecipientAddress().getPostalCode())
-                .firstAddress(ordersBean.getRecipientAddress().getFullAddress() + " " + ordersBean.getRecipientAddress().getAddressDetail())
+                .firstAddress(ordersBean.getRecipientAddress().getAddressLine1())
                 .secondAddress(ordersBean.getRecipientAddress().getAddressLine2()+ordersBean.getRecipientAddress().getAddressLine3()+ordersBean.getRecipientAddress().getAddressLine4())
-                .fullAddress(ordersBean.getRecipientAddress().getAddressDetail())
+                .fullAddress(ordersBean.getRecipientAddress().getFullAddress() + " " + ordersBean.getRecipientAddress().getAddressDetail())
                 .receiverTaxNo(ordersBean.getCpf())
                 .build();
     }
