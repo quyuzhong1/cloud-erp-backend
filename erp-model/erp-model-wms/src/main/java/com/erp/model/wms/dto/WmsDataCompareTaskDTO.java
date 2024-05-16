@@ -445,7 +445,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
     	/**
     	 * 默认导入字段
     	 */
-    	private String defultImportFiled;
+    	private String importFiled;
     	
     	/**
     	 * 导入数据字段下拉
@@ -455,7 +455,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
     	/**
     	 * 默认数据类型
     	 */
-    	private String defultDatatype;
+    	private String classType;
     	
     	/**
     	 * 数据类型下拉
