@@ -100,6 +100,9 @@
         <where>
             ${params.sqlMap.default}
             and lbc.is_deleted = false
+            <if test="permissionSql!=null and permissionSql!=''">
+                ${permissionSql}
+            </if>
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -152,6 +155,9 @@
         <where>
             ${params.sqlMap.default}
             and lbc.is_deleted = false
+            <if test="permissionSql!=null and permissionSql!=''">
+                ${permissionSql}
+            </if>
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">

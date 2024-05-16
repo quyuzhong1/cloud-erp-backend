@@ -1192,7 +1192,7 @@ public enum ApiError implements Serializable {
 
     SKU_MAPPING_INVENTORY_INSUFFICIENT(92135,"需要扣除的映射关系SKU【{}】可用库存不足"),
     SO_B2C_IS_MATCH_WAREHOUSE_RULE(92136,"仓库匹配规则更新失败"),
-    ERROR_SO_B2C_NOT_DISTRIBUTION_DECLARE(92137,"B2C销售订单【{}】只有待配货或配货中支持申报信息生成"),
+    ERROR_SO_B2C_NOT_DISTRIBUTION_DECLARE(92137,"B2C销售订单【{}】仅支持已审核-配货中的订单可操作"),
     ERROR_SO_B2C_HAS_DECLARE(92138,"B2C销售订单【{}】已存在申报信息不进行规则匹配"),
     ERROR_SO_B2C_DECLARE_NOT_EXIST(92139,"申报信息【{}】记录不存在"),
     ERROR_SO_B2C_ORDER_DECLARE_NOT_EXIST(92140,"销售订单【{}】申报信息不存在"),
