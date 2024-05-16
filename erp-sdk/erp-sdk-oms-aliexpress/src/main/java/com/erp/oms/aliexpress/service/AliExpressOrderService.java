@@ -35,6 +35,8 @@ import org.apache.regexp.RE;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static com.erp.oms.aliexpress.constants.AliexpressConstants.pageSize;
@@ -83,6 +85,8 @@ public class AliExpressOrderService {
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("current_page", orderRequest.getCurrentPage());
         paramMap.put("page_size", pageSize);
+//        paramMap.put("create_date_start", orderRequest.getStartTime());
+//        paramMap.put("create_date_end", orderRequest.getEndTime());
         paramMap.put("modified_date_start", orderRequest.getStartTime());
         paramMap.put("modified_date_end", orderRequest.getEndTime());
         request.addApiParameter("simplify", "true");
@@ -357,7 +361,7 @@ public class AliExpressOrderService {
         String appKey = "502978";
         String appSecret = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
         String baseUrl = "https://api-sg.aliexpress.com";
-        String apiName = AliexpressConstants.ORDER_DETAIL;
+        String apiName = AliexpressConstants.LIST_ORDER;
         String token = "50000200216zwXSmacvxdR9mlN3Q173edb18whDaGtElRAyxCAEBR9sxVko62BrXG7tj";
         IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
         IopRequest request = new IopRequest();
@@ -369,9 +373,19 @@ public class AliExpressOrderService {
         IopResponse response = client.execute(request, token, Protocol.TOP);
         String body = response.getBody();
         System.out.println(body);
+        OrderRequest orderRequest = OrderRequest.builder()
+                .clientId("502978")
+                .clientSecret("DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY")
+                .baseUrl("https://api-sg.aliexpress.com")
+                .apiName(AliexpressConstants.LIST_ORDER)
+                .currentPage(1)
+                .token("50000200216zwXSmacvxdR9mlN3Q173edb18whDaGtElRAyxCAEBR9sxVko62BrXG7tj")
+                .startTime("2024-01-01 00:00:00")
+                .endTime("2024-05-17 00:00:00")
+                .build();
 
-
-
+        AliExpressOrderService aliExpressOrderService = new AliExpressOrderService();
+        aliExpressOrderService.listOrder(orderRequest,new ArrayList<>());
 
     }
 }
