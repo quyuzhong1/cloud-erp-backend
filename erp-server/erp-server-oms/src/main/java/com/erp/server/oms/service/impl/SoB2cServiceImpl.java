@@ -5222,6 +5222,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (!oldEntity.hasPlatformWarehouseOrder() && SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(dto.getBillStatus())){
                 dto.setBillStatus(oldEntity.getBillStatus());
             }
+
             // 自发货订单的平台状态作废：如果订单状态是(待发货/已发货/部分发货)=已有发货单不作废，只添加平台作废记录
             if ( dto.getInvalidStatus() && oldEntity.hasB2cSelfDelivery()
             ){
@@ -5236,6 +5237,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (!this.updateById(entity)) {
                     throw new ServiceException("soB2c订单更新失败");
                 }
+            }
+
+            //TikTok订单状态是ON_HOLD时状态变更后需要修改ERP订单的状态和备注
+            if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getDictPlatform()) && "ON_HOLD".equalsIgnoreCase(oldEntity.getRemark())) {
+                entity.setBillStatus(dto.getBillStatus());
+                entity.setRemark(dto.getRemark());
             }
             resultDTO.setSoB2cEntity(entity);
             return resultDTO;
