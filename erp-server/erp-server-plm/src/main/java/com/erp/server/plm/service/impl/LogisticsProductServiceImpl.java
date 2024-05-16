@@ -18,6 +18,7 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -537,7 +538,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.PRODUCT_LOGISTICS.getCode());
-        revokeDTO.setUserId(commonService.getUserInfo().getUid());
+        revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.CANCEL_PROCESS);
     }
@@ -648,7 +649,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
      */
     public void updateForApprove(String id, String approveStatus) {
         //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         productLogisticsService.lambdaUpdate().eq(ProductLogisticsEntity::getId, id)
                 .set(ProductLogisticsEntity::getApproveUserId, userInfo.getUid())
                 .set(ProductLogisticsEntity::getApproveUserName, userInfo.getUserName())
@@ -668,7 +669,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         startDTO.setBusinessCode(entity.getCustomsCode());
         startDTO.setBusinessKey(SourceTypeEnum.PRODUCT_LOGISTICS.getCode());
         startDTO.setBusinessName(entity.getCustomsCode());
-        startDTO.setUserId(commonService.getUserInfo().getUid());
+        startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
@@ -682,7 +683,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
      * @param dto
      */
     private void approveProcess(ProductLogisticsEntity entity, ApproveOneDTO dto) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
         approveDTO.setBusinessKey(SourceTypeEnum.PRODUCT_LOGISTICS.getCode());

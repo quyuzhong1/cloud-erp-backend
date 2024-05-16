@@ -1,11 +1,12 @@
 package com.erp.server.wms.utils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipOutputStream;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -13,10 +14,8 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.CellRangeAddress;
 
 import com.alibaba.excel.metadata.Head;
@@ -24,9 +23,10 @@ import com.alibaba.excel.write.merge.AbstractMergeStrategy;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
-import com.erp.model.wms.dto.WmsDataComparePlanDTO.ImportDataMappingDTO;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.ZipUtil;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,17 +34,15 @@ import lombok.extern.slf4j.Slf4j;
 public class WmsDataCompareUtils {
 	@Data
 	public static class WmsDataCompareExcelDto{
-		public Integer importDataCount = 0;
 		public List<List<String>> headFieldLists = new ArrayList<>();
-		public List<List<String>> datas = new ArrayList<>();
+		public List<Map<String, String>> datas = new ArrayList<>();
 	}
 	
-	public static WmsDataCompareExcelDto getWmsDataCompareExcelDto(List<String> excelFiles , boolean needHeadAndCount) {
+	public static WmsDataCompareExcelDto getWmsDataCompareExcelDto(List<String> excelFiles) {
 		WmsDataCompareExcelDto dto = new WmsDataCompareExcelDto();
 		if(CollUtil.isEmpty(excelFiles)) {
 			return dto;
 		}
-		Integer importDataCount = 0;
         for(String excelFile : excelFiles) {
         	InputStream inputStream = null;
         	try {
@@ -68,21 +66,56 @@ public class WmsDataCompareUtils {
         			headFields.add(m.getKey());
         		}
         		dto.getHeadFieldLists().add(headFields);
-        		
-        		importDataCount = importDataCount + makeDataInputStream.size();
-        		
-        		for(Map<String, String> makeData : makeDataInputStream) {
-        			List<String> data = new ArrayList<>();
-        			for(Map.Entry<String, String> m : makeData.entrySet()) {
-        				data.add(m.getValue());
-        			}
-        			dto.getDatas().add(data);
-        		}
+        		dto.getDatas().addAll(makeDataInputStream);
         	}
         }
-        dto.setImportDataCount(importDataCount);
         return dto;
 	}
+	
+	public static String mergeExcel(List<String> excelFiles) {
+		int size = excelFiles.size();
+        if(size > 1) {
+        	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        	ZipOutputStream zipOutputStream = new ZipOutputStream(baos);
+        	InputStream[] ins = new InputStream[size];
+        	for(int i = 0; i < size ; i++) {
+        		InputStream inputStream = null;
+    			try {
+    				inputStream = FastDFSClientUtil.getInputStream(excelFiles.get(i));
+    			} catch (Exception e) {
+    				log.error("获取文件失败" , e);
+    				throw new ServiceException("获取文件失败");
+    			}
+    			ins[i] = inputStream;
+        	}
+        	ZipUtil.zip(zipOutputStream, excelFiles.toArray(new String[] {}), ins);
+        	excelFiles = new ArrayList<>();
+        	return FastDFSClientUtil.uploadFile(baos.toByteArray(), UUID.randomUUID().toString() + ".zip", null);
+        }else {
+        	return excelFiles.get(0);
+        }
+	}
+	
+	public static String convertToCamel(String underlineName) {
+        StringBuilder sb = new StringBuilder();
+        boolean capitalizeNext = false;
+
+        for (int i = 0; i < underlineName.length(); i++) {
+            char currentChar = underlineName.charAt(i);
+
+            if (currentChar == '_') {
+                capitalizeNext = true;
+            } else {
+                if (capitalizeNext) {
+                    sb.append(Character.toUpperCase(currentChar));
+                    capitalizeNext = false;
+                } else {
+                    sb.append(Character.toLowerCase(currentChar));
+                }
+            }
+        }
+        return sb.toString();
+    }
 	
 //	public static WmsDataCompareExcelDto getWmsDataCompareExcelDto(List<String> excelFiles , boolean needHeadAndCount) {
 //		WmsDataCompareExcelDto dto = new WmsDataCompareExcelDto();
@@ -201,28 +234,6 @@ public class WmsDataCompareUtils {
 	    }
 
 	    return true;
-	}
-	
-	public static void compareExcelIndexList(List<ImportDataMappingDTO> importDataMappingDTOList , List<String> headFieldList){
-		importDataMappingDTOList.removeIf(i -> StringUtils.isBlank(i.getSystemField()) || StringUtils.isBlank(i.getImportField()));
-		for(int i = 0; i < headFieldList.size() ; i++) {
-			String headField = headFieldList.get(i);
-			for(ImportDataMappingDTO importDataMappingDTO : importDataMappingDTOList) {
-				if(StringUtils.isNotBlank(importDataMappingDTO.getImportField()) && importDataMappingDTO.getImportField().equals(headField)) {
-					importDataMappingDTO.setHeadIndex(i);
-					break;
-				}
-			}
-		}
-		importDataMappingDTOList.sort((i1 , i2) -> {
-			if(i1.getHeadIndex() == null) {
-				return -1;
-			}
-			if(i2.getHeadIndex() == null) {
-				return 1;
-			}
-			return i1.getHeadIndex().compareTo(i2.getHeadIndex());
-		});
 	}
 	
 	// 自定义合并策略

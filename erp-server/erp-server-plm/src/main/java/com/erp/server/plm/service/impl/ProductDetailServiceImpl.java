@@ -25,8 +25,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SkuApproveConfigureEnum;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.RedisService;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -255,7 +255,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //待审核查询分配给自己的数据
         if (MathUtil.ONE.toString().equals(pagingDTO.getParams().getType())) {
             //TODO 2023-03-30 暂时取消审核流程 只改状态
-/*             LoginUser loginUser = CommonInterceptor.threadLocal.get();
+/*             LoginUser loginUser = UserContext.getLoginUser();
             List<TaskShowDTO> workflowList = workflowFeign.queryMyToDo(loginUser.getUid());
             //无待办则直接返回
             if (CollectionUtils.isEmpty(workflowList)) {
@@ -2123,7 +2123,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
 
@@ -2335,7 +2335,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95046);
         }
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
         //TODO 2023-03-30 暂时取消审核流程 只改状态
@@ -2376,7 +2376,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean updateApprover(ProductDetailApproveParamDTO dto) {
         ProductDetailApproverEntity entity = new ProductDetailApproverEntity();
         BeanMapperUtils.copy(dto, entity);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
         entity.setCreateUserId(userId);
@@ -2387,7 +2387,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public Boolean productDetailProcessPass(String processId) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductDetailEntity::getProcessId, processId);
         queryWrapper.last("LIMIT 1");
@@ -2425,7 +2425,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95086);
         }
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         LambdaUpdateWrapper<ProductDetailEntity> updateWrapper = new LambdaUpdateWrapper();
         updateWrapper.set(ProductDetailEntity::getIsChange, IsConstant.YES);
         updateWrapper.set(ProductDetailEntity::getUpdateUserId, loginUser.getUid());
@@ -3476,7 +3476,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         BusinessProcessEntity processEntity = businessProcessService.getProcessByBusinessKey(businessKey);
         if (!Objects.isNull(processEntity)) {
             StartProcessDTO startProcess = new StartProcessDTO();
-            LoginUser loginUser = commonService.getUserInfo();
+            LoginUser loginUser = UserContext.getDefaultLoginUser();
             startProcess.setBusinessKey(processEntity.getBusinessKey());
             startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
             startProcess.setUserId(loginUser.getUid());
@@ -3793,7 +3793,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95038);
         }
 
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //TODO 待加审核流程
 
         Integer approveStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
@@ -3803,7 +3803,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //workflowFeign.taskPass(approveProcess);
             entityList.forEach(obj -> {
                 //发送通知
-                noticeMessageService.approveProductNotice(CommonInterceptor.threadLocal.get().getUserName(), obj);
+                noticeMessageService.approveProductNotice(UserContext.getLoginUser().getUserName(), obj);
                 //新增操作日志
                 sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
                         .setBusinessId(obj.getId()).setOperation("状态变更").setContent("审核SKU[" + obj.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]，审批意见：" + baseApproveParamDTO.getComment()));

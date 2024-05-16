@@ -2,8 +2,7 @@ package com.erp.server.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.interceptor.CommonInterceptor;
-import com.common.business.vo.LoginUser;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
 import com.erp.model.sys.dto.FindCustomizeFieldDTO;
@@ -27,11 +26,7 @@ public class CustomizeFieldLayoutServiceImpl extends ServiceImpl<CustomizeFieldL
     @Override
     public Boolean add(CustomizeFieldLayoutDTO dto) {
         if (dto != null) {
-            LoginUser loginUser = CommonInterceptor.threadLocal.get();
-            String userId = "";
-            if (loginUser != null) {
-                userId = loginUser.getUid();
-            }
+            String userId = UserContext.getDefaultLoginUser().getUid();
             CustomizeFieldLayoutEntity entity = new CustomizeFieldLayoutEntity();
             BeanMapper.copy(dto, entity);
             entity.setCreateTime(new Date());
@@ -55,11 +50,7 @@ public class CustomizeFieldLayoutServiceImpl extends ServiceImpl<CustomizeFieldL
      */
     @Override
     public UserFieldVO getByUserId(FindCustomizeFieldDTO dto) {
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        String userId = "";
-        if (loginUser != null) {
-            userId = loginUser.getUid();
-        }
+        String userId = UserContext.getDefaultLoginUser().getUid();
         LambdaQueryWrapper<CustomizeFieldLayoutEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(CustomizeFieldLayoutEntity::getModuleCode, dto.getModuleCode());
         queryWrapper.eq(CustomizeFieldLayoutEntity::getUserId, userId);

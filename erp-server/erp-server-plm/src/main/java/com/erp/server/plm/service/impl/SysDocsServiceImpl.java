@@ -5,23 +5,22 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.IsConstant;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.DocsShowDTO;
 import com.erp.model.plm.dto.StateDTO;
 import com.erp.model.plm.entity.SysDocsEntity;
-import com.common.business.constant.IsConstant;
 import com.erp.server.plm.mapper.SysDocsMapper;
-import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.SysDocsService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -40,9 +39,6 @@ import java.util.Map;
 public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity> implements SysDocsService {
 
 
-    @Autowired
-    private CommonService commonService;
-
     /**
      * 保存或者修改系统文档
      *
@@ -53,7 +49,7 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
      */
     @Override
     public void saveOrUpdateDocs(DocsDTO dto) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String name = dto.getName();
         SysDocsEntity docsEntity = new SysDocsEntity();
         String id = dto.getId();
@@ -105,7 +101,7 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
      */
     @Override
     public Boolean updateState(StateDTO dto) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         LambdaUpdateWrapper<SysDocsEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(SysDocsEntity::getStartState, dto.getState());
         updateWrapper.set(SysDocsEntity::getUpdateUser, loginUser.getUserName());

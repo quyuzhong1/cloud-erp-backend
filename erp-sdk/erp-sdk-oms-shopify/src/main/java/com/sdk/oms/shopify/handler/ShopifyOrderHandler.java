@@ -114,7 +114,7 @@ public class ShopifyOrderHandler extends AbstractOrderHandler<PlatformShopifyOrd
         String accessToken = shopInfoDTO.getAccessToken();
 
         List<ShopifyTransaction> transactionList = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken)
-                .getOrderTransactions(dto.getUniqueId());
+                .getOrderTransactions(dto.getShopifyOrder().getOrderId());
         if (CollectionUtils.isEmpty(transactionList)){
             return dto;
         }

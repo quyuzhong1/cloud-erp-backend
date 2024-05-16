@@ -3,6 +3,8 @@ package com.erp.server.sys.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.service.impl.RedisService;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.utils.MathUtil;
 import com.erp.model.sys.dto.MessageDTO;
@@ -12,16 +14,12 @@ import com.erp.model.sys.enums.MessageTypeEnum;
 import com.erp.model.sys.enums.SysTypeEnum;
 import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.server.sys.mapper.MessageMapper;
-import com.erp.server.sys.service.CommonService;
 import com.erp.server.sys.service.MessageService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.sys.service.MessageUserReadService;
-import com.erp.server.sys.service.SysUserInfoService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-
-import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -43,12 +41,7 @@ import java.util.stream.Collectors;
 @Service
 public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageEntity> implements MessageService {
     @Resource
-    private SysUserInfoService sysUserInfoService;
-    @Resource
     private MessageUserReadService messageUserReadService;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private RedisService redisService;
@@ -56,7 +49,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     @Override
     public List<MessageDTO.NotReadMessageNum> listNotReadMessageNum() {
         List<MessageDTO.NotReadMessageNum> notReadMessageNumList = new ArrayList<>();
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         String uid = userInfo.getUid();
         //获取所有消息通知
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
@@ -85,7 +78,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     @Override
     public List<MessageDTO.NotReadMessageNumDetail> listNotReadMessageDetail(String type) {
         List<MessageDTO.NotReadMessageNumDetail> notReadMessageNumDetailList = new ArrayList<>();
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //获取已读的消息通知
         List<MessageUserReadEntity> messageUserReadEntities = messageUserReadService.listByUserId(userInfo.getUid());
         List<String> messageIds = messageUserReadEntities.stream().map(req -> req.getMessageId()).collect(Collectors.toList());
@@ -114,7 +107,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
 
     @Override
     public Boolean readAll() {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //获取已读的消息通知
         List<MessageUserReadEntity> messageUserReadEntities = messageUserReadService.listByUserId(userInfo.getUid());
         //获取所有消息通知
@@ -143,7 +136,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
      * @return void
      **/
     private void readMessage(List<MessageUserReadEntity> messageUserReadEntities, List<MessageEntity> messageEntityList) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         List<String> messageIds = messageUserReadEntities.stream().map(req -> req.getMessageId()).collect(Collectors.toList());
         for (MessageEntity messageEntity : messageEntityList) {
             //读取未读消息
@@ -156,7 +149,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
 
     @Override
     public MessageDTO.IsMessageDTO isMessage() {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         String uid = userInfo.getUid();
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setUserId(userInfo.getUid());
@@ -183,7 +176,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
 
     @Override
     public Boolean closeMessageNotice() {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setUserId(userInfo.getUid());
         paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));

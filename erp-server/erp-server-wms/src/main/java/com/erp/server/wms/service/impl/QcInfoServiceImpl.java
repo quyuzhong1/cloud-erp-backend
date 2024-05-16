@@ -16,6 +16,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -129,10 +130,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Resource
     private PoInstockService purchaseStorageService;
-
-    @Resource
-    private CommonService commonService;
-
 
     @Resource
     private OperateLogService operateLogService;
@@ -715,7 +712,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     private Boolean isExistAuth (List<String> billIdList,String menuCode,String menuTableField) {
         //判断是否有权限回填产品信息
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(userInfo.getUid());
         UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
         List<String> roleIdList = sysUserFeign.getRoleIdList(userInfo.getUid());
@@ -827,7 +824,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         dto.setSourceType(SourceTypeEnum.QC_INFO.getCode());
         dto.setPurchaseOrderId(purchaseOrderId);
         dto.setDeliveryWarehouseId(warehouseId);
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         dto.setStockInUserId(userId);
         //获取部门信息
         SysDepartmentUserNumberDTO depart = sysUserFeign.getDeptByUserId(userId);
@@ -860,7 +857,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 b2bQcType.equals(s.getQcType())).collect(Collectors.toList());
 
         String sourceType = SourceTypeEnum.QC_INFO.getCode();
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         //获取部门信息
         SysDepartmentUserNumberDTO depart = sysUserFeign.getDeptByUserId(userId);
 
@@ -1241,7 +1238,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             throw new ServiceException(ApiError.ERROR_99022);
         }
         //删除操作日志
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的质检单", commonService.getUserInfo().getUserName(), qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(",")));
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的质检单", UserContext.getDefaultLoginUser().getUserName(), qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.QC_ORDER.getCode(), pairList, "删除操作");
         Boolean result = this.removeByIds(ids);
@@ -1555,7 +1552,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
 
 
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //采购订单id集合
         List<String> poIds = list.stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getPurchaseOrderId).collect(Collectors.toList());
 
@@ -1877,8 +1874,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //质检类型的集合
         List<QcReportDTO.ListDTO> list = qcReportService.listByQcType(Arrays.asList(QcTypeEnum.RETURN_QC.getCode()));
         Map<String, List<QcReportDTO.ListDTO>> qcTypeMap = list.stream().collect(Collectors.groupingBy(QcReportDTO.ListDTO::getQcType));
-        String qcUserId = commonService.getUserInfo().getUid();
-        String qcUserName = commonService.getUserInfo().getUserName();
+        String qcUserId = UserContext.getDefaultLoginUser().getUid();
+        String qcUserName = UserContext.getDefaultLoginUser().getUserName();
         String departId = "";
         String departName = "";
         //质检员

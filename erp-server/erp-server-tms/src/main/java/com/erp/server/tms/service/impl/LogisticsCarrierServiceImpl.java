@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.excel.LogisticsCarrierExcelDTO;
 import com.erp.model.tms.entity.LogisticsCarrierEntity;
@@ -69,7 +70,7 @@ public class LogisticsCarrierServiceImpl extends SuperServiceImpl<LogisticsCarri
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物流快递/海运/空运公司列单" , logisticsCarrierEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流快递/海运/空运公司列单" , logisticsCarrierEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, logisticsCarrierEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -98,7 +99,7 @@ public class LogisticsCarrierServiceImpl extends SuperServiceImpl<LogisticsCarri
 
         // 记录主单操作日志
             log.info("编辑 开始记录物流快递/海运/空运公司列单日志数据，id：【{}】", logisticsCarrierEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsCarrierEntity.getId(), "物流快递/海运/空运公司列单");
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsCarrierEntity.getId(), "物流快递/海运/空运公司列单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, logisticsCarrierEntity, null, logisticsCarrierEntity.getId(), msg);
         return Boolean.TRUE;

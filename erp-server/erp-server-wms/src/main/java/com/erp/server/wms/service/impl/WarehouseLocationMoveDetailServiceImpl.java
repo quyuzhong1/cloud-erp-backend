@@ -46,8 +46,6 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
-    private CommonService commonService;
-    @Autowired
     private InventoryService inventoryService;
     @Autowired
     private WarehouseService warehouseService;

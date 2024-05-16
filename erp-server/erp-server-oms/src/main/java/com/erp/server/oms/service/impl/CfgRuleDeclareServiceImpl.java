@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
@@ -93,7 +94,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         //保存规则条件
         ruleConditionService.saveRuleCondition(id, conditionList);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据名称为【{}】", commonService.getUserInfo().getUserName(), "申报规则单", entity.getName());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据名称为【{}】", UserContext.getDefaultLoginUser().getUserName(), "申报规则单", entity.getName());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.RULE_DECLARE.getCode(), id, "新增操作");
         return entity.getId();
     }
@@ -143,7 +144,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         }
         ruleConditionService.updateRuleCondition(id, conditionList);
         // 记录主单操作日志
-        String msg = StrUtil.format("用户【{}】编辑名称为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), entity.getName(), "申报规则单");
+        String msg = StrUtil.format("用户【{}】编辑名称为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getName(), "申报规则单");
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.RULE_DECLARE.getCode(), entity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -251,7 +252,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
             });
         }
         if (CollectionUtils.isNotEmpty(updateLogPairList)) {
-            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】编辑销售订单申报信息",commonService.getUserInfo().getUserName())+"，【%s】", ModuleTypeEnum.SO_B2C_DECLARE.getCode(), updateLogPairList,"编辑操作");
+            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】编辑销售订单申报信息",UserContext.getDefaultLoginUser().getUserName())+"，【%s】", ModuleTypeEnum.SO_B2C_DECLARE.getCode(), updateLogPairList,"编辑操作");
         }
 
     }
