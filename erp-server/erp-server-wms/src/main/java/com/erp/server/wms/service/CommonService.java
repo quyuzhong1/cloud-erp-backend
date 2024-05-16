@@ -22,6 +22,7 @@ public interface CommonService {
      * @return com.common.business.vo.LoginUser
      */
     public LoginUser getUserInfo();
+
     /**
      * @description: 获取当前审核人
      * @author Will

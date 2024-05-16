@@ -46,10 +46,10 @@ public class WmsDataCompareImportEntity extends BaseEntity<WmsDataCompareImportE
     private Integer currParseOffset;
     
     /**
-     * 系统数据标识
+     * 主数据标识
      */
-    @TableField(value = "sys_flag")
-    private Boolean sysFlag; 
+    @TableField(value = "main_flag")
+    private Boolean mainFlag; 
     
     public static final String TASK_ID = "task_id";
 

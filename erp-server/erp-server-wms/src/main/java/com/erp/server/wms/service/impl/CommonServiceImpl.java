@@ -1,6 +1,14 @@
 package com.erp.server.wms.service.impl;
 
 import com.common.business.interceptor.CommonInterceptor;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
@@ -36,7 +44,7 @@ public class CommonServiceImpl  implements CommonService {
         //获取当前人需要审核的业务ids
         ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList = new ValidList<>();
         ProcessManagementDTO.ApproveActivityDTO approveActivityDTO = new ProcessManagementDTO.ApproveActivityDTO();
-        approveActivityDTO.setCurApproveId(this.getUserInfo().getUid());
+        approveActivityDTO.setCurApproveId(UserContext.getDefaultLoginUser().getUid());
         approveActivityDTO.setBusinessKey(businessKey);
         dtoList.add(approveActivityDTO);
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.batchCurApproverByApprove(dtoList);
