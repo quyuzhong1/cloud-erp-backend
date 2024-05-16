@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -1440,12 +1441,15 @@ public class SoOutstockDTO implements Serializable {
          */
         private String salesOrgName;
 
-
-
         /**
          * 预计发货日期
          */
         private LocalDate planDeliveryDate;
+
+        /**
+         * 实际发货日期
+         */
+        private LocalDateTime actualDeliveryDate;
 
         /**
          * 来源id

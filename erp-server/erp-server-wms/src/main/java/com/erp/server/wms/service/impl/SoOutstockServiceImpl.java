@@ -647,13 +647,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String b2c = OrderTypeEnum.B2C.getCode();
         Boolean isB2c = b2c.equals(orderType);
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        entity.setActualDeliveryDate(LocalDateTime.now());
         updateForApprove(entity.getId(), approveStatus.getStatus(), isB2c);
 
         Boolean isPass = ApproveStatusEnum.APPROVE.equals(approveStatus);
         if (isPass) {
             //审核通过发送金蝶
             if (!isB2c) {
+                // B2B物流单发货时间=销售出库单审核时间
+                entity.setActualDeliveryDate(LocalDateTime.now());
                 syncKingdeeSoOutstockService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
                 handleData(entity);
             } else {
@@ -2349,7 +2350,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         // 出库日期
         soOutstock.setBillDate(billDate);
         soOutstock.setPlanDeliveryDate(billDate);
-        soOutstock.setActualDeliveryDate(billDate.atStartOfDay());
+        // 实际发货实际
+        if (null != dto.getActualDeliveryDate()){
+            soOutstock.setActualDeliveryDate(dto.getActualDeliveryDate());
+        } else {
+            soOutstock.setActualDeliveryDate(billDate.atStartOfDay());
+        }
         soOutstock.setPackDate(billDate);
         Boolean addResult = this.save(soOutstock);
         if (addResult) {
@@ -2441,6 +2447,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             currentGenerateB2cDTO.setTrackNo(entry.getValue().get(0).getTrackNo());
             //运单号
             currentGenerateB2cDTO.setTransportNo(entry.getValue().get(0).getTrackNo());
+            // 时间发货时间
+            currentGenerateB2cDTO.setActualDeliveryDate(entry.getValue().get(0).getPlatformDeliveryTime().toLocalDateTime());
 
             LinkedList<SoOutstockDetailDTO.AddDTO> currentAddDTOList = new LinkedList<>();
             for (PlatformSoOutStockDetailDTO detailDTO : entry.getValue()) {
