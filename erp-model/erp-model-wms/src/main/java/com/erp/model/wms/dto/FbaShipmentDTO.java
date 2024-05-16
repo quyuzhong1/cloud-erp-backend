@@ -455,6 +455,26 @@ public class FbaShipmentDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    public static class SearchResultDTO {
+        private String id;
+        private String code;
+    }
+
+    /**
+     * 列表查询返回值
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchDTO {
+        private String code;
+        private String id;
+    }
+
+    /**
+     * 列表查询返回值
+     */
+    @Data
+    @NoArgsConstructor
     public static class ListDTO {
         /**
          * 主键id

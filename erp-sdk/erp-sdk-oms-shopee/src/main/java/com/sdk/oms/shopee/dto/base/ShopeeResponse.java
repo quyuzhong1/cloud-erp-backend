@@ -1,7 +1,7 @@
 package com.sdk.oms.shopee.dto.base;
 
+import cn.hutool.core.annotation.Alias;
 import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -18,7 +18,7 @@ public class ShopeeResponse implements Serializable {
     private static final long serialVersionUID = 1L;
     private String error;
     private String message;
-    @JSONField(name = "request_id")
+    @Alias( "request_id")
     private String requestId;
     private String warning;
     private JSONObject response;

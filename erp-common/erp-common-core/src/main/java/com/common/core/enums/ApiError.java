@@ -114,7 +114,6 @@ public enum ApiError implements Serializable {
     ERROR_EXCEL_EXPORT_SIZE(1060,"导出数据已超过50000条，请进行条件筛选后导出"),
     ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
 
-
     /**
      * 警告信息 从800 开始
      */
@@ -1005,6 +1004,7 @@ public enum ApiError implements Serializable {
 
 
 
+
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1099,7 +1099,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_NOT_SPLIT_EXIST(92082,"未找到拆分前B2C销售订单【{}】"),
     ERROR_SO_B2C_REF_CATEGORY_NOT_EXIST(92083,"未找到B2C销售订单分类信息"),
     ERROR_SO_B2C_NOT_INVALID(92084, "单据【{}】不支持取消【{}】"),
-    ERROR_SO_B2C_INVALID(92085, "单据【{}】未作废不支持作废"),
+    ERROR_SO_B2C_INVALID(92085, "单据【{}】未作废不支持反作废"),
     ERROR_SO_B2C_MERGE_SIZE(92086, "请至少选择2条订单数据进行合并"),
     ERROR_SO_B2C_PARENT_NOT_SPLIT(92081,"B2C销售订单【{}】非拆分后订单不支持取消拆分"),
     ERROR_SO_B2C_CHILD_NOT_EXIST(92082,"B2C销售订单【{}】未发现拆分后单据"),
@@ -1148,10 +1148,13 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_SAVE_SPLIT_INVALID(92117,"冻结中和已作废不支持拆分"),
     ERROR_SO_B2C_SAVE_MERGE_INVALID(92118,"冻结中和已作废不支持合并"),
     ERROR_SO_B2C_SHOPEE_NOT_SPLIT(92119,"B2C销售订单【{}】为shopee订单不支持拆分"),
+    ERROR_SO_B2C_MERCADO_NOT_SPLIT(92119,"B2C销售订单【{}】为mercado订单不支持拆分"),
     ERROR_SO_B2C_MERGE_FBA(92120,"B2C销售订单【{}】为FBA订单不支持合并"),
     ERROR_SO_B2C_MERGE_CAINIAO(92121,"B2C销售订单【{}】为菜鸟官方仓订单不支持合并"),
     ERROR_SO_B2C_MERGE_TAX(92122,"B2C销售订单【{}】为速卖通已税订单不支持合并"),
     ERROR_SO_B2C_SHOPEE_NOT_MERGE(92123,"B2C销售订单【{}】为shopee订单不支持合并"),
+    ERROR_SO_B2C_MERCADO_NOT_MERGE(92123,"B2C销售订单【{}】为mercado订单不支持合并"),
+    ERROR_SO_B2C_TIKTOK_NOT_MERGE(92124,"B2C销售订单【{}】为TikTok订单不支持合并"),
     ERROR_SO_B2C_PAYMENT_NOT_OPERATE(92125,"B2C销售订单【{}】未付款不支持任何操作"),
     ERROR_SO_B2C_EXCHANGERATE_NOT_SUBMIT(92126,"B2C销售订单【{}】汇率不存在不支持提交"),
     ERROR_SO_B2C_LOGISTICS_CANCEL_FAI(92114,"当前渠道无法取消物流单【{}】"),
@@ -1179,6 +1182,8 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_LOGISTICS_COMPARE_LENGTH(92128,"产品尺寸为{}，超出渠道配置尺寸{}"),
     ERROR_LOGISTICS_ID_NOT_EXIST(92129,"物流单的渠道不能为空"),
     PACKAGE_FORECAST_TRANSFER(92130,"销售订单【{}】关联强制组包，请在组包预报页面操作中转报关"),
+    ERROR_REFRESH_TOKEN(92131,"店铺【{}】，刷新token失败：{}"),
+    ERROR_SHOP_AUTHORIZE_FAIL(92108,"店铺【{}】，授权失败：【{}】"),
 
     SKU_MAPPING_NOT_ALLOW_HISTORY(92131,"当前映射关系在【{}】已存在过，无法修改"),
     IS_SO_OUT_STOCK_NOT_UPDATE_MAPPING(92132,"已生成销售出库单，不允许修改映射关系"),
@@ -1193,6 +1198,11 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_ORDER_DECLARE_NOT_EXIST(92140,"销售订单【{}】申报信息不存在"),
 
     ERROR_DECLARE_NOT_EXIST(92141,"申报信息不存在"),
+
+    ERROR_SO_B2C_TIKTOK_NOT_SPLIT(92119,"B2C销售订单【{}】在TikTok平台不允许拆分，平台提示【{}】"),
+    ERROR_SO_B2C_TIKTOK_SPLIT_SKU(92080,"订单【{}】SKU【{}】在TikTok平台中不允许把一个sku拆分成多个单据分开发货"),
+    ERROR_TIKTOK_SPLIT(92081,"订单【{}】TikTok拆分订单失败"),
+
 
     /**
      * TMS 错误

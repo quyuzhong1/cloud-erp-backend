@@ -257,7 +257,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param dto
      * @return Boolean
      */
-    List<String> splitSave(SoB2cDTO.SplitSaveDTO dto);
+    SoB2cDTO.SplitSaveResultDTO splitSave(SoB2cDTO.SplitSaveDTO dto);
     /**
      * @description: 取消合并前数据展示
      * @author Will
@@ -895,9 +895,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     List<PackageDTO.ScanResultDTO> listMergePackageBySoIds(List<String> ids);
 
-    Boolean autoCancelOrderForecast(SoB2cEntity mainEntity);
-
     PackageDTO.ScanResultDTO packageScan(PackageDTO.ScanDTO scanDTO);
+
+    Boolean autoCancelOrderForecast(SoB2cEntity mainEntity);
 
     List<BatchResultDTO> deliveryWithNotOutbound(List<String> ids);
 

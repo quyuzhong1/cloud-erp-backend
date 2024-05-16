@@ -13,9 +13,7 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
-import com.erp.model.oms.dto.CancelAuthorizeDTO;
-import com.erp.model.oms.dto.ShopAuthorizeDTO;
-import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
@@ -25,9 +23,6 @@ import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.shopify.api.dto.AccessDTO;
 import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
-import com.erp.server.oms.service.IShopAuthorizeService;
-import com.erp.server.oms.service.ShopAuthService;
-import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import com.sdk.oms.shopify.service.ShopSdkServer;
@@ -269,5 +264,10 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
                 .setChargeId(shopInfo.getChargeId())
                 // 店铺全域名: SHOP_NAME.myshopify.com
                 .setShopDomain(shopInfo.getDomain().concat(ShopifyConstant.DOMAIN));
+    }
+
+    @Override
+    public Boolean refreshToken(RefreshShopTokenDTO dto) {
+        return Boolean.TRUE;
     }
 }

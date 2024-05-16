@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.product.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -14,8 +14,8 @@ import java.io.Serializable;
  */
 @Data
 public class SummaryInfo implements Serializable {
-    @JSONField(name = "total_reserved_stock")
+    @Alias( "total_reserved_stock")
     private Integer totalReservedStock;
-    @JSONField(name = "total_available_stock")
+    @Alias( "total_available_stock")
     private Integer totalAvailableStock;
 }

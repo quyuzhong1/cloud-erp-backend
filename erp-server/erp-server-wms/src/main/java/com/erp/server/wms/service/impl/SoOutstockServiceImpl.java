@@ -55,7 +55,9 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
+import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
+import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShipmentTypeEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
@@ -2980,6 +2982,32 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return lambdaQuery().in(SoOutstockEntity::getCode, codes).list();
     }
 
+    @Override
+    public Boolean afreshGenerateB2cOutstock(List<String> ids) {
+        List<SoB2cEntity> soB2cList = soB2cFeign.listWarehouseIsEmpty(ids);
+        Map<String, SoB2cEntity> mainMap = soB2cFeign.listByIds(ids)
+                .stream()
+                .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
+        for (String id : ids) {
+            try {
+                SoB2cEntity currentEntity = mainMap.get(id);
+                if (null == currentEntity){
+                    throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+                }
+                PlatformRetryHandler.retrySoOutStock(currentEntity, soB2cList);
+            } catch (Exception e) {
+                String message = e.getMessage();
+                log.error("重新创建或者修改B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", id, id, message);
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+                addError.setMainId(id);
+                addError.setMessage(message);
+                addError.setParamJson(id);
+                soB2cFeign.addSoB2cError(addError);
+            }
+        }
+        return Boolean.TRUE;
+    }
     /**
      * 平台拉取数据生成销售出库单
      * 注意 List<PlatformDeliveryDetailDTO> 里的仓库ID和mainId相同
@@ -3037,32 +3065,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return Boolean.TRUE;
         }
 
-    }
-    @Override
-    public Boolean afreshGenerateB2cOutstock(List<String> ids) {
-        List<SoB2cEntity> soB2cList = soB2cFeign.listWarehouseIsEmpty(ids);
-        Map<String, SoB2cEntity> mainMap = soB2cFeign.listByIds(ids)
-                .stream()
-                .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
-        for (String id : ids) {
-            try {
-                SoB2cEntity currentEntity = mainMap.get(id);
-                if (null == currentEntity){
-                    throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
-                }
-                PlatformRetryHandler.retrySoOutStock(currentEntity, soB2cList);
-            } catch (Exception e) {
-                String message = e.getMessage();
-                log.error("重新创建或者修改B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", id, id, message);
-                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
-                addError.setMainId(id);
-                addError.setMessage(message);
-                addError.setParamJson(id);
-                soB2cFeign.addSoB2cError(addError);
-            }
-        }
-        return Boolean.TRUE;
     }
 
     @Override

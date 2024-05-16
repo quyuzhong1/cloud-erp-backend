@@ -6,8 +6,10 @@ import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderLogisticsDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OrderTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
@@ -142,7 +144,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         entity.setHeight(ObjectUtil.isEmpty(entity.getHeight()) ? BigDecimal.ZERO : entity.getHeight());
         entity.setWidth(ObjectUtil.isEmpty(entity.getWidth()) ? BigDecimal.ZERO : entity.getWidth());
         entity.setLength(ObjectUtil.isEmpty(entity.getLength()) ? BigDecimal.ZERO : entity.getLength());
-        entity.setAccessoriesSkuId(StrUtil.isBlank(entity.getAccessoriesSkuId()) ? "": entity.getAccessoriesSkuId());
+        entity.setAccessoriesSkuId(StrUtil.isBlank(entity.getAccessoriesSkuId()) ? "" : entity.getAccessoriesSkuId());
     }
 
     @Override
@@ -168,7 +170,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
-    public Boolean updateLogisticsCode(String mainId,  String transportNo, String trackNo) {
+    public Boolean updateLogisticsCode(String mainId, String transportNo, String trackNo) {
         return lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, mainId).
                 set(SoB2cLogisticsEntity::getCode, transportNo).
                 set(SoB2cLogisticsEntity::getTrackNo, trackNo).
@@ -182,11 +184,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 //        if (Objects.isNull(mainEntity) || StrUtil.isBlank(mainEntity.getId())) return;
         boolean isShopee = LogisticsPlatformEnum.SHOPEE.getCode().equals(dto.getDictPlatform());
         List<PlatformOrderLogisticsDTO> logisticsList = dto.getLogisticsList();
+        //获取主表下物流记录
+        SoB2cLogisticsEntity oldEntity = getByMainId(mainEntity.getId());
         if (CollectionUtils.isEmpty(logisticsList)) {
-            //获取主表下物流记录
-            SoB2cLogisticsEntity oldEntity = getByMainId(mainEntity.getId());
             if (null == oldEntity) {
-                SoB2cLogisticsEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(null, mainEntity.getId(), allNetWeight,maxLength,maxWidth,totalHeight);
+                SoB2cLogisticsEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(null, mainEntity.getId(), allNetWeight, maxLength, maxWidth, totalHeight);
                 entity.setMainId(mainEntity.getId());
                 entity.setWeight(allNetWeight);
                 entity.setLength(maxLength);
@@ -233,7 +235,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         //转map 比较是否存在记录 不存在则删除 存在则更新
 //        Map<String, SoB2cLogisticsEntity> map = listByMainId.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getCode, Function.identity()));
         SoB2cLogisticsEntity entity = null;
-        if (CollectionUtils.isNotEmpty(listByMainId)){
+        if (CollectionUtils.isNotEmpty(listByMainId)) {
             entity = listByMainId.get(0);//跨店铺拆单需要修改这里
         }
 //            SoB2cLogisticsEntity entity = map.get(platformOrderLogisticsDTO.getCode());
@@ -277,11 +279,20 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 if (null != entity.getHeight() && entity.getHeight().compareTo(BigDecimal.ZERO) > 0){
                     totalHeight  = entity.getHeight();
                 }
+
+                //如果美客多平台订单不是平台仓发货，不更新物流单号
+                if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+                    if (!mainEntity.hasPlatformWarehouseOrder()) {
+                        entity.setCode(oldEntity.getCode());
+                    }
+                }
+
                 entity2.setWeight(allNetWeight);
                 entity2.setLength(maxLength);
                 entity2.setWidth(maxWidth);
                 entity2.setHeight(totalHeight);
                 entity2.setId(entity.getId());
+
                 if (!this.updateById(entity2)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 更新失败");
                 }
@@ -306,7 +317,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     public SoB2cDTO.ShippingCalculationDTO getShippingCalculationByOrderId(String orderId) {
         //买家信息
         SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(orderId);
-        if(Objects.isNull(receiverEntity)){
+        if (Objects.isNull(receiverEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_NULL);
         }
         SoB2cLogisticsEntity entity = this.getByMainId(orderId);
@@ -372,10 +383,10 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     public Boolean updateWeight(String soId,String id, BigDecimal weightByG) {
+        String msg = StrUtil.format("用户【{}】更新重量为{} ", UserContext.getDefaultLoginUser().getUserName(),weightByG+"g");
         if(!MathUtil.isValidNumber(weightByG,12)){
             throw new ServiceException("重量过大，整数最大值不能超过12位");
         }
-        String msg = StrUtil.format("用户【{}】更新重量为{} ", UserContext.getDefaultLoginUser().getUserName(),weightByG+"g");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soId, "【组包称重】");
         return lambdaUpdate()
                 .set(SoB2cLogisticsEntity::getWeight, weightByG)

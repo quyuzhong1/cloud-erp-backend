@@ -673,6 +673,8 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(List<String> skuIds);
 
+    void initProductSizeAndBoxSize();
+
     /**
      * 根据skuId获取sku基础信息
      * @param skuIds
@@ -700,7 +702,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     void recalDestDeclarePrice(List<ProductDetailEntity> details);
 
-    void initProductSizeAndBoxSize();
 
     /**
      * 历史数据sku 增加默认值 并且把已存在目的国海关编码值移到custom中

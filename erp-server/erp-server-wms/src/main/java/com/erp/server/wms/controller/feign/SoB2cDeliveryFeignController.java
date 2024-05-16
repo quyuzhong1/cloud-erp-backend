@@ -55,7 +55,7 @@ public class SoB2cDeliveryFeignController extends BaseController {
       */
     @PostMapping("/add")
     public Boolean listBySoDetailIds(@RequestBody SoB2cDeliveryDTO.AddDTO dto) {
-        Boolean addResult=  soB2cDeliveryService.add(dto);
+        Boolean addResult = soB2cDeliveryService.add(dto);
         return addResult;
     }
 

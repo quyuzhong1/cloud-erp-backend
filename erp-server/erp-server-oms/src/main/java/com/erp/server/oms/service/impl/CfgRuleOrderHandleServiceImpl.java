@@ -26,7 +26,6 @@ import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.CfgRuleOrderHandleMapper;
 import com.erp.server.oms.service.CfgRuleOrderHandleService;
-import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.RuleConditionService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -51,9 +50,6 @@ import java.util.stream.Collectors;
 public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrderHandleMapper, CfgRuleOrderHandleEntity> implements CfgRuleOrderHandleService {
     @Autowired
     private OperateLogService operateLogService;
-
-    @Autowired
-    private CommonService commonService;
 
     @Autowired
     private RuleConditionService ruleConditionService;

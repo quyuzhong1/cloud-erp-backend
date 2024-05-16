@@ -83,6 +83,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             return syncAliExpressChannel(platform);
         } else if (LogisticsPlatformEnum.SHOPIFY.getCode().equalsIgnoreCase(platform)) {
             return syncShopifyChannel(platform);
+        } else if (LogisticsPlatformEnum.TIK_TOK.getCode().equalsIgnoreCase(platform)) {
+            return syncTikTokChannel(platform);
         } else {
             return syncSingleChannel(platform);
         }
@@ -583,5 +585,43 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(list)) {
             logisticsAddressService.batchSaveOrUpdateLogisticsAddress(list);
         }
+    }
+
+    public List<BatchResultDTO> syncTikTokChannel(String platform) {
+        log.info("{}渠道同步开始", platform);
+        ApiResult<List<ShopAuthEntity>> result = null;
+        try {
+            result = shopInfoFeign.getAuthShopByPlatformType(platform);
+        } catch (Exception e) {
+            log.error("erp-oms服务接口getShopeeShopList异常：{}", e.getMessage());
+        }
+        List<BatchResultDTO> batchResultDTOS = new ArrayList<>();
+        if (Objects.nonNull(result) && result.isSuccess()) {
+            LogisticsService service = logisticsRegistry.getHandler(platform);
+            List<ShopAuthEntity> data = result.getData();
+            if (CollectionUtils.isEmpty(data)) return batchResultDTOS;
+            for (ShopAuthEntity shopAuthEntity : data) {
+                ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
+                Map<String, String> map = new HashMap<>();
+                map.put("shopId", shopAuthEntity.getShopId());
+                chanelQueryVO.setAuthMap(map);
+                ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
+                //先暂停该渠道数据，然后进行更新动作
+                logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE);
+                if (channels.isSuccess()) {
+                    channels.getData().forEach(logisticsSaleChannelEntity -> {
+//                        logisticsSaleChannelEntity.setAuthId(shopAuthEntity.getShopId());
+                        logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
+                        logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
+                    });
+                    batchResultDTOS.add(BatchResultDTO.success(shopAuthEntity.getShopId(), String.valueOf(channels.getCode()), "同步成功"));
+                } else {
+                    batchResultDTOS.add(BatchResultDTO.fail(shopAuthEntity.getShopId(), String.valueOf(channels.getCode()), channels.getMsg()));
+                    log.error(channels.getMsg());
+                }
+            }
+        }
+        log.info("{}渠道同步结束", platform);
+        return batchResultDTOS;
     }
 }

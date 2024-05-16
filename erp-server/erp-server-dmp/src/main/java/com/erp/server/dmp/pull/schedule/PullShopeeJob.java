@@ -34,7 +34,7 @@ public class PullShopeeJob {
     private PlatformApiTaskService platformApiTaskService;
 
     /**
-     * 拉取Shopify任务
+     * 拉取shopee任务
      */
     @XxlJob("shopeeExecute")
     public void execute() {

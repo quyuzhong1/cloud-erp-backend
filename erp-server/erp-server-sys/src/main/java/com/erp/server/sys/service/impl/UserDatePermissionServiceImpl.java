@@ -27,8 +27,6 @@ import java.util.List;
 @Service
 public class UserDatePermissionServiceImpl implements UserDatePermissionService {
     @Resource
-    private CommonService commonService;
-    @Resource
     private SysRoleUserService sysRoleUserService;
     @Resource
     private SysUserInfoService sysUserInfoService;

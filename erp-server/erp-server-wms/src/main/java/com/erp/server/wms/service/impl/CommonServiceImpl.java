@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import com.common.business.interceptor.CommonInterceptor;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,6 +18,13 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.service.CommonService;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author yl

@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.global.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -14,8 +14,8 @@ import java.io.Serializable;
  */
 @Data
 public class GlobalItem implements Serializable {
-    @JSONField(name = "global_item_id")
+    @Alias( "global_item_id")
     private Long itemId;
-    @JSONField(name = "update_time")
+    @Alias( "update_time")
     private Long updateTime;
 }

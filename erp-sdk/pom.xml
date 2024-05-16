@@ -37,6 +37,9 @@
         <module>erp-sdk-oms-aliexpress</module>
         <module>erp-sdk-tms-batong</module>
         <module>erp-sdk-tms-baohong</module>
+        <module>erp-sdk-oms-mercado</module>
+        <module>erp-sdk-oms-tiktok</module>
+        <module>erp-sdk-tms-tiktok</module>
     </modules>
 
     <dependencies>

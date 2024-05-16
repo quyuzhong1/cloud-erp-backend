@@ -35,6 +35,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -158,7 +160,7 @@ public class BusinessServiceImpl {
             // 查询isClean = 0
             orderMongoDTO = OrderMongoDTO.getByIsCleanDateStr(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
         }
-        Class tClass = CleanDataTableEnum.getByName(tableName).getTClass();
+        Class tClass = Objects.requireNonNull(CleanDataTableEnum.getByName(tableName)).getTClass();
         List<T> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, tableName, tClass);
         if (CollectionUtil.isEmpty(mongoData)) {
             return Collections.EMPTY_LIST;

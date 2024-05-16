@@ -1,7 +1,6 @@
 package com.erp.model.oms.dto;
 
-import cn.hutool.core.lang.Dict;
-import cn.hutool.extra.spring.SpringUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.exception.ServiceException;
 import lombok.Data;
@@ -110,6 +109,18 @@ public class ShopAuthorizeDTO implements Serializable {
             return this;
         }
 
+        // 美客多
+        if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code) && StrUtil.startWith(this.state, PlatformDictEnum.MERCADOLIBRE.getCode())){
+            this.setPlatformCode(PlatformDictEnum.MERCADOLIBRE.getCode());
+            return this;
+        }
+
+        // TikTok
+        if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code) && StrUtil.startWith(this.state, PlatformDictEnum.TIK_TOK.getCode())){
+            this.setPlatformCode(PlatformDictEnum.TIK_TOK.getCode());
+            return this;
+        }
+
         // 速卖通
         if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code)){
             this.setPlatformCode(PlatformDictEnum.ALI_EXPRESS.getCode());
@@ -133,6 +144,8 @@ public class ShopAuthorizeDTO implements Serializable {
             this.setPlatformCode(PlatformDictEnum.WALMART.getCode());
             return this;
         }
+
+
 
         throw new ServiceException("参数无法识别到对应平台");
     }

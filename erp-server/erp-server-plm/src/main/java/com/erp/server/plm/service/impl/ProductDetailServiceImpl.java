@@ -5034,6 +5034,28 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
+    public List<SkuVO> accessoriesSku(String searchKeyword) {
+        return baseMapper.accessoriesSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
+
+    }
+    /**
+     * 获取已审核sku 未计算目的国申报价数据
+     * @return
+     */
+    @Override
+    public List<ProductDetailEntity> getProductDetailByDestDeclarePrice() {
+        return baseMapper.getProductDetailByDestDeclarePrice();
+    }
+
+    @Override
+    public List<SkuVO> getSkuBaseByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getSkuBaseBySkuIds(skuIds);
+    }
+
+    @Override
     public void initProductSizeAndBoxSize() {
         // 查询出所有需要进行初始化的产品尺寸或箱规
         List<ProductPackEntity> productPacks = productPackService.list();
@@ -5072,25 +5094,4 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         pack.setBoxHeight(LengthConverterUtil.cmToMm(boxSizeList.stream().skip(2).findFirst().orElse(BigDecimal.ZERO)));
     }
 
-    @Override
-    public List<SkuVO> accessoriesSku(String searchKeyword) {
-        return baseMapper.accessoriesSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
-
-    }
-    /**
-     * 获取已审核sku 未计算目的国申报价数据
-     * @return
-     */
-    @Override
-    public List<ProductDetailEntity> getProductDetailByDestDeclarePrice() {
-        return baseMapper.getProductDetailByDestDeclarePrice();
-    }
-
-    @Override
-    public List<SkuVO> getSkuBaseByIds(List<String> skuIds) {
-        if(CollectionUtils.isEmpty(skuIds)){
-            return Collections.emptyList();
-        }
-        return baseMapper.getSkuBaseBySkuIds(skuIds);
-    }
 }

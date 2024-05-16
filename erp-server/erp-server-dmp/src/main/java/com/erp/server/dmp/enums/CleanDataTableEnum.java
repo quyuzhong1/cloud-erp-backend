@@ -1,17 +1,19 @@
 package com.erp.server.dmp.enums;
 
-import com.common.business.dto.PlatformCityDictDTO;
-import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressListingDTO;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressOrderDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFbaShipmentDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
+import com.sdk.oms.mercado.dto.MercadoListingDTO;
+import com.sdk.oms.mercado.dto.MercadoOrderDTO;
 import com.sdk.oms.shopee.dto.PlatformShopeeListingDTO;
 import com.sdk.oms.shopee.dto.PlatformShopeeOrderDTO;
 import com.sdk.oms.shopify.dto.PlatformShopifyListingDTO;
 import com.sdk.oms.shopify.dto.PlatformShopifyOrderDTO;
+import com.sdk.oms.tiktok.dto.TikTokListingDTO;
+import com.sdk.oms.tiktok.dto.TikTokOrderDTO;
 import com.sdk.oms.walmart.dto.PlatformWalmartListingDTO;
 import com.sdk.oms.walmart.dto.PlatformWalmartOrderDTO;
 import com.sdk.tms.track123.dto.PlatformTrack123TrackDTO;
@@ -47,6 +49,13 @@ public enum CleanDataTableEnum {
     AMAZON_FBA_SHIPMENT("Amazon", "third_system_Amazon_fba_shipment","third_system", "fba_shipment","AmazonFBA货件", PlatformAmazonFbaShipmentDTO.class),
     AMAZON_SO_OUT_STOCK("Amazon", "third_system_Amazon_so_out_stock","third_system", "so_out_stock","Amazon物流销售出库", PlatformAmazonFulfilledShipmentsDTO.class),
 
+    //美客多
+    MERCADO_ORDER("mercadolibre", "third_system_mercadolibre_order","third_system", "order","美客多订单数据", MercadoOrderDTO.class),
+    MERCADO_PRODUCT("mercadolibre", "third_system_mercadolibre_product","third_system", "product","美客多产品数据", MercadoListingDTO.class),
+
+    //TikTok
+    TikTok_ORDER("TikTok", "third_system_TikTok_order","third_system", "order","TikTok订单数据", TikTokOrderDTO.class),
+    TikTok_PRODUCT("TikTok", "third_system_TikTok_product","third_system", "product","TikTok产品数据", TikTokListingDTO.class),
 
     //track123
     TRACK123_GET_TRACK("TRACK123", "third_system_TRACK123_getTrack","third_system", "getTrack","TRACK123物流轨迹数据", PlatformTrack123TrackDTO.class),

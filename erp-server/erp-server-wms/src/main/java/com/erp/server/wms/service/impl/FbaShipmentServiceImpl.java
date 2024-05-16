@@ -1318,8 +1318,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         for (FbaShipmentDTO.GenerateRequisitionApplicationViewDTO viewDTO : list) {
             //FBA下推要货单要货类型默认是：销售平台
-            viewDTO.setType(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode());
-            viewDTO.setTypeName(RequisitionApplicationTypeEnum.SALES_PLATFORM.getName());
+            viewDTO.setType(RequisitionApplicationTypeEnum.FBA.getCode());
+            viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBA.getName());
             //来源类型
             viewDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
             //来源类型中文
@@ -1734,4 +1734,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         return null;
     }
 
+    @Override
+    public PagingVO<FbaShipmentDTO.SearchResultDTO> search(PagingDTO<FbaShipmentDTO.SearchDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<FbaShipmentDTO.SearchResultDTO> searchData = this.baseMapper.search(query, dto.getParams());
+        if (CollUtil.isEmpty(searchData.getRecords())) {
+            return new PagingVO(searchData);
+        }
+        return new PagingVO(searchData);
+    }
 }

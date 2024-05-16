@@ -1,6 +1,8 @@
 package com.erp.server.oms.sdk.sob2c;
 
+import com.common.business.annotation.PlatformSoB2cAnnotate;
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -20,7 +22,7 @@ import javax.annotation.Resource;
 
 @Slf4j
 @Component
-//@PlatformSoB2cAnnotate(method = PlatformDictEnum.MERCADOLIBRE)
+@PlatformSoB2cAnnotate(method = PlatformDictEnum.MERCADOLIBRE)
 public class MercadoSoB2cHandle implements ISoB2cHandleService {
 
     @Resource

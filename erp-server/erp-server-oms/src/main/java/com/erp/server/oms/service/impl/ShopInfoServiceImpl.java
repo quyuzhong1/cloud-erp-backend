@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -41,6 +42,7 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillCostFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.server.oms.convert.ShopInfoConverter;
 import com.erp.server.oms.mapper.ShopInfoMapper;
 import com.erp.server.oms.service.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -653,6 +655,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 //    @GlobalTransactional(rollbackFor = Exception.class)
 //    @Transactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
+
+
         return AuthSaveHandler.shopAuthorize(dto.checkAndSetPlatform(), response);
     }
 
@@ -897,6 +901,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopAuth.setExpiresIn(Math.toIntExact(expireIn));
         shopAuth.setShopId(dto.getId());
         shopAuth.setAppClientId(cfgAppClient.getId());
+        LocalDateTime localDateTime = LocalDateTime.now().plusSeconds(Math.toIntExact(expireIn));
+        //提前半小时设置token失效，以免失效了以后才刷新容易出错
+        LocalDateTime tokenExpireTime = localDateTime.minusMinutes(30);
+        shopAuth.setTokenExpireTime(tokenExpireTime);
         shopAuthService.saveOrUpdate(shopAuth);
         //增加店铺信息获取
 
@@ -1052,6 +1060,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
         shopInfoEntity.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
         shopInfoEntity.setDictPlatform(PlatformDictEnum.SHOPEE.getCode());
+        shopInfoEntity.setAuthTime(LocalDateTime.now());
         //店铺
         this.saveOrUpdate(shopInfoEntity);
         shopId = shopInfoEntity.getId();
@@ -1064,6 +1073,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shopAuth.setExpiresIn(Math.toIntExact(expireIn));
         }
         shopAuth.setAppClientId(cfClientId);
+        LocalDateTime localDateTime = LocalDateTime.now().plusSeconds(Math.toIntExact(expireIn));
+        //提前半小时设置token失效，以免失效了以后才刷新容易出错
+        LocalDateTime tokenExpireTime = localDateTime.minusMinutes(30);
+        shopAuth.setTokenExpireTime(tokenExpireTime);
         shopAuthService.saveOrUpdate(shopAuth);
         return Boolean.TRUE;
     }
@@ -1314,5 +1327,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         log.warn("Shopify  平台返回头hmac：{}, 入参加密计算hmac：{}", hmacHeader, calculatedHmac);
         // 安全比较计算得到的HMAC和请求头中的HMAC
         return calculatedHmac.equals(hmacHeader);
+    }
+
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listShopSelect() {
+        List<ShopInfoEntity> list = this.list();
+        List<BaseDropDownDTO.DisabledDTO> resultList = ShopInfoConverter.INSTANCE.ShopInfoEntityToDisabledDTO(list);
+        return resultList;
     }
 }

@@ -54,10 +54,10 @@ public class SoB2cFeignController extends BaseController {
     private SoB2cRefService soB2cRefService;
 
     @Resource
-    private SoB2cStatusService b2cStatusService;
+    private OperateLogService operateLogService;
 
     @Resource
-    private OperateLogService operateLogService;
+    private SoB2cStatusService b2cStatusService;
 
 
     /**
