@@ -912,7 +912,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				diff.add(importDataMappingDTO);
 			}else if(systemValue != null && importValue == null) {
 				diff.add(importDataMappingDTO);
-			}else {
+			}else if(systemValue != null && importValue != null){
 				if(WmsDataCompareTaskClassTypeEnum.INT.getCode().equals(importDataMappingDTO.getClassType())) {
 					if(new BigDecimal(systemValue).compareTo(new BigDecimal(importValue)) != 0) {
 						diff.add(importDataMappingDTO);
