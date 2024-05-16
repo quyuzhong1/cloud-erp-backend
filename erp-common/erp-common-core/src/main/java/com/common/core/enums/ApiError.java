@@ -1098,7 +1098,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_NOT_SPLIT_EXIST(92082,"未找到拆分前B2C销售订单【{}】"),
     ERROR_SO_B2C_REF_CATEGORY_NOT_EXIST(92083,"未找到B2C销售订单分类信息"),
     ERROR_SO_B2C_NOT_INVALID(92084, "单据【{}】不支持取消【{}】"),
-    ERROR_SO_B2C_INVALID(92085, "单据【{}】未作废不支持作废"),
+    ERROR_SO_B2C_INVALID(92085, "单据【{}】未作废不支持反作废"),
     ERROR_SO_B2C_MERGE_SIZE(92086, "请至少选择2条订单数据进行合并"),
     ERROR_SO_B2C_PARENT_NOT_SPLIT(92081,"B2C销售订单【{}】非拆分后订单不支持取消拆分"),
     ERROR_SO_B2C_CHILD_NOT_EXIST(92082,"B2C销售订单【{}】未发现拆分后单据"),
