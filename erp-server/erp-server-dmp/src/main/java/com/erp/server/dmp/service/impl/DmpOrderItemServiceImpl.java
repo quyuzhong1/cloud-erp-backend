@@ -9,6 +9,7 @@ import com.erp.server.dmp.mapper.DmpOrderItemMapper;
 import com.erp.server.dmp.service.DmpOrderItemService;
 import com.erp.server.dmp.service.DmpOrderItemSplitService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,7 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, DmpOrderItemEntity> implements DmpOrderItemService {
     @Resource
+    @Lazy
     private DmpOrderItemSplitService dmpOrderItemSplitService;
 
     @Resource(name = "pullErpOpenApi")
