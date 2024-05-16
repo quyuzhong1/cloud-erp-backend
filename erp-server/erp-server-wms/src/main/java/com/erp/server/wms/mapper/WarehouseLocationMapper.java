@@ -40,4 +40,13 @@ public interface WarehouseLocationMapper extends BaseMapper<WarehouseLocationEnt
      * @return
      */
     Page<WarehouseLocationDTO.PagingViewDTO> pagingByParams(Page<WarehouseLocationDTO.PagingViewDTO> query,@Param("params") WarehouseLocationDTO.PagingParamDTO params);
+    /**
+     * @description: 分页远程查询下拉
+     * @author Will
+     * @date: 2024/5/16 15:20
+     * @param query
+     * @param params
+     * @return IPage<LocationListDTO>
+     */
+    IPage<WarehouseLocationDTO.LocationListDTO> pagingSelect(Page query,@Param("params") WarehouseLocationDTO.SelectDTO params);
 }

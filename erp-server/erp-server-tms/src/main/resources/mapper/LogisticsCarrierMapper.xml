@@ -46,6 +46,7 @@
                 logistics_type = #{params.logisticsType}
             </if>
             <if test="params != null and params.searchKeyword != null and params.searchKeyword != ''">
+                and (carrier_code ilike concat('%', #{params.searchKeyword}::text ,'%') or carrier_cn ilike concat('%', #{params.searchKeyword}::text ,'%') or carrier_en ilike concat('%', #{params.searchKeyword}::text ,'%'))
                 order by
                 case when carrier_cn ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
                 when carrier_cn ILIKE concat('%',#{params.searchKeyword}::text) THEN 2

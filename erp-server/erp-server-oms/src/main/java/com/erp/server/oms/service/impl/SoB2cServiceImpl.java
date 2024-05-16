@@ -1614,6 +1614,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!ApproveStatusEnum.APPROVE.equals(approveStatusEnum)) {
             throw new ServiceException(ApiError.B2C_APPROVE_DELIVERY, entity.getCode());
         }
+        if (entity.getIsCancel()){
+            throw new ServiceException(StrUtil.format("销售订单【{}】平台已取消，不支持发货", entity.getCode()));
+        }
 
         //校验是冻结
         if (entity.getIsFrozen()) {
@@ -5404,14 +5407,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_92058);
         }
         SoOutstockDTO.GenerateB2cDTO dto = new SoOutstockDTO.GenerateB2cDTO();
-        String sourceType;
-        if(entity.hasPlatformWarehouseOrder()){
-            // 平台仓订单(平台销售出库单)
-            sourceType = SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode();
-        } else {
-            // 非平台仓订单(必须要有已发货的B2C发货单:否则取消生成)
-            sourceType = SourceTypeEnum.SO_B2C_DELIVERY.getCode();
-        }
         dto.setOrderType(OrderTypeEnum.B2C.getCode());
         dto.setSoId(entity.getId());
         dto.setSoCode(entity.getCode());
@@ -5420,7 +5415,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 //        String sourceType = SourceTypeEnum.SO_B2C.getCode();
         String sourceCode = "";
         dto.setSourceId(sourceId);
-        dto.setSourceType(sourceType);
         dto.setSourceCode(sourceCode);
         String chargeId = shopInfoEntity.getChargeId();
         dto.setCustomerId(shopInfoEntity.getCustomerId());
@@ -5459,6 +5453,26 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             dto.setTrackNo(trackNo);
             dto.setTransportNo(soB2cLogistics.getCode());
         }
+        String sourceType;
+        if(entity.hasPlatformWarehouseOrder()){
+            // 平台仓订单(平台销售出库单)(扣可用库存)
+            sourceType = SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode();
+        } else {
+            LogisticsSupplierDTO.AuthDTO auth = logisticsAuthFeign.getAuthByChannelId(soB2cLogistics.getLogisticsChannelId());
+            if (Objects.isNull(auth)) {
+                throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+            }
+            LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
+            if (LogisticsPlatformEnum.GOOD_CANG.equals(platformEnum) || LogisticsPlatformEnum.IML.equals(platformEnum)) {
+                // 海外仓出库单 (扣可用库存)
+                sourceType = SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode();
+            } else {
+                // B2C发货单 (扣冻结库存)
+                sourceType = SourceTypeEnum.SO_B2C_DELIVERY.getCode();
+            }
+        }
+        dto.setSourceType(sourceType);
+
         //根据主表id 查询出库的信息
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
         if (CollectionUtils.isEmpty(detailList)) {
