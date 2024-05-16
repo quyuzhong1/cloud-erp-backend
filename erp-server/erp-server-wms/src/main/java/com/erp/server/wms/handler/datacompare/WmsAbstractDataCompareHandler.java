@@ -62,7 +62,7 @@ public abstract class WmsAbstractDataCompareHandler implements WmsDataCompareBil
 	private Pair<Boolean, List<Map<String, String>>> getSysExcelData(String taskId , boolean needData){
 		List<WmsDataCompareImportEntity> wmsDataCompareImportEntityList = wmsDataCompareImportService.lambdaQuery()
 				.eq(WmsDataCompareImportEntity::getTaskId, taskId)
-				.eq(WmsDataCompareImportEntity::getSysFlag, Boolean.TRUE)
+				.eq(WmsDataCompareImportEntity::getMainFlag, Boolean.TRUE)
 				.list();
 		if(CollUtil.isNotEmpty(wmsDataCompareImportEntityList)) {
 			List<String> excelFiles = wmsDataCompareImportEntityList.stream().map(WmsDataCompareImportEntity::getFileUrl).collect(Collectors.toList());
