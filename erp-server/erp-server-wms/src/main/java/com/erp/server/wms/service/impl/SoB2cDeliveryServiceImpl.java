@@ -15,6 +15,7 @@ import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.*;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -122,6 +123,8 @@ import java.util.stream.Collectors;
 public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapper, SoB2cDeliveryEntity> implements SoB2cDeliveryService {
     @Autowired
     private OperateLogService operateLogService;
+    @Autowired
+    private CommonService commonService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
     @Autowired
@@ -1019,27 +1022,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public boolean hasNotShippedDeliveryAndLog(SoB2cEntity currentEntity) {
-        Integer count = this.lambdaQuery()
-                .eq(SoB2cDeliveryEntity::getSourceId, currentEntity.getId())
-                .eq(SoB2cDeliveryEntity::getSourceCode, currentEntity.getCode())
-                .eq(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.SHIPPED.getCode())
-                .count();
-        if (count > 0){
-            return false;
-        }
-        // 记录日志
-        OperateLogDTO.AddModuleOperateLogDTO operateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
-        operateLogDTO.setContent(StrUtil.format("【】因无已发货的发货单跳过生成销售出库", currentEntity.getCode()));
-        operateLogDTO.setModuleType(ModuleTypeEnum.SO_B2C.getCode());
-        operateLogDTO.setBusinessId(currentEntity.getId());
-        operateLogDTO.setOperation("重新生成销售出库单");
-        soB2cFeign.addModuleOperateLog(operateLogDTO);
-        return true;
-    }
-
-    @Override
     public List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillPreview(SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param) {
         List<String> ids = param.getIds();
 
@@ -1185,6 +1167,47 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean hasNotGenB2cSoOutStockAndLog(SoB2cEntity currentEntity) {
+        Integer count = this.lambdaQuery()
+                .eq(SoB2cDeliveryEntity::getSourceId, currentEntity.getId())
+                .eq(SoB2cDeliveryEntity::getSourceCode, currentEntity.getCode())
+                .eq(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.SHIPPED.getCode())
+                .count();
+        if (count > 0){
+            return false;
+        }
+        if (currentEntity.hasPlatformWarehouseOrder()){
+            return false;
+        }
+        List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(currentEntity.getId()));
+        if (CollectionUtils.isEmpty(soB2cLogisticsList)){
+            // 无物流信息
+            String msg = StrUtil.format("soId={}, 无物流信息", currentEntity.getId());
+            throw new ServiceException(msg);
+        }
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsList.get(0);
+        // 无发货单判断是否海外仓发货
+        LogisticsSupplierDTO.AuthDTO auth = logisticsAuthFeign.getAuthByChannelId(logisticsEntity.getLogisticsChannelId());
+        if (Objects.isNull(auth)) {
+            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+        }
+        // 如果是API对接的海外仓忽略发货单为空拦截
+        LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
+        if (LogisticsPlatformEnum.GOOD_CANG.equals(platformEnum) || LogisticsPlatformEnum.IML.equals(platformEnum)) {
+            return false;
+        }
+
+        // 记录日志
+        OperateLogDTO.AddModuleOperateLogDTO operateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
+        operateLogDTO.setContent(StrUtil.format("【】因无已发货的发货单跳过生成销售出库", currentEntity.getCode()));
+        operateLogDTO.setModuleType(ModuleTypeEnum.SO_B2C.getCode());
+        operateLogDTO.setBusinessId(currentEntity.getId());
+        operateLogDTO.setOperation("重新生成销售出库单");
+        soB2cFeign.addModuleOperateLog(operateLogDTO);
+        return true;
+    }
 
     @Override
     public List<BatchResultDTO> logisticsIntercept(List<String> ids) {
