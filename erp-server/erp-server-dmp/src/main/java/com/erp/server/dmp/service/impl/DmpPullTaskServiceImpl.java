@@ -1020,7 +1020,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-        warnMsgInfo.setTitle(StrUtil.format("单据【{}】从{}推送至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
+        warnMsgInfo.setTitle(StrUtil.format("单据【{}】从{}拉取至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
         warnMsgInfo.setTableId(entity.getSourceId());
         warnMsgInfo.setKeyInfo(entity.getReturnMsg());
