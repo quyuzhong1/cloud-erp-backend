@@ -172,7 +172,6 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
     @Transactional(rollbackFor = Exception.class)
     public void checkOrderItem(List<DmpOrderItemEntity> orderItem, LocalDate platformCreateTime, String platformSign) {
         List<DmpOrderItemEntity> insertList = new ArrayList<>();
-        List<DmpOrderItemEntity> updateList = new ArrayList<>();
         for (DmpOrderItemEntity orderItemBean : orderItem) {
             if(StrUtil.isBlank(orderItemBean.getSkuNo())){
                 continue;
@@ -193,7 +192,9 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                     orderItemBean.setNewSign(0);
                 }
             }
-            DmpOrderItemEntity dmpOrderItemEntity = this.getByErpOrderItemId(orderItemBean.getErpOrderItemId());
+
+
+           /* DmpOrderItemEntity dmpOrderItemEntity = this.getByErpOrderItemId(orderItemBean.getErpOrderItemId());
             if (null != dmpOrderItemEntity) {
                 //如果数据有变动需要更新数据库订单商品信息
                 if (!dmpOrderItemEntity.toString().equals(orderItemBean.toString())) {
@@ -204,13 +205,17 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                 }
             } else {
                 insertList.add(orderItemBean);
-            }
+            }*/
+            insertList.add(orderItemBean);
         }
+
+        //删除原数据
+        List<String> orderIds = orderItem.stream().map(req -> req.getOrderId()).distinct().collect(Collectors.toList());
+        this.deleteByOrderIds(orderIds);
+
+        //新增新数据
         if (CollectionUtil.isNotEmpty(insertList)) {
             this.batchAdd(insertList, platformSign);
-        }
-        if(CollectionUtil.isNotEmpty(updateList)){
-            this.batchUpdate(updateList, platformSign);
         }
     }
 
@@ -449,6 +454,14 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         shareCost(itemListAll, splitSkuDTO.getAmountAfter());
 
         return itemListAll;
+    }
+
+    @Override
+    public Boolean deleteByOrderIds(List<String> orderIds) {
+        if (CollectionUtils.isEmpty(orderIds)) {
+            return Boolean.FALSE;
+        }
+        return lambdaUpdate().in(DmpOrderItemEntity::getOrderId, orderIds).remove();
     }
 
     /**

@@ -124,4 +124,10 @@ public interface DmpOrderItemService extends IService<DmpOrderItemEntity> {
      */
     List<SplitSkuDTO> splitSku(SplitSkuDTO splitSkuDTO, List<DmpBomEntity> machining, List<BomChildrenSkuDTO> allBomList);
 
+    /**
+     * 根据订单id删除订单详情
+     * @param orderIds
+     * @return
+     */
+    Boolean deleteByOrderIds(List<String> orderIds);
 }
