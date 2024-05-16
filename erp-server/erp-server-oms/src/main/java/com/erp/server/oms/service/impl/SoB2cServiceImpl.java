@@ -2266,6 +2266,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(entity.getDictPlatform())) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_MERCADO_NOT_MERGE, entity.getCode());
             }
+            //TikTok订单不支持合并
+            if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform())) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_TIKTOK_NOT_MERGE, entity.getCode());
+            }
         }
 
         //物流信息

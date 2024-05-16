@@ -1153,6 +1153,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_MERGE_TAX(92122,"B2C销售订单【{}】为速卖通已税订单不支持合并"),
     ERROR_SO_B2C_SHOPEE_NOT_MERGE(92123,"B2C销售订单【{}】为shopee订单不支持合并"),
     ERROR_SO_B2C_MERCADO_NOT_MERGE(92123,"B2C销售订单【{}】为mercado订单不支持合并"),
+    ERROR_SO_B2C_TIKTOK_NOT_MERGE(92124,"B2C销售订单【{}】为TikTok订单不支持合并"),
     ERROR_SO_B2C_PAYMENT_NOT_OPERATE(92125,"B2C销售订单【{}】未付款不支持任何操作"),
     ERROR_SO_B2C_EXCHANGERATE_NOT_SUBMIT(92126,"B2C销售订单【{}】汇率不存在不支持提交"),
     ERROR_SO_B2C_LOGISTICS_CANCEL_FAI(92114,"当前渠道无法取消物流单【{}】"),
