@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.dmp.dto.DmpOrderItemGroup;
 import com.erp.model.dmp.dto.SplitSkuDTO;
 import com.erp.model.dmp.entity.DmpBomEntity;
 import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
@@ -75,6 +76,14 @@ public interface DmpOrderItemSplitService extends IService<DmpOrderItemSplitEnti
      **/
     Boolean updateOrderItemByErpOrderItemId(DmpOrderItemSplitEntity dmpOrderItemSplitEntity);
 
+    /**
+     * 校验订单商品信息在中台是否存在，存在就修改不存在则新增
+     *
+     * @return void
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:25
+     **/
+    void checkOrderItem(List<DmpOrderItemSplitEntity> orderItem, LocalDate platformCreateTime, String platformSign);
 
     /**
      * 同步PLM的到货时间更新新老品
@@ -114,11 +123,6 @@ public interface DmpOrderItemSplitService extends IService<DmpOrderItemSplitEnti
      */
     List<SplitSkuDTO> splitSku(SplitSkuDTO splitSkuDTO, List<DmpBomEntity> machining, List<BomChildrenSkuDTO> allBomList);
 
-    /**
-     * 根据订单id删除订单详情
-     * @param orderIds
-     * @return
-     */
     Boolean deleteByOrderIds(List<String> orderIds);
 
 }

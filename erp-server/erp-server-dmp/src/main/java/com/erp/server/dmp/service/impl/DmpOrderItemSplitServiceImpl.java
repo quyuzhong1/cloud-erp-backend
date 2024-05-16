@@ -15,6 +15,7 @@ import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.dto.DmpOrderItemGroup;
 import com.erp.model.dmp.dto.SplitSkuDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -160,6 +161,69 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
         LambdaQueryWrapper<DmpOrderItemSplitEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(DmpOrderItemSplitEntity::getErpOrderItemId, dmpOrderItemSplitEntity.getErpOrderItemId());
         return this.update(dmpOrderItemSplitEntity, lambdaQueryWrapper);
+    }
+
+    /**
+     * 校验订单商品信息在中台是否存在，存在就修改不存在则新增
+     *
+     * @return void
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:25
+     **/
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void checkOrderItem(List<DmpOrderItemSplitEntity> orderItem, LocalDate platformCreateTime, String platformSign) {
+        List<DmpOrderItemSplitEntity> insertList = new ArrayList<>();
+        for (DmpOrderItemSplitEntity orderItemBean : orderItem) {
+            if(StrUtil.isBlank(orderItemBean.getSkuNo())){
+                continue;
+            }
+            Object skuListing = redisUtil.hget(RedisKeyConstant.SKU_LISTING_TIME, orderItemBean.getSkuNo());
+            if (ObjectUtil.isEmpty(skuListing)) {
+                Map<String, Object> resultMap = new HashMap<>();
+                resultMap.put("skuNo", orderItemBean.getSkuNo());
+                resultMap.put("listingTime", platformCreateTime);
+                mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.PRODUCT_LISTING_UPDATE_TAG.getName(), resultMap, orderItemBean.getId());
+            } else {
+                DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                LocalDate parse = LocalDate.parse(skuListing.toString(), dateTimeFormatter);
+                // 新品标识 1为新品 0 为非新品
+                if (platformCreateTime.getYear() == parse.getYear()) {
+                    orderItemBean.setNewSign(1);
+                } else {
+                    orderItemBean.setNewSign(0);
+                }
+            }
+
+
+           /* DmpOrderItemEntity dmpOrderItemEntity = this.getByErpOrderItemId(orderItemBean.getErpOrderItemId());
+            if (null != dmpOrderItemEntity) {
+                //如果数据有变动需要更新数据库订单商品信息
+                if (!dmpOrderItemEntity.toString().equals(orderItemBean.toString())) {
+                    orderItemBean.setId(dmpOrderItemEntity.getId());
+//                    updateById(orderItemBean);
+                    baseMapper.deleteById(dmpOrderItemEntity.getId());
+                    updateList.add(orderItemBean);
+                }
+            } else {
+                insertList.add(orderItemBean);
+            }*/
+            insertList.add(orderItemBean);
+        }
+
+        //删除原数据
+        List<String> orderIds = orderItem.stream().map(req -> req.getOrderId()).distinct().collect(Collectors.toList());
+        this.deleteByOrderIds(orderIds);
+
+        //新增新数据
+        if (CollectionUtil.isNotEmpty(insertList)) {
+            //拆分sku并保存
+            this.batchAdd(insertList, platformSign);
+
+            //保存未拆分数据
+            List<DmpOrderItemEntity> itemEntityList = BeanMapper.copyList(insertList, DmpOrderItemEntity.class);
+            dmpOrderItemService.batchAdd(itemEntityList, platformSign);
+        }
     }
 
     /**

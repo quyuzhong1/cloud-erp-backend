@@ -217,8 +217,8 @@ public interface DmpOrderConverter {
             @Mapping(target = "cnySettleRate", source = "detailViewDTO.exchangeRate"),
             @Mapping(target = "sourceItemId", source = "id")
     })
-    DmpOrderItemEntity soB2cToDmpOrderItem(SoB2cDetailDTO.ViewDTO detailViewDTO);
-    List<DmpOrderItemEntity> soB2cToDmpOrderItem(List<SoB2cDetailDTO.ViewDTO> viewDTO);
+    DmpOrderItemSplitEntity soB2cToDmpOrderItem(SoB2cDetailDTO.ViewDTO detailViewDTO);
+    List<DmpOrderItemSplitEntity> soB2cToDmpOrderItem(List<SoB2cDetailDTO.ViewDTO> viewDTO);
 
 
     @Mappings({

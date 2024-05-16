@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -197,13 +198,16 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         if (StrUtil.isBlank(orderInfoId)) {
             throw new RuntimeException("DmpOrderInfoServiceImpl>>>checkOrder>>>销售订单保存失败");
         }
-        List<DmpOrderItemEntity> itemList = orderInfoEntity.getItemList();
+        List<DmpOrderItemSplitEntity> itemList = orderInfoEntity.getItemList();
         if (CollectionUtil.isEmpty(itemList)) {
             return orderInfoId;
         }
         String orderId = orderInfoId;
         itemList.stream().peek(entity -> entity.setOrderId(orderId)).collect(Collectors.toList());
-        dmpOrderItemService.checkOrderItem(itemList, orderInfoEntity.getPlatformCreateTime().toLocalDate(), orderInfoEntity.getPlatformSign());
+
+        //保存未拆分数据
+        List<DmpOrderItemEntity> itemEntityList = BeanMapper.copyList(itemList, DmpOrderItemEntity.class);
+        dmpOrderItemService.checkOrderItem(itemEntityList, orderInfoEntity.getPlatformCreateTime().toLocalDate(), orderInfoEntity.getPlatformSign());
         return orderInfoId;
     }
 
