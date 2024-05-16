@@ -1912,7 +1912,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 if (Objects.nonNull(receiveQty) && receiveQty > 0) {
                     //查询收货单关联的SKU明细的下推的入库单的入库数量【单据已审核】
                     WarehouseReceiveDetailEntity detailEntity = null;
-                    Integer instockQty = baseMapper.getQty(poInstockEntity.getSourceId(),item.getSourceDetailId());
+                    Integer instockQty = baseMapper.getQty(poInstockEntity.getSourceId(),item.getId());
                     detailEntity= new WarehouseReceiveDetailEntity();
                     if (Objects.isNull(instockQty)||instockQty==0) {
                         detailEntity.setInStockStatus(InstockStatusEnum.NOT_IN_STOCK.getCode());
@@ -1924,35 +1924,14 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                             detailEntity.setInStockStatus(InstockStatusEnum.FULLY_IN_STOCK.getCode());
                         }
                     }
-                    detailEntity.setId(item.getSourceDetailId());
+                    detailEntity.setId(item.getId());
                     detailEntities.add(detailEntity);
                 }
             });
 
-//            Integer receiveQty = baseMapper.getReceiveQtyById(poInstockEntity.getSourceId());
-//            if (Objects.nonNull(receiveQty) && receiveQty > 0) {
-//                //查询收货单关联的SKU明细的下推的入库单的入库数量【单据已审核】
-//                WarehouseReceiveEntity viewDTO = null;
-//                Integer instockQty = baseMapper.getQty(poInstockEntity.getSourceId(),poInstockEntity.getsou);
-//                viewDTO= new WarehouseReceiveEntity();
-//                if (Objects.isNull(instockQty)||instockQty==0) {
-//                    viewDTO.setInStockStatus(InstockStatusEnum.NOT_IN_STOCK.getCode());
-//                }else{
-//                    if (instockQty<receiveQty){
-//                        viewDTO.setInStockStatus(InstockStatusEnum.PARTIALLY_IN_STOCK.getCode());
-//                    }
-//                    if (instockQty.equals(receiveQty)){
-//                        viewDTO.setInStockStatus(InstockStatusEnum.FULLY_IN_STOCK.getCode());
-//                    }
-//                }
-//                viewDTO.setId(poInstockEntity.getSourceId());
-//                detailEntities.add(viewDTO);
-//            }
         });
-        if (CollectionUtils.isNotEmpty(detailEntities)){
-//            detailEntities.forEach(view->{
-                warehouseReceiveDetailService.updateBatchById(detailEntities);
-//            });
+        if (CollectionUtils.isNotEmpty(detailEntities)) {
+            warehouseReceiveDetailService.updateBatchById(detailEntities);
         }
     }
 
