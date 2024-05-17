@@ -53,7 +53,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     private DmpShopInfoService dmpShopInfoService;
 
     @Resource
-    private DmpOrderItemService dmpOrderItemService;
+    private DmpOrderItemSplitService dmpOrderItemSplitService;
 
     @Resource
     private DmpShopChangeLogService dmpShopChangeLogService;
@@ -121,8 +121,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         if (CollectionUtils.isNotEmpty(list)) {
             //删除明细记录
             list.forEach(dmpOrderInfoEntity -> {
-                List<DmpOrderItemEntity> itemEntities = dmpOrderItemService.getByOrderId(dmpOrderInfoEntity.getId());
-                dmpOrderItemService.removeByIds(itemEntities.stream().map(DmpOrderItemEntity::getId).collect(Collectors.toList()));
+                List<DmpOrderItemSplitEntity> itemEntities = dmpOrderItemSplitService.getByOrderId(dmpOrderInfoEntity.getId());
+                dmpOrderItemSplitService.removeByIds(itemEntities.stream().map(DmpOrderItemSplitEntity::getId).collect(Collectors.toList()));
                 this.removeById(dmpOrderInfoEntity.getId());
             });
         }
@@ -139,8 +139,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         if (CollectionUtils.isNotEmpty(list)) {
             //删除明细记录
             list.forEach(dmpOrderInfoEntity -> {
-                List<DmpOrderItemEntity> itemEntities = dmpOrderItemService.getByOrderId(dmpOrderInfoEntity.getId());
-                dmpOrderItemService.removeByIds(itemEntities.stream().map(DmpOrderItemEntity::getId).collect(Collectors.toList()));
+                List<DmpOrderItemSplitEntity> itemEntities = dmpOrderItemSplitService.getByOrderId(dmpOrderInfoEntity.getId());
+                dmpOrderItemSplitService.removeByIds(itemEntities.stream().map(DmpOrderItemSplitEntity::getId).collect(Collectors.toList()));
                 this.removeById(dmpOrderInfoEntity.getId());
             });
         }
@@ -168,11 +168,11 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             // 删除已存在取消订单  和非销售订单
             if (isGyyPlatform && (skipOrderType || skipCancel)) {
                 removeById(dmpOrderInfoEntity.getId());
-                List<DmpOrderItemEntity> list = dmpOrderItemService.lambdaQuery()
-                        .eq(DmpOrderItemEntity::getOrderId, dmpOrderInfoEntity.getId())
+                List<DmpOrderItemSplitEntity> list = dmpOrderItemSplitService.lambdaQuery()
+                        .eq(DmpOrderItemSplitEntity::getOrderId, dmpOrderInfoEntity.getId())
                         .list();
                 if (CollectionUtil.isNotEmpty(list)) {
-                    dmpOrderItemService.removeByIds(list.stream().map(DmpOrderItemEntity::getId).collect(Collectors.toList()));
+                    dmpOrderItemSplitService.removeByIds(list.stream().map(DmpOrderItemSplitEntity::getId).collect(Collectors.toList()));
                 }
                 return orderInfoId;
             }
@@ -194,13 +194,13 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         if (StrUtil.isBlank(orderInfoId)) {
             throw new RuntimeException("DmpOrderInfoServiceImpl>>>checkOrder>>>销售订单保存失败");
         }
-        List<DmpOrderItemEntity> itemList = orderInfoEntity.getItemList();
+        List<DmpOrderItemSplitEntity> itemList = orderInfoEntity.getItemList();
         if (CollectionUtil.isEmpty(itemList)) {
             return orderInfoId;
         }
         String orderId = orderInfoId;
         itemList.stream().peek(entity -> entity.setOrderId(orderId)).collect(Collectors.toList());
-        dmpOrderItemService.checkOrderItem(itemList, orderInfoEntity.getPlatformCreateTime().toLocalDate(), orderInfoEntity.getPlatformSign());
+        dmpOrderItemSplitService.checkOrderItem(itemList, orderInfoEntity.getPlatformCreateTime().toLocalDate(), orderInfoEntity.getPlatformSign());
         return orderInfoId;
     }
 

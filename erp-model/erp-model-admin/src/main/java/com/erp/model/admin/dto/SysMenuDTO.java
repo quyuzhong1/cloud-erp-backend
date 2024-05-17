@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.util.List;
 
@@ -54,6 +55,7 @@ public class SysMenuDTO  implements Serializable {
     /**
      * 所属系统，/api/sys/dictBasic/list?type=menuSystem
      */
+    @NotBlank(message = "所属系统不能为空")
     private String system;
 
     private List<SysMenuDTO> childrenList;

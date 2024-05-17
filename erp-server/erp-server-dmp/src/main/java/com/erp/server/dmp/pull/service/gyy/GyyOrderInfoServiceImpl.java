@@ -20,7 +20,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
@@ -171,7 +171,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
      * @return
      */
     private List<GyyOrderEntity> pullDate(RequestDTO dto){
-        LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
+        LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime().minusMinutes(10);
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         return GyyApiUtils.querySalesList(dto.getPlatformApiEnum().getTaskName(), lastTime, nextTime, Boolean.FALSE);
     }
@@ -303,7 +303,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         //平台标识
         dmpOrderInfoEntity.setPlatformSign(PlatformEnum.GYY.getDesc());
         dmpOrderInfoEntity.setCreateTime(LocalDateTime.now());
-        List<DmpOrderItemEntity> dmpOrderItemEntities = initOrderItem(gyyOrderEntity, orderState);
+        List<DmpOrderItemSplitEntity> dmpOrderItemEntities = initOrderItem(gyyOrderEntity, orderState);
         if (CollectionUtil.isEmpty(dmpOrderItemEntities)){
             return null;
         }
@@ -325,69 +325,69 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
-    public List<DmpOrderItemEntity> initOrderItem(GyyOrderEntity gyyOrderEntity, Integer orderState) {
+    public List<DmpOrderItemSplitEntity> initOrderItem(GyyOrderEntity gyyOrderEntity, Integer orderState) {
         List<DetailsBean> orderItem = gyyOrderEntity.getDetails();
         String warehouseCode = gyyOrderEntity.getWarehouseCode();
-        List<DmpOrderItemEntity> orderItemList = new ArrayList<>();
+        List<DmpOrderItemSplitEntity> orderItemList = new ArrayList<>();
         Map<String, Integer> skuCountMap = new HashMap<>();
         for (DetailsBean detailsBean : orderItem) {
             if(StrUtil.isBlank(detailsBean.getItemCode())){
                 continue;
             }
-            DmpOrderItemEntity dmpOrderItemEntity = new DmpOrderItemEntity();
+            DmpOrderItemSplitEntity dmpOrderItemSplitEntity = new DmpOrderItemSplitEntity();
             //商品id
-            dmpOrderItemEntity.setItemId(detailsBean.getItemCode());
+            dmpOrderItemSplitEntity.setItemId(detailsBean.getItemCode());
             //平台sku
-            dmpOrderItemEntity.setPlatformSku(detailsBean.getSkuCode());
+            dmpOrderItemSplitEntity.setPlatformSku(detailsBean.getSkuCode());
             //平台原始sku数量
-            dmpOrderItemEntity.setPlatformQuantity(detailsBean.getDeliveringQty());
+            dmpOrderItemSplitEntity.setPlatformQuantity(detailsBean.getDeliveringQty());
             //商品名称
-            dmpOrderItemEntity.setItemName(detailsBean.getItemName());
-            dmpOrderItemEntity.setShippingFee(detailsBean.getPostFee());
+            dmpOrderItemSplitEntity.setItemName(detailsBean.getItemName());
+            dmpOrderItemSplitEntity.setShippingFee(detailsBean.getPostFee());
             //商品图片
-            dmpOrderItemEntity.setPictureUrl("");
+            dmpOrderItemSplitEntity.setPictureUrl("");
             //商品成本价
-            dmpOrderItemEntity.setCostPrice(detailsBean.getCostPrice());
+            dmpOrderItemSplitEntity.setCostPrice(detailsBean.getCostPrice());
             //商品原始售价
-            dmpOrderItemEntity.setSellPriceOrigin(detailsBean.getPrice());
+            dmpOrderItemSplitEntity.setSellPriceOrigin(detailsBean.getPrice());
             //商品售价
-            dmpOrderItemEntity.setSellPrice(detailsBean.getPrice());
+            dmpOrderItemSplitEntity.setSellPrice(detailsBean.getPrice());
             //商品数量
-            dmpOrderItemEntity.setQuantity(detailsBean.getQty());
+            dmpOrderItemSplitEntity.setQuantity(detailsBean.getQty());
             //商品单位
-            dmpOrderItemEntity.setProductUnit(detailsBean.getItemUnitName());
+            dmpOrderItemSplitEntity.setProductUnit(detailsBean.getItemUnitName());
             //是否是赠品 1. 是 2. 否
-            dmpOrderItemEntity.setIsGift(detailsBean.getIsGift() ? 1 : 2);
+            dmpOrderItemSplitEntity.setIsGift(detailsBean.getIsGift() ? 1 : 2);
             //缺货订单 0.正在计算是否缺货 1.有货 2.缺货 3.已补货
-            dmpOrderItemEntity.setHasGoods(0);
+            dmpOrderItemSplitEntity.setHasGoods(0);
             //是否是组合商品 1.组合 2非组合
-            dmpOrderItemEntity.setIsCombo(0);
+            dmpOrderItemSplitEntity.setIsCombo(0);
             //订单商品备注
-            dmpOrderItemEntity.setItemRemark(detailsBean.getSkuNote());
+            dmpOrderItemSplitEntity.setItemRemark(detailsBean.getSkuNote());
             //商品多属性
             if (StringUtils.isNotBlank(detailsBean.getPlatformSkuName())) {
-                dmpOrderItemEntity.setSpecifics(detailsBean.getPlatformSkuName());
+                dmpOrderItemSplitEntity.setSpecifics(detailsBean.getPlatformSkuName());
             }
             //商品状态 1：未付款 2：未发货 3：已发货 4：已作废
-            dmpOrderItemEntity.setStatus(String.valueOf(orderState));
+            dmpOrderItemSplitEntity.setStatus(String.valueOf(orderState));
             //商品仓位
-            dmpOrderItemEntity.setStockGrid("");
+            dmpOrderItemSplitEntity.setStockGrid("");
             //sku
-            dmpOrderItemEntity.setSkuNo(detailsBean.getItemCode());
+            dmpOrderItemSplitEntity.setSkuNo(detailsBean.getItemCode());
             //库存状态：1.自动创建 2.待开发 3.正常 4.清仓 5.停止销售
-            dmpOrderItemEntity.setStockStatus(0);
+            dmpOrderItemSplitEntity.setStockStatus(0);
             //商品仓库编号
-            dmpOrderItemEntity.setStockWarehouseId(warehouseCode);
+            dmpOrderItemSplitEntity.setStockWarehouseId(warehouseCode);
             //erp平台商品id
             String erpOrderItemId = gyyOrderEntity.getCode() + "_" + detailsBean.getItemCode();
             String skuNo = detailsBean.getItemCode();
             erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap, skuNo, erpOrderItemId);
-            dmpOrderItemEntity.setErpOrderItemId(erpOrderItemId);
+            dmpOrderItemSplitEntity.setErpOrderItemId(erpOrderItemId);
             //汇率
-            dmpOrderItemEntity.setCurrencyRate(BigDecimal.ONE);
+            dmpOrderItemSplitEntity.setCurrencyRate(BigDecimal.ONE);
             //折扣后金额
-            dmpOrderItemEntity.setAmountAfter(detailsBean.getAmountAfter().add(detailsBean.getPostFee()));
-            orderItemList.add(dmpOrderItemEntity);
+            dmpOrderItemSplitEntity.setAmountAfter(detailsBean.getAmountAfter().add(detailsBean.getPostFee()));
+            orderItemList.add(dmpOrderItemSplitEntity);
         }
         return orderItemList;
     }

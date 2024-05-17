@@ -3,27 +3,26 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.DmpDateDimensionDTO;
 import com.erp.model.dmp.entity.DmpDateDimensionEntity;
 import com.erp.server.dmp.mapper.DmpDateDimensionMapper;
 import com.erp.server.dmp.service.DmpDateDimensionService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.dmp.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.dmp.dto.DmpDateDimensionDTO;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 /**
  * <p>
  * 时间维度表 服务实现类
@@ -37,8 +36,6 @@ import com.common.core.enums.ApiError;
 public class DmpDateDimensionServiceImpl extends SuperServiceImpl<DmpDateDimensionMapper, DmpDateDimensionEntity> implements DmpDateDimensionService {
 //    @Autowired
 //    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -57,7 +54,7 @@ public class DmpDateDimensionServiceImpl extends SuperServiceImpl<DmpDateDimensi
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "时间维度单" , dmpDateDimensionEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "时间维度单" , dmpDateDimensionEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
 //        operateLogService.addModuleOperateLog(msg, null, dmpDateDimensionEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -86,7 +83,7 @@ public class DmpDateDimensionServiceImpl extends SuperServiceImpl<DmpDateDimensi
 
         // 记录主单操作日志
             log.info("编辑 开始记录时间维度单日志数据，id：【{}】", dmpDateDimensionEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), dmpDateDimensionEntity.getId(), "时间维度单");
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpDateDimensionEntity.getId(), "时间维度单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
 //        operateLogService.addModuleOperateLogByObj(old, dmpDateDimensionEntity, null, dmpDateDimensionEntity.getId(), msg);
         return Boolean.TRUE;
@@ -108,23 +105,15 @@ public class DmpDateDimensionServiceImpl extends SuperServiceImpl<DmpDateDimensi
     @Override
     public void batchInsertDateDimensions(List<LocalDateTime> dateTimes) {
         List<DmpDateDimensionEntity> list = new ArrayList<>();
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        String uid = "";
-        String userName = "";
-        if (ObjectUtils.isNotEmpty(loginUser)) {
-            uid = loginUser.getUid();
-            userName = loginUser.getUserName();
-        }
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
 
-        String finalUid = uid;
-        String finalUserName = userName;
         dateTimes.forEach(localDateTime -> {
             DmpDateDimensionEntity entity = new DmpDateDimensionEntity();
             entity.setDateTime(localDateTime);
             entity.setId(IdWorker.getIdStr());
             entity.setCreateTime(LocalDateTime.now());
-            entity.setCreateUserId(finalUid);
-            entity.setCreateUserName(finalUserName);
+            entity.setCreateUserId(loginUser.getUid());
+            entity.setCreateUserName(loginUser.getUserName());
             list.add(entity);
         });
         baseMapper.batchInsertDateDimensions(list);

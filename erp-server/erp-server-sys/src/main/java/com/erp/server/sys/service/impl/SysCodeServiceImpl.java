@@ -1,6 +1,5 @@
 package com.erp.server.sys.service.impl;
 
-import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -14,10 +13,7 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysCodeSkuDTO;
 import com.erp.model.sys.entity.SysCodeEntity;
 import com.erp.server.sys.mapper.SysCodeMapper;
-import com.erp.server.sys.service.CommonService;
 import com.erp.server.sys.service.SysCodeService;
-import io.seata.core.context.RootContext;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -25,8 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -42,10 +36,6 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
 
     @Autowired
     private RedissonClient redisson;
-
-    @Autowired
-    private CommonService commonService;
-
 
     @Override
     @Transactional(rollbackFor = Exception.class)

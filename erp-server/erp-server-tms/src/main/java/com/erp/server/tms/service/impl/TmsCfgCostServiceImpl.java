@@ -47,10 +47,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, TmsCfgCostEntity> implements TmsCfgCostService {
-    @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @Autowired
     private DictBasicService dictBasicService;

@@ -3,11 +3,11 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.erp.model.plm.dto.TaskFollowerDTO;
 import com.erp.model.plm.entity.TaskFollowerEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.mapper.TaskFollowerMapper;
-import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.TaskFollowerService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -31,9 +31,6 @@ import java.util.stream.Collectors;
 public class TaskFollowerServiceImpl extends SuperServiceImpl<TaskFollowerMapper, TaskFollowerEntity> implements TaskFollowerService {
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private SysUserFeign sysUserFeign;
 
     /**
@@ -47,7 +44,7 @@ public class TaskFollowerServiceImpl extends SuperServiceImpl<TaskFollowerMapper
     @Override
     public TaskFollowerDTO.InfoDTO getFollowerByTaskId(String taskId) {
         TaskFollowerDTO.InfoDTO result = new TaskFollowerDTO.InfoDTO();
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         TaskFollowerEntity taskConcern = this.getByTaskIdAndUserId(userId, taskId);
         if (taskConcern != null) {
             result.setIsConcern(Boolean.TRUE);
@@ -72,7 +69,7 @@ public class TaskFollowerServiceImpl extends SuperServiceImpl<TaskFollowerMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean followerTask(TaskFollowerDTO.FollowerDTO dto) {
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         TaskFollowerEntity taskConcern = new TaskFollowerEntity();
         taskConcern.setTaskId(dto.getTaskId());
         taskConcern.setUserId(userId);
@@ -88,7 +85,7 @@ public class TaskFollowerServiceImpl extends SuperServiceImpl<TaskFollowerMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean cancelFollower(TaskFollowerDTO.FollowerDTO dto) {
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         String taskId = dto.getTaskId();
         TaskFollowerEntity taskConcern = this.getByTaskIdAndUserId(userId, taskId);
         if (taskConcern != null) {

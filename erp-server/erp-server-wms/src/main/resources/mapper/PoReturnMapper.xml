@@ -183,6 +183,30 @@
             ${params.permissionSql}
         </if>
     </select>
+
+    <select id="pdaListCount" resultType="java.lang.Integer">
+        select
+        count(distinct pro.id)
+        FROM po_return_detail prod
+        LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
+        WHERE pro.is_deleted = FALSE
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and pro.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.invalidStatus != null ">
+            and pro.invalid_status = #{params.invalidStatus}
+        </if>
+        <if test="params.billDateList != null and params.billDateList.size > 0">AND
+            pro.bill_date >= #{params.billDateList[0]} AND (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pro.bill_date
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
     <select id="getReturnInfo" resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$SupplierReturnDTO">
         select pr.supplier_id,count(distinct pr.id) as qc_return_count,sum(prd.return_qty) as qc_return_qty
         from po_return pr

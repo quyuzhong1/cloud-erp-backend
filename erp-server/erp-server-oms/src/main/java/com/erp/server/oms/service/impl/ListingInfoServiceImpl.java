@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -25,7 +26,6 @@ import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.oms.mapper.ListingInfoMapper;
-import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SkuMappingService;
@@ -67,8 +67,6 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     private ListingInfoServiceImpl service;
     @Resource
     private OperateLogService operateLogService;
-    @Resource
-    private CommonService commonService;
     /**
      * 添加库存sku
      *
@@ -163,7 +161,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 throw new ServiceException("[SkuMapping] 首次映射修改失败");
             }
             // 记录日志
-            operateLogService.addModuleOperateLogByObj(skuMapping, skuMapping, ModuleTypeEnum.LISTING_INFO.getCode(), skuMapping.getListingId(), StrUtil.format("用户【{}】首次映射sku",commonService.getUserInfo().getUserName()));
+            operateLogService.addModuleOperateLogByObj(skuMapping, skuMapping, ModuleTypeEnum.LISTING_INFO.getCode(), skuMapping.getListingId(), StrUtil.format("用户【{}】首次映射sku", UserContext.getDefaultLoginUser().getUserName()));
         } else {
             LocalDateTime now = LocalDateTime.now();
             skuMapping.setExpireTime(now);
@@ -190,7 +188,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
             skuMappingService.save(skuMappingEntity);
             // 记录日志
-            operateLogService.addModuleOperateLogByObj(skuMapping, skuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntity.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",commonService.getUserInfo().getUserName()));
+            operateLogService.addModuleOperateLogByObj(skuMapping, skuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntity.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName()));
 
         }
 
@@ -302,7 +300,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
         skuMappingService.save(skuMappingEntity);
 
-        operateLogService.addModuleOperateLogByObj(skuMapping, skuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMapping.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",commonService.getUserInfo().getUserName()));
+        operateLogService.addModuleOperateLogByObj(skuMapping, skuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMapping.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName()));
 
         return lambdaUpdate()
                 .set(ListingInfoEntity::getMatchResult, Boolean.TRUE)
@@ -331,10 +329,10 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             skuMappingService.saveBatch(addSkuMappingList);
         }
         if (CollectionUtils.isNotEmpty(addLogPairList)) {
-            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】新增了sku映射表",commonService.getUserInfo().getUserName())+"id为【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), addLogPairList,"新增操作");
+            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】新增了sku映射表",UserContext.getDefaultLoginUser().getUserName())+"id为【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), addLogPairList,"新增操作");
         }
         if (CollectionUtils.isNotEmpty(updateLogPairList)) {
-            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】编辑sku映射表",commonService.getUserInfo().getUserName())+"，【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), updateLogPairList,"编辑操作");
+            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName())+"，【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), updateLogPairList,"编辑操作");
         }
     }
 

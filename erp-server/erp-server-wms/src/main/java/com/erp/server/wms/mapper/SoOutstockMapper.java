@@ -16,6 +16,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -64,6 +65,9 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
     Integer listCount(@Param("params") SoOutstockDTO.PagingParamDTO params);
 
 
+    Integer pdaListCount(@Param("params") SoOutstockDTO.PagingParamDTO params);
+
+
     /**
      * 临时接口批量更新
      * @param soOutstockList
@@ -85,7 +89,7 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
      * @param params
      * @return
      */
-    List<WmsDataCompareTaskDTO.SoOutstockDTO> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.SoOutstockDTO params , @Param("pageSize") Integer pageSize);
+    List<Map<String, String>> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.SoOutstockDTO params);
 
     Integer getDataCompareByConditionCount(@Param("params") WmsDataCompareTaskDTO.SoOutstockDTO params);
 

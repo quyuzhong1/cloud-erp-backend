@@ -130,6 +130,31 @@ public class SoB2cDetailDTO implements Serializable {
         */
        private DetailLabelDTO detailLabelDTO;
 
+
+        /**
+         * 目的国申报价
+         */
+        private BigDecimal toDeclarePrice;
+
+        /**
+         * 目的国申报币种
+         */
+        private String toCurrency;
+
+        /**
+         * 目的国申报币种符号
+         */
+        private String toCurrencySymbol;
+
+        /**
+         * 申报标签(正常申报normal，高申报high，低申报low)
+         */
+        private String declareLabel;
+        /**
+         * 申报标签名称
+         */
+        private String declareLabelName;
+
     }
 
     @Data

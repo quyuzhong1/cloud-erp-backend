@@ -413,8 +413,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
 
     List<SoOutstockEntity> listByAdvanceQuery(AdvanceQueryContainer container);
 
+
     /**
      * 检查和生成销售出库单
+     *
+     * @param generateB2cDTO 根据销售订单生成的销售出库单DTO != 平台的销售出库单
+     * @param dto 平台销售出库单信息
+     * @param soB2cEntity B2C 销售订单
      *
      * @author Jim
      * @date 2024-03-07
@@ -506,4 +511,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return Boolean
      */
     Boolean afreshGenerateB2cOutstock(List<String> ids);
+
+    void updateRemarkBySoId(String id,String remark);
 }

@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -16,15 +18,14 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
-import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.plm.enums.DistributionTypeEnum;
 import com.erp.model.plm.enums.RelatedSkuTypeEnum;
 import com.erp.model.plm.enums.TaskTypeEnum;
 import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.model.plm.vo.SysTaskVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
+import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectTaskSysMapper;
 import com.erp.server.plm.service.*;
@@ -76,18 +77,13 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     @Autowired
     private SysUserFeign sysUserFeign;
 
-    @Autowired
-    private TemplateMembersService templateMembersService;
-
-    @Autowired
-    private ProjectTemplateService projectTemplateService;
 
     @Override
     @Transactional
     public Boolean saveOrUpdateSysTask(SysTaskDTO dto) {
         checkTaskName(dto.getId(), dto.getName(), dto.getTemplateId());
         //当前登录人
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         ProjectTaskSysEntity entity = new ProjectTaskSysEntity();
         //获取到任务阶段
         SysTaskPhaseEntity phaseEntity = sysTaskPhaseService.getById(dto.getPhaseId());

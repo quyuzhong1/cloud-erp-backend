@@ -1,9 +1,5 @@
 package com.erp.server.tms.service;
 
-import com.common.business.vo.LoginUser;
-
-import java.util.List;
-
 /**
  * @author Lambda
  * @Classname CommonService
@@ -12,15 +8,6 @@ import java.util.List;
  * @Created by yl
  */
 public interface CommonService {
-
-    /**
-     * 获取用户信息
-     * @author yl
-     * @date 2023-03-15 11:58
-     * @param
-     * @return com.common.business.vo.LoginUser
-     */
-    public LoginUser getUserInfo();
 
 
 }

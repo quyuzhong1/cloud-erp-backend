@@ -9,39 +9,41 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.mapper.LogisticsAddressMapper;
 import com.erp.server.tms.service.LogisticsAddressService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.LogisticsAddressDTO;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -56,9 +58,6 @@ import javax.servlet.http.HttpServletResponse;
 public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddressMapper, LogisticsAddressEntity> implements LogisticsAddressService {
     @Autowired
     private OperateLogService operateLogService;
-
-    @Autowired
-    private CommonService commonService;
 
 
     @Autowired
@@ -85,7 +84,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】", commonService.getUserInfo().getUserName(), "物流地址");
+        String msg = StrUtil.format("用户【{}】新增【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流地址");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, logisticsAddressEntity.getId(), "新增操作");
 
@@ -112,7 +111,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         }
         // 记录主单操作日志
         log.info("编辑 开始记录物流地址单日志数据，id：【{}】", logisticsAddressEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsAddressEntity.getId(), "物流地址单");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsAddressEntity.getId(), "物流地址单");
         operateLogService.addModuleOperateLogByObj(old, logisticsAddressEntity, null, logisticsAddressEntity.getId(), msg);
         return Boolean.TRUE;
     }

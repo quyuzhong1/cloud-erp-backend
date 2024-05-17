@@ -7,14 +7,14 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.dto.base.PagingDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.dto.TemplateRoleDTO;
 import com.erp.model.plm.dto.TemplateRoleShowDTO;
@@ -152,7 +152,7 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
         checkRoleName(dto.getName(), dto.getTemplateId());
         TemplateRoleEntity entity = new TemplateRoleEntity();
         BeanMapperUtils.copy(dto, entity);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }

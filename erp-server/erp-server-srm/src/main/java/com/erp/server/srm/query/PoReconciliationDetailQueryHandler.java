@@ -25,8 +25,6 @@ public class PoReconciliationDetailQueryHandler extends AbstractQueryHandler {
     @Resource
     private PoReconciliationService poReconciliationService;
 
-    @Resource
-    private CommonService commonService;
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {

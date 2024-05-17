@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
@@ -58,8 +59,6 @@ import java.util.stream.Collectors;
 public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliveryWarehouseMapper, RuleDeliveryWarehouseEntity> implements RuleDeliveryWarehouseService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @Autowired
     private WmsTaskFeign wmsTaskFeign;
@@ -93,7 +92,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         String expression = expressionDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
         }
         RuleDeliveryWarehouseEntity ruleDeliveryWarehouseEntity = new RuleDeliveryWarehouseEntity();
         BeanMapperUtils.copy(addDTO, ruleDeliveryWarehouseEntity);
@@ -107,7 +106,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         //保存规则条件
         ruleConditionService.saveRuleCondition(id, conditionList);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "发货仓库规则单", ruleDeliveryWarehouseEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货仓库规则单", ruleDeliveryWarehouseEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.RULE_DELIVERY_WAREHOUSE.getCode(), ruleDeliveryWarehouseEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
         return ruleDeliveryWarehouseEntity.getId();
@@ -131,7 +130,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
         }
 
         RuleDeliveryWarehouseEntity ruleDeliveryWarehouseEntity = BeanMapperUtils.map(RuleDeliveryWarehouseEntity.class, updateDTO);
@@ -143,7 +142,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         }
         ruleConditionService.updateRuleCondition(id, conditionList);
         // 记录主单操作日志
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), ruleDeliveryWarehouseEntity.getId(), "发货仓库规则单");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), ruleDeliveryWarehouseEntity.getId(), "发货仓库规则单");
         operateLogService.addModuleOperateLogByObj(old, ruleDeliveryWarehouseEntity, ModuleTypeEnum.RULE_DELIVERY_WAREHOUSE.getCode(), ruleDeliveryWarehouseEntity.getId(), msg);
         return Boolean.TRUE;
     }

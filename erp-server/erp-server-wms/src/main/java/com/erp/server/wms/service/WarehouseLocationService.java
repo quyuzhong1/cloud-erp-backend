@@ -137,4 +137,12 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @param warehouseAreaCode
      */
     WarehouseLocationEntity findArea(String warehouseId, String warehouseAreaCode);
+    /**
+     * @description: 仓位远程查询（分页型）
+     * @author Will
+     * @date: 2024/5/16 15:18
+     * @param dto
+     * @return PagingVO<LocationListDTO>
+     */
+    PagingVO<WarehouseLocationDTO.LocationListDTO> pagingSelect(PagingDTO<WarehouseLocationDTO.SelectDTO> dto);
 }

@@ -138,7 +138,14 @@ public class LogisticsTrackDTO implements Serializable {
         @NotBlank(message = "运单号不能为空")
         @Size(max = 30,message = "运单号最大长度不能超过30位")
         private String trackNo;
-
+        /**
+         * 船司/航司
+         */
+        private String carrierId;
+        /**
+         * 船司/航司编码
+         */
+        private String carrierCode;
     }
 
     @Data

@@ -24,7 +24,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
 import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -212,7 +212,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         // 移除 订单类型过滤
 //            queryFilters.add(String.format("fBillTypeID = '%s'", "eacb50844fc84a10b03d7b841f3a6278"));
         queryFilters.add(StrUtil.format("FDocumentStatus = '{}'", "C"));
-        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(5)),sdf.format(nextTime)));
+        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(8)),sdf.format(nextTime)));
         String filterStr = String.join(" and ",  queryFilters );
 
         String fieldKeys = "FID,FBillNo,FDate,FBillTypeId.FName,FBillTypeId.FNumber,FBillTypeId," +
@@ -399,82 +399,82 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
     /**
      * 解析订单商品数据
      **/
-    public List<DmpOrderItemEntity> initOrderItem(KingdeeOrderEntity kingdeeOrderEntity) {
+    public List<DmpOrderItemSplitEntity> initOrderItem(KingdeeOrderEntity kingdeeOrderEntity) {
         List<KingdeeOrderItemEntity> orderItem = kingdeeOrderEntity.getOrderItemEntityList();
-        List<DmpOrderItemEntity> orderItemList = new ArrayList<>();
+        List<DmpOrderItemSplitEntity> orderItemList = new ArrayList<>();
         HashMap<String, Integer> skuCountMap = new HashMap<>();
         for (KingdeeOrderItemEntity orderItemBean : orderItem) {
-            DmpOrderItemEntity dmpOrderItemEntity = new DmpOrderItemEntity();
+            DmpOrderItemSplitEntity dmpOrderItemSplitEntity = new DmpOrderItemSplitEntity();
             //商品id
-            dmpOrderItemEntity.setItemId(orderItemBean.getFMaterialId());
+            dmpOrderItemSplitEntity.setItemId(orderItemBean.getFMaterialId());
             //平台sku
-            dmpOrderItemEntity.setPlatformSku(orderItemBean.getFMaterialName());
+            dmpOrderItemSplitEntity.setPlatformSku(orderItemBean.getFMaterialName());
             //平台原始sku数量
-            dmpOrderItemEntity.setPlatformQuantity(orderItemBean.getFOldQty());
+            dmpOrderItemSplitEntity.setPlatformQuantity(orderItemBean.getFOldQty());
             //商品名称
-            dmpOrderItemEntity.setItemName(orderItemBean.getFMaterialName());
+            dmpOrderItemSplitEntity.setItemName(orderItemBean.getFMaterialName());
             //商品图片
-            dmpOrderItemEntity.setPictureUrl("");
+            dmpOrderItemSplitEntity.setPictureUrl("");
             //商品成本价
-            dmpOrderItemEntity.setCostPrice(orderItemBean.getF_ulz_CGCB());
+            dmpOrderItemSplitEntity.setCostPrice(orderItemBean.getF_ulz_CGCB());
             //汇率
             if (null == kingdeeOrderEntity.getFExchangeRate()
                     || BigDecimal.ZERO.compareTo(kingdeeOrderEntity.getFExchangeRate()) >= 0) {
-                dmpOrderItemEntity.setCurrencyRate(BigDecimal.ONE);
+                dmpOrderItemSplitEntity.setCurrencyRate(BigDecimal.ONE);
             } else {
-                dmpOrderItemEntity.setCurrencyRate(kingdeeOrderEntity.getFExchangeRate());
+                dmpOrderItemSplitEntity.setCurrencyRate(kingdeeOrderEntity.getFExchangeRate());
             }
             //商品原始售价
-            dmpOrderItemEntity.setSellPriceOrigin(orderItemBean.getFPrice());
+            dmpOrderItemSplitEntity.setSellPriceOrigin(orderItemBean.getFPrice());
             //商品售价
-            dmpOrderItemEntity.setSellPrice(orderItemBean.getFPrice().multiply(dmpOrderItemEntity.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN));
+            dmpOrderItemSplitEntity.setSellPrice(orderItemBean.getFPrice().multiply(dmpOrderItemSplitEntity.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN));
             //商品数量
-            dmpOrderItemEntity.setQuantity(orderItemBean.getFQty().intValue());
+            dmpOrderItemSplitEntity.setQuantity(orderItemBean.getFQty().intValue());
             //商品单位
-            dmpOrderItemEntity.setProductUnit("");
+            dmpOrderItemSplitEntity.setProductUnit("");
             //是否是赠品 1. 是 2. 否
             if (Boolean.valueOf(orderItemBean.getFIsFree())) {
-                dmpOrderItemEntity.setIsGift(1);
+                dmpOrderItemSplitEntity.setIsGift(1);
             } else {
-                dmpOrderItemEntity.setIsGift(2);
+                dmpOrderItemSplitEntity.setIsGift(2);
             }
             //缺货订单 0.正在计算是否缺货 1.有货 2.缺货 3.已补货
-            dmpOrderItemEntity.setHasGoods(0);
+            dmpOrderItemSplitEntity.setHasGoods(0);
             //是否是组合商品 1.组合 2非组合
-            dmpOrderItemEntity.setIsCombo(0);
+            dmpOrderItemSplitEntity.setIsCombo(0);
             //订单商品备注
-            dmpOrderItemEntity.setItemRemark(orderItemBean.getFEntryNote());
+            dmpOrderItemSplitEntity.setItemRemark(orderItemBean.getFEntryNote());
             //商品多属性
-            dmpOrderItemEntity.setSpecifics("");
+            dmpOrderItemSplitEntity.setSpecifics("");
             //商品状态 1：未付款 2：未发货 3：已发货 4：已作废
             switch (orderItemBean.getFDeliveryStatus()) {
                 case "C":
-                    dmpOrderItemEntity.setStatus(String.valueOf(3));
+                    dmpOrderItemSplitEntity.setStatus(String.valueOf(3));
                     break;
                 case "B":
-                    dmpOrderItemEntity.setStatus(String.valueOf(2));
+                    dmpOrderItemSplitEntity.setStatus(String.valueOf(2));
                 case "A":
-                    dmpOrderItemEntity.setStatus(String.valueOf(2));
+                    dmpOrderItemSplitEntity.setStatus(String.valueOf(2));
                     break;
                 default:
-                    dmpOrderItemEntity.setStatus(String.valueOf(2));
+                    dmpOrderItemSplitEntity.setStatus(String.valueOf(2));
                     break;
             }
             //商品仓库编号
-            dmpOrderItemEntity.setStockWarehouseId(orderItemBean.getFSOStockId());
+            dmpOrderItemSplitEntity.setStockWarehouseId(orderItemBean.getFSOStockId());
             //商品仓位
-            dmpOrderItemEntity.setStockGrid("");
+            dmpOrderItemSplitEntity.setStockGrid("");
             //sku
             String skuNo = orderItemBean.getFMaterialNumber();
-            dmpOrderItemEntity.setSkuNo(skuNo);
+            dmpOrderItemSplitEntity.setSkuNo(skuNo);
             //库存状态：1.自动创建 2.待开发 3.正常 4.清仓 5.停止销售
-            dmpOrderItemEntity.setStockStatus(0);
+            dmpOrderItemSplitEntity.setStockStatus(0);
             String erpOrderItemId = orderItemBean.getFBillNo() + "_" + orderItemBean.getFMaterialNumber();
             erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap, skuNo, erpOrderItemId);
             //erp平台商品id
-            dmpOrderItemEntity.setErpOrderItemId(erpOrderItemId);
-            dmpOrderItemEntity.setAmountAfter(orderItemBean.getFAllAmount());
-            orderItemList.add(dmpOrderItemEntity);
+            dmpOrderItemSplitEntity.setErpOrderItemId(erpOrderItemId);
+            dmpOrderItemSplitEntity.setAmountAfter(orderItemBean.getFAllAmount());
+            orderItemList.add(dmpOrderItemSplitEntity);
         }
         return orderItemList;
     }

@@ -6,6 +6,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -53,9 +54,6 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
     private InventoryTransCoreService inventoryTransCoreService;
 
     @Autowired
-    private CommonService commonService;
-
-    @Autowired
     private InstockForcastMapper instockForcastMapper;
 
     @Autowired
@@ -88,7 +86,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         // String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.RKYB, BusinessNoTypeEnum.CODE_RKYB.getCode()));
         String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_RKYB);
         // feign调用取不到登录人信息，已解决
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         instockForcastEntity.setCreateUserId(loginUser.getUid());
         instockForcastEntity.setCreateUserName(loginUser.getUserName());
         instockForcastEntity.setUpdateUserId(loginUser.getUid());
