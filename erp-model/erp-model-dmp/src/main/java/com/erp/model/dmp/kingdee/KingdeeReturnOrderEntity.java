@@ -12,7 +12,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
 @ToString
 public class KingdeeReturnOrderEntity extends CleanBaseDTO {
 
