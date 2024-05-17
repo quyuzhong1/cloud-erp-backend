@@ -167,19 +167,6 @@ public class SysUserFeignController extends BaseController {
     public void updateSysUserTime(@RequestBody List<String> userIdList) {
       sysUserInfoService.updateSysUserTime(userIdList);
     }
-
-    /**
-     * 查询左菜单栏
-     *
-     * @param roleIds
-     * @return
-     */
-    @PostMapping("/findLeftMenuByRoleIds")
-    public List<SysMenuVO> findLeftMenuByRoleIds(@RequestBody List<String> roleIds) {
-        return sysRoleMenuService.findLeftMenuByRoleIds(roleIds);
-    }
-
-
     /**
      * 根据第三方绑定的关系 获取用户信息
      *
@@ -550,5 +537,16 @@ public class SysUserFeignController extends BaseController {
     @GetMapping("/getUserDatePermissionSql")
     public String getUserDatePermissionSql(@RequestParam("tableField") String tableField, @RequestParam("menuCode") String menuCode) {
         return userDatePermissionService.getUserDatePermissionSql(tableField, menuCode);
+    }
+    /**
+     * 根据菜单cdoe查询用户数据权限
+     * @author hyj
+     * @date 2024/5/9 10:43
+     * @param menuCode 菜单编号
+     * @return Boolean 是否有权限
+     **/
+    @GetMapping("/getUserDatePermissionByMenuCode")
+    public Boolean getUserDatePermissionByMenuCode(@RequestParam("menuCode") String menuCode) {
+        return userDatePermissionService.getUserDatePermissionByMenuCode( menuCode);
     }
 }

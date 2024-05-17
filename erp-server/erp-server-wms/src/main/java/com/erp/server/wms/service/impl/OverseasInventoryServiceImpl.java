@@ -7,36 +7,43 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.OverseasInventoryDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.excel.ExportOverseasInventoryExcelDTO;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.OverseasInventoryMapper;
-import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
+import com.erp.server.wms.service.CommonService;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.OverseasInventoryService;
+import com.erp.server.wms.service.OverseasProviderService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.OverseasInventoryDTO;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -51,8 +58,6 @@ import javax.servlet.http.HttpServletResponse;
 public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInventoryMapper, OverseasInventoryEntity> implements OverseasInventoryService {
     @Resource
     private OperateLogService operateLogService;
-    @Resource
-    private CommonService commonService;
     @Resource
     private PlmTaskFeign plmTaskFeign;
     @Resource
@@ -77,7 +82,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "海外仓库存" , overseasInventoryEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "海外仓库存" , overseasInventoryEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, overseasInventoryEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -106,7 +111,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
 
         // 记录主单操作日志
             log.info("编辑 开始记录海外仓库存日志数据，id：【{}】", overseasInventoryEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), overseasInventoryEntity.getId(), "海外仓库存");
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), overseasInventoryEntity.getId(), "海外仓库存");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, overseasInventoryEntity, null, overseasInventoryEntity.getId(), msg);
         return Boolean.TRUE;

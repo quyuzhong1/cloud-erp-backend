@@ -3,12 +3,12 @@ package com.erp.server.bi.service.impl;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.LayoutBlockEnum;
 import com.erp.server.bi.mapper.BiLayoutMapper;
 import com.erp.server.bi.service.*;
@@ -41,9 +41,6 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
     @Resource
     private BiSubjectRefLayoutService subjectRefLayoutService;
 
-    @Resource
-    private CommonService commonService;
-
 
     @Resource
     private BiSubjectService subjectService;
@@ -75,7 +72,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
     @Override
     @Transactional
     public Boolean addSubjectLayout(SubjectLayoutDTO dto) {
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
 
         String subjectId = dto.getSubjectId();
         String name = dto.getName();
@@ -135,7 +132,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
      */
     @Override
     public SubjectLayoutDetailsDTO subjectInfo(String subjectId) {
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         log.info("subjectId={}", subjectId);
         BiSubjectEntity subject = subjectService.getById(subjectId);
         if (Objects.isNull(subject)) {
@@ -181,7 +178,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
     @Override
     @Transactional
     public String updateSubjectLayout(SubjectLayoutDetailsDTO dto) {
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         String subjectId = dto.getSubjectId();
         String name = dto.getName();
         BiSubjectEntity subject = subjectService.getById(subjectId);

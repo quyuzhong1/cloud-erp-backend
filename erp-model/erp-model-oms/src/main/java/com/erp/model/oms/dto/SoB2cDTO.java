@@ -3,10 +3,7 @@ package com.erp.model.oms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cFinanceEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import lombok.AllArgsConstructor;
@@ -399,6 +396,15 @@ public class SoB2cDTO implements Serializable {
          * b2c销售订单明细信息
          */
         private List<SoB2cDetailDTO.ListDTO> detailList;
+        /**
+         * 运输状态
+         */
+        private String  trackStatus;
+
+        /**
+         * 运输状态
+         */
+        private String  trackStatusName;
     }
 
     @Data
@@ -576,6 +582,10 @@ public class SoB2cDTO implements Serializable {
         @NotNull(message = "明细信息不能为空")
         @Valid
         private List<SoB2cDetailDTO.ViewDTO> detailList;
+        /**
+         * 申报信息
+         */
+        private List<SoB2cDeclareProductDTO.ViewDTO> declareProductList;
     }
 
     /**
@@ -1899,6 +1909,12 @@ public class SoB2cDTO implements Serializable {
          * 国家名
          */
         private String countryName;
+
+        /**
+         * 是否平台订单
+         */
+        private Boolean hasPlatformWarehouseOrder;
+
     }
 
     /**

@@ -159,6 +159,16 @@ public class AmazonShipOrder implements IPlatformService {
             AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
             OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
 
+            //平台已发货 跳过
+            try {
+                GetOrderResponse response = api.getOrder(mainEntity.getPlatformCode());
+                if(Objects.nonNull(response.getPayload()) && "shipped".equals(response.getPayload().convertBillStatus())){
+                    continue;
+                }
+            } catch (Exception e) {
+                log.warn("查询亚马逊订单【{}】信息响应结果: error={}", mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
+                throw new ServiceException("查询亚马逊订单最新信息失败:" + e.getMessage());
+            }
             //取消则需要自动发起订单拦截
             PlatformDeliveryInterceptDTO interceptDTO = PlatformDeliveryInterceptDTO.builder()
                     .soB2cId(mainEntity.getId())

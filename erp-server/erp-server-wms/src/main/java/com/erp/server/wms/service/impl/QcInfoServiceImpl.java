@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -17,6 +16,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -53,6 +53,7 @@ import com.erp.rpc.sys.feign.aspect.DataPermissionAspect;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcInfoMapper;
+import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.query.QcInfoQueryHandler;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.QcUtils;
@@ -131,10 +132,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     private PoInstockService purchaseStorageService;
 
     @Resource
-    private CommonService commonService;
-
-
-    @Resource
     private OperateLogService operateLogService;
 
     @Resource
@@ -183,6 +180,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Resource
     private PoReturnDetailService poReturnDetailService;
+    @Resource
+    private ProductDetailService productDetailService;
 
     @Value("${fdfs.publicUrl:''}")
     private String filePublicUrl;
@@ -207,6 +206,14 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         QcInfoEntity bill = new QcInfoEntity();
         String code = "";
         String billId = dto.getId();
+        //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
+        QcProductDTO.AddDTO qcProduct = dto.getQcProduct();
+        if (ObjectUtils.isNotEmpty(qcProduct)) {
+           compareDimensions(qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
+           compareDimensions(qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
+           compareDimensions(qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+        }
+
         if (StringUtils.isBlank(billId)) {
             billId = IdWorker.getIdStr();
         } else {
@@ -705,7 +712,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     private Boolean isExistAuth (List<String> billIdList,String menuCode,String menuTableField) {
         //判断是否有权限回填产品信息
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(userInfo.getUid());
         UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
         List<String> roleIdList = sysUserFeign.getRoleIdList(userInfo.getUid());
@@ -817,7 +824,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         dto.setSourceType(SourceTypeEnum.QC_INFO.getCode());
         dto.setPurchaseOrderId(purchaseOrderId);
         dto.setDeliveryWarehouseId(warehouseId);
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         dto.setStockInUserId(userId);
         //获取部门信息
         SysDepartmentUserNumberDTO depart = sysUserFeign.getDeptByUserId(userId);
@@ -850,7 +857,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 b2bQcType.equals(s.getQcType())).collect(Collectors.toList());
 
         String sourceType = SourceTypeEnum.QC_INFO.getCode();
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         //获取部门信息
         SysDepartmentUserNumberDTO depart = sysUserFeign.getDeptByUserId(userId);
 
@@ -907,6 +914,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         BeanMapper.copy(dto, bill);
         bill.setId(billId);
+        //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
+        QcProductDTO.AddDTO qcProduct = dto.getQcProduct();
+        if (ObjectUtils.isNotEmpty(qcProduct)) {
+            compareDimensions(qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
+            compareDimensions(qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
+            compareDimensions(qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+        }
         //处理相关数据
         HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceType(), dto.getSourceId());
         String skuId = dto.getQcProduct().getSkuId();
@@ -1224,7 +1238,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             throw new ServiceException(ApiError.ERROR_99022);
         }
         //删除操作日志
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的质检单", commonService.getUserInfo().getUserName(), qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(",")));
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的质检单", UserContext.getDefaultLoginUser().getUserName(), qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.QC_ORDER.getCode(), pairList, "删除操作");
         Boolean result = this.removeByIds(ids);
@@ -1538,7 +1552,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
 
 
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //采购订单id集合
         List<String> poIds = list.stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getPurchaseOrderId).collect(Collectors.toList());
 
@@ -1860,8 +1874,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //质检类型的集合
         List<QcReportDTO.ListDTO> list = qcReportService.listByQcType(Arrays.asList(QcTypeEnum.RETURN_QC.getCode()));
         Map<String, List<QcReportDTO.ListDTO>> qcTypeMap = list.stream().collect(Collectors.groupingBy(QcReportDTO.ListDTO::getQcType));
-        String qcUserId = commonService.getUserInfo().getUid();
-        String qcUserName = commonService.getUserInfo().getUserName();
+        String qcUserId = UserContext.getDefaultLoginUser().getUid();
+        String qcUserName = UserContext.getDefaultLoginUser().getUserName();
         String departId = "";
         String departName = "";
         //质检员
@@ -2513,5 +2527,23 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Override
     public Integer countTotalNotQc(QcEffectivenessDTO.CountQcParamDTO qcParamDTO) {
         return baseMapper.countTotalNotQc(qcParamDTO);
+    }
+
+    /**
+     * 比较尺寸
+     *
+     * @author hyj
+     * @date 2024/5/10 9:05
+     * @param larger   大尺寸
+     * @param smaller  小尺寸
+     * @param apiError 报错信息
+     */
+    private void compareDimensions(BigDecimal larger, BigDecimal smaller, ApiError apiError) {
+        if (Objects.nonNull(larger) && larger.compareTo(BigDecimal.ZERO) > 0
+                && Objects.nonNull(smaller) && smaller.compareTo(BigDecimal.ZERO) > 0) {
+            if (larger.compareTo(smaller) < 0) {
+                throw new ServiceException(apiError);
+            }
+        }
     }
 }

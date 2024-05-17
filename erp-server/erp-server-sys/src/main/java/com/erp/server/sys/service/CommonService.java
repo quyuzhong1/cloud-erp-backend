@@ -1,7 +1,5 @@
 package com.erp.server.sys.service;
 
-import com.common.business.vo.LoginUser;
-
 /**
  * @Classname CommonService
 
@@ -10,5 +8,4 @@ import com.common.business.vo.LoginUser;
  */
 public interface CommonService {
 
-    LoginUser getUserInfo();
 }

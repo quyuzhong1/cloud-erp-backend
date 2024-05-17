@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
@@ -201,6 +202,19 @@ public class ShopifyShipOrder implements IPlatformService {
                 payload.setTrackingInfo(trackingInfo);
                 ShopifyFulfillmentPayloadRoot request = new ShopifyFulfillmentPayloadRoot();
                 request.setFulfillment(payload);
+
+                // 在非正式环境
+                if (!BusinessCommonConstants.hasProfile("prod")){
+                    // 在非正式环境，店铺域名带test允许触发平台标记发货
+                    if (shopifyShopDomain.contains("test")){
+                        log.warn("[Shopify测试账号触发标记发货] platformCode={},创建Fulfillment参数：,dto={}", platformOrderId, JSONUtil.toJsonStr(request));
+                        final ShopifyFulfillment actualShopifyFulfillment = shopifyRestClient.createFulfillment(request);
+                        log.warn("[Shopify测试账号触发标记发货] platformCode={},创建Fulfillment结果：{}", platformOrderId, JSONUtil.toJsonStr(actualShopifyFulfillment));
+                    } else {
+                        log.warn("【{}】非正式环境不带test域名的店铺：不请求Shopify接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(request));
+                    }
+                    return;
+                }
                 log.warn("[Shopify标记发货]platformCode={},创建Fulfillment参数：,dto={}", platformOrderId, JSONUtil.toJsonStr(request));
                 // Creates a fulfillment for one or many fulfillment orders
                 final ShopifyFulfillment actualShopifyFulfillment = shopifyRestClient.createFulfillment(request);

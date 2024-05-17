@@ -1,7 +1,6 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +10,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -28,9 +28,14 @@ public class OrderCategoryDTO implements Serializable {
     public static class PagingParamDTO  extends SortDTO {
 
         /**
-         * 分类名称
+         * 页面高级查询
          */
-        private String name;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
 
 
     }

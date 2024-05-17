@@ -1,23 +1,21 @@
 package com.erp.server.plm.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.plm.dto.CfgProductCategoryFieldDTO;
 import com.erp.model.plm.entity.CfgProductCategoryFieldEntity;
 import com.erp.server.plm.mapper.CfgProductCategoryFieldMapper;
 import com.erp.server.plm.service.CfgProductCategoryFieldService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.plm.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.plm.dto.CfgProductCategoryFieldDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 /**
  * <p>
  * 产品分类字段配置表 服务实现类
@@ -30,8 +28,6 @@ import com.common.core.enums.ApiError;
 @Service
 public class CfgProductCategoryFieldServiceImpl extends SuperServiceImpl<CfgProductCategoryFieldMapper, CfgProductCategoryFieldEntity> implements CfgProductCategoryFieldService {
 
-    @Autowired
-    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)

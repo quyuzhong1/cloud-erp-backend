@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.DmpOrderItemMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpOrderItemEntity">
+        <id column="picture_url" property="pictureUrl" />
+        <id column="specifics" property="specifics" />
+        <id column="category_name" property="categoryName" />
+        <result column="id" property="id" />
+        <result column="order_id" property="orderId" />
+        <result column="item_id" property="itemId" />
+        <result column="platform_sku" property="platformSku" />
+        <result column="platform_quantity" property="platformQuantity" />
+        <result column="item_name" property="itemName" />
+        <result column="sell_price_origin" property="sellPriceOrigin" />
+        <result column="sell_price" property="sellPrice" />
+        <result column="quantity" property="quantity" />
+        <result column="product_unit" property="productUnit" />
+        <result column="is_gift" property="isGift" />
+        <result column="has_goods" property="hasGoods" />
+        <result column="is_combo" property="isCombo" />
+        <result column="item_remark" property="itemRemark" />
+        <result column="status" property="status" />
+        <result column="stock_grid" property="stockGrid" />
+        <result column="sku_no" property="skuNo" />
+        <result column="stock_status" property="stockStatus" />
+        <result column="stock_warehouse_id" property="stockWarehouseId" />
+        <result column="erp_order_item_id" property="erpOrderItemId" />
+        <result column="category_id" property="categoryId" />
+        <result column="brand_id" property="brandId" />
+        <result column="brand_name" property="brandName" />
+        <result column="currency_rate" property="currencyRate" />
+        <result column="new_sign" property="newSign" />
+        <result column="amount_after" property="amountAfter" />
+        <result column="refresh_status" property="refreshStatus" />
+        <result column="cny_settle_rate" property="cnySettleRate" />
+        <result column="cost_price" property="costPrice" />
+    </resultMap>
+
+</mapper>

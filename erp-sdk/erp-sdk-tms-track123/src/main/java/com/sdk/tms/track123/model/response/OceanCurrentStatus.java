@@ -1,10 +1,14 @@
 package com.sdk.tms.track123.model.response;
 
+import lombok.Builder;
+import lombok.Data;
+
 /**
  * @author Will
  * @version 1.0
  * @date 2024/4/9 16:49
  */
+@Data
 public class OceanCurrentStatus {
 
 

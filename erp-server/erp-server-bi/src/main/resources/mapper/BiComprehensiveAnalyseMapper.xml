@@ -8,7 +8,7 @@
             COALESCE(SUM(doit.amount_after), 0) AS sales,
             COALESCE(SUM(droi.order_fee) + SUM(dri.refund_amount), 0)as amount
         FROM dmp_sku_info sku
-        LEFT JOIN dmp_order_item doit ON sku.sku_no = doit.sku_no
+        LEFT JOIN dmp_order_item_split doit ON sku.sku_no = doit.sku_no
         LEFT JOIN dmp_order_info doi ON doi.id = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
@@ -158,7 +158,7 @@
             COALESCE(SUM(doit.amount_after), 0) AS sales,
             COALESCE(SUM(droi.order_fee) + SUM(dri.refund_amount), 0) as amount
             FROM dmp_sku_info sku
-        LEFT JOIN dmp_order_item doit ON sku.sku_no = doit.sku_no
+        LEFT JOIN dmp_order_item_split doit ON sku.sku_no = doit.sku_no
         LEFT JOIN dmp_order_info doi ON doi.id = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
@@ -258,7 +258,7 @@
             COALESCE(SUM(dri.refund_amount),0) AS refundAmount,
             count(dri.platform_order_id) refundOrderQty
         FROM dmp_sku_info sku
-        LEFT JOIN dmp_order_item doit ON sku.sku_no = doit.sku_no
+        LEFT JOIN dmp_order_item_split doit ON sku.sku_no = doit.sku_no
         LEFT JOIN dmp_order_info doi ON doi.id = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
@@ -380,7 +380,7 @@
             sku.sku_no AS name,
             SUM(droi.order_fee) AS amount
         FROM dmp_sku_info sku
-        LEFT JOIN dmp_order_item doit ON sku.sku_no = doit.sku_no
+        LEFT JOIN dmp_order_item_split doit ON sku.sku_no = doit.sku_no
         LEFT JOIN dmp_order_info doi ON doi.id = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         <where>
@@ -404,7 +404,7 @@
         count(dri.platform_order_id) refundOrderQty
         FROM dmp_shop_info dsi
         LEFT JOIN dmp_order_info doi ON dsi.platform_shop_no = doi.shop_no
-        LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
+        LEFT JOIN dmp_order_item_split doit ON doi.id = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
@@ -517,7 +517,7 @@
             count(dri.platform_order_id) refundOrderQty
         FROM dmp_shop_info dsi
         LEFT JOIN dmp_order_info doi ON dsi.platform_shop_no = doi.shop_no
-        LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
+        LEFT JOIN dmp_order_item_split doit ON doi.id = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
@@ -892,7 +892,7 @@
         AS amount
         FROM dmp_order_info  AS doi
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
-        left join dmp_order_item AS doit on doi.id = doit.order_id
+        left join dmp_order_item_split AS doit on doi.id = doit.order_id
         left join product_detail AS pd on doit.sku_no = pd.sku_no
         left join product_info AS pi on pi.id = pd.product_id
         <where>

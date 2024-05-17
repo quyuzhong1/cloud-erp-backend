@@ -6,36 +6,38 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.OverseasProviderMapper;
-import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.OverseasProviderService;
+import com.erp.server.wms.service.OverseasProviderWarehouseService;
+import com.erp.server.wms.service.ThirdWarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.OverseasProviderDTO;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.annotation.Resource;
 
 /**
  * <p>
@@ -50,10 +52,6 @@ import javax.annotation.Resource;
 public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProviderMapper, OverseasProviderEntity> implements OverseasProviderService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
-    @Autowired
-    private DocNoGenHelper docNoGenHelper;
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -85,7 +83,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         overseasProviderWarehouseService.update(updateDTO, overseasProviderEntity.getId());
         // 记录主单操作日志
         log.info("编辑 开始记录海外物流商日志数据，单号：【{}】", overseasProviderEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), overseasProviderEntity.getCode(), "海外物流商");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), overseasProviderEntity.getCode(), "海外物流商");
         operateLogService.addModuleOperateLogByObj(old, overseasProviderEntity, ModuleTypeEnum.OVERSEAS_PROVIDER.getCode(), overseasProviderEntity.getId(), msg);
         return Boolean.TRUE;
     }

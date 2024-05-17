@@ -38,15 +38,14 @@ public class LoginAuthService {
     @Resource
     private RedisUtil redisUtil;
 
-    public ApiResult<SysLoginUserVO> processLogin(AccountLoginDTO loginDTO, UserTypeEnum userType, HttpServletRequest request) {
-        String loginErrorKey = StrUtil.format(RedisCacheConstants.LOGIN_ERROR_KEY, userType.getCode(), loginDTO.getAccount());
+    public ApiResult<SysLoginUserVO> processLogin(AccountLoginDTO loginDTO, HttpServletRequest request) {
+        String loginErrorKey = StrUtil.format(RedisCacheConstants.LOGIN_ERROR_KEY, loginDTO.getUserType(), loginDTO.getAccount());
 
         int loginAttempts = Integer.parseInt(redisUtil.get(loginErrorKey) != null ?redisUtil.get(loginErrorKey).toString() : "0");
         if(loginAttempts >= RedisCacheConstants.MAX_LOGIN_ATTEMPTS){
             return ApiResult.error(ApiError.LOGIN_ERROR);
         }
 
-        loginDTO.setUserType(userType.code);
         ApiResult<SysUserDTO> apiResult = sysUserFeign.accountLogin(loginDTO);
         int code = apiResult.getCode();
         if (code != 200) {
@@ -62,7 +61,7 @@ public class LoginAuthService {
         } else {
             SysUserDTO info = apiResult.getData();
             //SRM校验供应商是否启用
-            if(userType.equals(UserTypeEnum.SRM)){
+            if(loginDTO.getUserType().equals(UserTypeEnum.SRM.getCode())){
                 SupplierEntity supplier = supplierFeign.getSupplierByUid(info.getUid());
                 if(Objects.isNull(supplier)){
                     return ApiResult.error(ApiError.ERROR_96001);

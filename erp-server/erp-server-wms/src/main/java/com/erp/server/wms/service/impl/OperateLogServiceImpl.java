@@ -49,8 +49,6 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
     private CfgOperateLogFieldService cfgOperateLogFieldService;
 
     @Resource
-    private CommonService commonService;
-    @Resource
     private DictBasicService dictBasicService;
 
     @Resource

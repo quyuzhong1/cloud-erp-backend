@@ -65,6 +65,26 @@
             </foreach>
         </if>
     </select>
+    <select id="listLogisticsBillVoByTrackNo" resultType="com.erp.model.tms.dto.LogisticsBillDTO$LogisticsBillVo">
+        SELECT
+            lb.shop_id,
+            lb.shop_name,
+            lb.source_type,
+            lb.source_id,
+            lb.source_code,
+            lb.transport_no,
+            lbd.track_status,
+            lbd.track_no
+        FROM logistics_bill lb
+        LEFT JOIN logistics_bill_detail lbd ON lb.id = lbd.main_id AND lbd.is_deleted = FALSE
+        WHERE lb.is_deleted = FALSE
+        <if test="trackNoList != null and trackNoList.size > 0">
+            AND lbd.track_no IN
+            <foreach collection="trackNoList" item="trackNo" open="(" close=")" separator=",">
+                #{trackNo}
+            </foreach>
+        </if>
+    </select>
     <!--tab 页统计-->
     <select id="tabList" resultType="com.erp.model.tms.dto.LogisticsBillDTO$TabListDTO">
         SELECT
@@ -102,7 +122,9 @@
              lbd.track_no AS trackNo,
              lbd.sign_time AS signTime,
              lbd.track_query_mode AS trackQueryMode,
-             lc.name AS channelName
+             lc.name AS channelName,
+             lb.platform_code as platformCode,
+             lb.shipment_type as shipmentType
         FROM  logistics_bill lb
         LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
         LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
@@ -128,6 +150,17 @@
             <foreach collection="params.orderNoList" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
+        </if>
+        <!--发货类型-->
+        <if test="params.shipmentTypeList !=null and params.shipmentTypeList.size>0">
+            AND lb.shipment_type in
+            <foreach collection="params.shipmentTypeList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <!--平台订单号-->
+        <if test="params.platformCode != '' and params.platformCode != null">
+            and lb.platform_code ILIKE concat('%', #{params.platformCode}::text,'%')
         </if>
           <!--销售平台-->
          <if test="params.salesPlatformList !=null and params.salesPlatformList.size>0">
@@ -197,6 +230,7 @@
         </if>
         lb.create_time DESC
     </select>
+
     <!--导出-->
     <select id="listExport" resultType="com.erp.model.tms.dto.LogisticsBillDTO$PagingVO">
         SELECT
@@ -219,7 +253,9 @@
             lbd.track_no AS trackNo,
             lbd.sign_time AS signTime,
             lbd.track_query_mode AS trackQueryMode,
-            lc.name AS channelName
+            lc.name AS channelName,
+            lb.platform_code as platformCode,
+            lb.shipment_type as shipmentType
         FROM  logistics_bill lb
         LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
         LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
@@ -246,6 +282,17 @@
                     <foreach collection="params.orderNoList" item="item" open="(" separator="," close=")">
                         #{item}
                     </foreach>
+                </if>
+                <!--发货类型-->
+                <if test="params.shipmentTypeList !=null and params.shipmentTypeList.size>0">
+                    AND lb.shipment_type in
+                    <foreach collection="params.shipmentTypeList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <!--平台订单号-->
+                <if test="params.platformCode != '' and params.platformCode != null">
+                    and lb.platform_code ILIKE concat('%', #{params.platformCode}::text,'%')
                 </if>
                 <!--物流单号-->
                 <if test="params.trackNoList !=null and params.trackNoList.size>0">
@@ -389,6 +436,7 @@
                lb.outstock_id as outstockId,
                lb.transport_no as transportNo,
                lb.counter_no as counterNo,
+               lb.carrier_id as carrierId,
                lb.source_code as businessCode,
                lb.outstock_code as outstockCode,
                lbd.track_status as logisticsStatus,
@@ -439,6 +487,7 @@
         lbd.track_status as logisticsStatus,
                (select lt.content from logistics_track lt where lt.track_no = lbd.track_no and lt.is_deleted = false order by lt.update_time desc limit 1) as logisticsTrack,
                lb.counter_no as counterNo,
+               lb.carrier_id as carrierId,
         lb.source_code as businessCode,
         lb.invoices_status as invoicesStatus,
         lbc.reconciliation_status as reconciliationStatus,

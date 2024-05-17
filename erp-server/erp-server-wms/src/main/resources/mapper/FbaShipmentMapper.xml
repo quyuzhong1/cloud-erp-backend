@@ -125,7 +125,7 @@
         </if>
     </select>
     
-    <select id="getDataCompareByCondition" resultType="com.erp.model.wms.dto.WmsDataCompareTaskDTO$FbaShipmentDTO">
+    <select id="getDataCompareByCondition" resultType="java.util.Map">
 		 SELECT h.id,T.code,
 			T.shop_name,
 			G.sku_no,

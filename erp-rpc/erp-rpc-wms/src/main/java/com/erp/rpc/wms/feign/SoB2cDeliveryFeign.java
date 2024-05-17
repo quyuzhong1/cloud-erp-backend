@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
@@ -98,4 +99,13 @@ public interface SoB2cDeliveryFeign {
      **/
     @PostMapping("feign/soB2cDelivery/mergePackageDelivery")
     Boolean mergePackageDelivery(@RequestBody List<String> soIdList);
+
+
+    /**
+     * 平台标记发货
+     * @param platformShipOrderDTO
+     * @return
+     */
+    @PostMapping("/feign/soB2cDelivery/shipOrder")
+    Boolean shipOrder(@RequestBody PlatformShipOrderDTO platformShipOrderDTO);
 }

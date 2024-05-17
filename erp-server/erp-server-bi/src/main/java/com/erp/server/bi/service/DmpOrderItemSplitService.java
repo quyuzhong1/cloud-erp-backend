@@ -2,7 +2,7 @@ package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -11,7 +11,7 @@ import java.util.List;
  * 订单商品服务类
  * @author Cloud
  */
-public interface DmpOrderItemService extends IService<DmpOrderItemEntity> {
+public interface DmpOrderItemSplitService extends IService<DmpOrderItemSplitEntity> {
 
     /**
      * 根据sku和订单号计算订单详情中的销售额
@@ -44,12 +44,12 @@ public interface DmpOrderItemService extends IService<DmpOrderItemEntity> {
      * @param orderInfoIds
      * @return List<DmpOrderItemEntity>
      */
-    List<DmpOrderItemEntity> listByOrderInfoIds(List<String> orderInfoIds);
+    List<DmpOrderItemSplitEntity> listByOrderInfoIds(List<String> orderInfoIds);
 
     /**
      *
      * @param orderIds
      * @return
      */
-    List<DmpOrderItemEntity> listByConditions(List<String> orderIds, Integer newSign, List<String> sku);
+    List<DmpOrderItemSplitEntity> listByConditions(List<String> orderIds, Integer newSign, List<String> sku);
 }
