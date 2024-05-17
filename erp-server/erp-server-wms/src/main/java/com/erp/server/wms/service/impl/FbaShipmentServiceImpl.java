@@ -1743,33 +1743,4 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
         return new PagingVO(searchData);
     }
-
-
-    @Override
-	public List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO> getDataCompareByCondition(
-			com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO params , Integer pageSize) {
-		if("0".equals(params.getId())) {
-			this.getParams(params);
-		}
-		return baseMapper.getDataCompareByCondition(params , pageSize);
-	}
-
-	@Override
-	public Integer getDataCompareByConditionCount(com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO params) {
-		this.getParams(params);
-		return baseMapper.getDataCompareByConditionCount(params);
-	}
-	
-	private void getParams(com.erp.model.wms.dto.WmsDataCompareTaskDTO.FbaShipmentDTO params) {
-		if(CollUtil.isEmpty(params.getReceiveDateList())) {
-			throw new ServiceException("FBA货件签收的系统数据范围【签收日期】不能为空");
-		}
-		String shopId = params.getShopId();
-		if(StringUtils.isNotBlank(shopId)) {
-			ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
-			if(shopInfo != null) {
-				params.setShopName(shopInfo.getName());
-			}
-		}
-	}
 }

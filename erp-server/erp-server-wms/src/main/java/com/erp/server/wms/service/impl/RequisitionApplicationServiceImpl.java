@@ -644,7 +644,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             requisitionApplicationEntity.setFbaShipmentCode(fbaShipmentEntity.getCode());
             updateList.add(requisitionApplicationEntity);
 
-            String msg = StrUtil.format("用户【{}】绑定单号为【{}】货件号为【{}】 ", commonService.getUserInfo().getUserName(), requisitionApplicationEntity.getCode(), fbaShipmentEntity.getCode());
+            String msg = StrUtil.format("用户【{}】绑定单号为【{}】货件号为【{}】 ", UserContext.getDefaultLoginUser().getUserName(), requisitionApplicationEntity.getCode(), fbaShipmentEntity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId(), "绑定货件");
         }
         if(CollectionUtils.isNotEmpty(updateList)){
