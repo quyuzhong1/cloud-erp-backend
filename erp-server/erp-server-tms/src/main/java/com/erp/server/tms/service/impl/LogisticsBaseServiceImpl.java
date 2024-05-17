@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -380,6 +381,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         log.info("{}渠道同步开始", platform);
         ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
         LogisticsService service = logisticsRegistry.getHandler(platform);
+        if (ObjectUtil.isEmpty(service)) {
+            return Collections.emptyList();
+        }
         List<Map<String, String>> mapList = service.getLogisticsAuthConfigByPlatform(platform);
         if (CollectionUtils.isEmpty(mapList)) {
             return Collections.emptyList();
