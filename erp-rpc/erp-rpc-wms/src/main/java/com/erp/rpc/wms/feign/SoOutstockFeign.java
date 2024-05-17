@@ -3,6 +3,7 @@ package com.erp.rpc.wms.feign;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -104,7 +105,7 @@ public interface SoOutstockFeign {
      * 生成b2c 销售出库单(平台拉取发货信息生成)
      */
     @PostMapping("feign/soOutstock/generateB2cSoOutstockByPlatformData")
-    Boolean generateB2cSoOutstockByPlatformData(@RequestBody List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO);
+    Boolean generateB2cSoOutstockByPlatformData(@RequestBody PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO);
 
     @PostMapping("feign/soOutstock/getCanGenerateDeclare")
     List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(@RequestBody TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);

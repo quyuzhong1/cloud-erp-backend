@@ -917,4 +917,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     List<LogisticsDeclareProductDTO> splitLogisticsBySoDetail(List<SoB2cDetailEntity> detailList, SoB2cEntity soB2cEntity);
+
+    SoOutstockDTO.GenerateB2cDTO getSoOutstockByIdAndWarehouseId(String id,String warehouseId);
 }

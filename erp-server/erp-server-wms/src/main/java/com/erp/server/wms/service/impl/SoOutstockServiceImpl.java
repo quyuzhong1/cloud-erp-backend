@@ -36,10 +36,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
-import com.erp.model.oms.dto.SoDetailDTO;
-import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
@@ -2516,7 +2513,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean defaultHandleRetry(SoB2cEntity currentEntity, List<SoB2cEntity> soB2cList) {
         String id = currentEntity.getId();
         //已发货
@@ -2539,8 +2535,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         Boolean flag = Boolean.TRUE;
 
         //速卖通异常订单重新生成需要查询速卖通平台发货单获取仓库
-        if (Objects.nonNull(soB2c) && PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getDictPlatform())) {
-            flag = soB2cFeign.updateAliExpressOrderWarehouse(soB2c.getId(), soB2c.getShopId());
+        if (currentEntity.hasPlatformWarehouseOrder() && PlatformDictEnum.ALI_EXPRESS.getCode().equals(currentEntity.getDictPlatform())) {
+            flag = soB2cFeign.updateAliExpressOrderWarehouse(currentEntity.getId(), currentEntity.getShopId());
         }
 
         Boolean result = false;
@@ -2555,7 +2551,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         } else {
             //速卖通平台仓订单的销售出库在处理类生成
-            if (Objects.nonNull(soB2c) && PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getDictPlatform())) {
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(currentEntity.getDictPlatform())) {
                 result = flag;
             }else{
                 result = this.generateB2cSoOutstock(id);
@@ -2990,48 +2986,25 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return lambdaQuery().in(SoOutstockEntity::getCode, codes).list();
     }
 
-    @Override
-    public Boolean afreshGenerateB2cOutstock(List<String> ids) {
-        List<SoB2cEntity> soB2cList = soB2cFeign.listWarehouseIsEmpty(ids);
-        Map<String, SoB2cEntity> mainMap = soB2cFeign.listByIds(ids)
-                .stream()
-                .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
-        for (String id : ids) {
-            try {
-                SoB2cEntity currentEntity = mainMap.get(id);
-                if (null == currentEntity){
-                    throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
-                }
-                PlatformRetryHandler.retrySoOutStock(currentEntity, soB2cList);
-            } catch (Exception e) {
-                String message = e.getMessage();
-                log.error("重新创建或者修改B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", id, id, message);
-                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
-                addError.setMainId(id);
-                addError.setMessage(message);
-                addError.setParamJson(id);
-                soB2cFeign.addSoB2cError(addError);
-            }
-        }
-        return Boolean.TRUE;
-    }
+
     /**
-     * 平台拉取数据生成销售出库单
-     * 注意 List<PlatformDeliveryDetailDTO> 里的仓库ID和mainId相同
-     * @param platformDeliveryDetailDTO
+     * 平台拉取数据生成销售出库单 (根据平台发货的sku生成对应销售出库单)
+     * 注意 List<PlatformDeliveryDetailDTO> 是同个销售订单下相同仓库的明细
+     *
+     * @param platformGenerateSoOutstockDTO
      * @return
      */
     @Override
-    public Boolean generateB2cSoOutstockByPlatformData(List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO) {
-        if(CollectionUtils.isEmpty(platformDeliveryDetailDTO)){
+    public Boolean generateB2cSoOutstockByPlatformData(PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO) {
+        List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO = platformGenerateSoOutstockDTO.getPlatformDeliveryDetailDTOList();
+        if(CollectionUtils.isEmpty(platformGenerateSoOutstockDTO.getPlatformDeliveryDetailDTOList())){
             return true;
         }
         String warehouseId = platformDeliveryDetailDTO.get(0).getWarehouseId();
         String soB2cId = platformDeliveryDetailDTO.get(0).getMainId();
         SoOutstockEntity outstock = this.getBySoIdAndWarehouseId(soB2cId,warehouseId);
         if (Objects.isNull(outstock)) {
-            SoOutstockDTO.GenerateB2cDTO dto = soB2cFeign.getSoOutstockInfoById(soB2cId);
+            SoOutstockDTO.GenerateB2cDTO dto = platformGenerateSoOutstockDTO.getGenerateB2cDTO();
             //重新赋值仓库 因为可能销售订单是仓库A 速卖通发货是仓库B
             dto.setWarehouseId(warehouseId);
             dto.setWarehouseName(platformDeliveryDetailDTO.get(0).getWarehouseName());
@@ -3073,6 +3046,33 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return Boolean.TRUE;
         }
 
+    }
+    @Override
+    public Boolean afreshGenerateB2cOutstock(List<String> ids) {
+        List<SoB2cEntity> soB2cList = soB2cFeign.listWarehouseIsEmpty(ids);
+        Map<String, SoB2cEntity> mainMap = soB2cFeign.listByIds(ids)
+                .stream()
+                .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
+        for (String id : ids) {
+            try {
+                SoB2cEntity currentEntity = mainMap.get(id);
+                if (null == currentEntity){
+                    throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+                }
+                PlatformRetryHandler.retrySoOutStock(currentEntity, soB2cList);
+            } catch (Exception e) {
+                String message = e.getMessage();
+                log.error("重新创建或者修改B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", id, id, message);
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+                addError.setMainId(id);
+                addError.setMessage(message);
+                addError.setParamJson(id);
+                soB2cFeign.addSoB2cError(addError);
+                return Boolean.FALSE;
+            }
+        }
+        return Boolean.TRUE;
     }
 
     @Override
