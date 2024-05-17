@@ -5542,14 +5542,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_92058);
         }
         SoOutstockDTO.GenerateB2cDTO dto = new SoOutstockDTO.GenerateB2cDTO();
-        String sourceType;
-        if (entity.hasPlatformWarehouseOrder()) {
-            // 平台仓订单(平台销售出库单)
-            sourceType = SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode();
-        } else {
-            // 非平台仓订单(必须要有已发货的B2C发货单:否则取消生成)
-            sourceType = SourceTypeEnum.SO_B2C_DELIVERY.getCode();
-        }
         dto.setOrderType(OrderTypeEnum.B2C.getCode());
         dto.setSoId(entity.getId());
         dto.setSoCode(entity.getCode());
