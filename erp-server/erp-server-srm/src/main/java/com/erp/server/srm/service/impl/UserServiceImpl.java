@@ -5,7 +5,7 @@ import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.UserTypeEnum;
-import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -23,7 +23,6 @@ import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
-import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.rpc.wms.feign.SupplierUserFeign;
 import com.erp.server.srm.listener.SupplierUserExcelListener;
 import com.erp.server.srm.service.UserService;
@@ -68,7 +67,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public String getSupplierId(){
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         if (Objects.nonNull(loginUser)){
             String uid = loginUser.getUid();
             SysUserInfoEntity user = userInfoFeign.info(uid);

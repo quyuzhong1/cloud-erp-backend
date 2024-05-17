@@ -7,9 +7,10 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.IsConstant;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -20,7 +21,6 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.vo.PreTaskListVO;
 import com.erp.model.plm.vo.migrateTempVO;
-import com.common.business.constant.IsConstant;
 import com.erp.server.plm.mapper.ProjectTemplateMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -125,7 +125,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         ProjectTemplateEntity entity = new ProjectTemplateEntity();
         BeanMapperUtils.copy(dto, entity);
         //获取登录人信息
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
@@ -165,7 +165,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
             throw new ServiceException(ApiError.ERROR_95051);
         }
         //获取登录人信息
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
@@ -471,7 +471,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
     public String saveTemplate(String templateName, String productId, String productPropertyId) {
         checkTemplateName(templateName, "");
         //获取登录人信息
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }

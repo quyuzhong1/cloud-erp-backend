@@ -39,7 +39,6 @@ import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -48,7 +47,10 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmDictFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.srm.mapper.PoReconciliationDetailMapper;
-import com.erp.server.srm.service.*;
+import com.erp.server.srm.service.OperateLogService;
+import com.erp.server.srm.service.PoReconciliationDetailScmService;
+import com.erp.server.srm.service.PoReconciliationScmService;
+import com.erp.server.srm.service.UserService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -77,9 +79,6 @@ import java.util.stream.Collectors;
 public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoReconciliationDetailMapper, PoReconciliationDetailEntity> implements PoReconciliationDetailScmService {
     @Autowired
     private OperateLogService operateLogService;
-
-    @Autowired
-    private CommonService commonService;
 
     @Autowired
     private PoReconciliationScmService poReconciliationScmService;

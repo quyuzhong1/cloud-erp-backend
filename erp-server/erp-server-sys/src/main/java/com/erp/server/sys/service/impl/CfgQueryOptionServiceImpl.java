@@ -1,32 +1,27 @@
 package com.erp.server.sys.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.erp.model.plm.entity.CfgProductOwnerRuleEntity;
-import com.erp.model.sys.dto.CfgQueryConditionDTO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.sys.dto.CfgQueryOptionDTO;
 import com.erp.model.sys.entity.CfgQueryOptionEntity;
 import com.erp.server.sys.mapper.CfgQueryOptionMapper;
 import com.erp.server.sys.service.CfgQueryOptionService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.sys.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.sys.dto.CfgQueryOptionDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 /**
  * <p>
  * 查询option配置表 服务实现类
@@ -39,8 +34,6 @@ import com.common.core.enums.ApiError;
 @Service
 public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMapper, CfgQueryOptionEntity> implements CfgQueryOptionService {
 
-    @Autowired
-    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)

@@ -2,12 +2,11 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.erp.model.plm.entity.DocsChangeRecordEntity;
 import com.erp.server.plm.mapper.DocsChangeRecordMapper;
-import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.DocsChangeRecordService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,8 +19,6 @@ import java.util.List;
 public class DocsChangeRecordServiceImpl extends ServiceImpl<DocsChangeRecordMapper, DocsChangeRecordEntity>
         implements DocsChangeRecordService {
 
-    @Autowired
-    private CommonService commonService;
 
 
     /**
@@ -38,7 +35,7 @@ public class DocsChangeRecordServiceImpl extends ServiceImpl<DocsChangeRecordMap
     @Override
     public void addRecord(String content, String taskId, String finishDocsId, String processId) {
         DocsChangeRecordEntity recordEntity = new DocsChangeRecordEntity();
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         recordEntity.setContent(content);
         recordEntity.setCreateUserId(loginUser.getUid());
         recordEntity.setCreateUserName(loginUser.getUserName());

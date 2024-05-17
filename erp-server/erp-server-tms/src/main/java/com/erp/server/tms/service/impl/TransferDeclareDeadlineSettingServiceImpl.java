@@ -40,10 +40,6 @@ import java.util.stream.Collectors;
 @Service
 public class TransferDeclareDeadlineSettingServiceImpl extends SuperServiceImpl<TransferDeclareDeadlineSettingMapper, TransferDeclareDeadlineSettingEntity> implements TransferDeclareDeadlineSettingService {
     @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
-    @Autowired
     private MultipleOptionService multipleOptionService;
 
     @GlobalTransactional(rollbackFor = Exception.class)

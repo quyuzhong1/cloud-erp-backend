@@ -1,11 +1,7 @@
 package com.erp.server.sys.service.impl;
 
-import com.common.business.interceptor.CommonInterceptor;
-import com.common.business.vo.LoginUser;
 import com.erp.server.sys.service.CommonService;
 import org.springframework.stereotype.Service;
-
-import java.util.Objects;
 
 /**
  * @Classname CommonServiceImpl
@@ -15,16 +11,4 @@ import java.util.Objects;
  */
 @Service
 public class CommonServiceImpl implements CommonService {
-    @Override
-    public LoginUser getUserInfo() {
-        String userId = "";
-        String userName = "";
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (Objects.isNull(loginUser)) {
-            loginUser = new LoginUser();
-            loginUser.setUid(userId);
-            loginUser.setUserName(userName);
-        }
-        return loginUser;
-    }
 }

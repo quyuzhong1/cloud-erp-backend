@@ -17,6 +17,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -65,8 +66,6 @@ import java.util.stream.Collectors;
 public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlanMapper, StocktakingPlanEntity> implements StocktakingPlanService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
     @Resource
     private DocNoGenHelper docNoGenHelper;
     @Resource
@@ -151,7 +150,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         // 保存明细数据
         stocktakingPlanDetailService.saveList(addDTO.getDetailList(), stocktakingPlanEntity.getId());
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "盘点计划" , stocktakingPlanEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "盘点计划" , stocktakingPlanEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), stocktakingPlanEntity.getId(), "新增单据");
         return stocktakingPlanEntity.getId();
     }
@@ -181,7 +180,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         stocktakingPlanDetailService.updateList(updateDTO.getDetailList(), stocktakingPlanEntity.getId());
         // 记录主单操作日志
         log.info("编辑 开始记录盘点计划单日志数据，单号：【{}】", stocktakingPlanEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), old.getCode(), "盘点计划");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "盘点计划");
         operateLogService.addModuleOperateLogByObj(old, stocktakingPlanEntity, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), stocktakingPlanEntity.getId(), msg);
     }
 
@@ -206,7 +205,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         // 记录操作日志
         log.info("提交 开始记录盘点计划单日志数据，id集合：【{}】", JSONObject.toJSONString(entity));
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
@@ -256,7 +255,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         startDTO.setBusinessCode(entity.getCode());
         startDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_PLAN.getCode());
         startDTO.setBusinessName(entity.getCode());
-        startDTO.setUserId(commonService.getUserInfo().getUid());
+        startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
@@ -300,7 +299,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划", approveType.getName(), dto.getComment());
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划", approveType.getName(), dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
@@ -312,7 +311,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
      * @param dto
      */
     private void approveProcess(StocktakingPlanEntity entity, ApproveOneDTO dto) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
         approveDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_PLAN.getCode());
@@ -344,7 +343,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
@@ -376,7 +375,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         }
         // 删除日志数据
         log.info("删除 开始删除盘点计划单日志数据，id集合：【{}】", JSONObject.toJSONString(id));
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getCode(), "删除盘点计划单数据");
         // 删除明细数据
         stocktakingPlanDetailService.removeByMainId(id);
@@ -402,12 +401,12 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
 
         //操作日志
         log.info("撤销 开始记录操作日志，id集合：【{}】", JSONObject.toJSONString(id));
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_PLAN.getCode());
-        revokeDTO.setUserId(commonService.getUserInfo().getUid());
+        revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
@@ -473,7 +472,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
      */
     public void updateForApprove(String id, String approveStatus) {
         //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         this.lambdaUpdate().eq(StocktakingPlanEntity::getId, id)
                 .set(StocktakingPlanEntity::getApproveUserId, userInfo.getUid())
                 .set(StocktakingPlanEntity::getApproveUserName, userInfo.getUserName())
@@ -504,8 +503,8 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         lambdaUpdate().in(StocktakingPlanEntity::getId, ids)
         .set(StocktakingPlanEntity::getApproveStatus, approveStatus)
         .set(StocktakingPlanEntity::getSubmitTime, LocalDateTime.now())
-        .set(StocktakingPlanEntity::getSubmitUserId, commonService.getUserInfo().getUid())
-        .set(StocktakingPlanEntity::getSubmitUserName, commonService.getUserInfo().getUserName())
+        .set(StocktakingPlanEntity::getSubmitUserId, UserContext.getDefaultLoginUser().getUid())
+        .set(StocktakingPlanEntity::getSubmitUserName, UserContext.getDefaultLoginUser().getUserName())
         .update(new StocktakingPlanEntity());
     }
     /**
@@ -515,8 +514,8 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         lambdaUpdate().eq(StocktakingPlanEntity::getId, id)
                 .set(StocktakingPlanEntity::getApproveStatus, approveStatus)
                 .set(StocktakingPlanEntity::getSubmitTime, LocalDateTime.now())
-                .set(StocktakingPlanEntity::getSubmitUserId, commonService.getUserInfo().getUid())
-                .set(StocktakingPlanEntity::getSubmitUserName, commonService.getUserInfo().getUserName())
+                .set(StocktakingPlanEntity::getSubmitUserId, UserContext.getDefaultLoginUser().getUid())
+                .set(StocktakingPlanEntity::getSubmitUserName, UserContext.getDefaultLoginUser().getUserName())
                 .update(new StocktakingPlanEntity());
     }
 

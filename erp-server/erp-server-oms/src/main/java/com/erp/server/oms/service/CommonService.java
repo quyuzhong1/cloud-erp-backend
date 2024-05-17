@@ -1,7 +1,5 @@
 package com.erp.server.oms.service;
 
-import com.common.business.vo.LoginUser;
-
 import java.util.List;
 
 /**
@@ -12,15 +10,6 @@ import java.util.List;
  * @Created by yl
  */
 public interface CommonService {
-
-    /**
-     * 获取用户信息
-     * @author yl
-     * @date 2023-03-15 11:58
-     * @param
-     * @return com.common.business.vo.LoginUser
-     */
-    public LoginUser getUserInfo();
 
     /**
      * @description: 获取当前人需要审核的业务ids

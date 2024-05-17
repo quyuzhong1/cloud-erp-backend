@@ -344,7 +344,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean updateQtyById(String id, Integer qty) {
-//        LoginUser loginUser = commonService.getUserInfo();
+//        LoginUser loginUser = UserContext.getDefaultLoginUser();
         boolean flag = lambdaUpdate()
                 .setSql(StrUtil.format("{}={}+{}", "qty", "qty", qty))
 //                .setSql(StrUtil.format("{}={}+{}", "version","version", 1))
@@ -879,7 +879,28 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Override
     public List<InventoryDTO.PdaInventoryDTO> getInventoryByParam(InventoryDTO.PdaSearchParamDTO dto) {
-        return baseMapper.getInventoryByParam(dto);
+        if (Objects.isNull(dto.getWarehouseId())){
+            return new ArrayList<>();
+        }
+        String warehouseId = dto.getWarehouseId();
+        List<String> warehouseLocations = dto.getWarehouseLocations();
+        List<String> skuIds = dto.getSkuIds();
+        if (CollectionUtils.isEmpty(warehouseLocations)||CollectionUtils.isEmpty(skuIds)){
+            return baseMapper.getInventoryByParam(dto);
+        }
+
+        List<InventoryDTO.PdaInventoryDTO> inventoryDTOList=new ArrayList<>();
+        for (int i = 0; i <skuIds.size() ; i++) {
+            InventoryDTO.PdaSearchParamDTO pdaSearchParamDTO = new InventoryDTO.PdaSearchParamDTO();
+            pdaSearchParamDTO.setSkuIds(Collections.singletonList(skuIds.get(i)));
+            pdaSearchParamDTO.setWarehouseId(warehouseId);
+            pdaSearchParamDTO.setWarehouseLocations(Collections.singletonList(warehouseLocations.get(i)));
+            List<InventoryDTO.PdaInventoryDTO> inventoryByParam = baseMapper.getInventoryByParam(pdaSearchParamDTO);
+            if (CollectionUtils.isNotEmpty(inventoryByParam)){
+                inventoryDTOList.add(inventoryByParam.get(0));
+            }
+        }
+        return inventoryDTOList;
     }
 
     @Override

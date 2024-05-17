@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseDropDownDTO;
@@ -25,12 +26,10 @@ import com.erp.server.wms.mapper.WarehouseLocationMapper;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -346,5 +345,35 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode())
                 .last("limit 1")
                 .one();
+    }
+
+    @Override
+    public PagingVO<WarehouseLocationDTO.LocationListDTO> pagingSelect(PagingDTO<WarehouseLocationDTO.SelectDTO> searchDTO) {
+        Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
+        WarehouseLocationDTO.SelectDTO params = searchDTO.getParams();
+        IPage<WarehouseLocationDTO.LocationListDTO> pagResult = baseMapper.pagingSelect(query, params);
+        List<WarehouseLocationDTO.LocationListDTO> records = pagResult.getRecords();
+        handleSelect(records);
+        return new PagingVO<>(pagResult);
+    }
+
+
+    /**
+     * @description: 下拉数据处理
+     * @author Will
+     * @date: 2024/5/16 15:49
+     * @param records
+     */
+    private void handleSelect (List<WarehouseLocationDTO.LocationListDTO> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+        for (WarehouseLocationDTO.LocationListDTO locationListDTO: records) {
+            locationListDTO.setStatusName(WarehouseLocationStatusEnum.getName(locationListDTO.getStatus()));
+            locationListDTO.setCanCheck(Boolean.TRUE);
+            if(Objects.equals(locationListDTO.getDisabled(), Boolean.TRUE) || Objects.equals(locationListDTO.getStatus(), WarehouseLocationStatusEnum.STOP)) {
+                locationListDTO.setCanCheck(Boolean.FALSE);
+            }
+        }
     }
 }

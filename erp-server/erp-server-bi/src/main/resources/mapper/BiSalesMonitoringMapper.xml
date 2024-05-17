@@ -8,7 +8,7 @@
             ${params.viewData},
             sum(doit.amount_after * doit.currency_rate) as value
         from dmp_order_info doi
-        inner join dmp_order_item doit on doit.order_id = doi.id
+        inner join dmp_order_item_split doit on doit.order_id = doi.id
         where doi.platform_create_time >= #{lastsMonth}
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql }
@@ -22,7 +22,7 @@
             ${params.viewData},
         sum(doit.quantity) as value
         from dmp_order_info doi
-        inner join dmp_order_item doit on doit.order_id = doi.id
+        inner join dmp_order_item_split doit on doit.order_id = doi.id
         where doi.platform_create_time >= #{lastsMonth}
         <if test="params.permissionSql != null and dto.permissionSql != ''">
             ${params.permissionSql }
@@ -36,7 +36,7 @@
         ${params.viewData},
         sum(doit.amount_after * doit.currency_rate) as value
         from dmp_order_info doi
-        inner join dmp_order_item doit on doit.order_id = doi.id
+        inner join dmp_order_item_split doit on doit.order_id = doi.id
         inner join product_detail pd on pd.is_deleted = false and doit.sku_no = pd.sku_no
         inner join product_info pi on pi.is_deleted = false and pd.product_id = pi.id
         where doi.platform_create_time >= #{lastsMonth}
@@ -52,7 +52,7 @@
         ${params.viewData},
         sum(doit.quantity) as value
         from dmp_order_info doi
-        inner join dmp_order_item doit on doit.order_id = doi.id
+        inner join dmp_order_item_split doit on doit.order_id = doi.id
         inner join product_detail pd on pd.is_deleted = false and doit.sku_no = pd.sku_no
         inner join product_info pi on pi.is_deleted = false and pd.product_id = pi.id
         where doi.platform_create_time >= #{lastsMonth}

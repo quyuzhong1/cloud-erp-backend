@@ -7,14 +7,13 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.SplitSkuDTO;
 import com.erp.model.dmp.entity.DmpBomEntity;
 import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
-import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.pull.mapper.DmpDeliveryDetailItemMapper;
 import com.erp.server.dmp.service.DmpBomService;
 import com.erp.server.dmp.service.DmpDeliveryDetailItemService;
-import com.erp.server.dmp.service.DmpOrderItemService;
+import com.erp.server.dmp.service.DmpOrderItemSplitService;
 import com.erp.server.dmp.service.DmpSkuCostService;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +40,7 @@ public class DmpDeliveryDetailItemServiceImpl extends ServiceImpl<DmpDeliveryDet
     private DmpSkuCostService dmpSkuCostService;
 
     @Resource
-    private DmpOrderItemService dmpOrderItemService;
+    private DmpOrderItemSplitService dmpOrderItemSplitService;
 
     /**
      * 添加发货详情商品信息
@@ -122,7 +121,7 @@ public class DmpDeliveryDetailItemServiceImpl extends ServiceImpl<DmpDeliveryDet
             }
             splitSkuDTO.setAmountAfter(dmpDeliveryDetailItemEntity.getAmount());
             //拆单
-            List<SplitSkuDTO> splitSkuDTOS = dmpOrderItemService.splitSku(splitSkuDTO, machining, allBomList);
+            List<SplitSkuDTO> splitSkuDTOS = dmpOrderItemSplitService.splitSku(splitSkuDTO, machining, allBomList);
             if (CollectionUtil.isEmpty(splitSkuDTOS)){
                 continue;
             }

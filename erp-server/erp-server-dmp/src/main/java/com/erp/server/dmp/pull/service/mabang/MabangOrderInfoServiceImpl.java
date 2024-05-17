@@ -23,7 +23,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.MabangSourcePlatformEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -300,7 +300,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
     /**
      * 解析订单商品数据
      **/
-    public static List<DmpOrderItemEntity> initOrderItem(OrderEntity orderEntity) {
+    public static List<DmpOrderItemSplitEntity> initOrderItem(OrderEntity orderEntity) {
         List<OrderItemEntity> orderItems = orderEntity.getOrderItem();
         if(CollectionUtil.isEmpty(orderItems)){
             log.warn("MabangOrderInfoServiceImpl>>>initOrderItem>>>orderEntity 详情列表为空 {}", JSONUtil.toJsonStr(orderItems));
@@ -311,28 +311,28 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         BigDecimal itemTotal = orderEntity.getItemTotalOrigin();
         BigDecimal shareFeeAmount = BigDecimal.ZERO;
         HashMap<String, Integer> skuCountMap = new HashMap<>();
-        List<DmpOrderItemEntity> items = new ArrayList<>();
+        List<DmpOrderItemSplitEntity> items = new ArrayList<>();
         for (int i = 0; i < orderItems.size(); i++) {
             OrderItemEntity orderItemBean = orderItems.get(i);
-            DmpOrderItemEntity dmpOrderItemEntity = new DmpOrderItemEntity();
-            BeanUtil.copyProperties(orderItemBean, dmpOrderItemEntity);
+            DmpOrderItemSplitEntity dmpOrderItemSplitEntity = new DmpOrderItemSplitEntity();
+            BeanUtil.copyProperties(orderItemBean, dmpOrderItemSplitEntity);
             //商品名称
-            dmpOrderItemEntity.setItemName(orderItemBean.getTitle());;
+            dmpOrderItemSplitEntity.setItemName(orderItemBean.getTitle());;
             //sku
             String skuNo = orderItemBean.getStockSku();
-            dmpOrderItemEntity.setSkuNo(skuNo);
+            dmpOrderItemSplitEntity.setSkuNo(skuNo);
             //erp平台商品id
             String erpOrderItemId = orderEntity.getPlatformOrderId() + "_" + orderItemBean.getStockSku();
             erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap,skuNo,erpOrderItemId);
-            dmpOrderItemEntity.setErpOrderItemId(erpOrderItemId);
+            dmpOrderItemSplitEntity.setErpOrderItemId(erpOrderItemId);
             //汇率
-            dmpOrderItemEntity.setCurrencyRate(BigDecimal.ONE);
+            dmpOrderItemSplitEntity.setCurrencyRate(BigDecimal.ONE);
             if (orderEntity.getCurrencyRate() != null
                     && BigDecimal.ZERO.compareTo(orderEntity.getCurrencyRate()) < 0) {
-                dmpOrderItemEntity.setCurrencyRate(orderEntity.getCurrencyRate());
+                dmpOrderItemSplitEntity.setCurrencyRate(orderEntity.getCurrencyRate());
             }
-            BigDecimal sellPriceOrigin = ObjectUtil.isNotEmpty(dmpOrderItemEntity.getSellPriceOrigin()) ? dmpOrderItemEntity.getSellPriceOrigin() : BigDecimal.ZERO;
-            Integer quantity = null != dmpOrderItemEntity.getQuantity() ? dmpOrderItemEntity.getQuantity() : 0;
+            BigDecimal sellPriceOrigin = ObjectUtil.isNotEmpty(dmpOrderItemSplitEntity.getSellPriceOrigin()) ? dmpOrderItemSplitEntity.getSellPriceOrigin() : BigDecimal.ZERO;
+            Integer quantity = null != dmpOrderItemSplitEntity.getQuantity() ? dmpOrderItemSplitEntity.getQuantity() : 0;
             BigDecimal amountAfter = sellPriceOrigin.multiply(new BigDecimal(quantity));
             // 运费分摊
             // 最后一笔订单 分摊剩余运费
@@ -344,9 +344,9 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
                 fee = shippingFee.multiply(amountAfter).divide(itemTotal, 4, RoundingMode.HALF_DOWN);
                 shareFeeAmount = shareFeeAmount.add(fee);
             }
-            dmpOrderItemEntity.setShippingFee(fee);
-            dmpOrderItemEntity.setAmountAfter(amountAfter.add(fee));
-            items.add(dmpOrderItemEntity);
+            dmpOrderItemSplitEntity.setShippingFee(fee);
+            dmpOrderItemSplitEntity.setAmountAfter(amountAfter.add(fee));
+            items.add(dmpOrderItemSplitEntity);
         }
         return items;
     }

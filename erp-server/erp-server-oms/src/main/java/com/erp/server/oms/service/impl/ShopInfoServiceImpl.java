@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
@@ -13,6 +14,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -33,10 +35,12 @@ import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.DictBasicValueEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.DictValueEnum;
+import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.LogisticsBillCostFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.convert.ShopInfoConverter;
 import com.erp.server.oms.mapper.ShopInfoMapper;
@@ -112,7 +116,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     private ShopAuthService shopAuthService;
 
     @Resource
-    private CustomerB2cService customerB2cService;
+    private LogisticsBillCostFeign logisticsBillCostFeign;
 
     @Resource
     private CustomerInfoService customerInfoService;
@@ -123,8 +127,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Resource
     private ShopeeMerchantService shopeeMerchantService;
 
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private ShopSysUserAuthService shopSysUserAuthService;
@@ -460,6 +462,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (Objects.isNull(shopInfo)) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
+        //旧负责人
+        String oldChargeId = shopInfo.getChargeId();
         shopInfo.setName(dto.getName());
         String salesOrgId = dto.getSalesOrgId();
         //负责人
@@ -497,6 +501,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         Boolean result = this.updateById(shopInfo);
         if (!result) {
             throw new ServiceException("更新失败");
+        }
+
+        //负责人变更则更新物流单店铺负责人
+        if (!StrUtil.equals(oldChargeId,dto.getChargeId())) {
+            logisticsBillCostFeign.updateShopCharge(new LogisticsBillCostDTO.UpdateShopChargeDTO(shopInfo.getId(),dto.getChargeId()));
         }
         return shopInfo;
     }
@@ -759,7 +768,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Override
     public List<ShopInfoEntity> listAuth(ShopDTO.PlatformDTO platformDTO) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
         if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
             return Collections.EMPTY_LIST;
@@ -1095,7 +1104,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     public List<ShopSysUserAuthDTO.ViewShopDTO> listShopByAmazonAuth() {
         ShopSysUserAuthDTO.UserAuthShopParamDTO dto = new ShopSysUserAuthDTO.UserAuthShopParamDTO();
         dto.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
-        dto.setUserId(commonService.getUserInfo().getUid());
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
         return shopSysUserAuthService.listUserAuthShop(dto);
     }
 
