@@ -347,6 +347,11 @@ public class RequisitionApplicationController extends BaseController {
      * @Author Luo_WG
      **/
     @PostMapping("/bindShipment")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:requisitionApplication:bindShipment",
+            serviceClass = RequisitionApplicationService.class,
+            keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> bindShipment(@RequestBody @Validated List<RequisitionApplicationDTO.BindShipment> dto) {
         List<BatchResultDTO> resultDTOS = requisitionApplicationService.bindShipment(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
