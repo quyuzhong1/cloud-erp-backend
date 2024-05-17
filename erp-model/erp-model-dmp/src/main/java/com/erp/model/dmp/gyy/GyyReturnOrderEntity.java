@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
 public class GyyReturnOrderEntity extends CleanBaseDTO {
     /**
      * code : RGO315677282722
@@ -328,6 +327,16 @@ public class GyyReturnOrderEntity extends CleanBaseDTO {
     private List<?> refundCodes;
     @SerializedName("stock_location")
     private List<?> stockLocation;
+
+    /**
+     * 是否无效 false：无效  true：有效
+     */
+    private Boolean isValid;
+
+    public GyyReturnOrderEntity() {
+        this.isValid = Boolean.TRUE;
+    }
+
     @Override
     public String toString() {
         return "GyyReturnOrderEntity{" +

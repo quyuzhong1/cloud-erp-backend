@@ -10,7 +10,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
 public class GyyOrderEntity extends CleanBaseDTO {
 
     /**
@@ -540,6 +539,16 @@ public class GyyOrderEntity extends CleanBaseDTO {
      * api编码，订单来源于历史订单还是当前订单接口区分
      */
     private String apiCode;
+
+    /**
+     * 是否无效 false：无效  true：有效
+     */
+    private Boolean isValid;
+
+    public GyyOrderEntity() {
+        this.isValid = Boolean.TRUE;
+    }
+
     @Override
     public String toString() {
         return "GyyOrderEntity{" +

@@ -10,7 +10,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
 public class KingdeeOrderEntity  extends CleanBaseDTO {
 
     private String _id;
@@ -261,9 +260,18 @@ public class KingdeeOrderEntity  extends CleanBaseDTO {
     private String fSettleCurrId;
 
     /**
+     * 是否无效 false：无效  true：有效
+     */
+    private Boolean isValid;
+
+    /**
      * 商品信息
      */
     private List<KingdeeOrderItemEntity> orderItemEntityList;
+
+    public KingdeeOrderEntity() {
+        this.isValid = Boolean.TRUE;
+    }
 
     @Override
     public String toString() {

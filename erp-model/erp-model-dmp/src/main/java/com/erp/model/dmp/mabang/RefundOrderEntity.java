@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
 public class RefundOrderEntity extends CleanBaseDTO {
     /**
      * 唯一编号 示例：544786
@@ -184,6 +183,11 @@ public class RefundOrderEntity extends CleanBaseDTO {
      */
     private String trackNumber;
     private List<RefundOrderItemEntity> productList;
+
+    /**
+     * 是否无效 false：无效  true：有效
+     */
+    private Boolean isValid;
 
 
     @Override

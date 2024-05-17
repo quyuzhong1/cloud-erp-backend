@@ -10,7 +10,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
 public class ReturnOrderEntity extends CleanBaseDTO {
 
     private String _id;
@@ -150,6 +149,15 @@ public class ReturnOrderEntity extends CleanBaseDTO {
 
     @SerializedName("item")
     private List<ReturnOrderItemEntity> item;
+
+    /**
+     * 是否无效 false：无效  true：有效
+     */
+    private Boolean isValid;
+
+    public ReturnOrderEntity() {
+        this.isValid = Boolean.TRUE;
+    }
 
     @Override
     public String toString() {
