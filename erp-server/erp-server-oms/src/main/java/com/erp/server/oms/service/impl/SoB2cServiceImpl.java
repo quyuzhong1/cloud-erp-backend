@@ -6273,7 +6273,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 //速卖通分仓发货，可能有多个发货单，根据仓库分组生成数据
                 Map<String, List<ErpFulfillmentForwardDtoBean>> eroBeanMap = erpFulfillmentForwardDto.stream().collect(Collectors.groupingBy(ErpFulfillmentForwardDtoBean::getWarehouseName));
-                eroBeanMap.forEach((key, val) -> {
+
+                for (Map.Entry<String, List<ErpFulfillmentForwardDtoBean>> entry : eroBeanMap.entrySet()) {
+                    String key = entry.getKey();
+                    List<ErpFulfillmentForwardDtoBean> val = entry.getValue();
                     //校验仓库是否匹配到
                     WarehouseMappingDTO.MappingViewDTO mappingViewDTO = mappingViewDTOS.stream().filter(req -> key.equals(req.getThirdWarehouseName())).findFirst().orElse(null);
                     if (Objects.isNull(mappingViewDTO)) {
@@ -6285,7 +6288,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         detailList.addAll(aliExpressDliveryOrderService.getDeliveryDetail(aliExpressCfgClientMap, fulfillmentOrderNo));
                     }
                     if (CollectionUtils.isEmpty(detailList)) {
-                        return;
+                        throw new ServiceException(StrUtil.format("速卖通【{}】发货明细为空", fulfillmentOrderNoList));
                     }
                     //校验sku
                     List<String> platformSkuIdList = detailList.stream().map(AliExpressDeliveryDetail::getPlatformSkuId).distinct().collect(Collectors.toList());
@@ -6326,8 +6329,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         soB2cDetailService.updateWarehouseByMapping(mappingViewDTO, entity.getId(),skuIds);
                         //生成速卖通发货单
                         addAliExpressDelivery(logisticsEntity, val.get(0), entity, platformDeliveryDetailDTOList);
+                    }else{
+                        return false;
                     }
-                });
+                }
             }
             return Boolean.TRUE;
 

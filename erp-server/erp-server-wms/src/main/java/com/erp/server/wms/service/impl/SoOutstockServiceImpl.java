@@ -2518,8 +2518,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         Boolean flag = Boolean.TRUE;
 
         //速卖通异常订单重新生成需要查询速卖通平台发货单获取仓库
-        if (Objects.nonNull(soB2c) && PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getDictPlatform())) {
-            flag = soB2cFeign.updateAliExpressOrderWarehouse(soB2c.getId(), soB2c.getShopId());
+        if (currentEntity.hasPlatformWarehouseOrder() && PlatformDictEnum.ALI_EXPRESS.getCode().equals(currentEntity.getDictPlatform())) {
+            flag = soB2cFeign.updateAliExpressOrderWarehouse(currentEntity.getId(), currentEntity.getShopId());
         }
 
         Boolean result = false;
@@ -2534,7 +2534,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         } else {
             //速卖通平台仓订单的销售出库在处理类生成
-            if (Objects.nonNull(soB2c) && PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getDictPlatform())) {
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(currentEntity.getDictPlatform())) {
                 result = flag;
             }else{
                 result = this.generateB2cSoOutstock(id);
