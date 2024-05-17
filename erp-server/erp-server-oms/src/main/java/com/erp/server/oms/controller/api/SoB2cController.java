@@ -578,7 +578,7 @@ public class SoB2cController extends BaseController {
                 result = soB2cService.saveSoB2cDistribution(id, dto);
                 //申报信息匹配
                 if (result.getSuccess()){
-                    soB2cService.declareRule(id, new HashMap<>(), Boolean.FALSE);
+                    soB2cService.declareRule(id, new HashMap<>(), Boolean.TRUE);
                 }
             } catch (Exception e) {
                 log.error("B2C销售订单配货失败", e);
