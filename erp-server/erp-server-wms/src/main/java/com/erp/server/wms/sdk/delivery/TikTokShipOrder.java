@@ -78,7 +78,7 @@ public class TikTokShipOrder implements IPlatformService {
             paramDTO.setShippingProviderId(tmsScaleChannelShipDTO.getCode());
             ShipOrderUS shipOrderUS = tikTokSdkClientService.sendTikTokShipOrderUS(tikTokShopInfoDTO, view.getPlatformCode(), paramDTO);
             if (shipOrderUS.getCode() != 0) {
-                throw new ServiceException("TikTok标记发货失败");
+                throw new ServiceException(shipOrderUS.getMessage());
             }
         } else {
             ShipOrderOtherParam paramDTO = new ShipOrderOtherParam();
