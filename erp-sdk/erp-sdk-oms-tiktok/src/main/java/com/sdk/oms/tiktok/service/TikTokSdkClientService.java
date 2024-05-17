@@ -26,6 +26,9 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.sdk.oms.tiktok.constant.TikTokConstant;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
 import com.sdk.oms.tiktok.dto.tiktok.channel.delivery.DeliveryOptionsBean;
@@ -999,15 +1002,13 @@ public class TikTokSdkClientService {
         headerMap.put("x-tts-access-token", tikTokShopInfoDTO.getAccessToken());
         headerMap.put("content-type", "application/json");
 
-
-        Map<String, Object> bodyMap = new HashMap<>();
-        bodyMap.put("tracking_number" , paramDTO.getTrackingNumber());
-        bodyMap.put("shipping_provider_id" , paramDTO.getShippingProviderId());
-        bodyMap.put("order_line_item_ids" , paramDTO.getOrderLineItemIds());
-
+        Gson gson = new GsonBuilder()
+                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+                .create();
+        String bodyJson = gson.toJson(paramDTO);
 
         //组装入参排序计算签名字符串
-        String input = EncryptionUtils.urlParamsSort(params, path, headerMap, clientSecret, JSONUtil.toJsonStr(bodyMap));
+        String input = EncryptionUtils.urlParamsSort(params, path, headerMap, clientSecret, bodyJson);
 
         // 追加请求路径获取签名
         String sign = EncryptionUtils.generateSHA256(input, clientSecret);
@@ -1027,7 +1028,7 @@ public class TikTokSdkClientService {
         sb.append("&version=" + TikTokConstant.VERSION + "");
 
         //拉取数据
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(bodyMap), null, headerMap, RequestMethod.POST);
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), bodyJson, null, headerMap, RequestMethod.POST);
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
             log.error("调用url={},入参params={}, TikTok订单发货（美国站）失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok订单发货（美国站）失败，返回值 responseMap={}",
@@ -1071,8 +1072,13 @@ public class TikTokSdkClientService {
         headerMap.put("x-tts-access-token", tikTokShopInfoDTO.getAccessToken());
         headerMap.put("content-type", "application/json");
 
+        Gson gson = new GsonBuilder()
+                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+                .create();
+        String bodyJson = gson.toJson(paramDTO);
+
         //组装入参排序计算签名字符串
-        String input = EncryptionUtils.urlParamsSort(params, path, headerMap, clientSecret, JSONUtil.toJsonStr(paramDTO));
+        String input = EncryptionUtils.urlParamsSort(params, path, headerMap, clientSecret, bodyJson);
 
         // 追加请求路径获取签名
         String sign = EncryptionUtils.generateSHA256(input, clientSecret);
@@ -1092,7 +1098,7 @@ public class TikTokSdkClientService {
         sb.append("&version=" + TikTokConstant.VERSION + "");
 
         //拉取数据
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(paramDTO), null, headerMap, RequestMethod.POST);
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), bodyJson, null, headerMap, RequestMethod.POST);
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
             log.error("调用url={},入参params={}, TikTok订单发货（其他站点）失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok订单发货（非美国站点）失败，返回值 responseMap={}",
