@@ -79,7 +79,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
 
     @Override
     public Boolean update(LogisticsBillCostDTO.UpdateDTO dto, Boolean isImport) {
-       return logisticsBillCostService.update(dto,Boolean.FALSE);
+       return logisticsBillCostService.update(dto,isImport);
     }
 
     @Override

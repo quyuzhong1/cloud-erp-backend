@@ -1,22 +1,20 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.UserTypeEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
-import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.dto.SupplierRefUserDTO;
 import com.erp.model.scm.dto.excel.SupplierUserImportExcelDTO;
@@ -39,8 +37,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -77,8 +73,6 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     private SupplierRefUserService supplierRefUserService;
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
-    @Resource
-    private CommonService commonService;
 
     /**
      * 分页查询 协同用户只展示 供应商超级管理员
@@ -113,7 +107,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         }
         String uid = userInfoFeign.addSrmUser(sysUserInfoDTO);
         // 操作日志
-        String msg = StrUtil.format("供应商协同用户【{}】新增【{}】id为【{}】", commonService.getUserInfo().getUserName(), "", uid);
+        String msg = StrUtil.format("供应商协同用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "", uid);
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUPPLIER_REF_USER.getCode(), uid, "新增操作");
         //增加用户和供应商关系
         SupplierRefUserDTO.AddDTO addDTO = new SupplierRefUserDTO.AddDTO();
@@ -148,7 +142,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         supplierRefUserService.saveOrUpdate(refUserEntity);
         // 记录主单操作日志
         log.info("编辑 开始记录日志数据，id：【{}】", sysUserInfoDTO.getRefId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), refUserEntity.getId(), "");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), refUserEntity.getId(), "");
         moduleOperateLogService.addModuleOperateLogByObj(old, refUserEntity, ModuleTypeEnum.SUPPLIER_REF_USER.getCode(), refUserEntity.getId(), "", msg);
     }
 

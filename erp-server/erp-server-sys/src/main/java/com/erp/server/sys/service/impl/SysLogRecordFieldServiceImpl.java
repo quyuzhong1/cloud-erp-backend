@@ -7,15 +7,12 @@ import com.erp.model.sys.dto.SysLogRecordFieldDTO;
 import com.erp.model.sys.dto.SysLogRecordFieldListDTO;
 import com.erp.model.sys.entity.SysLogRecordFieldEntity;
 import com.erp.server.sys.mapper.SysLogRecordFieldMapper;
-import com.erp.server.sys.service.CommonService;
 import com.erp.server.sys.service.SysLogRecordFieldService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import javax.annotation.Resource;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;

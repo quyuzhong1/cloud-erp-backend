@@ -17,8 +17,8 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BaseStatusEnum;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.RedisService;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -301,7 +301,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userId = loginUser.getUid();
         TaskPagingDTO params = dto.getParams();
         Integer taskFlag = params.getTaskFlag();
@@ -536,7 +536,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //验证表单数据
         checkFieldConfig(dto);
         List<TaskChargeDistributionDTO> approvalList = dto.getApprovalList();
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
         ProjectPhaseEntity phaseEntity = projectPhaseService.getById(dto.getPhaseId());
@@ -708,7 +708,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
 
 //        String scheduleStatus = entity.getScheduleStatus();
 //        if (BaseStatusEnum.AUDIT_PASS.getStatus().equals(scheduleStatus)) {
@@ -717,14 +717,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 //            }
 //        }
         //如果是删除固定任务，需要数据权限
-        Integer IsFixed = entity.getIsFixed();
-        if (IsConstant.YES.equals(IsFixed)) {
-            //获取固定任务按钮权限
-            Boolean userDatePermissionByMenuCode = sysUserFeign.getUserDatePermissionByMenuCode(PLM_TASK_REMOVETASK_FIXED);
-            if (!userDatePermissionByMenuCode) {
-                throw new ServiceException(ApiError.NO_PERMISSION);
-            }
-        }
+        getFixedUpdateOrRemovePermission(entity.getIsFixed(),PLM_TASK_REMOVETASK_FIXED);
         //检查是否是子任务
         checkTaskIfExistPid(taskId);
         Boolean flag = this.removeById(entity);
@@ -1055,15 +1048,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
-        //如果是删除固定任务，需要数据权限
-        Integer IsFixed = taskEntity.getIsFixed();
-        if (IsConstant.YES.equals(IsFixed)) {
-            //获取固定任务按钮权限
-            Boolean userDatePermissionByMenuCode = sysUserFeign.getUserDatePermissionByMenuCode(PLM_TASK_UPDATE_FIXED);
-            if (!userDatePermissionByMenuCode) {
-                throw new ServiceException(ApiError.NO_PERMISSION);
-            }
-        }
+        //如果是修改固定任务，需要数据权限
+        getFixedUpdateOrRemovePermission(taskEntity.getIsFixed(),PLM_TASK_UPDATE_FIXED);
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
         //sku不关联
         String notRelated = RelatedSkuTypeEnum.NOT_RELATED.getCode();
@@ -1118,7 +1104,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         taskEntity.setBusinessProcessId(parameterBusinessProcessId);
         taskEntity.setProcessId(processId);
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         ProjectPhaseEntity phaseEntity = projectPhaseService.getById(dto.getPhaseId());
         String phaseName = "";
         if (phaseEntity != null) {
@@ -1209,6 +1195,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return flag;
     }
 
+    private void getFixedUpdateOrRemovePermission(Integer IsFixed,String menuPermission) {
+        if (IsConstant.YES.equals(IsFixed)) {
+            //获取固定任务按钮权限
+            Boolean userDatePermissionByMenuCode = sysUserFeign.getUserDatePermissionByMenuCode(menuPermission);
+            if (!userDatePermissionByMenuCode) {
+                throw new ServiceException(ApiError.NO_PERMISSION);
+            }
+        }
+    }
+
 
     /**
      * 根据产品id 获取任务数量信息
@@ -1263,7 +1259,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         ProjectTaskEntity oldEntity = new ProjectTaskEntity();
         BeanMapperUtils.copy(taskEntity, oldEntity);
 
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         //任务名
         String name = dto.getName();
         //固定任务不能修改名称
@@ -1783,7 +1779,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     @Override
     public PagingVO<List<TaskPagingShowDTO>> expertPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userId = loginUser.getUid();
         TaskSearchParamDTO params = searchParamDTO.getParams();
         params.setPermissionSql(searchParamDTO.getPermissionSql());
@@ -1941,7 +1937,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public PagingVO<List<TaskPagingShowDTO>> assignToMePaging(PagingDTO<TaskSearchParamDTO> searchParamDTO) {
         searchParamDTO.getParams().setPermissionSql(searchParamDTO.getPermissionSql());
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userId = loginUser.getUid();
         TaskSearchParamDTO params = searchParamDTO.getParams();
         params.setPermissionSql(searchParamDTO.getPermissionSql());
@@ -2102,7 +2098,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public PagingVO<List<TaskPagingShowDTO>> assignToMeWaitAuditPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO) {
         searchParamDTO.getParams().setPermissionSql("");
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userId = loginUser.getUid();
         TaskSearchParamDTO params = searchParamDTO.getParams();
         params.setPermissionSql(searchParamDTO.getPermissionSql());
@@ -2259,7 +2255,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     @Override
     public List<ProductTaskCategoryCountDTO> listProductTaskCategoryCount(TaskPagingDTO params) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userId = loginUser.getUid();
         String productId = params.getProductId();
         String param = params.getPermissionSql();
@@ -2306,7 +2302,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public void flyingBookReminder(FlyingBookReminderDTO dto) {
         //飞书提醒
         noticeMessageService.flyingBookReminder(dto);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         //操作日志
         List<String> taskIds = dto.getTaskIds();
         List<SysLogEntity> logList = new ArrayList<>();
@@ -2578,7 +2574,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //待发布
         Integer releasedCode = TaskStateEnum.TO_BE_RELEASED.getCode();
         List<ProjectTaskEntity> releasedTaskList = taskList.stream().filter(f -> f.getStatus().equals(releasedCode)).collect(Collectors.toList());
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         for (ProjectTaskEntity task : releasedTaskList) {
             Integer taskType = task.getType();
             List<String> chargeIdList = new ArrayList<>();
@@ -2665,7 +2661,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public PagingVO<List<TaskPagingShowDTO>> myCreatePaging(PagingDTO<TaskSearchParamDTO> searchParamDTO) {
         searchParamDTO.getParams().setPermissionSql(searchParamDTO.getPermissionSql());
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userId = loginUser.getUid();
         TaskSearchParamDTO params = searchParamDTO.getParams();
         Page query = new Page(searchParamDTO.getCurrPage(), searchParamDTO.getPageSize());
@@ -2889,7 +2885,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         boolean deleteTaskShow = true;
         Integer IsFixed = taskEntity.getIsFixed();
-        LoginUser userInfo = CommonInterceptor.threadLocal.get();
+        LoginUser userInfo = UserContext.getLoginUser();
 
 //        //如果是固定任务
 //        if (IsConstant.YES.equals(IsFixed)) {
@@ -3325,7 +3321,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean startTask(OperateBaseTaskDTO dto) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         List<String> taskIds = dto.getTaskIdList();
         //获取所有的任务列表
         List<ProjectTaskEntity> list = getByTaskIds(taskIds);
@@ -3374,7 +3370,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean publishTask(OperateBaseTaskDTO dto) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         List<String> taskIds = dto.getTaskIdList();
         //待发布
         Integer releasedCode = TaskStateEnum.TO_BE_RELEASED.getCode();
@@ -3548,7 +3544,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public Boolean cancelPublishTask(OperateBaseTaskDTO dto) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         List<String> taskIds = dto.getTaskIdList();
         //待开始
         Integer notStartCode = TaskStateEnum.NOT_START.getCode();
@@ -3610,7 +3606,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional
     public Boolean closeTask(OperateBaseTaskDTO dto) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         List<String> taskIds = dto.getTaskIdList();
         //进行中
         Integer ingCode = TaskStateEnum.ING.getCode();
@@ -3650,7 +3646,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean finishTask(OperateBaseTaskDTO dto) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         List<String> taskIds = dto.getTaskIdList();
         //获取所有的任务列表
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
@@ -3913,7 +3909,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
         }
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userId = loginUser.getUid();
         List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
         //这是用户的流程id
@@ -4006,7 +4002,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional
     public Boolean approvalReject(TaskOperateDTO dto) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
 
         List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(loginUser.getUid());
         //这是用户的流程id
@@ -4094,7 +4090,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (CollectionUtils.isEmpty(taskList)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
-        String userName = commonService.getUserInfo().getUserName();
+        String userName = UserContext.getDefaultLoginUser().getUserName();
         Integer waitConfirm = TaskStateEnum.WAIT_CONFIRM.getCode();
         Integer approvalIng = TaskStateEnum.APPROVAL_ING.getCode();
         List<Integer> statusList = new ArrayList<>(2);
@@ -4356,7 +4352,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public void approvalTaskPass(String processId) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userName = loginUser.getUserName();
         if (StringUtils.isBlank(userName)) {
             userName = "system";
@@ -5065,10 +5061,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (CollectionUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
 
         for (ProjectTaskEntity req : entity) {
-
+            //如果是删除固定任务，需要数据权限
+            getFixedUpdateOrRemovePermission(req.getIsFixed(),PLM_TASK_REMOVETASK_FIXED);
 //            if (BaseStatusEnum.AUDIT_PASS.getStatus().equals(req.getScheduleStatus())) {
 //                if (!"admin".equals(loginUser.getUserAccount())) {
 //                    throw new ServiceException(ApiError.ERROR_95137);

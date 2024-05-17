@@ -1,6 +1,5 @@
 package com.erp.server.srm.service;
 
-import com.common.business.vo.LoginUser;
 import com.erp.model.scm.entity.SupplierEntity;
 
 /**
@@ -12,14 +11,6 @@ import com.erp.model.scm.entity.SupplierEntity;
  */
 public interface CommonService {
 
-    /**
-     * 获取用户信息
-     * @author yl
-     * @date 2023-03-15 11:58
-     * @param
-     * @return com.common.business.vo.LoginUser
-     */
-    public LoginUser getUserInfo();
 
     SupplierEntity getSupplierEntity();
 }

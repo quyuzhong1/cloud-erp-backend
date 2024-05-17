@@ -41,8 +41,6 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
-    private CommonService commonService;
-    @Autowired
     private WarehouseService warehouseService;
 
     @Resource

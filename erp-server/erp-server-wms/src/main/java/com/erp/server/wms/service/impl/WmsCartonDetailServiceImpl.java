@@ -41,10 +41,6 @@ import java.util.List;
 @Service
 public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetailMapper, WmsCartonDetailEntity> implements WmsCartonDetailService {
     @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
-    @Autowired
     private WmsCartonBillService wmsCartonBillService;
 
     @GlobalTransactional(rollbackFor = Exception.class)

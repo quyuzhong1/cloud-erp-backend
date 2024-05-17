@@ -6,32 +6,28 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.controller.vo.ApiResult;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MathUtil;
 import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
 import com.erp.model.tms.dto.SaleChannelDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.model.tms.vo.request.ChanelQueryVO;
-import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.mapper.LogisticsSaleChannelMapper;
-import com.erp.server.tms.service.CommonService;
 import com.erp.server.tms.service.LogisticsSaleChannelService;
-import com.erp.server.tms.service.LogisticsService;
 import com.erp.server.tms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * <p>
@@ -46,8 +42,6 @@ import java.util.*;
 public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsSaleChannelMapper, LogisticsSaleChannelEntity> implements LogisticsSaleChannelService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
 
@@ -73,7 +67,7 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "销售平台物流渠道单" , logisticsSaleChannelEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "销售平台物流渠道单" , logisticsSaleChannelEntity.getCode());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, logisticsSaleChannelEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -102,7 +96,7 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
 
         // 记录主单操作日志
             log.info("编辑 开始记录销售平台物流渠道单日志数据，单号：【{}】", logisticsSaleChannelEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsSaleChannelEntity.getCode(), "销售平台物流渠道单");
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsSaleChannelEntity.getCode(), "销售平台物流渠道单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, logisticsSaleChannelEntity, null, logisticsSaleChannelEntity.getId(), msg);
         return Boolean.TRUE;

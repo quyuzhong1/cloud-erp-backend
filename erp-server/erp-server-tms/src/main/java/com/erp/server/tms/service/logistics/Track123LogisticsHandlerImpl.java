@@ -14,6 +14,7 @@ import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.tms.dto.LogisticsTrackBaseDTO;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
+import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.LogisticsRegisterVO;
@@ -222,13 +223,13 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     private String convertOceanTrackStatus(String eventStatus) {
         if (StringUtils.isBlank(eventStatus)) {
-            return LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode();
+            return FmLogisticTrackStatusEnum.TRACK_ING.getCode();
         } else if (eventStatus.contains("ARRI")) {
-            return LogisticTrackStatusEnum.OCEAN_ARRIVE.getCode();
+            return FmLogisticTrackStatusEnum.ARRIVED.getCode();
         } else if (eventStatus.contains("HOLD")) {
-            return LogisticTrackStatusEnum.OCEAN_HOLD.getCode();
+            return FmLogisticTrackStatusEnum.INSPECTING.getCode();
         }
-        return LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode();
+        return FmLogisticTrackStatusEnum.TRACK_ING.getCode();
     }
 
     @Override

@@ -408,7 +408,7 @@ public enum ApiError implements Serializable {
     ERROR_MSG_ID_OR_UNION_ID_IS_NULL(95161, "消息ID或者用户绑定ID为空，发送加急信息失败"),
 
     ERROR_BUSINESS_NOT_EXIT(95162, "业务类型不存在，请检查"),
-    ERROR_95163(95163, "未找到选择的销售套装BOM信息"),
+    ERROR_95163(95163, "未找到选择的BOM信息"),
     ERROR_95164(95164, "不可新增相同EAN码"),
     ERROR_DOCS_NO(95165,"文档不存在"),
 	ERROR_95166(95166, "未找到BOM子件"),
@@ -1187,7 +1187,7 @@ public enum ApiError implements Serializable {
 
     SKU_MAPPING_INVENTORY_INSUFFICIENT(92135,"需要扣除的映射关系SKU【{}】可用库存不足"),
     SO_B2C_IS_MATCH_WAREHOUSE_RULE(92136,"仓库匹配规则更新失败"),
-    ERROR_SO_B2C_NOT_DISTRIBUTION_DECLARE(92137,"B2C销售订单【{}】只有待配货或配货中支持申报信息生成"),
+    ERROR_SO_B2C_NOT_DISTRIBUTION_DECLARE(92137,"B2C销售订单【{}】仅支持已审核-配货中的订单可操作"),
     ERROR_SO_B2C_HAS_DECLARE(92138,"B2C销售订单【{}】已存在申报信息不进行规则匹配"),
     ERROR_SO_B2C_DECLARE_NOT_EXIST(92139,"申报信息【{}】记录不存在"),
     ERROR_SO_B2C_ORDER_DECLARE_NOT_EXIST(92140,"销售订单【{}】申报信息不存在"),

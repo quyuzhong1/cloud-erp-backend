@@ -9,6 +9,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
@@ -85,7 +86,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         ruleConditionService.saveRuleCondition(cfgRuleOrderHandleEntity.getId(), conditionList);
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "订单处理规则单" , cfgRuleOrderHandleEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "订单处理规则单" , cfgRuleOrderHandleEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_RULE_ORDER_HANDLE.getCode(), cfgRuleOrderHandleEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(cfgRuleOrderHandleEntity.getId(), cfgRuleOrderHandleEntity.getId());
@@ -119,7 +120,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
 
         // 记录主单操作日志
         log.info("编辑 开始记录订单处理规则单日志数据，id：【{}】", cfgRuleOrderHandleEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), cfgRuleOrderHandleEntity.getId(), "订单处理规则单");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgRuleOrderHandleEntity.getId(), "订单处理规则单");
         operateLogService.addModuleOperateLogByObj(old, cfgRuleOrderHandleEntity, ModuleTypeEnum.CFG_RULE_ORDER_HANDLE.getCode(), cfgRuleOrderHandleEntity.getId(), msg);
         return Boolean.TRUE;
     }

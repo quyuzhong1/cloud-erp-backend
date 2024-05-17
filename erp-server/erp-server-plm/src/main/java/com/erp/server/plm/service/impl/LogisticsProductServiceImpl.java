@@ -3,7 +3,6 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -19,6 +18,7 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -46,11 +46,9 @@ import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.ProductRegistrationDTO;
-import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
-import com.erp.model.tms.enums.CfgSettingEnum;
+import com.erp.model.tms.enums.ProductRegistrationEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -74,7 +72,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -541,7 +538,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.PRODUCT_LOGISTICS.getCode());
-        revokeDTO.setUserId(commonService.getUserInfo().getUid());
+        revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.CANCEL_PROCESS);
     }
@@ -581,7 +578,11 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         //校验下推是否备案
         List<ProductRegistrationEntity> productRegistrationList = forecastFeign.listBySkuId(entity.getSkuId());
         if (CollectionUtils.isNotEmpty(productRegistrationList)) {
-            throw new ServiceException(StrUtil.format("已下推备案信息不支持反审核",entity.getSkuNo()));
+            long count = productRegistrationList.stream().filter(obj -> !StrUtil.equals(obj.getStatus(), ProductRegistrationEnum.StatusEnum.DRAFT.getCode())
+                    && !StrUtil.equals(obj.getStatus(), ProductRegistrationEnum.StatusEnum.CANCEL.getCode())).count();
+            if (count > 0) {
+                throw new ServiceException(StrUtil.format("已下推备案信息(非备案不通过、已取消)不支持反审核",entity.getSkuNo()));
+            }
         }
         // 更新审核信息
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -648,7 +649,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
      */
     public void updateForApprove(String id, String approveStatus) {
         //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         productLogisticsService.lambdaUpdate().eq(ProductLogisticsEntity::getId, id)
                 .set(ProductLogisticsEntity::getApproveUserId, userInfo.getUid())
                 .set(ProductLogisticsEntity::getApproveUserName, userInfo.getUserName())
@@ -668,7 +669,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         startDTO.setBusinessCode(entity.getCustomsCode());
         startDTO.setBusinessKey(SourceTypeEnum.PRODUCT_LOGISTICS.getCode());
         startDTO.setBusinessName(entity.getCustomsCode());
-        startDTO.setUserId(commonService.getUserInfo().getUid());
+        startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
@@ -682,7 +683,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
      * @param dto
      */
     private void approveProcess(ProductLogisticsEntity entity, ApproveOneDTO dto) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
         approveDTO.setBusinessKey(SourceTypeEnum.PRODUCT_LOGISTICS.getCode());

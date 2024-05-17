@@ -2,11 +2,14 @@ package com.erp.server.srm.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.srm.dto.DictBasicDTO;
 import com.erp.model.srm.dto.OrderAcceptDTO;
 import com.erp.model.srm.dto.ReturnConfirmDTO;
@@ -15,31 +18,20 @@ import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.srm.enums.DictBasicEnum;
 import com.erp.model.srm.vo.ConfigVO;
 import com.erp.model.srm.vo.SupplierConfigVO;
-import com.erp.model.wms.dto.CfgSettingValueDTO;
-import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.server.srm.convert.CfgSettingConfigConverter;
 import com.erp.server.srm.mapper.CfgSettingMapper;
 import com.erp.server.srm.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.mapstruct.Named;
-import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.srm.dto.CfgSettingDTO;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.annotation.Resource;
 
 /**
  * <p>
@@ -54,8 +46,6 @@ import javax.annotation.Resource;
 public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, CfgSettingEntity> implements CfgSettingService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
     @Resource
     private UserService userService;
     @Resource
@@ -75,7 +65,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 throw new ServiceException("系统配置管理保存失败");
             }
             // 操作日志
-            String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "系统配置管理", cfgSettingEntity.getId());
+            String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "系统配置管理", cfgSettingEntity.getId());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SRM_USER.getCode(), cfgSettingEntity.getId(), "新增操作");
         }
 
@@ -117,7 +107,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 }
                 // 记录主单操作日志
                 log.info("编辑 开始记录系统配置管理日志数据，id：【{}】", cfgSettingEntity.getId());
-                String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), cfgSettingEntity.getId(), "系统配置管理");
+                String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgSettingEntity.getId(), "系统配置管理");
                 operateLogService.addModuleOperateLogByObj(old, cfgSettingEntity, ModuleTypeEnum.SRM_USER.getCode(), cfgSettingEntity.getId(), msg);
             }
         }

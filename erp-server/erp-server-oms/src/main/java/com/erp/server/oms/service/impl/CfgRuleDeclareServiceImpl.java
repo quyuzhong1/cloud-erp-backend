@@ -7,11 +7,19 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
+import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.erp.model.oms.dto.CfgRuleDeclareDTO;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.CfgRuleDeclareEntity;
 import com.erp.model.oms.entity.RuleConditionEntity;
@@ -23,27 +31,19 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.mapper.CfgRuleDeclareMapper;
 import com.erp.server.oms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.CfgRuleDeclareDTO;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -94,7 +94,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         //保存规则条件
         ruleConditionService.saveRuleCondition(id, conditionList);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据名称为【{}】", commonService.getUserInfo().getUserName(), "申报规则单", entity.getName());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据名称为【{}】", UserContext.getDefaultLoginUser().getUserName(), "申报规则单", entity.getName());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.RULE_DECLARE.getCode(), id, "新增操作");
         return entity.getId();
     }
@@ -138,16 +138,13 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
                 .set(CfgRuleDeclareEntity::getToDeclarePriceType,entity.getToDeclarePriceType())
                 .set(CfgRuleDeclareEntity::getMinDeclarePrice,entity.getMinDeclarePrice())
                 .set(CfgRuleDeclareEntity::getMaxDeclarePrice,entity.getMaxDeclarePrice())
-                .set(CfgRuleDeclareEntity::getUpdateTime, LocalDate.now())
-                .set(CfgRuleDeclareEntity::getUpdateUserId,commonService.getUserInfo().getUid())
-                .set(CfgRuleDeclareEntity::getUpdateUserName,commonService.getUserInfo().getUserName())
-                .update();
+                .update(new CfgRuleDeclareEntity());
         if (!save) {
             throw new ServiceException("申报规则单保存失败");
         }
         ruleConditionService.updateRuleCondition(id, conditionList);
         // 记录主单操作日志
-        String msg = StrUtil.format("用户【{}】编辑名称为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), entity.getName(), "申报规则单");
+        String msg = StrUtil.format("用户【{}】编辑名称为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getName(), "申报规则单");
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.RULE_DECLARE.getCode(), entity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -255,7 +252,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
             });
         }
         if (CollectionUtils.isNotEmpty(updateLogPairList)) {
-            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】编辑销售订单申报信息",commonService.getUserInfo().getUserName())+"，【%s】", ModuleTypeEnum.SO_B2C_DECLARE.getCode(), updateLogPairList,"编辑操作");
+            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】编辑销售订单申报信息",UserContext.getDefaultLoginUser().getUserName())+"，【%s】", ModuleTypeEnum.SO_B2C_DECLARE.getCode(), updateLogPairList,"编辑操作");
         }
 
     }

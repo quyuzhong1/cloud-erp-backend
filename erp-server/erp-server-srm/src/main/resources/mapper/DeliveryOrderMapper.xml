@@ -102,7 +102,7 @@
         do2.id,
         do2.receipt_status AS receiptStatus,
         do2.is_print AS isPrint,
-        case when ( SELECT COUNT ( 1 ) FROM delivery_order_detail doe WHERE doe.main_id = do2.ID AND doe.delivery_qty != doe.receive_qty ) >0 then 1 else 0 end  AS qtyDifferences,
+        case when ( SELECT COUNT ( 1 ) FROM delivery_order_detail doe WHERE doe.main_id = do2.ID AND doe.delivery_qty != doe.receive_qty and doe.is_deleted = false ) >0 then 1 else 0 end  AS qtyDifferences,
         COUNT ( 1 )   AS COUNT
         FROM
         delivery_order do2
