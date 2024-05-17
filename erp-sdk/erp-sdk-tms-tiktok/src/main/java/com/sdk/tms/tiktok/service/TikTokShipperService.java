@@ -1,7 +1,9 @@
 package com.sdk.tms.tiktok.service;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.utils.CollectionUtils;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.HttpCommonUtil;
 import com.sdk.oms.tiktok.constant.TikTokConstant;
@@ -81,6 +83,9 @@ public class TikTokShipperService {
         for (WarehousesBean warehouse : warehousesDTO.getData().getWarehouses()) {
             //根据平台仓库id查询发货选项
             DeliveryOptionsDTO deliveryOptionsDTO = this.sendTikTokDeliveryOptions(tikTokShopInfoDTO, warehouse.getId());
+            if (CollectionUtil.isEmpty(deliveryOptionsDTO.getData().getDeliveryOptions())) {
+                continue;
+            }
             for (DeliveryOptionsBean deliveryOption : deliveryOptionsDTO.getData().getDeliveryOptions()) {
                 //根据发货选项查询物流渠道
                 ShippingProviderDTO shippingProviderDTO = this.sendTikTokShippingProviders(tikTokShopInfoDTO, deliveryOption.getId());
