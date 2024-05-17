@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-@NoArgsConstructor
 public class KingdeeRefundOrderEntity extends CleanBaseDTO {
 
     private String _id;
