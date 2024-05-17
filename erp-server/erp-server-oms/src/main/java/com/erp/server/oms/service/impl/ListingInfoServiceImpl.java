@@ -31,6 +31,9 @@ import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SkuMappingService;
 import com.erp.server.oms.service.*;
+import com.erp.server.oms.service.ListingInfoService;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.SkuMappingService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -70,8 +73,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     private ListingInfoServiceImpl service;
     @Resource
     private OperateLogService operateLogService;
-    @Resource
-    private CommonService commonService;
+
     @Autowired
     private ShopInfoService shopInfoService;
 
