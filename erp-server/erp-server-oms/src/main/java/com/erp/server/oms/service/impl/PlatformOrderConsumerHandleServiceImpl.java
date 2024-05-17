@@ -4,7 +4,6 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.exception.ServiceException;
@@ -144,6 +143,13 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         //平台取消订单后自动取消预报
         if(Objects.nonNull(mainEntity.getIsCancel()) && mainEntity.getIsCancel()){
             soB2cService.autoCancelOrderForecast(mainEntity);
+        }
+
+        // 非平台
+        if (!mainEntity.hasPlatformWarehouseOrder()
+                && resultDTO.isUpdateCancel()
+                && SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())){
+            soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
         }
     }
 

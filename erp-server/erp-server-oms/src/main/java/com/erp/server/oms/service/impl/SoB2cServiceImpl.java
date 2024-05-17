@@ -5061,7 +5061,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public SoB2cDTO.PullOrderResultDTO saveOrUpdateEntity(PlatformOrderDTO dto, ShopInfoEntity shopInfo) {
         SoB2cDTO.PullOrderResultDTO resultDTO = new SoB2cDTO.PullOrderResultDTO();
         if (dto.getInvalidStatus()) {
-            dto.setRemark("平台作废");
+            dto.setRemark("平台取消");
         }
         // 平台来源币种为空取默认币种
         if (StringUtils.isBlank(dto.getCurrency())){
@@ -5108,6 +5108,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             resultDTO.setNewInsertOrder(true);
             return resultDTO;
         } else {
+            // 是否是状态变更为取消状态：是=从非取消变更为取消
+            resultDTO.setUpdateCancel(!oldEntity.getIsCancel() && null != dto.getIsCancel() && dto.getIsCancel());
             // 历史异常记录修复
             if (StringUtils.isBlank(oldEntity.getCode()) && !BusinessCommonConstants.hasProfile("prod")) {
                 String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
@@ -5187,7 +5189,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ){
                 // 查询是否是本平台发货
                 dto.setInvalidStatus(false);
-                dto.setInvalidRemark("平台作废");
+                dto.setInvalidRemark("平台取消");
             }
 
             // 只替换更新信息

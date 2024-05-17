@@ -254,9 +254,10 @@ public class AmazonShipOrder implements IPlatformService {
     @Override
     public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
         Boolean isCancel = dto.getOldIsCancel();
-        if (!dto.getOldIsCancel()){
-            isCancel = queryAndUpdateOrderStatus(dto);
-        }
+        // 取消实时查询，调整到打印拣货单批量查询
+//        if (!dto.getOldIsCancel()){
+//            isCancel = queryAndUpdateOrderStatus(dto);
+//        }
 
         if (isCancel) {
             //订单拦截
