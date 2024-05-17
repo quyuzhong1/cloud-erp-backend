@@ -140,7 +140,7 @@ public class LogisticsBillDTO implements Serializable {
         /**
          * 发货类型 http://172.16.100.11:3002/project/128/interface/api/25522 key=shipmentType
          */
-        private String shipmentTypeList;
+        private List<String> shipmentTypeList;
     }
 
     /**
