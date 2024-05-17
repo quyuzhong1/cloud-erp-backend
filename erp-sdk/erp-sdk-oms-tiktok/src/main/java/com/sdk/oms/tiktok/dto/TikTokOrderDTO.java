@@ -5,11 +5,13 @@ import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.utils.CollectionUtils;
+import com.common.business.utils.StringUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
@@ -360,9 +362,19 @@ public class TikTokOrderDTO extends CleanBaseDTO {
      * @return java.util.List<com.common.business.dto.PlatformOrderFinanceDTO>
      **/
     private static PlatformOrderFinanceDTO parseFinances(OrdersBean ordersBean) {
+        BigDecimal tax = BigDecimal.ZERO;
+        for (LineItemsBean lineItem : ordersBean.getLineItems()) {
+            BigDecimal bigDecimal = lineItem.getItemTax().stream()
+                    .filter(req -> StringUtils.isNotBlank(req.getTaxType()) && "SALES_TAX".equalsIgnoreCase(req.getTaxType()))
+                    .map(req -> req.getTaxAmount())
+                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+
+            tax = tax.add(bigDecimal);
+        }
         return PlatformOrderFinanceDTO.builder()
                 .currency(ordersBean.getPayment().getCurrency())
                 .shippingCost(NumberUtil.toBigDecimal(ordersBean.getPayment().getShippingFee()))
+                .platformRate(tax)
                 .build();
     }
 }
